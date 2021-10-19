@@ -14,13 +14,14 @@ interface RolePickerMenuProps {
   onCustomRolesChange: (newRoles: string[]) => void;
   onBuiltinRoleChange: (newRole: string) => void;
   onClose: () => void;
+  onClear?: () => void;
 }
 
 export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
-  const { builtInRole, options, appliedRoles, onCustomRolesChange, onBuiltinRoleChange } = props;
+  const { builtInRole, options, appliedRoles, onCustomRolesChange, onBuiltinRoleChange, onClear } = props;
 
   const [selectedOptions, setSelectedOptions] = useState({} as any);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState(builtInRole);
@@ -33,7 +34,7 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
       }
     }
     setSelectedOptions(initialSelectedOptions);
-  }, [appliedRoles]);
+  }, [appliedRoles, options]);
 
   const onSelect = (option: SelectableValue<string>) => {
     if (option.value) {
@@ -50,7 +51,10 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
     setSelectedBuiltInRole(newRole);
   };
 
-  const onClear = () => {
+  const onClearInternal = async () => {
+    if (onClear) {
+      onClear();
+    }
     setSelectedOptions({});
   };
 
@@ -85,7 +89,7 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
       </CustomScrollbar>
       <div className={customStyles.menuButtonRow}>
         <HorizontalGroup justify="flex-end">
-          <Button size="sm" fill="text" onClick={onClear}>
+          <Button size="sm" fill="text" onClick={onClearInternal}>
             Clear all
           </Button>
           <Button size="sm" onClick={onUpdate}>

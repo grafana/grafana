@@ -27,6 +27,7 @@ export const RolePicker: FC<Props> = ({
   const [roleOptions, setRoleOptions] = useState([] as Array<SelectableValue<string>>);
   const [filteredOptions, setFilteredOptions] = useState([] as Array<SelectableValue<string>>);
   const [appliedRoles, setAppliedRoles] = useState({} as { [key: string]: boolean });
+  const [query, setQuery] = useState('');
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
@@ -53,14 +54,6 @@ export const RolePicker: FC<Props> = ({
     fetchOptions();
   }, [getRoles, getRoleOptions]);
 
-  // const onApply = useCallback(
-  //   (role: string) => {
-  //     setOpen(false);
-  //     onChange(role);
-  //   },
-  //   [onChange]
-  // );
-
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
       event.preventDefault();
@@ -71,16 +64,25 @@ export const RolePicker: FC<Props> = ({
 
   const onClose = useCallback(() => {
     setOpen(false);
-  }, []);
+    setQuery('');
+    setFilteredOptions(roleOptions);
+  }, [roleOptions]);
+
+  // const onClear = useCallback(() => {
+  //   setQuery('');
+  //   setFilteredOptions(roleOptions);
+  // }, [roleOptions]);
 
   const onInputChange = (query?: string) => {
     if (query) {
+      setQuery(query);
       setFilteredOptions(
         roleOptions.filter((option) => {
           return option.label?.toLowerCase().includes(query.toLowerCase());
         })
       );
     } else {
+      setQuery('');
       setFilteredOptions(roleOptions);
     }
   };
@@ -100,7 +102,8 @@ export const RolePicker: FC<Props> = ({
       <ClickOutsideWrapper onClick={onClose}>
         <RolePickerInput
           role={builtinRole}
-          onChange={onInputChange}
+          query={query}
+          onQueryChange={onInputChange}
           onOpen={onOpen}
           onClose={onClose}
           isFocused={isOpen}
@@ -111,6 +114,7 @@ export const RolePicker: FC<Props> = ({
             onBuiltinRoleChange={onBuiltinRoleChangeInternal}
             onCustomRolesChange={onCustomRoleChangeInternal}
             onClose={onClose}
+            // onClear={onClear}
             options={filteredOptions}
             builtInRole={builtinRole}
             appliedRoles={appliedRoles}

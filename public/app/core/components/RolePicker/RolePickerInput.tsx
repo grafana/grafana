@@ -12,7 +12,7 @@ import { DropdownIndicator } from '@grafana/ui/src/components/Select/DropdownInd
 interface InputProps {
   role?: string;
   query: string;
-  onChange: (query?: string) => void;
+  onQueryChange: (query?: string) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
   onClose: () => void;
   isFocused?: boolean;
@@ -20,39 +20,26 @@ interface InputProps {
 }
 
 export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((props, ref) => {
-  const { role, disabled, isFocused, onChange, onOpen, onClose } = props;
+  const { role, disabled, isFocused, query, onOpen, onClose, onQueryChange } = props;
 
   const theme = useTheme2();
   const styles = getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false);
 
-  const onFocus = useCallback(
-    (event: FormEvent<HTMLElement>) => {
-      onOpen(event);
-    },
-    [onOpen]
-  );
-
   const onClick = useCallback(
     (event: FormEvent<HTMLElement>) => {
       if (!!isFocused) {
-        // (ref as any).current.blur();
         onClose();
       } else {
         (ref as any).current.focus();
         onOpen(event);
       }
     },
-    [ref, onFocus, isFocused, onClose]
+    [ref, isFocused, onClose, onOpen]
   );
-
-  // const onBlur = useCallback((event: FormEvent<HTMLInputElement>) => {
-  //   event.preventDefault();
-  //   event.stopPropagation();
-  // }, []);
 
   const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target?.value;
-    onChange(query);
+    onQueryChange(query);
   };
 
   return (
@@ -64,12 +51,11 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
       <input
         className={styles.input}
         ref={ref}
-        // onClick={stopPropagation}
-        onFocus={onFocus}
-        // onBlur={onBlur}
+        onFocus={onOpen}
         onChange={onInputChange}
         data-testid="role-picker-input"
-        placeholder="Select role"
+        placeholder={isFocused ? 'Select role' : ''}
+        value={query}
       />
       <div className={styles.suffix}>
         <DropdownIndicator isOpen={!!isFocused} />
