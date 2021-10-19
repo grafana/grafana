@@ -64,7 +64,6 @@ func TestAPIEndpoint_CreateOrgs_LegacyAccessControl(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPost, createOrgsURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
-
 }
 
 func TestAPIEndpoint_CreateOrgs_AccessControl(t *testing.T) {
