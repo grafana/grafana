@@ -606,7 +606,7 @@ describe('PrometheusDatasource', () => {
       templateSrvStub.replace.mockReturnValue(interval);
 
       const interpolatedQuery = ds.applyTemplateVariables(query, { interval: { text: interval, value: interval } });
-      expect(interpolatedQuery.expr).toBe(interval);
+      expect(interpolatedQuery.interval).not.toBe(interval);
     });
   });
   describe('metricFindQuery', () => {
