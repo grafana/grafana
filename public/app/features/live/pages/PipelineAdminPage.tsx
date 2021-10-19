@@ -31,8 +31,8 @@ export default function PipelineAdminPage() {
     getBackendSrv()
       .get(`api/live/channel-rules`)
       .then((data) => {
-        setRules(data.rules);
-        setDefaultRules(data.rules);
+        setRules(data.rules ?? []);
+        setDefaultRules(data.rules ?? []);
       })
       .catch((e) => {
         if (e.data) {
