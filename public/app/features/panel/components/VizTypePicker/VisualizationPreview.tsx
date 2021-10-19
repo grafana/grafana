@@ -8,13 +8,14 @@ import { cloneDeep } from 'lodash';
 
 export interface Props {
   data: PanelData;
+  width: number;
   suggestion: VisualizationSuggestion;
   onChange: (details: VizTypeChangeDetails) => void;
 }
 
-export function VisualizationPreview({ data, suggestion, onChange }: Props) {
+export function VisualizationPreview({ data, suggestion, onChange, width }: Props) {
   const styles = useStyles2(getStyles);
-  const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles();
+  const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   // const [showLargePreview, setShowLargePreview] = useState<boolean>(false);
 
   const onClick = () => {
@@ -91,12 +92,13 @@ interface PreviewDimensionsAndStyles {
   outerStyles: CSSProperties;
 }
 
-function getPreviewDimensionsAndStyles(): PreviewDimensionsAndStyles {
-  const aspectRatio = 1.44;
-  const renderWidth = 300 * aspectRatio;
-  const renderHeight = 300;
-  const showWidth = 100 * aspectRatio;
-  const showHeight = 100;
+function getPreviewDimensionsAndStyles(width: number): PreviewDimensionsAndStyles {
+  const aspectRatio = 16 / 10;
+  const showWidth = width;
+  const showHeight = width * (1 / aspectRatio);
+  const renderWidth = 350;
+  const renderHeight = renderWidth * (1 / aspectRatio);
+
   const padding = 6;
   const widthFactor = (showWidth - padding * 2) / renderWidth;
   const heightFactor = (showHeight - padding * 2) / renderHeight;
