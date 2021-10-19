@@ -185,9 +185,9 @@ function createServiceMapDataFrames() {
 }
 
 function getMetricFrames(responses: DataQueryResponse[]) {
-  const responsesMap = groupBy(responses, (r) => r.data[0].refId);
-  const totalsDFView = new DataFrameView(responsesMap[totalsMetric][0].data[0]);
-  const secondsDFView = new DataFrameView(responsesMap[secondsMetric][0].data[0]);
+  const responsesMap = groupBy(responses[0].data, (data) => data.refId);
+  const totalsDFView = new DataFrameView(responsesMap[totalsMetric][0]);
+  const secondsDFView = new DataFrameView(responsesMap[secondsMetric][0]);
   return [totalsDFView, secondsDFView];
 }
 

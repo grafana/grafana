@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { DataFrame, SelectableValue } from '@grafana/data';
 export interface Converter extends RuleSetting {
   [t: string]: any;
 }
@@ -53,4 +53,9 @@ export interface PipeLineEntitiesInfo {
   frameProcessors: SelectableValue[];
   frameOutputs: SelectableValue[];
   getExample: (rule: RuleType, type: string) => object;
+}
+
+export interface ChannelFrame {
+  channel: string;
+  frame: DataFrame;
 }

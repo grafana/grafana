@@ -23,6 +23,12 @@ jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings',
   return { GeneralSettings };
 });
 
+jest.mock('app/features/query/components/QueryGroup', () => {
+  return {
+    QueryGroup: () => null,
+  };
+});
+
 jest.mock('app/core/core', () => ({
   appEvents: {
     subscribe: () => {

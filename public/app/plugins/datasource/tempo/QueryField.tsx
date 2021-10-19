@@ -96,7 +96,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     ];
 
     if (config.featureToggles.tempoServiceGraph) {
-      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Map' });
+      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Graph' });
     }
 
     if (config.featureToggles.tempoSearch && !datasource?.search?.hide) {
@@ -179,13 +179,13 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             </InlineField>
           </InlineFieldRow>
         )}
-        {query.queryType === 'serviceMap' && <ServiceMapSection graphDatasourceUid={graphDatasourceUid} />}
+        {query.queryType === 'serviceMap' && <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} />}
       </>
     );
   }
 }
 
-function ServiceMapSection({ graphDatasourceUid }: { graphDatasourceUid?: string }) {
+function ServiceGraphSection({ graphDatasourceUid }: { graphDatasourceUid?: string }) {
   const dsState = useAsync(() => getDS(graphDatasourceUid), [graphDatasourceUid]);
   if (dsState.loading) {
     return null;
