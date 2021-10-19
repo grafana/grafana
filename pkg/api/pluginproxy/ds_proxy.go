@@ -121,6 +121,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxyErrorLogger := logger.New("userId", proxy.ctx.UserId, "orgId", proxy.ctx.OrgId, "uname", proxy.ctx.Login,
 		"path", proxy.ctx.Req.URL.Path, "remote_addr", proxy.ctx.RemoteAddr(), "referer", proxy.ctx.Req.Referer())
 
+	// separate cache key for ruler requests as they can have different auth options
 	transportCacheKey := fmt.Sprint(proxy.ds.Id)
 	if proxy.isRulerReq() {
 		transportCacheKey += "-ruler"
