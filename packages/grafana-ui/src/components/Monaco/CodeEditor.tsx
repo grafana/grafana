@@ -10,7 +10,7 @@ import { Themeable2 } from '../../types';
 
 import { CodeEditorProps, Monaco, MonacoEditor as MonacoEditorType, MonacoOptions } from './types';
 import { registerSuggestions } from './suggestions';
-import defineThemes from './theme';
+import { ensureGrafanaMonacoThemes } from './theme';
 
 type Props = CodeEditorProps & Themeable2;
 

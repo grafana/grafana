@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+import { useTheme2, ReactMonacoEditor, ensureGrafanaMonacoThemes, Monaco, monacoTypes } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { useLatest } from 'react-use';
@@ -51,23 +51,6 @@ function ensurePromQL(monaco: Monaco) {
   }
 }
 
-const THEME_NAME = 'grafana-prometheus-query-field';
-
-let MONACO_THEME_SETUP_STARTED = false;
-function ensureMonacoTheme(monaco: Monaco, theme: GrafanaTheme2) {
-  if (MONACO_THEME_SETUP_STARTED === false) {
-    MONACO_THEME_SETUP_STARTED = true;
-    monaco.editor.defineTheme(THEME_NAME, {
-      base: theme.isDark ? 'vs-dark' : 'vs',
-      inherit: true,
-      colors: {
-        'editor.background': theme.components.input.background,
-      },
-      rules: [],
-    });
-  }
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
@@ -106,11 +89,11 @@ const MonacoQueryField = (props: Props) => {
       <ReactMonacoEditor
         options={options}
         language="promql"
-        theme={THEME_NAME}
+        theme={theme.isDark ? 'grafana-dark' : 'grafana-light'}
         value={initialValue}
         beforeMount={(monaco) => {
           ensurePromQL(monaco);
-          ensureMonacoTheme(monaco, theme);
+          ensureGrafanaMonacoThemes(monaco, theme);
         }}
         onMount={(editor, monaco) => {
           // we setup on-blur

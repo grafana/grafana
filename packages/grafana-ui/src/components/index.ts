@@ -45,6 +45,7 @@ export { QueryField } from './QueryField/QueryField';
 export { CodeEditor } from './Monaco/CodeEditor';
 
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './Monaco/ReactMonacoEditorLazy';
+export { ensureGrafanaMonacoThemes } from './Monaco/theme';
 
 export {
   Monaco,
