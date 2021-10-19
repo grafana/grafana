@@ -52,8 +52,8 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apk add --no-cache ca-certificates bash tzdata && \
-    apk add --no-cache openssl musl-utils
+RUN apk add --no-cache ca-certificates bash tzdata musl-utils
+RUN apk add --no-cache openssl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 
 COPY conf ./conf
 

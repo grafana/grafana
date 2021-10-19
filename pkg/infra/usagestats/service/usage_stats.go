@@ -129,7 +129,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.ds.other.count"] = dsOtherCount
 
 	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
-	if err := uss.Bus.DispatchCtx(ctx, &esDataSourcesQuery); err != nil {
+	if err := uss.Bus.Dispatch(&esDataSourcesQuery); err != nil {
 		uss.log.Error("Failed to get elasticsearch json data", "error", err)
 		return report, err
 	}
