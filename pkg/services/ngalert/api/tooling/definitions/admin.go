@@ -1,7 +1,6 @@
 package definitions
 
 import (
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
@@ -55,16 +54,25 @@ type NGalertConfig struct {
 	Body PostableNGalertConfig
 }
 
+// swagger:enum AlertmanagersChoice
+type AlertmanagersChoice int
+
+const (
+	AllAlertmanagers      AlertmanagersChoice = 0
+	InternalAlertmanager  AlertmanagersChoice = 1
+	ExternalAlertmanagers AlertmanagersChoice = 2
+)
+
 // swagger:model
 type PostableNGalertConfig struct {
-	Alertmanagers       []string                   `json:"alertmanagers"`
-	AlertmanagersChoice models.AlertmanagersChoice `json:"alertmanagersChoice"`
+	Alertmanagers       []string            `json:"alertmanagers"`
+	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
 // swagger:model
 type GettableNGalertConfig struct {
-	Alertmanagers       []string                   `json:"alertmanagers"`
-	AlertmanagersChoice models.AlertmanagersChoice `json:"alertmanagersChoice"`
+	Alertmanagers       []string            `json:"alertmanagers"`
+	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
 // swagger:model

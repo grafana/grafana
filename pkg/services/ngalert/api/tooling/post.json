@@ -812,10 +812,16 @@
      "type": "array",
      "x-go-name": "Alertmanagers"
     },
-    "handling": {
+    "alertmanagersChoice": {
+     "enum": [
+      0,
+      1,
+      2
+     ],
      "format": "int64",
      "type": "integer",
-     "x-go-name": "Handling"
+     "x-go-enum-desc": "0 AllAlertmanagers\n1 InternalAlertmanager\n2 ExternalAlertmanagers",
+     "x-go-name": "AlertmanagersChoice"
     }
    },
    "type": "object",
@@ -1643,10 +1649,16 @@
      "type": "array",
      "x-go-name": "Alertmanagers"
     },
-    "handling": {
+    "alertmanagersChoice": {
+     "enum": [
+      0,
+      1,
+      2
+     ],
      "format": "int64",
      "type": "integer",
-     "x-go-name": "Handling"
+     "x-go-enum-desc": "0 AllAlertmanagers\n1 InternalAlertmanager\n2 ExternalAlertmanagers",
+     "x-go-name": "AlertmanagersChoice"
     }
    },
    "type": "object",
@@ -2664,7 +2676,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -2686,7 +2697,9 @@
     "labels",
     "receiver"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "AlertGroup",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
    "description": "AlertGroups alert groups",
@@ -2876,15 +2889,13 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array",
-   "x-go-name": "GettableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -2936,14 +2947,17 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableSilences",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3116,6 +3130,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3126,9 +3141,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
