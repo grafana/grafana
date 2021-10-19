@@ -82,7 +82,7 @@ func getOrgHelper(orgID int64) response.Response {
 func (hs *HTTPServer) CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) response.Response {
 	acEnabled := hs.Cfg.FeatureToggles["accesscontrol"]
 	if !acEnabled && !(setting.AllowUserOrgCreate || c.IsGrafanaAdmin) {
-		return response.Error(403, "Ac!cess denied", nil)
+		return response.Error(403, "Access denied", nil)
 	}
 
 	cmd.UserId = c.UserId
