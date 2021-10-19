@@ -6,7 +6,7 @@ import { MetricQuery, SLOQuery } from '../types';
 
 export interface Props<T> {
   onChange(query: T): void;
-  query: MetricQuery | SLOQuery;
+  query: T;
   templateVariableOptions: Array<SelectableValue<string>>;
   selectWidth?: number;
 }
