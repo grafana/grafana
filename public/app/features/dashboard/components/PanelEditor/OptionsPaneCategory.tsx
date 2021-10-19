@@ -6,7 +6,6 @@ import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
 import { getLocationSrv } from '@grafana/runtime';
-import { categoryParam } from './OptionsPaneOptions';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 export interface OptionsPaneCategoryProps {
   id: string;
@@ -19,6 +18,8 @@ export interface OptionsPaneCategoryProps {
   isNested?: boolean;
   children: ReactNode;
 }
+
+const categoryParam = 'showCategory';
 
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
