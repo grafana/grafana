@@ -27,7 +27,7 @@ else
 fi
 
 # Run accessibility command
-yarn run -s test:accessibility --json > pa11y-ci-results.json
+yarn run test:accessibility --json > pa11y-ci-results.json
 
 # Generate HTML report
 pa11y-ci-reporter-html
