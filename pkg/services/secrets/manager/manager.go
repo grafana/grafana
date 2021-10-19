@@ -242,8 +242,6 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 }
 
 func (s *SecretsService) currentProvider() string {
-	// TODO: 1. Should this method be defined here in OSS if OSS has only secret_key provider?
-	// TODO: 2. Do we really need to fallback to secret_key?
 	return s.settings.KeyValue("security", "encryption_provider").MustString(defaultProvider)
 }
 
