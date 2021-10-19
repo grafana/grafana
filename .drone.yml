@@ -239,9 +239,7 @@ trigger:
     - pull_request
   paths:
     exclude:
-    - docs/**
-    include:
-    - '**'
+    - '**.md'
 type: docker
 ---
 depends_on: []
@@ -3580,6 +3578,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 899320768f0a33385ad46818e519701d81f34287c83a5fe700f90f2145640ea8
+hmac: 3866bfd9c97ab35741de30a9554b592112ed0266a4b731b4962c427861b47f44
 
 ...
