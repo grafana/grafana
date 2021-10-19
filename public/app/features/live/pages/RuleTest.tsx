@@ -3,9 +3,9 @@ import { Button, CodeEditor, Table, useStyles, Select, Field } from '@grafana/ui
 import { ChannelFrame, Rule } from './types';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, config } from '@grafana/runtime';
 import { css } from '@emotion/css';
-import { GrafanaTheme, StreamingDataFrame } from '@grafana/data';
+import { getDisplayProcessor, GrafanaTheme, StreamingDataFrame } from '@grafana/data';
 import { transformLabel } from './utils';
 
 export default function RuleTest() {
@@ -43,7 +43,15 @@ export default function RuleTest() {
       .then((data: any) => {
         const t = data.channelFrames as any[];
         if (t) {
-          setResponse(t.map((f) => ({ channel: f.channel, frame: new StreamingDataFrame(f.frame) })));
+          setResponse(
+            t.map((f) => {
+              const frame = new StreamingDataFrame(f.frame);
+              for (const field of frame.fields) {
+                field.display = getDisplayProcessor({ field, theme: config.theme2 });
+              }
+              return { channel: f.channel, frame };
+            })
+          );
         }
       })
       .catch((e) => {
@@ -68,7 +76,7 @@ export default function RuleTest() {
         </Field>
         <Field label="Data">
           <CodeEditor
-            height="25vh"
+            height={200}
             value=""
             showLineNumbers={true}
             readOnly={false}
@@ -80,10 +88,11 @@ export default function RuleTest() {
         <Button onClick={onClick} className={styles.margin}>
           Test
         </Button>
+
         {response?.length &&
           response.map((r) => (
             <Field key={r.channel} label={r.channel}>
-              <Table data={r.frame} width={500} height={10 * r.frame.length + 10} showTypeIcons></Table>
+              <Table data={r.frame} width={650} height={10 * r.frame.length + 10} showTypeIcons></Table>
             </Field>
           ))}
       </Page.Contents>
