@@ -957,7 +957,7 @@ func createRulerAuthTest(t *testing.T, dsType string, authType string, authCheck
 		map[string]string{
 			"basicAuthPassword":      "password",
 			"rulerBasicAuthPassword": "ruler password",
-		})
+		}, setting.SecretKey)
 	require.NoError(t, err)
 
 	test.checkReq = func(req *http.Request) {
@@ -973,8 +973,10 @@ func runDatasourceAuthTest(t *testing.T, test *testCase) {
 	plugin := &plugins.DataSourcePlugin{}
 	ctx := &models.ReqContext{}
 	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
-	proxy, err := NewDataSourceProxy(test.datasource, plugin, ctx, "", &setting.Cfg{
-		FeatureToggles: map[string]bool{"ngalert": true},
+	proxy, err := NewDataSourceProxy(test.datasource, plugin, ctx, test.proxyPath, &setting.Cfg{
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			Enabled: true,
+		},
 	}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 
 	require.NoError(t, err)

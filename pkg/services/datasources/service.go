@@ -201,7 +201,7 @@ func (s *Service) DecryptedRulerBasicAuthPassword(ds *models.DataSource) string 
 		return value
 	}
 
-	return ds.BasicAuthPassword
+	return ""
 }
 
 func (s *Service) DecryptedPassword(ds *models.DataSource) string {
