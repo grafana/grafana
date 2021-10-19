@@ -202,7 +202,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
-		StartTime:     aws.Int64(startTime.Unix()),
+		StartTime: aws.Int64(startTime.Unix()),
 		// Usually grafana time range allows only second precision, but you can create ranges with milliseconds
 		// for example when going from trace to logs for that trace and trace length is sub second. In that case
 		// StartTime is effectively floored while here EndTime is ceiled and so we should get the logs user wants
