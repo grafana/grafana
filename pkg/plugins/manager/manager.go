@@ -170,6 +170,7 @@ func (m *PluginManager) loadPlugins(paths ...string) error {
 				PluginID:  p.ID,
 				ErrorCode: p.SignatureError.AsErrorCode(),
 			}
+			m.log.Debug("Skipping registration for plugin due to signature error", "pluginId", p.ID)
 			continue
 		}
 
