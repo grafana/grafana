@@ -14,6 +14,8 @@ import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
 import { OptionPaneRenderProps } from './types';
 
+export const categoryParam = 'showCategory';
+
 export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
   const { plugin, dashboard, panel } = props;
   const [searchQuery, setSearchQuery] = useState('');
