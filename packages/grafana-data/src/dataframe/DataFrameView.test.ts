@@ -92,7 +92,7 @@ describe('dataFrameView', () => {
       })
     );
 
-    const obj = view.get(0);
+    const obj = view.get(0) as any;
     expect(obj['1']).toEqual('a');
     expect(obj['2']).toEqual('b');
   });
