@@ -1007,8 +1007,8 @@ def ensure_cuetsified_step():
             'validate-scuemata',
         ],
         'commands': [
-            'pwd',
-            'ls -a bin/linux-amd64',
+            '# Make sure the git tree is clean.',
+            'git reset --hard',
             './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
             '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
             '# It is required that the generated Typescript be in sync with the input CUE files.',

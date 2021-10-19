@@ -121,8 +121,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
-  - pwd
-  - ls -a bin/linux-amd64
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -397,8 +397,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
-  - pwd
-  - ls -a bin/linux-amd64
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -856,8 +856,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
-  - pwd
-  - ls -a bin/linux-amd64
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -1239,8 +1239,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
-  - pwd
-  - ls -a bin/linux-amd64
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -1796,8 +1796,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
-  - pwd
-  - ls -a bin/linux-amd64
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -2168,8 +2168,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
-  - pwd
-  - ls -a bin/linux-amd64
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -2720,8 +2720,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
-  - pwd
-  - ls -a bin/linux-amd64
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -3064,8 +3064,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
-  - pwd
-  - ls -a bin/linux-amd64
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -3473,6 +3473,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 485001e8ea52089210dbdaada0a9045e63e2fd693258a205c1bd1d182e6888df
+hmac: fb7a82e73f8507d43feff402273291d13c55dfcf2e9c9af5595c6c4a79f450dd
 
 ...
