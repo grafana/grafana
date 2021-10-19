@@ -77,7 +77,7 @@ exports[`Render should render table 1`] = `
             }
           }
           text="Incompatible"
-          tooltip="This dashboard is not compatible with this version of Grafana"
+          tooltip="This dashboard requires versions undefined of Grafana"
         />
         <Button
           icon="trash-alt"
