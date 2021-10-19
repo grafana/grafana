@@ -23,6 +23,7 @@ type Calls struct {
 	GetUserBuiltInRoles        []interface{}
 	RegisterFixedRoles         []interface{}
 	LinkAPIKeyToServiceAccount []interface{}
+	DeleteServiceAccount       []interface{}
 }
 
 type Mock struct {
@@ -43,6 +44,7 @@ type Mock struct {
 	// Override functions
 	CloneUserToServiceAccountFunc  func(context.Context, *models.SignedInUser) (*models.User, error)
 	LinkAPIKeyToServiceAccountFunc func(context.Context, *models.ApiKey, *models.User) error
+	DeleteServiceAccountFunc       func(context.Context, int64) error
 	EvaluateFunc                   func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
 	GetUserPermissionsFunc         func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
 	GetUserRolesFunc               func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
@@ -139,6 +141,16 @@ func (m *Mock) LinkAPIKeyToServiceAccount(ctx context.Context, apikey *models.Ap
 	return nil
 }
 
+func (m *Mock) DeleteServiceAccount(ctx context.Context, serviceAccountId int64) error {
+	m.Calls.DeleteServiceAccount = append(m.Calls.DeleteServiceAccount, []interface{}{ctx, serviceAccountId})
+	// Use override if provided
+	if m.DeleteServiceAccountFunc != nil {
+		return m.DeleteServiceAccountFunc(ctx, serviceAccountId)
+	}
+	// Otherwise return the default
+	return nil
+}
+
 // Middleware checks if service disabled or not to switch to fallback authorization.
 // This mock return m.disabled unless an override is provided.
 func (m *Mock) IsDisabled() bool {
@@ -150,8 +162,6 @@ func (m *Mock) IsDisabled() bool {
 	// Otherwise return the Disabled bool
 	return m.disabled
 }
-
-func (m *Mock) DeleteServiceAccount(ctx context.Context, serviceAccountId int64) error { return nil }
 
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their
 // assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
