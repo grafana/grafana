@@ -650,7 +650,7 @@ func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin
 
 // start starts a backend plugin process
 func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
-	if !p.IsManaged() || !p.Backend {
+	if !p.IsManaged() || !p.Backend || p.SignatureError != nil {
 		return nil
 	}
 
