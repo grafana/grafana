@@ -198,7 +198,7 @@ steps:
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - build-frontend
+  - lint-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend-docs
 - commands:
@@ -506,7 +506,7 @@ steps:
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - build-frontend
+  - lint-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend-docs
 - commands:
@@ -3473,6 +3473,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: fb7a82e73f8507d43feff402273291d13c55dfcf2e9c9af5595c6c4a79f450dd
+hmac: 545c17474588c3e4c797cd8b84069d9e3b20ee6b2cab7aaa141c4c35a45597af
 
 ...
