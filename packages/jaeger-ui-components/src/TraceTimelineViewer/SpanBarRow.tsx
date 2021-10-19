@@ -27,7 +27,7 @@ import SpanTreeOffset from './SpanTreeOffset';
 import SpanBar from './SpanBar';
 import Ticks from './Ticks';
 
-import { TNil } from '../types';
+import { SpanLinkFunc, TNil } from '../types';
 import { TraceSpan } from '../types/trace';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
@@ -294,9 +294,7 @@ type SpanBarRowProps = {
   removeHoverIndentGuideId: (spanID: string) => void;
   clippingLeft?: boolean;
   clippingRight?: boolean;
-  createSpanLink?: (
-    span: TraceSpan
-  ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
+  createSpanLink?: SpanLinkFunc;
 };
 
 /**

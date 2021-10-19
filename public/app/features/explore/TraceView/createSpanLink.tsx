@@ -10,18 +10,12 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
-import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
+import { SpanLinkDef, SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import React from 'react';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { getFieldLinksForExplore } from '../utils/links';
-
-type SpanLinkDef = {
-  href: string;
-  onClick?: (event: any) => void;
-  content: React.ReactNode;
-};
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -36,7 +30,7 @@ export function createSpanLinkFactory({
   splitOpenFn: SplitOpen;
   traceToLogsOptions?: TraceToLogsOptions;
   dataFrame: DataFrame;
-}) {
+}): SpanLinkFunc | undefined {
   if (dataFrame.fields.length === 1 || !dataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
     // if the dataframe contains just a single blob of data (legacy format) or does not have any links configured,
     // let's try to use the old legacy path.
