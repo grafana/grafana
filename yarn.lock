@@ -14354,17 +14354,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"date-fns@npm:1.30.1, date-fns@npm:^1.23.0, date-fns@npm:^1.27.2":
+  version: 1.30.1
+  resolution: "date-fns@npm:1.30.1"
+  checksum: 86b1f3269cbb1f3ee5ac9959775ea6600436f4ee2b78430cd427b41a0c9fabf740b1a5d401c085f3003539a6f4755c7c56c19fbd70ce11f6f673f6bc8075b710
+  languageName: node
+  linkType: hard
+
 "date-fns@npm:2.21.3":
   version: 2.21.3
   resolution: "date-fns@npm:2.21.3"
   checksum: 00dc783af23ab1ca686ea9a21acd9572733ca9544c40a26e3061fc190bb0663c638c88f35d7719553279ad08c787eae816eaa0043d141563efc8394235f6c857
-  languageName: node
-  linkType: hard
-
-"date-fns@npm:^1.23.0, date-fns@npm:^1.27.2":
-  version: 1.30.1
-  resolution: "date-fns@npm:1.30.1"
-  checksum: 86b1f3269cbb1f3ee5ac9959775ea6600436f4ee2b78430cd427b41a0c9fabf740b1a5d401c085f3003539a6f4755c7c56c19fbd70ce11f6f673f6bc8075b710
   languageName: node
   linkType: hard
 
@@ -18280,6 +18280,7 @@ fsevents@^1.2.7:
     d3-force: ^2.1.1
     d3-scale-chromatic: 1.5.0
     dangerously-set-html-content: 1.0.9
+    date-fns: 1.30.1
     debounce-promise: 3.1.2
     emotion: 10.0.27
     enzyme: 3.11.0
