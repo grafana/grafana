@@ -66,7 +66,8 @@ type DataSource struct {
 	Updated time.Time `json:"updated"`
 }
 
-func (ds *DataSource) GetRulerProperties() *Ruler {
+func (ds *DataSource) GetRulerProperties() Ruler {
+	ruler := Ruler{}
 	if ds.JsonData == nil {
 		return ruler
 	}

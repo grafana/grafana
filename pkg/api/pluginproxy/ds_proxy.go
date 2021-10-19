@@ -80,7 +80,7 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService *datasources.Service) (*DataSourceProxy, error) {
 
 	url := ds.Url
-	if cfg.IsNgAlertEnabled() && isLotex(ds.Type) && isRulerPath(proxyPath) {
+	if cfg.UnifiedAlerting.Enabled && isLotex(ds.Type) && isRulerPath(proxyPath) {
 		rulerProps := ds.GetRulerProperties()
 		if rulerProps.Url != "" {
 			url = rulerProps.Url
@@ -224,13 +224,14 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	req.URL.Path = unescapedPath
 
-	if proxy.ds.BasicAuth {
+	rulerProperties := proxy.ds.GetRulerProperties()
+	if proxy.isRulerReq(rulerProperties) && rulerProperties.BasicAuth {
+		req.Header.Set("Authorization", util.GetBasicAuthHeader(rulerProperties.BasicAuthUser,
+			proxy.dataSourcesService.DecryptedRulerBasicAuthPassword(proxy.ds)))
+	} else if proxy.ds.BasicAuth {
 		req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser,
 			proxy.dataSourcesService.DecryptedBasicAuthPassword(proxy.ds)))
 	}
-	rulerProperties := proxy.ds.GetRulerProperties()
-	proxy.setAuthorisation(req, rulerProperties)
-
 	dsAuth := req.Header.Get("X-DS-Authorization")
 	if len(dsAuth) > 0 {
 		req.Header.Del("X-DS-Authorization")
@@ -393,17 +394,6 @@ func (proxy *DataSourceProxy) isRulerReq(rulerProperties models.Ruler) bool {
 	return false
 }
 
-func (proxy *DataSourceProxy) setAuthorisation(req *http.Request, rulerProperties models.Ruler) {
-	if proxy.isRulerReq(rulerProperties) {
-		if rulerProperties.BasicAuth {
-			req.Header.Set("Authorization", util.GetBasicAuthHeader(rulerProperties.BasicAuthUser,
-				proxy.ds.DecryptedRulerBasicAuthPassword()))
-		}
-	} else if proxy.ds.BasicAuth {
-		req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser,
-			proxy.ds.DecryptedBasicAuthPassword()))
-	}
-}
 func checkWhiteList(c *models.ReqContext, host string) bool {
 	if host != "" && len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[host]; !exists {

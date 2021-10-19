@@ -196,6 +196,14 @@ func (s *Service) DecryptedBasicAuthPassword(ds *models.DataSource) string {
 	return ds.BasicAuthPassword
 }
 
+func (s *Service) DecryptedRulerBasicAuthPassword(ds *models.DataSource) string {
+	if value, ok := s.DecryptedValue(ds, "rulerBasicAuthPassword"); ok {
+		return value
+	}
+
+	return ds.BasicAuthPassword
+}
+
 func (s *Service) DecryptedPassword(ds *models.DataSource) string {
 	if value, ok := s.DecryptedValue(ds, "password"); ok {
 		return value
