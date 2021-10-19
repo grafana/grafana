@@ -48,7 +48,6 @@ function setup(queries: DataQuery[]) {
     syncedTimes: false,
     right: undefined,
     richHistory: [],
-    autoLoadLogsVolume: false,
     localStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
   };

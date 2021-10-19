@@ -6,6 +6,7 @@ export const StatsPickerEditor: React.FC<FieldConfigEditorProps<string[], StatsP
   value,
   onChange,
   item,
+  id,
 }) => {
   return (
     <StatsPicker
@@ -13,6 +14,7 @@ export const StatsPickerEditor: React.FC<FieldConfigEditorProps<string[], StatsP
       onChange={onChange}
       allowMultiple={!!item.settings?.allowMultiple}
       defaultStat={item.settings?.defaultStat}
+      inputId={id}
     />
   );
 };

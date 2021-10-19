@@ -29,13 +29,14 @@ import {
   deleteAlertManagerConfig,
   testReceivers,
 } from '../api/alertmanager';
-import { fetchRules } from '../api/prometheus';
+import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
   deleteNamespace,
   deleteRulerRulesGroup,
   fetchRulerRules,
   fetchRulerRulesGroup,
   fetchRulerRulesNamespace,
+  FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
@@ -64,7 +65,8 @@ const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
-  (rulesSourceName: string): Promise<RuleNamespace[]> => withSerializedError(fetchRules(rulesSourceName))
+  ({ rulesSourceName, filter }: { rulesSourceName: string; filter?: FetchPromRulesFilter }): Promise<RuleNamespace[]> =>
+    withSerializedError(fetchRules(rulesSourceName, filter))
 );
 
 export const fetchAlertManagerConfigAction = createAsyncThunk(
@@ -106,8 +108,14 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
 
 export const fetchRulerRulesAction = createAsyncThunk(
   'unifiedalerting/fetchRulerRules',
-  (rulesSourceName: string): Promise<RulerRulesConfigDTO | null> => {
-    return withSerializedError(fetchRulerRules(rulesSourceName));
+  ({
+    rulesSourceName,
+    filter,
+  }: {
+    rulesSourceName: string;
+    filter?: FetchRulerRulesFilter;
+  }): Promise<RulerRulesConfigDTO | null> => {
+    return withSerializedError(fetchRulerRules(rulesSourceName, filter));
   }
 );
 
@@ -119,12 +127,12 @@ export const fetchSilencesAction = createAsyncThunk(
 );
 
 // this will only trigger ruler rules fetch if rules are not loaded yet and request is not in flight
-export function fetchRulerRulesIfNotFetchedYet(dataSourceName: string): ThunkResult<void> {
+export function fetchRulerRulesIfNotFetchedYet(rulesSourceName: string): ThunkResult<void> {
   return (dispatch, getStore) => {
     const { rulerRules } = getStore().unifiedAlerting;
-    const resp = rulerRules[dataSourceName];
+    const resp = rulerRules[rulesSourceName];
     if (!resp?.result && !(resp && isRulerNotSupportedResponse(resp)) && !resp?.loading) {
-      dispatch(fetchRulerRulesAction(dataSourceName));
+      dispatch(fetchRulerRulesAction({ rulesSourceName }));
     }
   };
 }
@@ -132,12 +140,12 @@ export function fetchRulerRulesIfNotFetchedYet(dataSourceName: string): ThunkRes
 export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
   return (dispatch, getStore) => {
     const { promRules, rulerRules } = getStore().unifiedAlerting;
-    getAllRulesSourceNames().map((name) => {
-      if (force || !promRules[name]?.loading) {
-        dispatch(fetchPromRulesAction(name));
+    getAllRulesSourceNames().map((rulesSourceName) => {
+      if (force || !promRules[rulesSourceName]?.loading) {
+        dispatch(fetchPromRulesAction({ rulesSourceName }));
       }
-      if (force || !rulerRules[name]?.loading) {
-        dispatch(fetchRulerRulesAction(name));
+      if (force || !rulerRules[rulesSourceName]?.loading) {
+        dispatch(fetchRulerRulesAction({ rulesSourceName }));
       }
     });
   };
@@ -146,9 +154,9 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
 export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
   return (dispatch, getStore) => {
     const { promRules } = getStore().unifiedAlerting;
-    getAllRulesSourceNames().map((name) => {
-      if (force || !promRules[name]?.loading) {
-        dispatch(fetchPromRulesAction(name));
+    getAllRulesSourceNames().map((rulesSourceName) => {
+      if (force || !promRules[rulesSourceName]?.loading) {
+        dispatch(fetchPromRulesAction({ rulesSourceName }));
       }
     });
   };
@@ -250,8 +258,8 @@ export function deleteRuleAction(
         }
         await deleteRule(ruleWithLocation);
         // refetch rules for this rules source
-        dispatch(fetchRulerRulesAction(ruleWithLocation.ruleSourceName));
-        dispatch(fetchPromRulesAction(ruleWithLocation.ruleSourceName));
+        dispatch(fetchRulerRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
+        dispatch(fetchPromRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
 
         if (options.navigateTo) {
           locationService.replace(options.navigateTo);
@@ -712,7 +720,7 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
           }
 
           // refetch all rules
-          await thunkAPI.dispatch(fetchRulerRulesAction(rulesSourceName));
+          await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName }));
         })()
       ),
       {

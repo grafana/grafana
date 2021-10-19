@@ -84,7 +84,10 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		return false, err
 	}
 
-	errCnt := 0
+	var (
+		lastErr error
+		numErrs int
+	)
 	for _, u := range n.urls {
 		if _, err := sendHTTPRequest(ctx, u, httpCfg{
 			user:     n.basicAuthUser,
@@ -92,14 +95,15 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 			body:     body,
 		}, n.logger); err != nil {
 			n.logger.Warn("Failed to send to Alertmanager", "error", err, "alertmanager", n.Name, "url", u.String())
-			errCnt++
+			lastErr = err
+			numErrs++
 		}
 	}
 
-	if errCnt == len(n.urls) {
+	if numErrs == len(n.urls) {
 		// All attempts to send alerts have failed
 		n.logger.Warn("All attempts to send to Alertmanager failed", "alertmanager", n.Name)
-		return false, fmt.Errorf("failed to send alert to Alertmanager")
+		return false, fmt.Errorf("failed to send alert to Alertmanager: %w", lastErr)
 	}
 
 	return true, nil

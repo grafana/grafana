@@ -5,15 +5,14 @@ import (
 	"net/http"
 	"time"
 
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, accesscontrol.Evaluator) macaron.Handler {
-	return func(fallback macaron.Handler, evaluator accesscontrol.Evaluator) macaron.Handler {
+func Middleware(ac accesscontrol.AccessControl) func(web.Handler, accesscontrol.Evaluator) web.Handler {
+	return func(fallback web.Handler, evaluator accesscontrol.Evaluator) web.Handler {
 		if ac.IsDisabled() {
 			return fallback
 		}
@@ -73,6 +72,6 @@ func newID() string {
 func buildScopeParams(c *models.ReqContext) accesscontrol.ScopeParams {
 	return accesscontrol.ScopeParams{
 		OrgID:     c.OrgId,
-		URLParams: macaron.Params(c.Req),
+		URLParams: web.Params(c.Req),
 	}
 }

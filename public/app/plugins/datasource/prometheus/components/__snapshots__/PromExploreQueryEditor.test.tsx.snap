@@ -14,9 +14,7 @@ exports[`PromExploreQueryEditor should render component 1`] = `
         }
       }
       onChange={[MockFunction]}
-      onKeyDownFunc={[Function]}
-      onQueryTypeChange={[Function]}
-      onStepChange={[Function]}
+      onRunQuery={[MockFunction]}
       query={
         Object {
           "expr": "",
@@ -24,8 +22,6 @@ exports[`PromExploreQueryEditor should render component 1`] = `
           "refId": "A",
         }
       }
-      queryType="both"
-      stepValue="1s"
     />
   }
   data={
