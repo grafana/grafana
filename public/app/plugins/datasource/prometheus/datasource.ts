@@ -894,6 +894,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
     return {
       ...target,
+      legendFormat: this.templateSrv.replace(target.legendFormat, variables),
       expr: this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
     };
   }
