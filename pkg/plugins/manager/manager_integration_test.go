@@ -29,6 +29,11 @@ func TestPluginManager_int_init(t *testing.T) {
 		Env:                setting.Prod,
 		StaticRootPath:     staticRootPath,
 		BundledPluginsPath: bundledPluginsPath,
+		PluginSettings: map[string]map[string]string{
+			"plugin.datasource-id": {
+				"path": "testdata/test-app",
+			},
+		},
 	}
 
 	license := &licensing.OSSLicensingService{
@@ -46,7 +51,7 @@ func TestPluginManager_int_init(t *testing.T) {
 func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	t.Helper()
 
-	panels := map[string]struct{}{
+	expPanels := map[string]struct{}{
 		"alertGroups":    {},
 		"alertlist":      {},
 		"annolist":       {},
@@ -79,7 +84,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"xychart":        {},
 	}
 
-	dataSources := map[string]struct{}{
+	expDataSources := map[string]struct{}{
 		"alertmanager": {},
 		"dashboard":    {},
 		"input":        {},
@@ -88,26 +93,46 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"zipkin":       {},
 	}
 
+	expApps := map[string]struct{}{
+		"test-app": {},
+	}
+
 	pluginRoutes := make(map[string]*plugins.StaticRoute)
 	for _, route := range pm.Routes() {
 		pluginRoutes[route.PluginID] = route
 	}
 
-	for _, p := range pm.Plugins(plugins.Panel) {
+	panels := pm.Plugins(plugins.Panel)
+	assert.Equal(t, len(expPanels), len(panels))
+	for _, p := range panels {
 		require.NotNil(t, pm.Plugin(p.ID))
-		assert.Contains(t, panels, p.ID)
+		assert.Contains(t, expPanels, p.ID)
 		assert.Contains(t, pm.registeredPlugins(), p.ID)
 		assert.Contains(t, pluginRoutes, p.ID)
 		assert.Equal(t, pluginRoutes[p.ID].Directory, p.PluginDir)
 	}
 
-	for _, ds := range pm.Plugins(plugins.DataSource) {
+	dataSources := pm.Plugins(plugins.DataSource)
+	assert.Equal(t, len(expDataSources), len(dataSources))
+	for _, ds := range dataSources {
 		require.NotNil(t, pm.Plugin(ds.ID))
-		assert.Contains(t, dataSources, ds.ID)
+		assert.Contains(t, expDataSources, ds.ID)
 		assert.Contains(t, pm.registeredPlugins(), ds.ID)
 		assert.Contains(t, pluginRoutes, ds.ID)
 		assert.Equal(t, pluginRoutes[ds.ID].Directory, ds.PluginDir)
 	}
+
+	apps := pm.Plugins(plugins.App)
+	assert.Equal(t, len(expApps), len(apps))
+	for _, app := range apps {
+		require.NotNil(t, pm.Plugin(app.ID))
+		require.Contains(t, expApps, app.ID)
+		assert.Contains(t, pm.registeredPlugins(), app.ID)
+		assert.Contains(t, pluginRoutes, app.ID)
+		assert.Equal(t, pluginRoutes[app.ID].Directory, app.PluginDir)
+	}
+
+	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(pm.Plugins()))
 }
 
 func verifyBundledPlugins(t *testing.T, pm *PluginManager) {

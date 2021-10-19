@@ -91,7 +91,7 @@ func (m *PluginManager) init() error {
 	}
 
 	// install Core plugins
-	err = m.loadPlugins(m.corePluginDirs()...)
+	err = m.loadPlugins(m.corePluginPaths()...)
 	if err != nil {
 		return err
 	}
@@ -104,6 +104,12 @@ func (m *PluginManager) init() error {
 
 	// install External plugins
 	err = m.loadPlugins(m.cfg.PluginsPath)
+	if err != nil {
+		return err
+	}
+
+	// install plugins from cfg.PluginSettings
+	err = m.loadPlugins(m.pluginSettingPaths()...)
 	if err != nil {
 		return err
 	}
@@ -721,8 +727,8 @@ func (m *PluginManager) stop(ctx context.Context) {
 	wg.Wait()
 }
 
-// corePluginDirs provides a list of the Core plugins which need to be read
-func (m *PluginManager) corePluginDirs() []string {
+// corePluginPaths provides a list of the Core plugin paths which need to be scanned on init()
+func (m *PluginManager) corePluginPaths() []string {
 	datasourcePaths := []string{
 		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/alertmanager"),
 		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/dashboard"),
@@ -734,6 +740,20 @@ func (m *PluginManager) corePluginDirs() []string {
 	panelsPath := filepath.Join(m.cfg.StaticRootPath, "app/plugins/panel")
 
 	return append(datasourcePaths, panelsPath)
+}
+
+// pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
+func (m *PluginManager) pluginSettingPaths() []string {
+	var pluginSettingDirs []string
+	for _, settings := range m.cfg.PluginSettings {
+		path, exists := settings["path"]
+		if !exists || path == "" {
+			continue
+		}
+		pluginSettingDirs = append(pluginSettingDirs, path)
+	}
+
+	return pluginSettingDirs
 }
 
 // callResourceClientResponseStream is used for receiving resource call responses.

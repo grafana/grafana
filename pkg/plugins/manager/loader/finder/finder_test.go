@@ -40,22 +40,6 @@ func TestFinder_Find(t *testing.T) {
 			expectedPathSuffix: []string{"/pkg/plugins/manager/testdata/includes-symlinks/plugin.json"},
 		},
 		{
-			name: "Dir with single plugin with extra plugin path defined in config",
-			cfg: &setting.Cfg{
-				PluginSettings: map[string]map[string]string{
-					"plugin.datasource-id": {
-						"path": "../../testdata/duplicate-plugins",
-					},
-				},
-			},
-			pluginDirs: []string{"../../testdata/valid-v2-signature"},
-			expectedPathSuffix: []string{
-				"/pkg/plugins/manager/testdata/valid-v2-signature/plugin/plugin.json",
-				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/nested/plugin.json",
-				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/plugin.json",
-			},
-		},
-		{
 			name:       "Multiple plugin dirs",
 			cfg:        setting.NewCfg(),
 			pluginDirs: []string{"../../testdata/duplicate-plugins", "../../testdata/invalid-v1-signature"},
@@ -63,23 +47,6 @@ func TestFinder_Find(t *testing.T) {
 				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/nested/plugin.json",
 				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/plugin.json",
 				"/pkg/plugins/manager/testdata/invalid-v1-signature/plugin/plugin.json"},
-		},
-		{
-			name: "Empty and non existing plugin dirs",
-			cfg: &setting.Cfg{
-				PluginSettings: map[string]map[string]string{
-					"plugin.datasource-id": {
-						"path": "",
-					},
-					"": {},
-					"plugin.test-app": {
-						"path": "./does/not/exist/",
-					},
-				},
-			},
-			pluginDirs: []string{"", "../../testdata/valid-v2-signature", "/does/not/exist", "../../testdata/symbolic-plugin-dirs/plugin/dashboards"},
-			expectedPathSuffix: []string{
-				"/pkg/plugins/manager/testdata/valid-v2-signature/plugin/plugin.json"},
 		},
 	}
 	for _, tc := range testCases {

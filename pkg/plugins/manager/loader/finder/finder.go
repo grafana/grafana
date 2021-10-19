@@ -42,20 +42,7 @@ func (f *Finder) Find(pluginDirs []string) ([]string, error) {
 		pluginJSONPaths = append(pluginJSONPaths, paths...)
 	}
 
-	var pluginSettingJSONPaths []string
-	for _, settings := range f.cfg.PluginSettings {
-		path, exists := settings["path"]
-		if !exists || path == "" {
-			continue
-		}
-		pluginJSONPaths, err := f.getPluginJSONPaths(path)
-		if err != nil {
-			return nil, err
-		}
-		pluginSettingJSONPaths = append(pluginSettingJSONPaths, pluginJSONPaths...)
-	}
-
-	return append(pluginJSONPaths, pluginSettingJSONPaths...), nil
+	return pluginJSONPaths, nil
 }
 
 func (f *Finder) getPluginJSONPaths(dir string) ([]string, error) {
