@@ -114,25 +114,18 @@ func (m *PluginManager) init() error {
 func (m *PluginManager) Run(ctx context.Context) error {
 	if m.cfg.CheckForUpdates {
 		go func() {
-			err := func() error {
-				m.checkForUpdates()
+			m.checkForUpdates()
 
-				ticker := time.NewTicker(time.Minute * 10)
-				run := true
+			ticker := time.NewTicker(time.Minute * 10)
+			run := true
 
-				for run {
-					select {
-					case <-ticker.C:
-						m.checkForUpdates()
-					case <-ctx.Done():
-						run = false
-					}
+			for run {
+				select {
+				case <-ticker.C:
+					m.checkForUpdates()
+				case <-ctx.Done():
+					run = false
 				}
-
-				return ctx.Err()
-			}()
-			if err != nil {
-				m.log.Error("Error occurred checking for Plugin updates", "err", err)
 			}
 		}()
 	}
