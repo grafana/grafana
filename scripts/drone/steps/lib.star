@@ -41,6 +41,9 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         'chmod +x bin/grabpl',
     ]
     common_cmds = [
+        'echo $DRONE_BUILD_ACTION',
+        'echo $DRONE_BUILD_TRIGGER',
+        'echo $DRONE_BUILD_EVENT',
         './bin/grabpl verify-drone',
         # Generate Go code, will install Wire
         # TODO: Install Wire in Docker image instead
