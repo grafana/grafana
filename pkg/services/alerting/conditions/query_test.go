@@ -241,13 +241,14 @@ func (rh fakeReqHandler) HandleRequest(context.Context, *models.DataSource, plug
 
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 	Convey(desc, func() {
-		bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
 			return nil
 		})
 
 		ctx := &queryConditionTestContext{}
 		ctx.result = &alerting.EvalContext{
+			Ctx:              context.Background(),
 			Rule:             &alerting.Rule{},
 			RequestValidator: &validations.OSSPluginRequestValidator{},
 		}
