@@ -89,6 +89,7 @@ type HTTPServer struct {
 	pluginStore               plugins.Store
 	pluginDashboardManager    plugins.PluginDashboardManager
 	pluginStaticRouteResolver plugins.StaticRouteResolver
+	pluginErrorResolver       plugins.ErrorResolver
 	SearchService             *search.SearchService
 	ShortURLService           shorturls.Service
 	Live                      *live.GrafanaLive
@@ -123,8 +124,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
 	dataService *tsdb.Service, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
-	pluginDashboardManager plugins.PluginDashboardManager,
-	pluginStore plugins.Store, pluginClient plugins.Client, settingsProvider setting.Provider,
+	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store, pluginClient plugins.Client,
+	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service,
 	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
@@ -158,6 +159,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStore:               pluginStore,
 		pluginStaticRouteResolver: pluginStaticRouteResolver,
 		pluginDashboardManager:    pluginDashboardManager,
+		pluginErrorResolver:       pluginErrorResolver,
 		updateChecker:             updateChecker,
 		SettingsProvider:          settingsProvider,
 		DataSourceCache:           dataSourceCache,

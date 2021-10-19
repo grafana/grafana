@@ -147,6 +147,37 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 	})
+
+	t.Run("Plugin with error", func(t *testing.T) {
+		p, pc := createPlugin(testPluginID, "", plugins.External, false, false)
+		p.SignatureError = &plugins.SignatureError{
+			PluginID:        p.ID,
+			SignatureStatus: plugins.SignatureInvalid,
+		}
+
+		loader := &fakeLoader{
+			mockedLoadedPlugins: []*plugins.Plugin{p},
+		}
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.pluginLoader = loader
+		})
+		err := pm.loadPlugins("test/path")
+		require.NoError(t, err)
+
+		assert.Equal(t, 0, pc.startCount)
+		assert.Equal(t, 0, pc.stopCount)
+		assert.False(t, pc.exited)
+		assert.False(t, pc.decommissioned)
+		assert.Nil(t, pm.Plugin(testPluginID))
+		assert.Len(t, pm.Plugins(), 0)
+		assert.Equal(t, []*plugins.Error{{
+			PluginID:  p.ID,
+			ErrorCode: p.SignatureError.AsErrorCode(),
+		}}, pm.PluginErrors())
+
+		verifyNoPluginErrors(t, pm)
+	})
 }
 
 func TestPluginManager_Installer(t *testing.T) {

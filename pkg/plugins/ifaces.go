@@ -81,6 +81,10 @@ type StaticRouteResolver interface {
 	Routes() []*StaticRoute
 }
 
+type ErrorResolver interface {
+	PluginErrors() []*Error
+}
+
 type PluginDashboardManager interface {
 	// GetPluginDashboards gets dashboards for a certain org/plugin.
 	GetPluginDashboards(orgID int64, pluginID string) ([]*PluginDashboardInfoDTO, error)

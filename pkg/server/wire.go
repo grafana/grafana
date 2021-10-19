@@ -101,6 +101,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.PluginDashboardManager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.ErrorResolver), new(*manager.PluginManager)),
 	cloudwatch.ProvideService,
 	cloudwatch.ProvideLogsService,
 	cloudmonitoring.ProvideService,

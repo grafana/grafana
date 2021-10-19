@@ -374,7 +374,7 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
-	return response.JSON(200, hs.pluginSignatureErrors())
+	return response.JSON(200, hs.pluginErrorResolver.PluginErrors())
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
@@ -482,17 +482,4 @@ func (hs *HTTPServer) pluginMarkdown(pluginId string, name string) ([]byte, erro
 		return nil, err
 	}
 	return data, nil
-}
-
-func (hs *HTTPServer) pluginSignatureErrors() []plugins.Error {
-	scanningErrs := make([]plugins.Error, 0)
-	for _, p := range hs.pluginStore.Plugins() {
-		if p.SignatureError != nil {
-			scanningErrs = append(scanningErrs, plugins.Error{
-				PluginID:  p.ID,
-				ErrorCode: p.SignatureError.AsErrorCode(),
-			})
-		}
-	}
-	return scanningErrs
 }

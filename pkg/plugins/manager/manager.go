@@ -41,12 +41,14 @@ var _ plugins.PluginDashboardManager = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.CoreBackendRegistrar = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
+var _ plugins.ErrorResolver = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg              *setting.Cfg
 	requestValidator models.PluginRequestValidator
 	sqlStore         *sqlstore.SQLStore
 	plugins          map[string]*plugins.Plugin
+	errors           map[string]*plugins.Error
 	pluginInstaller  plugins.Installer
 	pluginLoader     plugins.Loader
 	pluginsMu        sync.RWMutex
@@ -69,6 +71,7 @@ func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidat
 		requestValidator: pluginRequestValidator,
 		sqlStore:         sqlStore,
 		plugins:          map[string]*plugins.Plugin{},
+		errors:           map[string]*plugins.Error{},
 		log:              log.New("plugin.manager"),
 		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 		pluginLoader:     loader.New(license, cfg),
@@ -162,6 +165,14 @@ func (m *PluginManager) loadPlugins(paths ...string) error {
 	}
 
 	for _, p := range loadedPlugins {
+		if p.SignatureError != nil {
+			m.errors[p.ID] = &plugins.Error{
+				PluginID:  p.ID,
+				ErrorCode: p.SignatureError.AsErrorCode(),
+			}
+			continue
+		}
+
 		if err := m.registerAndStart(context.Background(), p); err != nil {
 			m.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
 		}
@@ -818,4 +829,16 @@ func (s *callResourceResponseStream) Close() error {
 	close(s.stream)
 	s.closed = true
 	return nil
+}
+
+func (m *PluginManager) PluginErrors() []*plugins.Error {
+	errs := make([]*plugins.Error, 0)
+	for _, err := range m.errors {
+		errs = append(errs, &plugins.Error{
+			PluginID:  err.PluginID,
+			ErrorCode: err.ErrorCode,
+		})
+	}
+
+	return errs
 }
