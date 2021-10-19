@@ -56,7 +56,7 @@ func (srv AdminSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respons
 
 	resp := apimodels.GettableNGalertConfig{
 		Alertmanagers:       cfg.Alertmanagers,
-		AlertmanagersChoice: cfg.AlertmanagersChoice,
+		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.AlertmanagersChoice),
 	}
 	return response.JSON(http.StatusOK, resp)
 }
@@ -68,7 +68,7 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 
 	cfg := &ngmodels.AdminConfiguration{
 		Alertmanagers:       body.Alertmanagers,
-		AlertmanagersChoice: body.AlertmanagersChoice,
+		AlertmanagersChoice: ngmodels.AlertmanagersChoice(body.AlertmanagersChoice),
 		OrgID:               c.OrgId,
 	}
 

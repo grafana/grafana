@@ -72,7 +72,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	{
 		ac := apimodels.PostableNGalertConfig{
 			Alertmanagers:       []string{fakeAM1.URL(), fakeAM2.URL()},
-			AlertmanagersChoice: ngmodels.ExternalAlertmanagers,
+			AlertmanagersChoice: apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
