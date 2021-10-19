@@ -1,7 +1,7 @@
 import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Project, AliasBy, AlignmentPeriod, AlignmentPeriodLabel, QueryEditorRow } from '..';
-import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
+import { AlignmentTypes, CustomMetaData, MetricQuery, SLOQuery } from '../../types';
 import CloudMonitoringDatasource from '../../datasource';
 import { Selector, Service, SLO } from '.';
 import { SELECT_WIDTH } from '../../constants';
@@ -68,7 +68,10 @@ export function SLOQueryEditor({
             ...query,
             perSeriesAligner: query.selectorName === 'select_slo_health' ? 'ALIGN_MEAN' : 'ALIGN_NEXT_OLDER',
           }}
-          onChange={onChange}
+          onChange={(q: MetricQuery | SLOQuery) => {
+            const query = q as SLOQuery;
+            onChange(query);
+          }}
           selectWidth={SELECT_WIDTH}
         />
         <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />

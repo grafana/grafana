@@ -2,11 +2,11 @@ import React, { FC, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 import { ALIGNMENT_PERIODS } from '../constants';
-import { BaseQuery } from '../types';
+import { MetricQuery, SLOQuery } from '../types';
 
 export interface Props {
-  onChange: (query: BaseQuery) => void;
-  query: BaseQuery;
+  onChange: (query: MetricQuery | SLOQuery) => void;
+  query: MetricQuery | SLOQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
   selectWidth?: number;
 }
