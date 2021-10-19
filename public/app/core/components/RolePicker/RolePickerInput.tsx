@@ -94,7 +94,7 @@ const getRolePickerInputStyles = stylesFactory(
           max-width: 100%;
           align-items: center;
           display: flex;
-          flex-wrap: nowrap;
+          flex-wrap: wrap;
           justify-content: flex-start;
           position: relative;
           box-sizing: border-box;
@@ -109,6 +109,7 @@ const getRolePickerInputStyles = stylesFactory(
       input: cx(
         sharedInputStyle(theme, invalid),
         css`
+          max-width: 120px;
           border: none;
           cursor: ${focused ? 'default' : 'pointer'};
         `

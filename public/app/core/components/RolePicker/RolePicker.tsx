@@ -4,8 +4,6 @@ import { SelectableValue } from '@grafana/data';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
 
-// const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
-
 export interface Props {
   /** Primary role selected */
   builtinRole: string;
@@ -70,11 +68,6 @@ export const RolePicker: FC<Props> = ({
     setFilteredOptions(roleOptions);
   }, [roleOptions]);
 
-  // const onClear = useCallback(() => {
-  //   setQuery('');
-  //   setFilteredOptions(roleOptions);
-  // }, [roleOptions]);
-
   const onInputChange = (query?: string) => {
     if (query) {
       setQuery(query);
@@ -89,13 +82,8 @@ export const RolePicker: FC<Props> = ({
     }
   };
 
-  const onBuiltinRoleChangeInternal = (newRole: string) => {
-    console.log(newRole);
-    onBuiltinRoleChange(newRole);
-  };
-
-  const onCustomRoleChangeInternal = (newRoles: string[]) => {
-    console.log(newRoles);
+  const onUpdate = (newBuiltInRole: string, newRoles: string[]) => {
+    onBuiltinRoleChange(newBuiltInRole);
     onRolesChange(newRoles);
   };
 
@@ -114,13 +102,11 @@ export const RolePicker: FC<Props> = ({
         />
         {isOpen && (
           <RolePickerMenu
-            onBuiltinRoleChange={onBuiltinRoleChangeInternal}
-            onCustomRolesChange={onCustomRoleChangeInternal}
-            onClose={onClose}
-            // onClear={onClear}
             options={filteredOptions}
             builtInRole={builtinRole}
             appliedRoles={appliedRoles}
+            onUpdate={onUpdate}
+            onClose={onClose}
           />
         )}
       </ClickOutsideWrapper>
