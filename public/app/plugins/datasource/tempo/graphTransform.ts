@@ -257,8 +257,8 @@ function convertToDataFrames(
       title: nodeId,
       // NaN will not be shown in the node graph. This happens for a root client node which did not process
       // any requests itself.
-      mainStat: node.total ? (node.seconds / node.total) * 1000 : Number.NaN, // Average response time (ms/t)
-      secondaryStat: node.total ? Math.round((node.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (r/sec to 2 decimals)
+      mainStat: node.total ? (node.seconds / node.total) * 1000 : Number.NaN, // Average response time
+      secondaryStat: node.total ? Math.round((node.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });
   }
   for (const edgeId of Object.keys(edgesMap)) {
@@ -267,8 +267,8 @@ function convertToDataFrames(
       id: edgeId,
       source: edge.source,
       target: edge.target,
-      mainStat: edge.total, // Requests (r)
-      secondaryStat: edge.total ? (edge.seconds / edge.total) * 1000 : Number.NaN, // Average response time (ms/t)
+      mainStat: edge.total, // Requests
+      secondaryStat: edge.total ? (edge.seconds / edge.total) * 1000 : Number.NaN, // Average response time
     });
   }
 
