@@ -9,9 +9,10 @@ export interface Props {
   userId: number;
   orgId?: number;
   onBuiltinRoleChange: (newRole: string) => void;
+  disabled?: boolean;
 }
 
-export const UserRolePicker: FC<Props> = ({ builtinRole, userId, orgId, onBuiltinRoleChange }) => {
+export const UserRolePicker: FC<Props> = ({ builtinRole, userId, orgId, onBuiltinRoleChange, disabled }) => {
   const getRoles = async () => {
     const roles = await getUserRoles(userId, orgId);
     return roles.map((role) => role.uid);
@@ -24,6 +25,7 @@ export const UserRolePicker: FC<Props> = ({ builtinRole, userId, orgId, onBuilti
       onBuiltinRoleChange={onBuiltinRoleChange}
       getRoleOptions={getRolesOptions}
       getRoles={getRoles}
+      disabled={disabled}
     />
   );
 };

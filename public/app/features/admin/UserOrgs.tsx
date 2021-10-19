@@ -1,4 +1,4 @@
-import React, { PureComponent, ReactElement } from 'react';
+import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
 import {
   Button,
@@ -10,10 +10,10 @@ import {
   stylesFactory,
   Themeable,
   Tooltip,
-  useStyles2,
+  useTheme,
   withTheme,
 } from '@grafana/ui';
-import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { AccessControlAction, Organization, OrgRole, UserDTO, UserOrg } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
@@ -103,6 +103,13 @@ const getOrgRowStyles = stylesFactory((theme: GrafanaTheme) => {
     tooltipItemLink: css`
       color: ${theme.palette.blue95};
     `,
+    rolePickerWrapper: css`
+      display: flex;
+    `,
+    rolePicker: css`
+      flex: auto;
+      margin-right: ${theme.spacing.sm};
+    `,
   };
 });
 
@@ -114,12 +121,7 @@ interface OrgRowProps extends Themeable {
   onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
 }
 
-interface OrgRowState {
-  currentRole: OrgRole;
-  isChangingRole: boolean;
-}
-
-class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
+class UnThemedOrgRow extends PureComponent<OrgRowProps> {
   state = {
     currentRole: this.props.org.role,
     isChangingRole: false,
@@ -153,39 +155,27 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
 
   render() {
     const { user, org, isExternalUser, theme } = this.props;
-    const { currentRole, isChangingRole } = this.state;
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
     const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
     const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
+    const rolePickerDisabled = isExternalUser || !canChangeRole;
 
     return (
       <tr>
         <td className={labelClass}>{org.name}</td>
-        {isChangingRole ? (
-          <td>
-            <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} />
-          </td>
-        ) : (
-          <td className="width-20">
-            <UserRolePicker
-              userId={user?.id || 0}
-              orgId={org.orgId}
-              builtinRole={org.role}
-              onBuiltinRoleChange={this.onBuiltinRoleChange}
-            />
-          </td>
-        )}
-        <td colSpan={1}>
-          <div className="pull-right">
-            {canChangeRole && (
-              <ChangeOrgButton
-                isExternalUser={isExternalUser}
-                onChangeRoleClick={this.onChangeRoleClick}
-                onCancelClick={this.onCancelClick}
-                onOrgRoleSave={this.onOrgRoleSave}
+        <td className="width-20">
+          <div className={styles.rolePickerWrapper}>
+            <div className={styles.rolePicker}>
+              <UserRolePicker
+                userId={user?.id || 0}
+                orgId={org.orgId}
+                builtinRole={org.role}
+                onBuiltinRoleChange={this.onBuiltinRoleChange}
+                disabled={rolePickerDisabled}
               />
-            )}
+            </div>
+            {isExternalUser && <ExternalUserTooltip />}
           </div>
         </td>
         <td colSpan={1}>
@@ -294,62 +284,40 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
   }
 }
 
-interface ChangeOrgButtonProps {
-  isExternalUser?: boolean;
-  onChangeRoleClick: () => void;
-  onCancelClick: () => void;
-  onOrgRoleSave: () => void;
-}
+const ExternalUserTooltip: React.FC = () => {
+  const theme = useTheme();
+  const styles = getTooltipStyles(theme);
 
-const getChangeOrgButtonTheme = (theme: GrafanaTheme2) => ({
+  return (
+    <div className={styles.disabledTooltip}>
+      <Tooltip
+        placement="right-end"
+        content={
+          <div>
+            This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to the&nbsp;
+            <a
+              className={styles.tooltipItemLink}
+              href={'https://grafana.com/docs/grafana/latest/auth'}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Grafana authentication docs
+            </a>
+            &nbsp;for details.
+          </div>
+        }
+      >
+        <Icon name="question-circle" />
+      </Tooltip>
+    </div>
+  );
+};
+
+const getTooltipStyles = stylesFactory((theme: GrafanaTheme) => ({
   disabledTooltip: css`
     display: flex;
   `,
   tooltipItemLink: css`
-    color: ${theme.v1.palette.blue95};
+    color: ${theme.palette.blue95};
   `,
-});
-
-export function ChangeOrgButton({
-  onChangeRoleClick,
-  isExternalUser,
-  onOrgRoleSave,
-  onCancelClick,
-}: ChangeOrgButtonProps): ReactElement {
-  const styles = useStyles2(getChangeOrgButtonTheme);
-  return (
-    <div className={styles.disabledTooltip}>
-      <ConfirmButton
-        confirmText="Save"
-        onClick={onChangeRoleClick}
-        onCancel={onCancelClick}
-        onConfirm={onOrgRoleSave}
-        disabled={isExternalUser}
-      >
-        Change role
-      </ConfirmButton>
-      {isExternalUser && (
-        <Tooltip
-          placement="right-end"
-          content={
-            <div>
-              This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
-              the&nbsp;
-              <a
-                className={styles.tooltipItemLink}
-                href={'https://grafana.com/docs/grafana/latest/auth'}
-                rel="noreferrer"
-                target="_blank"
-              >
-                Grafana authentication docs
-              </a>
-              &nbsp;for details.
-            </div>
-          }
-        >
-          <Icon name="question-circle" />
-        </Tooltip>
-      )}
-    </div>
-  );
-}
+}));
