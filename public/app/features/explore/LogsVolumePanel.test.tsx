@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { LogsVolumePanel } from './LogsVolumePanel';
-import { ExploreId } from '../../types';
 import { DataQueryResponse, LoadingState } from '@grafana/data';
 
 jest.mock('./ExploreGraph', () => {
@@ -14,16 +13,13 @@ jest.mock('./ExploreGraph', () => {
 function renderPanel(logsVolumeData?: DataQueryResponse) {
   render(
     <LogsVolumePanel
-      exploreId={ExploreId.left}
-      loadLogsVolumeData={() => {}}
       absoluteRange={{ from: 0, to: 1 }}
       timeZone="timeZone"
       splitOpen={() => {}}
       width={100}
       onUpdateTimeRange={() => {}}
       logsVolumeData={logsVolumeData}
-      autoLoadLogsVolume={false}
-      onChangeAutoLogsVolume={() => {}}
+      onLoadLogsVolume={() => {}}
     />
   );
 }
@@ -45,12 +41,13 @@ describe('LogsVolumePanel', () => {
   });
 
   it('shows error message', () => {
-    renderPanel({ state: LoadingState.Error, error: { data: { message: 'Error message' } }, data: [] });
-    expect(screen.getByText('Failed to load volume logs for this query: Error message')).toBeInTheDocument();
+    renderPanel({ state: LoadingState.Error, error: { data: { message: 'Test error message' } }, data: [] });
+    expect(screen.getByText('Failed to load volume logs for this query')).toBeInTheDocument();
+    expect(screen.getByText('Test error message')).toBeInTheDocument();
   });
 
-  it('shows button to load logs volume', () => {
+  it('does not show the panel when there is no volume data', () => {
     renderPanel(undefined);
-    expect(screen.getByText('Load logs volume')).toBeInTheDocument();
+    expect(screen.queryByText('Logs volume')).not.toBeInTheDocument();
   });
 });

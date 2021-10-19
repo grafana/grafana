@@ -384,7 +384,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 			},
 		}
 
-		value[Exemplar] = exemplars
+		value[ExemplarQueryType] = exemplars
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
@@ -413,7 +413,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 			{Value: 5, Timestamp: 5000},
 		}
 		value := make(map[PrometheusQueryType]interface{})
-		value[Range] = p.Matrix{
+		value[RangeQueryType] = p.Matrix{
 			&p.SampleStream{
 				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
 				Values: values,
@@ -442,7 +442,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 
 	t.Run("vector response should be parsed normally", func(t *testing.T) {
 		value := make(map[PrometheusQueryType]interface{})
-		value[Range] = p.Vector{
+		value[RangeQueryType] = p.Vector{
 			&p.Sample{
 				Metric:    p.Metric{"app": "Application", "tag2": "tag2"},
 				Value:     1,
@@ -473,7 +473,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 
 	t.Run("scalar response should be parsed normally", func(t *testing.T) {
 		value := make(map[PrometheusQueryType]interface{})
-		value[Range] = &p.Scalar{
+		value[RangeQueryType] = &p.Scalar{
 			Value:     1,
 			Timestamp: 1000,
 		}
