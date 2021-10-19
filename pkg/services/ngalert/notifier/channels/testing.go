@@ -3,7 +3,7 @@ package channels
 import "time"
 
 // mockTimeNow replaces function timeNow to return constant time.
-// The result is a function that resets the variable back to its original value.
+// It returns a function that resets the variable back to its original value.
 // This allows usage of this function with defer:
 // func Test (t *testing.T) {
 //    now := time.Now()
@@ -17,7 +17,7 @@ func mockTimeNow(constTime time.Time) func() {
 	return resetTimeNow
 }
 
-// resetTimeNow resets variable timeNow to the default value, which is time.Now
+// resetTimeNow resets the global variable timeNow to the default value, which is time.Now
 func resetTimeNow() {
 	timeNow = time.Now
 }

@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	// Provides current time. Can be overwritten in tests
+	// Provides current time. Can be overwritten in tests.
 	timeNow = time.Now
 )
 
