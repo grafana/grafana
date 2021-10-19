@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.0.0-rc1",
-    "@rollup/plugin-commonjs": "16.0.0",
+    "@rollup/plugin-commonjs": "21.0.1",
     "@rollup/plugin-json": "4.1.0",
     "@rollup/plugin-node-resolve": "10.0.0",
     "@types/rollup-plugin-visualizer": "2.6.0",

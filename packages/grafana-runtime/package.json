@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.0.0-rc1",
-    "@rollup/plugin-commonjs": "16.0.0",
+    "@rollup/plugin-commonjs": "21.0.1",
     "@rollup/plugin-node-resolve": "10.0.0",
     "@types/history": "^4.7.8",
     "@types/jest": "26.0.15",
