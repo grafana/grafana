@@ -7,7 +7,6 @@ import {
   FieldConfig,
   FieldType,
   getLogLevelFromKey,
-  Labels,
   LoadingState,
   LogLevel,
   MutableDataFrame,
@@ -117,7 +116,7 @@ function aggregateRawLogsVolume(rawLogsVolume: DataFrame[]): DataFrame[] {
     if (!valueField) {
       return;
     }
-    const level: LogLevel = valueField.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
+    const level: LogLevel = getLogLevelFromKey(dataFrame.name || '');
     if (!logsVolumeByLevelMap[level]) {
       logsVolumeByLevelMap[level] = [];
       levels++;
@@ -192,16 +191,4 @@ function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFram
   });
 
   return aggregatedDataFrame;
-}
-
-function getLogLevelFromLabels(labels: Labels): LogLevel {
-  const labelNames = ['level', 'lvl', 'loglevel'];
-  let levelLabel;
-  for (let labelName of labelNames) {
-    if (labelName in labels) {
-      levelLabel = labelName;
-      break;
-    }
-  }
-  return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }
