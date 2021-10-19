@@ -170,7 +170,7 @@ function createServiceMapDataFrames() {
     { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
-      config: { unit: 'r/sec', displayName: 'Request per second' },
+      config: { unit: 'r/sec', displayName: 'Requests per second' },
     },
   ]);
   const edges = createDF('Edges', [
