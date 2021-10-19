@@ -167,7 +167,7 @@ function createServiceMapDataFrames() {
   const nodes = createDF('Nodes', [
     { name: Fields.id },
     { name: Fields.title },
-    { name: Fields.mainStat, config: { unit: 'ms/t', displayName: 'Average response time' } },
+    { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
       config: { unit: 'r/sec', displayName: 'Request per second' },
@@ -178,7 +178,7 @@ function createServiceMapDataFrames() {
     { name: Fields.source },
     { name: Fields.target },
     { name: Fields.mainStat, config: { unit: 'r', displayName: 'Requests' } },
-    { name: Fields.secondaryStat, config: { unit: 'ms/t', displayName: 'Average response time' } },
+    { name: Fields.secondaryStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
   ]);
 
   return [nodes, edges];
