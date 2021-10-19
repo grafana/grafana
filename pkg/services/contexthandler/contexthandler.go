@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	ol "github.com/opentracing/opentracing-go/log"
-	cw "github.com/weaveworks/common/middleware"
+	cw "github.com/weaveworks/common/tracing"
 )
 
 const (
