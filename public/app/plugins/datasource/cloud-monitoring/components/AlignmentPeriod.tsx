@@ -4,14 +4,19 @@ import { Select } from '@grafana/ui';
 import { ALIGNMENT_PERIODS } from '../constants';
 import { MetricQuery, SLOQuery } from '../types';
 
-export interface Props {
-  onChange: (query: MetricQuery | SLOQuery) => void;
+export interface Props<T> {
+  onChange(query: T): void;
   query: MetricQuery | SLOQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
   selectWidth?: number;
 }
 
-export const AlignmentPeriod: FC<Props> = ({ templateVariableOptions, onChange, query, selectWidth }) => {
+export const AlignmentPeriod: FC<Props<MetricQuery | SLOQuery>> = ({
+  templateVariableOptions,
+  onChange,
+  query,
+  selectWidth,
+}) => {
   const options = useMemo(
     () =>
       ALIGNMENT_PERIODS.map((ap) => ({
