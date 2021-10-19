@@ -96,11 +96,7 @@ func executeMiddleware(next http.RoundTripper, datasourceLabel prometheus.Labels
 			return nil, err
 		}
 
-		// we avoid measuring contentlength less than zero because it indicates
-		// that the content size is unknown. https://godoc.org/github.com/badu/http#Response
-		if res != nil && res.ContentLength > 0 {
-			responseSizeSummary.Observe(float64(res.ContentLength))
-		} else {
+		if res != nil {
 			res.Body = httpclient.CountBytesReader(res.Body, func(bytesRead int64) {
 				responseSizeSummary.Observe(float64(bytesRead))
 			})
