@@ -14,7 +14,7 @@ export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): P
     const supplier = plugin.getSuggestionsSupplier();
 
     if (supplier) {
-      supplier.getDataSuggestions(builder);
+      supplier.getSuggestions(builder);
     }
   }
 

@@ -2,7 +2,7 @@ import { ThresholdsMode, VisualizationSuggestionsBuilder } from '@grafana/data';
 import { GaugeOptions } from './types';
 
 export class GaugeSuggestionsSupplier {
-  getDataSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestions(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<GaugeOptions, {}>({
       name: 'Gauge',
       pluginId: 'gauge',

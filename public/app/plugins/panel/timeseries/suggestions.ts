@@ -9,8 +9,8 @@ import {
 } from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 
-export class TimeSeriesSuggestionSupplier {
-  getDataSuggestions(builder: VisualizationSuggestionsBuilder) {
+export class TimeSeriesSuggestionsSupplier {
+  getSuggestions(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<TimeSeriesOptions, GraphFieldConfig>({
       name: 'Line chart',
       pluginId: 'timeseries',

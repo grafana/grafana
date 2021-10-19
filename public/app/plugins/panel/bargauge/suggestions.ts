@@ -3,7 +3,7 @@ import { BarGaugeDisplayMode } from '@grafana/ui';
 import { BarGaugeOptions } from './types';
 
 export class BarGaugeSuggestionsSupplier {
-  getDataSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestions(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<BarGaugeOptions, {}>({
       name: 'Bar gauge',
       pluginId: 'bargauge',

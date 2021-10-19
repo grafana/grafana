@@ -2,7 +2,7 @@ import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { StatPanelOptions } from './types';
 
 export class StatSuggestionsSupplier {
-  getDataSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestions(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<StatPanelOptions, {}>({
       name: 'Stat',
       pluginId: 'stat',

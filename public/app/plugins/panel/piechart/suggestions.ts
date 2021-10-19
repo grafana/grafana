@@ -3,7 +3,7 @@ import { LegendDisplayMode } from '@grafana/schema';
 import { PieChartLabels, PieChartOptions, PieChartType } from './types';
 
 export class PieChartSuggestionsSupplier {
-  getDataSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestions(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<PieChartOptions, {}>({
       name: 'Piechart',
       pluginId: 'piechart',

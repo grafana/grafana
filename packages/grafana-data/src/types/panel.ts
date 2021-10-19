@@ -298,7 +298,13 @@ export class VisualizationSuggestionsBuilder {
  * @alpha
  */
 export type VisualizationSuggestionsSupplier = {
-  getDataSuggestions: (builder: VisualizationSuggestionsBuilder) => void;
+  /**
+   * Adds good suitable suggestions for the current data
+   */
+  getSuggestions: (builder: VisualizationSuggestionsBuilder) => void;
+  /**
+   * When the user wants to explore more options for a specific panel
+   */
   getOptionSuggestions?: (builder: VisualizationSuggestionsBuilder) => void;
 };
 
