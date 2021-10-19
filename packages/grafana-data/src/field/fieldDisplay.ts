@@ -265,8 +265,9 @@ function getSmartDisplayNameForRow(
 
     if (otherField.type === FieldType.string) {
       const value = otherField.values.get(rowIndex) ?? '';
-      if (value.length > 0) {
-        parts.push(value);
+      const mappedValue = otherField.display ? otherField.display(value).text : value;
+      if (mappedValue.length > 0) {
+        parts.push(mappedValue);
       }
     } else if (otherField.type === FieldType.number) {
       otherNumericFields++;
