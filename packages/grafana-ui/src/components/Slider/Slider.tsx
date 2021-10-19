@@ -19,6 +19,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
   reverse,
   step,
   value,
+  ariaLabelForHandle,
 }) => {
   const isHorizontal = orientation === 'horizontal';
   const theme = useTheme2();
@@ -79,6 +80,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
           onAfterChange={onAfterChange}
           vertical={!isHorizontal}
           reverse={reverse}
+          ariaLabelForHandle={ariaLabelForHandle}
         />
         {/* Uses text input so that the number spinners are not shown */}
         <Input

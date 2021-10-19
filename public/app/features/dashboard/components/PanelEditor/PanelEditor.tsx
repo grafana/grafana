@@ -34,7 +34,6 @@ import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { toggleTableView } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
-import { getPanelStateById } from '../../state/selectors';
 import { getVariables } from 'app/features/variables/state/selectors';
 
 import { StoreState } from 'app/types';
@@ -55,6 +54,7 @@ import {
 import { notifyApp } from '../../../../core/actions';
 import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -64,12 +64,12 @@ interface OwnProps {
 
 const mapStateToProps = (state: StoreState) => {
   const panel = state.panelEditor.getPanel();
-  const { plugin, instanceState } = getPanelStateById(state.dashboard, panel.id);
+  const panelState = getPanelStateForModel(state, panel);
 
   return {
-    plugin: plugin,
     panel,
-    instanceState,
+    plugin: panelState?.plugin,
+    instanceState: panelState?.instanceState,
     initDone: state.panelEditor.initDone,
     uiState: state.panelEditor.ui,
     tableViewEnabled: state.panelEditor.tableViewEnabled,
@@ -244,8 +244,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
               return (
                 <div className={styles.centeringContainer} style={{ width, height }}>
-                  <div style={panelSize} data-panelid={panel.editSourceId}>
+                  <div style={panelSize} data-panelid={panel.id}>
                     <DashboardPanel
+                      key={panel.key}
+                      stateKey={panel.key}
                       dashboard={dashboard}
                       panel={panel}
                       isEditing={true}
@@ -253,6 +255,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       isInView={true}
                       width={panelSize.width}
                       height={panelSize.height}
+                      skipStateCleanUp={true}
                     />
                   </div>
                 </div>

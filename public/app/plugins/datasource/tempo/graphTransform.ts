@@ -127,18 +127,18 @@ function findTraceDuration(view: DataFrameView<Row>): number {
   return traceEndTime - traceStartTime;
 }
 
-const secondsMetric = 'tempo_service_graph_request_server_seconds_sum';
-const totalsMetric = 'tempo_service_graph_request_total';
+const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
+const totalsMetric = 'traces_service_graph_request_total';
 
 export const serviceMapMetrics = [
   secondsMetric,
   totalsMetric,
   // We don't show histogram in node graph at the moment but we could later add that into a node context menu.
-  // 'tempo_service_graph_request_seconds_bucket',
-  // 'tempo_service_graph_request_seconds_count',
+  // 'traces_service_graph_request_seconds_bucket',
+  // 'traces_service_graph_request_seconds_count',
   // These are used for debugging the tempo collection so probably not useful for service map right now.
-  // 'tempo_service_graph_unpaired_spans_total',
-  // 'tempo_service_graph_untagged_spans_total',
+  // 'traces_service_graph_unpaired_spans_total',
+  // 'traces_service_graph_untagged_spans_total',
 ];
 
 /**
@@ -185,9 +185,9 @@ function createServiceMapDataFrames() {
 }
 
 function getMetricFrames(responses: DataQueryResponse[]) {
-  const responsesMap = groupBy(responses, (r) => r.data[0].refId);
-  const totalsDFView = new DataFrameView(responsesMap[totalsMetric][0].data[0]);
-  const secondsDFView = new DataFrameView(responsesMap[secondsMetric][0].data[0]);
+  const responsesMap = groupBy(responses[0].data, (data) => data.refId);
+  const totalsDFView = new DataFrameView(responsesMap[totalsMetric][0]);
+  const secondsDFView = new DataFrameView(responsesMap[secondsMetric][0]);
   return [totalsDFView, secondsDFView];
 }
 

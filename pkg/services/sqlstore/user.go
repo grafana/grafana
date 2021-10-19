@@ -562,7 +562,7 @@ func GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) er
 	}
 
 	getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
-	err = GetTeamsByUser(getTeamsByUserQuery)
+	err = GetTeamsByUser(ctx, getTeamsByUserQuery)
 	if err != nil {
 		return err
 	}
@@ -652,6 +652,18 @@ func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 
 	if len(whereConditions) > 0 {
 		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+	}
+
+	for _, filter := range query.Filters {
+		if jc := filter.JoinCondition(); jc != nil {
+			countSess.Join(jc.Operator, jc.Table, jc.Params)
+		}
+		if ic := filter.InCondition(); ic != nil {
+			countSess.In(ic.Condition, ic.Params)
+		}
+		if wc := filter.WhereCondition(); wc != nil {
+			countSess.Where(wc.Condition, wc.Params)
+		}
 	}
 
 	count, err := countSess.Count(&user)

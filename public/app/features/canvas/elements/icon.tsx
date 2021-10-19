@@ -14,7 +14,7 @@ import { isString } from 'lodash';
 import { LineConfig } from '../types';
 import { DimensionContext } from 'app/features/dimensions/context';
 
-interface IconConfig {
+export interface IconConfig {
   path?: ResourceDimensionConfig;
   fill?: ColorDimensionConfig;
   stroke?: LineConfig;

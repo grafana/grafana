@@ -78,6 +78,7 @@ export class DashboardModel {
   tags: any;
   style: any;
   timezone: any;
+  weekStart: any;
   editable: any;
   graphTooltip: DashboardCursorSync;
   time: any;
@@ -139,6 +140,7 @@ export class DashboardModel {
     this.tags = data.tags ?? [];
     this.style = data.style ?? 'dark';
     this.timezone = data.timezone ?? '';
+    this.weekStart = data.weekStart ?? '';
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
@@ -285,11 +287,8 @@ export class DashboardModel {
       .map((panel: PanelModel) => {
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel
-        if (this.panelInEdit && this.panelInEdit.editSourceId === panel.id) {
-          const saveModel = this.panelInEdit.getSaveModel();
-          // while editing a panel we modify its id, need to restore it here
-          saveModel.id = this.panelInEdit.editSourceId;
-          return saveModel;
+        if (this.panelInEdit && this.panelInEdit.id === panel.id) {
+          return this.panelInEdit.getSaveModel();
         }
 
         return panel.getSaveModel();
