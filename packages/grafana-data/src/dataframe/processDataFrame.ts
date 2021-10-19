@@ -25,7 +25,7 @@ import { ArrayDataFrame } from './ArrayDataFrame';
 import { getFieldDisplayName } from '../field/fieldState';
 import { fieldIndexComparer } from '../field/fieldComparers';
 import { vectorToArray } from '../vector/vectorToArray';
-import { StreamingDataFrame } from '.';
+import { StreamingDataFrame } from './StreamingDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
