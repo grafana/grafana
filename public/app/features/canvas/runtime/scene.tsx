@@ -43,14 +43,14 @@ export class Scene {
   height = 0;
   style: CSSProperties = {};
   data?: PanelData;
-  selecto?: Selecto | null;
+  selecto?: Selecto;
+  div?: HTMLDivElement;
 
   constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = this.load(cfg);
   }
 
   load(cfg: CanvasGroupOptions) {
-    console.log('LOAD', cfg, this);
     this.root = new RootElement(
       cfg ?? {
         type: 'group',
@@ -65,6 +65,11 @@ export class Scene {
       this.lookup.set(v.UID, v);
     });
 
+    setTimeout(() => {
+      if (this.div) {
+        this.initMoveable();
+      }
+    }, 100);
     return this.root;
   }
 
@@ -85,6 +90,11 @@ export class Scene {
     this.height = height;
     this.style = { width, height };
     this.root.updateSize(width, height);
+
+    if (this.selecto?.getSelectedTargets().length) {
+      let event: MouseEvent = new MouseEvent('click');
+      this.selecto.clickTarget(event, this.div);
+    }
   }
 
   onChange(uid: number, cfg: CanvasElementOptions) {
@@ -143,19 +153,27 @@ export class Scene {
     return this.root.elements.find((element) => element.div === target);
   };
 
-  initMoveable = (sceneContainer: HTMLDivElement) => {
+  setRef = (sceneContainer: HTMLDivElement) => {
+    this.div = sceneContainer;
+  };
+
+  initMoveable = () => {
+    if (this.selecto) {
+      this.selecto.destroy();
+    }
+
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);
     });
 
     this.selecto = new Selecto({
-      container: sceneContainer,
+      container: this.div,
       selectableTargets: targetElements,
       selectByClick: true,
     });
 
-    const moveable = new Moveable(sceneContainer, {
+    const moveable = new Moveable(this.div!, {
       draggable: true,
       resizable: true,
     })
@@ -209,7 +227,6 @@ export class Scene {
 
       if (event.isDragStart) {
         event.inputEvent.preventDefault();
-
         setTimeout(() => {
           moveable.dragStart(event.inputEvent);
         });
@@ -219,7 +236,7 @@ export class Scene {
 
   render() {
     return (
-      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.initMoveable}>
+      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
       </div>
     );
