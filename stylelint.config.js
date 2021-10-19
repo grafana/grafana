@@ -1,5 +1,5 @@
 module.exports = {
-  extends: 'stylelint-config-sass-guidelines',
+  extends: ['stylelint-config-sass-guidelines', 'stylelint-config-prettier'],
   ignoreFiles: ['**/node_modules/**/*.scss'],
   rules: {
     'at-rule-no-vendor-prefix': null,
@@ -22,7 +22,6 @@ module.exports = {
       'border-left': [0],
     },
     'function-comma-space-after': null,
-    'function-parentheses-space-inside': 'never',
     'function-url-quotes': null,
     'length-zero-no-unit': null,
     'max-nesting-depth': null,
@@ -34,6 +33,7 @@ module.exports = {
     'scss/at-function-pattern': null,
     'scss/at-mixin-pattern': null,
     'scss/dollar-variable-pattern': null,
+    'scss/at-extend-no-missing-placeholder': null,
     'selector-class-pattern': null,
     'selector-max-compound-selectors': null,
     'selector-max-id': null,

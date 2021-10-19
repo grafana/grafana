@@ -17852,6 +17852,7 @@ fsevents@~2.1.2:
     slate-plain-serializer: 0.7.10
     style-loader: 3.3.0
     stylelint: 13.13.1
+    stylelint-config-prettier: 9.0.3
     stylelint-config-sass-guidelines: 8.0.0
     terser-webpack-plugin: 5.2.4
     testing-library-selector: ^0.1.3
@@ -31253,6 +31254,18 @@ resolve@~1.19.0:
   peerDependencies:
     postcss: ^8.2.15
   checksum: 777dbed3987e04f713b9d74e08f66ab4c23c76cabb07c666c0ae9a06e58e8961063e17b5c7b9c23421b75e9caa9fb78084688e509624e57b19c92c174fbd964d
+  languageName: node
+  linkType: hard
+
+"stylelint-config-prettier@npm:9.0.3":
+  version: 9.0.3
+  resolution: "stylelint-config-prettier@npm:9.0.3"
+  peerDependencies:
+    stylelint: ">=11.0.0"
+  bin:
+    stylelint-config-prettier: bin/check.js
+    stylelint-config-prettier-check: bin/check.js
+  checksum: 9ff3f719daf3865878615ba52c31de6ef0a0d25d41cb58c41afe2f1c459a838997ff912cc4a5b4d401f92e2193667ff4d140b6d303cf8192e894b5cb454c41b9
   languageName: node
   linkType: hard
 
