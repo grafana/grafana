@@ -20,18 +20,20 @@ export class StatSuggestionsSupplier {
         }
       },
     });
+
     const { dataSummary } = builder;
 
-    if (dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
+    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
       list.append({
         options: {
           reduceOptions: {
             values: true,
             calcs: [],
+            fields: dataSummary.hasNumberField ? undefined : '/.*/',
           },
         },
       });
-    } else {
+    } else if (dataSummary.hasNumberField) {
       list.append({
         options: {
           reduceOptions: {

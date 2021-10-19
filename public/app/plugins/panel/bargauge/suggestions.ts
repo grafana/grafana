@@ -19,6 +19,10 @@ export class BarGaugeSuggestionsSupplier {
 
     const { dataSummary } = builder;
 
+    if (!dataSummary.hasNumberField) {
+      return;
+    }
+
     if (dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
       list.append({
         name: 'Bar gauge horizontal retro lcd',

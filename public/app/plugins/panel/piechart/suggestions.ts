@@ -27,6 +27,10 @@ export class PieChartSuggestionsSupplier {
 
     const { dataSummary } = builder;
 
+    if (!dataSummary.hasNumberField || dataSummary.numberFieldCount < 2) {
+      return;
+    }
+
     if (dataSummary.frameCount === 1) {
       // if many values this is not a good option
       if (dataSummary.rowCountTotal > 10) {

@@ -27,7 +27,12 @@ export class GaugeSuggestionsSupplier {
         }
       },
     });
+
     const { dataSummary } = builder;
+
+    if (!dataSummary.hasNumberField) {
+      return;
+    }
 
     if (dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
       list.append({
