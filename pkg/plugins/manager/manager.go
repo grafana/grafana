@@ -163,10 +163,6 @@ func (m *PluginManager) loadPlugins(paths ...string) error {
 	for _, p := range loadedPlugins {
 		if err := m.registerAndStart(context.Background(), p); err != nil {
 			m.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
-		} else {
-			if !p.IsCorePlugin() {
-				p.Logger().Info("Successfully started plugin")
-			}
 		}
 	}
 
@@ -660,6 +656,10 @@ func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
+	}
+
+	if !p.IsCorePlugin() {
+		p.Logger().Info("Successfully started plugin")
 	}
 
 	return nil
