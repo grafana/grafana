@@ -30,6 +30,7 @@ import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { TempoQuery, TempoQueryType } from 'app/plugins/datasource/tempo/datasource';
+import { FocusedSpanContextProvider } from '@jaegertracing/jaeger-ui-components';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -275,19 +276,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { queryResponse, splitOpen, exploreId } = this.props;
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
-    // TODO: hack
-    const { focusedSpanId } = queryResponse.request?.targets.find((t) => t.refId === dataFrames[0].refId) as TempoQuery;
-
     return (
       // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames.length && (
-        <TraceViewContainer
-          exploreId={exploreId}
-          dataFrames={dataFrames}
-          splitOpenFn={splitOpen}
-          focusedSpanId={focusedSpanId}
-        />
-      )
+      dataFrames.length && <TraceViewContainer exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
     );
   }
 
@@ -314,67 +305,69 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       <CustomScrollbar autoHeightMin={'100%'}>
-        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
-        {datasourceMissing ? this.renderEmptyState() : null}
-        {datasourceInstance && (
-          <div className="explore-container">
-            <div className={cx('panel-container', styles.queryContainer)}>
-              <QueryRows exploreId={exploreId} />
-              <SecondaryActions
-                addQueryRowButtonDisabled={isLive}
-                // We cannot show multiple traces at the same time right now so we do not show add query button.
-                //TODO:unification
-                addQueryRowButtonHidden={false}
-                richHistoryButtonActive={showRichHistory}
-                queryInspectorButtonActive={showQueryInspector}
-                onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                onClickRichHistoryButton={this.toggleShowRichHistory}
-                onClickQueryInspectorButton={this.toggleShowQueryInspector}
-              />
-              <ResponseErrorContainer exploreId={exploreId} />
-            </div>
-            <AutoSizer onResize={this.onResize} disableHeight>
-              {({ width }) => {
-                if (width === 0) {
-                  return null;
-                }
+        <FocusedSpanContextProvider>
+          <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
+          {datasourceMissing ? this.renderEmptyState() : null}
+          {datasourceInstance && (
+            <div className="explore-container">
+              <div className={cx('panel-container', styles.queryContainer)}>
+                <QueryRows exploreId={exploreId} />
+                <SecondaryActions
+                  addQueryRowButtonDisabled={isLive}
+                  // We cannot show multiple traces at the same time right now so we do not show add query button.
+                  //TODO:unification
+                  addQueryRowButtonHidden={false}
+                  richHistoryButtonActive={showRichHistory}
+                  queryInspectorButtonActive={showQueryInspector}
+                  onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                  onClickRichHistoryButton={this.toggleShowRichHistory}
+                  onClickQueryInspectorButton={this.toggleShowQueryInspector}
+                />
+                <ResponseErrorContainer exploreId={exploreId} />
+              </div>
+              <AutoSizer onResize={this.onResize} disableHeight>
+                {({ width }) => {
+                  if (width === 0) {
+                    return null;
+                  }
 
-                return (
-                  <main className={cx(styles.exploreMain)} style={{ width }}>
-                    <ErrorBoundaryAlert>
-                      {showPanels && (
-                        <>
-                          {showMetrics && graphResult && (
-                            <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
-                          )}
-                          {<ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
-                          {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
-                          {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
-                          {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
-                        </>
-                      )}
-                      {showRichHistory && (
-                        <RichHistoryContainer
-                          width={width}
-                          exploreId={exploreId}
-                          onClose={this.toggleShowRichHistory}
-                        />
-                      )}
-                      {showQueryInspector && (
-                        <ExploreQueryInspector
-                          exploreId={exploreId}
-                          width={width}
-                          onClose={this.toggleShowQueryInspector}
-                        />
-                      )}
-                    </ErrorBoundaryAlert>
-                  </main>
-                );
-              }}
-            </AutoSizer>
-          </div>
-        )}
+                  return (
+                    <main className={cx(styles.exploreMain)} style={{ width }}>
+                      <ErrorBoundaryAlert>
+                        {showPanels && (
+                          <>
+                            {showMetrics && graphResult && (
+                              <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                            )}
+                            {<ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
+                            {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
+                            {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+                            {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
+                            {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
+                          </>
+                        )}
+                        {showRichHistory && (
+                          <RichHistoryContainer
+                            width={width}
+                            exploreId={exploreId}
+                            onClose={this.toggleShowRichHistory}
+                          />
+                        )}
+                        {showQueryInspector && (
+                          <ExploreQueryInspector
+                            exploreId={exploreId}
+                            width={width}
+                            onClose={this.toggleShowQueryInspector}
+                          />
+                        )}
+                      </ErrorBoundaryAlert>
+                    </main>
+                  );
+                }}
+              </AutoSizer>
+            </div>
+          )}
+        </FocusedSpanContextProvider>
       </CustomScrollbar>
     );
   }

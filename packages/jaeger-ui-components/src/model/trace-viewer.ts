@@ -53,5 +53,5 @@ export const getTraceName = memoize(_getTraceNameImpl, (spans: TraceSpan[]) => {
   if (!spans.length) {
     return 0;
   }
-  return spans[0].traceID;
+  return spans[0].spanID;
 });

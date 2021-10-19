@@ -20,8 +20,11 @@ import LokiDatasource from '../loki/datasource';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import useAsync from 'react-use/lib/useAsync';
 import NativeSearch from './NativeSearch';
+import { FocusedSpanContextValue, withFocusedSpanContext } from '@jaegertracing/jaeger-ui-components';
 
-interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
+interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {
+  focusedSpanContext: FocusedSpanContextValue;
+}
 
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceId';
 
@@ -68,6 +71,27 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
         ...this.props.query,
         queryType: DEFAULT_QUERY_TYPE,
       });
+    }
+
+    this.props.focusedSpanContext.setFocusedSpanId(this.props.query.focusedSpanId);
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    // if the query is different from the context
+    if (this.props.query.focusedSpanId !== this.props.focusedSpanContext.focusedSpanId) {
+      // if the query has changed, update the context
+      if (this.props.query.focusedSpanId !== prevProps.query.focusedSpanId) {
+        this.props.focusedSpanContext.setFocusedSpanId(this.props.query.focusedSpanId);
+      }
+      // if the context has changed, update the query
+      else if (this.props.focusedSpanContext.focusedSpanId !== prevProps.focusedSpanContext.focusedSpanId) {
+        this.props.onChange({
+          ...this.props.query,
+          focusedSpanId: this.props.focusedSpanContext.focusedSpanId,
+        });
+        // it doesn't flush to the url until I run onRunQuery
+        this.props.onRunQuery();
+      }
     }
   }
 
@@ -269,4 +293,4 @@ async function getDS(uid?: string): Promise<DataSourceApi | undefined> {
   }
 }
 
-export const TempoQueryField = withTheme2(TempoQueryFieldComponent);
+export const TempoQueryField = withTheme2(withFocusedSpanContext(TempoQueryFieldComponent));

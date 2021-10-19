@@ -15,7 +15,7 @@
 import { isEqual as _isEqual } from 'lodash';
 
 // @ts-ignore
-import { getTraceSpanIdsAsTree } from '../selectors/trace';
+import { getTraceSpanIdsAsTree, TREE_ROOT_ID } from '../selectors/trace';
 import { getConfigValue } from '../utils/config/get-config';
 import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse } from '../types/trace';
 // @ts-ignore
@@ -78,27 +78,18 @@ export default function transformTraceData(data: TraceResponse | undefined, focu
   }
   const traceID = data.traceID.toLowerCase();
 
-  let traceEndTime = 0;
-  let traceStartTime = Number.MAX_SAFE_INTEGER;
-  const spanIdCounts = new Map();
-  const spanMap = new Map<string, TraceSpan>();
   // filter out spans with empty start times
   // eslint-disable-next-line no-param-reassign
   data.spans = data.spans.filter((span) => Boolean(span.startTime));
+  const spanIdCounts = new Map();
+  const spanMap = new Map<string, TraceSpan>();
 
   const max = data.spans.length;
   for (let i = 0; i < max; i++) {
     const span: TraceSpan = data.spans[i] as TraceSpan;
-    const { startTime, duration, processID } = span;
-    //
+    const { processID } = span;
     let spanID = span.spanID;
-    // check for start / end time for the trace
-    if (startTime < traceStartTime) {
-      traceStartTime = startTime;
-    }
-    if (startTime + duration > traceEndTime) {
-      traceEndTime = startTime + duration;
-    }
+
     // make sure span IDs are unique
     const idCount = spanIdCounts.get(spanID);
     if (idCount != null) {
@@ -119,19 +110,37 @@ export default function transformTraceData(data: TraceResponse | undefined, focu
   }
   // tree is necessary to sort the spans, so children follow parents, and
   // siblings are sorted by start time
-  const tree = getTraceSpanIdsAsTree(data);
+  let tree = getTraceSpanIdsAsTree(data);
   const spans: TraceSpan[] = [];
   const svcCounts: Record<string, number> = {};
+  let traceEndTime = 0;
+  let traceStartTime = Number.MAX_SAFE_INTEGER;
+
+  if (focusedSpanId != null) {
+    const focusedSpan = tree.find(focusedSpanId);
+    if (focusedSpan != null) {
+      tree.children = [focusedSpan];
+      tree = new TreeNode(TREE_ROOT_ID, [focusedSpan]);
+    }
+  }
 
   // Eslint complains about number type not needed but then TS complains it is implicitly any.
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   tree.walk((spanID: string, node: TreeNode, depth: number = 0) => {
-    if (spanID === '__root__') {
+    if (spanID === TREE_ROOT_ID) {
       return;
     }
     const span = spanMap.get(spanID) as TraceSpan;
     if (!span) {
       return;
+    }
+    const { startTime, duration } = span;
+    // check for start / end time for the trace
+    if (startTime < traceStartTime) {
+      traceStartTime = startTime;
+    }
+    if (startTime + duration > traceEndTime) {
+      traceEndTime = startTime + duration;
     }
     const { serviceName } = span.process;
     svcCounts[serviceName] = (svcCounts[serviceName] || 0) + 1;
@@ -165,6 +174,7 @@ export default function transformTraceData(data: TraceResponse | undefined, focu
   });
   const traceName = getTraceName(spans);
   const services = Object.keys(svcCounts).map((name) => ({ name, numberOfSpans: svcCounts[name] }));
+
   return {
     services,
     spans,
@@ -173,7 +183,7 @@ export default function transformTraceData(data: TraceResponse | undefined, focu
     // can't use spread operator for intersection types
     // repl: https://goo.gl/4Z23MJ
     // issue: https://github.com/facebook/flow/issues/1511
-    processes: data.processes,
+    processes: tree.children[0].processes,
     duration: traceEndTime - traceStartTime,
     startTime: traceStartTime,
     endTime: traceEndTime,

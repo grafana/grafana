@@ -20,7 +20,15 @@ import cx from 'classnames';
 
 import SpanGraph from './SpanGraph';
 import TracePageSearchBar from './TracePageSearchBar';
-import { autoColor, Theme, TUpdateViewRangeTimeFunction, useTheme, ViewRange, ViewRangeTimeUpdate } from '..';
+import {
+  autoColor,
+  Theme,
+  TUpdateViewRangeTimeFunction,
+  useFocusedSpanContext,
+  useTheme,
+  ViewRange,
+  ViewRangeTimeUpdate,
+} from '..';
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { getTraceName } from '../model/trace-viewer';
@@ -33,6 +41,7 @@ import ExternalLinks from '../common/ExternalLinks';
 import { createStyle } from '../Theme';
 import { uTxMuted } from '../uberUtilityStyles';
 import { dateTimeFormat, TimeZone } from '@grafana/data';
+import { Button } from '@grafana/ui';
 
 const getStyles = createStyle((theme: Theme) => {
   return {
@@ -224,6 +233,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     hideSearchButtons,
     timeZone,
   } = props;
+  const { focusedSpanId, setFocusedSpanId } = useFocusedSpanContext();
 
   const styles = getStyles(useTheme());
   const links = React.useMemo(() => {
@@ -248,7 +258,12 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
   const title = (
     <h1 className={cx(styles.TracePageHeaderTitle, canCollapse && styles.TracePageHeaderTitleCollapsible)}>
       <TraceName traceName={getTraceName(trace.spans)} />{' '}
-      <small className={cx(styles.TracePageHeaderTraceId, uTxMuted)}>{trace.traceID}</small>
+      <small className={cx(styles.TracePageHeaderTraceId, uTxMuted)}>{trace.traceID}</small>{' '}
+      {focusedSpanId == null ? null : (
+        <Button fill="text" size="sm" onClick={() => setFocusedSpanId()}>
+          View full trace
+        </Button>
+      )}
     </h1>
   );
 

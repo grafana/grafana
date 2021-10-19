@@ -30,8 +30,9 @@ import AccordianReferences from './AccordianReferences';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
 import { ubFlex, ubFlexAuto, ubItemsCenter, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
-import { DataLinkButton, TextArea } from '@grafana/ui';
+import { DataLinkButton, IconButton, TextArea } from '@grafana/ui';
 import { CreateSpanLink } from '../types';
+import { useFocusedSpanContext } from '../FocusedSpanContext';
 
 const getStyles = createStyle((theme: Theme) => {
   return {
@@ -175,11 +176,21 @@ export default function SpanDetail(props: SpanDetailProps) {
   const deepLinkCopyText = `${window.location.origin}${window.location.pathname}?uiFind=${spanID}`;
   const styles = getStyles(useTheme());
   const link = createSpanLink?.(span);
+  const { setFocusedSpanId, focusedSpanId } = useFocusedSpanContext();
+  const isFocused = focusedSpanId === spanID;
 
   return (
     <div>
       <div className={cx(ubFlex, ubItemsCenter, ubMb1)}>
-        <h2 className={cx(ubFlexAuto, ubM0)}>{operationName}</h2>
+        <h2 className={cx(ubFlexAuto, ubM0)}>
+          {operationName}{' '}
+          <IconButton
+            style={{ marginLeft: 4 }}
+            onClick={() => setFocusedSpanId(isFocused ? undefined : spanID)}
+            name={isFocused ? 'eye-slash' : 'eye'}
+            title={isFocused ? 'View entire trace' : 'Focus on this span'}
+          ></IconButton>
+        </h2>{' '}
         <LabeledList className={ubTxRightAlign} dividerClassName={styles.divider} items={overviewItems} />
       </div>
       {link ? (

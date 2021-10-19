@@ -12,6 +12,7 @@ import {
   transformTraceData,
   TTraceTimeline,
   UIElementsContext,
+  useFocusedSpanContext,
 } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -36,7 +37,6 @@ type Props = {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
-  focusedSpanId?: string;
 };
 
 export function TraceView(props: Props) {
@@ -63,10 +63,11 @@ export function TraceView(props: Props) {
    * State of the top minimap, slim means it is collapsed.
    */
   const [slim, setSlim] = useState(false);
+  const { focusedSpanId } = useFocusedSpanContext();
 
-  const traceProp = useMemo(() => transformDataFrames(props.dataFrames, props.focusedSpanId), [
+  const traceProp = useMemo(() => transformDataFrames(props.dataFrames, focusedSpanId), [
     props.dataFrames,
-    props.focusedSpanId,
+    focusedSpanId,
   ]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
@@ -191,7 +192,7 @@ function transformDataFrames(frames: DataFrame[], focusedSpanId?: string): Trace
   return transformTraceData(data, focusedSpanId);
 }
 
-function transformTraceDataFrame(frame: DataFrame, focusedSpanId?: string): TraceResponse {
+function transformTraceDataFrame(frame: DataFrame): TraceResponse {
   const view = new DataFrameView<TraceSpanRow>(frame);
   const processes: Record<string, TraceProcess> = {};
   for (let i = 0; i < view.length; i++) {

@@ -45,7 +45,7 @@ export interface TempoJsonData extends DataSourceJsonData {
 
 export type TempoQuery = {
   query: string;
-  focusedSpanId: string;
+  focusedSpanId?: string;
   // Query to find list of traces, e.g., via Loki
   linkedQuery?: LokiQuery;
   search: string;
