@@ -80,10 +80,6 @@ func (i *Initializer) Initialize(p *plugins.Plugin) error {
 		}
 	}
 
-	if !p.IsCorePlugin() {
-		logger.Info("Successfully initialized plugin", "pluginID", p.ID)
-	}
-
 	pluginLog := log.New(p.ID)
 	p.SetLogger(pluginLog)
 
