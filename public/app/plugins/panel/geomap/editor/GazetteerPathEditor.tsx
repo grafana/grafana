@@ -65,8 +65,8 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({
               <b>({gaz.count})</b>
               {gaz.examples(10).map((k) => (
                 <span key={k}>{k},</span>
-              ))}{' '}
-              &ellipsis;
+              ))}
+              {gaz.count > 10 && ' ...'}
             </div>
           )}
         </>
