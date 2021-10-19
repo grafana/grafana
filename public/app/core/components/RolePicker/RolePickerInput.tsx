@@ -12,15 +12,16 @@ import { DropdownIndicator } from '@grafana/ui/src/components/Select/DropdownInd
 interface InputProps {
   role?: string;
   query: string;
+  numberOfRoles?: number;
+  isFocused?: boolean;
+  disabled?: boolean;
   onQueryChange: (query?: string) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
   onClose: () => void;
-  isFocused?: boolean;
-  disabled?: boolean;
 }
 
 export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((props, ref) => {
-  const { role, disabled, isFocused, query, onOpen, onClose, onQueryChange } = props;
+  const { role, disabled, isFocused, query, numberOfRoles, onOpen, onClose, onQueryChange } = props;
 
   const theme = useTheme2();
   const styles = getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false);
@@ -48,6 +49,12 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
         <Icon name="user" size="xs" />
         {role}
       </div>
+      {!!numberOfRoles && (
+        <div className={styles.builtInRoleValueContainer}>
+          <Icon name="user" size="xs" />
+          {`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}
+        </div>
+      )}
       <input
         className={styles.input}
         ref={ref}
@@ -87,7 +94,7 @@ const getRolePickerInputStyles = stylesFactory(
           max-width: 100%;
           align-items: center;
           display: flex;
-          flex-wrap: wrap;
+          flex-wrap: nowrap;
           justify-content: flex-start;
           position: relative;
           box-sizing: border-box;

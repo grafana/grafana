@@ -27,6 +27,7 @@ export const RolePicker: FC<Props> = ({
   const [roleOptions, setRoleOptions] = useState([] as Array<SelectableValue<string>>);
   const [filteredOptions, setFilteredOptions] = useState([] as Array<SelectableValue<string>>);
   const [appliedRoles, setAppliedRoles] = useState({} as { [key: string]: boolean });
+  const [numberOfRoles, setNumberOfRoles] = useState(0);
   const [query, setQuery] = useState('');
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -44,6 +45,7 @@ export const RolePicker: FC<Props> = ({
       setFilteredOptions(options);
 
       const roles = await getRoles();
+      setNumberOfRoles(roles.length);
       const rolesMap = {} as any;
       for (const role of roles) {
         rolesMap[role] = true;
@@ -107,6 +109,7 @@ export const RolePicker: FC<Props> = ({
           onOpen={onOpen}
           onClose={onClose}
           isFocused={isOpen}
+          numberOfRoles={numberOfRoles}
           ref={inputRef}
         />
         {isOpen && (
