@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -45,7 +46,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
 
 	query := &models.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
-	err := dc.SQLStore.GetDataSource(query)
+	err := dc.SQLStore.GetDataSource(context.TODO(), query)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	plog.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
 	query := &models.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
-	err := dc.SQLStore.GetDataSource(query)
+	err := dc.SQLStore.GetDataSource(context.TODO(), query)
 	if err != nil {
 		return nil, err
 	}
