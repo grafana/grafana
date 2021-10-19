@@ -271,6 +271,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       clearCache,
       addResultsToCache,
       onClickLoadLogsVolume,
+      loadingLogsVolumeAvailable,
     } = this.props;
 
     const {
@@ -344,16 +345,18 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             </InlineField>
           </InlineFieldRow>
           <div>
-            <Button
-              variant="secondary"
-              aria-label="Load volume button"
-              title="Execute a query to show full range logs volume"
-              onClick={onClickLoadLogsVolume}
-              icon="graph-bar"
-              className={styles.headerButton}
-            >
-              Load volume
-            </Button>
+            {loadingLogsVolumeAvailable && (
+              <Button
+                variant="secondary"
+                aria-label="Load volume button"
+                title="Execute a query to show full range logs volume"
+                onClick={onClickLoadLogsVolume}
+                icon="graph-bar"
+                className={styles.headerButton}
+              >
+                Load volume
+              </Button>
+            )}
             <Button
               variant="secondary"
               disabled={isFlipping}
