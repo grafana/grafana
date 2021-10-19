@@ -12,6 +12,7 @@ export interface Props {
   getRoleOptions: () => Promise<Array<SelectableValue<string>>>;
   onRolesChange: (newRoles: string[]) => void;
   onBuiltinRoleChange: (newRole: string) => void;
+  disabled?: boolean;
 }
 
 export const RolePicker: FC<Props> = ({
@@ -20,6 +21,7 @@ export const RolePicker: FC<Props> = ({
   getRoleOptions,
   onRolesChange,
   onBuiltinRoleChange,
+  disabled,
 }) => {
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState([] as Array<SelectableValue<string>>);
@@ -56,10 +58,12 @@ export const RolePicker: FC<Props> = ({
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
-      event.preventDefault();
-      setOpen(true);
+      if (!disabled) {
+        event.preventDefault();
+        setOpen(true);
+      }
     },
-    [setOpen]
+    [setOpen, disabled]
   );
 
   const onClose = useCallback(() => {
@@ -99,6 +103,7 @@ export const RolePicker: FC<Props> = ({
           isFocused={isOpen}
           numberOfRoles={numberOfRoles}
           ref={inputRef}
+          disabled={disabled}
         />
         {isOpen && (
           <RolePickerMenu

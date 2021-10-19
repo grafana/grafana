@@ -7,8 +7,6 @@ import { sharedInputStyle } from '@grafana/ui/src/components/Forms/commonStyles'
 import { focusCss } from '@grafana/ui/src/themes/mixins';
 import { DropdownIndicator } from '@grafana/ui/src/components/Select/DropdownIndicator';
 
-// const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
-
 interface InputProps {
   role?: string;
   query: string;
@@ -55,15 +53,17 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
           {`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}
         </div>
       )}
-      <input
-        className={styles.input}
-        ref={ref}
-        onMouseDown={onInputClick}
-        onChange={onInputChange}
-        data-testid="role-picker-input"
-        placeholder={isFocused ? 'Select role' : ''}
-        value={query}
-      />
+      {!disabled && (
+        <input
+          className={styles.input}
+          ref={ref}
+          onMouseDown={onInputClick}
+          onChange={onInputChange}
+          data-testid="role-picker-input"
+          placeholder={isFocused ? 'Select role' : ''}
+          value={query}
+        />
+      )}
       <div className={styles.suffix}>
         <DropdownIndicator isOpen={!!isFocused} />
       </div>
@@ -98,8 +98,8 @@ const getRolePickerInputStyles = stylesFactory(
           justify-content: flex-start;
           position: relative;
           box-sizing: border-box;
-          // cursor: ${disabled ? 'not-allowed' : 'pointer'};
-          cursor: ${focused ? 'default' : 'pointer'};
+          cursor: ${disabled ? 'not-allowed' : 'default'};
+          // cursor: ${focused ? 'default' : 'pointer'};
         `,
         withPrefix &&
           css`
@@ -118,20 +118,19 @@ const getRolePickerInputStyles = stylesFactory(
         styles.prefix,
         css`
           position: relative;
-          // label: grafana-select-multi-value-container;
           display: flex;
           align-items: center;
           line-height: 1;
-          background: ${theme.colors.background.secondary};
+          background: ${disabled ? theme.colors.secondary.border : theme.colors.background.secondary};
           border-radius: ${theme.shape.borderRadius()};
           margin: ${theme.spacing(0.25, 1, 0.25, 0)};
           padding: ${theme.spacing(0.25, 1, 0.25, 0.25)};
           color: ${theme.colors.text.primary};
           font-size: ${theme.typography.bodySmall.fontSize};
 
-          &:hover {
-            background: ${theme.colors.emphasize(theme.colors.background.secondary)};
-          }
+          // &:hover {
+          //   background: ${theme.colors.emphasize(theme.colors.background.secondary)};
+          // }
 
           svg {
             margin: ${theme.spacing(0, 0.25, 0, 0)};
