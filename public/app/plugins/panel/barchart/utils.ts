@@ -16,6 +16,7 @@ import { BarsOptions, getConfig } from './bars';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
 import { collectStackingGroups, orderIdsByCalcs } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { orderBy } from 'lodash';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -117,7 +118,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    field.state!.seriesIndex = seriesIndex++;
+    seriesIndex++;
 
     const customConfig: BarChartFieldConfig = { ...defaultBarChartFieldConfig, ...field.config.custom };
 
@@ -232,7 +233,7 @@ export function preparePlotFrame(data: DataFrame[]) {
 export function prepareGraphableFrames(
   series: DataFrame[],
   theme: GrafanaTheme2,
-  stacking: StackingMode
+  options: BarChartOptions
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
     return { warn: 'No data in response' };
@@ -271,7 +272,7 @@ export function prepareGraphableFrames(
               ...field.config.custom,
               stacking: {
                 group: '_',
-                mode: stacking,
+                mode: options.stacking,
               },
             },
           },
@@ -285,7 +286,7 @@ export function prepareGraphableFrames(
           ),
         };
 
-        if (stacking === StackingMode.Percent) {
+        if (options.stacking === StackingMode.Percent) {
           copy.config.unit = 'percentunit';
           copy.display = getDisplayProcessor({ field: copy, theme });
         }
@@ -296,9 +297,25 @@ export function prepareGraphableFrames(
       }
     }
 
+    let orderedFields: Field[] | undefined;
+
+    if (options.legend?.sortBy && options.legend.sortDesc !== null) {
+      orderedFields = orderBy(
+        fields,
+        ({ state }) => {
+          return state?.calcs?.[options.legend.sortBy!.toLowerCase()];
+        },
+        options.legend.sortDesc ? 'desc' : 'asc'
+      );
+      // The string field needs to be the first one
+      if (orderedFields[orderedFields.length - 1].type === FieldType.string) {
+        orderedFields.unshift(orderedFields.pop()!);
+      }
+    }
+
     frames.push({
       ...frame,
-      fields,
+      fields: orderedFields || fields,
     });
   }
 
