@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback } from 'react';
+import React, { FormEvent } from 'react';
 import { css, cx } from '@emotion/css';
 import { Icon, stylesFactory, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -25,17 +25,17 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
   const theme = useTheme2();
   const styles = getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false);
 
-  const onClick = useCallback(
-    (event: FormEvent<HTMLElement>) => {
-      if (!!isFocused) {
-        onClose();
-      } else {
-        (ref as any).current.focus();
-        onOpen(event);
-      }
-    },
-    [ref, isFocused, onClose, onOpen]
-  );
+  const onInputClick = (event: FormEvent<HTMLElement>) => {
+    if (!!isFocused) {
+      event.preventDefault();
+      event.stopPropagation();
+      (ref as any).current.blur();
+      onClose();
+    } else {
+      (ref as any).current.focus();
+      onOpen(event);
+    }
+  };
 
   const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target?.value;
@@ -43,7 +43,7 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
   };
 
   return (
-    <div className={styles.wrapper} onMouseDown={onClick}>
+    <div className={styles.wrapper} onMouseDown={onInputClick}>
       <div className={styles.builtInRoleValueContainer}>
         <Icon name="user" size="xs" />
         {role}
@@ -51,7 +51,7 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
       <input
         className={styles.input}
         ref={ref}
-        onFocus={onOpen}
+        onMouseDown={onInputClick}
         onChange={onInputChange}
         data-testid="role-picker-input"
         placeholder={isFocused ? 'Select role' : ''}
