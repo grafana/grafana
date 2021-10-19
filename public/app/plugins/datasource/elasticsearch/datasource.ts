@@ -12,6 +12,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
+  DataSourceWithLogsVolumeSupport,
   DateTime,
   dateTime,
   Field,
@@ -42,6 +43,7 @@ import {
   isBucketAggregationWithField,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { coerceESVersion, getScriptValue } from './utils';
+import { createElasticSearchLogsVolumeProvider } from './dataProviders/logsVolumeProvider';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -59,7 +61,7 @@ const ELASTIC_META_FIELDS = [
 
 export class ElasticDatasource
   extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions>
-  implements DataSourceWithLogsContextSupport {
+  implements DataSourceWithLogsContextSupport, DataSourceWithLogsVolumeSupport<ElasticsearchQuery> {
   basicAuth?: string;
   withCredentials?: boolean;
   url: string;
@@ -556,6 +558,13 @@ export class ElasticDatasource
     }
     return logResponse;
   };
+
+  getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+    const isLogsVolumeAvailable = request.targets.some((target) => {
+      return target.metrics?.length === 1 && target.metrics[0].type === 'logs';
+    });
+    return isLogsVolumeAvailable ? createElasticSearchLogsVolumeProvider(this, request) : undefined;
+  }
 
   query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     let payload = '';
