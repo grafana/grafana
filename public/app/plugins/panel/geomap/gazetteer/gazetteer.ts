@@ -30,7 +30,7 @@ export function loadGazetteer(path: string, data: any): Gazetteer {
 
   // try loading geojson
   const features = data?.features;
-  if (Array.isArray(features)) {
+  if (Array.isArray(features) && data?.type === "FeatureCollection") {
     return loadFromGeoJSON(path, data);
   }
 
