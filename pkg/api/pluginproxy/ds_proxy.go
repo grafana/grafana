@@ -121,7 +121,12 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxyErrorLogger := logger.New("userId", proxy.ctx.UserId, "orgId", proxy.ctx.OrgId, "uname", proxy.ctx.Login,
 		"path", proxy.ctx.Req.URL.Path, "remote_addr", proxy.ctx.RemoteAddr(), "referer", proxy.ctx.Req.Referer())
 
-	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ds, proxy.clientProvider)
+	transportCacheKey := fmt.Sprint(proxy.ds.Id)
+	if proxy.isRulerReq() {
+		transportCacheKey += "-ruler"
+	}
+
+	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ds, proxy.clientProvider, transportCacheKey)
 	if err != nil {
 		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
@@ -225,7 +230,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	req.URL.Path = unescapedPath
 
 	rulerProperties := proxy.ds.GetRulerProperties()
-	if proxy.isRulerReq(rulerProperties) && rulerProperties.BasicAuth {
+	if proxy.isRulerReq() && rulerProperties.BasicAuth {
 		req.Header.Set("Authorization", util.GetBasicAuthHeader(rulerProperties.BasicAuthUser,
 			proxy.dataSourcesService.DecryptedRulerBasicAuthPassword(proxy.ds)))
 	} else if proxy.ds.BasicAuth {
@@ -379,12 +384,12 @@ func (proxy *DataSourceProxy) getRulerURL(rulerProperties models.Ruler) (rulerUR
 	return rulerURL
 }
 
-func (proxy *DataSourceProxy) isRulerReq(rulerProperties models.Ruler) bool {
+func (proxy *DataSourceProxy) isRulerReq() bool {
 	if !isLotex(proxy.ds.Type) {
 		return false
 	}
 
-	rulerURL := proxy.getRulerURL(rulerProperties)
+	rulerURL := proxy.getRulerURL(proxy.ds.GetRulerProperties())
 	if isRulerPath(proxy.proxyPath) &&
 		proxy.targetUrl != nil &&
 		rulerURL != nil &&

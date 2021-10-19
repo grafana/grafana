@@ -30,7 +30,7 @@ type Service struct {
 }
 
 type proxyTransportCache struct {
-	cache map[int64]cachedRoundTripper
+	cache map[string]cachedRoundTripper
 	sync.Mutex
 }
 
@@ -55,7 +55,7 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 		SQLStore:          store,
 		EncryptionService: encryptionService,
 		ptc: proxyTransportCache{
-			cache: make(map[int64]cachedRoundTripper),
+			cache: make(map[string]cachedRoundTripper),
 		},
 		dsDecryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
@@ -114,7 +114,7 @@ func (s *Service) GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) 
 }
 
 func (s *Service) GetHTTPClient(ds *models.DataSource, provider httpclient.Provider) (*http.Client, error) {
-	transport, err := s.GetHTTPTransport(ds, provider)
+	transport, err := s.GetHTTPTransport(ds, provider, fmt.Sprint(ds.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -125,12 +125,12 @@ func (s *Service) GetHTTPClient(ds *models.DataSource, provider httpclient.Provi
 	}, nil
 }
 
-func (s *Service) GetHTTPTransport(ds *models.DataSource, provider httpclient.Provider,
+func (s *Service) GetHTTPTransport(ds *models.DataSource, provider httpclient.Provider, cacheKey string,
 	customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	s.ptc.Lock()
 	defer s.ptc.Unlock()
 
-	if t, present := s.ptc.cache[ds.Id]; present && ds.Updated.Equal(t.updated) {
+	if t, present := s.ptc.cache[cacheKey]; present && ds.Updated.Equal(t.updated) {
 		return t.roundTripper, nil
 	}
 
@@ -146,7 +146,7 @@ func (s *Service) GetHTTPTransport(ds *models.DataSource, provider httpclient.Pr
 		return nil, err
 	}
 
-	s.ptc.cache[ds.Id] = cachedRoundTripper{
+	s.ptc.cache[cacheKey] = cachedRoundTripper{
 		roundTripper: rt,
 		updated:      ds.Updated,
 	}

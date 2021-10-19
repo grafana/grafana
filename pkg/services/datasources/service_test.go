@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -80,12 +81,12 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		dsService := ProvideService(bus.New(), nil, ossencryption.ProvideService())
 
-		rt1, err := dsService.GetHTTPTransport(&ds, provider)
+		rt1, err := dsService.GetHTTPTransport(&ds, provider, fmt.Sprint(ds.Id))
 		require.NoError(t, err)
 		require.NotNil(t, rt1)
 		tr1 := configuredTransport
 
-		rt2, err := dsService.GetHTTPTransport(&ds, provider)
+		rt2, err := dsService.GetHTTPTransport(&ds, provider, fmt.Sprint(ds.Id))
 		require.NoError(t, err)
 		require.NotNil(t, rt2)
 		tr2 := configuredTransport
@@ -124,7 +125,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Updated:        time.Now().Add(-2 * time.Minute),
 		}
 
-		rt1, err := dsService.GetHTTPTransport(&ds, provider)
+		rt1, err := dsService.GetHTTPTransport(&ds, provider, fmt.Sprint(ds.Id))
 		require.NotNil(t, rt1)
 		require.NoError(t, err)
 
@@ -138,7 +139,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		ds.SecureJsonData = map[string][]byte{}
 		ds.Updated = time.Now()
 
-		rt2, err := dsService.GetHTTPTransport(&ds, provider)
+		rt2, err := dsService.GetHTTPTransport(&ds, provider, fmt.Sprint(ds.Id))
 		require.NoError(t, err)
 		require.NotNil(t, rt2)
 		tr2 := configuredTransport
@@ -180,7 +181,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		}
 
-		rt, err := dsService.GetHTTPTransport(&ds, provider)
+		rt, err := dsService.GetHTTPTransport(&ds, provider, fmt.Sprint(ds.Id))
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 		tr := configuredTransport
@@ -219,7 +220,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		}
 
-		rt, err := dsService.GetHTTPTransport(&ds, provider)
+		rt, err := dsService.GetHTTPTransport(&ds, provider, fmt.Sprint(ds.Id))
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 		tr := configuredTransport
@@ -250,12 +251,12 @@ func TestService_GetHttpTransport(t *testing.T) {
 			JsonData: json,
 		}
 
-		rt1, err := dsService.GetHTTPTransport(&ds, provider)
+		rt1, err := dsService.GetHTTPTransport(&ds, provider, fmt.Sprint(ds.Id))
 		require.NoError(t, err)
 		require.NotNil(t, rt1)
 		tr1 := configuredTransport
 
-		rt2, err := dsService.GetHTTPTransport(&ds, provider)
+		rt2, err := dsService.GetHTTPTransport(&ds, provider, fmt.Sprint(ds.Id))
 		require.NoError(t, err)
 		require.NotNil(t, rt2)
 		tr2 := configuredTransport
@@ -305,7 +306,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		// 2. Get HTTP transport from datasource which uses the test server as backend
 		ds.Url = backend.URL
-		rt, err := dsService.GetHTTPTransport(&ds, provider)
+		rt, err := dsService.GetHTTPTransport(&ds, provider, fmt.Sprint(ds.Id))
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 
@@ -371,7 +372,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			JsonData: json,
 		}
 
-		_, err = dsService.GetHTTPTransport(&ds, provider)
+		_, err = dsService.GetHTTPTransport(&ds, provider, fmt.Sprint(ds.Id))
 		require.NoError(t, err)
 		require.NotNil(t, configuredOpts)
 		require.NotNil(t, configuredOpts.SigV4)
