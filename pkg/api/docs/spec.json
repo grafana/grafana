@@ -27,6 +27,33 @@
   "host": "localhost:10081",
   "basePath": "/api",
   "paths": {
+    "/api/tsdb/query": {
+      "get": {
+        "description": "Queries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Query a data source by ID",
+        "operationId": "queryDatasource",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MetricRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/queryDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          }
+        }
+      }
+    },
     "/auth/keys": {
       "get": {
         "description": "Will return auth keys.",
@@ -628,6 +655,387 @@
           }
         }
       }
+    },
+    "/datasources": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scope: `datasources:*`.",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Get all data sources",
+        "operationId": "getDatasources",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDatasourcesResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "By defining `password` and `basicAuthPassword` under secureJsonData property\nGrafana encrypts them securely as an encrypted blob in the database.\nThe response then lists the encrypted fields under secureJsonFields.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:create`",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Create a data source",
+        "operationId": "addDatasource",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AddDataSourceCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createOrUpdateDatasourceResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/quotaReachedError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/id/{datasource_name}": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Get data source Id by Name",
+        "operationId": "getDatasourceIdByName",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceName",
+            "name": "datasource_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDatasourceIDresponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/name/{datasource_name}": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Get a single data source by Name",
+        "operationId": "getDatasourceByName",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceName",
+            "name": "datasource_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDatasourceResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Delete an existing data source by name",
+        "operationId": "deleteDatasourceByName",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceName",
+            "name": "datasource_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deleteDatasourceByNameResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/proxy/{datasource_id}": {
+      "get": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Data source proxy calls",
+        "operationId": "datasourceProxyCalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/uid/{datasource_uid}": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Get a single data source by UID",
+        "operationId": "getDatasourceByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Delete an existing data source by UID",
+        "operationId": "deleteDatasourceByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{datasource_id}": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Get a single data source by Id",
+        "operationId": "getDatasourceByID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Update an existing data source",
+        "operationId": "updateDatasource",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateDataSourceCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createOrUpdateDatasourceResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Delete an existing data source by id",
+        "operationId": "deleteDatasourceByID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -646,6 +1054,77 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "SecondsToLive"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AddDataSourceCommand": {
+      "description": "Also acts as api DTO",
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/DataSource"
+        },
+        "access": {
+          "$ref": "#/definitions/DsAccess"
+        },
+        "basicAuth": {
+          "type": "boolean",
+          "x-go-name": "BasicAuth"
+        },
+        "basicAuthPassword": {
+          "type": "string",
+          "x-go-name": "BasicAuthPassword"
+        },
+        "basicAuthUser": {
+          "type": "string",
+          "x-go-name": "BasicAuthUser"
+        },
+        "database": {
+          "type": "string",
+          "x-go-name": "Database"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "jsonData": {
+          "$ref": "#/definitions/Json"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "password": {
+          "type": "string",
+          "x-go-name": "Password"
+        },
+        "secureJsonData": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "SecureJsonData"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "Uid"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Url"
+        },
+        "user": {
+          "type": "string",
+          "x-go-name": "User"
+        },
+        "withCredentials": {
+          "type": "boolean",
+          "x-go-name": "WithCredentials"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -1117,6 +1596,311 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "DataFrames": {
+      "description": "See NewDecodedDataFrames and NewEncodedDataFrames for more information.",
+      "type": "object",
+      "title": "DataFrames is an interface for retrieving encoded and decoded data frames.",
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+    },
+    "DataQueryResult": {
+      "description": "Deprecated: DataQueryResult should use backend.QueryDataResponse",
+      "type": "object",
+      "properties": {
+        "dataframes": {
+          "$ref": "#/definitions/DataFrames"
+        },
+        "error": {
+          "type": "string",
+          "x-go-name": "ErrorString"
+        },
+        "meta": {
+          "$ref": "#/definitions/Json"
+        },
+        "refId": {
+          "type": "string",
+          "x-go-name": "RefID"
+        },
+        "series": {
+          "$ref": "#/definitions/DataTimeSeriesSlice"
+        },
+        "tables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataTable"
+          },
+          "x-go-name": "Tables"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+    },
+    "DataResponse": {
+      "description": "Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "results": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/DataQueryResult"
+          },
+          "x-go-name": "Results"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+    },
+    "DataRowValues": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+    },
+    "DataSource": {
+      "type": "object",
+      "properties": {
+        "access": {
+          "$ref": "#/definitions/DsAccess"
+        },
+        "basicAuth": {
+          "type": "boolean",
+          "x-go-name": "BasicAuth"
+        },
+        "basicAuthPassword": {
+          "type": "string",
+          "x-go-name": "BasicAuthPassword"
+        },
+        "basicAuthUser": {
+          "type": "string",
+          "x-go-name": "BasicAuthUser"
+        },
+        "database": {
+          "type": "string",
+          "x-go-name": "Database"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "jsonData": {
+          "$ref": "#/definitions/Json"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgId"
+        },
+        "password": {
+          "type": "string",
+          "x-go-name": "Password"
+        },
+        "readOnly": {
+          "type": "boolean",
+          "x-go-name": "ReadOnly"
+        },
+        "secureJsonFields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "x-go-name": "SecureJsonFields"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "typeLogoUrl": {
+          "type": "string",
+          "x-go-name": "TypeLogoUrl"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "UID"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Url"
+        },
+        "user": {
+          "type": "string",
+          "x-go-name": "User"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Version"
+        },
+        "withCredentials": {
+          "type": "boolean",
+          "x-go-name": "WithCredentials"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DataSourceList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DataSourceListItemDTO"
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DataSourceListItemDTO": {
+      "type": "object",
+      "properties": {
+        "access": {
+          "$ref": "#/definitions/DsAccess"
+        },
+        "basicAuth": {
+          "type": "boolean",
+          "x-go-name": "BasicAuth"
+        },
+        "database": {
+          "type": "string",
+          "x-go-name": "Database"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "jsonData": {
+          "$ref": "#/definitions/Json"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgId"
+        },
+        "password": {
+          "type": "string",
+          "x-go-name": "Password"
+        },
+        "readOnly": {
+          "type": "boolean",
+          "x-go-name": "ReadOnly"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "typeLogoUrl": {
+          "type": "string",
+          "x-go-name": "TypeLogoUrl"
+        },
+        "typeName": {
+          "type": "string",
+          "x-go-name": "TypeName"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "UID"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Url"
+        },
+        "user": {
+          "type": "string",
+          "x-go-name": "User"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DataTable": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataTableColumn"
+          },
+          "x-go-name": "Columns"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataRowValues"
+          },
+          "x-go-name": "Rows"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+    },
+    "DataTableColumn": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "x-go-name": "Text"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+    },
+    "DataTimePoint": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Float"
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+    },
+    "DataTimeSeries": {
+      "description": "DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "points": {
+          "$ref": "#/definitions/DataTimeSeriesPoints"
+        },
+        "tags": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Tags"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+    },
+    "DataTimeSeriesPoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DataTimePoint"
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+    },
+    "DataTimeSeriesSlice": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DataTimeSeries"
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+    },
+    "DsAccess": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "ErrorResponseBody": {
       "type": "object",
       "required": [
@@ -1140,6 +1924,21 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+    },
+    "Float": {
+      "description": "It does not consider zero values to be null.\nIt will decode to null, not zero, if null.",
+      "type": "object",
+      "title": "Float is a nullable float64.",
+      "properties": {
+        "Float64": {
+          "type": "number",
+          "format": "double"
+        },
+        "Valid": {
+          "type": "boolean"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/components/null"
     },
     "GetHomeDashboardResponse": {
       "title": "Get home dashboard response.",
@@ -1230,6 +2029,31 @@
     "Json": {
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
+    },
+    "MetricRequest": {
+      "type": "object",
+      "properties": {
+        "debug": {
+          "type": "boolean",
+          "x-go-name": "Debug"
+        },
+        "from": {
+          "type": "string",
+          "x-go-name": "From"
+        },
+        "queries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Json"
+          },
+          "x-go-name": "Queries"
+        },
+        "to": {
+          "type": "string",
+          "x-go-name": "To"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -1337,6 +2161,82 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "UpdateDataSourceCommand": {
+      "description": "Also acts as api DTO",
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/DataSource"
+        },
+        "access": {
+          "$ref": "#/definitions/DsAccess"
+        },
+        "basicAuth": {
+          "type": "boolean",
+          "x-go-name": "BasicAuth"
+        },
+        "basicAuthPassword": {
+          "type": "string",
+          "x-go-name": "BasicAuthPassword"
+        },
+        "basicAuthUser": {
+          "type": "string",
+          "x-go-name": "BasicAuthUser"
+        },
+        "database": {
+          "type": "string",
+          "x-go-name": "Database"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "jsonData": {
+          "$ref": "#/definitions/Json"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "password": {
+          "type": "string",
+          "x-go-name": "Password"
+        },
+        "secureJsonData": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "SecureJsonData"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "Uid"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Url"
+        },
+        "user": {
+          "type": "string",
+          "x-go-name": "User"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Version"
+        },
+        "withCredentials": {
+          "type": "boolean",
+          "x-go-name": "WithCredentials"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     }
   },
   "responses": {
@@ -1350,6 +2250,42 @@
       "description": "ConflictError",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "createOrUpdateDatasourceResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "message",
+          "datasource"
+        ],
+        "properties": {
+          "datasource": {
+            "$ref": "#/definitions/DataSource"
+          },
+          "id": {
+            "description": "ID Identifier of the new data source.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the deleted dashboard.",
+            "type": "string",
+            "x-go-name": "Message",
+            "example": "Dashboard My Dashboard deleted"
+          },
+          "name": {
+            "description": "Name of the new dashboard.",
+            "type": "string",
+            "x-go-name": "Name",
+            "example": "My Dashboard"
+          }
+        }
       }
     },
     "dashboardDiffResponse": {
@@ -1424,6 +2360,31 @@
         }
       }
     },
+    "deleteDatasourceByNameResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the deleted data source.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the deleted dashboard.",
+            "type": "string",
+            "x-go-name": "Message",
+            "example": "Dashboard My Dashboard deleted"
+          }
+        }
+      }
+    },
     "dublicateAPIkeyError": {
       "description": "DublicateAPIkeyError is returned when the API key conflicts with another",
       "schema": {
@@ -1458,6 +2419,36 @@
         "items": {
           "$ref": "#/definitions/DashboardAclInfoDTO"
         }
+      }
+    },
+    "getDatasourceIDresponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the data source.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID",
+            "example": 65
+          }
+        }
+      }
+    },
+    "getDatasourceResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/DataSource"
+      }
+    },
+    "getDatasourcesResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/DataSourceList"
       }
     },
     "getHomeDashboardResponse": {
@@ -1553,6 +2544,12 @@
       "description": "PreconditionFailedError",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "queryDatasourceResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/DataResponse"
       }
     },
     "quotaReachedError": {
