@@ -90,6 +90,8 @@ func (m *PluginManager) init() error {
 		}
 	}
 
+	m.log.Info("Initialising plugins")
+
 	// install Core plugins
 	err = m.loadPlugins(m.corePluginPaths()...)
 	if err != nil {
@@ -623,7 +625,11 @@ func (m *PluginManager) register(p *plugins.Plugin) error {
 	}
 
 	m.plugins[pluginID] = p
-	m.log.Debug("Plugin registered", "pluginId", pluginID)
+
+	if !p.IsCorePlugin() {
+		m.log.Info("Plugin registered", "pluginId", pluginID)
+	}
+
 	return nil
 }
 
@@ -658,7 +664,7 @@ func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 	}
 
 	if !p.IsCorePlugin() {
-		p.Logger().Info("Successfully started plugin")
+		p.Logger().Debug("Successfully started backend plugin process")
 	}
 
 	return nil
