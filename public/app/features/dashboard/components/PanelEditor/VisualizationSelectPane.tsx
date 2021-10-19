@@ -12,6 +12,8 @@ import { toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { getPanelPluginWithFallback } from '../../state/selectors';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
+import { useLocalStorage } from 'react-use';
 
 interface Props {
   panel: PanelModel;
@@ -21,7 +23,7 @@ interface Props {
 export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
   const plugin = useSelector(getPanelPluginWithFallback(panel.type));
   const [searchQuery, setSearchQuery] = useState('');
-  const [listMode, setListMode] = useState(ListMode.Visualizations);
+  const [listMode, setListMode] = useLocalStorage(`VisualizationSelectPane.ListMode`, ListMode.Visualizations);
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -70,8 +72,9 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
 
   const radioOptions: Array<SelectableValue<ListMode>> = [
     { label: 'Visualizations', value: ListMode.Visualizations },
+    { label: 'Suggestions', value: ListMode.Suggestions },
     {
-      label: 'Library panels',
+      label: 'Panels',
       value: ListMode.LibraryPanels,
       description: 'Reusable panels you can share between multiple dashboards.',
     },
@@ -113,6 +116,16 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
                 onClose={() => {}}
               />
             )}
+            {listMode === ListMode.Suggestions && (
+              <VisualizationSuggestions
+                current={plugin.meta}
+                onChange={onVizChange}
+                searchQuery={searchQuery}
+                panel={panel}
+                data={data}
+                onClose={() => {}}
+              />
+            )}
             {listMode === ListMode.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
             )}
@@ -126,6 +139,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
 enum ListMode {
   Visualizations,
   LibraryPanels,
+  Suggestions,
 }
 
 VisualizationSelectPane.displayName = 'VisualizationSelectPane';

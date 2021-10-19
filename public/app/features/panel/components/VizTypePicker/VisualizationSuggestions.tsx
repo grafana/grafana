@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
 import { VizTypeChangeDetails } from './types';
 import { VisualizationPreview } from './VisualizationPreview';
 import { getAllSuggestions } from './getAllSuggestions';
-import { useAsync } from 'react-use';
+import { useAsync, useLocalStorage } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 export interface Props {
@@ -20,7 +20,7 @@ export interface Props {
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
   const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
-  const [columnCount, setColumnCount] = useState<number>(1);
+  const [columnCount, setColumnCount] = useLocalStorage(`VisualizationSuggestions.ColumnCount`, 1);
 
   return (
     <AutoSizer disableHeight style={{ width: '100%', height: '100%' }}>
@@ -29,8 +29,8 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
           return null;
         }
 
-        const spaceBetween = 8 * (columnCount - 1);
-        const previewWidth = (width - spaceBetween) / columnCount;
+        const spaceBetween = 8 * (columnCount! - 1);
+        const previewWidth = (width - spaceBetween) / columnCount!;
 
         return (
           <div>
@@ -74,7 +74,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     filterRow: css({
       display: 'flex',
       flexDirection: 'row',
-      justifyContent: 'row-reverse',
+      justifyContent: 'flex-end',
     }),
     grid: css({
       display: 'grid',
