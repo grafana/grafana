@@ -64,9 +64,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 						Action: ActionDatasourcesWrite,
 						Scope:  ScopeDatasourcesAll,
 					},
-					{Action: ActionDatasourcesCreate},
+					{
+						Action: ActionDatasourcesCreate,
+					},
 					{
 						Action: ActionDatasourcesDelete,
+						Scope:  ScopeDatasourcesAll,
+					},
+					{
+						Action: ActionDatasourcesQuery,
 						Scope:  ScopeDatasourcesAll,
 					},
 				},
