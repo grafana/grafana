@@ -80,7 +80,7 @@ func (i *Initializer) Initialize(p *plugins.Plugin) error {
 		}
 	}
 
-	pluginLog := log.New(p.ID)
+	pluginLog := logger.New("pluginID", p.ID)
 	p.SetLogger(pluginLog)
 
 	if p.Backend {
