@@ -16,8 +16,6 @@ export class TableSuggestionsSupplier {
       previewModifier: (s) => {},
     });
 
-    if (builder.dataSummary.frameCount === 1) {
-      list.append({});
-    }
+    list.append({});
   }
 }

@@ -43,6 +43,16 @@ export class GaugeSuggestionsSupplier {
           },
         },
       });
+      list.append({
+        name: 'Gauge without thresholds markers',
+        options: {
+          reduceOptions: {
+            values: true,
+            calcs: [],
+          },
+          showThresholdMarkers: false,
+        },
+      });
     } else {
       list.append({
         options: {
@@ -50,6 +60,16 @@ export class GaugeSuggestionsSupplier {
             values: false,
             calcs: ['lastNotNull'],
           },
+        },
+      });
+      list.append({
+        name: 'Gauge without thresholds markers',
+        options: {
+          reduceOptions: {
+            values: false,
+            calcs: ['lastNotNull'],
+          },
+          showThresholdMarkers: false,
         },
       });
     }

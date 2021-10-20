@@ -87,7 +87,7 @@ export class TimeSeriesSuggestionsSupplier {
 
     if (dataSummary.rowCountTotal / dataSummary.numberFieldCount < 100) {
       list.append({
-        name: 'Bar chart with time x-axis',
+        name: 'Bar chart stacked',
         fieldConfig: {
           defaults: {
             custom: {

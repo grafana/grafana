@@ -60,5 +60,16 @@ export class PieChartSuggestionsSupplier {
         },
       },
     });
+
+    list.append({
+      name: 'Piechart donut',
+      options: {
+        reduceOptions: {
+          values: false,
+          calcs: ['lastNotNull'],
+        },
+        pieType: PieChartType.Donut,
+      },
+    });
   }
 }

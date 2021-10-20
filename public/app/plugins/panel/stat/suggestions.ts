@@ -1,4 +1,5 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { BigValueColorMode, BigValueGraphMode } from '@grafana/ui';
 import { StatPanelOptions } from './types';
 
 export class StatSuggestionsSupplier {
@@ -33,6 +34,16 @@ export class StatSuggestionsSupplier {
           },
         },
       });
+      list.append({
+        options: {
+          reduceOptions: {
+            values: true,
+            calcs: [],
+            fields: dataSummary.hasNumberField ? undefined : '/.*/',
+          },
+          colorMode: BigValueColorMode.Background,
+        },
+      });
     } else if (dataSummary.hasNumberField) {
       list.append({
         options: {
@@ -40,6 +51,17 @@ export class StatSuggestionsSupplier {
             values: false,
             calcs: ['lastNotNull'],
           },
+        },
+      });
+
+      list.append({
+        options: {
+          reduceOptions: {
+            values: false,
+            calcs: ['lastNotNull'],
+          },
+          graphMode: BigValueGraphMode.None,
+          colorMode: BigValueColorMode.Background,
         },
       });
     }
