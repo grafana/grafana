@@ -8,22 +8,3 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    ignore:
-      # ignore minor/patch updates for now
-      - dependency-name: "*"
-        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
-      # things that will probably need some thinking
-      - dependency-name: "d3"
-      - dependency-name: "husky"
-      - dependency-name: "slate"
-      - dependency-name: "slate-plain-serializer"
-      - dependency-name: "systemjs"
-      - dependency-name: "ts-loader" # we should remove ts-loader and use babel-loader instead
-      - dependency-name: "ora" # we should bump this once we move to esm modules
-    reviewers:
-      - "grafana/frontend-ops"
-    versioning-strategy: "increase-if-necessary"

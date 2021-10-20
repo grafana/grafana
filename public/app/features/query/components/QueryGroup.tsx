@@ -12,7 +12,7 @@ import {
   stylesFactory,
   Tooltip,
 } from '@grafana/ui';
-import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
+import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -27,12 +27,9 @@ import {
   PanelData,
 } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
-import { addQuery } from 'app/core/utils/query';
+import { addQuery, updateQueries } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import {
-  dataSource as expressionDatasource,
-  ExpressionDatasourceID,
-} from 'app/features/expressions/ExpressionDatasource';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
@@ -52,6 +49,7 @@ interface Props {
 interface State {
   dataSource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
+  queries: DataQuery[];
   helpContent: React.ReactNode;
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
@@ -74,6 +72,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     isAddingMixed: false,
     isHelpOpen: false,
     scrollTop: 0,
+    queries: [],
     data: {
       state: LoadingState.NotStarted,
       series: [],
@@ -92,7 +91,8 @@ export class QueryGroup extends PureComponent<Props, State> {
       const ds = await this.dataSourceSrv.get(options.dataSource.name);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
       const defaultDataSource = await this.dataSourceSrv.get();
-      this.setState({ dataSource: ds, dsSettings, defaultDataSource });
+      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource: dsSettings?.name }));
+      this.setState({ queries, dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
       console.log('failed to load data source', error);
     }
@@ -110,36 +110,10 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
-    let { queries } = this.props.options;
     const { dsSettings } = this.state;
-
-    // switching to mixed
-    if (newSettings.meta.mixed) {
-      for (const query of queries) {
-        if (query.datasource !== ExpressionDatasourceID) {
-          query.datasource = dsSettings?.name;
-          if (!query.datasource) {
-            query.datasource = config.defaultDatasource;
-          }
-        }
-      }
-    } else if (dsSettings) {
-      // if switching from mixed
-      if (dsSettings.meta.mixed) {
-        // Remove the explicit datasource
-        for (const query of queries) {
-          if (query.datasource !== ExpressionDatasourceID) {
-            delete query.datasource;
-          }
-        }
-      } else if (dsSettings.meta.id !== newSettings.meta.id) {
-        // we are changing data source type, clear queries
-        queries = [{ refId: 'A' }];
-      }
-    }
+    const queries = updateQueries(newSettings, this.state.queries, expressionDatasource.name, dsSettings);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
-
     this.onChange({
       queries,
       dataSource: {
@@ -150,14 +124,15 @@ export class QueryGroup extends PureComponent<Props, State> {
     });
 
     this.setState({
+      queries,
       dataSource: dataSource,
       dsSettings: newSettings,
     });
   };
 
   onAddQueryClick = () => {
-    const { options } = this.props;
-    this.onChange({ queries: addQuery(options.queries, this.newQuery()) });
+    const { queries } = this.state;
+    this.onQueriesChange(addQuery(queries, this.newQuery()));
     this.onScrollBottom();
   };
 
@@ -165,7 +140,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { dsSettings, defaultDataSource } = this.state;
 
     if (!dsSettings?.meta.mixed) {
-      return {};
+      return { datasource: dsSettings?.name };
     }
 
     return {
@@ -181,9 +156,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   onAddExpressionClick = () => {
-    this.onChange({
-      queries: addQuery(this.props.options.queries, expressionDatasource.newQuery()),
-    });
+    this.onQueriesChange(addQuery(this.state.queries, expressionDatasource.newQuery()));
     this.onScrollBottom();
   };
 
@@ -284,8 +257,8 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onAddQuery = (query: Partial<DataQuery>) => {
-    const { queries } = this.props.options;
-    this.onChange({ queries: addQuery(queries, query) });
+    const { dsSettings, queries } = this.state;
+    this.onQueriesChange(addQuery(queries, query, dsSettings?.name));
     this.onScrollBottom();
   };
 
@@ -295,16 +268,17 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onQueriesChange = (queries: DataQuery[]) => {
     this.onChange({ queries });
+    this.setState({ queries });
   };
 
   renderQueries(dsSettings: DataSourceInstanceSettings) {
-    const { options, onRunQueries } = this.props;
-    const { data } = this.state;
+    const { onRunQueries } = this.props;
+    const { data, queries } = this.state;
 
     if (isSharedDashboardQuery(dsSettings.name)) {
       return (
         <DashboardQueryEditor
-          queries={options.queries}
+          queries={queries}
           panelData={data}
           onChange={this.onQueriesChange}
           onRunQueries={onRunQueries}
@@ -315,7 +289,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (
       <div aria-label={selectors.components.QueryTab.content}>
         <QueryEditorRows
-          queries={options.queries}
+          queries={queries}
           dsSettings={dsSettings}
           onQueriesChange={this.onQueriesChange}
           onAddQuery={this.onAddQuery}
@@ -331,8 +305,12 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderExtraActions() {
-    return GroupActionComponents.getAllExtraRenderAction().map((c) => {
-      return React.createElement(c, { onAddQuery: this.onAddQuery });
+    return GroupActionComponents.getAllExtraRenderAction().map((c, index) => {
+      return React.createElement(c, {
+        onAddQuery: this.onAddQuery,
+        onChangeDataSource: this.onChangeDataSource,
+        key: index,
+      });
     });
   }
 

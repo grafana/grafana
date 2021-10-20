@@ -37,7 +37,7 @@ export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): Gazette
     path,
     find: (k) => {
       let v = values.get(k);
-      if (!v) {
+      if (!v && typeof k === 'string') {
         v = values.get(k.toUpperCase());
       }
       return v;

@@ -39,6 +39,7 @@ describe('LokiLogsVolumeProvider', () => {
     datasourceSetup();
     request = ({
       targets: [{ expr: '{app="app01"}' }, { expr: '{app="app02"}' }],
+      range: { from: 0, to: 1 },
     } as unknown) as DataQueryRequest<LokiQuery>;
     volumeProvider = createLokiLogsVolumeProvider((datasource as unknown) as LokiDatasource, request);
   }

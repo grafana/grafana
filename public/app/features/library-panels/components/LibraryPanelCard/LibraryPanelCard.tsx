@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
 import { LibraryElementDTO } from '../../types';
-import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
+import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/PanelTypeCard';
 import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
 import { config } from '@grafana/runtime';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';

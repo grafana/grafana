@@ -80,7 +80,7 @@ describe('Tempo data source', () => {
     ]);
   });
 
-  it('runs service map queries', async () => {
+  it('runs service graph queries', async () => {
     const ds = new TempoDatasource({
       ...defaultSettings,
       jsonData: {
@@ -209,7 +209,7 @@ const backendSrvWithPrometheus = {
     if (uid === 'prom') {
       return {
         query() {
-          return of({ data: [totalsPromMetric] }, { data: [secondsPromMetric] });
+          return of({ data: [totalsPromMetric, secondsPromMetric] });
         },
       };
     }
@@ -255,7 +255,7 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
 };
 
 const totalsPromMetric = new MutableDataFrame({
-  refId: 'tempo_service_graph_request_total',
+  refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
     { name: 'client', values: ['app', 'lb'] },
@@ -263,12 +263,12 @@ const totalsPromMetric = new MutableDataFrame({
     { name: 'job', values: ['local_scrape', 'local_scrape'] },
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #tempo_service_graph_request_total', values: [10, 20] },
+    { name: 'Value #traces_service_graph_request_total', values: [10, 20] },
   ],
 });
 
 const secondsPromMetric = new MutableDataFrame({
-  refId: 'tempo_service_graph_request_server_seconds_sum',
+  refId: 'traces_service_graph_request_server_seconds_sum',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
     { name: 'client', values: ['app', 'lb'] },
@@ -276,7 +276,7 @@ const secondsPromMetric = new MutableDataFrame({
     { name: 'job', values: ['local_scrape', 'local_scrape'] },
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #tempo_service_graph_request_server_seconds_sum', values: [10, 40] },
+    { name: 'Value #traces_service_graph_request_server_seconds_sum', values: [10, 40] },
   ],
 });
 

@@ -1,12 +1,13 @@
 import { Component } from 'react';
-import { CoreApp, PanelProps } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { Subscription } from 'rxjs';
-import { PanelEditExitedEvent } from 'app/types/events';
+import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { CanvasGroupOptions } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
+import { GroupState } from 'app/features/canvas/runtime/group';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -16,7 +17,8 @@ interface State {
 
 export interface InstanceState {
   scene: Scene;
-  selected?: ElementState;
+  selected: ElementState[];
+  layer: GroupState;
 }
 
 export class CanvasPanel extends Component<Props, State> {
@@ -40,6 +42,14 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene.updateData(props.data);
 
     this.subs.add(
+      this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {
+        // Remove current selection when entering edit mode for any panel in dashboard
+        let event: MouseEvent = new MouseEvent('click');
+        this.scene?.selecto?.clickTarget(event, this.scene?.div);
+      })
+    );
+
+    this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.props.id === evt.payload) {
           this.needsReload = true;
@@ -50,17 +60,19 @@ export class CanvasPanel extends Component<Props, State> {
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
-    if (this.panelContext.onInstanceStateChange && this.panelContext.app === CoreApp.PanelEditor) {
+    if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         scene: this.scene,
+        layer: this.scene.root,
       });
 
       this.subs.add(
-        this.scene.selected.subscribe({
+        this.scene.selection.subscribe({
           next: (v) => {
             this.panelContext.onInstanceStateChange!({
               scene: this.scene,
               selected: v,
+              layer: this.scene.root,
             });
           },
         })
@@ -85,7 +97,7 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   shouldComponentUpdate(nextProps: Props) {
-    const { width, height, data, renderCounter } = this.props;
+    const { width, height, data } = this.props;
     let changed = false;
 
     if (width !== nextProps.width || height !== nextProps.height) {
@@ -103,10 +115,6 @@ export class CanvasPanel extends Component<Props, State> {
       this.scene.load(nextProps.options.root);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
-      changed = true;
-    }
-
-    if (renderCounter !== nextProps.renderCounter) {
       changed = true;
     }
 
