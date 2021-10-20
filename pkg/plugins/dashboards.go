@@ -17,4 +17,5 @@ type PluginDashboardInfoDTO struct {
 	Compatible         bool   `json:"compatible"`
 	ImportedCompatible bool   `json:"importedCompatible"`
 	SupportedVersions  string `json:"supportedVersions"`
+	Uid                string `json:"uid"`
 }

@@ -10,6 +10,7 @@ export interface PluginDashboard {
   importedCompatible: boolean;
   supportedVersions: string;
   importedRevision: number;
+  uid: string;
   importedUri: string;
   importedUrl: string;
   path: string;

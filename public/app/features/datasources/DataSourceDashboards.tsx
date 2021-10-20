@@ -10,7 +10,7 @@ import DashboardTable from './DashboardsTable';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { loadDataSource } from './state/actions';
 import { loadPluginDashboards } from '../plugins/state/actions';
-import { importDashboard, removeDashboard } from '../dashboard/state/actions';
+import { importDashboard, removeDashboardByUid } from '../dashboard/state/actions';
 import { getDataSource } from './state/selectors';
 
 // Types
@@ -35,7 +35,7 @@ const mapDispatchToProps = {
   importDashboard,
   loadDataSource,
   loadPluginDashboards,
-  removeDashboard,
+  removeDashboardByUid,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -71,7 +71,7 @@ export class DataSourceDashboards extends PureComponent<Props> {
   };
 
   onRemove = (dashboard: PluginDashboard) => {
-    this.props.removeDashboard(dashboard.importedUri);
+    this.props.removeDashboardByUid(dashboard.uid);
   };
 
   render() {

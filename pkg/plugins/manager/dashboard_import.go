@@ -91,6 +91,7 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 		DashboardId:       savedDash.Id,
 		Slug:              savedDash.Slug,
 		SupportedVersions: supportedVersions,
+		Uid:               savedDash.Uid,
 	}, savedDash, nil
 }
 

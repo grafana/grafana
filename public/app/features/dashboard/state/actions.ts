@@ -113,6 +113,13 @@ export function removeDashboard(uri: string): ThunkResult<void> {
   };
 }
 
+export function removeDashboardByUid(uid: string): ThunkResult<void> {
+  return async (dispatch) => {
+    await getBackendSrv().delete(`/api/dashboards/uid/${uid}`);
+    dispatch(loadPluginDashboards());
+  };
+}
+
 export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, getStore) => {
   const store = getStore();
   const dashboard = store.dashboard.getModel();

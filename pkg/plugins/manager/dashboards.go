@@ -58,6 +58,7 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 		res.PluginId = plugin.Id
 		res.Title = dashboard.Title
 		res.Revision = dashboard.Data.Get("revision").MustInt64(1)
+		res.Uid = dashboard.Uid
 
 		// find existing dashboard
 		for _, existingDash := range query.Result {
