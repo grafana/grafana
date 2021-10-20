@@ -96,10 +96,8 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
 };
 
 interface SelectMenuOptionProps<T> {
-  // isDisabled: boolean;
   isSelected: boolean;
   isFocused?: boolean;
-  // innerProps: any;
   data: SelectableValue<T>;
   onSelect: (value: SelectableValue<T>) => void;
 }
@@ -116,8 +114,7 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
       <div
         ref={ref}
         className={cx(styles.option, isFocused && styles.optionFocused)}
-        // {...innerProps}
-        aria-label="Select option"
+        aria-label="Role picker option"
         onClick={() => onSelect(data)}
       >
         <Checkbox value={isSelected} className={customStyles.menuOptionCheckbox} />

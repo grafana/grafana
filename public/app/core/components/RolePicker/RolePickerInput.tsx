@@ -98,8 +98,7 @@ const getRolePickerInputStyles = stylesFactory(
           justify-content: flex-start;
           position: relative;
           box-sizing: border-box;
-          cursor: ${disabled ? 'not-allowed' : 'default'};
-          // cursor: ${focused ? 'default' : 'pointer'};
+          cursor: ${disabled ? 'not-allowed' : 'pointer'};
         `,
         withPrefix &&
           css`
