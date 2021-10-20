@@ -1,11 +1,12 @@
 import coreModule from 'app/core/core_module';
 import { appEvents } from 'app/core/app_events';
 import { DashboardModel } from '../state/DashboardModel';
-import { removePanel } from '../utils/panel';
+import { copyPanel, removePanel } from '../utils/panel';
 import { DashboardMeta } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
 import { RemovePanelEvent } from '../../../types/events';
+import { PanelModel } from '@grafana/data';
 
 export class DashboardSrv {
   dashboard?: DashboardModel;
@@ -64,6 +65,13 @@ export class DashboardSrv {
       }
       return res;
     });
+  }
+
+  /**
+   * Copy a panel model to the grafana clipboard
+   */
+  copyPanelToClipboard(panel: PanelModel) {
+    copyPanel(panel);
   }
 }
 
