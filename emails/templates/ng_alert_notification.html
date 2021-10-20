@@ -5,13 +5,13 @@
       <tr>
         <td colspan="2" class="annotations">
           [[ range .Annotations.SortedPairs ]]
-            <p>[[ .Name ]]: [[ .Value ]]</p>
+          <p><span class="annotations-heading">[[ .Name ]]:</span> [[ .Value ]]</p>
           [[ end ]]
         </td>
       </tr>
   [[ end ]]
   <tr>
-    <td valign="top" class="labels-heading">Labels:</td>
+    <td class="labels-heading">Labels:</td>
     <td>
       <ul class="labels-list">
         [[ range .Labels.SortedPairs ]]<li>[[ .Name ]]: [[ .Value ]]</li>[[ end ]]
@@ -117,9 +117,14 @@
     font-weight: bold;
     vertical-align: top;
   }
+  .annotations-heading {
+    font-weight: bold;
+    text-transform: capitalize;
+  }
   .labels-list {
     font-size: 14px;
     vertical-align: top;
+    margin: 0;
   }
   .section-heading {
     color: #2c3235;
@@ -132,6 +137,7 @@
     font-weight: bold;
     padding: 0 0 0 12px;
     text-decoration: underline;
+    vertical-align: middle;
   }
   .status-tag {
     color: #ffffff;
@@ -213,6 +219,6 @@
       </table>
       </table>
     </td>
-  </tr> 
+  </tr>
 </table>
 [[ end ]]
