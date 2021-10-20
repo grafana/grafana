@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"net/url"
 	"os"
 	"testing"
