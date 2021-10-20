@@ -29,7 +29,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       isExpanded: initialIsExpanded,
     });
 
-    const [queryParams] = useQueryParams();
+    const [queryParams, updateQueryParams] = useQueryParams();
     const isSelected = queryParams[CATEGORY_PARAM_NAME] === id;
     const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
     const [toggleTime, setToggleTime] = useState<number>(0);
@@ -40,16 +40,14 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       const elapsed = Date.now() - toggleTime;
       if ((!isExpanded && forceOpen && forceOpen > 0) || isSelected) {
         setIsExpanded(true);
-        // scroll on query change and not toggle change
-        if (elapsed > 100 && ref.current) {
-          ref.current.scrollIntoView();
+        if (elapsed < 100 && ref.current) {
+          ref.current?.scrollIntoView();
         }
       }
     }, [forceOpen, isExpanded, isSelected, toggleTime]);
 
     const onToggle = useCallback(() => {
       setToggleTime(Date.now());
-      // TODO: this call will cause the panel to not close on the first click
       // updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? null : id });
       getLocationSrv().update({
         query: {
@@ -59,7 +57,8 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       });
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-    }, [setSavedState, setIsExpanded, isExpanded, id]);
+      console.log('toggle', isExpanded);
+    }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
