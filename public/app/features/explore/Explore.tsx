@@ -12,7 +12,6 @@ import {
   DataQuery,
   ExploreGraphStyle,
   GrafanaTheme2,
-  hasLogsVolumeSupport,
   LoadingState,
   RawTimeRange,
 } from '@grafana/data';
@@ -311,8 +310,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
-      logsVolumeDataProvider,
-      loadLogsVolumeData,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -335,11 +332,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 addQueryRowButtonHidden={false}
                 richHistoryButtonActive={showRichHistory}
                 queryInspectorButtonActive={showQueryInspector}
-                loadingLogsVolumeAvailable={hasLogsVolumeSupport(datasourceInstance) && !!logsVolumeDataProvider}
                 onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                 onClickRichHistoryButton={this.toggleShowRichHistory}
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
-                onClickLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
               />
               <ResponseErrorContainer exploreId={exploreId} />
             </div>
@@ -401,7 +396,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeDataProvider,
     logsVolumeData,
     logsResult,
     showLogs,
@@ -421,7 +415,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeDataProvider,
     logsVolumeData,
     logsResult: logsResult ?? undefined,
     absoluteRange,

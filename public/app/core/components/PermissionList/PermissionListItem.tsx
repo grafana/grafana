@@ -75,20 +75,27 @@ export default class PermissionsListItem extends PureComponent<Props> {
         <td className="query-keyword">Can</td>
         <td>
           <Select
-            menuShouldPortal
+            aria-label={`Permission level for "${item.name}"`}
             isSearchable={false}
             options={dashboardPermissionLevels}
             onChange={this.onPermissionChanged}
             disabled={item.inherited}
             value={currentPermissionLevel}
             width={25}
+            menuShouldPortal
           />
         </td>
         <td>
           {!item.inherited ? (
-            <Button size="sm" variant="destructive" icon="times" onClick={this.onRemoveItem} />
+            <Button
+              aria-label={`Remove permission for "${item.name}"`}
+              size="sm"
+              variant="destructive"
+              icon="times"
+              onClick={this.onRemoveItem}
+            />
           ) : (
-            <Button size="sm" disabled icon="times" />
+            <Button aria-label={`Remove permission for "${item.name}" (Disabled)`} size="sm" disabled icon="times" />
           )}
         </td>
       </tr>
