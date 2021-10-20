@@ -31,7 +31,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     private readonly dashboard: DashboardModel,
     private readonly timeSrv: TimeSrv = getTimeSrv(),
     private readonly workers: DashboardQueryRunnerWorker[] = [
-      config.featureToggles.ngalert ? new UnifiedAlertStatesWorker() : new AlertStatesWorker(),
+      config.unifiedAlertingEnabled ? new UnifiedAlertStatesWorker() : new AlertStatesWorker(),
       new SnapshotWorker(),
       new AnnotationsWorker(),
     ]
