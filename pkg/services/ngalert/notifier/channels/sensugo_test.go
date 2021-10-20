@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -141,7 +140,7 @@ func TestSensuGoNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+			secretsService := secretsManager.SetupTestService(t, nil)
 			decryptFn := secretsService.GetDecryptedValue
 			sn, err := NewSensuGoNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {

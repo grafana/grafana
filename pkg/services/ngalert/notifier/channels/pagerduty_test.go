@@ -3,12 +3,10 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"net/url"
 	"os"
 	"testing"
-
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -18,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
 func TestPagerdutyNotifier(t *testing.T) {
@@ -137,7 +136,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+			secretsService := secretsManager.SetupTestService(t, nil)
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewPagerdutyNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {

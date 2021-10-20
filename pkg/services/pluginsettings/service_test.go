@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,7 +16,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 	t.Run("When plugin settings hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
 		ctx := context.Background()
 
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		psService := ProvideService(bus.New(), nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
@@ -55,7 +54,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 	t.Run("When plugin settings is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
 		ctx := context.Background()
 
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		psService := ProvideService(bus.New(), nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(

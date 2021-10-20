@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -25,7 +24,7 @@ func presenceComparerInt(a, b int64) bool {
 }
 func TestVictoropsNotifier(t *testing.T) {
 	Convey("Victorops notifier tests", t, func() {
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

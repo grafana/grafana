@@ -6,13 +6,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestKafkaNotifier(t *testing.T) {
 	Convey("Kafka notifier tests", t, func() {
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

@@ -15,6 +15,7 @@ import (
 func TestDashboardSnapshotsService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, sqlStore)
+
 	s := &Service{
 		SQLStore:       sqlStore,
 		SecretsService: secretsService,

@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -87,7 +86,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password" //nolint:goconst
 
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		key, err := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
 		require.NoError(t, err)
 
@@ -242,7 +241,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password"
 
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		key, err := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
 		require.NoError(t, err)
 
@@ -342,7 +341,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		ds := &models.DataSource{Url: "htttp://graphite:8080", Type: models.DS_GRAPHITE}
 		ctx := &models.ReqContext{}
 
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{BuildVersion: "5.3.0"}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
@@ -369,7 +368,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		ctx := &models.ReqContext{}
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
@@ -394,7 +393,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		ctx := &models.ReqContext{}
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
@@ -423,7 +422,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		ctx := &models.ReqContext{}
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
@@ -446,7 +445,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			Url:  "http://host/root/",
 		}
 		ctx := &models.ReqContext{}
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
@@ -503,7 +502,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			},
 			oAuthEnabled: true,
 		}
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &mockAuthToken, dsService)
 		require.NoError(t, err)
@@ -555,7 +554,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying data source proxy should handle authentication", func(t *testing.T) {
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 
 		tests := []*testCase{
 			createAuthTest(t, secretsService, models.DS_INFLUXDB_08, authTypePassword, authCheckQuery, false),
@@ -633,7 +632,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 	t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
 		ctx, ds := setUp(t)
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
@@ -650,7 +649,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 				"Set-Cookie": "important_cookie=important_value",
 			},
 		})
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
@@ -671,7 +670,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 				t.Log("Wrote 401 response")
 			},
 		})
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
@@ -695,7 +694,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		})
 
 		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
@@ -719,7 +718,7 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	}
 	cfg := setting.Cfg{}
 	plugin := plugins.DataSourcePlugin{}
-	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, nil)
 	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 	require.Error(t, err)
@@ -738,7 +737,7 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 	cfg := setting.Cfg{}
 	plugin := plugins.DataSourcePlugin{}
 
-	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, nil)
 	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 
@@ -778,7 +777,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 				Url:  tc.url,
 			}
 
-			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+			secretsService := secretsManager.SetupTestService(t, nil)
 			dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 			p, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 			if tc.err == nil {
@@ -804,7 +803,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *sett
 		Url:  "http://host/root/",
 	}
 
-	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, nil)
 	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 	require.NoError(t, err)
@@ -965,7 +964,7 @@ func Test_PathCheck(t *testing.T) {
 		return ctx, req
 	}
 	ctx, _ := setUp()
-	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, nil)
 	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	proxy, err := NewDataSourceProxy(&models.DataSource{}, plugin, ctx, "b", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 	require.NoError(t, err)

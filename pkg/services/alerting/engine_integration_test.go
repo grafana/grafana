@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -22,7 +21,7 @@ import (
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
 		usMock := &usagestats.UsageStatsMock{T: t}
-		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, nil)
 		engine := ProvideAlertEngine(nil, nil, nil, nil, usMock, secretsService, setting.NewCfg())
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3

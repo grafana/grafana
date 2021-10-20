@@ -16,7 +16,7 @@ import (
 func TestService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 
-	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, sqlStore)
 	s := ProvideService(bus.New(), sqlStore, secretsService)
 
 	origSecret := setting.SecretKey

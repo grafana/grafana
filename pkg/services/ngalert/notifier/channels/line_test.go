@@ -5,8 +5,6 @@ import (
 	"net/url"
 	"testing"
 
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -15,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
 func TestLineNotifier(t *testing.T) {
@@ -90,7 +89,7 @@ func TestLineNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
+			secretsService := secretsManager.SetupTestService(t, nil)
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewLineNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
