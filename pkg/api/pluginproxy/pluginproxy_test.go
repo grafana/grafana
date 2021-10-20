@@ -202,8 +202,8 @@ func TestPluginProxy(t *testing.T) {
 			Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
 		}
 
+		secretsService := secretsManager.SetupTestService(t, nil)
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-			secretsService := secretsManager.SetupTestService(t, nil)
 			encryptedJsonData, err := secretsService.EncryptJsonData(
 				ctx,
 				map[string]string{"key": "123"},
@@ -228,7 +228,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
-			secretsManager.SetupTestService(t, nil),
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
