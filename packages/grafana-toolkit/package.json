@@ -52,7 +52,7 @@
     "command-exists": "^1.2.8",
     "commander": "^5.0.0",
     "concurrently": "4.1.0",
-    "copy-webpack-plugin": "5.1.2",
+    "copy-webpack-plugin": "9.0.1",
     "css-loader": "3.4.2",
     "eslint": "7.21.0",
     "execa": "^5.1.1",
