@@ -15,7 +15,7 @@ const setup = (propOverrides?: object) => {
     importDashboard: jest.fn(),
     loadDataSource: jest.fn(),
     loadPluginDashboards: jest.fn(),
-    removeDashboard: jest.fn(),
+    removeDashboardByUid: jest.fn(),
     isLoading: false,
   };
 
