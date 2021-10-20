@@ -569,34 +569,39 @@ export class ElasticDatasource
     }
     const logsVolumeRequest = cloneDeep(request);
     logsVolumeRequest.targets = logsVolumeRequest.targets.map((target) => {
+      const bucketAggs: BucketAggregation[] = [];
+      const timeField = this.timeField ?? '@timestamp';
+
+      if (this.logLevelField) {
+        bucketAggs.push({
+          id: '2',
+          type: 'terms',
+          settings: {
+            min_doc_count: '0',
+            size: '0',
+            order: 'desc',
+            orderBy: '_count',
+          },
+          field: this.logLevelField ?? '',
+        });
+      }
+      bucketAggs.push({
+        id: '3',
+        type: 'date_histogram',
+        settings: {
+          interval: 'auto',
+          min_doc_count: '0',
+          trimEdges: '0',
+        },
+        field: timeField,
+      });
+
       const logsVolumeQuery: ElasticsearchQuery = {
         refId: target.refId,
         query: target.query,
         metrics: [{ type: 'count', id: '1' }],
-        timeField: '@timestamp',
-        bucketAggs: [
-          {
-            id: '2',
-            type: 'terms',
-            settings: {
-              min_doc_count: '0',
-              size: '0',
-              order: 'desc',
-              orderBy: '_count',
-            },
-            field: 'fields.level',
-          },
-          {
-            id: '3',
-            type: 'date_histogram',
-            settings: {
-              interval: 'auto',
-              min_doc_count: '0',
-              trimEdges: '0',
-            },
-            field: '@timestamp',
-          },
-        ],
+        timeField,
+        bucketAggs,
       };
       return logsVolumeQuery;
     });
