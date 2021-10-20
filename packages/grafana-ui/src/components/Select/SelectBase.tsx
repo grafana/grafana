@@ -12,6 +12,7 @@ import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
 import { ValueContainer } from './ValueContainer';
 import { InputControl } from './InputControl';
+import { SelectContainer } from './SelectContainer';
 import { DropdownIndicator } from './DropdownIndicator';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
@@ -334,6 +335,7 @@ export function SelectBase<T>({
           },
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
+          SelectContainer,
           ...components,
         }}
         styles={{

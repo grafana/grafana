@@ -1,5 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { PipelineListOption, EntitiesTypes, PipeLineEntitiesInfo } from './types';
+import { PipelineListOption, PipeLineEntitiesInfo } from './types';
 
 export async function getPipeLineEntities(): Promise<PipeLineEntitiesInfo> {
   return await getBackendSrv()
@@ -16,7 +16,13 @@ export async function getPipeLineEntities(): Promise<PipeLineEntitiesInfo> {
     });
 }
 
-function transformLabel(data: EntitiesTypes, key: keyof typeof data) {
+export function transformLabel(data: any, key: keyof typeof data) {
+  if (Array.isArray(data)) {
+    return data.map((d) => ({
+      label: d[key],
+      value: d[key],
+    }));
+  }
   return data[key].map((typeObj: PipelineListOption) => ({
     label: typeObj.type,
     value: typeObj.type,
