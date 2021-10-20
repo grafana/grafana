@@ -26,6 +26,8 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   azureAuthSettings?: AzureAuthSettings;
   /** Show proxy settings if applicable. Default true */
   proxySettingsEnabled?: boolean;
+  /** Show "with credentials" auth setting toggle. Default true */
+  withCredentialsToggleEnabled?: boolean;
   /** Title for the section. Default "HTTP" */
   title?: string;
 }

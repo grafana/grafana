@@ -66,6 +66,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
     azureAuthSettings,
     title,
     proxySettingsEnabled = true,
+    withCredentialsToggleEnabled = true,
   } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
@@ -158,7 +159,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
               {isAccessHelpVisible && <HttpAccessHelp />}
             </>
           )}
-          {dataSourceConfig.access === 'proxy' && (
+          {dataSourceConfig.access === 'proxy' && proxySettingsEnabled && (
             <div className="gf-form-group">
               <div className="gf-form">
                 <InlineFormLabel
@@ -207,15 +208,17 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                 onSettingsChange({ basicAuth: event!.currentTarget.checked });
               }}
             />
-            <Switch
-              label="With Credentials"
-              labelClass="width-13"
-              checked={dataSourceConfig.withCredentials}
-              onChange={(event) => {
-                onSettingsChange({ withCredentials: event!.currentTarget.checked });
-              }}
-              tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests."
-            />
+            {withCredentialsToggleEnabled && (
+              <Switch
+                label="With Credentials"
+                labelClass="width-13"
+                checked={dataSourceConfig.withCredentials}
+                onChange={(event) => {
+                  onSettingsChange({ withCredentials: event!.currentTarget.checked });
+                }}
+                tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests."
+              />
+            )}
           </div>
 
           {azureAuthSettings?.azureAuthEnabled && (

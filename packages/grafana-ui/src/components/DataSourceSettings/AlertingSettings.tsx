@@ -110,8 +110,9 @@ export function AlertingSettings<T extends AlertingUIDataSourceJsonData>({
             dataSourceConfig={dataSourceSettingsToRulerHTTPDataSourceSettings(options)}
             showAccessOptions={false}
             onChange={(data) => onOptionsChange(mergeInRulerHTTPDataSourceSettings(options, data))}
-            sigV4AuthToggleEnabled={sigV4AuthEnabled}
+            sigV4AuthToggleEnabled={false}
             proxySettingsEnabled={false}
+            withCredentialsToggleEnabled={false}
           />
         </div>
       )}
@@ -132,6 +133,7 @@ function dataSourceSettingsToRulerHTTPDataSourceSettings(
   } = settings.jsonData.ruler ?? {};
   return {
     ...settings,
+    access: 'server',
     url,
     basicAuth,
     withCredentials,

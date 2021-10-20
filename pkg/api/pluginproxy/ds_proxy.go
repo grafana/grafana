@@ -78,7 +78,6 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService *datasources.Service) (*DataSourceProxy, error) {
-
 	url := ds.Url
 	if cfg.UnifiedAlerting.Enabled && isLotex(ds.Type) && isRulerPath(proxyPath) {
 		rulerProps := ds.GetRulerProperties()
