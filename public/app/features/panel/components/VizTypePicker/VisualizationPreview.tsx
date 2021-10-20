@@ -16,7 +16,7 @@ export interface Props {
 export function VisualizationPreview({ data, suggestion, onChange, width }: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
-  // const [showLargePreview, setShowLargePreview] = useState<boolean>(false);
+  const showName = false;
 
   const onClick = () => {
     onChange({
@@ -33,21 +33,24 @@ export function VisualizationPreview({ data, suggestion, onChange, width }: Prop
   }
 
   return (
-    <div style={outerStyles} className={styles.card} onClick={onClick}>
-      <Tooltip content={suggestion.name}>
-        <div style={innerStyles} className={styles.renderContainer}>
-          <PanelRenderer
-            title=""
-            data={data}
-            pluginId={suggestion.pluginId}
-            width={renderWidth}
-            height={renderHeight}
-            options={preview.options}
-            fieldConfig={preview.fieldConfig}
-          />
-          <div className={styles.hoverPane} />
-        </div>
-      </Tooltip>
+    <div onClick={onClick}>
+      {showName && <div className={styles.name}>{suggestion.name}</div>}
+      <div className={styles.vizBox} style={outerStyles}>
+        <Tooltip content={suggestion.name}>
+          <div style={innerStyles} className={styles.renderContainer}>
+            <PanelRenderer
+              title=""
+              data={data}
+              pluginId={suggestion.pluginId}
+              width={renderWidth}
+              height={renderHeight}
+              options={preview.options}
+              fieldConfig={preview.fieldConfig}
+            />
+            <div className={styles.hoverPane} />
+          </div>
+        </Tooltip>
+      </div>
     </div>
   );
 }
@@ -62,7 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.spacing(2),
       bottom: 0,
     }),
-    card: css`
+    vizBox: css`
       position: relative;
       border-radius: ${theme.shape.borderRadius(1)};
       cursor: pointer;
@@ -75,6 +78,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover {
         background: ${theme.colors.background.secondary};
       }
+    `,
+    name: css`
+      font-size: ${theme.typography.bodySmall.fontSize};
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     `,
     renderContainer: css`
       position: absolute;

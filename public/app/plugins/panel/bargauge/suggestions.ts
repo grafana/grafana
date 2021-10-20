@@ -31,7 +31,7 @@ export class BarGaugeSuggestionsSupplier {
     // To use show individual row values we also need a string field to give each value a name
     if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 30) {
       list.append({
-        name: 'Bar gauge horizontal basic gauge',
+        name: 'Bar gauge',
         options: {
           reduceOptions: {
             values: true,
@@ -51,7 +51,7 @@ export class BarGaugeSuggestionsSupplier {
       });
 
       list.append({
-        name: 'Bar gauge horizontal retro lcd',
+        name: 'Bar gauge LCD',
         options: {
           reduceOptions: {
             values: true,
@@ -71,7 +71,7 @@ export class BarGaugeSuggestionsSupplier {
       });
     } else {
       list.append({
-        name: 'Bar gauge horizontal basic lcd',
+        name: 'Bar gauge',
         options: {
           displayMode: BarGaugeDisplayMode.Basic,
           orientation: VizOrientation.Horizontal,
@@ -91,7 +91,7 @@ export class BarGaugeSuggestionsSupplier {
       });
 
       list.append({
-        name: 'Bar gauge horizontal retro lcd',
+        name: 'Bar gauge LCD',
         options: {
           displayMode: BarGaugeDisplayMode.Lcd,
           orientation: VizOrientation.Horizontal,
