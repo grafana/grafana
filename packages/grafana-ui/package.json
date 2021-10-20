@@ -102,7 +102,7 @@
     "@types/mock-raf": "1.0.2",
     "@types/node": "10.14.1",
     "@types/papaparse": "5.2.0",
-    "@types/react": "16.9.9",
+    "@types/react": "17.0.30",
     "@types/react-beautiful-dnd": "13.1.1",
     "@types/react-calendar": "^3.4.3",
     "@types/react-color": "3.0.1",
