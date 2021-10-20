@@ -219,6 +219,9 @@ export const Components = {
   TimeZonePicker: {
     container: 'Time zone picker select container',
   },
+  WeekStartPicker: {
+    container: 'Choose starting day of the week',
+  },
   TraceViewer: {
     spanBar: () => '[data-test-id="SpanBar--wrapper"]',
   },
