@@ -78,7 +78,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 
 	// get 1st user's organisation
 	getOrgByIdQuery := &models.GetOrgByIdQuery{Id: users[0].OrgId}
-	err := GetOrgById(getOrgByIdQuery)
+	err := GetOrgById(context.Background(), getOrgByIdQuery)
 	require.NoError(t, err)
 	org := getOrgByIdQuery.Result
 
@@ -102,7 +102,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 
 	// get 2nd user's organisation
 	getOrgByIdQuery = &models.GetOrgByIdQuery{Id: users[1].OrgId}
-	err = GetOrgById(getOrgByIdQuery)
+	err = GetOrgById(context.Background(), getOrgByIdQuery)
 	require.NoError(t, err)
 	org = getOrgByIdQuery.Result
 

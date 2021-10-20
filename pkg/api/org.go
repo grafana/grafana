@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -14,13 +15,18 @@ import (
 )
 
 // GET /api/org
+<<<<<<< HEAD
 func GetCurrentOrg(c *models.ReqContext) response.Response {
 	return getOrgHelper(c.OrgId)
+=======
+func GetOrgCurrent(c *models.ReqContext) response.Response {
+	return getOrgHelper(c.Req.Context(), c.OrgId)
+>>>>>>> 8966c67075 (Add context to org)
 }
 
 // GET /api/orgs/:orgId
 func GetOrgByID(c *models.ReqContext) response.Response {
-	return getOrgHelper(c.ParamsInt64(":orgId"))
+	return getOrgHelper(c.Req.Context(), c.ParamsInt64(":orgId"))
 }
 
 // Get /api/orgs/name/:name
@@ -49,10 +55,14 @@ func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 	return response.JSON(200, &result)
 }
 
-func getOrgHelper(orgID int64) response.Response {
+func getOrgHelper(ctx context.Context, orgID int64) response.Response {
 	query := models.GetOrgByIdQuery{Id: orgID}
 
+<<<<<<< HEAD
 	if err := sqlstore.GetOrgById(&query); err != nil {
+=======
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
+>>>>>>> 8966c67075 (Add context to org)
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Organization not found", err)
 		}
@@ -85,7 +95,11 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext, cmd models.CreateOrgComman
 	}
 
 	cmd.UserId = c.UserId
+<<<<<<< HEAD
 	if err := sqlstore.CreateOrg(&cmd); err != nil {
+=======
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+>>>>>>> 8966c67075 (Add context to org)
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(409, "Organization name taken", err)
 		}
@@ -101,16 +115,16 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext, cmd models.CreateOrgComman
 }
 
 // PUT /api/org
-func UpdateCurrentOrg(c *models.ReqContext, form dtos.UpdateOrgForm) response.Response {
-	return updateOrgHelper(form, c.OrgId)
+func UpdateOrgCurrent(c *models.ReqContext, form dtos.UpdateOrgForm) response.Response {
+	return updateOrgHelper(c.Req.Context(), form, c.OrgId)
 }
 
 // PUT /api/orgs/:orgId
 func UpdateOrg(c *models.ReqContext, form dtos.UpdateOrgForm) response.Response {
-	return updateOrgHelper(form, c.ParamsInt64(":orgId"))
+	return updateOrgHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgHelper(form dtos.UpdateOrgForm, orgID int64) response.Response {
+func updateOrgHelper(ctx context.Context, form dtos.UpdateOrgForm, orgID int64) response.Response {
 	cmd := models.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
 	if err := sqlstore.UpdateOrg(&cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
@@ -129,10 +143,10 @@ func UpdateCurrentOrgAddress(c *models.ReqContext, form dtos.UpdateOrgAddressFor
 
 // PUT /api/orgs/:orgId/address
 func UpdateOrgAddress(c *models.ReqContext, form dtos.UpdateOrgAddressForm) response.Response {
-	return updateOrgAddressHelper(form, c.ParamsInt64(":orgId"))
+	return updateOrgAddressHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
+func updateOrgAddressHelper(ctx context.Context, form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
 	cmd := models.UpdateOrgAddressCommand{
 		OrgId: orgID,
 		Address: models.Address{
@@ -184,7 +198,11 @@ func SearchOrgs(c *models.ReqContext) response.Response {
 		Limit: perPage,
 	}
 
+<<<<<<< HEAD
 	if err := sqlstore.SearchOrgs(&query); err != nil {
+=======
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+>>>>>>> 8966c67075 (Add context to org)
 		return response.Error(500, "Failed to search orgs", err)
 	}
 
