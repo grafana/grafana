@@ -152,8 +152,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   environment: null
   image: grafana/build-container:1.4.3
   name: package
@@ -215,7 +213,7 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - end-to-end-tests-server
+  - package
   image: grafana/build-container:1.4.3
   name: copy-packages-for-docker
 - depends_on:
@@ -430,8 +428,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -517,7 +513,7 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - end-to-end-tests-server
+  - package
   image: grafana/build-container:1.4.3
   name: copy-packages-for-docker
 - depends_on:
@@ -891,8 +887,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -928,7 +922,7 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - end-to-end-tests-server
+  - package
   image: grafana/build-container:1.4.3
   name: copy-packages-for-docker
 - depends_on:
@@ -1307,8 +1301,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   - build-backend-enterprise2
   - test-backend-enterprise2
   environment:
@@ -1348,7 +1340,7 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - end-to-end-tests-server
+  - package
   image: grafana/build-container:1.4.3
   name: copy-packages-for-docker
 - depends_on:
@@ -1456,8 +1448,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   - build-backend-enterprise2
   - test-backend-enterprise2
   environment:
@@ -1841,8 +1831,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1878,7 +1866,7 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - end-to-end-tests-server
+  - package
   image: grafana/build-container:1.4.3
   name: copy-packages-for-docker
 - depends_on:
@@ -2246,8 +2234,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   - build-backend-enterprise2
   - test-backend-enterprise2
   environment:
@@ -2287,7 +2273,7 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - end-to-end-tests-server
+  - package
   image: grafana/build-container:1.4.3
   name: copy-packages-for-docker
 - depends_on:
@@ -2387,8 +2373,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   - build-backend-enterprise2
   - test-backend-enterprise2
   environment:
@@ -2775,8 +2759,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2812,7 +2794,7 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - end-to-end-tests-server
+  - package
   image: grafana/build-container:1.4.3
   name: copy-packages-for-docker
 - depends_on:
@@ -3150,8 +3132,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   - build-backend-enterprise2
   - test-backend-enterprise2
   environment:
@@ -3191,7 +3171,7 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - end-to-end-tests-server
+  - package
   image: grafana/build-container:1.4.3
   name: copy-packages-for-docker
 - depends_on:
@@ -3300,8 +3280,6 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - codespell
-  - shellcheck
   - build-backend-enterprise2
   - test-backend-enterprise2
   environment:
@@ -3507,6 +3485,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 2e6faca0cb0dbf3c14bf3a589a1ffefb0fc50ada0e3adfc10436030d72dae97a
+hmac: e9840e1a4ba7a76a431ea51f37d3ead1d94e099d3057891b8a2dc8dac4c7c284
 
 ...

@@ -514,8 +514,6 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
         'build-plugins',
         'build-backend',
         'build-frontend',
-        'codespell',
-        'shellcheck',
     ]
     if include_enterprise2:
         sfx = '-enterprise2'
@@ -644,7 +642,7 @@ def copy_packages_for_docker_step():
         'name': 'copy-packages-for-docker',
         'image': build_image,
         'depends_on': [
-            'end-to-end-tests-server',
+            'package',
         ],
         'commands': [
             'ls dist/*.tar.gz*',
