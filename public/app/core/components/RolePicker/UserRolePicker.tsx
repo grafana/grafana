@@ -25,6 +25,7 @@ export const UserRolePicker: FC<Props> = ({ builtinRole, userId, orgId, onBuilti
       onBuiltinRoleChange={onBuiltinRoleChange}
       getRoleOptions={getRolesOptions}
       getRoles={getRoles}
+      getBuiltinRoles={getBuiltinRoles}
       disabled={disabled}
     />
   );
@@ -42,6 +43,10 @@ export const getRolesOptions = async (query?: string): Promise<Array<SelectableV
       description: role.description,
     })
   );
+};
+
+export const getBuiltinRoles = (): Promise<{ [key: string]: Role[] }> => {
+  return getBackendSrv().get('/api/access-control/builtin-roles');
 };
 
 export const getUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {

@@ -3,11 +3,13 @@ import { ClickOutsideWrapper } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
+import { Role } from 'app/types';
 
 export interface Props {
   builtinRole: string;
   getRoles: () => Promise<string[]>;
   getRoleOptions: () => Promise<Array<SelectableValue<string>>>;
+  getBuiltinRoles: () => Promise<{ [key: string]: Role[] }>;
   onRolesChange: (newRoles: string[]) => void;
   onBuiltinRoleChange: (newRole: string) => void;
   disabled?: boolean;
@@ -17,6 +19,7 @@ export const RolePicker = ({
   builtinRole,
   getRoles,
   getRoleOptions,
+  getBuiltinRoles,
   onRolesChange,
   onBuiltinRoleChange,
   disabled,
@@ -40,11 +43,17 @@ export const RolePicker = ({
       for (const role of roles) {
         rolesMap[role] = true;
       }
+
+      const builtinRoles = await getBuiltinRoles();
+      const selectedBuiltinRole = builtinRoles[builtinRole];
+      for (const fixedRole of selectedBuiltinRole) {
+        rolesMap[fixedRole.uid] = true;
+      }
       setAppliedRoles(rolesMap);
     }
 
     fetchOptions();
-  }, [getRoles, getRoleOptions]);
+  }, [getRoles, getRoleOptions, getBuiltinRoles, builtinRole]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
