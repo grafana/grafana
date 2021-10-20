@@ -214,7 +214,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   render() {
     const { dashboard } = this.props;
-
     return (
       /**
        * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
