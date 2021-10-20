@@ -56,7 +56,7 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 
 		// find existing dashboard
 		for _, existingDash := range query.Result {
-			if existingDash.Uid == dashboard.Uid {
+			if existingDash.Uid == dashboard.Uid || (dashboard.Uid == "" && existingDash.Slug == dashboard.Slug) {
 				res.DashboardId = existingDash.Id
 				res.Imported = true
 				res.ImportedUri = "db/" + existingDash.Slug
