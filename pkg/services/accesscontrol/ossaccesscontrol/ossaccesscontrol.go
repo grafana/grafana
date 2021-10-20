@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -69,6 +70,21 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	}
 
 	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
+}
+
+// GetUserRoles returns user permissions based on built-in roles
+func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
+	return nil, errors.New("unsupported function") //OSS users will continue to use builtin roles via GetUserPermissions
+}
+
+// CloneUserToServiceAccount creates a service account with permissions based on a user
+func (ac *OSSAccessControlService) CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error) {
+	return nil, errors.New("clone user not implemented yet in service accounts") //Please switch on Enterprise to test this
+}
+
+// Link creates a service account with permissions based on a user
+func (ac *OSSAccessControlService) LinkAPIKeyToServiceAccount(context.Context, *models.ApiKey, *models.User) error {
+	return errors.New("link SA not implemented yet in service accounts") //Please switch on Enterprise to test this
 }
 
 // GetUserPermissions returns user permissions based on built-in roles

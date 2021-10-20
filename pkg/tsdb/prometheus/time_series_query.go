@@ -20,12 +20,12 @@ import (
 
 func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *DatasourceInfo) (*backend.QueryDataResponse, error) {
 	client := dsInfo.promClient
+
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
 
 	queries, err := s.parseTimeSeriesQuery(req, dsInfo)
-
 	if err != nil {
 		return &result, err
 	}
@@ -39,20 +39,21 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
+		response := make(map[PrometheusQueryType]interface{})
+
 		timeRange := apiv1.Range{
 			Step: query.Step,
 			// Align query range to step. It rounds start and end down to a multiple of step.
 			Start: time.Unix(int64(math.Floor((float64(query.Start.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
 			End:   time.Unix(int64(math.Floor((float64(query.End.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
 		}
-		response := make(map[PrometheusQueryType]interface{})
 
 		if query.RangeQuery {
 			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
+				plog.Error("Range query", query.Expr, "failed with", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-				return &result, nil
-
+				continue
 			}
 			response[RangeQueryType] = rangeResponse
 		}
@@ -60,17 +61,19 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		if query.InstantQuery {
 			instantResponse, _, err := client.Query(ctx, query.Expr, query.End)
 			if err != nil {
-				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+				plog.Error("Instant query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				continue
 			}
 			response[InstantQueryType] = instantResponse
 		}
 
-		// For now, we ignore exemplar errors and continue with processing of other results
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
-				exemplarResponse = nil
 				plog.Error("Exemplar query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				continue
 			}
 			response[ExemplarQueryType] = exemplarResponse
 		}
@@ -84,7 +87,6 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			Frames: frames,
 		}
 	}
-
 	return &result, nil
 }
 
