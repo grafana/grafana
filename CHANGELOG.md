@@ -1,3 +1,31 @@
+<!-- 8.2.2 START -->
+
+# 8.2.2 (unreleased)
+
+### Features and enhancements
+
+- **Annotations:** Improve tag search performance. [#40567](https://github.com/grafana/grafana/pull/40567), [@ashharrison90](https://github.com/ashharrison90)
+- **Application:** Make error-template title configurable. [#40310](https://github.com/grafana/grafana/pull/40310), [@benrubson](https://github.com/benrubson)
+- Make cache size metric collection optional. (Enterprise)
+- **Packaging:** Remove ProcSubset option in systemd. [#40339](https://github.com/grafana/grafana/pull/40339), [@kminehart](https://github.com/kminehart)
+- **Prometheus:** Removed autocomplete limit for metrics. [#39363](https://github.com/grafana/grafana/pull/39363), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Request interceptor:** Allow MSSQL's named instances. (Enterprise)
+- **Table:** Improve styling for type icon to make it more distinct from the column / field name. [#40596](https://github.com/grafana/grafana/pull/40596), [@torkelo](https://github.com/torkelo)
+
+### Bug fixes
+
+- **Alerting:** make panel alert tab "create alert" button work with default datasource. [#40334](https://github.com/grafana/grafana/pull/40334), [@domasx2](https://github.com/domasx2)
+- **Explore:** Prevent empty Elasticsearch logs query responses from hiding the logs panel. [#40217](https://github.com/grafana/grafana/pull/40217), [@Elfo404](https://github.com/Elfo404)
+- **Graph:** Fix annotation description not being shown on hover. [#40581](https://github.com/grafana/grafana/pull/40581), [@axelavargas](https://github.com/axelavargas)
+- **Logs:** Fix creating of detected fields for each letter in log line. [#40507](https://github.com/grafana/grafana/pull/40507), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Prometheus:** Fix PromLink button crashing when internal variables used as min step. [#40525](https://github.com/grafana/grafana/pull/40525), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Prometheus:** Fix issue where TCP connections not being reused when querying from Grafana alerting. [#40349](https://github.com/grafana/grafana/pull/40349), [@kminehart](https://github.com/kminehart)
+- **RowsToFields:** Fix issue with field names that are numbers. [#40580](https://github.com/grafana/grafana/pull/40580), [@torkelo](https://github.com/torkelo)
+- **Scale:** Fixes handling of NaN percent when data min = data max. [#40622](https://github.com/grafana/grafana/pull/40622), [@torkelo](https://github.com/torkelo)
+- **Table panel:** Fix filter not working for special characters and allow filter's case sensitivity control. [#40458](https://github.com/grafana/grafana/pull/40458), [@dprokop](https://github.com/dprokop)
+- **ValueMappings:** Fixes value mappings when used for to map row based names for stat/gauge/bargauge/piechart. [#40612](https://github.com/grafana/grafana/pull/40612), [@torkelo](https://github.com/torkelo)
+
+<!-- 8.2.2 END -->
 <!-- 8.2.1 START -->
 
 # 8.2.1 (2021-10-11)
