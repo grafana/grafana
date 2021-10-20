@@ -25,10 +25,9 @@ func TestPluginProxy(t *testing.T) {
 			},
 		}
 
-		setting.SecretKey = "password"
-
+		//setting.SecretKey = "password"
+		secretsService := secretsManager.SetupTestService(t, nil)
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-			secretsService := secretsManager.SetupTestService(t, nil)
 			key, err := secretsService.Encrypt(ctx, []byte("123"), secrets.WithoutScope())
 			if err != nil {
 				return err
@@ -47,6 +46,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -68,6 +68,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsManager.SetupTestService(t, nil),
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -90,6 +91,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsManager.SetupTestService(t, nil),
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -111,6 +113,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsManager.SetupTestService(t, nil),
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{IsAnonymous: true},
 				Context: &macaron.Context{
@@ -145,6 +148,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsManager.SetupTestService(t, nil),
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -176,6 +180,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsManager.SetupTestService(t, nil),
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -223,6 +228,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsManager.SetupTestService(t, nil),
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -241,7 +247,7 @@ func TestPluginProxy(t *testing.T) {
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.AppPluginRoute) *http.Request {
+func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.AppPluginRoute) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
 		route = &plugins.AppPluginRoute{
@@ -250,7 +256,6 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	secretsService := secretsManager.SetupTestService(t, nil)
 	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, secretsService)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
