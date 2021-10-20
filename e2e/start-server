@@ -49,7 +49,6 @@ cp -r devenv $RUNDIR
 echo -e "Starting Grafana Server port $PORT"
 
 $RUNDIR/bin/grafana-server \
-  --homepath=$RUNDIR \
   --pidfile=$RUNDIR/pid \
   cfg:server.http_port=$PORT \
   cfg:server.router_logging=1 \
