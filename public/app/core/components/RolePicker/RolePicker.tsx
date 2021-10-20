@@ -1,4 +1,4 @@
-import React, { FC, FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { RolePickerMenu } from './RolePickerMenu';
@@ -25,9 +25,7 @@ export const RolePicker = ({
 }: Props): JSX.Element => {
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState<Array<SelectableValue<string>>>([]);
-  const [filteredOptions, setFilteredOptions] = useState<Array<SelectableValue<string>>>([]);
   const [appliedRoles, setAppliedRoles] = useState<{ [key: string]: boolean }>({});
-  const [numberOfRoles, setNumberOfRoles] = useState(0);
   const [query, setQuery] = useState('');
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -42,10 +40,8 @@ export const RolePicker = ({
         );
       });
       setRoleOptions(options);
-      setFilteredOptions(options);
 
       const roles = await getRoles();
-      setNumberOfRoles(roles.length);
       const rolesMap = {} as any;
       for (const role of roles) {
         rolesMap[role] = true;
@@ -69,20 +65,13 @@ export const RolePicker = ({
   const onClose = useCallback(() => {
     setOpen(false);
     setQuery('');
-    setFilteredOptions(roleOptions);
-  }, [roleOptions]);
+  }, []);
 
   const onInputChange = (query?: string) => {
     if (query) {
       setQuery(query);
-      setFilteredOptions(
-        roleOptions.filter((option) => {
-          return option.label?.toLowerCase().includes(query.toLowerCase());
-        })
-      );
     } else {
       setQuery('');
-      setFilteredOptions(roleOptions);
     }
   };
 

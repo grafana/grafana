@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { Button, Checkbox, CustomScrollbar, HorizontalGroup, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';

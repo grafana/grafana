@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { useStyles2 } from '@grafana/ui';
