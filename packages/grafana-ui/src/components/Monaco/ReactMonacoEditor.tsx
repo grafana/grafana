@@ -2,8 +2,7 @@ import React from 'react';
 import MonacoEditor, { loader as monacoEditorLoader } from '@monaco-editor/react';
 import defineThemes from './theme';
 import { useTheme2 } from '../../themes';
-import { Monaco } from './types';
-import type { Props } from './reactMonacoEditorProps';
+import type { Monaco, ReactMonacoEditorProps } from './types';
 
 let initalized = false;
 function initMonaco() {
@@ -19,7 +18,7 @@ function initMonaco() {
   initalized = true;
 }
 
-export const ReactMonacoEditor = (props: Props) => {
+export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
   const theme = useTheme2();
   initMonaco();
   const { beforeMount, ...rest } = props;

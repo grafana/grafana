@@ -2,13 +2,13 @@ import React from 'react';
 import { useAsyncDependency } from '../../utils/useAsyncDependency';
 import { ErrorWithStack, LoadingPlaceholder } from '..';
 // we only use import type so it will not be included in the bundle
-import type { Props } from './reactMonacoEditorProps';
+import type { ReactMonacoEditorProps } from './types';
 
 /**
  * @internal
  * Experimental export
  **/
-export const ReactMonacoEditorLazy = (props: Props) => {
+export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
   const { loading, error, dependency } = useAsyncDependency(
     import(/* webpackChunkName: "react-monaco-editor" */ './ReactMonacoEditor')
   );
