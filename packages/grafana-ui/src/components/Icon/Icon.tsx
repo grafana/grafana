@@ -74,7 +74,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
           src={svgPath}
           width={svgWid}
           height={svgHgt}
-          title={title ? title : undefined}
+          title={title}
           className={cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : '')}
           style={style}
         />
