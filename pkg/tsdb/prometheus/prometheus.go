@@ -159,7 +159,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if query.RangeQuery {
 			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+				plog.Error("Range query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				continue
 			}
 			response[RangeQueryType] = rangeResponse
 		}
@@ -167,16 +169,19 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if query.InstantQuery {
 			instantResponse, _, err := client.Query(ctx, query.Expr, query.End)
 			if err != nil {
-				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+				plog.Error("Instant query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				continue
 			}
 			response[InstantQueryType] = instantResponse
 		}
-		// For now, we ignore exemplar errors and continue with processing of other results
+
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
-				exemplarResponse = nil
 				plog.Error("Exemplar query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				continue
 			}
 			response[ExemplarQueryType] = exemplarResponse
 		}
