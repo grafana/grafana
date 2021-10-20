@@ -125,33 +125,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 }
 
-// switch TYPE {
-// 	// We have everything
-// 	case "labelNames":
-// 		labelNamesResponse, _,  err := client.LabelNames(ctx, []string{}, timeRange.Start, timeRange.End)
-// 		if err != nil {
-// 			return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
-// 		}
-// 		response["labelNames"] = labelNamesResponse
-// 	// We miss label
-// 	case "LabelValues":
-// 		labelValuesResponse, _,  err := client.LabelValues(ctx, "", []string{}, timeRange.Start, timeRange.End)
-// 		if err != nil {
-// 			return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
-// 		}
-// 		response["LabelValues"] = labelValuesResponse
-// 	// We miss matchers - metric
-// 	case "series"
-// 		seriesResponse, _,  err := client.Series(ctx, []string{}, timeRange.Start, timeRange.End)
-// 		if err != nil {
-// 			return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
-// 		}
-// 		response["LabelValues"] = labelValuesResponse
-
-// 	default:
-
-// }
-
 func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
 	customMiddlewares := customQueryParametersMiddleware(plog)
 	httpOpts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
