@@ -1,4 +1,4 @@
-DELETE THIS LINE: If `draft = "false"`, then the document is not published. If `date` is earlier than the build date, than the document is not displayed in the build site. For details about meta data, go to https://gohugo.io/documentation/.
+DELETE THIS LINE: If `draft = "true"`, then the document is not published. If `date` is earlier than the build date, than the document is not displayed in the build site. For details about meta data, go to https://gohugo.io/documentation/.
 +++
 draft = "false"
 date = "yyyy-mm-dd"
