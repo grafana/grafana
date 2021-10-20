@@ -382,7 +382,7 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	if resp.StatusCode == http.StatusOK {
+	if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
 		// Slack responds to some requests with a JSON document, that might contain an error
 		rslt := struct {
 			Ok  bool   `json:"ok"`

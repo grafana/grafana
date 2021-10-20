@@ -281,6 +281,12 @@ func TestSendSlackRequest(t *testing.T) {
 			expectError:   false,
 		},
 		{
+			name:          "Success case, ok: true",
+			statusCode:    http.StatusOK,
+			slackResponse: "{\"ok\": true}",
+			expectError:   false,
+		},
+		{
 			name:          "200 status code, error in body",
 			statusCode:    http.StatusOK,
 			slackResponse: `{"ok": false, "error": "test error"}`,
@@ -292,7 +298,8 @@ func TestSendSlackRequest(t *testing.T) {
 		t.Run(test.name, func(tt *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(test.statusCode)
-				w.Write([]byte(test.slackResponse))
+				_, err := w.Write([]byte(test.slackResponse))
+				require.NoError(tt, err)
 			}))
 			req, err := http.NewRequest(http.MethodGet, server.URL, nil)
 			require.NoError(tt, err)
