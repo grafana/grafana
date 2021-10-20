@@ -125,7 +125,9 @@ steps:
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
-  - git reset --hard
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -136,6 +138,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -404,7 +408,9 @@ steps:
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
-  - git reset --hard
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -415,6 +421,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -866,7 +874,9 @@ steps:
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
-  - git reset --hard
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -877,6 +887,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -1252,7 +1264,9 @@ steps:
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
-  - git reset --hard
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -1263,6 +1277,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -1812,7 +1828,9 @@ steps:
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
-  - git reset --hard
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -1823,6 +1841,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -2187,7 +2207,9 @@ steps:
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
-  - git reset --hard
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -2198,6 +2220,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -2742,7 +2766,9 @@ steps:
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
-  - git reset --hard
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -2753,6 +2779,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -3089,7 +3117,9 @@ steps:
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
-  - git reset --hard
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -3100,6 +3130,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -3497,6 +3529,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: a6afb9baae7ecf011d368d43870c625c727d8604563a6daae0c76fac94762886
+hmac: 96d23b144a0a27bce871f7faf782827c17cc132492fe058a7c56768c543078c9
 
 ...
