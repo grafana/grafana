@@ -7,7 +7,7 @@ import { sharedInputStyle } from '@grafana/ui/src/components/Forms/commonStyles'
 import { focusCss } from '@grafana/ui/src/themes/mixins';
 import { DropdownIndicator } from '@grafana/ui/src/components/Select/DropdownIndicator';
 
-interface InputProps {
+interface InputProps extends HTMLProps<HTMLInputElement> {
   role?: string;
   query: string;
   numberOfRoles?: number;
@@ -18,20 +18,20 @@ interface InputProps {
   onClose: () => void;
 }
 
-export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((props, ref) => {
-  const { role, disabled, isFocused, query, numberOfRoles, onOpen, onClose, onQueryChange } = props;
+export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ role, disabled, isFocused, query, numberOfRoles, onOpen, onClose, onQueryChange, ...rest }, ref) => {
 
   const theme = useTheme2();
   const styles = getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false);
 
   const onInputClick = (event: FormEvent<HTMLElement>) => {
-    if (!!isFocused) {
+    if (isFocused) {
       event.preventDefault();
       event.stopPropagation();
-      (ref as any).current.blur();
+      (ref as MutableRefObject<HTMLInputElement>).current.blur();
       onClose();
     } else {
-      (ref as any).current.focus();
+      (ref as MutableRefObject<HTMLInputElement>).current.focus();
       onOpen(event);
     }
   };
@@ -55,6 +55,7 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
       )}
       {!disabled && (
         <input
+            {...rest}
           className={styles.input}
           ref={ref}
           onMouseDown={onInputClick}

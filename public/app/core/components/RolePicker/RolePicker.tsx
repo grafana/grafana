@@ -15,18 +15,18 @@ export interface Props {
   disabled?: boolean;
 }
 
-export const RolePicker: FC<Props> = ({
+export const RolePicker = ({
   builtinRole,
   getRoles,
   getRoleOptions,
   onRolesChange,
   onBuiltinRoleChange,
   disabled,
-}) => {
+}: Props): JSX.Element => {
   const [isOpen, setOpen] = useState(false);
-  const [roleOptions, setRoleOptions] = useState([] as Array<SelectableValue<string>>);
-  const [filteredOptions, setFilteredOptions] = useState([] as Array<SelectableValue<string>>);
-  const [appliedRoles, setAppliedRoles] = useState({} as { [key: string]: boolean });
+  const [roleOptions, setRoleOptions] = useState<Array<SelectableValue<string>>>([]);
+  const [filteredOptions, setFilteredOptions] = useState<Array<SelectableValue<string>>>([]);
+  const [appliedRoles, setAppliedRoles] = useState<{ [key: string]: boolean }>({});
   const [numberOfRoles, setNumberOfRoles] = useState(0);
   const [query, setQuery] = useState('');
 
@@ -101,13 +101,17 @@ export const RolePicker: FC<Props> = ({
           onOpen={onOpen}
           onClose={onClose}
           isFocused={isOpen}
-          numberOfRoles={numberOfRoles}
+          numberOfRoles={Object.keys(appliedRoles).length}
           ref={inputRef}
           disabled={disabled}
         />
         {isOpen && (
           <RolePickerMenu
-            options={filteredOptions}
+            options={
+              query
+                ? roleOptions.filter((option) => option.label?.toLowerCase().includes(query.toLowerCase()))
+                : roleOptions
+            }
             builtInRole={builtinRole}
             appliedRoles={appliedRoles}
             onUpdate={onUpdate}

@@ -149,8 +149,8 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     this.setState({ isChangingRole: false });
   };
 
-  onBuiltinRoleChange = (newRole: string) => {
-    this.props.onOrgRoleChange(this.props.org.orgId, newRole as OrgRole);
+  onBuiltinRoleChange = (newRole: OrgRole) => {
+    this.props.onOrgRoleChange(this.props.org.orgId, newRole);
   };
 
   render() {
@@ -298,7 +298,7 @@ const ExternalUserTooltip: React.FC = () => {
             <a
               className={styles.tooltipItemLink}
               href={'https://grafana.com/docs/grafana/latest/auth'}
-              rel="noreferrer"
+              rel="noreferrer noopener"
               target="_blank"
             >
               Grafana authentication docs

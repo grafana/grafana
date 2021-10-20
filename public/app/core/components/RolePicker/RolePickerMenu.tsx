@@ -14,17 +14,17 @@ interface RolePickerMenuProps {
   onClear?: () => void;
 }
 
-export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
+export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
   const { builtInRole, options, appliedRoles, onUpdate, onClear } = props;
 
-  const [selectedOptions, setSelectedOptions] = useState({} as any);
+  const [selectedOptions, setSelectedOptions] = useState<SelectableValue>({});
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState(builtInRole);
 
   useEffect(() => {
-    const initialSelectedOptions = {} as any;
+    const initialSelectedOptions: SelectableValue = {};
     for (const option of options) {
       if (option.value && appliedRoles[option.value]) {
         initialSelectedOptions[option.value] = option;
@@ -132,7 +132,7 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
 
 SelectMenuOptions.displayName = 'SelectMenuOptions';
 
-export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     menu: css`
       max-height: 400px;

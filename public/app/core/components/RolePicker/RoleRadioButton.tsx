@@ -12,10 +12,9 @@ interface RoleRadioButtonProps {
 
 export const RoleRadioButton: FC<RoleRadioButtonProps> = ({
   children,
-  active = false,
+  checked = false,
   onChange,
   id,
-  name = undefined,
 }) => {
   const styles = useStyles2(getStyles);
 
