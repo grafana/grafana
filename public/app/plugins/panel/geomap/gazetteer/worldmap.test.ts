@@ -10,7 +10,7 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-describe('Placename lookups', () => {
+describe('Placename lookup from worldmap format', () => {
   beforeEach(() => {
     backendResults = { hello: 'world' };
   });

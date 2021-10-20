@@ -45,6 +45,15 @@ func removeRoleHelper(role string) {
 	}
 }
 
+// extractRawPermissionsHelper extracts action and scope fields only from a permission slice
+func extractRawPermissionsHelper(perms []*accesscontrol.Permission) []*accesscontrol.Permission {
+	res := make([]*accesscontrol.Permission, len(perms))
+	for i, p := range perms {
+		res[i] = &accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
+	}
+	return res
+}
+
 type evaluatingPermissionsTestCase struct {
 	desc       string
 	user       userTestCase
@@ -487,6 +496,88 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 						fmt.Sprintf("role %s should have been assigned to %s", registration.Role.Name, br))
 				}
 			}
+		})
+	}
+}
+
+func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
+	testUser := &models.SignedInUser{
+		UserId:  2,
+		OrgId:   3,
+		OrgName: "TestOrg",
+		OrgRole: models.ROLE_VIEWER,
+		Login:   "testUser",
+		Name:    "Test User",
+		Email:   "testuser@example.org",
+	}
+	registration := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			UID:         "fixed:test:test",
+			Name:        "fixed:test:test",
+			Description: "Test role",
+			Permissions: []accesscontrol.Permission{},
+		},
+		Grants: []string{"Viewer"},
+	}
+	tests := []struct {
+		name     string
+		user     *models.SignedInUser
+		rawPerm  accesscontrol.Permission
+		wantPerm accesscontrol.Permission
+		wantErr  bool
+	}{
+		{
+			name:     "Translate orgs:current",
+			user:     testUser,
+			rawPerm:  accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:current"},
+			wantPerm: accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:id:3"},
+			wantErr:  false,
+		},
+		{
+			name:     "Translate users:self",
+			user:     testUser,
+			rawPerm:  accesscontrol.Permission{Action: "users:read", Scope: "users:self"},
+			wantPerm: accesscontrol.Permission{Action: "users:read", Scope: "users:id:2"},
+			wantErr:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Remove any inserted role after the test case has been run
+			t.Cleanup(func() {
+				removeRoleHelper(registration.Role.Name)
+			})
+
+			// Setup
+			ac := &OSSAccessControlService{
+				Cfg:           setting.NewCfg(),
+				UsageStats:    &usagestats.UsageStatsMock{T: t},
+				Log:           log.New("accesscontrol-test"),
+				registrations: accesscontrol.RegistrationList{},
+				scopeResolver: accesscontrol.NewScopeResolver(),
+			}
+			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+
+			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
+			err := ac.DeclareFixedRoles(registration)
+			require.NoError(t, err)
+
+			err = ac.RegisterFixedRoles()
+			require.NoError(t, err)
+
+			// Test
+			userPerms, err := ac.GetUserPermissions(context.TODO(), tt.user)
+			if tt.wantErr {
+				assert.Error(t, err, "Expected an error with GetUserPermissions.")
+				return
+			}
+			require.NoError(t, err, "Did not expect an error with GetUserPermissions.")
+
+			rawUserPerms := extractRawPermissionsHelper(userPerms)
+
+			assert.Contains(t, rawUserPerms, &tt.wantPerm, "Expected resolution of raw permission")
+			assert.NotContains(t, rawUserPerms, &tt.rawPerm, "Expected raw permission to have been resolved")
 		})
 	}
 }

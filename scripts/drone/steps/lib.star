@@ -388,7 +388,7 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'lint-frontend',
+            'initialize',
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
@@ -1010,6 +1010,9 @@ def ensure_cuetsified_step():
             'validate-scuemata',
         ],
         'commands': [
+            '# Make sure the git tree is clean.',
+            '# Stashing changes, since packages that were produced in build-backend step are needed.',
+            'git stash',
             './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
             '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
             '# It is required that the generated Typescript be in sync with the input CUE files.',
@@ -1017,5 +1020,7 @@ def ensure_cuetsified_step():
             './node_modules/.bin/eslint . --ext .gen.ts --fix',
             '# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result.',
             './scripts/clean-git-or-error.sh',
+            '# Un-stash changes.',
+            'git stash pop',
         ],
     }
