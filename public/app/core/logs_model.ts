@@ -531,8 +531,6 @@ function getLogVolumeFieldConfig(level: LogLevel, levels: number) {
     custom: {
       drawStyle: GraphDrawStyle.Bars,
       barAlignment: BarAlignment.Center,
-      barWidthFactor: 0.9,
-      barMaxWidth: 5,
       lineColor: color,
       pointColor: color,
       fillColor: color,
