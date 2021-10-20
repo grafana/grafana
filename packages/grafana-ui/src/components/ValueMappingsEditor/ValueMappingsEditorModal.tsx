@@ -83,11 +83,9 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
 
   // Start with an empty row
   useEffect(() => {
-    console.log('INITALIZE', value);
     if (!value?.length) {
       onAddValueMapping({ value: MappingType.ValueToText });
     }
-    // componentDidMount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
