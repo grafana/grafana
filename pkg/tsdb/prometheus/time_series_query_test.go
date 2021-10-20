@@ -13,7 +13,7 @@ import (
 
 var now = time.Now()
 
-func TestPrometheus_formatLeged(t *testing.T) {
+func TestPrometheus_timeSeriesQuery_formatLeged(t *testing.T) {
 	t.Run("converting metric name", func(t *testing.T) {
 		metric := map[p.LabelName]p.LabelValue{
 			p.LabelName("app"):    p.LabelValue("backend"),
@@ -53,7 +53,7 @@ func TestPrometheus_formatLeged(t *testing.T) {
 	})
 }
 
-func TestPrometheus_parseQuery(t *testing.T) {
+func TestPrometheus_timeSeriesQuery_parseTimeSeriesQueryQuery(t *testing.T) {
 	service := Service{
 		intervalCalculator: intervalv2.NewCalculator(),
 	}
@@ -71,7 +71,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
@@ -90,7 +90,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*15, models[0].Step)
 	})
@@ -109,7 +109,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*20, models[0].Step)
 	})
@@ -128,7 +128,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
 	})
@@ -149,7 +149,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		dsInfo := &DatasourceInfo{
 			TimeInterval: "240s",
 		}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*4, models[0].Step)
 	})
@@ -168,7 +168,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", models[0].Expr)
 	})
@@ -187,7 +187,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]})", models[0].Expr)
 	})
@@ -206,7 +206,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]}) + rate(ALERTS{job=\"test\" [2m]})", models[0].Expr)
 	})
@@ -225,7 +225,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800s]})", models[0].Expr)
 	})
@@ -244,7 +244,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800]})", models[0].Expr)
 	})
@@ -263,7 +263,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800000]})", models[0].Expr)
 	})
@@ -282,7 +282,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [1m]})", models[0].Expr)
 	})
@@ -302,7 +302,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, true, models[0].RangeQuery)
 	})
@@ -323,7 +323,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, true, models[0].RangeQuery)
 		require.Equal(t, true, models[0].InstantQuery)
@@ -343,13 +343,13 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(query, dsInfo)
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, true, models[0].RangeQuery)
 	})
 }
 
-func TestPrometheus_parseResponse(t *testing.T) {
+func TestPrometheus_timeSeriesQuery_parseTimeSeriesResponse(t *testing.T) {
 	t.Run("exemplars response should be sampled and parsed normally", func(t *testing.T) {
 		value := make(map[PrometheusQueryType]interface{})
 		exemplars := []apiv1.ExemplarQueryResult{
@@ -363,22 +363,22 @@ func TestPrometheus_parseResponse(t *testing.T) {
 					{
 						Labels:    p.LabelSet{"traceID": "test1"},
 						Value:     0.003535405,
-						Timestamp: p.TimeFromUnixNano(time.Now().Add(-2 * time.Minute).UnixNano()),
+						Timestamp: p.TimeFromUnixNano(now.Add(-2 * time.Minute).UnixNano()),
 					},
 					{
 						Labels:    p.LabelSet{"traceID": "test2"},
 						Value:     0.005555605,
-						Timestamp: p.TimeFromUnixNano(time.Now().Add(-4 * time.Minute).UnixNano()),
+						Timestamp: p.TimeFromUnixNano(now.Add(-4 * time.Minute).UnixNano()),
 					},
 					{
 						Labels:    p.LabelSet{"traceID": "test3"},
 						Value:     0.007545445,
-						Timestamp: p.TimeFromUnixNano(time.Now().Add(-6 * time.Minute).UnixNano()),
+						Timestamp: p.TimeFromUnixNano(now.Add(-6 * time.Minute).UnixNano()),
 					},
 					{
 						Labels:    p.LabelSet{"traceID": "test4"},
 						Value:     0.009545445,
-						Timestamp: p.TimeFromUnixNano(time.Now().Add(-7 * time.Minute).UnixNano()),
+						Timestamp: p.TimeFromUnixNano(now.Add(-7 * time.Minute).UnixNano()),
 					},
 				},
 			},
@@ -388,7 +388,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseResponse(value, query)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		// Test fields
@@ -422,7 +422,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseResponse(value, query)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -452,7 +452,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseResponse(value, query)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -479,7 +479,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 		}
 
 		query := &PrometheusQuery{}
-		res, err := parseResponse(value, query)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
