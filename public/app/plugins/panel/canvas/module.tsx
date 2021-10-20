@@ -14,7 +14,7 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
     builder.addBooleanSwitch({
       path: 'inlineEditing',
       name: 'Inline editing',
-      description: 'Enable editing while the panel is in dashboard mode',
+      description: 'Enable editing the panel directly',
       defaultValue: true,
     });
 
