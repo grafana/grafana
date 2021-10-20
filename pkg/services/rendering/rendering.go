@@ -219,10 +219,6 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 		rs.renderCSVAction = rs.renderCSVViaPlugin
 	}
 
-	rs.log.Debug("No image renderer found/installed. " +
-		"For image rendering support please install the grafana-image-renderer plugin. " +
-		"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
-
 	return rs.renderAction(ctx, renderKey, opts)
 }
 
