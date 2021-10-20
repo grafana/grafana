@@ -5,9 +5,9 @@ import { Counter, Icon, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
-import { getLocationSrv } from '@grafana/runtime';
-import { categoryParam } from './OptionsPaneOptions';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { getLocationSrv } from '@grafana/runtime';
+
 export interface OptionsPaneCategoryProps {
   id: string;
   title?: string;
@@ -20,6 +20,8 @@ export interface OptionsPaneCategoryProps {
   children: ReactNode;
 }
 
+const CATEGORY_PARAM_NAME = 'showCategory';
+
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
     const initialIsExpanded = isOpenDefault !== false;
@@ -27,23 +29,31 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       isExpanded: initialIsExpanded,
     });
 
-    const isSelected = useQueryParams()[0][categoryParam] === id;
-    // `savedState` can be undefined by typescript, so we have to handle that case
+    const [queryParams] = useQueryParams();
+    const isSelected = queryParams[CATEGORY_PARAM_NAME] === id;
     const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
+    const [toggleTime, setToggleTime] = useState<number>(0);
     const styles = useStyles2(getStyles);
     const ref = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
+      const elapsed = Date.now() - toggleTime;
       if ((!isExpanded && forceOpen && forceOpen > 0) || isSelected) {
         setIsExpanded(true);
-        ref.current?.scrollIntoView();
+        // scroll on query change and not toggle change
+        if (elapsed > 100 && ref.current) {
+          ref.current.scrollIntoView();
+        }
       }
-    }, [forceOpen, isExpanded, isSelected]);
+    }, [forceOpen, isExpanded, isSelected, toggleTime]);
 
     const onToggle = useCallback(() => {
-      // TODO: set the route, listening to changes in the url, make sure the element is visible
+      setToggleTime(Date.now());
+      // TODO: this call will cause the panel to not close on the first click
+      // updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? null : id });
       getLocationSrv().update({
         query: {
-          [categoryParam]: isExpanded ? undefined : id,
+          [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
         },
         partial: true,
       });
@@ -88,7 +98,6 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
         className={boxStyles}
         data-testid="options-category"
         aria-label={selectors.components.OptionsGroup.group(id)}
-        data-optioncategory={id}
         ref={ref}
       >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
