@@ -159,6 +159,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if query.RangeQuery {
 			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
+				plog.Error("Range query", query.Expr, "failed with", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
 			}
@@ -168,6 +169,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if query.InstantQuery {
 			instantResponse, _, err := client.Query(ctx, query.Expr, query.End)
 			if err != nil {
+				plog.Error("Instant query", query.Expr, "failed with", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
 			}
@@ -177,6 +179,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
+				plog.Error("Exemplar query", query.Expr, "failed with", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
 			}
