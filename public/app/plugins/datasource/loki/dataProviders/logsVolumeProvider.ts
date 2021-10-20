@@ -6,15 +6,13 @@ import {
   FieldType,
   getLogLevelFromKey,
   Labels,
-  LoadingState,
   LogLevel,
-  toDataFrame,
 } from '@grafana/data';
 import { LokiQuery } from '../types';
-import { Observable, throwError, timeout } from 'rxjs';
+import { Observable } from 'rxjs';
 import { cloneDeep } from 'lodash';
 import LokiDatasource, { isMetricsQuery } from '../datasource';
-import { aggregateRawLogsVolume } from '../../../../core/logs_model';
+import { queryLogsVolume } from '../../../../core/logs_model';
 
 /**
  * Logs volume query may be expensive as it requires counting all logs in the selected range. If such query
@@ -36,56 +34,11 @@ export function createLokiLogsVolumeProvider(
         expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
       };
     });
-
-  return new Observable((observer) => {
-    let rawLogsVolume: DataFrame[] = [];
-    observer.next({
-      state: LoadingState.Loading,
-      error: undefined,
-      data: [],
-    });
-
-    const subscription = datasource
-      .query(logsVolumeRequest)
-      .pipe(
-        timeout({
-          each: TIMEOUT,
-          with: () => throwError(new Error('Request timed-out. Please make your query more specific and try again.')),
-        })
-      )
-      .subscribe({
-        complete: () => {
-          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, extractLevel);
-          if (aggregatedLogsVolume[0]) {
-            aggregatedLogsVolume[0].meta = {
-              custom: {
-                targets: dataQueryRequest.targets,
-                absoluteRange: { from: dataQueryRequest.range.from.valueOf(), to: dataQueryRequest.range.to.valueOf() },
-              },
-            };
-          }
-          observer.next({
-            state: LoadingState.Done,
-            error: undefined,
-            data: aggregatedLogsVolume,
-          });
-          observer.complete();
-        },
-        next: (dataQueryResponse: DataQueryResponse) => {
-          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
-        },
-        error: (error) => {
-          observer.next({
-            state: LoadingState.Error,
-            error: error,
-            data: [],
-          });
-          observer.error(error);
-        },
-      });
-    return () => {
-      subscription?.unsubscribe();
-    };
+  return queryLogsVolume(datasource, logsVolumeRequest, {
+    timeout: TIMEOUT,
+    extractLevel,
+    range: dataQueryRequest.range,
+    targets: dataQueryRequest.targets,
   });
 }
 

@@ -1,16 +1,9 @@
-import {
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
-  getLogLevelFromKey,
-  LoadingState,
-  toDataFrame,
-} from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, getLogLevelFromKey } from '@grafana/data';
 import { ElasticsearchQuery } from '../types';
 import { Observable } from 'rxjs';
 import { cloneDeep } from 'lodash';
 import { ElasticDatasource } from '../datasource';
-import { aggregateRawLogsVolume } from '../../../../core/logs_model';
+import { queryLogsVolume } from '../../../../core/logs_model';
 
 export function createElasticSearchLogsVolumeProvider(
   datasource: ElasticDatasource,
@@ -50,48 +43,9 @@ export function createElasticSearchLogsVolumeProvider(
     return logsVolumeQuery;
   });
 
-  return new Observable((observer) => {
-    let rawLogsVolume: DataFrame[] = [];
-    observer.next({
-      state: LoadingState.Loading,
-      error: undefined,
-      data: [],
-    });
-
-    const subscription = datasource.query(logsVolumeRequest).subscribe({
-      complete: () => {
-        const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, (dataFrame) =>
-          getLogLevelFromKey(dataFrame.name || '')
-        );
-        if (aggregatedLogsVolume[0]) {
-          aggregatedLogsVolume[0].meta = {
-            custom: {
-              targets: dataQueryRequest.targets,
-              absoluteRange: { from: dataQueryRequest.range.from.valueOf(), to: dataQueryRequest.range.to.valueOf() },
-            },
-          };
-        }
-        observer.next({
-          state: LoadingState.Done,
-          error: undefined,
-          data: aggregatedLogsVolume,
-        });
-        observer.complete();
-      },
-      next: (dataQueryResponse: DataQueryResponse) => {
-        rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
-      },
-      error: (error) => {
-        observer.next({
-          state: LoadingState.Error,
-          error: error,
-          data: [],
-        });
-        observer.error(error);
-      },
-    });
-    return () => {
-      subscription?.unsubscribe();
-    };
+  return queryLogsVolume(datasource, logsVolumeRequest, {
+    range: dataQueryRequest.range,
+    targets: dataQueryRequest.targets,
+    extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
   });
 }

@@ -6,6 +6,9 @@ import {
   AbsoluteTimeRange,
   DataFrame,
   DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
   dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
@@ -19,6 +22,7 @@ import {
   getLogLevel,
   getLogLevelFromKey,
   Labels,
+  LoadingState,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
@@ -29,10 +33,12 @@ import {
   rangeUtil,
   sortInAscendingOrder,
   textUtil,
+  TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+import { Observable, throwError, timeout } from 'rxjs';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -601,4 +607,69 @@ function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFram
   });
 
   return aggregatedDataFrame;
+}
+
+const LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT = 60000;
+
+type LogsVolumeQueryOptions<T extends DataQuery> = {
+  timeout?: number;
+  extractLevel: (dataFrame: DataFrame) => LogLevel;
+  targets: T[];
+  range: TimeRange;
+};
+
+export function queryLogsVolume<T extends DataQuery>(
+  datasource: DataSourceApi<T, any, any>,
+  logsVolumeRequest: DataQueryRequest<T>,
+  options: LogsVolumeQueryOptions<T>
+): Observable<DataQueryResponse> {
+  return new Observable((observer) => {
+    let rawLogsVolume: DataFrame[] = [];
+    observer.next({
+      state: LoadingState.Loading,
+      error: undefined,
+      data: [],
+    });
+
+    const subscription = (datasource.query(logsVolumeRequest) as Observable<DataQueryResponse>)
+      .pipe(
+        timeout({
+          each: options.timeout || LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT,
+          with: () => throwError(new Error('Request timed-out. Please make your query more specific and try again.')),
+        })
+      )
+      .subscribe({
+        complete: () => {
+          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
+          if (aggregatedLogsVolume[0]) {
+            aggregatedLogsVolume[0].meta = {
+              custom: {
+                targets: options.targets,
+                absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              },
+            };
+          }
+          observer.next({
+            state: LoadingState.Done,
+            error: undefined,
+            data: aggregatedLogsVolume,
+          });
+          observer.complete();
+        },
+        next: (dataQueryResponse: DataQueryResponse) => {
+          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+        },
+        error: (error) => {
+          observer.next({
+            state: LoadingState.Error,
+            error: error,
+            data: [],
+          });
+          observer.error(error);
+        },
+      });
+    return () => {
+      subscription?.unsubscribe();
+    };
+  });
 }
