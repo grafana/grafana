@@ -48,6 +48,11 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 			return nil, err
 		}
 
+		if dashboard.Uid == "" {
+			plog.Info(fmt.Sprintf("Ignoring dashboard %s from %s as Uid is missing", dashboard.Slug, include.Path))
+			continue
+		}
+
 		res := &plugins.PluginDashboardInfoDTO{}
 		res.Path = include.Path
 		res.PluginId = plugin.Id
@@ -56,7 +61,7 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 
 		// find existing dashboard
 		for _, existingDash := range query.Result {
-			if existingDash.Uid == dashboard.Uid || (dashboard.Uid == "" && existingDash.Slug == dashboard.Slug) {
+			if existingDash.Uid == dashboard.Uid {
 				res.DashboardId = existingDash.Id
 				res.Imported = true
 				res.ImportedUri = "db/" + existingDash.Slug
