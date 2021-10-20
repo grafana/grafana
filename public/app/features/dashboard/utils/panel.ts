@@ -26,7 +26,7 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
   // confirm deletion
   if (ask !== false) {
     const text2 =
-      panel.alert && !config.featureToggles.ngalert
+      panel.alert && !config.unifiedAlertingEnabled
         ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
         : undefined;
     const confirmText = panel.alert ? 'YES' : undefined;
