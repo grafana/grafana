@@ -37,7 +37,7 @@ export class CanvasPanel extends Component<Props, State> {
 
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
-    this.scene = new Scene(this.props.options.root, this.onUpdateScene);
+    this.scene = new Scene(this.props.options.root, this.props.options.inlineEditing, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
 
@@ -97,6 +97,7 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   shouldComponentUpdate(nextProps: Props) {
+    console.log('should component update being called, needs reload?', this.needsReload);
     const { width, height, data } = this.props;
     let changed = false;
 
@@ -109,14 +110,20 @@ export class CanvasPanel extends Component<Props, State> {
       changed = true;
     }
 
-    // After editing, the options are valid, but the scene was in a different panel
-    if (this.needsReload && this.props.options !== nextProps.options) {
+    // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
+    const shouldUpdateSceneAndPanel =
+      (this.needsReload && this.props.options !== nextProps.options) ||
+      this.props.options.inlineEditing !== nextProps.options.inlineEditing;
+    if (shouldUpdateSceneAndPanel) {
       this.needsReload = false;
-      this.scene.load(nextProps.options.root);
+      this.scene.load(nextProps.options.root, nextProps.options.inlineEditing);
+      console.log('scene being reloaded');
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
     }
+
+    console.log('CanvasPanel being updated?', changed);
 
     return changed;
   }
