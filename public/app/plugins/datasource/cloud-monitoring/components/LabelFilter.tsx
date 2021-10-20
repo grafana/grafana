@@ -77,9 +77,9 @@ export const LabelFilter: FunctionComponent<Props> = ({
       <VerticalGroup spacing="xs" width="auto">
         {filters.map(({ key, operator, value, condition }, index) => {
           // Add the current key and value as options if they are manually entered
-          const keyPresent = options.find((op) => {
+          const keyPresent = options.some((op) => {
             if (op.options) {
-              return options.find((opp) => opp.label === key);
+              return options.some((opp) => opp.label === key);
             }
             return op.label === key;
           });
@@ -90,7 +90,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
           const valueOptions = labels.hasOwnProperty(key)
             ? [variableOptionGroup, ...labels[key].map(toOption)]
             : [variableOptionGroup];
-          const valuePresent = valueOptions.find((op) => {
+          const valuePresent = valueOptions.some((op) => {
             return op.label === value;
           });
           if (!valuePresent) {
