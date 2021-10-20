@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {FormEvent, useEffect, useState} from 'react';
 import { css, cx } from '@emotion/css';
 import { Button, Checkbox, CustomScrollbar, HorizontalGroup, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -142,14 +142,20 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
     const styles = getSelectStyles(theme);
     const customStyles = useStyles2(getStyles);
 
+    const onChange = (event: FormEvent<HTMLElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onSelect(data);
+    };
+
     return (
       <div
         ref={ref}
         className={cx(styles.option, isFocused && styles.optionFocused)}
         aria-label="Role picker option"
-        onClick={() => onSelect(data)}
+        onClick={onChange}
       >
-        <Checkbox value={isSelected} className={customStyles.menuOptionCheckbox} />
+        <Checkbox value={isSelected} className={customStyles.menuOptionCheckbox} onChange={onChange} />
         {data.icon && <Icon name={data.icon as IconName} className={styles.optionIcon} />}
         {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} />}
         <div className={styles.optionBody}>
