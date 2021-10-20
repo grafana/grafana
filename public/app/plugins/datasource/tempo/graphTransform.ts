@@ -10,6 +10,9 @@ import {
 } from '@grafana/data';
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
 
+/**
+ * Row in a trace dataFrame
+ */
 interface Row {
   traceID: string;
   spanID: string;
@@ -150,8 +153,8 @@ export function mapPromMetricsToServiceMap(responses: DataQueryResponse[], range
   const [totalsDFView, secondsDFView] = getMetricFrames(responses);
 
   // First just collect data from the metrics into a map with nodes and edges as keys
-  const nodesMap: Record<string, any> = {};
-  const edgesMap: Record<string, any> = {};
+  const nodesMap: Record<string, ServiceMapStatistics> = {};
+  const edgesMap: Record<string, EdgeObject> = {};
   // At this moment we don't have any error/success or other counts so we just use these 2
   collectMetricData(totalsDFView, 'total', totalsMetric, nodesMap, edgesMap);
   collectMetricData(secondsDFView, 'seconds', secondsMetric, nodesMap, edgesMap);
@@ -191,6 +194,16 @@ function getMetricFrames(responses: DataQueryResponse[]) {
   return [totalsDFView, secondsDFView];
 }
 
+type ServiceMapStatistics = {
+  total?: number;
+  seconds?: number;
+};
+
+type EdgeObject = ServiceMapStatistics & {
+  source: string;
+  target: string;
+};
+
 /**
  * Collect data from a metric into a map of nodes and edges. The metric data is modeled as counts of metric per edge
  * which is a pair of client-server nodes. This means we convert each row of the metric 1-1 to edges and than we assign
@@ -204,10 +217,10 @@ function getMetricFrames(responses: DataQueryResponse[]) {
  */
 function collectMetricData(
   frame: DataFrameView,
-  stat: 'total' | 'seconds',
+  stat: keyof ServiceMapStatistics,
   metric: string,
-  nodesMap: Record<string, any>,
-  edgesMap: Record<string, any>
+  nodesMap: Record<string, ServiceMapStatistics>,
+  edgesMap: Record<string, EdgeObject>
 ) {
   // The name of the value column is in this format
   // TODO figure out if it can be changed
@@ -218,24 +231,32 @@ function collectMetricData(
     const edgeId = `${row.client}_${row.server}`;
 
     if (!edgesMap[edgeId]) {
+      // Create edge as it does not exist yet
       edgesMap[edgeId] = {
         target: row.server,
         source: row.client,
         [stat]: row[valueName],
       };
     } else {
+      // Add stat to edge
+      // We are adding the values if exists but that should not happen in general as there should be single row for
+      // an edge.
       edgesMap[edgeId][stat] = (edgesMap[edgeId][stat] || 0) + row[valueName];
     }
 
     if (!nodesMap[row.server]) {
+      // Create node for server
       nodesMap[row.server] = {
         [stat]: row[valueName],
       };
     } else {
+      // Add stat to server node. Sum up values if there are multiple edges targeting this server node.
       nodesMap[row.server][stat] = (nodesMap[row.server][stat] || 0) + row[valueName];
     }
 
     if (!nodesMap[row.client]) {
+      // Create the client node but don't add the stat as edge stats are attributed to the server node. This means for
+      // example that the number of requests in a node show how many requests it handled not how many it generated.
       nodesMap[row.client] = {
         [stat]: 0,
       };
@@ -244,8 +265,8 @@ function collectMetricData(
 }
 
 function convertToDataFrames(
-  nodesMap: Record<string, any>,
-  edgesMap: Record<string, any>,
+  nodesMap: Record<string, ServiceMapStatistics>,
+  edgesMap: Record<string, EdgeObject>,
   range: TimeRange
 ): [DataFrame, DataFrame] {
   const rangeMs = range.to.valueOf() - range.from.valueOf();
@@ -257,7 +278,7 @@ function convertToDataFrames(
       title: nodeId,
       // NaN will not be shown in the node graph. This happens for a root client node which did not process
       // any requests itself.
-      mainStat: node.total ? (node.seconds / node.total) * 1000 : Number.NaN,
+      mainStat: node.total ? (node.seconds! / node.total) * 1000 : Number.NaN,
       secondaryStat: node.total ? node.total / (rangeMs / (1000 * 60)) : Number.NaN,
     });
   }
@@ -268,7 +289,7 @@ function convertToDataFrames(
       source: edge.source,
       target: edge.target,
       mainStat: edge.total,
-      secondaryStat: edge.total ? (edge.seconds / edge.total) * 1000 : Number.NaN,
+      secondaryStat: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN,
     });
   }
 
