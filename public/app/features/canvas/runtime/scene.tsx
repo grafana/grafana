@@ -46,15 +46,11 @@ export class Scene {
   selecto?: Selecto;
   div?: HTMLDivElement;
 
-  constructor(
-    cfg: CanvasGroupOptions,
-    isInlineEditingEnabled: boolean,
-    public onSave: (cfg: CanvasGroupOptions) => void
-  ) {
-    this.root = this.load(cfg, isInlineEditingEnabled);
+  constructor(cfg: CanvasGroupOptions, enableEditing: boolean, public onSave: (cfg: CanvasGroupOptions) => void) {
+    this.root = this.load(cfg, enableEditing);
   }
 
-  load(cfg: CanvasGroupOptions, isInlineEditingEnabled: boolean) {
+  load(cfg: CanvasGroupOptions, enableEditing: boolean) {
     this.root = new RootElement(
       cfg ?? {
         type: 'group',
@@ -70,7 +66,7 @@ export class Scene {
     });
 
     setTimeout(() => {
-      if (this.div && isInlineEditingEnabled) {
+      if (this.div && enableEditing) {
         this.initMoveable();
       }
     }, 100);
