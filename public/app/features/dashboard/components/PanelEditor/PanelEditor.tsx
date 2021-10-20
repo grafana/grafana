@@ -271,21 +271,22 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     const { panel, dashboard, plugin, tab } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
     const isOnlyPanel = tabs.length === 0;
-    const panes: React.ReactNode[] = [this.renderPanel(styles, isOnlyPanel)];
+    const panelPane = this.renderPanel(styles, isOnlyPanel);
 
-    if (tabs.length > 0) {
-      panes.push(
-        <div
-          className={styles.tabsWrapper}
-          aria-label={selectors.components.PanelEditor.DataPane.content}
-          key="panel-editor-tabs"
-        >
-          <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
-        </div>
-      );
+    if (tabs.length === 0) {
+      return panelPane;
     }
 
-    return panes;
+    return [
+      panelPane,
+      <div
+        className={styles.tabsWrapper}
+        aria-label={selectors.components.PanelEditor.DataPane.content}
+        key="panel-editor-tabs"
+      >
+        <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
+      </div>,
+    ];
   }
 
   renderTemplateVariables(styles: EditorStyles) {

@@ -4,7 +4,7 @@ import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel, SelectableValue 
 import { css } from '@emotion/css';
 import { VizTypeChangeDetails } from './types';
 import { VisualizationPreview } from './VisualizationPreview';
-import { getAllSuggestions } from './getAllSuggestions';
+import { getAllSuggestions } from '../../state/getAllSuggestions';
 import { useAsync, useLocalStorage } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 

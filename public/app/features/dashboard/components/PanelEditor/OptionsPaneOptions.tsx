@@ -13,6 +13,7 @@ import { getRecentOptions } from './state/getRecentOptions';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
 import { OptionPaneRenderProps } from './types';
+import { getOptionSuggestions } from 'app/features/panel/state/getOptionSuggestions';
 
 export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
   const { plugin, dashboard, panel } = props;
@@ -32,9 +33,16 @@ export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
     [panel.configRev, props.data, props.instanceState]
   );
 
+  const optionSuggestions = useMemo(
+    () => getOptionSuggestions(plugin, panel, props.data),
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [plugin, panel, panel.configRev, props.data]
+  );
+
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
-  const optionRadioFilters = useMemo(getOptionRadioFilters, []);
+  const optionRadioFilters = getOptionRadioFilters(optionSuggestions.length > 0);
   const allOptions = isPanelModelLibraryPanel(panel)
     ? [libraryPanelOptions, panelFrameOptions, ...vizOptions]
     : [panelFrameOptions, ...vizOptions];
@@ -79,6 +87,9 @@ export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
           mainBoxElements.push(override.render());
         }
         break;
+      case OptionFilter.Presets:
+        mainBoxElements.push(<div></div>);
+        break;
       case OptionFilter.Recent:
         mainBoxElements.push(
           <OptionsPaneCategory id="Recent options" title="Recent options" key="Recent options" forceOpen={1}>
@@ -96,7 +107,7 @@ export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
         <div className={styles.formRow}>
-          <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
+          <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search...'} />
         </div>
         {showSearchRadioButtons && (
           <div className={styles.formRow}>
@@ -113,19 +124,24 @@ export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
   );
 };
 
-function getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
-  return [
+function getOptionRadioFilters(hasPresets: boolean): Array<SelectableValue<OptionFilter>> {
+  const list = [
     { label: OptionFilter.All, value: OptionFilter.All },
     { label: OptionFilter.Overrides, value: OptionFilter.Overrides },
-    // { label: OptionFilter.Suggestions, value: OptionFilter.Suggestions },
   ];
+
+  if (hasPresets) {
+    list.push({ label: OptionFilter.Presets, value: OptionFilter.Presets });
+  }
+
+  return list;
 }
 
 export enum OptionFilter {
   All = 'All',
   Overrides = 'Overrides',
   Recent = 'Recent',
-  Suggestions = 'Suggestions',
+  Presets = 'Presets',
 }
 
 function renderSearchHits(
