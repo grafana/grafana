@@ -14,5 +14,5 @@ dump.rdb
 node_modules
 /local
 /tmp
-*.yml
+#*.yml
 *.md
