@@ -93,6 +93,7 @@ debug.test
 /packaging/**/*.rpm
 /packaging/**/*.deb
 /packaging/**/*.tar.gz
+/packaging/**/*.tar.gz.sha256
 
 # Ignore OSX indexing
 .DS_Store
