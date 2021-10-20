@@ -58,7 +58,7 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
-import { queryLogsVolume } from '../../../core/logs_model';
+import { queryLogsVolume } from 'app/core/logs_model';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -66,7 +66,7 @@ export const LOKI_ENDPOINT = '/loki/api/v1';
 const NS_IN_MS = 1000000;
 
 /**
- * Logs volume query may be expensive as it requires counting all logs in the selected range. If such query
+ * Loki's logs volume query may be expensive as it requires counting all logs in the selected range. If such query
  * takes too much time it may need be made more specific to limit number of logs processed under the hood.
  */
 const LOGS_VOLUME_TIMEOUT = 10000;

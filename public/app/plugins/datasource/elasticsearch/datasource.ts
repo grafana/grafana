@@ -44,7 +44,7 @@ import {
   isBucketAggregationWithField,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { coerceESVersion, getScriptValue } from './utils';
-import { queryLogsVolume } from '../../../core/logs_model';
+import { queryLogsVolume } from 'app/core/logs_model';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.

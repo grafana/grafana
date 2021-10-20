@@ -519,6 +519,9 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
   return logsModelMeta;
 }
 
+/**
+ * Returns field configuration used to render logs volume bars
+ */
 function getLogVolumeFieldConfig(level: LogLevel, levels: number) {
   const name = levels === 1 && level === LogLevel.unknown ? 'logs' : level;
   const color = LogLevelColor[level];
@@ -545,7 +548,8 @@ function getLogVolumeFieldConfig(level: LogLevel, levels: number) {
 }
 
 /**
- * Add up values for the same level and create a single data frame for each level
+ * Take multiple data frames, sum up values and group by level.
+ * Return a list of data frames, each representing single level.
  */
 export function aggregateRawLogsVolume(
   rawLogsVolume: DataFrame[],
@@ -571,8 +575,9 @@ export function aggregateRawLogsVolume(
 }
 
 /**
- * Create a new data frame with a single field and values creating by adding field values
- * from all provided data frames
+ * Aggregate multiple data frames into a single data frame by adding values.
+ * Multiple data frames for the same level are passed here to get a single
+ * data frame for a given level. Aggregation by level happens in aggregateRawLogsVolume()
  */
 function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFrame {
   const aggregatedDataFrame = new MutableDataFrame();
@@ -616,6 +621,9 @@ type LogsVolumeQueryOptions<T extends DataQuery> = {
   range: TimeRange;
 };
 
+/**
+ * Creates an observable, which makes requests to get logs volume and aggregates results.
+ */
 export function queryLogsVolume<T extends DataQuery>(
   datasource: DataSourceApi<T, any, any>,
   logsVolumeRequest: DataQueryRequest<T>,
