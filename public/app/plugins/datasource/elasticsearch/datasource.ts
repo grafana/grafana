@@ -17,6 +17,7 @@ import {
   dateTime,
   Field,
   getDefaultTimeRange,
+  getLogLevelFromKey,
   LogRowModel,
   MetricFindValue,
   ScopedVars,
@@ -43,7 +44,7 @@ import {
   isBucketAggregationWithField,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { coerceESVersion, getScriptValue } from './utils';
-import { createElasticSearchLogsVolumeProvider } from './dataProviders/logsVolumeProvider';
+import { queryLogsVolume } from '../../../core/logs_model';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -563,7 +564,48 @@ export class ElasticDatasource
     const isLogsVolumeAvailable = request.targets.some((target) => {
       return target.metrics?.length === 1 && target.metrics[0].type === 'logs';
     });
-    return isLogsVolumeAvailable ? createElasticSearchLogsVolumeProvider(this, request) : undefined;
+    if (!isLogsVolumeAvailable) {
+      return undefined;
+    }
+    const logsVolumeRequest = cloneDeep(request);
+    logsVolumeRequest.targets = logsVolumeRequest.targets.map((target) => {
+      const logsVolumeQuery: ElasticsearchQuery = {
+        refId: target.refId,
+        query: target.query,
+        metrics: [{ type: 'count', id: '1' }],
+        timeField: '@timestamp',
+        bucketAggs: [
+          {
+            id: '2',
+            type: 'terms',
+            settings: {
+              min_doc_count: '0',
+              size: '0',
+              order: 'desc',
+              orderBy: '_count',
+            },
+            field: 'fields.level',
+          },
+          {
+            id: '3',
+            type: 'date_histogram',
+            settings: {
+              interval: 'auto',
+              min_doc_count: '0',
+              trimEdges: '0',
+            },
+            field: '@timestamp',
+          },
+        ],
+      };
+      return logsVolumeQuery;
+    });
+
+    return queryLogsVolume(this, logsVolumeRequest, {
+      range: request.range,
+      targets: request.targets,
+      extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
+    });
   }
 
   query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
