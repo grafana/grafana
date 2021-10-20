@@ -7996,12 +7996,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:16.9.9":
-  version: 16.9.9
-  resolution: "@types/react-dom@npm:16.9.9"
+"@types/react-dom@npm:17.0.10":
+  version: 17.0.10
+  resolution: "@types/react-dom@npm:17.0.10"
   dependencies:
     "@types/react": "*"
-  checksum: b42a788b6a40a79a738346044c21e6c536f136e9b919fce90847aaaba7298e0b7d4d6845a1449d92a5678c5c221f060d66207a7f4968f7f5991e2511aa8e6860
+  checksum: cc7d8d5b77ee2f3b989c107abd8ec0f2460ba1b1ee6e6d637124e1939594b5619fa4166ef0ea7632a69b68358e0b71aa618de446ccc416dcc0017175549da601
   languageName: node
   linkType: hard
 
@@ -17692,7 +17692,7 @@ fsevents@~2.1.2:
     "@types/rc-time-picker": ^3
     "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
-    "@types/react-dom": 16.9.9
+    "@types/react-dom": 17.0.10
     "@types/react-grid-layout": 1.1.1
     "@types/react-highlight-words": ^0.16.2
     "@types/react-loadable": 5.5.2

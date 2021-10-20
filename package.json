@@ -120,7 +120,7 @@
     "@types/rc-time-picker": "^3",
     "@types/react": "17.0.30",
     "@types/react-beautiful-dnd": "13.1.1",
-    "@types/react-dom": "16.9.9",
+    "@types/react-dom": "17.0.10",
     "@types/react-grid-layout": "1.1.1",
     "@types/react-highlight-words": "^0.16.2",
     "@types/react-loadable": "5.5.2",
