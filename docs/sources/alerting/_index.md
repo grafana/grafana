@@ -7,34 +7,20 @@ weight = 110
 
 Alerts allow you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
-<<<<<<< HEAD
-Grafana 8.0 has new and improved alerts. You can now create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts, as well as see alerting information from Prometheus-compatible data sources in a single, searchable view. To learn more, see [What's New with Grafana 8 alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
-=======
-Grafana 8.0 has new and improved alerts that centralize alerting information for Grafana managed alerts as well as alerts from Prometheus-compatible data sources into one user interface and API.
->>>>>>> main
+Grafana 8.0 has new and improved alerting that centralizes alerting information in a single, searchable view and allows you to:
+- Create and manage Grafana managed alerts.
+- Create and manage Cortex and Loki managed alerts
+- View alerting information from Prometheus compatible data sources
 
-> **Note:** Grafana 8 alerts are an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "./old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerts.
+Grafana 8 alerting have four key components:
 
-Grafana 8 alerting have four main components:
-
-<<<<<<< HEAD
 - Alerting rule - An evaluation criteria that determine whether an alert will fire. It consists of one or more queries and/or expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
-=======
-- Alerting rule - One or more queries and/or expressions, conditions, evaluation frequencies, and the (optional) duration that a condition must be met before creating an alert.
->>>>>>> main
 - Contact point - A channel for sending notifications when the conditions of an alerting rule are met.
 - Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications.
 - Silences - Date and matching criteria used to silence notifications.
 
-<<<<<<< HEAD
-For information on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}).
-=======
-You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts, as well as see alerting information from Prometheus-compatible data sources, in a single searchable view. For more information on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}).
->>>>>>> main
+To learn more, see [What's New with Grafana 8 alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
 
-For handling notifications for Grafana managed alerts, we use an embedded alert manager. You can configure its contact points, notification policies, silences, and templates from the new Grafana alerting UI by selecting `Grafana` from the Alertmanager dropdown on the top of the respective tab.
+For information on how to create and manage Grafana 8 alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}) and [Create and manage Grafana 8 alerting rules]({{< relref "./unified-alerting/alerting-rules/_index.md" >}}).
 
-> **Note:** Currently the configuration of this embedded Alertmanager is shared across organisations. Therefore, users are advised to use the new Grafana 8 Alerts only if they have just one organization. Otherwise all contact points, notification policies, silences, and templates for Grafana managed alerts will be visible by all organizations.
-
-As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it is not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}). If such a data source is present, then you can view and modify its silences, contact points and notification policies from the Grafana alerting UI by selecting it from the Alertmanager dropdown on the top of the respective tab.
-
+> **Note:** Grafana 8 alerting are an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "./old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerts.

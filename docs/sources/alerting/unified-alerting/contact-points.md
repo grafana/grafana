@@ -68,8 +68,6 @@ Grafana includes built-in support for Prometheus Alertmanager. By default, conta
 | [Webhook](#webhook)                           | `webhook`                 |
 | [Zenduty](#zenduty)                           | `webhook`                 |
 
-<<<<<<< HEAD
-=======
 ## Webhook
 
 Example JSON body:
@@ -196,7 +194,6 @@ Grafana alerting UI supports managing external Alertmanager configuration. Once 
 
 {{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select Alertmanager" >}}
 
->>>>>>> main
 ### Edit Alertmanager global config
 
 To edit global configuration options for an external Alertmanager, like SMTP server, that is used by default for all email contact types:

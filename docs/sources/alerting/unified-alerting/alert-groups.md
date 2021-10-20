@@ -5,9 +5,9 @@ keywords = ["grafana", "alerting", "alerts", "groups"]
 weight = 400
 +++
 
-# View alert groups
+# Alert groups
 
-Alert groups shows grouped alerts from an alertmanager instance. Alertmanager will group alerts based on common label values. This prevents duplicate alerts from being fired by grouping common alerts into a single alert group. By default, the alerts are grouped by the label keys for the root policy in [notification policies]({{< relref "./notification-policies.md" >}}).
+Alert groups show alerts from an alertmanager instance. Alertmanager will group alerts based on common label values. This prevents duplicate alerts from being fired by grouping common alerts into a single alert group. By default, the alerts are grouped by the label keys for the root policy in [notification policies]({{< relref "./notification-policies.md" >}}).
 
 ## Show alert groups for an external Alertmanager
 

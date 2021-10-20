@@ -31,13 +31,6 @@ To add a silence:
 Grafana suppresses notifications only for alerts with labels that match all the "Matching Labels" specified in the silence.
 
 - The **Label** field is the name of the label to match. It must exactly match the label name.
-<<<<<<< HEAD
-- The **Value** field matches against the corresponding value for the specified **Label** name. How it matches depends on the **Regex** and **Equal** checkboxes.
-- The **Regex** checkbox indicates if **Value** should be treated as a regular expression to match against labels. The regular expression is always anchored. If not selected, it is an exact string match.
-- The **Equal** checkbox specifies if the match should include alert instances that match. If not checked, the silence includes alerts that _do not_ match.
-
-## Edit silences
-=======
 - The **Operator** field is the operator to match against the label value. The available operators are:
 
   - `=`: Select labels that are exactly equal to the provided string.
@@ -46,7 +39,6 @@ Grafana suppresses notifications only for alerts with labels that match all the 
   - `!~`: Select labels that do not regex-match the provided string.
 
 - The **Value** field matches against the corresponding value for the specified **Label** name. How it matches depends on the **Operator** value.
->>>>>>> main
 
 1. In the Alerting page, click **Silences** to view the list of existing silences.
 1. Find the silence you want to edit, then click **Edit** (pen icon).

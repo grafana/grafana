@@ -7,7 +7,7 @@ weight = 114
 
 # What's new in Grafana 8 alerting
 
-Grafana 8.0 alerts centralize alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts, as well as see alerting information from Prometheus-compatible data sources in a single, searchable view.
+Grafana 8.0 alerting centralize alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts, as well as see alerting information from Prometheus-compatible data sources in a single, searchable view.
 
 ## Multi-dimensional alerting
 

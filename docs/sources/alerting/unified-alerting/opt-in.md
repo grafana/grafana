@@ -1,7 +1,7 @@
 +++
 title = "Opt-in to Grafana 8 Alerting"
 description = "Enable Grafana 8 Alerts"
-weight = 128
+weight = 115
 +++
 
 # Opt-in to Grafana 8 alerting
