@@ -1,6 +1,6 @@
 import React from 'react';
-import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel, SelectableValue } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel } from '@grafana/data';
 import { css } from '@emotion/css';
 import { VizTypeChangeDetails } from './types';
 import { VisualizationPreview } from './VisualizationPreview';
@@ -20,7 +20,6 @@ export interface Props {
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
   const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
-  const [columnCount, setColumnCount] = useLocalStorage(`VisualizationSuggestions.columnCount`, 1);
   // temp test
   const [showTitle, setShowTitle] = useLocalStorage(`VisualizationSuggestions.showTitle`, false);
 
@@ -31,6 +30,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
           return null;
         }
 
+        const columnCount = Math.floor(width / 170);
         const spaceBetween = 8 * (columnCount! - 1);
         const previewWidth = (width - spaceBetween) / columnCount!;
 
@@ -40,9 +40,6 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
               <div className={styles.infoText} onClick={() => setShowTitle(!showTitle)}>
                 Based on current data
               </div>
-              <Field label="Size">
-                <RadioButtonGroup size="sm" options={getSizeOptions()} value={columnCount} onChange={setColumnCount} />
-              </Field>
             </div>
             <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth - 1}px)` }}>
               {suggestions &&
@@ -64,13 +61,6 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   );
 }
 
-function getSizeOptions(): Array<SelectableValue<number>> {
-  return [
-    { value: 2, icon: 'columns', description: 'Two column layout' },
-    { value: 1, icon: 'square', description: 'Single column layout' },
-  ];
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     heading: css({
@@ -80,8 +70,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     filterRow: css({
       display: 'flex',
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      justifyContent: 'space-around',
       alignItems: 'center',
+      paddingBottom: '8px',
     }),
     infoText: css({
       fontSize: theme.typography.bodySmall.fontSize,
