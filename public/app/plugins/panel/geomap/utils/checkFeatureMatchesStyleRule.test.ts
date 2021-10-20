@@ -11,6 +11,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.EQ,
           property: 'number',
           value: 3,
@@ -21,6 +22,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.LT,
           property: 'number',
           value: 2,
@@ -31,6 +33,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.LTE,
           property: 'number',
           value: 3,
@@ -41,6 +44,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.GT,
           property: 'number',
           value: 3,
@@ -51,6 +55,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.GTE,
           property: 'number',
           value: 3,
@@ -67,6 +72,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.EQ,
           property: 'string',
           value: 'B',
@@ -77,6 +83,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.LT,
           property: 'string',
           value: 'c',
@@ -87,6 +94,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.LTE,
           property: 'string',
           value: 'bc',
@@ -97,6 +105,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.GT,
           property: 'string',
           value: 'ab',
@@ -107,6 +116,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.GTE,
           property: 'string',
           value: 'abc',
@@ -125,6 +135,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.EQ,
           property: 'boolean',
           value: false,
@@ -135,6 +146,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.LT,
           property: 'boolean',
           value: true,
@@ -145,6 +157,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.LTE,
           property: 'boolean',
           value: true,
@@ -155,6 +168,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.GT,
           property: 'boolean',
           value: false,
@@ -165,6 +179,7 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          fillColor: '#1F60C4',
           operation: ComparisonOperation.GTE,
           property: 'boolean',
           value: false,

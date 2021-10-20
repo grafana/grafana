@@ -7,16 +7,25 @@ import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
 import { getGeoMapStyle } from '../../utils/getGeoMapStyle';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
-import { FeatureStyleConfig } from '../../types';
+import { ComparisonOperation, FeatureStyleRuleConfig } from '../../types';
 import { Stroke, Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
+import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
 
   // Styles that can be applied
-  styles?: FeatureStyleConfig[];
+  styles: FeatureStyleRuleConfig[];
 }
+
+export const DEFAULT_STYLE_RULE: FeatureStyleRuleConfig = {
+  fillColor: '#1F60C4',
+  strokeWidth: 1,
+  property: '',
+  operation: ComparisonOperation.EQ,
+  value: '',
+};
 
 const defaultOptions: GeoJSONMapperConfig = {
   src: 'public/maps/countries.geojson',
@@ -44,8 +53,8 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     const defaultStyle = new Style({
       stroke: new Stroke({
-        color: '#1F60C4',
-        width: 1,
+        color: DEFAULT_STYLE_RULE.fillColor,
+        width: DEFAULT_STYLE_RULE.strokeWidth,
       }),
     });
 
@@ -55,7 +64,10 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         if (feature && config?.styles?.length) {
           for (const style of config.styles) {
             //check if there is no style rule or if the rule matches feature property
-            if (!style.rule || checkFeatureMatchesStyleRule(style.rule, feature as Feature<Geometry>)) {
+            if (
+              (!style.property && !style.value) ||
+              checkFeatureMatchesStyleRule(style, feature as Feature<Geometry>)
+            ) {
               return getGeoMapStyle(style, feature);
             }
           }
@@ -79,20 +91,27 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
   // Geojson source url
   registerOptionsUI: (builder) => {
-    builder.addSelect({
-      path: 'config.src',
-      name: 'GeoJSON URL',
-      settings: {
-        options: [
-          { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
-          { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
-        ],
-        allowCustomValue: true,
-      },
-      defaultValue: defaultOptions.src,
-    });
+    builder
+      .addSelect({
+        path: 'config.src',
+        name: 'GeoJSON URL',
+        settings: {
+          options: [
+            { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
+            { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
+          ],
+          allowCustomValue: true,
+        },
+        defaultValue: defaultOptions.src,
+      })
+      .addCustomEditor({
+        id: 'config.styles',
+        path: 'config.styles',
+        name: 'Style Rules',
+        editor: GeomapStyleRulesEditor,
+        settings: {},
+        defaultValue: [],
+      });
   },
-
-  // fill in the default values
   defaultOptions,
 };
