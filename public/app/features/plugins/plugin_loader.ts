@@ -1,6 +1,6 @@
 // eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
-import * as sdk from 'app/plugins/sdk';
+// import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import angular from 'angular';
@@ -18,13 +18,13 @@ import reactDom from 'react-dom';
 import * as reactRedux from 'react-redux';
 import * as redux from 'redux';
 
-import config from 'app/core/config';
+// import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
-import { coreModule, appEvents, contextSrv } from 'app/core/core';
+// import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
-import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+// import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
@@ -33,7 +33,7 @@ import * as emotion from '@emotion/css';
 import * as grafanaData from '@grafana/data';
 import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
-import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
+// import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
 
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
@@ -119,12 +119,12 @@ exposeToPlugin('app/features/dashboard/impression_store', {
  * If you use this export, only use the:
  *  get/delete/post/patch/request methods
  */
-exposeToPlugin('app/core/services/backend_srv', {
-  BackendSrv,
-  getBackendSrv,
-});
+// exposeToPlugin('app/core/services/backend_srv', {
+//   BackendSrv,
+//   getBackendSrv,
+// });
 
-exposeToPlugin('app/plugins/sdk', sdk);
+// exposeToPlugin('app/plugins/sdk', sdk);
 exposeToPlugin('app/core/utils/datemath', grafanaData.dateMath);
 exposeToPlugin('app/core/utils/flatten', flatten);
 exposeToPlugin('app/core/utils/kbn', kbn);
@@ -134,18 +134,18 @@ exposeToPlugin('app/core/utils/promiseToDigest', {
   __esModule: true,
 });
 
-exposeToPlugin('app/core/config', config);
+// exposeToPlugin('app/core/config', config);
 exposeToPlugin('app/core/time_series', TimeSeries);
 exposeToPlugin('app/core/time_series2', TimeSeries);
 exposeToPlugin('app/core/table_model', TableModel);
-exposeToPlugin('app/core/app_events', appEvents);
-exposeToPlugin('app/core/core_module', coreModule);
-exposeToPlugin('app/core/core', {
-  coreModule: coreModule,
-  appEvents: appEvents,
-  contextSrv: contextSrv,
-  __esModule: true,
-});
+// exposeToPlugin('app/core/app_events', appEvents);
+// exposeToPlugin('app/core/core_module', coreModule);
+// exposeToPlugin('app/core/core', {
+//   coreModule: coreModule,
+//   appEvents: appEvents,
+//   contextSrv: contextSrv,
+//   __esModule: true,
+// });
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
@@ -187,10 +187,10 @@ export async function importPluginModule(path: string): Promise<any> {
   return grafanaRuntime.SystemJS.import(path);
 }
 
-export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
+export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<any> {
   return importPluginModule(meta.module).then((pluginExports) => {
     if (pluginExports.plugin) {
-      const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
+      const dsPlugin = pluginExports.plugin as any;
       dsPlugin.meta = meta;
       return dsPlugin;
     }
