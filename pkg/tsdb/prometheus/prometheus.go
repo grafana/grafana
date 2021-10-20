@@ -121,19 +121,55 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
-
+	q := req.Queries[0]
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
 
-	client := dsInfo.promClient
+	switch q.QueryType {
+	// case "labelNames":
+	// 	return s.executeLabelNamesQuery(ctx, req, dsInfo)
+	default:
+		return s.executeTimeSeriesQuery(ctx, req, dsInfo)
+	}
+}
 
+// switch TYPE {
+// 	// We have everything
+// 	case "labelNames":
+// 		labelNamesResponse, _,  err := client.LabelNames(ctx, []string{}, timeRange.Start, timeRange.End)
+// 		if err != nil {
+// 			return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+// 		}
+// 		response["labelNames"] = labelNamesResponse
+// 	// We miss label
+// 	case "LabelValues":
+// 		labelValuesResponse, _,  err := client.LabelValues(ctx, "", []string{}, timeRange.Start, timeRange.End)
+// 		if err != nil {
+// 			return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+// 		}
+// 		response["LabelValues"] = labelValuesResponse
+// 	// We miss matchers - metric
+// 	case "series"
+// 		seriesResponse, _,  err := client.Series(ctx, []string{}, timeRange.Start, timeRange.End)
+// 		if err != nil {
+// 			return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+// 		}
+// 		response["LabelValues"] = labelValuesResponse
+
+// 	default:
+
+// }
+
+func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *DatasourceInfo) (*backend.QueryDataResponse, error) {
+	client := dsInfo.promClient
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
 
-	queries, err := s.parseQuery(req, dsInfo)
+	queries, err := s.parseTimeSeriesQuery(req, dsInfo)
+
 	if err != nil {
 		return &result, err
 	}
@@ -147,19 +183,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		response := make(map[PrometheusQueryType]interface{})
-
 		timeRange := apiv1.Range{
 			Step: query.Step,
 			// Align query range to step. It rounds start and end down to a multiple of step.
 			Start: time.Unix(int64(math.Floor((float64(query.Start.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
 			End:   time.Unix(int64(math.Floor((float64(query.End.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
 		}
+		response := make(map[PrometheusQueryType]interface{})
 
 		if query.RangeQuery {
 			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				return &result, nil
+
 			}
 			response[RangeQueryType] = rangeResponse
 		}
@@ -171,6 +208,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			}
 			response[InstantQueryType] = instantResponse
 		}
+
 		// For now, we ignore exemplar errors and continue with processing of other results
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
@@ -181,7 +219,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			response[ExemplarQueryType] = exemplarResponse
 		}
 
-		frames, err := parseResponse(response, query)
+		frames, err := parseTimeSeriesResponse(response, query)
 		if err != nil {
 			return &result, err
 		}
