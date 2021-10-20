@@ -4,8 +4,6 @@ This document contains information about Grafana frontend package versioning and
 
 ## Versioning
 
-We use [Lerna](https://github.com/lerna/lerna) for packages versioning and releases.
-
 All packages are versioned according to the current Grafana version:
 
 - Grafana v6.3.0-alpha1 -> @grafana/\* packages @ 6.3.0-alpha.1
@@ -26,10 +24,10 @@ Alpha and beta releases are published under the `next` tag on npm.
 
 ### Automatic prereleases
 
-Every commit to main that has changes within the `packages` directory is a subject of npm packages release. _ALL_ packages must be released under version from lerna.json file with commit SHA added to it:
+Every commit to main that has changes within the `packages` directory is a subject of npm packages release. _ALL_ packages must be released under the version from the root package.json file with commit SHA added to it:
 
 ```
-<lerna.json version>-<COMMIT_SHA>
+<root package.json version>-<COMMIT_SHA>
 ```
 
 Automatic prereleases are published under the `canary` dist tag to the [github package registry](https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages).
@@ -65,7 +63,7 @@ As mentioned above the `canary` releases are published to the Github package reg
 1. Run `yarn packages:prepare` script from the root directory. This performs tests on the packages and prompts for the version of the packages. The version should be the same as the one being released.
    - Make sure you use semver convention. So, _place a dot between prerelease id and prerelease number_, i.e. 6.3.0-alpha.1
    - Make sure you confirm the version bump when prompted!
-2. Commit changes (lerna.json and package.json files) - _"Packages version update: \<VERSION\>"_
+2. Commit changes (package.json file) - _"Packages version update: \<VERSION\>"_
 3. Run `yarn packages:build` script that prepares distribution packages in `packages/grafana-*/dist`. These directories are going to be published to npm.
 4. Depending whether or not it's a prerelease:
 
@@ -107,7 +105,7 @@ You need to follow [manual packages release procedure](#manual-release). The onl
 From your terminal:
 
 1. Run `yarn packages:prepare`.
-2. Commit changes in package.json and lerna.json files
+2. Commit changes in package.json file
 3. Build packages: `yarn packages:build`
 4. Run `yarn packages:publishDev`.
 5. Navigate to http://grafana-npm.local:4873 and verify that version was published

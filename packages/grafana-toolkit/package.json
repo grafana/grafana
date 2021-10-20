@@ -20,7 +20,9 @@
   },
   "scripts": {
     "build": "grafana-toolkit toolkit:build",
+    "bump": "npm version --no-git-tag-version",
     "clean": "rimraf ./dist ./compiled",
+    "publish": "cd dist && npm publish",
     "precommit": "npm run lint & npm run typecheck",
     "typecheck": "tsc --noEmit"
   },

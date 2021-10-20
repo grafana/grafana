@@ -20,10 +20,10 @@ echo "$_grafana_version"
 # lerna bootstrap might have created yarn.lock
 git checkout .
 
-# Get current version from lerna.json
-# Since this happens on tagged branch, the lerna.json version and package.json file SHOULD be updated already
+# Get current version from package.json
+# Since this happens on tagged branch, package.json SHOULD be updated already
 # as specified in release guideline
-PACKAGE_VERSION=$(grep '"version"' lerna.json | cut -d '"' -f 4)
+PACKAGE_VERSION=$(grep '"version"' package.json | cut -d '"' -f 4)
 
 echo "Releasing grafana packages @ ${PACKAGE_VERSION} under ${RELEASE_CHANNEL} channel"
 

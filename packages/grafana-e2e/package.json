@@ -21,10 +21,12 @@
   },
   "scripts": {
     "build": "grafana-toolkit package:build --scope=e2e",
+    "bump": "npm version --no-git-tag-version",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "open": "cypress open",
+    "publish": "cd dist && npm publish",
     "start": "cypress run --browser=chrome",
     "test": "pushd test && node ../dist/bin/grafana-e2e.js run",
     "typecheck": "tsc --noEmit"

@@ -103,7 +103,6 @@ go.sum @grafana/backend-platform
 /scripts/generate-a11y-report.sh @grafana/user-essentials
 package.json @grafana/frontend-ops
 tsconfig.json @grafana/frontend-ops
-lerna.json @grafana/frontend-ops
 .babelrc @grafana/frontend-ops
 .prettierrc.js @grafana/frontend-ops
 .eslintrc @grafana/frontend-ops

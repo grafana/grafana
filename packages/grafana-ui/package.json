@@ -18,9 +18,11 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "grafana-toolkit package:build --scope=ui",
+    "bump": "npm version --no-git-tag-version",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "publish": "cd dist && npm publish",
     "storybook": "start-storybook -p 9001 -c .storybook -s ../../public/img:public/img,../../public/lib:public/lib",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook -s ../../public/img:public/img,../../public/lib:public/lib",
     "typecheck": "tsc --noEmit"

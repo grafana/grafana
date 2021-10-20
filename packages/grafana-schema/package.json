@@ -16,9 +16,11 @@
   "types": "src/index.ts",
   "scripts": {
     "build": "grafana-toolkit package:build --scope=schema",
+    "bump": "npm version --no-git-tag-version",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "publish": "cd dist && npm publish",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
