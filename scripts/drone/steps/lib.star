@@ -48,9 +48,17 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     ]
 
     if ver_mode == 'release':
+        args = '${DRONE_TAG}'
         common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
     elif ver_mode == 'test-release':
+        args = test_release_ver
         common_cmds.append('./bin/grabpl verify-version {}'.format(test_release_ver))
+    else:
+        if not is_downstream:
+            build_no = '${DRONE_BUILD_NUMBER}'
+        else:
+            build_no = '$${SOURCE_BUILD_NUMBER}'
+        args = '--build-id {}'.format(build_no)
 
     identify_runner_step = {
         'name': 'identify-runner',
@@ -62,6 +70,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if install_deps:
         common_cmds.extend([
+            './bin/grabpl gen-version {}'.format(args),
             'yarn install --immutable',
         ])
     if edition in ('enterprise', 'enterprise2'):
@@ -184,7 +193,7 @@ def build_storybook_step(edition, ver_mode):
         'image': build_image,
         'depends_on': [
             # Best to ensure that this step doesn't mess with what's getting built and packaged
-            'package',
+            'build-frontend',
         ],
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=4096',
@@ -500,7 +509,7 @@ def shellcheck_step():
         ],
     }
 
-def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
+def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is_downstream=False):
     deps = [
         'build-plugins',
         'build-backend',
@@ -515,28 +524,6 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
             'test-backend' + sfx,
         ])
 
-    if ver_mode == 'release':
-        args = '${DRONE_TAG}'
-    elif ver_mode == 'test-release':
-        args = test_release_ver
-    else:
-        if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
-        else:
-            build_no = '$${SOURCE_BUILD_NUMBER}'
-        args = '--build-id {}'.format(build_no)
-
-    return {
-        'name': 'gen-version',
-        'image': build_image,
-        'depends_on': deps,
-        'commands': [
-            './bin/grabpl gen-version {}'.format(args),
-        ],
-    }
-
-
-def package_step(edition, ver_mode, variants=None, is_downstream=False):
     variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
@@ -584,11 +571,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
     return {
         'name': 'package' + enterprise2_suffix(edition),
         'image': build_image,
-        'depends_on': [
-            # This step should have all the dependencies required for packaging, and should generate
-            # dist/grafana.version
-            'gen-version',
-        ],
+        'depends_on': deps,
         'environment': env,
         'commands': cmds,
     }

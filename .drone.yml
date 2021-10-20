@@ -32,6 +32,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   image: grafana/build-container:1.4.3
   name: initialize
@@ -145,20 +146,14 @@ steps:
   image: grafana/build-container:1.4.3
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
+    --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
   depends_on:
   - build-plugins
   - build-backend
   - build-frontend
   - codespell
   - shellcheck
-  image: grafana/build-container:1.4.3
-  name: gen-version
-- commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
-  depends_on:
-  - gen-version
   environment: null
   image: grafana/build-container:1.4.3
   name: package
@@ -184,7 +179,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -302,6 +297,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   image: grafana/build-container:1.4.3
   name: initialize
@@ -428,20 +424,14 @@ steps:
   image: grafana/build-container:1.4.3
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+    --sign
   depends_on:
   - build-plugins
   - build-backend
   - build-frontend
   - codespell
   - shellcheck
-  image: grafana/build-container:1.4.3
-  name: gen-version
-- commands:
-  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
-    --sign
-  depends_on:
-  - gen-version
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -477,7 +467,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -777,6 +767,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
+  - ./bin/grabpl gen-version ${DRONE_TAG}
   - yarn install --immutable
   image: grafana/build-container:1.4.3
   name: initialize
@@ -894,20 +885,14 @@ steps:
   image: grafana/build-container:1.4.3
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
+  - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
+    --sign ${DRONE_TAG}
   depends_on:
   - build-plugins
   - build-backend
   - build-frontend
   - codespell
   - shellcheck
-  image: grafana/build-container:1.4.3
-  name: gen-version
-- commands:
-  - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
-    --sign ${DRONE_TAG}
-  depends_on:
-  - gen-version
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1006,7 +991,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -1164,6 +1149,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
+  - ./bin/grabpl gen-version ${DRONE_TAG}
   - yarn install --immutable
   depends_on:
   - clone
@@ -1315,7 +1301,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: build-backend-enterprise2
 - commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
+  - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise --sign ${DRONE_TAG}
   depends_on:
   - build-plugins
   - build-backend
@@ -1324,13 +1311,6 @@ steps:
   - shellcheck
   - build-backend-enterprise2
   - test-backend-enterprise2
-  image: grafana/build-container:1.4.3
-  name: gen-version
-- commands:
-  - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
-    --no-pull-enterprise --sign ${DRONE_TAG}
-  depends_on:
-  - gen-version
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1473,7 +1453,13 @@ steps:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise --sign ${DRONE_TAG}
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1731,6 +1717,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
+  - ./bin/grabpl gen-version v7.3.0-test
   - yarn install --immutable
   image: grafana/build-container:1.4.3
   name: initialize
@@ -1848,20 +1835,14 @@ steps:
   image: grafana/build-container:1.4.3
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl gen-version v7.3.0-test
+  - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
+    --sign v7.3.0-test
   depends_on:
   - build-plugins
   - build-backend
   - build-frontend
   - codespell
   - shellcheck
-  image: grafana/build-container:1.4.3
-  name: gen-version
-- commands:
-  - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
-    --sign v7.3.0-test
-  depends_on:
-  - gen-version
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1952,7 +1933,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -2107,6 +2088,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
+  - ./bin/grabpl gen-version v7.3.0-test
   - yarn install --immutable
   depends_on:
   - clone
@@ -2258,7 +2240,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: build-backend-enterprise2
 - commands:
-  - ./bin/grabpl gen-version v7.3.0-test
+  - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise --sign v7.3.0-test
   depends_on:
   - build-plugins
   - build-backend
@@ -2267,13 +2250,6 @@ steps:
   - shellcheck
   - build-backend-enterprise2
   - test-backend-enterprise2
-  image: grafana/build-container:1.4.3
-  name: gen-version
-- commands:
-  - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
-    --no-pull-enterprise --sign v7.3.0-test
-  depends_on:
-  - gen-version
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2408,7 +2384,13 @@ steps:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise --sign v7.3.0-test
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2671,6 +2653,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   image: grafana/build-container:1.4.3
   name: initialize
@@ -2786,20 +2769,14 @@ steps:
   image: grafana/build-container:1.4.3
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+    --sign
   depends_on:
   - build-plugins
   - build-backend
   - build-frontend
   - codespell
   - shellcheck
-  image: grafana/build-container:1.4.3
-  name: gen-version
-- commands:
-  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
-    --sign
-  depends_on:
-  - gen-version
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2890,7 +2867,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -3019,6 +2996,7 @@ steps:
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
   - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   depends_on:
   - clone
@@ -3166,7 +3144,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: build-backend-enterprise2
 - commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise --sign
   depends_on:
   - build-plugins
   - build-backend
@@ -3175,13 +3154,6 @@ steps:
   - shellcheck
   - build-backend-enterprise2
   - test-backend-enterprise2
-  image: grafana/build-container:1.4.3
-  name: gen-version
-- commands:
-  - ./bin/grabpl package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise --sign
-  depends_on:
-  - gen-version
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3274,7 +3246,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -3325,7 +3297,13 @@ steps:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise --variants linux-x64 --sign
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3529,6 +3507,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 96d23b144a0a27bce871f7faf782827c17cc132492fe058a7c56768c543078c9
+hmac: 2e6faca0cb0dbf3c14bf3a589a1ffefb0fc50ada0e3adfc10436030d72dae97a
 
 ...
