@@ -5,9 +5,7 @@ import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
 
 export interface Props {
-  /** Primary role selected */
   builtinRole: string;
-  // roles: string[];
   getRoles: () => Promise<string[]>;
   getRoleOptions: () => Promise<Array<SelectableValue<string>>>;
   onRolesChange: (newRoles: string[]) => void;
@@ -33,11 +31,7 @@ export const RolePicker = ({
     async function fetchOptions() {
       let options = await getRoleOptions();
       options = options.filter((option) => {
-        return (
-          !option.label?.startsWith('grafana:') &&
-          !option.label?.startsWith('fixed:') &&
-          !option.label?.startsWith('managed:')
-        );
+        return !option.label?.startsWith('managed:');
       });
       setRoleOptions(options);
 

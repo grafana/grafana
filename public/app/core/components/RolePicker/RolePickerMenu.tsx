@@ -64,23 +64,47 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
     onUpdate(selectedBuiltInRole, selectedCustomRoles);
   };
 
+  const customRoles = options.filter(filterCustomRoles);
+  const fixedRoles = options.filter(filterFixedRoles).map(removeDescription);
+
   return (
     <div className={cx(styles.menu, customStyles.menu)} aria-label="Role picker menu">
       <div className={customStyles.groupHeader}>Built-in roles</div>
       <BuiltinRoleSelector value={builtInRole} onChange={onSelectedBuiltinRoleChange} />
-      <div className={customStyles.groupHeader}>Custom roles</div>
-      <CustomScrollbar autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
-        <div className={styles.optionBody}>
-          {options.map((option, i) => (
-            <SelectMenuOptions
-              data={option}
-              key={i}
-              isSelected={!!(option.value && selectedOptions[option.value])}
-              onSelect={onSelect}
-            />
-          ))}
-        </div>
-      </CustomScrollbar>
+      {customRoles?.length && (
+        <>
+          <div className={customStyles.groupHeader}>Custom roles</div>
+          <CustomScrollbar autoHide={false} autoHeightMax="200px" hideHorizontalTrack>
+            <div className={styles.optionBody}>
+              {customRoles.map((option, i) => (
+                <SelectMenuOptions
+                  data={option}
+                  key={i}
+                  isSelected={!!(option.value && selectedOptions[option.value])}
+                  onSelect={onSelect}
+                />
+              ))}
+            </div>
+          </CustomScrollbar>
+        </>
+      )}
+      {fixedRoles?.length && (
+        <>
+          <div className={customStyles.groupHeader}>Fixed roles</div>
+          <CustomScrollbar autoHide={false} autoHeightMax="200px" hideHorizontalTrack>
+            <div className={styles.optionBody}>
+              {fixedRoles.map((option, i) => (
+                <SelectMenuOptions
+                  data={option}
+                  key={i}
+                  isSelected={!!(option.value && selectedOptions[option.value])}
+                  onSelect={onSelect}
+                />
+              ))}
+            </div>
+          </CustomScrollbar>
+        </>
+      )}
       <div className={customStyles.menuButtonRow}>
         <HorizontalGroup justify="flex-end">
           <Button size="sm" fill="text" onClick={onClearInternal}>
@@ -93,6 +117,14 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
       </div>
     </div>
   );
+};
+
+const filterCustomRoles = (option: SelectableValue<string>) => !option.label?.startsWith('fixed:');
+
+const filterFixedRoles = (option: SelectableValue<string>) => option.label?.startsWith('fixed:');
+const removeDescription = (option: SelectableValue<string>) => {
+  const { description, ...rest } = option;
+  return { ...rest };
 };
 
 interface SelectMenuOptionProps<T> {
@@ -135,7 +167,7 @@ SelectMenuOptions.displayName = 'SelectMenuOptions';
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     menu: css`
-      max-height: 400px;
+      max-height: 650px;
       position: absolute;
       z-index: ${theme.zIndex.dropdown};
       overflow: hidden;
