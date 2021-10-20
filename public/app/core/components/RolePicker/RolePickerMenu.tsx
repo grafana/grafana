@@ -72,7 +72,7 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
     <div className={cx(styles.menu, customStyles.menu)} aria-label="Role picker menu">
       <div className={customStyles.groupHeader}>Built-in roles</div>
       <BuiltinRoleSelector value={builtInRole} onChange={onSelectedBuiltinRoleChange} />
-      {customRoles?.length && (
+      {!!customRoles?.length && (
         <>
           <div className={customStyles.groupHeader}>Custom roles</div>
           <CustomScrollbar autoHide={false} autoHeightMax="200px" hideHorizontalTrack>
@@ -89,7 +89,7 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
           </CustomScrollbar>
         </>
       )}
-      {fixedRoles?.length && (
+      {!!fixedRoles?.length && (
         <>
           <div className={customStyles.groupHeader}>Fixed roles</div>
           <CustomScrollbar autoHide={false} autoHeightMax="200px" hideHorizontalTrack>

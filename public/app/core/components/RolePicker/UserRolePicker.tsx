@@ -36,13 +36,6 @@ export const getRolesOptions = async (query?: string): Promise<Role[]> => {
     return [];
   }
   return roles;
-  // return roles.map(
-  //   (role: Role): SelectableValue => ({
-  //     value: role.uid,
-  //     label: role.name,
-  //     description: role.description,
-  //   })
-  // );
 };
 
 export const getBuiltinRoles = (): Promise<{ [key: string]: Role[] }> => {
