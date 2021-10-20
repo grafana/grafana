@@ -39,6 +39,11 @@ export class BarChartSuggestionsSupplier {
       return;
     }
 
+    // if you have this many rows barchart might not be a good fit
+    if (dataSummary.rowCountTotal > 50) {
+      return;
+    }
+
     list.append({});
     list.append({
       name: 'Bar chart horizontal',
