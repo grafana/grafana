@@ -1,13 +1,16 @@
-import React, {FormEvent, useEffect, useState} from 'react';
+import React, { FormEvent, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Button, Checkbox, CustomScrollbar, HorizontalGroup, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Button, Checkbox, CustomScrollbar, HorizontalGroup, useStyles2, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
+import { Role } from 'app/types';
+
+type RoleMap = { [key: string]: Role };
 
 interface RolePickerMenuProps {
   builtInRole: string;
-  options: Array<SelectableValue<string>>;
+  options: Role[];
   appliedRoles: { [key: string]: boolean };
   onUpdate: (newBuiltInRole: string, newRoles: string[]) => void;
   onClose: () => void;
@@ -20,27 +23,25 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
   const customStyles = useStyles2(getStyles);
   const { builtInRole, options, appliedRoles, onUpdate, onClear } = props;
 
-  const [selectedOptions, setSelectedOptions] = useState<SelectableValue>({});
+  const [selectedOptions, setSelectedOptions] = useState<RoleMap>({});
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState(builtInRole);
 
   useEffect(() => {
-    const initialSelectedOptions: SelectableValue = {};
+    const initialSelectedOptions: RoleMap = {};
     for (const option of options) {
-      if (option.value && appliedRoles[option.value]) {
-        initialSelectedOptions[option.value] = option;
+      if (appliedRoles[option.uid]) {
+        initialSelectedOptions[option.uid] = option;
       }
     }
     setSelectedOptions(initialSelectedOptions);
   }, [appliedRoles, options]);
 
-  const onSelect = (option: SelectableValue<string>) => {
-    if (option.value) {
-      if (selectedOptions[option.value]) {
-        const { [option.value]: deselected, ...restOptions } = selectedOptions;
-        setSelectedOptions(restOptions);
-      } else {
-        setSelectedOptions({ ...selectedOptions, [option.value]: option });
-      }
+  const onSelect = (option: Role) => {
+    if (selectedOptions[option.uid]) {
+      const { [option.uid]: deselected, ...restOptions } = selectedOptions;
+      setSelectedOptions(restOptions);
+    } else {
+      setSelectedOptions({ ...selectedOptions, [option.uid]: option });
     }
   };
 
@@ -58,14 +59,14 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
   const onUpdateInternal = () => {
     const selectedCustomRoles: string[] = [];
     for (const key in selectedOptions) {
-      const roleUID = selectedOptions[key]?.value;
+      const roleUID = selectedOptions[key]?.uid;
       selectedCustomRoles.push(roleUID);
     }
     onUpdate(selectedBuiltInRole, selectedCustomRoles);
   };
 
   const customRoles = options.filter(filterCustomRoles);
-  const fixedRoles = options.filter(filterFixedRoles).map(removeDescription);
+  const fixedRoles = options.filter(filterFixedRoles);
 
   return (
     <div className={cx(styles.menu, customStyles.menu)} aria-label="Role picker menu">
@@ -77,10 +78,10 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
           <CustomScrollbar autoHide={false} autoHeightMax="200px" hideHorizontalTrack>
             <div className={styles.optionBody}>
               {customRoles.map((option, i) => (
-                <SelectMenuOptions
+                <RoleMenuOption
                   data={option}
                   key={i}
-                  isSelected={!!(option.value && selectedOptions[option.value])}
+                  isSelected={!!(option.uid && selectedOptions[option.uid])}
                   onSelect={onSelect}
                 />
               ))}
@@ -94,11 +95,12 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
           <CustomScrollbar autoHide={false} autoHeightMax="200px" hideHorizontalTrack>
             <div className={styles.optionBody}>
               {fixedRoles.map((option, i) => (
-                <SelectMenuOptions
+                <RoleMenuOption
                   data={option}
                   key={i}
-                  isSelected={!!(option.value && selectedOptions[option.value])}
+                  isSelected={!!(option.uid && selectedOptions[option.uid])}
                   onSelect={onSelect}
+                  hideDescription
                 />
               ))}
             </div>
@@ -119,24 +121,20 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
   );
 };
 
-const filterCustomRoles = (option: SelectableValue<string>) => !option.label?.startsWith('fixed:');
-
-const filterFixedRoles = (option: SelectableValue<string>) => option.label?.startsWith('fixed:');
-const removeDescription = (option: SelectableValue<string>) => {
-  const { description, ...rest } = option;
-  return { ...rest };
-};
+const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:');
+const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
 
 interface SelectMenuOptionProps<T> {
+  data: Role;
+  onSelect: (value: Role) => void;
   isSelected: boolean;
   isFocused?: boolean;
-  data: SelectableValue<T>;
-  onSelect: (value: SelectableValue<T>) => void;
+  hideDescription?: boolean;
 }
 
-export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectMenuOptionProps<any>>>(
+export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectMenuOptionProps<any>>>(
   (props, ref) => {
-    const { data, isFocused, isSelected, onSelect } = props;
+    const { data, isFocused, isSelected, onSelect, hideDescription } = props;
 
     const theme = useTheme2();
     const styles = getSelectStyles(theme);
@@ -156,19 +154,16 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
         onClick={onChange}
       >
         <Checkbox value={isSelected} className={customStyles.menuOptionCheckbox} onChange={onChange} />
-        {data.icon && <Icon name={data.icon as IconName} className={styles.optionIcon} />}
-        {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} />}
         <div className={styles.optionBody}>
-          <span>{data.label}</span>
-          {data.description && <div className={styles.optionDescription}>{data.description}</div>}
-          {data.component && <data.component />}
+          <span>{data.displayName || data.name}</span>
+          {!hideDescription && data.description && <div className={styles.optionDescription}>{data.description}</div>}
         </div>
       </div>
     );
   }
 );
 
-SelectMenuOptions.displayName = 'SelectMenuOptions';
+RoleMenuOption.displayName = 'RoleMenuOption';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {

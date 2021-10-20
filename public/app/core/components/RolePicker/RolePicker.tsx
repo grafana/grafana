@@ -1,6 +1,5 @@
 import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { ClickOutsideWrapper } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
 import { Role } from 'app/types';
@@ -8,7 +7,7 @@ import { Role } from 'app/types';
 export interface Props {
   builtinRole: string;
   getRoles: () => Promise<string[]>;
-  getRoleOptions: () => Promise<Array<SelectableValue<string>>>;
+  getRoleOptions: () => Promise<Role[]>;
   getBuiltinRoles: () => Promise<{ [key: string]: Role[] }>;
   onRolesChange: (newRoles: string[]) => void;
   onBuiltinRoleChange: (newRole: string) => void;
@@ -25,7 +24,7 @@ export const RolePicker = ({
   disabled,
 }: Props): JSX.Element => {
   const [isOpen, setOpen] = useState(false);
-  const [roleOptions, setRoleOptions] = useState<Array<SelectableValue<string>>>([]);
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [appliedRoles, setAppliedRoles] = useState<{ [key: string]: boolean }>({});
   const [query, setQuery] = useState('');
 
@@ -34,7 +33,7 @@ export const RolePicker = ({
     async function fetchOptions() {
       let options = await getRoleOptions();
       options = options.filter((option) => {
-        return !option.label?.startsWith('managed:');
+        return !option.name?.startsWith('managed:');
       });
       setRoleOptions(options);
 
@@ -84,7 +83,7 @@ export const RolePicker = ({
   };
 
   const appliedRolesCount = roleOptions.filter((option) => {
-    return option.value && appliedRoles.hasOwnProperty(option.value) && !option.label?.startsWith('fixed:');
+    return option.uid && appliedRoles[option.uid] && !option.name?.startsWith('fixed:');
   }).length;
 
   return (
@@ -105,7 +104,7 @@ export const RolePicker = ({
           <RolePickerMenu
             options={
               query
-                ? roleOptions.filter((option) => option.label?.toLowerCase().includes(query.toLowerCase()))
+                ? roleOptions.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()))
                 : roleOptions
             }
             builtInRole={builtinRole}
