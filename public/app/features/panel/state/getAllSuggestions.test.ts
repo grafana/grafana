@@ -2,8 +2,11 @@ import { FieldType, getDefaultTimeRange, LoadingState, PanelData, toDataFrame } 
 import { config } from 'app/core/config';
 import { getAllSuggestions, panelsToCheckFirst } from './getAllSuggestions';
 
+jest.unmock('app/core/core');
+jest.unmock('app/features/plugins/plugin_loader');
+
 describe('getAllSuggestions', () => {
-  it('testing', async () => {
+  it('wip', async () => {
     const data = toDataFrame({
       fields: [
         { name: 'Time', type: FieldType.time, values: [1, 2] },
@@ -20,7 +23,7 @@ describe('getAllSuggestions', () => {
     for (const pluginId of panelsToCheckFirst) {
       config.panels[pluginId] = {
         module: `app/plugins/panel/${pluginId}/module`,
-      };
+      } as any;
     }
 
     const suggestions = await getAllSuggestions(panelData);
