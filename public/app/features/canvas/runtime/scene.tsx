@@ -162,10 +162,6 @@ export class Scene {
   };
 
   initMoveable = () => {
-    if (this.selecto) {
-      this.selecto.destroy();
-    }
-
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);

@@ -97,7 +97,6 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   shouldComponentUpdate(nextProps: Props) {
-    console.log('should component update being called, needs reload?', this.needsReload);
     const { width, height, data } = this.props;
     let changed = false;
 
@@ -117,13 +116,14 @@ export class CanvasPanel extends Component<Props, State> {
     if (shouldUpdateSceneAndPanel) {
       this.needsReload = false;
       this.scene.load(nextProps.options.root, nextProps.options.inlineEditing);
-      console.log('scene being reloaded');
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
-    }
 
-    console.log('CanvasPanel being updated?', changed);
+      if (this.props.options.inlineEditing) {
+        this.scene.selecto?.destroy();
+      }
+    }
 
     return changed;
   }
