@@ -83,6 +83,10 @@ export const RolePicker = ({
     onRolesChange(newRoles);
   };
 
+  const appliedRolesCount = roleOptions.filter((option) => {
+    return option.value && appliedRoles.hasOwnProperty(option.value) && !option.label?.startsWith('fixed:');
+  }).length;
+
   return (
     <div data-testid="role-picker" style={{ position: 'relative' }}>
       <ClickOutsideWrapper onClick={onClose}>
@@ -93,7 +97,7 @@ export const RolePicker = ({
           onOpen={onOpen}
           onClose={onClose}
           isFocused={isOpen}
-          numberOfRoles={Object.keys(appliedRoles).length}
+          numberOfRoles={appliedRolesCount}
           ref={inputRef}
           disabled={disabled}
         />
