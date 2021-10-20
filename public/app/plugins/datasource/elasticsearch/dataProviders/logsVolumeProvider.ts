@@ -3,7 +3,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   FieldCache,
-  FieldColorModeId,
   FieldConfig,
   FieldType,
   getLogLevelFromKey,
@@ -16,8 +15,7 @@ import { ElasticsearchQuery } from '../types';
 import { Observable } from 'rxjs';
 import { cloneDeep } from 'lodash';
 import { ElasticDatasource } from '../datasource';
-import { LogLevelColor } from '../../../../core/logs_model';
-import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
+import { getFieldConfig } from '../../../../core/logs_model';
 
 export function createElasticSearchLogsVolumeProvider(
   datasource: ElasticDatasource,
@@ -127,33 +125,6 @@ function aggregateRawLogsVolume(rawLogsVolume: DataFrame[]): DataFrame[] {
   return Object.keys(logsVolumeByLevelMap).map((level: string) => {
     return aggregateFields(logsVolumeByLevelMap[level as LogLevel]!, getFieldConfig(level as LogLevel, levels));
   });
-}
-
-function getFieldConfig(level: LogLevel, levels: number) {
-  const name = levels === 1 && level === LogLevel.unknown ? 'logs' : level;
-  const color = LogLevelColor[level];
-  return {
-    displayNameFromDS: name,
-    color: {
-      mode: FieldColorModeId.Fixed,
-      fixedColor: color,
-    },
-    custom: {
-      drawStyle: GraphDrawStyle.Bars,
-      barAlignment: BarAlignment.Center,
-      barWidthFactor: 0.9,
-      barMaxWidth: 5,
-      lineColor: color,
-      pointColor: color,
-      fillColor: color,
-      lineWidth: 1,
-      fillOpacity: 100,
-      stacking: {
-        mode: StackingMode.Normal,
-        group: 'A',
-      },
-    },
-  };
 }
 
 /**

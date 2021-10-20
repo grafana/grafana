@@ -510,3 +510,30 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
 
   return logsModelMeta;
 }
+
+export function getFieldConfig(level: LogLevel, levels: number) {
+  const name = levels === 1 && level === LogLevel.unknown ? 'logs' : level;
+  const color = LogLevelColor[level];
+  return {
+    displayNameFromDS: name,
+    color: {
+      mode: FieldColorModeId.Fixed,
+      fixedColor: color,
+    },
+    custom: {
+      drawStyle: GraphDrawStyle.Bars,
+      barAlignment: BarAlignment.Center,
+      barWidthFactor: 0.9,
+      barMaxWidth: 5,
+      lineColor: color,
+      pointColor: color,
+      fillColor: color,
+      lineWidth: 1,
+      fillOpacity: 100,
+      stacking: {
+        mode: StackingMode.Normal,
+        group: 'A',
+      },
+    },
+  };
+}
