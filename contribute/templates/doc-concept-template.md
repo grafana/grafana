@@ -1,13 +1,13 @@
-DELETE THIS LINE: If draft = false, then the document will not be built in the doc site. If the date is earlier than the build date, than the document will not show in the build site. Use these settings to control whether future content is shown in the doc site.
+DELETE THIS LINE: If `draft = "false"`, then the document is not published. If `date` is earlier than the build date, than the document is not displayed in the build site. For details about meta data, go to https://gohugo.io/documentation/.
 +++
 draft = "false"
 date = "yyyy-mm-dd"
 title = "Title in sentence case"
-description = "Description in title case"
+description = "Description in sentence case"
 keywords = ["grafana", "enter", "keywords", "here"]
 type = "docs"
 [menu.docs]
-name = "Name of topic"
+name = "Name of concept"
 identifier = "identifier"
 parent = "menu parent"
 weight = 100
@@ -15,11 +15,16 @@ weight = 100
 
 # Concept
 
-The title of the concept topic will generally be a noun or a gerund. Examples include Templates, Templating, Dashboards, and panels.
+The title of the _concept_ content type is generally a noun (a person, place, or thing) or a gerund (a word that ends with an _-ing_).
 
-Concepts are topic types for any information that doesn't involve task lists or reference information. Ideally you use concept elements to explain concepts, ideas, overviews, workflows, and the like. In the intro section, this first paragraph or two, you should explain to the user what to expect in this topic or section.
+A concept is for any information that is not a procedure or a reference:
 
-[Permissions overview](https://grafana.com/docs/grafana/latest/permissions/overview/) is an example of a concept topic.
+* concept
+* idea
+* overview
+* workflow
+
+In the introduction, explain to the reader what to expect in this unit of information. An example of a concept is the [Permissions overview](https://grafana.com/docs/grafana/latest/permissions/overview/).
 
 ## Idea
 
@@ -39,4 +44,4 @@ Continuing the example in the previous section, here is a sample Grafana workflo
 
 ## Next steps
 
-Concept tasks often link to related information, including _tasks_ related to the concept and _reference_ topics related to the concept.
+Concepts often link to related information, such as a _procedure_ or a _reference_.
