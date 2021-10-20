@@ -44,13 +44,8 @@ export class BarChartSuggestionsSupplier {
       return;
     }
 
+    // Vertical bars
     list.append({});
-    list.append({
-      name: 'Bar chart horizontal',
-      options: {
-        orientation: VizOrientation.Horizontal,
-      },
-    });
 
     if (dataSummary.numberFieldCount > 1) {
       list.append({
@@ -60,10 +55,35 @@ export class BarChartSuggestionsSupplier {
         },
       });
       list.append({
-        name: 'Bar chart stacked horizontal',
+        name: 'Bar chart 100% stacked',
+        options: {
+          stacking: StackingMode.Percent,
+        },
+      });
+    }
+
+    // horizontal bars
+    list.append({
+      name: 'Bar chart horizontal',
+      options: {
+        orientation: VizOrientation.Horizontal,
+      },
+    });
+
+    if (dataSummary.numberFieldCount > 1) {
+      list.append({
+        name: 'Bar chart horizontal stacked',
         options: {
           stacking: StackingMode.Normal,
           orientation: VizOrientation.Horizontal,
+        },
+      });
+
+      list.append({
+        name: 'Bar chart horizontal 100% stacked',
+        options: {
+          orientation: VizOrientation.Horizontal,
+          stacking: StackingMode.Percent,
         },
       });
     }

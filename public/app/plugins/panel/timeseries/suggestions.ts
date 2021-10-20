@@ -83,6 +83,22 @@ export class TimeSeriesSuggestionsSupplier {
           overrides: [],
         },
       });
+
+      list.append({
+        name: 'Area chart 100% stacked',
+        fieldConfig: {
+          defaults: {
+            custom: {
+              fillOpacity: 25,
+              stacking: {
+                mode: StackingMode.Percent,
+                group: 'A',
+              },
+            },
+          },
+          overrides: [],
+        },
+      });
     }
 
     if (dataSummary.rowCountTotal / dataSummary.numberFieldCount < 100) {
@@ -97,6 +113,25 @@ export class TimeSeriesSuggestionsSupplier {
               gradientMode: GraphGradientMode.Hue,
               stacking: {
                 mode: StackingMode.Normal,
+                group: 'A',
+              },
+            },
+          },
+          overrides: [],
+        },
+      });
+
+      list.append({
+        name: 'Bar chart 100% stacked',
+        fieldConfig: {
+          defaults: {
+            custom: {
+              drawStyle: GraphDrawStyle.Bars,
+              fillOpacity: 100,
+              lineWidth: 1,
+              gradientMode: GraphGradientMode.Hue,
+              stacking: {
+                mode: StackingMode.Percent,
                 group: 'A',
               },
             },
