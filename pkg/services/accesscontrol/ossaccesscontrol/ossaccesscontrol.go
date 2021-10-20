@@ -74,7 +74,12 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
-	return evaluator.Evaluate(user.Permissions[user.OrgId])
+	attributeMutator := ac.scopeResolver.GetResolveAttributeScopeMutator(user.OrgId)
+	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
+	if err != nil {
+		return false, err
+	}
+	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId])
 }
 
 // GetUserRoles returns user permissions based on built-in roles
@@ -87,6 +92,9 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	var err error
+	keywordMutator := ac.scopeResolver.GetResolveKeywordScopeMutator(user)
+
 	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
@@ -96,13 +104,14 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 				if !exists {
 					continue
 				}
-				for _, p := range role.Permissions {
+				for i := range role.Permissions {
 					// if the permission has a keyword in its scope it will be resolved
-					permission, err := ac.scopeResolver.ResolveKeyword(user, p)
+					p := (role.Permissions[i])
+					p.Scope, err = keywordMutator(ctx, p.Scope)
 					if err != nil {
 						return nil, err
 					}
-					permissions = append(permissions, permission)
+					permissions = append(permissions, &p)
 				}
 			}
 		}
