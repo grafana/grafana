@@ -38,7 +38,7 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
       />
 
-      {config.featureToggles.ngalert && (
+      {config.unifiedAlertingEnabled && (
         <AlertingSettings<LokiOptions>
           alertmanagerDataSources={alertmanagers}
           options={options}
