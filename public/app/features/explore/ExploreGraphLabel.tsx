@@ -1,15 +1,13 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { ExploreGraphStyle, SelectableValue } from '@grafana/data';
+import { ExploreGraphStyle, SelectableValue, EXPLORE_GRAPH_STYLES } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
 
-const ALL_GRAPH_STYLE_OPTIONS: Array<SelectableValue<ExploreGraphStyle>> = [
-  { label: 'Lines', value: 'lines' },
-  { label: 'Bars', value: 'bars' },
-  { label: 'Points', value: 'points' },
-  { label: 'Stacked lines', value: 'stacked_lines' },
-  { label: 'Stacked bars', value: 'stacked_bars' },
-];
+const ALL_GRAPH_STYLE_OPTIONS: Array<SelectableValue<ExploreGraphStyle>> = EXPLORE_GRAPH_STYLES.map((style) => ({
+  value: style,
+  // capital-case it and switch `_` to ` `
+  label: style[0].toUpperCase() + style.slice(1).replace(/_/, ' '),
+}));
 
 const spacing = css({
   display: 'flex',
