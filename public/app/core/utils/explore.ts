@@ -24,6 +24,7 @@ import {
   DateTime,
   isDateTime,
   ExploreGraphStyle,
+  EXPLORE_GRAPH_STYLES,
 } from '@grafana/data';
 import store from 'app/core/store';
 import { v4 as uuidv4 } from 'uuid';
@@ -218,11 +219,8 @@ const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
 // note that typescript makes sure we make no mistake in this function.
 // we do not rely on ` as ` or ` any `.
 export const toGraphStyle = (data: unknown): ExploreGraphStyle => {
-  if (data === 'lines' || data === 'bars' || data === 'points' || data === 'stacked_lines' || data === 'stacked_bars') {
-    return data;
-  }
-
-  return DEFAULT_GRAPH_STYLE;
+  const found = EXPLORE_GRAPH_STYLES.find((v) => v === data);
+  return found ?? DEFAULT_GRAPH_STYLE;
 };
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {

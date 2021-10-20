@@ -4,7 +4,10 @@ import { RawTimeRange, TimeRange } from './time';
 type AnyQuery = DataQuery & Record<string, any>;
 
 /** @internal */
-export type ExploreGraphStyle = 'lines' | 'bars' | 'points' | 'stacked_lines' | 'stacked_bars';
+export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
+
+/** @internal */
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 /** @internal */
 export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
