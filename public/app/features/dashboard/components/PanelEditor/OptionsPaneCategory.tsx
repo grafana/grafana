@@ -6,6 +6,7 @@ import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { getLocationSrv } from '@grafana/runtime';
 
 export interface OptionsPaneCategoryProps {
   id: string;
@@ -19,7 +20,7 @@ export interface OptionsPaneCategoryProps {
   children: ReactNode;
 }
 
-const categoryParam = 'showCategory';
+const CATEGORY_PARAM_NAME = 'showCategory';
 
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
@@ -29,22 +30,34 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     });
 
     const [queryParams, updateQueryParams] = useQueryParams();
-    const isSelected = queryParams[categoryParam] === id;
+    const isSelected = queryParams[CATEGORY_PARAM_NAME] === id;
     const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
+    const [toggleTime, setToggleTime] = useState<number>(0);
     const styles = useStyles2(getStyles);
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+      const elapsed = Date.now() - toggleTime;
       if ((!isExpanded && forceOpen && forceOpen > 0) || isSelected) {
         setIsExpanded(true);
-        ref.current?.scrollIntoView();
+        if (elapsed < 100 && ref.current) {
+          ref.current?.scrollIntoView();
+        }
       }
-    }, [forceOpen, isExpanded, isSelected]);
+    }, [forceOpen, isExpanded, isSelected, toggleTime]);
 
     const onToggle = useCallback(() => {
-      updateQueryParams({ [categoryParam]: isExpanded ? null : id });
+      setToggleTime(Date.now());
+      // updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? null : id });
+      getLocationSrv().update({
+        query: {
+          [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
+        },
+        partial: true,
+      });
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
+      console.log('toggle', isExpanded);
     }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
 
     if (!renderTitle) {
@@ -84,7 +97,6 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
         className={boxStyles}
         data-testid="options-category"
         aria-label={selectors.components.OptionsGroup.group(id)}
-        data-optioncategory={id}
         ref={ref}
       >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
