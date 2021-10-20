@@ -19,6 +19,9 @@ import (
 )
 
 func TestGoogleChatNotifier(t *testing.T) {
+	constNow := time.Now()
+	defer mockTimeNow(constNow)()
+
 	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
@@ -77,7 +80,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + (time.Now()).Format(time.RFC822),
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -135,7 +138,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									},
 									textParagraphWidget{
 										Text: text{
-											Text: "Grafana v" + setting.BuildVersion + " | " + (time.Now()).Format(time.RFC822),
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -177,12 +180,6 @@ func TestGoogleChatNotifier(t *testing.T) {
 				return nil
 			})
 
-			if time.Now().Second() == 59 {
-				// The notification payload has a time component with a precision
-				// of minute. So if we are at the edge of a minute, we delay for 1 second
-				// to avoid any flakiness.
-				time.Sleep(1 * time.Second)
-			}
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
 			ok, err := pn.Notify(ctx, c.alerts...)

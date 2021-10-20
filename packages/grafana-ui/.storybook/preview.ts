@@ -39,8 +39,8 @@ export const parameters = {
     container: ThemedDocsContainer,
   },
   darkMode: {
-    dark: GrafanaDark,
-    light: GrafanaLight,
+    dark: { ...GrafanaDark, base: 'dark' },
+    light: { ...GrafanaLight, base: 'light' },
   },
   layout: 'fullscreen',
   actions: { argTypesRegex: '^on[A-Z].*' },

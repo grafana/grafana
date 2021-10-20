@@ -110,7 +110,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
   render() {
     const { datasource, query, range, data } = this.props;
-    const { formatOption, instant, interval, intervalFactorOption, legendFormat, exemplar } = this.state;
+    const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
 
     return (
       <PromQueryField
@@ -197,12 +197,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 />
               </InlineFormLabel>
             </div>
-            <PromExemplarField
-              refId={query.refId}
-              isEnabled={exemplar}
-              onChange={this.onExemplarChange}
-              datasource={datasource}
-            />
+            <PromExemplarField onChange={this.onExemplarChange} datasource={datasource} query={this.query} />
           </div>
         }
       />

@@ -1,3 +1,15 @@
+<!-- 8.2.1 START -->
+
+# 8.2.1 (2021-10-11)
+
+### Bug fixes
+
+- **Dashboard:** Fix rendering of repeating panels. [#39991](https://github.com/grafana/grafana/pull/39991), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Datasources:** Fix deletion of data source if plugin is not found. [#40095](https://github.com/grafana/grafana/pull/40095), [@jackw](https://github.com/jackw)
+- **Packaging:** Remove systemcallfilters sections from systemd unit files. [#40176](https://github.com/grafana/grafana/pull/40176), [@kminehart](https://github.com/kminehart)
+- **Prometheus:** Add Headers to HTTP client options. [#40214](https://github.com/grafana/grafana/pull/40214), [@dsotirakis](https://github.com/dsotirakis)
+
+<!-- 8.2.1 END -->
 <!-- 8.2.0 START -->
 
 # 8.2.0 (2021-10-07)
@@ -11,12 +23,19 @@
 - **Annotations:** Improved rendering performance of event markers. [#39984](https://github.com/grafana/grafana/pull/39984), [@torkelo](https://github.com/torkelo)
 - **CloudWatch Logs:** Skip caching for log queries. [#39860](https://github.com/grafana/grafana/pull/39860), [@aocenas](https://github.com/aocenas)
 - **Explore:** Added an opt-in configuration for Node Graph in Jaeger, Zipkin, and Tempo. [#39958](https://github.com/grafana/grafana/pull/39958), [@connorlindsey](https://github.com/connorlindsey)
+- **Packaging:** Add stricter systemd unit options. [#38109](https://github.com/grafana/grafana/pull/38109), [@erdnaxe](https://github.com/erdnaxe)
 - **Prometheus:** Metrics browser can now handle label values with special characters. [#39713](https://github.com/grafana/grafana/pull/39713), [@gabor](https://github.com/gabor)
 
 ### Bug fixes
 
 - **CodeEditor:** Ensure that we trigger the latest onSave callback provided to the component. [#39835](https://github.com/grafana/grafana/pull/39835), [@mckn](https://github.com/mckn)
 - **DashboardList/AlertList:** Fix for missing All folder value. [#39772](https://github.com/grafana/grafana/pull/39772), [@hugohaggmark](https://github.com/hugohaggmark)
+
+### Breaking changes
+
+#### Potential failure to start in Ubuntu 18.04 / Debian 9 / CentOS
+
+- In Grafana v8.2.0, this change can prevent the `grafana-server` service from starting on older versions of systemd, present on Ubuntu 18.04 and slightly older versions of Debian. If running one of those versions, please wait until v8.2.1 is released before upgrading. If you still want to upgrade or have already ugpraded, a simple fix is available here: https://github.com/grafana/grafana/issues/40162#issuecomment-938060240 Issue [#38109](https://github.com/grafana/grafana/issues/38109)
 
 ### Plugin development fixes & changes
 
@@ -239,6 +258,8 @@ Panel queries and/or annotation queries that used more than one statistic will b
 - **Plugins:** Track signed files + add warn log for plugin assets which are not signed. [#38938](https://github.com/grafana/grafana/pull/38938), [@wbrowne](https://github.com/wbrowne)
 - **Postgres/MySQL/MSSQL:** Fix region annotations not displayed correctly. [#38936](https://github.com/grafana/grafana/pull/38936), [@marefr](https://github.com/marefr)
 - **Prometheus:** Fix validate selector in metrics browser. [#38921](https://github.com/grafana/grafana/pull/38921), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Security:** Fix stylesheet injection vulnerability [#38432](https://github.com/grafana/grafana/pull/38432), [@idafurjes](https://github.com/idafurjes). Big thanks to Tobias Hamann and Lauritz Holtmann of usd AG for reporting this issue.
+- **Security:** Fix short URL vulnerability [#38436](https://github.com/grafana/grafana/pull/38436), [@idafurjes](https://github.com/idafurjes). Big thanks to Tobias Hamann and Lauritz Holtmann of usd AG for reporting this issue.
 
 <!-- 8.1.3 END -->
 <!-- 8.1.2 START -->

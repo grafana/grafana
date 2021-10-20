@@ -15,8 +15,8 @@ type Calls struct {
 
 type ProvisioningServiceMock struct {
 	Calls                                   *Calls
-	RunInitProvisionersFunc                 func() error
-	ProvisionDatasourcesFunc                func() error
+	RunInitProvisionersFunc                 func(ctx context.Context) error
+	ProvisionDatasourcesFunc                func(ctx context.Context) error
 	ProvisionPluginsFunc                    func() error
 	ProvisionNotificationsFunc              func() error
 	ProvisionDashboardsFunc                 func() error
@@ -31,18 +31,18 @@ func NewProvisioningServiceMock() *ProvisioningServiceMock {
 	}
 }
 
-func (mock *ProvisioningServiceMock) RunInitProvisioners() error {
+func (mock *ProvisioningServiceMock) RunInitProvisioners(ctx context.Context) error {
 	mock.Calls.RunInitProvisioners = append(mock.Calls.RunInitProvisioners, nil)
 	if mock.RunInitProvisionersFunc != nil {
-		return mock.RunInitProvisionersFunc()
+		return mock.RunInitProvisionersFunc(ctx)
 	}
 	return nil
 }
 
-func (mock *ProvisioningServiceMock) ProvisionDatasources() error {
+func (mock *ProvisioningServiceMock) ProvisionDatasources(ctx context.Context) error {
 	mock.Calls.ProvisionDatasources = append(mock.Calls.ProvisionDatasources, nil)
 	if mock.ProvisionDatasourcesFunc != nil {
-		return mock.ProvisionDatasourcesFunc()
+		return mock.ProvisionDatasourcesFunc(ctx)
 	}
 	return nil
 }

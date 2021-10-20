@@ -1,58 +1,35 @@
-import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
-import { Button, Collapse, InlineField, InlineFieldRow, InlineSwitch, useTheme2 } from '@grafana/ui';
+import { AbsoluteTimeRange, DataQueryResponse, GrafanaTheme2, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
+import { Alert, Button, Collapse, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './ExploreGraph';
-import React, { useCallback } from 'react';
-import { ExploreId } from '../../types';
+import React from 'react';
 import { css } from '@emotion/css';
 
 type Props = {
-  exploreId: ExploreId;
-  loadLogsVolumeData: (exploreId: ExploreId) => void;
   logsVolumeData?: DataQueryResponse;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   splitOpen: SplitOpen;
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
-  autoLoadLogsVolume: boolean;
-  onChangeAutoLogsVolume: (value: boolean) => void;
+  onLoadLogsVolume: () => void;
 };
 
 export function LogsVolumePanel(props: Props) {
-  const {
-    width,
-    logsVolumeData,
-    exploreId,
-    loadLogsVolumeData,
-    absoluteRange,
-    timeZone,
-    splitOpen,
-    onUpdateTimeRange,
-    autoLoadLogsVolume,
-    onChangeAutoLogsVolume,
-  } = props;
+  const { width, logsVolumeData, absoluteRange, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume } = props;
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
 
   let LogsVolumePanelContent;
 
   if (!logsVolumeData) {
-    LogsVolumePanelContent = (
-      <Button
-        onClick={() => {
-          loadLogsVolumeData(exploreId);
-        }}
-      >
-        Load logs volume
-      </Button>
-    );
+    return null;
   } else if (logsVolumeData?.error) {
-    LogsVolumePanelContent = (
-      <span>
-        Failed to load volume logs for this query:{' '}
-        {logsVolumeData.error.data?.message || logsVolumeData.error.statusText}
-      </span>
+    return (
+      <Alert title="Failed to load volume logs for this query">
+        {logsVolumeData.error.data?.message || logsVolumeData.error.statusText || logsVolumeData.error.message}
+      </Alert>
     );
   } else if (logsVolumeData?.state === LoadingState.Loading) {
     LogsVolumePanelContent = <span>Logs volume is loading...</span>;
@@ -68,6 +45,7 @@ export function LogsVolumePanel(props: Props) {
           onChangeTime={onUpdateTimeRange}
           timeZone={timeZone}
           splitOpenFn={splitOpen}
+          tooltipDisplayMode={TooltipDisplayMode.Multi}
         />
       );
     } else {
@@ -75,40 +53,53 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
-  const handleOnChangeAutoLogsVolume = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const { target } = event;
-      if (target) {
-        onChangeAutoLogsVolume(target.checked);
-      }
-    },
-    [onChangeAutoLogsVolume]
-  );
+  const zoomRatio = logsLevelZoomRatio(logsVolumeData, absoluteRange);
+  let zoomLevelInfo;
+
+  if (zoomRatio !== undefined && zoomRatio < 1) {
+    zoomLevelInfo = (
+      <>
+        <span className={styles.zoomInfo}>Reload to show higher resolution</span>
+        <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} />
+      </>
+    );
+  }
 
   return (
     <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
-      <div
-        style={{ height }}
-        className={css({
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        })}
-      >
+      <div style={{ height }} className={styles.contentContainer}>
         {LogsVolumePanelContent}
       </div>
-      <div
-        className={css({
-          display: 'flex',
-          justifyContent: 'end',
-        })}
-      >
-        <InlineFieldRow>
-          <InlineField label="Auto-load logs volume" transparent>
-            <InlineSwitch value={autoLoadLogsVolume} onChange={handleOnChangeAutoLogsVolume} transparent />
-          </InlineField>
-        </InlineFieldRow>
-      </div>
+      <div className={styles.zoomInfoContainer}>{zoomLevelInfo}</div>
     </Collapse>
   );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    zoomInfoContainer: css`
+      display: flex;
+      justify-content: end;
+      position: absolute;
+      right: 5px;
+      top: 5px;
+    `,
+    zoomInfo: css`
+      padding: 8px;
+      font-size: ${theme.typography.bodySmall.fontSize};
+    `,
+    contentContainer: css`
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `,
+  };
+};
+
+function logsLevelZoomRatio(
+  logsVolumeData: DataQueryResponse | undefined,
+  selectedTimeRange: AbsoluteTimeRange
+): number | undefined {
+  const dataRange = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.absoluteRange;
+  return dataRange ? (selectedTimeRange.from - selectedTimeRange.to) / (dataRange.from - dataRange.to) : undefined;
 }

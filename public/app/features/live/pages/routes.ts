@@ -22,6 +22,12 @@ const liveRoutes = [
       () => import(/* webpackChunkName: "CloudAdminPage" */ 'app/features/live/pages/CloudAdminPage')
     ),
   },
+  {
+    path: '/live/test',
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "CloudAdminPage" */ 'app/features/live/pages/RuleTest')
+    ),
+  },
 ];
 
 export function getLiveRoutes(cfg = config): RouteDescriptor[] {

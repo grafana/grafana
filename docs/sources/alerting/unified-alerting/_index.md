@@ -6,7 +6,20 @@ weight = 113
 
 # Overview of Grafana 8 alerts
 
+<<<<<<< HEAD
 Grafana 8 alerts is an [opt-in]({{< relref "../unified-alerting/unified-alerting/opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "./old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerts.
+=======
+Grafana 8.0 has a new and improved alerting sub-system that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources into one user interface and API.
+
+> **Note:** Grafana 8 alerts is an [opt-in]({{< relref "../unified-alerting/opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "../old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerts.
+
+Grafana 8 alerts have four main components:
+
+- Alerting rule - One or more query and/or expression, a condition, the frequency of evaluation, and the (optional) duration that a condition must be met before creating an alert.
+- Contact point - A channel for sending notifications when the conditions of an alerting rule are met.
+- Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications.
+- Silences - Date and matching criteria used to silence notifications.
+>>>>>>> main
 
 ## Alerting tasks
 

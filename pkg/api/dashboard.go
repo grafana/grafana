@@ -8,19 +8,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	macaron "gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -71,7 +70,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
-	uid := macaron.Params(c.Req)[":uid"]
+	uid := web.Params(c.Req)[":uid"]
 	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
@@ -215,7 +214,7 @@ func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) 
 }
 
 func (hs *HTTPServer) DeleteDashboardBySlug(c *models.ReqContext) response.Response {
-	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: macaron.Params(c.Req)[":slug"]}
+	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: web.Params(c.Req)[":slug"]}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return response.Error(500, "Failed to retrieve dashboards by slug", err)
@@ -233,7 +232,7 @@ func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
-	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, macaron.Params(c.Req)[":uid"])
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, web.Params(c.Req)[":uid"])
 	if rsp != nil {
 		return rsp
 	}
@@ -339,7 +338,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 			dashboard = dash // the original request
 		}
 
-		// This will broadcast all save requets only if a `gitops` observer exists.
+		// This will broadcast all save requests only if a `gitops` observer exists.
 		// gitops is useful when trying to save dashboards in an environment where the user can not save
 		channel := hs.Live.GrafanaScope.Dashboards
 		liveerr := channel.DashboardSaved(c.SignedInUser.OrgId, c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)

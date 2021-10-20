@@ -17,6 +17,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
       max={settings?.max || 100}
       step={settings?.step}
       onChange={onChange}
+      ariaLabelForHandle={settings?.ariaLabelForHandle}
     />
   );
 };

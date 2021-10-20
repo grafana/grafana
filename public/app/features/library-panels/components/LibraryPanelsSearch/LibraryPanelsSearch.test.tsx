@@ -8,7 +8,7 @@ import { LibraryPanelsSearch, LibraryPanelsSearchProps } from './LibraryPanelsSe
 import * as api from '../../state/api';
 import { LibraryElementKind, LibraryElementsSearchResult } from '../../types';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import * as viztypepicker from '../../../dashboard/components/VizTypePicker/VizTypePicker';
+import * as viztypepicker from '../../../panel/components/VizTypePicker/VizTypePicker';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -95,7 +95,7 @@ describe('LibraryPanelsSearch', () => {
         const { getLibraryPanelsSpy } = await getTestContext();
         getLibraryPanelsSpy.mockClear();
 
-        await userEvent.type(screen.getByPlaceholderText(/search by name/i), 'a');
+        userEvent.type(screen.getByPlaceholderText(/search by name/i), 'a');
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalled());
         expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1);
         expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
@@ -123,7 +123,7 @@ describe('LibraryPanelsSearch', () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showSort: true });
         getLibraryPanelsSpy.mockClear();
 
-        await userEvent.type(screen.getByText(/sort \(default a–z\)/i), 'Desc{enter}');
+        userEvent.type(screen.getByText(/sort \(default a–z\)/i), 'Desc{enter}');
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
         expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
           searchString: '',
@@ -151,8 +151,8 @@ describe('LibraryPanelsSearch', () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showPanelFilter: true });
         getLibraryPanelsSpy.mockClear();
 
-        await userEvent.type(screen.getByRole('textbox', { name: /panel type filter/i }), 'Graph{enter}');
-        await userEvent.type(screen.getByRole('textbox', { name: /panel type filter/i }), 'Time Series{enter}');
+        userEvent.type(screen.getByRole('textbox', { name: /panel type filter/i }), 'Graph{enter}');
+        userEvent.type(screen.getByRole('textbox', { name: /panel type filter/i }), 'Time Series{enter}');
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
         expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
           searchString: '',
@@ -180,7 +180,7 @@ describe('LibraryPanelsSearch', () => {
         getLibraryPanelsSpy.mockClear();
 
         userEvent.click(screen.getByRole('textbox', { name: /folder filter/i }));
-        await userEvent.type(screen.getByRole('textbox', { name: /folder filter/i }), '{enter}', {
+        userEvent.type(screen.getByRole('textbox', { name: /folder filter/i }), '{enter}', {
           skipClick: true,
         });
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));

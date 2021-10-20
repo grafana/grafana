@@ -145,6 +145,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
         <Select
+          aria-label={selectors.components.DataSourcePicker.inputV2}
           inputId="data-source-picker"
           menuShouldPortal
           className={styles.select}
