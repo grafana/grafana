@@ -5,8 +5,8 @@ import { Counter, Icon, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
-import { getLocationSrv } from '@grafana/runtime';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+
 export interface OptionsPaneCategoryProps {
   id: string;
   title?: string;
@@ -28,11 +28,12 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       isExpanded: initialIsExpanded,
     });
 
-    const isSelected = useQueryParams()[0][categoryParam] === id;
-    // `savedState` can be undefined by typescript, so we have to handle that case
+    const [queryParams, updateQueryParams] = useQueryParams();
+    const isSelected = queryParams[categoryParam] === id;
     const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
     const styles = useStyles2(getStyles);
     const ref = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
       if ((!isExpanded && forceOpen && forceOpen > 0) || isSelected) {
         setIsExpanded(true);
@@ -41,16 +42,10 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     }, [forceOpen, isExpanded, isSelected]);
 
     const onToggle = useCallback(() => {
-      // on expand, append query param
-      getLocationSrv().update({
-        query: {
-          [categoryParam]: isExpanded ? undefined : id,
-        },
-        partial: true,
-      });
+      updateQueryParams({ [categoryParam]: isExpanded ? null : id });
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-    }, [setSavedState, setIsExpanded, isExpanded, id]);
+    }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
