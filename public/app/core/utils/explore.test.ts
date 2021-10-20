@@ -61,8 +61,7 @@ describe('state functions', () => {
     });
 
     it('returns a valid Explore state from a compact URL parameter with graphStyle', () => {
-      const paramValue =
-        '["now-1h","now","Local",{"expr":"metric"},{"style":{"graph":"bars"}}, {"ui":[true,true,true,"none"]}]';
+      const paramValue = '["now-1h","now","Local",{"expr":"metric"},{"style":{"graph":"bars"}}]';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
         queries: [{ expr: 'metric' }],
