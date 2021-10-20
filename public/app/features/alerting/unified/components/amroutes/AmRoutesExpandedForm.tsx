@@ -3,7 +3,6 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
-  Checkbox,
   Field,
   FieldArray,
   Form,
@@ -27,6 +26,7 @@ import {
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
 import { getFormStyles } from './formStyles';
+import { matcherFieldOptions } from '../../utils/alertmanager';
 
 export interface AmRoutesExpandedFormProps {
   onCancel: () => void;
@@ -51,19 +51,19 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
           {/* @ts-ignore-check: react-hook-form made me do this */}
           <input type="hidden" {...register('id')} />
           {/* @ts-ignore-check: react-hook-form made me do this */}
-          <FieldArray name="matchers" control={control}>
+          <FieldArray name="object_matchers" control={control}>
             {({ fields, append, remove }) => (
               <>
                 <div>Matching labels</div>
                 <div className={styles.matchersContainer}>
                   {fields.map((field, index) => {
-                    const localPath = `matchers[${index}]`;
+                    const localPath = `object_matchers[${index}]`;
                     return (
                       <HorizontalGroup key={field.id} align="flex-start">
                         <Field
                           label="Label"
-                          invalid={!!errors.matchers?.[index]?.name}
-                          error={errors.matchers?.[index]?.name?.message}
+                          invalid={!!errors.object_matchers?.[index]?.name}
+                          error={errors.object_matchers?.[index]?.name?.message}
                         >
                           <Input
                             {...register(`${localPath}.name`, { required: 'Field is required' })}
@@ -71,22 +71,32 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                             placeholder="label"
                           />
                         </Field>
+                        <Field label={'Operator'}>
+                          <InputControl
+                            render={({ field: { onChange, ref, ...field } }) => (
+                              <Select
+                                {...field}
+                                className={styles.matchersOperator}
+                                onChange={(value) => onChange(value?.value)}
+                                options={matcherFieldOptions}
+                              />
+                            )}
+                            defaultValue={field.operator}
+                            control={control}
+                            name={`${localPath}.operator` as const}
+                            rules={{ required: { value: true, message: 'Required.' } }}
+                          />
+                        </Field>
                         <Field
                           label="Value"
-                          invalid={!!errors.matchers?.[index]?.value}
-                          error={errors.matchers?.[index]?.value?.message}
+                          invalid={!!errors.object_matchers?.[index]?.value}
+                          error={errors.object_matchers?.[index]?.value?.message}
                         >
                           <Input
                             {...register(`${localPath}.value`, { required: 'Field is required' })}
                             defaultValue={field.value}
                             placeholder="value"
                           />
-                        </Field>
-                        <Field className={styles.matcherRegexField} label="Regex">
-                          <Checkbox {...register(`${localPath}.isRegex`)} defaultChecked={field.isRegex} />
-                        </Field>
-                        <Field className={styles.matcherRegexField} label="Equal">
-                          <Checkbox {...register(`${localPath}.isEqual`)} defaultChecked={field.isEqual} />
                         </Field>
                         <IconButton
                           className={styles.removeButton}
@@ -179,7 +189,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} />
+                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
                       )}
                       control={control}
                       name="groupWaitValue"
@@ -213,7 +223,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} />
+                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
                       )}
                       control={control}
                       name="groupIntervalValue"
@@ -247,7 +257,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} />
+                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
                       )}
                       control={control}
                       name="repeatIntervalValue"
@@ -299,8 +309,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1, 4.6, 1, 1.5)};
       width: fit-content;
     `,
-    matcherRegexField: css`
-      margin-left: ${theme.spacing(6)};
+    matchersOperator: css`
+      min-width: 140px;
     `,
     nestedPolicies: css`
       margin-top: ${commonSpacing};

@@ -32,6 +32,8 @@ const makeInitialUserListAdminState = (): UserListAdminState => ({
   perPage: 50,
   totalPages: 1,
   showPaging: false,
+  filters: [{ name: 'activeLast30Days', value: true }],
+  isLoading: false,
 });
 
 const getTestUserMapping = (): LdapUser => ({

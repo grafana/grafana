@@ -11,6 +11,7 @@ import {
   UserOrg,
   UserSession,
   UserListAdminState,
+  UserFilter,
 } from 'app/types';
 
 const initialLdapState: LdapState = {
@@ -128,6 +129,8 @@ const initialUserListAdminState: UserListAdminState = {
   perPage: 50,
   totalPages: 1,
   showPaging: false,
+  filters: [{ name: 'activeLast30Days', value: false }],
+  isLoading: false,
 };
 
 interface UsersFetched {
@@ -151,7 +154,14 @@ export const userListAdminSlice = createSlice({
         totalPages,
         perPage,
         showPaging: totalPages > 1,
+        isLoading: false,
       };
+    },
+    usersFetchBegin: (state) => {
+      return { ...state, isLoading: true };
+    },
+    usersFetchEnd: (state) => {
+      return { ...state, isLoading: false };
     },
     queryChanged: (state, action: PayloadAction<string>) => ({
       ...state,
@@ -162,10 +172,31 @@ export const userListAdminSlice = createSlice({
       ...state,
       page: action.payload,
     }),
+    filterChanged: (state, action: PayloadAction<UserFilter>) => {
+      const { name, value } = action.payload;
+
+      if (state.filters.some((filter) => filter.name === name)) {
+        return {
+          ...state,
+          filters: state.filters.map((filter) => (filter.name === name ? { ...filter, value } : filter)),
+        };
+      }
+      return {
+        ...state,
+        filters: [...state.filters, action.payload],
+      };
+    },
   },
 });
 
-export const { usersFetched, queryChanged, pageChanged } = userListAdminSlice.actions;
+export const {
+  usersFetched,
+  usersFetchBegin,
+  usersFetchEnd,
+  queryChanged,
+  pageChanged,
+  filterChanged,
+} = userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
 
 export default {

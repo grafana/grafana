@@ -147,3 +147,32 @@ describe('When adding and updating range map', () => {
     ]);
   });
 });
+
+describe('When adding and updating tegex map', () => {
+  it('should add new regex map', async () => {
+    const onChangeSpy = jest.fn();
+    setup(onChangeSpy, { value: [] });
+
+    fireEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
+    const selectComponent = await screen.findByLabelText(selectors.components.ValuePicker.select('Add a new mapping'));
+    await selectOptionInTest(selectComponent, 'Regex');
+
+    fireEvent.change(screen.getByPlaceholderText('Regular expression'), { target: { value: '(.*).example.com' } });
+    fireEvent.change(screen.getByPlaceholderText('Optional display text'), { target: { value: '$1' } });
+
+    fireEvent.click(screen.getByText('Update'));
+
+    expect(onChangeSpy).toBeCalledWith([
+      {
+        type: MappingType.RegexToText,
+        options: {
+          pattern: '(.*).example.com',
+          result: {
+            text: '$1',
+            index: 0,
+          },
+        },
+      },
+    ]);
+  });
+});

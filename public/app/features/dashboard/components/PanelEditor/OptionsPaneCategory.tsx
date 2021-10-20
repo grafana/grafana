@@ -83,9 +83,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
           </div>
-          <div className={styles.title} role="heading">
-            {renderTitle(isExpanded)}
-          </div>
+          <h6 className={styles.title}>{renderTitle(isExpanded)}</h6>
         </div>
         {isExpanded && <div className={bodyStyles}>{children}</div>}
       </div>
@@ -108,6 +106,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css`
       flex-grow: 1;
       overflow: hidden;
+      line-height: 1.5;
+      font-size: 1rem;
+      font-weight: ${theme.typography.fontWeightMedium};
+      margin: 0;
     `,
     header: css`
       display: flex;

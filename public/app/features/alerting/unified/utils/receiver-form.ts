@@ -207,7 +207,7 @@ function grafanaChannelConfigToFormChannelValues(
   return values;
 }
 
-function formChannelValuesToGrafanaChannelConfig(
+export function formChannelValuesToGrafanaChannelConfig(
   values: GrafanaChannelValues,
   defaults: GrafanaChannelValues,
   name: string,

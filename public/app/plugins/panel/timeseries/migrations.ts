@@ -13,19 +13,19 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import {
+  LegendDisplayMode,
+  TooltipDisplayMode,
   AxisPlacement,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   GraphTresholdsStyleMode,
-  LegendDisplayMode,
   LineInterpolation,
   LineStyle,
-  PointVisibility,
+  VisibilityMode,
   ScaleDistribution,
   StackingMode,
-  TooltipDisplayMode,
-} from '@grafana/ui';
+} from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
 import { defaultGraphConfig } from './config';
@@ -166,14 +166,14 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
           case 'points':
             rule.properties.push({
               id: 'custom.showPoints',
-              value: v ? PointVisibility.Always : PointVisibility.Never,
+              value: v ? VisibilityMode.Always : VisibilityMode.Never,
             });
             break;
           case 'bars':
             if (v) {
               rule.properties.push({
                 id: 'custom.drawStyle',
-                value: DrawStyle.Bars,
+                value: GraphDrawStyle.Bars,
               });
               rule.properties.push({
                 id: 'custom.fillOpacity',
@@ -182,7 +182,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             } else {
               rule.properties.push({
                 id: 'custom.drawStyle',
-                value: DrawStyle.Line, // Change from bars
+                value: GraphDrawStyle.Line, // Change from bars
               });
             }
             break;
@@ -257,16 +257,16 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   const graph = y1.custom ?? ({} as GraphFieldConfig);
-  graph.drawStyle = angular.bars ? DrawStyle.Bars : angular.lines ? DrawStyle.Line : DrawStyle.Points;
+  graph.drawStyle = angular.bars ? GraphDrawStyle.Bars : angular.lines ? GraphDrawStyle.Line : GraphDrawStyle.Points;
 
   if (angular.points) {
-    graph.showPoints = PointVisibility.Always;
+    graph.showPoints = VisibilityMode.Always;
 
     if (isNumber(angular.pointradius)) {
       graph.pointSize = 2 + angular.pointradius * 2;
     }
-  } else if (graph.drawStyle !== DrawStyle.Points) {
-    graph.showPoints = PointVisibility.Never;
+  } else if (graph.drawStyle !== GraphDrawStyle.Points) {
+    graph.showPoints = VisibilityMode.Never;
   }
 
   graph.lineWidth = angular.linewidth;
@@ -291,7 +291,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.lineInterpolation = LineInterpolation.StepAfter;
   }
 
-  if (graph.drawStyle === DrawStyle.Bars) {
+  if (graph.drawStyle === GraphDrawStyle.Bars) {
     graph.fillOpacity = 100; // bars were always
   }
 

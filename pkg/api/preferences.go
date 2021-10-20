@@ -7,6 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+const (
+	defaultTheme string = ""
+	darkTheme    string = "dark"
+	lightTheme   string = "light"
+)
+
 // POST /api/preferences/set-home-dash
 func SetHomeDashboard(c *models.ReqContext, cmd models.SavePreferencesCommand) response.Response {
 	cmd.UserId = c.UserId
@@ -35,6 +41,7 @@ func getPreferencesFor(orgID, userID, teamID int64) response.Response {
 		Theme:           prefsQuery.Result.Theme,
 		HomeDashboardID: prefsQuery.Result.HomeDashboardId,
 		Timezone:        prefsQuery.Result.Timezone,
+		WeekStart:       prefsQuery.Result.WeekStart,
 	}
 
 	return response.JSON(200, &dto)
@@ -46,12 +53,16 @@ func UpdateUserPreferences(c *models.ReqContext, dtoCmd dtos.UpdatePrefsCmd) res
 }
 
 func updatePreferencesFor(orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) response.Response {
+	if dtoCmd.Theme != lightTheme && dtoCmd.Theme != darkTheme && dtoCmd.Theme != defaultTheme {
+		return response.Error(400, "Invalid theme", nil)
+	}
 	saveCmd := models.SavePreferencesCommand{
 		UserId:          userID,
 		OrgId:           orgID,
 		TeamId:          teamId,
 		Theme:           dtoCmd.Theme,
 		Timezone:        dtoCmd.Timezone,
+		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardId: dtoCmd.HomeDashboardID,
 	}
 

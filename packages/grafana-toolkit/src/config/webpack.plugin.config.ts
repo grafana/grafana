@@ -274,7 +274,7 @@ export const loadWebpackConfig: WebpackConfigurationGetter = async (options) => 
       );
     }
     return (configGetter as CustomWebpackConfigurationGetter)(baseConfig, options);
-  } catch (err) {
+  } catch (err: any) {
     if (err.code === 'ENOENT') {
       return baseConfig;
     }

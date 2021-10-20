@@ -14,27 +14,26 @@ Follow these steps to activate your Grafana Enterprise license:
 
 To download your Grafana Enterprise license:
 
-1. Log in to your [Grafana Cloud Account](https://grafana.com).
-1. Go to your **Org Profile**.
-1. Go to the section for Grafana Enterprise licenses in the side menu.
-1. At the bottom of the license details page there is **Download Token** link that will download the _license.jwt_ file containing your license to your computer.
+1. Sign in to your [Grafana Cloud](https://grafana.com) account.
+1. Go to **My Account** and select an organization from the drop-down menu at the top left of the page. On the Overview page for each organization, you can see a section for Grafana Enterprise licenses. Click **Details** next to a license.
+1. At the bottom of the license details page, select **Download token** to download the `license.jwt` file that contains your license.
 
 ## Step 2. Add your license to a Grafana instance
 
-There are three different ways to add the license to a Grafana instance:
+There is more than one way to add the license to a Grafana instance:
 
-### Upload the license file through the Grafana Server Administrator page
+### Upload the license file via the Grafana server administrator page
 
 This is the preferred option for single instance installations of Grafana Enterprise.
 
-1. Sign in as a Grafana server admin.
+1. Sign in as a Grafana server administrator.
 1. Navigate to **Server Admin > Upgrade** within Grafana.
 1. Click **Upload license token file**.
 1. Select your license file, and upload it.
 
-### Place the license.jwt file in Grafana's data folder
+### Put the `license.jwt` file into the data directory of Grafana
 
-The data folder is usually `/var/lib/grafana` on Linux systems.
+On Linux systems, the data directory is usually at `/var/lib/grafana`.
 
 You can also configure a custom location for the license file using the grafana.ini setting:
 
@@ -68,13 +67,13 @@ In your configuration file:
 
 ```
 [server]
-root_url = https://grafana.blah.com/
+root_url = https://grafana.example.com/
 ```
 
 Or with an environment variable:
 
 ```
-GF_SERVER_ROOT_URL=https://grafana.blah.com/
+GF_SERVER_ROOT_URL=https://grafana.example.com/
 ```
 
 ## Step 4. Restart Grafana

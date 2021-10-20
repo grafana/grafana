@@ -2,32 +2,35 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// OSSAccessControlService is the service implementing role based access control.
-type OSSAccessControlService struct {
-	Cfg           *setting.Cfg          `inject:""`
-	UsageStats    usagestats.UsageStats `inject:""`
-	Log           log.Logger
-	registrations accesscontrol.RegistrationList
+func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessControlService {
+	s := &OSSAccessControlService{
+		Cfg:           cfg,
+		UsageStats:    usageStats,
+		Log:           log.New("accesscontrol"),
+		scopeResolver: accesscontrol.NewScopeResolver(),
+	}
+	s.registerUsageMetrics()
+	return s
 }
 
-// Init initializes the OSSAccessControlService.
-func (ac *OSSAccessControlService) Init() error {
-	ac.Log = log.New("accesscontrol")
-
-	ac.registerUsageMetrics()
-
-	return nil
+// OSSAccessControlService is the service implementing role based access control.
+type OSSAccessControlService struct {
+	Cfg           *setting.Cfg
+	UsageStats    usagestats.Service
+	Log           log.Logger
+	registrations accesscontrol.RegistrationList
+	scopeResolver accesscontrol.ScopeResolver
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -55,9 +58,33 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 	return 1
 }
 
-// Evaluate evaluates access to the given resource
-func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
-	return evaluator.Evaluate(ctx, ac, user, permission, scope...)
+// Evaluate evaluates access to the given resources
+func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
+	defer timer.ObserveDuration()
+	metrics.MAccessEvaluationCount.Inc()
+
+	permissions, err := ac.GetUserPermissions(ctx, user)
+	if err != nil {
+		return false, err
+	}
+
+	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
+}
+
+// GetUserRoles returns user permissions based on built-in roles
+func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
+	return nil, errors.New("unsupported function") //OSS users will continue to use builtin roles via GetUserPermissions
+}
+
+// CloneUserToServiceAccount creates a service account with permissions based on a user
+func (ac *OSSAccessControlService) CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error) {
+	return nil, errors.New("clone user not implemented yet in service accounts") //Please switch on Enterprise to test this
+}
+
+// Link creates a service account with permissions based on a user
+func (ac *OSSAccessControlService) LinkAPIKeyToServiceAccount(context.Context, *models.ApiKey, *models.User) error {
+	return errors.New("link SA not implemented yet in service accounts") //Please switch on Enterprise to test this
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
@@ -75,8 +102,12 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 					continue
 				}
 				for _, p := range role.Permissions {
-					permission := p
-					permissions = append(permissions, &permission)
+					// if the permission has a keyword in its scope it will be resolved
+					permission, err := ac.scopeResolver.ResolveKeyword(user, p)
+					if err != nil {
+						return nil, err
+					}
+					permissions = append(permissions, permission)
 				}
 			}
 		}

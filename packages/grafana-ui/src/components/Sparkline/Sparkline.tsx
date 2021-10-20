@@ -11,12 +11,12 @@ import {
 } from '@grafana/data';
 import {
   AxisPlacement,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
-  PointVisibility,
+  VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
-} from '../uPlot/config';
+} from '@grafana/schema';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { UPlotChart } from '../uPlot/Plot';
 import { Themeable2 } from '../../types';
@@ -38,8 +38,8 @@ interface State {
 }
 
 const defaultConfig: GraphFieldConfig = {
-  drawStyle: DrawStyle.Line,
-  showPoints: PointVisibility.Auto,
+  drawStyle: GraphDrawStyle.Line,
+  showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Hidden,
 };
 
@@ -50,7 +50,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     const alignedDataFrame = preparePlotFrame(props.sparkline, props.config);
 
     this.state = {
-      data: preparePlotData(alignedDataFrame),
+      data: preparePlotData([alignedDataFrame]),
       alignedDataFrame,
       configBuilder: this.prepareConfig(alignedDataFrame),
     };
@@ -64,7 +64,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
     return {
       ...state,
-      data: preparePlotData(frame),
+      data: preparePlotData([frame]),
       alignedDataFrame: frame,
     };
   }
@@ -162,7 +162,8 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-      const pointsMode = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+      const pointsMode =
+        customConfig.drawStyle === GraphDrawStyle.Points ? VisibilityMode.Always : customConfig.showPoints;
 
       builder.addSeries({
         pxAlign: false,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -79,8 +80,8 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	}
 
 	annotations := make(map[string]string, 3)
-	annotations["__dashboardUid__"] = da.DashboardUID
-	annotations["__panelId__"] = fmt.Sprintf("%v", da.PanelId)
+	annotations[ngmodels.DashboardUIDAnnotation] = da.DashboardUID
+	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelId)
 	annotations["__alertId__"] = fmt.Sprintf("%v", da.Id)
 
 	return lbls, annotations

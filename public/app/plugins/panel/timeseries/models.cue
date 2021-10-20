@@ -15,16 +15,14 @@
 package grafanaschema
 
 import (
-    ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+    ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Family: {
+Panel: {
     lineages: [
         [
             {
                 PanelOptions: {
-                    // FIXME idk where this is coming from but various devenv dashes have it
-                    graph?: {...}
                     legend: ui.VizLegendOptions
                     tooltip: ui.VizTooltipOptions
                 }

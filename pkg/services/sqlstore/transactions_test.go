@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package sqlstore
@@ -20,7 +21,7 @@ func TestTransaction(t *testing.T) {
 	Convey("InTransaction", t, func() {
 		cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
 
-		err := AddApiKey(cmd)
+		err := AddAPIKey(context.Background(), cmd)
 		So(err, ShouldBeNil)
 
 		Convey("can update key", func() {

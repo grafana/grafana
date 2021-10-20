@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -19,14 +19,14 @@ func TestDeleteLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.reqContext.SignedInUser.OrgId = 2
 			sc.reqContext.SignedInUser.OrgRole = models.ROLE_ADMIN
 			resp := sc.service.deleteHandler(sc.reqContext)
@@ -66,10 +66,10 @@ func TestDeleteLibraryElement(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
 			require.NoError(t, err)
 
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 403, resp.Status())
 		})

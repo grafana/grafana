@@ -1,23 +1,22 @@
 import React from 'react';
-import { hot } from 'react-hot-loader';
 import { css, cx } from '@emotion/css';
 import { compose } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import { ErrorBoundaryAlert, CustomScrollbar, Collapse, TooltipDisplayMode, withTheme2, Themeable2 } from '@grafana/ui';
-import { AbsoluteTimeRange, DataQuery, LoadingState, RawTimeRange, DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
+import { AbsoluteTimeRange, DataFrame, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
-import QueryRows from './QueryRows';
+import { QueryRows } from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
 import { changeSize } from './state/explorePane';
 import { updateTimeRange } from './state/time';
-import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
+import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -25,10 +24,11 @@ import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
-import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 import { NodeGraphContainer } from './NodeGraphContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import { ExploreGraph } from './ExploreGraph';
+import { LogsVolumePanel } from './LogsVolumePanel';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -191,18 +191,34 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <Collapse label="Graph" loading={loading} isOpen>
-        <ExploreGraphNGPanel
+        <ExploreGraph
           data={graphResult!}
           height={400}
           width={width - spacing}
-          tooltipDisplayMode={TooltipDisplayMode.Single}
           absoluteRange={absoluteRange}
+          onChangeTime={this.onUpdateTimeRange}
           timeZone={timeZone}
-          onUpdateTimeRange={this.onUpdateTimeRange}
           annotations={queryResponse.annotations}
           splitOpenFn={splitOpen}
+          loadingState={queryResponse.state}
         />
       </Collapse>
+    );
+  }
+
+  renderLogsVolume(width: number) {
+    const { logsVolumeData, exploreId, loadLogsVolumeData, absoluteRange, timeZone, splitOpen } = this.props;
+
+    return (
+      <LogsVolumePanel
+        absoluteRange={absoluteRange}
+        width={width}
+        logsVolumeData={logsVolumeData}
+        onUpdateTimeRange={this.onUpdateTimeRange}
+        timeZone={timeZone}
+        splitOpen={splitOpen}
+        onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
+      />
     );
   }
 
@@ -219,11 +235,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsPanel(width: number) {
-    const { exploreId, syncedTimes, theme } = this.props;
+    const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <LogsContainer
         exploreId={exploreId}
+        loadingState={queryResponse.state}
         syncedTimes={syncedTimes}
         width={width - spacing}
         onClickFilterLabel={this.onClickFilterLabel}
@@ -268,7 +285,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       datasourceInstance,
       datasourceMissing,
       exploreId,
-      queryKeys,
       graphResult,
       queryResponse,
       isLive,
@@ -292,7 +308,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         {datasourceInstance && (
           <div className="explore-container">
             <div className={cx('panel-container', styles.queryContainer)}>
-              <QueryRows exploreId={exploreId} queryKeys={queryKeys} />
+              <QueryRows exploreId={exploreId} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
                 // We cannot show multiple traces at the same time right now so we do not show add query button.
@@ -320,6 +336,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                           )}
+                          {<ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
@@ -363,6 +380,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
+    logsVolumeData,
     logsResult,
     showLogs,
     showMetrics,
@@ -380,6 +398,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
+    logsVolumeData,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,
@@ -401,10 +420,11 @@ const mapDispatchToProps = {
   scanStopAction,
   setQueries,
   updateTimeRange,
+  loadLogsVolumeData,
   addQueryRow,
   splitOpen,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default compose(hot(module), connector, withTheme2)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
+export default compose(connector, withTheme2)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;

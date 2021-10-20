@@ -1,26 +1,24 @@
 package state_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-var nilMetrics = metrics.NewMetrics(nil)
+var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
 
 func TestProcessEvalResults(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
@@ -153,7 +151,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime,
-					EndsAt:             evaluationTime.Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime,
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -275,7 +273,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(1 * time.Minute),
-					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(time.Duration(20) * time.Second),
+					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -351,7 +349,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(80 * time.Second),
-					EndsAt:             evaluationTime.Add(80 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(80 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(80 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -414,7 +412,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -477,7 +475,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime,
-					EndsAt:             evaluationTime.Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -540,7 +538,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -603,7 +601,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -666,7 +664,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -730,7 +728,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -794,7 +792,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -854,10 +852,10 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"), nilMetrics, nil, nil)
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, nil)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
-				_ = st.ProcessEvalResults(tc.alertRule, res)
+				_ = st.ProcessEvalResults(context.Background(), tc.alertRule, res)
 			}
 			for _, s := range tc.expectedStates {
 				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
@@ -874,9 +872,10 @@ func TestStaleResultsHandler(t *testing.T) {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
 
-	dbstore := tests.SetupTestEnv(t, 1)
+	_, dbstore := tests.SetupTestEnv(t, 1)
 
-	rule := tests.CreateTestAlertRule(t, dbstore, 600)
+	const mainOrgID int64 = 1
+	rule := tests.CreateTestAlertRule(t, dbstore, 600, mainOrgID)
 
 	saveCmd1 := &models.SaveAlertInstanceCommand{
 		RuleOrgID:         rule.OrgID,
@@ -900,8 +899,6 @@ func TestStaleResultsHandler(t *testing.T) {
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
 	_ = dbstore.SaveAlertInstance(saveCmd2)
-
-	t.Cleanup(registry.ClearOverrides)
 
 	testCases := []struct {
 		desc               string
@@ -951,14 +948,14 @@ func TestStaleResultsHandler(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_stale_results_handler"), nilMetrics, dbstore, dbstore)
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore)
 		st.Warm()
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
 		assert.Equal(t, tc.startingStateCount, len(existingStatesForRule))
 		for _, res := range tc.evalResults {
-			st.ProcessEvalResults(rule, res)
+			st.ProcessEvalResults(context.Background(), rule, res)
 			for _, s := range tc.expectedStates {
 				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				require.NoError(t, err)

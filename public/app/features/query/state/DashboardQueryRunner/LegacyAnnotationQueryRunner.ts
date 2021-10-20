@@ -6,7 +6,11 @@ import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
 import { handleAnnotationQueryRunnerError } from './utils';
 
 export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
-  canRun(datasource: DataSourceApi): boolean {
+  canRun(datasource?: DataSourceApi): boolean {
+    if (!datasource) {
+      return false;
+    }
+
     return Boolean(datasource.annotationQuery && !datasource.annotations);
   }
 
@@ -15,7 +19,7 @@ export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
       return of([]);
     }
 
-    return from(datasource.annotationQuery!({ range, rangeRaw: range.raw, annotation, dashboard })).pipe(
+    return from(datasource!.annotationQuery!({ range, rangeRaw: range.raw, annotation, dashboard })).pipe(
       catchError(handleAnnotationQueryRunnerError)
     );
   }

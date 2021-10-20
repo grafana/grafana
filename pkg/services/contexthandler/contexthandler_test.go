@@ -7,14 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	macaron "gopkg.in/macaron.v1"
 )
 
 func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
@@ -96,12 +96,8 @@ func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *Conte
 		return nil, nil, err
 	}
 	reqContext := &models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{
-				Request: req,
-			},
-		},
-		Logger: log.New("testlogger"),
+		Context: &web.Context{Req: req},
+		Logger:  log.New("testlogger"),
 	}
 
 	mw := mockWriter{rr}
@@ -114,11 +110,11 @@ type mockWriter struct {
 	*httptest.ResponseRecorder
 }
 
-func (mw mockWriter) Flush()                    {}
-func (mw mockWriter) Status() int               { return 0 }
-func (mw mockWriter) Size() int                 { return 0 }
-func (mw mockWriter) Written() bool             { return false }
-func (mw mockWriter) Before(macaron.BeforeFunc) {}
+func (mw mockWriter) Flush()                {}
+func (mw mockWriter) Status() int           { return 0 }
+func (mw mockWriter) Size() int             { return 0 }
+func (mw mockWriter) Written() bool         { return false }
+func (mw mockWriter) Before(web.BeforeFunc) {}
 func (mw mockWriter) Push(target string, opts *http.PushOptions) error {
 	return nil
 }

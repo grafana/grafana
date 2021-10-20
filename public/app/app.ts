@@ -19,6 +19,7 @@ import {
   monacoLanguageRegistry,
   setLocale,
   setTimeZoneResolver,
+  setWeekStart,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
@@ -31,7 +32,7 @@ import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { getScrollbarWidth, getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { getScrollbarWidth, getStandardFieldConfigs } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
@@ -41,14 +42,16 @@ import { configureStore } from './store/configureStore';
 import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { AngularApp } from './angular/AngularApp';
-import { PanelRenderer } from './features/panel/PanelRenderer';
+import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 import { contextSrv } from './core/services/context_srv';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
+import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
+import { getAllOptionEditors } from './core/components/editors/registry';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -75,13 +78,14 @@ export class GrafanaApp {
     initEchoSrv();
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
+    setWeekStart(config.bootData.user.weekStart);
     setPanelRenderer(PanelRenderer);
     setTimeZoneResolver(() => config.bootData.user.timezone);
     // Important that extensions are initialized before store
     initExtensions();
     configureStore();
 
-    standardEditorsRegistry.setInit(getStandardOptionEditors);
+    standardEditorsRegistry.setInit(getAllOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
@@ -178,6 +182,15 @@ function initEchoSrv() {
         writeKey: (config as any).rudderstackWriteKey,
         dataPlaneUrl: (config as any).rudderstackDataPlaneUrl,
         user: config.bootData.user,
+      })
+    );
+  }
+
+  if (config.applicationInsightsConnectionString) {
+    registerEchoBackend(
+      new ApplicationInsightsBackend({
+        connectionString: config.applicationInsightsConnectionString,
+        endpointUrl: config.applicationInsightsEndpointUrl,
       })
     );
   }

@@ -101,7 +101,7 @@ $text-color-strong: #fff;
 $text-color: rgb(204, 204, 220);
 $text-color-semi-weak: rgba(204, 204, 220, 0.65);
 $text-color-weak: rgba(204, 204, 220, 0.65);
-$text-color-faint: rgba(204, 204, 220, 0.40);
+$text-color-faint: rgba(204, 204, 220, 0.57);
 $text-color-emphasis: #fff;
 $text-blue: #6E9FFF;
 
@@ -115,7 +115,7 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 // Links
 // -------------------------
 $link-color: rgb(204, 204, 220);
-$link-color-disabled: rgba(204, 204, 220, 0.40);
+$link-color-disabled: rgba(204, 204, 220, 0.57);
 $link-hover-color: #fff;
 $external-link-color: #6E9FFF;
 
@@ -131,7 +131,7 @@ $hr-border-color: $dark-9;
 // -------------------------
 $panel-bg: #181b1f;
 $panel-border: 1px solid rgba(204, 204, 220, 0.07);
-$panel-header-hover-bg: rgba(204, 204, 220, 0.08);
+$panel-header-hover-bg: rgba(204, 204, 220, 0.16);
 $panel-box-shadow: none;
 $panel-corner: $panel-bg;
 
@@ -146,7 +146,7 @@ $divider-border-color: $gray-1;
 $tight-form-func-bg: #22252b;
 $tight-form-func-highlight-bg: rgb(40, 43, 49);
 
-$modal-backdrop-bg: rgba(204, 204, 220, 0.08);
+$modal-backdrop-bg: rgba(204, 204, 220, 0.16);
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
@@ -209,14 +209,14 @@ $btn-active-box-shadow: 0px 0px 4px rgba(255, 120, 10, 0.5);
 // Forms
 // -------------------------
 $input-bg: #111217;
-$input-bg-disabled: rgba(204, 204, 220, 0.07);
+$input-bg-disabled: rgba(204, 204, 220, 0.04);
 
 $input-color: rgb(204, 204, 220);
 $input-border-color: rgba(204, 204, 220, 0.15);
 $input-box-shadow: none;
 $input-border-focus: #6E9FFF;
 $input-box-shadow-focus: #6E9FFF !default;
-$input-color-placeholder: rgba(204, 204, 220, 0.40);
+$input-color-placeholder: rgba(204, 204, 220, 0.57);
 $input-label-bg: #22252b;
 $input-color-select-arrow: $white;
 
@@ -263,7 +263,7 @@ $side-menu-header-color: rgb(204, 204, 220);
 // Menu dropdowns
 // -------------------------
 $menu-dropdown-bg: #181b1f;
-$menu-dropdown-hover-bg: rgba(204, 204, 220, 0.08);
+$menu-dropdown-hover-bg: rgba(204, 204, 220, 0.16);
 $menu-dropdown-shadow: 0px 10px 20px rgb(20,20,20);
 
 // Tabs
@@ -332,7 +332,7 @@ $json-explorer-url-color: #027bff;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: rgba(204, 204, 220, 0.08);
+$diff-label-bg: rgba(204, 204, 220, 0.16);
 $diff-label-fg: $white;
 
 $diff-group-bg: #22252b;

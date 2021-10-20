@@ -7,7 +7,8 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
-import { StackingMode, BarValueVisibility, graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { StackingMode, VisibilityMode } from '@grafana/schema';
+import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from 'app/plugins/panel/barchart/types';
 
@@ -16,7 +17,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
-          byValueSupport: false,
+          byValueSupport: true,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
@@ -79,12 +80,12 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         name: 'Show values',
         settings: {
           options: [
-            { value: BarValueVisibility.Auto, label: 'Auto' },
-            { value: BarValueVisibility.Always, label: 'Always' },
-            { value: BarValueVisibility.Never, label: 'Never' },
+            { value: VisibilityMode.Auto, label: 'Auto' },
+            { value: VisibilityMode.Always, label: 'Always' },
+            { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
-        defaultValue: BarValueVisibility.Auto,
+        defaultValue: VisibilityMode.Auto,
       })
       .addRadio({
         path: 'stacking',

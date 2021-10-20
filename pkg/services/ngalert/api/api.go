@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -30,10 +31,8 @@ type Scheduler interface {
 
 type Alertmanager interface {
 	// Configuration
-	// temporary add orgID parameter; this will move to the Alertmanager wrapper when it will be available
-	SaveAndApplyConfig(orgID int64, config *apimodels.PostableUserConfig) error
-	// temporary add orgID parameter; this will move to the Alertmanager wrapper when it will be available
-	SaveAndApplyDefaultConfig(orgID int64) error
+	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
+	SaveAndApplyDefaultConfig() error
 	GetStatus() apimodels.GettableStatus
 
 	// Silences
@@ -52,23 +51,24 @@ type Alertmanager interface {
 
 // API handlers.
 type API struct {
-	Cfg              *setting.Cfg
-	DatasourceCache  datasources.CacheService
-	RouteRegister    routing.RouteRegister
-	DataService      *tsdb.Service
-	QuotaService     *quota.QuotaService
-	Schedule         schedule.ScheduleService
-	RuleStore        store.RuleStore
-	InstanceStore    store.InstanceStore
-	AlertingStore    store.AlertingStore
-	AdminConfigStore store.AdminConfigurationStore
-	DataProxy        *datasourceproxy.DatasourceProxyService
-	Alertmanager     Alertmanager
-	StateManager     *state.Manager
+	Cfg                  *setting.Cfg
+	DatasourceCache      datasources.CacheService
+	RouteRegister        routing.RouteRegister
+	DataService          *tsdb.Service
+	QuotaService         *quota.QuotaService
+	Schedule             schedule.ScheduleService
+	RuleStore            store.RuleStore
+	InstanceStore        store.InstanceStore
+	AlertingStore        store.AlertingStore
+	AdminConfigStore     store.AdminConfigurationStore
+	DataProxy            *datasourceproxy.DataSourceProxyService
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	StateManager         *state.Manager
+	EncryptionService    encryption.Service
 }
 
 // RegisterAPIEndpoints registers API handlers
-func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
+func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	logger := log.New("ngalert.api")
 	proxy := &AlertingProxy{
 		DataProxy: api.DataProxy,
@@ -78,7 +78,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
+		AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, enc: api.EncryptionService, log: logger},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(

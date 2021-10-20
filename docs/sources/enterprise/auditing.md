@@ -15,7 +15,7 @@ Auditing allows you to track important changes to your Grafana instance. By defa
 
 Audit logs are JSON objects representing user actions like:
 
-- Modifications ro resources such as dashboards and data sources.
+- Modifications to resources such as dashboards and data sources.
 - A user failing to log in.
 
 ### Format
@@ -126,7 +126,7 @@ The audit logs include records about the following categories of actions:
 Audit logs can be saved into files, sent to a Loki instance or sent to the Grafana default logger. By default, only the file exporter is enabled.
 You can choose which exporter to use in the [configuration file]({{< relref "../administration/configuration.md" >}}).
 
-Options are `file`, `loki`, and `console`. Use spaces to separate multiple modes, such as `file loki`.
+Options are `file`, `loki`, and `logger`. Use spaces to separate multiple modes, such as `file loki`.
 
 By default, when a user creates or updates a dashboard, its content will not appear in the logs as it can significantly increase the size of your logs. If this is important information for you and you can handle the amount of data generated, then you can enable this option in the configuration.
 

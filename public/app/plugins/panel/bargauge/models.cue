@@ -14,9 +14,9 @@
 
 package grafanaschema
 
-import ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 
-Family: {
+Panel: {
     lineages: [
         [
             {

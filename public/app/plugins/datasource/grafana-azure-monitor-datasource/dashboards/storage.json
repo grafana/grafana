@@ -1576,7 +1576,6 @@
       },
       "id": 13,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -1845,7 +1844,6 @@
       },
       "id": 12,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -2472,7 +2470,6 @@
       },
       "id": 18,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -6098,7 +6095,6 @@
       },
       "id": 44,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": ["mean"],
           "displayMode": "list",

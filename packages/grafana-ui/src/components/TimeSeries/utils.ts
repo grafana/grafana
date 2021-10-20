@@ -17,21 +17,21 @@ import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConf
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import {
   AxisPlacement,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
   GraphTresholdsStyleMode,
-  PointVisibility,
+  VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
-} from '../uPlot/config';
+} from '@grafana/schema';
 import { collectStackingGroups, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 const defaultConfig: GraphFieldConfig = {
-  drawStyle: DrawStyle.Line,
-  showPoints: PointVisibility.Auto,
+  drawStyle: GraphDrawStyle.Line,
+  showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
 
@@ -79,6 +79,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       placement: AxisPlacement.Bottom,
       timeZone,
       theme,
+      grid: { show: xField.config.custom?.axisGridShow },
     });
   } else {
     // Not time!
@@ -96,6 +97,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       scaleKey: xScaleKey,
       placement: AxisPlacement.Bottom,
       theme,
+      grid: { show: xField.config.custom?.axisGridShow },
     });
   }
 
@@ -147,10 +149,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
         formatValue: (v) => formattedValueToString(fmt(v)),
         theme,
+        grid: { show: customConfig.axisGridShow },
       });
     }
 
-    const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+    const showPoints =
+      customConfig.drawStyle === GraphDrawStyle.Points ? VisibilityMode.Always : customConfig.showPoints;
 
     let pointsFilter: uPlot.Series.Points.Filter = () => null;
 
@@ -232,6 +236,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: config.thresholds,
+      hardMin: field.config.min,
+      hardMax: field.config.max,
+      softMin: customConfig.axisSoftMin,
+      softMax: customConfig.axisSoftMax,
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
     });
@@ -245,6 +253,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
           thresholds: config.thresholds,
           scaleKey,
           theme,
+          hardMin: field.config.min,
+          hardMax: field.config.max,
+          softMin: customConfig.axisSoftMin,
+          softMax: customConfig.axisSoftMax,
         });
       }
     }
@@ -333,7 +345,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;
             payload.point[yScaleKey] = null;
-            eventBus.publish(new DataHoverClearEvent(payload));
+            eventBus.publish(new DataHoverClearEvent());
           } else {
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);

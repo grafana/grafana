@@ -7,32 +7,32 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func init() {
-	registry.RegisterService(&Implementation{})
-}
-
 var (
 	logger = log.New("login.ext_user")
 )
 
-type Implementation struct {
-	SQLStore        *sqlstore.SQLStore    `inject:""`
-	Bus             bus.Bus               `inject:""`
-	AuthInfoService login.AuthInfoService `inject:""`
-	QuotaService    *quota.QuotaService   `inject:""`
-	TeamSync        login.TeamSyncFunc
+func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, quotaService *quota.QuotaService, authInfoService login.AuthInfoService) *Implementation {
+	s := &Implementation{
+		SQLStore:        sqlStore,
+		Bus:             bus,
+		QuotaService:    quotaService,
+		AuthInfoService: authInfoService,
+	}
+	bus.AddHandler(s.UpsertUser)
+	return s
 }
 
-func (ls *Implementation) Init() error {
-	ls.Bus.AddHandler(ls.UpsertUser)
-
-	return nil
+type Implementation struct {
+	SQLStore        *sqlstore.SQLStore
+	Bus             bus.Bus
+	AuthInfoService login.AuthInfoService
+	QuotaService    *quota.QuotaService
+	TeamSync        login.TeamSyncFunc
 }
 
 // CreateUser creates inserts a new one.

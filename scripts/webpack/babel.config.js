@@ -1,6 +1,7 @@
 module.exports = function getBabelConfig(options = {}) {
-  return {
+  const babelOptions = {
     cacheDirectory: true,
+    cacheCompression: false,
     babelrc: false,
     // Note: order is bottom-to-top and/or right-to-left
     presets: [
@@ -43,4 +44,10 @@ module.exports = function getBabelConfig(options = {}) {
       'angularjs-annotate',
     ],
   };
+
+  if (options.REACT_REFRESH) {
+    babelOptions.plugins.push('react-refresh/babel');
+  }
+
+  return babelOptions;
 };

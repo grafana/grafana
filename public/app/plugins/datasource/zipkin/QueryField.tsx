@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { ExploreQueryFieldProps } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { QueryEditorProps } from '@grafana/data';
 import {
   ButtonCascader,
   CascaderOption,
@@ -9,6 +8,7 @@ import {
   InlineFieldRow,
   RadioButtonGroup,
   useTheme2,
+  QueryField,
 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -21,9 +21,9 @@ import { apiPrefix } from './constants';
 import { ZipkinDatasource } from './datasource';
 import { ZipkinQuery, ZipkinQueryType, ZipkinSpan } from './types';
 
-type Props = ExploreQueryFieldProps<ZipkinDatasource, ZipkinQuery>;
+type Props = QueryEditorProps<ZipkinDatasource, ZipkinQuery>;
 
-export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) => {
+export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Props) => {
   const serviceOptions = useServices(datasource);
   const theme = useTheme2();
   const { onLoadOptions, allOptions } = useLoadOptions(datasource);
@@ -38,6 +38,11 @@ export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) =
     },
     [onChange, onRunQuery, query]
   );
+
+  const onChangeQuery = (value: string) => {
+    const nextQuery = { ...query, query: value };
+    onChange(nextQuery);
+  };
 
   let cascaderOptions = useMapToCascaderOptions(serviceOptions, allOptions);
 
@@ -72,29 +77,20 @@ export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) =
           />
         </div>
       ) : (
-        <div className="gf-form-inline gf-form-inline--nowrap">
-          <div className="gf-form flex-shrink-0">
-            <ButtonCascader options={cascaderOptions} onChange={onSelectTrace} loadData={onLoadOptions}>
-              Traces
-            </ButtonCascader>
+        <InlineFieldRow>
+          <ButtonCascader options={cascaderOptions} onChange={onSelectTrace} loadData={onLoadOptions}>
+            Traces
+          </ButtonCascader>
+          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
+            <QueryField
+              query={query.query}
+              onChange={onChangeQuery}
+              onRunQuery={onRunQuery}
+              placeholder={'Insert Trace ID (run with Shift+Enter)'}
+              portalOrigin="zipkin"
+            />
           </div>
-          <div className="gf-form gf-form--grow flex-shrink-1">
-            <div className="slate-query-field__wrapper">
-              <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
-                <input
-                  style={{ width: '100%' }}
-                  value={query.query || ''}
-                  onChange={(e) =>
-                    onChange({
-                      ...query,
-                      query: e.currentTarget.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        </InlineFieldRow>
       )}
     </>
   );

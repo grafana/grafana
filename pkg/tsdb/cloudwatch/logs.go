@@ -5,11 +5,14 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/registry"
 )
 
-func init() {
-	registry.RegisterService(&LogsService{})
+func ProvideLogsService() *LogsService {
+	return &LogsService{
+		// nolint:staticcheck // plugins.DataQueryResponse deprecated
+		responseChannels: make(map[string]chan *backend.QueryDataResponse),
+		queues:           make(map[string](chan bool)),
+	}
 }
 
 // LogsService provides methods for querying CloudWatch Logs.
@@ -19,14 +22,6 @@ type LogsService struct {
 	responseChannels map[string]chan *backend.QueryDataResponse
 	queues           map[string](chan bool)
 	queueLock        sync.Mutex
-}
-
-// Init is called by the DI framework to initialize the instance.
-func (s *LogsService) Init() error {
-	// nolint:staticcheck // plugins.DataQueryResult deprecated
-	s.responseChannels = make(map[string]chan *backend.QueryDataResponse)
-	s.queues = make(map[string](chan bool))
-	return nil
 }
 
 // nolint:staticcheck // plugins.DataQueryResult deprecated

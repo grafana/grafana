@@ -41,6 +41,7 @@ tls_skip_verify_insecure = false
 tls_client_cert =
 tls_client_key =
 tls_client_ca =
+use_pkce = true
 ```
 
 Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
@@ -55,24 +56,30 @@ You can also specify the SSL/TLS configuration used by the client.
 
 Set `empty_scopes` to true to use an empty scope during authentication. By default, Grafana uses `user:email` as scope.
 
-Grafana will attempt to determine the user's e-mail address by querying the OAuth provider as described below in the following order until an e-mail address is found:
+### Email address
+
+Grafana determines a user's email address by querying the OAuth provider until it finds an e-mail address:
 
 1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
 1. Check for the presence of an e-mail address using the [JMESPath](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
    **Note**: Only available in Grafana v6.4+.
 1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
-1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`) and check for the presence of an e-mail address marked as a primary address.
-1. If no e-mail address is found in steps (1-4), then the e-mail address of the user is set to the empty string.
+1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`), then check for the presence of an email address marked as a primary address.
+1. If no email address is found in steps (1-4), then the email address of the user is set to an empty string.
 
-Grafana will also attempt to do role mapping through OAuth as described below.
+### Roles
 
-Check for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to the `id_token` first. If there is no match, then the UserInfo endpoint specified via the `api_url` configuration option is tried next. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
 
-Grafana also attempts to map teams through OAuth as described below.
+For more information, refer to the [JMESPath examples](#jmespath-examples).
 
-Check for the presence of groups using the [JMESPath](http://jmespath.org/examples.html) specified via the `groups_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. After evaluating the `groups_attribute_path` JMESPath expression, the result should be a string array of groups.
+### Groups / Teams
 
-See [JMESPath examples](#jmespath-examples) for more information.
+Similarly, group mappings are made using [JMESPath](http://jmespath.org/examples.html) with the `groups_attribute_path` configuration option. The `id_token` is attempted first, followed by the UserInfo from the `api_url`. The result of the JMESPath expression should be a string array of groups.
+
+Furthermore, Grafana will check for the presence of at least one of the teams specified via the `team_ids` configuration option using the [JMESPath](http://jmespath.org/examples.html) specified via the `team_ids_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the Teams endpoint specified via the `teams_url` configuration option (using `/teams` as a fallback endpoint). The result should be a string array of Grafana Team IDs. Using this setting ensures that only certain teams is allowed to authenticate to Grafana using your OAuth provider.
+
+### Login
 
 Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
 
@@ -84,6 +91,24 @@ You can customize the attribute name used to extract the ID token from the retur
 You can set the user's display name with JMESPath using the `name_attribute_path` configuration option. It operates the same way as the `login_attribute_path` option.
 
 > **Note:** `name_attribute_path` is available in Grafana 7.4+.
+
+### PKCE
+
+> Available in Grafana v8.3 and later versions.
+
+IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
+introduces "proof key for code exchange" (PKCE) which introduces
+additional protection against some forms of authorization code
+interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
+
+You can enable PKCE in Grafana by setting `use_pkce` to `true` in the
+`[auth.generic_oauth]` section.
+
+```
+use_pkce = true
+```
+
+Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.
 
 ## Set up OAuth2 with Auth0
 
@@ -111,6 +136,7 @@ You can set the user's display name with JMESPath using the `name_attribute_path
    auth_url = https://<domain>/authorize
    token_url = https://<domain>/oauth/token
    api_url = https://<domain>/userinfo
+   use_pkce = true
    ```
 
 ## Set up OAuth2 with Bitbucket
@@ -126,6 +152,8 @@ scopes = account email
 auth_url = https://bitbucket.org/site/oauth2/authorize
 token_url = https://bitbucket.org/site/oauth2/access_token
 api_url = https://api.bitbucket.org/2.0/user
+teams_url = https://api.bitbucket.org/2.0/user/permissions/workspaces
+team_ids_attribute_path = values[*].workspace.slug
 team_ids =
 allowed_organizations =
 ```

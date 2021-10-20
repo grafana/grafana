@@ -13,16 +13,8 @@ import {
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
-import {
-  AxisPlacement,
-  FIXED_UNIT,
-  ScaleDirection,
-  ScaleDistribution,
-  ScaleOrientation,
-  StackingMode,
-  UPlotConfigBuilder,
-  UPlotConfigPrepFn,
-} from '@grafana/ui';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
+import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
 import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 /** @alpha */
@@ -53,6 +45,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   barWidth,
   stacking,
   text,
+  rawValue,
+  allFrames,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) =>
@@ -75,7 +69,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     groupWidth,
     barWidth,
     stacking,
-    rawValue: (seriesIdx: number, valueIdx: number) => frame.fields[seriesIdx].values.get(valueIdx),
+    rawValue,
     formatValue,
     text,
     showValue,
@@ -107,7 +101,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     placement: vizOrientation.xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
     splits: config.xSplits,
     values: config.xValues,
-    grid: false,
+    grid: { show: false },
     ticks: false,
     gap: 15,
     theme,
@@ -142,10 +136,17 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
+      hardMin: field.config.min,
+      hardMax: field.config.max,
+      softMin: customConfig.axisSoftMin,
+      softMax: customConfig.axisSoftMax,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
+      // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
       dataFrameFieldIndex: {
-        fieldIndex: i,
+        fieldIndex: allFrames[0].fields.findIndex(
+          (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
+        ),
         frameIndex: 0,
       },
     });
@@ -182,6 +183,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
         placement,
         formatValue: (v) => formattedValueToString(field.display!(v)),
         theme,
+        grid: { show: customConfig.axisGridShow },
       });
     }
 
@@ -248,10 +250,16 @@ export function prepareGraphableFrames(
     };
   }
 
+  let seriesIndex = 0;
+
   for (let frame of series) {
     const fields: Field[] = [];
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
+        field.state = field.state ?? {};
+
+        field.state.seriesIndex = seriesIndex++;
+
         let copy = {
           ...field,
           config: {

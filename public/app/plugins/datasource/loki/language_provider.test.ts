@@ -87,6 +87,21 @@ describe('Language completion provider', () => {
     });
   });
 
+  describe('fetchSeries', () => {
+    it('should use match[] parameter', () => {
+      const datasource = makeMockLokiDatasource({}, { '{foo="bar"}': [{ label1: 'label_val1' }] });
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeries = languageProvider.fetchSeries;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeries('{job="grafana"}');
+      expect(requestSpy).toHaveBeenCalledWith('/loki/api/v1/series', {
+        end: 1560163909000,
+        'match[]': '{job="grafana"}',
+        start: 1560153109000,
+      });
+    });
+  });
+
   describe('label key suggestions', () => {
     it('returns all label suggestions on empty selector', async () => {
       const datasource = makeMockLokiDatasource({ label1: [], label2: [] });
@@ -239,6 +254,18 @@ describe('Query imports', () => {
   });
 
   describe('prometheus query imports', () => {
+    it('always results in range query type', async () => {
+      const instance = new LanguageProvider(datasource);
+      const result = await instance.importQueries(
+        [{ refId: 'bar', expr: '{job="grafana"}', instant: true, range: false } as DataQuery],
+        {
+          meta: { id: 'prometheus' },
+        } as DataSourceApi
+      );
+      expect(result).toEqual([{ refId: 'bar', expr: '{job="grafana"}', range: true }]);
+      expect(result).not.toHaveProperty('instant');
+    });
+
     it('returns empty query from metric-only query', async () => {
       const instance = new LanguageProvider(datasource);
       const result = await instance.importPrometheusQuery('foo');

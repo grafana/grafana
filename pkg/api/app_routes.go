@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -12,12 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var pluginProxyTransport *http.Transport
 
-func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
+func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 	pluginProxyTransport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: hs.Cfg.PluginsAppsSkipVerifyTLS,
@@ -34,7 +35,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 	for _, plugin := range hs.PluginManager.Apps() {
 		for _, route := range plugin.Routes {
 			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
-			handlers := make([]macaron.Handler, 0)
+			handlers := make([]web.Handler, 0)
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
 				ReqSignedIn: true,
 			}))
@@ -47,18 +48,20 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 				}
 			}
 			handlers = append(handlers, AppPluginRoute(route, plugin.Id, hs))
-			r.Route(url, route.Method, handlers...)
+			for _, method := range strings.Split(route.Method, ",") {
+				r.Handle(strings.TrimSpace(method), url, handlers)
+			}
 			log.Debugf("Plugins: Adding proxy route %s", url)
 		}
 	}
 }
 
-func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer) macaron.Handler {
+func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer) web.Handler {
 	return func(c *models.ReqContext) {
-		path := c.Params("*")
+		path := web.Params(c.Req)["*"]
 
-		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg)
+		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg, hs.EncryptionService)
 		proxy.Transport = pluginProxyTransport
-		proxy.ServeHTTP(c.Resp, c.Req.Request)
+		proxy.ServeHTTP(c.Resp, c.Req)
 	}
 }

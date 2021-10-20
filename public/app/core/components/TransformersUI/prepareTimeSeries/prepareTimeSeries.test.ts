@@ -1,15 +1,24 @@
-import { toDataFrame, ArrayVector, DataFrame, FieldType, toDataFrameDTO, DataFrameDTO } from '@grafana/data';
+import {
+  toDataFrame,
+  ArrayVector,
+  DataFrame,
+  FieldType,
+  toDataFrameDTO,
+  DataFrameDTO,
+  DataFrameType,
+  getFrameDisplayName,
+} from '@grafana/data';
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
-describe('Prepair time series transformer', () => {
+describe('Prepare time series transformer', () => {
   it('should transform wide to many', () => {
     const source = [
       toDataFrame({
         name: 'wide',
         refId: 'A',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'time', type: FieldType.time, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'count', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
           { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
       }),
@@ -24,33 +33,39 @@ describe('Prepair time series transformer', () => {
         name: 'wide',
         refId: 'A',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'time', type: FieldType.time, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'count', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
         ],
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
         length: 6,
       }),
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
+          { name: 'time', type: FieldType.time, values: [1, 2, 3, 4, 5, 6] },
           { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
         length: 6,
       }),
     ]);
   });
 
-  it('should remove string fields since time series format is expected to be time/number fields', () => {
+  it('should treat string fields as labels', () => {
     const source = [
       toDataFrame({
         name: 'wide',
         refId: 'A',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
-          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
-          { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
+          { name: 'time', type: FieldType.time, values: [1, 1, 2, 2] },
+          { name: 'region', type: FieldType.string, values: ['a', 'b', 'a', 'b'] },
+          { name: 'count', type: FieldType.number, values: [10, 20, 30, 40] },
+          { name: 'more', type: FieldType.number, values: [2, 3, 4, 5] },
         ],
       }),
     ];
@@ -59,26 +74,75 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
-      toEquableDataFrame({
-        name: 'wide',
-        refId: 'A',
-        fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
-        ],
-        length: 6,
-      }),
-      toEquableDataFrame({
-        name: 'wide',
-        refId: 'A',
-        fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
-        ],
-        length: 6,
-      }),
-    ]);
+    const frames = prepareTimeSeriesTransformer.transformer(config)(source);
+    expect(frames.length).toEqual(4);
+    expect(
+      frames.map((f) => ({
+        name: getFrameDisplayName(f),
+        labels: f.fields[1].labels,
+        time: f.fields[0].values.toArray(),
+        values: f.fields[1].values.toArray(),
+      }))
+    ).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "labels": Object {
+            "region": "a",
+          },
+          "name": "wide",
+          "time": Array [
+            1,
+            2,
+          ],
+          "values": Array [
+            10,
+            30,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "region": "b",
+          },
+          "name": "wide",
+          "time": Array [
+            1,
+            2,
+          ],
+          "values": Array [
+            20,
+            40,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "region": "a",
+          },
+          "name": "wide",
+          "time": Array [
+            1,
+            2,
+          ],
+          "values": Array [
+            2,
+            4,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "region": "b",
+          },
+          "name": "wide",
+          "time": Array [
+            1,
+            2,
+          ],
+          "values": Array [
+            3,
+            5,
+          ],
+        },
+      ]
+    `);
   });
 
   it('should transform all wide to many when mixed', () => {
@@ -87,9 +151,8 @@ describe('Prepair time series transformer', () => {
         name: 'wide',
         refId: 'A',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
-          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5] },
+          { name: 'count', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
           { name: 'another', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
       }),
@@ -97,7 +160,7 @@ describe('Prepair time series transformer', () => {
         name: 'long',
         refId: 'B',
         fields: [
-          { name: 'time', type: FieldType.time, values: [100, 90, 80, 70, 60, 50] },
+          { name: 'time', type: FieldType.time, values: [4, 5, 6, 7, 8, 9] },
           { name: 'value', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
       }),
@@ -112,28 +175,37 @@ describe('Prepair time series transformer', () => {
         name: 'wide',
         refId: 'A',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5] },
+          { name: 'another', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
         length: 6,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
       }),
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'another', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
+          { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5] },
+          { name: 'count', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
         ],
         length: 6,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
       }),
       toEquableDataFrame({
         name: 'long',
         refId: 'B',
         fields: [
-          { name: 'time', type: FieldType.time, values: [100, 90, 80, 70, 60, 50] },
+          { name: 'time', type: FieldType.time, values: [4, 5, 6, 7, 8, 9] },
           { name: 'value', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
         length: 6,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
       }),
     ]);
   });
@@ -144,16 +216,16 @@ describe('Prepair time series transformer', () => {
         name: 'long',
         refId: 'A',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'time', type: FieldType.time, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'count', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
         ],
       }),
       toDataFrame({
         name: 'long',
         refId: 'B',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'time', type: FieldType.time, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'count', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
         ],
       }),
     ];
@@ -163,7 +235,14 @@ describe('Prepair time series transformer', () => {
     };
 
     expect(toEquableDataFrames(prepareTimeSeriesTransformer.transformer(config)(source))).toEqual(
-      toEquableDataFrames(source)
+      toEquableDataFrames(
+        source.map((frame) => ({
+          ...frame,
+          meta: {
+            type: DataFrameType.TimeSeriesMany,
+          },
+        }))
+      )
     );
   });
 
@@ -194,6 +273,52 @@ describe('Prepair time series transformer', () => {
     };
 
     expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([]);
+  });
+
+  it('should convert long to many', () => {
+    const source = [
+      toDataFrame({
+        name: 'long',
+        refId: 'X',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 1, 2, 2, 3, 3] },
+          { name: 'value', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
+          { name: 'region', type: FieldType.string, values: ['a', 'b', 'a', 'b', 'a', 'b'] },
+        ],
+      }),
+    ];
+
+    const config: PrepareTimeSeriesOptions = {
+      format: timeSeriesFormat.TimeSeriesMany,
+    };
+
+    const frames = prepareTimeSeriesTransformer.transformer(config)(source);
+    expect(frames).toEqual([
+      toEquableDataFrame({
+        name: 'long',
+        refId: 'X',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', labels: { region: 'a' }, type: FieldType.number, values: [10, 30, 50] },
+        ],
+        length: 3,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
+      }),
+      toEquableDataFrame({
+        name: 'long',
+        refId: 'X',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', labels: { region: 'b' }, type: FieldType.number, values: [20, 40, 60] },
+        ],
+        length: 3,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
+      }),
+    ]);
   });
 });
 

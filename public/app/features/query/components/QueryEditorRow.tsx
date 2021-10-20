@@ -1,18 +1,20 @@
 // Libraries
 import React, { PureComponent, ReactNode } from 'react';
 import classNames from 'classnames';
-import { has, cloneDeep } from 'lodash';
+import { cloneDeep, has } from 'lodash';
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
+  CoreApp,
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   EventBusExtended,
   EventBusSrv,
+  HistoryItem,
   LoadingState,
   PanelData,
   PanelEvents,
@@ -25,10 +27,11 @@ import {
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
+import { RowActionComponents } from './QueryActionComponent';
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -45,6 +48,9 @@ interface Props<TQuery extends DataQuery> {
   onRunQuery: () => void;
   visualization?: ReactNode;
   hideDisableQuery?: boolean;
+  app?: CoreApp;
+  history?: Array<HistoryItem<TQuery>>;
+  eventBus?: EventBusExtended;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -94,10 +100,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       dashboard: dashboard,
       refresh: () => {
         // Old angular editors modify the query model and just call refresh
-        // Important that this use this.props here so that as this fuction is only created on mount and it's
+        // Important that this use this.props here so that as this function is only created on mount and it's
         // important not to capture old prop functions in this closure
 
-        // the "hide" attribute of the quries can be changed from the "outside",
+        // the "hide" attribute of the queries can be changed from the "outside",
         // it will be applied to "this.props.query.hide", but not to "query.hide".
         // so we have to apply it.
         if (query.hide !== me.props.query.hide) {
@@ -108,7 +114,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         this.props.onRunQuery();
       },
       render: () => () => console.log('legacy render function called, it does nothing'),
-      events: new EventBusSrv(),
+      events: this.props.eventBus || new EventBusSrv(),
       range: getTimeSrv().timeRange(),
     };
   }
@@ -193,29 +199,53 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.renderAngularQueryEditor();
   };
 
+  getReactQueryEditor(ds: DataSourceApi<TQuery>) {
+    if (!ds) {
+      return;
+    }
+
+    switch (this.props.app) {
+      case CoreApp.Explore:
+        return (
+          ds.components?.ExploreMetricsQueryField ||
+          ds.components?.ExploreLogsQueryField ||
+          ds.components?.ExploreQueryField ||
+          ds.components?.QueryEditor
+        );
+      case CoreApp.PanelEditor:
+      case CoreApp.Dashboard:
+      default:
+        return ds.components?.QueryEditor;
+    }
+  }
+
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery } = this.props;
+    const { query, onChange, queries, onRunQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
       return <div ref={(element) => (this.element = element)} />;
     }
 
-    if (datasource?.components?.QueryEditor) {
-      const QueryEditor = datasource.components.QueryEditor;
+    if (datasource) {
+      let QueryEditor = this.getReactQueryEditor(datasource);
 
-      return (
-        <QueryEditor
-          key={datasource?.name}
-          query={query}
-          datasource={datasource}
-          onChange={onChange}
-          onRunQuery={onRunQuery}
-          data={data}
-          range={getTimeSrv().timeRange()}
-          queries={queries}
-        />
-      );
+      if (QueryEditor) {
+        return (
+          <QueryEditor
+            key={datasource?.name}
+            query={query}
+            datasource={datasource}
+            onChange={onChange}
+            onRunQuery={onRunQuery}
+            data={data}
+            range={getTimeSrv().timeRange()}
+            queries={queries}
+            app={app}
+            history={history}
+          />
+        );
+      }
     }
 
     return <div>Data source plugin does not export any Query Editor component</div>;
@@ -273,6 +303,20 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return null;
   }
 
+  renderExtraActions = () => {
+    const { query, queries, data, onAddQuery, dataSource } = this.props;
+    return RowActionComponents.getAllExtraRenderAction().map((c, index) => {
+      return React.createElement(c, {
+        query,
+        queries,
+        timeRange: data.timeRange,
+        onAddQuery: onAddQuery as (query: DataQuery) => void,
+        dataSource: dataSource,
+        key: index,
+      });
+    });
+  };
+
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideDisableQuery = false } = this.props;
     const { hasTextEditMode, datasource, showingHelp } = this.state;
@@ -299,6 +343,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             }}
           />
         )}
+        {this.renderExtraActions()}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         {!hideDisableQuery ? (
           <QueryOperationAction

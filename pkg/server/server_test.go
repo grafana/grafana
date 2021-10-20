@@ -3,45 +3,36 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/registry"
-
+	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
-type testServiceRegistry struct {
-	services []*registry.Descriptor
-}
-
-func (r *testServiceRegistry) GetServices() []*registry.Descriptor {
-	return r.services
-}
-
-func (r *testServiceRegistry) IsDisabled(_ registry.Service) bool {
-	return false
-}
-
 type testService struct {
-	started chan struct{}
-	initErr error
-	runErr  error
+	started    chan struct{}
+	runErr     error
+	isDisabled bool
 }
 
-func newTestService(initErr, runErr error) *testService {
+func newTestService(runErr error, disabled bool) *testService {
 	return &testService{
-		started: make(chan struct{}),
-		initErr: initErr,
-		runErr:  runErr,
+		started:    make(chan struct{}),
+		runErr:     runErr,
+		isDisabled: disabled,
 	}
 }
 
-func (s *testService) Init() error {
-	return s.initErr
-}
-
 func (s *testService) Run(ctx context.Context) error {
+	if s.isDisabled {
+		return fmt.Errorf("Shouldn't run disabled service")
+	}
+
 	if s.runErr != nil {
 		return s.runErr
 	}
@@ -50,8 +41,14 @@ func (s *testService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func testServer() *Server {
-	s := newServer(Config{})
+func (s *testService) IsDisabled() bool {
+	return s.isDisabled
+}
+
+func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
+	t.Helper()
+	s, err := newServer(Options{}, setting.NewCfg(), nil, &ossaccesscontrol.OSSAccessControlService{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...))
+	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
 	s.isInitialized = true
@@ -59,25 +56,8 @@ func testServer() *Server {
 }
 
 func TestServer_Run_Error(t *testing.T) {
-	s := testServer()
-
-	var testErr = errors.New("boom")
-
-	s.serviceRegistry = &testServiceRegistry{
-		services: []*registry.Descriptor{
-			{
-				Name:         "TestService1",
-				Instance:     newTestService(nil, nil),
-				InitPriority: registry.High,
-			},
-			{
-				Name:         "TestService2",
-				Instance:     newTestService(nil, testErr),
-				InitPriority: registry.High,
-			},
-		},
-	}
-
+	testErr := errors.New("boom")
+	s := testServer(t, newTestService(nil, false), newTestService(testErr, false))
 	err := s.Run()
 	require.ErrorIs(t, err, testErr)
 	require.NotZero(t, s.ExitCode(err))
@@ -86,22 +66,7 @@ func TestServer_Run_Error(t *testing.T) {
 func TestServer_Shutdown(t *testing.T) {
 	ctx := context.Background()
 
-	s := testServer()
-	services := []*registry.Descriptor{
-		{
-			Name:         "TestService1",
-			Instance:     newTestService(nil, nil),
-			InitPriority: registry.High,
-		},
-		{
-			Name:         "TestService2",
-			Instance:     newTestService(nil, nil),
-			InitPriority: registry.High,
-		},
-	}
-	s.serviceRegistry = &testServiceRegistry{
-		services: services,
-	}
+	s := testServer(t, newTestService(nil, false), newTestService(nil, true))
 
 	ch := make(chan error)
 
@@ -109,8 +74,10 @@ func TestServer_Shutdown(t *testing.T) {
 		defer close(ch)
 
 		// Wait until all services launched.
-		for _, svc := range services {
-			<-svc.Instance.(*testService).started
+		for _, svc := range s.backgroundServices {
+			if !svc.(*testService).isDisabled {
+				<-svc.(*testService).started
+			}
 		}
 		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()

@@ -1,5 +1,5 @@
-import { DataFrame, dateTime, Field, FieldType } from '@grafana/data';
-import { StackingMode } from './config';
+import { DataFrame, ensureTimeField, Field, FieldType } from '@grafana/data';
+import { StackingMode } from '@grafana/schema';
 import { createLogger } from '../../utils/logger';
 import { attachDebugger } from '../../utils';
 import { AlignedData, Options, PaddingSide } from 'uplot';
@@ -39,7 +39,8 @@ interface StackMeta {
 }
 
 /** @internal */
-export function preparePlotData(frame: DataFrame, onStackMeta?: (meta: StackMeta) => void): AlignedData {
+export function preparePlotData(frames: DataFrame[], onStackMeta?: (meta: StackMeta) => void): AlignedData {
+  const frame = frames[0];
   const result: any[] = [];
   const stackingGroups: Map<string, number[]> = new Map();
   let seriesIndex = 0;
@@ -48,16 +49,7 @@ export function preparePlotData(frame: DataFrame, onStackMeta?: (meta: StackMeta
     const f = frame.fields[i];
 
     if (f.type === FieldType.time) {
-      if (f.values.length > 0 && typeof f.values.get(0) === 'string') {
-        const timestamps = [];
-        for (let i = 0; i < f.values.length; i++) {
-          timestamps.push(dateTime(f.values.get(i)).valueOf());
-        }
-        result.push(timestamps);
-        seriesIndex++;
-        continue;
-      }
-      result.push(f.values.toArray());
+      result.push(ensureTimeField(f).values.toArray());
       seriesIndex++;
       continue;
     }

@@ -1,4 +1,4 @@
-import { Observable, of } from 'rxjs';
+import { lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { SelectableValue } from '@grafana/data';
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
@@ -38,49 +38,50 @@ export default class Api {
       return Promise.resolve(this.cache[path]);
     }
 
-    return getBackendSrv()
-      .fetch<Record<string, any>>({
-        url: baseUrl + path,
-        method: 'GET',
-      })
-      .pipe(
-        map((response) => {
-          const responsePropName = path.match(/([^\/]*)\/*$/)![1].split('?')[0];
-          let res = [];
-          if (response && response.data && response.data[responsePropName]) {
-            res = response.data[responsePropName].map(responseMap);
-          }
-
-          if (useCache) {
-            this.cache[path] = res;
-          }
-
-          return res;
-        }),
-        catchError((error) => {
-          appEvents.emit(CoreEvents.dsRequestError, {
-            error: { data: { error: formatCloudMonitoringError(error) } },
-          });
-          return of([]);
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<Record<string, any>>({
+          url: baseUrl + path,
+          method: 'GET',
         })
-      )
-      .toPromise();
+        .pipe(
+          map((response) => {
+            const responsePropName = path.match(/([^\/]*)\/*$/)![1].split('?')[0];
+            let res = [];
+            if (response && response.data && response.data[responsePropName]) {
+              res = response.data[responsePropName].map(responseMap);
+            }
+
+            if (useCache) {
+              this.cache[path] = res;
+            }
+
+            return res;
+          }),
+          catchError((error) => {
+            appEvents.emit(CoreEvents.dsRequestError, {
+              error: { data: { error: formatCloudMonitoringError(error) } },
+            });
+            return of([]);
+          })
+        )
+    );
   }
 
   post(data: Record<string, any>): Observable<FetchResponse<PostResponse>> {
     return getBackendSrv().fetch<PostResponse>({
-      url: '/api/tsdb/query',
+      url: '/api/ds/query',
       method: 'POST',
       data,
     });
   }
 
   test(projectName: string) {
-    return getBackendSrv()
-      .fetch<any>({
+    return lastValueFrom(
+      getBackendSrv().fetch<any>({
         url: `${this.baseUrl}${projectName}/metricDescriptors`,
         method: 'GET',
       })
-      .toPromise();
+    );
   }
 }

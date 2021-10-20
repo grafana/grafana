@@ -17,8 +17,8 @@ func TestCSVFileScenario(t *testing.T) {
 	cfg.DataPath = t.TempDir()
 	cfg.StaticRootPath = "../../../public"
 
-	p := &testDataPlugin{
-		Cfg: cfg,
+	p := &TestDataPlugin{
+		cfg: cfg,
 	}
 
 	t.Run("loadCsvFile", func(t *testing.T) {
@@ -35,7 +35,7 @@ func TestCSVFileScenario(t *testing.T) {
 					_ = fileReader.Close()
 				}()
 
-				frame, err := p.loadCsvContent(fileReader, name)
+				frame, err := LoadCsvContent(fileReader, name)
 				require.NoError(t, err)
 				require.NotNil(t, frame)
 

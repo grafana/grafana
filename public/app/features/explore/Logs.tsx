@@ -2,7 +2,7 @@ import React, { PureComponent, createRef } from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
-
+import { TooltipDisplayMode } from '@grafana/schema';
 import {
   rangeUtil,
   RawTimeRange,
@@ -19,6 +19,7 @@ import {
   DataQuery,
   DataFrame,
   GrafanaTheme2,
+  LoadingState,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -28,7 +29,6 @@ import {
   InlineFieldRow,
   InlineSwitch,
   withTheme2,
-  TooltipDisplayMode,
   Themeable2,
 } from '@grafana/ui';
 import store from 'app/core/store';
@@ -36,7 +36,7 @@ import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
+import { ExploreGraph } from './ExploreGraph';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -53,8 +53,8 @@ interface Props extends Themeable2 {
   logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
   theme: GrafanaTheme2;
-  highlighterExpressions?: string[];
   loading: boolean;
+  loadingState: LoadingState;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
@@ -69,6 +69,8 @@ interface Props extends Themeable2 {
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
+  loadingLogsVolumeAvailable: boolean;
+  onClickLoadLogsVolume: () => void;
 }
 
 interface State {
@@ -136,8 +138,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     this.setState({ dedupStrategy });
   };
 
-  onChangeLabels = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangeLabels = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const showLabels = target.checked;
       this.setState({
@@ -147,8 +149,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangeTime = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangeTime = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const showTime = target.checked;
       this.setState({
@@ -158,8 +160,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangewrapLogMessage = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangewrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const wrapLogMessage = target.checked;
       this.setState({
@@ -169,8 +171,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangePrettifyLogMessage = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangePrettifyLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const prettifyLogMessage = target.checked;
       this.setState({
@@ -253,8 +255,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       logsMeta,
       logsSeries,
       visibleRange,
-      highlighterExpressions,
       loading = false,
+      loadingState,
       onClickFilterLabel,
       onClickFilterOutLabel,
       timeZone,
@@ -268,6 +270,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       logsQueries,
       clearCache,
       addResultsToCache,
+      onClickLoadLogsVolume,
+      loadingLogsVolumeAvailable,
     } = this.props;
 
     const {
@@ -294,20 +298,24 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className={styles.infoText}>
-          This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
-        </div>
         {logsSeries && logsSeries.length ? (
-          <ExploreGraphNGPanel
-            data={logsSeries}
-            height={150}
-            width={width}
-            tooltipDisplayMode={TooltipDisplayMode.Multi}
-            absoluteRange={visibleRange || absoluteRange}
-            timeZone={timeZone}
-            onUpdateTimeRange={onChangeTime}
-            onHiddenSeriesChanged={this.onToggleLogLevel}
-          />
+          <>
+            <div className={styles.infoText}>
+              This datasource does not support full-range histograms. The graph is based on the logs seen in the
+              response.
+            </div>
+            <ExploreGraph
+              data={logsSeries}
+              height={150}
+              width={width}
+              tooltipDisplayMode={TooltipDisplayMode.Multi}
+              absoluteRange={visibleRange || absoluteRange}
+              timeZone={timeZone}
+              loadingState={loadingState}
+              onChangeTime={onChangeTime}
+              onHiddenSeriesChanged={this.onToggleLogLevel}
+            />
+          </>
         ) : undefined}
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
@@ -336,16 +344,30 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               />
             </InlineField>
           </InlineFieldRow>
-          <Button
-            variant="secondary"
-            disabled={isFlipping}
-            title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
-            aria-label="Flip results order"
-            className={styles.flipButton}
-            onClick={this.onChangeLogsSortOrder}
-          >
-            {isFlipping ? 'Flipping...' : 'Flip results order'}
-          </Button>
+          <div>
+            {loadingLogsVolumeAvailable && (
+              <Button
+                variant="secondary"
+                aria-label="Load volume button"
+                title="Execute a query to show full range logs volume"
+                onClick={onClickLoadLogsVolume}
+                icon="graph-bar"
+                className={styles.headerButton}
+              >
+                Load volume
+              </Button>
+            )}
+            <Button
+              variant="secondary"
+              disabled={isFlipping}
+              title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
+              aria-label="Flip results order"
+              className={styles.headerButton}
+              onClick={this.onChangeLogsSortOrder}
+            >
+              {isFlipping ? 'Flipping...' : 'Flip results order'}
+            </Button>
+          </div>
         </div>
         <LogsMetaRow
           logRows={logRows}
@@ -365,7 +387,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               deduplicatedRows={dedupedRows}
               dedupStrategy={dedupStrategy}
               getRowContext={this.props.getRowContext}
-              highlighterExpressions={highlighterExpressions}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
               showContextToggle={showContextToggle}
@@ -438,7 +459,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       margin: ${theme.spacing(2, 0, 1)};
       border: 1px solid ${theme.colors.border.medium};
     `,
-    flipButton: css`
+    headerButton: css`
       margin: ${theme.spacing(0.5, 0, 0, 1)};
     `,
     radioButtons: css`

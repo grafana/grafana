@@ -24,12 +24,12 @@
       - influxdb
 
   telegraf:
-    image: telegraf:1.19.1
+    image: telegraf:latest
     links:
       - influxdb
     depends_on:
       - influxdb_cli
     volumes:
       - ./docker/blocks/influxdb/telegraf.conf:/etc/telegraf/telegraf.conf:ro
-      - /var/log:/var/log
+      - /var/log:/var/log/host
       - ../data/log:/var/log/grafana

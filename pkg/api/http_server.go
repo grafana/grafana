@@ -13,10 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/libraryelements"
-	"github.com/grafana/grafana/pkg/services/librarypanels"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/searchusers"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -24,25 +21,32 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
-	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -52,75 +56,147 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	macaron "gopkg.in/macaron.v1"
 )
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "HTTPServer",
-		Instance:     &HTTPServer{},
-		InitPriority: registry.High,
-	})
-}
 
 type HTTPServer struct {
 	log         log.Logger
-	macaron     *macaron.Macaron
+	web         *web.Mux
 	context     context.Context
 	httpSrv     *http.Server
-	middlewares []macaron.Handler
+	middlewares []web.Handler
 
-	PluginContextProvider  *plugincontext.Provider                 `inject:""`
-	RouteRegister          routing.RouteRegister                   `inject:""`
-	Bus                    bus.Bus                                 `inject:""`
-	RenderService          rendering.Service                       `inject:""`
-	Cfg                    *setting.Cfg                            `inject:""`
-	SettingsProvider       setting.Provider                        `inject:""`
-	HooksService           *hooks.HooksService                     `inject:""`
-	CacheService           *localcache.CacheService                `inject:""`
-	DatasourceCache        datasources.CacheService                `inject:""`
-	AuthTokenService       models.UserTokenService                 `inject:""`
-	QuotaService           *quota.QuotaService                     `inject:""`
-	RemoteCacheService     *remotecache.RemoteCache                `inject:""`
-	ProvisioningService    provisioning.ProvisioningService        `inject:""`
-	Login                  login.Service                           `inject:""`
-	License                models.Licensing                        `inject:""`
-	AccessControl          accesscontrol.AccessControl             `inject:""`
-	BackendPluginManager   backendplugin.Manager                   `inject:""`
-	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
-	PluginRequestValidator models.PluginRequestValidator           `inject:""`
-	PluginManager          plugins.Manager                         `inject:""`
-	SearchService          *search.SearchService                   `inject:""`
-	ShortURLService        shorturls.Service                       `inject:""`
-	Live                   *live.GrafanaLive                       `inject:""`
-	LivePushGateway        *pushhttp.Gateway                       `inject:""`
-	ContextHandler         *contexthandler.ContextHandler          `inject:""`
-	SQLStore               *sqlstore.SQLStore                      `inject:""`
-	DataService            *tsdb.Service                           `inject:""`
-	PluginDashboardService *plugindashboards.Service               `inject:""`
-	AlertEngine            *alerting.AlertEngine                   `inject:""`
-	LoadSchemaService      *schemaloader.SchemaLoaderService       `inject:""`
-	Alertmanager           *notifier.Alertmanager                  `inject:""`
-	LibraryPanelService    librarypanels.Service                   `inject:""`
-	LibraryElementService  libraryelements.Service                 `inject:""`
-	SocialService          social.Service                          `inject:""`
-	OAuthTokenService      *oauthtoken.Service                     `inject:""`
+	PluginContextProvider  *plugincontext.Provider
+	RouteRegister          routing.RouteRegister
+	Bus                    bus.Bus
+	RenderService          rendering.Service
+	Cfg                    *setting.Cfg
+	SettingsProvider       setting.Provider
+	HooksService           *hooks.HooksService
+	CacheService           *localcache.CacheService
+	DataSourceCache        datasources.CacheService
+	AuthTokenService       models.UserTokenService
+	QuotaService           *quota.QuotaService
+	RemoteCacheService     *remotecache.RemoteCache
+	ProvisioningService    provisioning.ProvisioningService
+	Login                  login.Service
+	License                models.Licensing
+	AccessControl          accesscontrol.AccessControl
+	BackendPluginManager   backendplugin.Manager
+	DataProxy              *datasourceproxy.DataSourceProxyService
+	PluginRequestValidator models.PluginRequestValidator
+	PluginManager          plugins.Manager
+	SearchService          *search.SearchService
+	ShortURLService        shorturls.Service
+	Live                   *live.GrafanaLive
+	LivePushGateway        *pushhttp.Gateway
+	ContextHandler         *contexthandler.ContextHandler
+	SQLStore               *sqlstore.SQLStore
+	DataService            *tsdb.Service
+	AlertEngine            *alerting.AlertEngine
+	LoadSchemaService      *schemaloader.SchemaLoaderService
+	AlertNG                *ngalert.AlertNG
+	LibraryPanelService    librarypanels.Service
+	LibraryElementService  libraryelements.Service
+	notificationService    *notifications.NotificationService
+	SocialService          social.Service
+	OAuthTokenService      oauthtoken.OAuthTokenService
 	Listener               net.Listener
+	EncryptionService      encryption.Service
+	DataSourcesService     *datasources.Service
+	cleanUpService         *cleanup.CleanUpService
+	tracingService         *tracing.TracingService
+	internalMetricsSvc     *metrics.InternalMetricsService
+	searchUsersService     searchusers.Service
 }
 
-func (hs *HTTPServer) Init() error {
-	hs.log = log.New("http.server")
+type ServerOptions struct {
+	Listener net.Listener
+}
 
-	hs.macaron = hs.newMacaron()
+func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
+	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
+	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
+	dataService *tsdb.Service, alertEngine *alerting.AlertEngine, pluginRequestValidator models.PluginRequestValidator,
+	pluginManager plugins.Manager, backendPM backendplugin.Manager, settingsProvider setting.Provider,
+	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service,
+	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
+	loginService login.Service, accessControl accesscontrol.AccessControl,
+	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
+	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
+	contextHandler *contexthandler.ContextHandler,
+	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
+	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
+	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
+	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
+	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
+	encryptionService encryption.Service, searchUsersService searchusers.Service,
+	dataSourcesService *datasources.Service) (*HTTPServer, error) {
+	web.Env = cfg.Env
+	m := web.New()
+
+	hs := &HTTPServer{
+		Cfg:                    cfg,
+		RouteRegister:          routeRegister,
+		Bus:                    bus,
+		RenderService:          renderService,
+		License:                licensing,
+		HooksService:           hooksService,
+		CacheService:           cacheService,
+		SQLStore:               sqlStore,
+		DataService:            dataService,
+		AlertEngine:            alertEngine,
+		PluginRequestValidator: pluginRequestValidator,
+		PluginManager:          pluginManager,
+		BackendPluginManager:   backendPM,
+		SettingsProvider:       settingsProvider,
+		DataSourceCache:        dataSourceCache,
+		AuthTokenService:       userTokenService,
+		cleanUpService:         cleanUpService,
+		ShortURLService:        shortURLService,
+		RemoteCacheService:     remoteCache,
+		ProvisioningService:    provisioningService,
+		Login:                  loginService,
+		AccessControl:          accessControl,
+		DataProxy:              dataSourceProxy,
+		SearchService:          searchService,
+		Live:                   live,
+		LivePushGateway:        livePushGateway,
+		PluginContextProvider:  plugCtxProvider,
+		ContextHandler:         contextHandler,
+		LoadSchemaService:      schemaService,
+		AlertNG:                alertNG,
+		LibraryPanelService:    libraryPanelService,
+		LibraryElementService:  libraryElementService,
+		QuotaService:           quotaService,
+		notificationService:    notificationService,
+		tracingService:         tracingService,
+		internalMetricsSvc:     internalMetricsSvc,
+		log:                    log.New("http.server"),
+		web:                    m,
+		Listener:               opts.Listener,
+		SocialService:          socialService,
+		OAuthTokenService:      oauthTokenService,
+		EncryptionService:      encryptionService,
+		DataSourcesService:     dataSourcesService,
+		searchUsersService:     searchUsersService,
+	}
+	if hs.Listener != nil {
+		hs.log.Debug("Using provided listener")
+	}
 	hs.registerRoutes()
-	return hs.declareFixedRoles()
+
+	if err := hs.declareFixedRoles(); err != nil {
+		return nil, err
+	}
+	return hs, nil
 }
 
-func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
+func (hs *HTTPServer) AddMiddleware(middleware web.Handler) {
 	hs.middlewares = append(hs.middlewares, middleware)
 }
 
@@ -133,7 +209,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	hs.httpSrv = &http.Server{
 		Addr:        net.JoinHostPort(host, hs.Cfg.HTTPPort),
-		Handler:     hs.macaron,
+		Handler:     hs.web,
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 	switch hs.Cfg.Protocol {
@@ -306,29 +382,19 @@ func (hs *HTTPServer) configureHttp2() error {
 	return nil
 }
 
-func (hs *HTTPServer) newMacaron() *macaron.Macaron {
-	macaron.Env = hs.Cfg.Env
-	m := macaron.New()
-
-	// automatically set HEAD for every GET
-	m.SetAutoHead(true)
-
-	return m
-}
-
 func (hs *HTTPServer) applyRoutes() {
 	// start with middlewares & static routes
 	hs.addMiddlewaresAndStaticRoutes()
 	// then add view routes & api routes
-	hs.RouteRegister.Register(hs.macaron)
+	hs.RouteRegister.Register(hs.web)
 	// then custom app proxy routes
-	hs.initAppPluginRoutes(hs.macaron)
+	hs.initAppPluginRoutes(hs.web)
 	// lastly not found route
-	hs.macaron.NotFound(middleware.ReqSignedIn, hs.NotFoundHandler)
+	hs.web.NotFound(middleware.ReqSignedIn, hs.NotFoundHandler)
 }
 
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
-	m := hs.macaron
+	m := hs.web
 
 	m.Use(middleware.RequestTracing())
 
@@ -354,7 +420,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
 	}
 
-	m.UseMiddleware(macaron.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
+	m.UseMiddleware(web.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
 
 	// These endpoints are used for monitoring the Grafana instance
 	// and should not be redirected or rejected.
@@ -378,7 +444,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 }
 
-func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
+func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 	if !hs.Cfg.MetricsEndpointEnabled {
 		return
 	}
@@ -394,11 +460,11 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 
 	promhttp.
 		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
-		ServeHTTP(ctx.Resp, ctx.Req.Request)
+		ServeHTTP(ctx.Resp, ctx.Req)
 }
 
 // healthzHandler always return 200 - Ok if Grafana's web server is running
-func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
+func (hs *HTTPServer) healthzHandler(ctx *web.Context) {
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
 	if notHeadOrGet || ctx.Req.URL.Path != "/healthz" {
 		return
@@ -414,7 +480,7 @@ func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
 // apiHealthHandler will return ok if Grafana's web server is running and it
 // can access the database. If the database cannot be accessed it will return
 // http status code 503.
-func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
+func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
 	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
 		return
@@ -427,7 +493,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 		data.Set("commit", hs.Cfg.BuildCommit)
 	}
 
-	if !hs.databaseHealthy() {
+	if !hs.databaseHealthy(ctx.Req.Context()) {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		ctx.Resp.WriteHeader(503)
@@ -447,19 +513,19 @@ func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	}
 }
 
-func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
-	headers := func(c *macaron.Context) {
+func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix string) {
+	headers := func(c *web.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
 	if prefix == "public/build" {
-		headers = func(c *macaron.Context) {
+		headers = func(c *web.Context) {
 			c.Resp.Header().Set("Cache-Control", "public, max-age=31536000")
 		}
 	}
 
 	if hs.Cfg.Env == setting.Dev {
-		headers = func(c *macaron.Context) {
+		headers = func(c *web.Context) {
 			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 		}
 	}

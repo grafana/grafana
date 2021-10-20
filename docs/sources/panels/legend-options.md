@@ -10,8 +10,8 @@ Use the legend to adjust how a visualization displays series. This legend functi
 
 This topic currently applies to the following visualizations:
 
-- [Pie chart panel]({{< relref "visualizations/pie-chart-panel.md">}})
-- [Time series panel]({{< relref "visualizations/time-series/_index.md" >}})
+- [Pie chart panel]({{< relref "../visualizations/pie-chart-panel.md">}})
+- [Time series panel]({{< relref "../visualizations/time-series/_index.md" >}})
 
 ## Toggle series
 

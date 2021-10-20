@@ -6,15 +6,15 @@ import {
 } from '@grafana/data';
 import React from 'react';
 import {
+  GraphFieldConfig,
   graphFieldOptions,
   HorizontalGroup,
   IconButton,
   Input,
   RadioButtonGroup,
-  StackingConfig,
-  StackingMode,
   Tooltip,
 } from '../..';
+import { StackingConfig, StackingMode } from '@grafana/schema';
 
 export const StackingEditor: React.FC<FieldOverrideEditorProps<StackingConfig, any>> = ({
   value,
@@ -57,7 +57,7 @@ export const StackingEditor: React.FC<FieldOverrideEditorProps<StackingConfig, a
 };
 
 export function addStackingConfig(
-  builder: FieldConfigEditorBuilder<{ stacking: StackingConfig }>,
+  builder: FieldConfigEditorBuilder<GraphFieldConfig>,
   defaultConfig?: StackingConfig,
   category = ['Graph styles']
 ) {

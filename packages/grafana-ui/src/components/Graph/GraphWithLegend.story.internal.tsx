@@ -3,7 +3,7 @@ import React from 'react';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
-import { LegendDisplayMode } from '../VizLegend/models.gen';
+import { LegendDisplayMode } from '@grafana/schema';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
 
 export default {

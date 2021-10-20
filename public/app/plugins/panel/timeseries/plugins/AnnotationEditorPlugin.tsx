@@ -1,7 +1,7 @@
-import React, { useLayoutEffect, useState, useCallback } from 'react';
-
-import { UPlotConfigBuilder, PlotSelection, usePlotContext } from '@grafana/ui';
 import { CartesianCoords2D, DataFrame, TimeZone } from '@grafana/data';
+import { PlotSelection, UPlotConfigBuilder } from '@grafana/ui';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useMountedState } from 'react-use';
 import { AnnotationEditor } from './annotations/AnnotationEditor';
 
 type StartAnnotatingFn = (props: {
@@ -20,36 +20,60 @@ interface AnnotationEditorPluginProps {
  * @alpha
  */
 export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ data, timeZone, config, children }) => {
-  const plotCtx = usePlotContext();
+  const plotInstance = useRef<uPlot>();
+  const [bbox, setBbox] = useState<DOMRect>();
   const [isAddingAnnotation, setIsAddingAnnotation] = useState(false);
   const [selection, setSelection] = useState<PlotSelection | null>(null);
+  const isMounted = useMountedState();
 
   const clearSelection = useCallback(() => {
     setSelection(null);
-    const plotInstance = plotCtx.plot;
-    if (plotInstance) {
-      plotInstance.setSelect({ top: 0, left: 0, width: 0, height: 0 });
+
+    if (plotInstance.current) {
+      plotInstance.current.setSelect({ top: 0, left: 0, width: 0, height: 0 });
     }
     setIsAddingAnnotation(false);
-  }, [setSelection, , setIsAddingAnnotation, plotCtx]);
+  }, [setIsAddingAnnotation, setSelection]);
 
   useLayoutEffect(() => {
     let annotating = false;
-    let isClick = false;
+
+    config.addHook('init', (u) => {
+      plotInstance.current = u;
+      // Wrap all setSelect hooks to prevent them from firing if user is annotating
+      const setSelectHooks = u.hooks.setSelect;
+
+      if (setSelectHooks) {
+        for (let i = 0; i < setSelectHooks.length; i++) {
+          const hook = setSelectHooks[i];
+
+          if (hook !== setSelect) {
+            setSelectHooks[i] = (...args) => {
+              !annotating && hook!(...args);
+            };
+          }
+        }
+      }
+    });
+
+    // cache uPlot plotting area bounding box
+    config.addHook('syncRect', (u, rect) => {
+      if (!isMounted()) {
+        return;
+      }
+      setBbox(rect);
+    });
 
     const setSelect = (u: uPlot) => {
       if (annotating) {
         setIsAddingAnnotation(true);
-        const min = u.posToVal(u.select.left, 'x');
-        const max = u.posToVal(u.select.left + u.select.width, 'x');
-
         setSelection({
-          min,
-          max,
+          min: u.posToVal(u.select.left, 'x'),
+          max: u.posToVal(u.select.left + u.select.width, 'x'),
           bbox: {
             left: u.select.left,
             top: 0,
-            height: u.bbox.height / window.devicePixelRatio,
+            height: u.select.height,
             width: u.select.width,
           },
         });
@@ -59,76 +83,34 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
 
     config.addHook('setSelect', setSelect);
 
-    config.addHook('init', (u) => {
-      // Wrap all setSelect hooks to prevent them from firing if user is annotating
-      const setSelectHooks = u.hooks['setSelect'];
-      if (setSelectHooks) {
-        for (let i = 0; i < setSelectHooks.length; i++) {
-          const hook = setSelectHooks[i];
-          if (hook === setSelect) {
-            continue;
-          }
-
-          setSelectHooks[i] = (...args) => {
-            if (!annotating) {
-              hook!(...args);
-            }
-          };
-        }
-      }
-    });
-
     config.setCursor({
       bind: {
         mousedown: (u, targ, handler) => (e) => {
-          if (e.button === 0) {
-            handler(e);
-            if (e.metaKey) {
-              isClick = true;
-              annotating = true;
-            }
-          }
-
-          return null;
-        },
-        mousemove: (u, targ, handler) => (e) => {
-          if (e.button === 0) {
-            handler(e);
-            // handle cmd+drag
-            if (e.metaKey) {
-              isClick = false;
-              annotating = true;
-            }
-          }
-
+          annotating = e.button === 0 && (e.metaKey || e.ctrlKey);
+          handler(e);
           return null;
         },
         mouseup: (u, targ, handler) => (e) => {
-          // handle cmd+click
-          if (isClick && u.cursor.left && e.button === 0 && e.metaKey) {
-            u.setSelect({ left: u.cursor.left, width: 0, top: 0, height: 0 });
-            annotating = true;
+          // uPlot will not fire setSelect hooks for 0-width && 0-height selections
+          // so we force it to fire on single-point clicks by mutating left & height
+          if (annotating && u.select.width === 0) {
+            u.select.left = u.cursor.left!;
+            u.select.height = u.bbox.height / window.devicePixelRatio;
           }
           handler(e);
           return null;
         },
       },
     });
-  }, [config, setIsAddingAnnotation]);
+  }, [config, setBbox, isMounted]);
 
   const startAnnotating = useCallback<StartAnnotatingFn>(
     ({ coords }) => {
-      if (!plotCtx || !plotCtx.plot || !coords) {
+      if (!plotInstance.current || !bbox || !coords) {
         return;
       }
 
-      const bbox = plotCtx.getCanvasBoundingBox();
-
-      if (!bbox) {
-        return;
-      }
-
-      const min = plotCtx.plot.posToVal(coords.plotCanvas.x, 'x');
+      const min = plotInstance.current.posToVal(coords.plotCanvas.x, 'x');
 
       if (!min) {
         return;
@@ -146,18 +128,25 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
       });
       setIsAddingAnnotation(true);
     },
-    [plotCtx, setSelection, setIsAddingAnnotation]
+    [bbox]
   );
 
   return (
     <>
-      {isAddingAnnotation && selection && (
+      {isAddingAnnotation && selection && bbox && (
         <AnnotationEditor
           selection={selection}
           onDismiss={clearSelection}
           onSave={clearSelection}
           data={data}
           timeZone={timeZone}
+          style={{
+            position: 'absolute',
+            top: `${bbox.top}px`,
+            left: `${bbox.left}px`,
+            width: `${bbox.width}px`,
+            height: `${bbox.height}px`,
+          }}
         />
       )}
       {children ? children({ startAnnotating }) : null}

@@ -1,7 +1,9 @@
 package state
 
 import (
+	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -17,9 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
+var ResendDelay = 30 * time.Second
+
 type Manager struct {
 	log     log.Logger
-	metrics *metrics.Metrics
+	metrics *metrics.State
 
 	cache       *cache
 	quit        chan struct{}
@@ -29,11 +33,11 @@ type Manager struct {
 	instanceStore store.InstanceStore
 }
 
-func NewManager(logger log.Logger, metrics *metrics.Metrics, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
 	manager := &Manager{
-		cache:         newCache(logger, metrics),
+		cache:         newCache(logger, metrics, externalURL),
 		quit:          make(chan struct{}),
-		ResendDelay:   1 * time.Minute, // TODO: make this configurable
+		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           logger,
 		metrics:       metrics,
 		ruleStore:     ruleStore,
@@ -134,12 +138,12 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
-func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
+func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results) []*State {
 	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
-		s := st.setNextState(alertRule, result)
+		s := st.setNextState(ctx, alertRule, result)
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
@@ -147,8 +151,8 @@ func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eva
 	return states
 }
 
-//Set the current state based on evaluation results
-func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Result) *State {
+// Set the current state based on evaluation results
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
 	currentState := st.getOrCreate(alertRule, result)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -181,7 +185,7 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 
 	st.set(currentState)
 	if oldState != currentState.State {
-		go st.createAlertAnnotation(currentState.State, alertRule, result, oldState)
+		go st.createAlertAnnotation(ctx, currentState.State, alertRule, result, oldState)
 	}
 	return currentState
 }
@@ -202,7 +206,7 @@ func (st *Manager) recordMetrics() {
 	for {
 		select {
 		case <-ticker.C:
-			st.log.Info("recording state cache metrics", "now", time.Now())
+			st.log.Debug("recording state cache metrics", "now", time.Now())
 			st.cache.recordMetrics()
 		case <-st.quit:
 			st.log.Debug("stopping state cache metrics recording", "now", time.Now())
@@ -229,14 +233,14 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.AlertRule, result eval.Result, oldState eval.State) {
+func (st *Manager) createAlertAnnotation(ctx context.Context, new eval.State, alertRule *ngModels.AlertRule, result eval.Result, oldState eval.State) {
 	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String())
-	dashUid, ok := alertRule.Annotations["__dashboardUid__"]
+	dashUid, ok := alertRule.Annotations[ngModels.DashboardUIDAnnotation]
 	if !ok {
 		return
 	}
 
-	panelUid := alertRule.Annotations["__panelId__"]
+	panelUid := alertRule.Annotations[ngModels.PanelIDAnnotation]
 
 	panelId, err := strconv.ParseInt(panelUid, 10, 64)
 	if err != nil {
@@ -249,7 +253,7 @@ func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.Ale
 		OrgId: alertRule.OrgID,
 	}
 
-	err = sqlstore.GetDashboard(query)
+	err = sqlstore.GetDashboard(ctx, query)
 	if err != nil {
 		st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
 		return

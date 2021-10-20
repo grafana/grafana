@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	models2 "github.com/grafana/grafana/pkg/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
@@ -110,10 +110,10 @@ func (f *fakeRuleStore) GetRuleGroupAlertRules(q *models.ListRuleGroupAlertRules
 
 	return nil
 }
-func (f *fakeRuleStore) GetNamespaces(_ int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *fakeRuleStore) GetNamespaces(_ context.Context, _ int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
 	return nil, nil
 }
-func (f *fakeRuleStore) GetNamespaceByTitle(_ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
+func (f *fakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
 	return nil, nil
 }
 func (f *fakeRuleStore) GetOrgRuleGroups(_ *models.ListOrgRuleGroupsQuery) error { return nil }
@@ -227,13 +227,6 @@ func (f *fakeAdminConfigStore) UpdateAdminConfiguration(cmd store.UpdateAdminCon
 	defer f.mtx.Unlock()
 	f.configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration
 
-	return nil
-}
-
-// fakeNotifier represents a fake internal Alertmanager.
-type fakeNotifier struct{}
-
-func (n *fakeNotifier) PutAlerts(alerts apimodels.PostableAlerts) error {
 	return nil
 }
 

@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem } from './types';
-import { LegendDisplayMode } from './models.gen';
+import { LegendDisplayMode } from '@grafana/schema';
 import { VizLegendTable } from './VizLegendTable';
 import { VizLegendList } from './VizLegendList';
 import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data';

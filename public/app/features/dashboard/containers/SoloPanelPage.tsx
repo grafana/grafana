@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
@@ -95,6 +94,7 @@ export class SoloPanelPage extends Component<Props, State> {
             }
             return (
               <DashboardPanel
+                stateKey={panel.key}
                 width={width}
                 height={height}
                 dashboard={dashboard}
@@ -111,4 +111,4 @@ export class SoloPanelPage extends Component<Props, State> {
   }
 }
 
-export default hot(module)(connector(SoloPanelPage));
+export default connector(SoloPanelPage);

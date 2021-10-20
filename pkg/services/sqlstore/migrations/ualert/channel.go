@@ -5,27 +5,25 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 
-	"github.com/prometheus/alertmanager/pkg/labels"
-
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/alertmanager/pkg/labels"
 )
 
 type notificationChannel struct {
-	ID                    int64                         `xorm:"id"`
-	OrgID                 int64                         `xorm:"org_id"`
-	Uid                   string                        `xorm:"uid"`
-	Name                  string                        `xorm:"name"`
-	Type                  string                        `xorm:"type"`
-	DisableResolveMessage bool                          `xorm:"disable_resolve_message"`
-	IsDefault             bool                          `xorm:"is_default"`
-	Settings              *simplejson.Json              `xorm:"settings"`
-	SecureSettings        securejsondata.SecureJsonData `xorm:"secure_settings"`
+	ID                    int64            `xorm:"id"`
+	OrgID                 int64            `xorm:"org_id"`
+	Uid                   string           `xorm:"uid"`
+	Name                  string           `xorm:"name"`
+	Type                  string           `xorm:"type"`
+	DisableResolveMessage bool             `xorm:"disable_resolve_message"`
+	IsDefault             bool             `xorm:"is_default"`
+	Settings              *simplejson.Json `xorm:"settings"`
+	SecureSettings        SecureJsonData   `xorm:"secure_settings"`
 }
 
 // channelsPerOrg maps notification channels per organisation
@@ -126,14 +124,33 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUid
 			m.migratedChannelsPerOrg[orgID] = make(map[*notificationChannel]struct{})
 		}
 		m.migratedChannelsPerOrg[orgID][c] = struct{}{}
-		settings, secureSettings := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
+		settings, decryptedSecureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
+		if err != nil {
+			return err
+		}
+
+		// Grafana accepts any type of string as a URL for the Slack notification channel.
+		// However, the Alertmanager will fail if provided with an invalid URL we have two options at this point:
+		// Either we fail the migration or remove the URL, we've chosen the latter and assume that the notification
+		// channel was broken to begin with.
+		if c.Type == "slack" {
+			u, ok := decryptedSecureSettings["url"]
+			if ok {
+				_, err := url.Parse(u)
+				if err != nil {
+					m.mg.Logger.Warn("slack notification channel had invalid URL, removing", "name", c.Name, "uid", c.Uid, "org", c.OrgID)
+					delete(decryptedSecureSettings, "url")
+				}
+			}
+		}
+
 		portedChannels = append(portedChannels, &PostableGrafanaReceiver{
 			UID:                   uid,
 			Name:                  c.Name,
 			Type:                  c.Type,
 			DisableResolveMessage: c.DisableResolveMessage,
 			Settings:              settings,
-			SecureSettings:        secureSettings,
+			SecureSettings:        decryptedSecureSettings,
 		})
 
 		return nil
@@ -294,14 +311,17 @@ func (m *migration) addUnmigratedChannels(orgID int64, amConfigs *PostableUserCo
 		}
 
 		m.migratedChannelsPerOrg[orgID][c] = struct{}{}
-		settings, secureSettings := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
+		settings, decryptedSecureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
+		if err != nil {
+			return err
+		}
 		portedChannels = append(portedChannels, &PostableGrafanaReceiver{
 			UID:                   uid,
 			Name:                  c.Name,
 			Type:                  c.Type,
 			DisableResolveMessage: c.DisableResolveMessage,
 			Settings:              settings,
-			SecureSettings:        secureSettings,
+			SecureSettings:        decryptedSecureSettings,
 		})
 	}
 	receiver.GrafanaManagedReceivers = portedChannels
@@ -327,7 +347,7 @@ func (m *migration) generateChannelUID() (string, bool) {
 // Some settings were migrated from settings to secure settings in between.
 // See https://grafana.com/docs/grafana/latest/installation/upgrading/#ensure-encryption-of-existing-alert-notification-channel-secrets.
 // migrateSettingsToSecureSettings takes care of that.
-func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings securejsondata.SecureJsonData) (*simplejson.Json, map[string]string) {
+func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings SecureJsonData) (*simplejson.Json, map[string]string, error) {
 	keys := []string{}
 	switch chanType {
 	case "slack":
@@ -350,20 +370,28 @@ func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json,
 		keys = []string{"api_secret"}
 	}
 
-	ss := secureSettings.Decrypt()
+	decryptedSecureSettings := secureSettings.Decrypt()
+	cloneSettings := simplejson.New()
+	settingsMap, err := settings.Map()
+	if err != nil {
+		return nil, nil, err
+	}
+	for k, v := range settingsMap {
+		cloneSettings.Set(k, v)
+	}
 	for _, k := range keys {
-		if v, ok := ss[k]; ok && v != "" {
+		if v, ok := decryptedSecureSettings[k]; ok && v != "" {
 			continue
 		}
 
-		sv := settings.Get(k).MustString()
+		sv := cloneSettings.Get(k).MustString()
 		if sv != "" {
-			ss[k] = sv
-			settings.Del(k)
+			decryptedSecureSettings[k] = sv
+			cloneSettings.Del(k)
 		}
 	}
 
-	return settings, ss
+	return cloneSettings, decryptedSecureSettings, nil
 }
 
 func getLabelForRouteMatching(ruleUID string) (string, string) {
@@ -400,12 +428,9 @@ type amConfigsPerOrg = map[int64]*PostableUserConfig
 func (c *PostableUserConfig) EncryptSecureSettings() error {
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
-			for k, v := range gr.SecureSettings {
-				encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
-				if err != nil {
-					return fmt.Errorf("failed to encrypt secure settings: %w", err)
-				}
-				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+			encryptedData := GetEncryptedJsonData(gr.SecureSettings)
+			for k, v := range encryptedData {
+				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(v)
 			}
 		}
 	}

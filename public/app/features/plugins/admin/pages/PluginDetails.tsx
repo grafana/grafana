@@ -1,41 +1,64 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
+import { usePrevious } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Icon, Alert } from '@grafana/ui';
-
-import { AppNotificationSeverity } from 'app/types';
-import { InstallControls } from '../components/InstallControls';
-import { usePluginDetails } from '../hooks/usePluginDetails';
+import { useStyles2, TabsBar, TabContent, Tab, Alert, IconName } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Page } from 'app/core/components/Page/Page';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
+import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
+import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
-import { Page } from 'app/core/components/Page/Page';
-import { PluginLogo } from '../components/PluginLogo';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { ActionTypes } from '../types';
-import { PluginDetailsBody } from '../components/PluginDetailsBody';
+import { PluginTabLabels, PluginTabIds, PluginDetailsTab } from '../types';
+import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
+import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
+import { AppNotificationSeverity } from 'app/types';
+import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 
-type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
+type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
-export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
-  const { pluginId } = match.params;
-  const { state, dispatch } = usePluginDetails(pluginId!);
+export default function PluginDetails({ match, queryParams }: Props): JSX.Element | null {
   const {
-    loading,
-    error,
-    plugin,
-    pluginConfig,
-    tabs,
-    activeTab,
-    isInflight,
-    hasUpdate,
-    isInstalled,
-    hasInstalledPanel,
-  } = state;
-  const tab = tabs[activeTab];
+    params: { pluginId = '' },
+    url,
+  } = match;
+  const pageId = (queryParams.page as PluginTabIds) || PluginTabIds.OVERVIEW;
+  const parentUrl = url.substring(0, url.lastIndexOf('/'));
+  const defaultTabs: PluginDetailsTab[] = [
+    {
+      label: PluginTabLabels.OVERVIEW,
+      icon: 'file-alt',
+      id: PluginTabIds.OVERVIEW,
+      href: `${url}?page=${PluginTabIds.OVERVIEW}`,
+    },
+    {
+      label: PluginTabLabels.VERSIONS,
+      icon: 'history',
+      id: PluginTabIds.VERSIONS,
+      href: `${url}?page=${PluginTabIds.VERSIONS}`,
+    },
+  ];
+  const plugin = useGetSingle(pluginId); // fetches the localplugin settings
+  const { tabs } = usePluginDetailsTabs(plugin, defaultTabs);
+  const { isLoading: isFetchLoading } = useFetchStatus();
+  const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
-  const breadcrumbHref = match.url.substring(0, match.url.lastIndexOf('/'));
+  const prevTabs = usePrevious(tabs);
 
-  if (loading) {
+  // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
+  useEffect(() => {
+    const hasUninstalledWithConfigPages = prevTabs && prevTabs.length > tabs.length;
+    const isViewingAConfigPage = pageId !== PluginTabIds.OVERVIEW && pageId !== PluginTabIds.VERSIONS;
+
+    if (hasUninstalledWithConfigPages && isViewingAConfigPage) {
+      locationService.replace(`${url}?page=${PluginTabIds.OVERVIEW}`);
+    }
+  }, [pageId, url, tabs, prevTabs]);
+
+  if (isFetchLoading || isFetchDetailsLoading) {
     return (
       <Page>
         <Loader />
@@ -43,147 +66,57 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
     );
   }
 
-  if (plugin) {
+  if (!plugin) {
     return (
-      <Page>
-        <PluginPage>
-          <div className={styles.headerContainer}>
-            <PluginLogo
-              alt={`${plugin.name} logo`}
-              src={plugin.info.logos.small}
-              className={css`
-                object-fit: contain;
-                width: 100%;
-                height: 68px;
-                max-width: 68px;
-              `}
-            />
-
-            <div className={styles.headerWrapper}>
-              <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-                <ol>
-                  <li>
-                    <a
-                      className={css`
-                        text-decoration: underline;
-                      `}
-                      href={breadcrumbHref}
-                    >
-                      Plugins
-                    </a>
-                  </li>
-                  <li>
-                    <a href={`${match.url}`} aria-current="page">
-                      {plugin.name}
-                    </a>
-                  </li>
-                </ol>
-              </nav>
-              <div className={styles.headerLinks}>
-                <span>{plugin.orgName}</span>
-                {plugin.links.map((link: any) => (
-                  <a key={link.name} href={link.url}>
-                    {link.name}
-                  </a>
-                ))}
-                {plugin.downloads > 0 && (
-                  <span>
-                    <Icon name="cloud-download" />
-                    {` ${new Intl.NumberFormat().format(plugin.downloads)}`}{' '}
-                  </span>
-                )}
-                {plugin.version && <span>{plugin.version}</span>}
-              </div>
-              <p>{plugin.description}</p>
-              <InstallControls
-                plugin={plugin}
-                isInflight={isInflight}
-                hasUpdate={hasUpdate}
-                isInstalled={isInstalled}
-                hasInstalledPanel={hasInstalledPanel}
-                dispatch={dispatch}
-              />
-            </div>
-          </div>
-          <TabsBar>
-            {tabs.map((tab: { label: string }, idx: number) => (
-              <Tab
-                key={tab.label}
-                label={tab.label}
-                active={idx === activeTab}
-                onChangeTab={() => dispatch({ type: ActionTypes.SET_ACTIVE_TAB, payload: idx })}
-              />
-            ))}
-          </TabsBar>
-          <TabContent>
-            {error && (
-              <Alert severity={AppNotificationSeverity.Error} title="Error Loading Plugin">
-                <>
-                  Check the server startup logs for more information. <br />
-                  If this plugin was loaded from git, make sure it was compiled.
-                </>
-              </Alert>
-            )}
-            <PluginDetailsBody
-              tab={tab}
-              plugin={pluginConfig}
-              remoteVersions={plugin.versions}
-              readme={plugin.readme}
-            />
-          </TabContent>
-        </PluginPage>
-      </Page>
+      <Layout justify="center" align="center">
+        <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
+          That plugin cannot be found. Please check the url is correct or <br />
+          go to the <a href={parentUrl}>plugin catalog</a>.
+        </Alert>
+      </Layout>
     );
   }
 
-  return null;
+  return (
+    <Page>
+      <PluginPage>
+        <PluginDetailsHeader currentUrl={`${url}?page=${pageId}`} parentUrl={parentUrl} plugin={plugin} />
+
+        {/* Tab navigation */}
+        <TabsBar>
+          {tabs.map((tab: PluginDetailsTab) => {
+            return (
+              <Tab
+                key={tab.label}
+                label={tab.label}
+                href={tab.href}
+                icon={tab.icon as IconName}
+                active={tab.id === pageId}
+              />
+            );
+          })}
+        </TabsBar>
+
+        {/* Active tab */}
+        <TabContent className={styles.tabContent}>
+          <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
+          <PluginDetailsSignature plugin={plugin} className={styles.alert} />
+          <PluginDetailsBody queryParams={queryParams} plugin={plugin} />
+        </TabContent>
+      </PluginPage>
+    </Page>
+  );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    headerContainer: css`
-      display: flex;
-      margin-bottom: ${theme.spacing(3)};
-      margin-top: ${theme.spacing(3)};
-      min-height: 120px;
+    alert: css`
+      margin: ${theme.spacing(3)};
+      margin-bottom: 0;
     `,
-    headerWrapper: css`
-      margin-left: ${theme.spacing(3)};
-    `,
-    breadcrumb: css`
-      font-size: ${theme.typography.h2.fontSize};
-      li {
-        display: inline;
-        list-style: none;
-        &::after {
-          content: '/';
-          padding: 0 0.25ch;
-        }
-        &:last-child::after {
-          content: '';
-        }
-      }
-    `,
-    headerLinks: css`
-      display: flex;
-      align-items: center;
-      margin-top: ${theme.spacing()};
-      margin-bottom: ${theme.spacing(3)};
-
-      & > * {
-        &::after {
-          content: '|';
-          padding: 0 ${theme.spacing()};
-        }
-        &:last-child::after {
-          content: '';
-          padding-right: 0;
-        }
-      }
-      font-size: ${theme.typography.h4.fontSize};
-    `,
-    headerOrgName: css`
-      font-size: ${theme.typography.h4.fontSize};
+    // Needed due to block formatting context
+    tabContent: css`
+      overflow: auto;
     `,
   };
 };

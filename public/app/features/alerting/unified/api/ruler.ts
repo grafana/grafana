@@ -1,6 +1,8 @@
-import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
-import { getDatasourceAPIId } from '../utils/datasource';
+import { lastValueFrom } from 'rxjs';
 import { getBackendSrv } from '@grafana/runtime';
+
+import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 
 // upsert a rule group. use this to update rules
@@ -9,20 +11,40 @@ export async function setRulerRuleGroup(
   namespace: string,
   group: PostableRulerRuleGroupDTO
 ): Promise<void> {
-  await await getBackendSrv()
-    .fetch<unknown>({
+  await lastValueFrom(
+    getBackendSrv().fetch<unknown>({
       method: 'POST',
       url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
       data: group,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-    .toPromise();
+  );
+}
+
+export interface FetchRulerRulesFilter {
+  dashboardUID: string;
+  panelId?: number;
 }
 
 // fetch all ruler rule namespaces and included groups
-export async function fetchRulerRules(dataSourceName: string) {
-  return rulerGetRequest<RulerRulesConfigDTO>(`/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`, {});
+export async function fetchRulerRules(dataSourceName: string, filter?: FetchRulerRulesFilter) {
+  if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+    throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
+  }
+
+  const params: Record<string, string> = {};
+  if (filter?.dashboardUID) {
+    params['dashboard_uid'] = filter.dashboardUID;
+    if (filter.panelId) {
+      params['panel_id'] = String(filter.panelId);
+    }
+  }
+  return rulerGetRequest<RulerRulesConfigDTO>(
+    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+    {},
+    params
+  );
 }
 
 // fetch rule groups for a particular namespace
@@ -51,8 +73,8 @@ export async function fetchRulerRulesGroup(
 }
 
 export async function deleteRulerRulesGroup(dataSourceName: string, namespace: string, groupName: string) {
-  return getBackendSrv()
-    .fetch({
+  await lastValueFrom(
+    getBackendSrv().fetch({
       url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
         namespace
       )}/${encodeURIComponent(groupName)}`,
@@ -60,19 +82,20 @@ export async function deleteRulerRulesGroup(dataSourceName: string, namespace: s
       showSuccessAlert: false,
       showErrorAlert: false,
     })
-    .toPromise();
+  );
 }
 
 // false in case ruler is not supported. this is weird, but we'll work on it
-async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
+async function rulerGetRequest<T>(url: string, empty: T, params?: Record<string, string>): Promise<T> {
   try {
-    const response = await getBackendSrv()
-      .fetch<T>({
+    const response = await lastValueFrom(
+      getBackendSrv().fetch<T>({
         url,
         showErrorAlert: false,
         showSuccessAlert: false,
+        params,
       })
-      .toPromise();
+    );
     return response.data;
   } catch (e) {
     if (e?.status === 404) {
@@ -94,4 +117,15 @@ async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
     }
     throw e;
   }
+}
+
+export async function deleteNamespace(dataSourceName: string, namespace: string): Promise<void> {
+  await lastValueFrom(
+    getBackendSrv().fetch<unknown>({
+      method: 'DELETE',
+      url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  );
 }

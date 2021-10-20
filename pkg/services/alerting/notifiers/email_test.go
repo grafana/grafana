@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -21,7 +22,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewEmailNotifier(model)
+				_, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -38,7 +39,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewEmailNotifier(model)
+				not, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				emailNotifier := not.(*EmailNotifier)
 
 				So(err, ShouldBeNil)
@@ -62,7 +63,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewEmailNotifier(model)
+				not, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				emailNotifier := not.(*EmailNotifier)
 
 				So(err, ShouldBeNil)

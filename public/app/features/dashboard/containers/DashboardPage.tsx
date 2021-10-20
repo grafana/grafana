@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
@@ -25,11 +24,13 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
+import { GrafanaTheme2, TimeRange, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import classnames from 'classnames';
+import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
+import { liveTimer } from '../dashgrid/liveTimer';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -67,14 +68,9 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-interface OwnProps {
-  isPanelEditorOpen?: boolean;
-}
-
 export type Props = Themeable2 &
   GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
-  ConnectedProps<typeof connector> &
-  OwnProps;
+  ConnectedProps<typeof connector>;
 
 export interface State {
   editPanel: PanelModel | null;
@@ -132,6 +128,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       routeName: this.props.route.routeName,
       fixUrl: true,
     });
+
+    // small delay to start live updates
+    setTimeout(this.updateLiveTimer, 250);
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -162,6 +161,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
       if (urlParams?.from !== prevUrlParams?.from || urlParams?.to !== prevUrlParams?.to) {
         getTimeSrv().updateTimeRangeFromUrl();
+        this.updateLiveTimer();
       }
 
       if (!prevUrlParams?.refresh && urlParams?.refresh) {
@@ -178,11 +178,17 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     // entering edit mode
     if (this.state.editPanel && !prevState.editPanel) {
       dashboardWatcher.setEditingState(true);
+
+      // Some panels need to be notified when entering edit mode
+      this.props.dashboard?.events.publish(new PanelEditEnteredEvent(this.state.editPanel.id));
     }
 
     // leaving edit mode
     if (!this.state.editPanel && prevState.editPanel) {
       dashboardWatcher.setEditingState(false);
+
+      // Some panels need kicked when leaving edit mode
+      this.props.dashboard?.events.publish(new PanelEditExitedEvent(prevState.editPanel.id));
     }
 
     if (this.state.editPanelAccessDenied) {
@@ -195,6 +201,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       locationService.partial({ editPanel: null, viewPanel: null });
     }
   }
+
+  updateLiveTimer = () => {
+    let tr: TimeRange | undefined = undefined;
+    if (this.props.dashboard?.liveNow) {
+      tr = getTimeSrv().timeRange();
+    }
+    liveTimer.setLiveTimeRange(tr);
+  };
 
   static getDerivedStateFromProps(props: Props, state: State) {
     const { dashboard, queryParams } = props;
@@ -324,6 +338,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const containerClassNames = classnames(styles.dashboardContainer, {
       'panel-in-fullscreen': viewPanel,
     });
+    const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
 
     return (
       <div className={containerClassNames}>
@@ -353,7 +368,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           >
             <div className={styles.dashboardContent}>
               {initError && <DashboardFailed />}
-              {!editPanel && kioskMode === KioskMode.Off && (
+              {showSubMenu && (
                 <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
                 </section>
@@ -384,14 +399,12 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
   const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
   return {
     dashboardContainer: css`
-      position: absolute;
-      top: 0;
-      bottom: 0;
       width: 100%;
       height: 100%;
       display: flex;
       flex: 1 1 0;
       flex-direction: column;
+      min-height: 0;
     `,
     dashboardScroll: css`
       width: 100%;
@@ -409,4 +422,4 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
 
 export const DashboardPage = withTheme2(UnthemedDashboardPage);
 DashboardPage.displayName = 'DashboardPage';
-export default hot(module)(connector(DashboardPage));
+export default connector(DashboardPage);

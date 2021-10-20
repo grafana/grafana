@@ -11,27 +11,24 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func fakeGetTime() func() time.Time {
@@ -630,10 +627,10 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		require.NoError(t, err)
 		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
 
-		sc.m = macaron.New()
+		sc.m = web.New()
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.UseMiddleware(AddCSPHeader(cfg, logger))
-		sc.m.UseMiddleware(macaron.Renderer(viewsPath, "[[", "]]"))
+		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
 		ctxHdlr := getContextHandler(t, cfg)
 		sc.sqlStore = ctxHdlr.SQLStore
@@ -669,47 +666,18 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	t.Helper()
 
 	sqlStore := sqlstore.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
 		Name: "database",
 	}
+	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
+	require.NoError(t, err)
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	ctxHdlr := &contexthandler.ContextHandler{}
-
-	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
-		{
-			Name:     sqlstore.ServiceName,
-			Instance: sqlStore,
-		},
-		{
-			Name:     remotecache.ServiceName,
-			Instance: remoteCacheSvc,
-		},
-		{
-			Name:     auth.ServiceName,
-			Instance: userAuthTokenSvc,
-		},
-		{
-			Name:     rendering.ServiceName,
-			Instance: renderSvc,
-		},
-		{
-			Name:     jwt.ServiceName,
-			Instance: authJWTSvc,
-		},
-		{
-			Name:     contexthandler.ServiceName,
-			Instance: ctxHdlr,
-		},
-	})
-	require.NoError(t, err)
-
-	return ctxHdlr
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
 }
 
 type fakeRenderService struct {

@@ -1,56 +1,74 @@
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
+import React, { ReactNode } from 'react';
+import {
+  MapLayerRegistryItem,
+  MapLayerOptions,
+  PanelData,
+  GrafanaTheme2,
+  FrameGeometrySourceMode,
+} from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
+import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
+import * as style from 'ol/style';
 
 import tinycolor from 'tinycolor2';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { ColorDimensionConfig, ScaleDimensionConfig, } from '../../dims/types';
-import { getScaledDimension, } from '../../dims/scale';
-import { getColorDimension, } from '../../dims/color';
-import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
-import { ColorDimensionEditor } from '../../dims/editors/ColorDimensionEditor';
-import React from 'react';
+import {
+  ColorDimensionConfig,
+  ScaleDimensionConfig,
+  getScaledDimension,
+  getColorDimension,
+  ResourceDimensionConfig,
+  ResourceDimensionMode,
+  ResourceFolderName,
+  getPublicOrAbsoluteUrl,
+} from 'app/features/dimensions';
+import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
-import { ReplaySubject } from 'rxjs';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { ReactNode } from 'react';
-import { circleMarker, markerMakers } from '../../utils/regularShapes';
+import { StyleMaker, getMarkerFromPath } from '../../utils/regularShapes';
+import { ReplaySubject } from 'rxjs';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
   size: ScaleDimensionConfig;
   color: ColorDimensionConfig;
   fillOpacity: number;
-  shape?: string;
   showLegend?: boolean;
+  markerSymbol: ResourceDimensionConfig;
 }
+
+const DEFAULT_SIZE = 5;
 
 const defaultOptions: MarkersConfig = {
   size: {
-    fixed: 5,
+    fixed: DEFAULT_SIZE,
     min: 2,
     max: 15,
   },
   color: {
-    fixed: 'dark-green', // picked from theme 
+    fixed: 'dark-green', // picked from theme
   },
   fillOpacity: 0.4,
-  shape: 'circle',
   showLegend: true,
+  markerSymbol: {
+    mode: ResourceDimensionMode.Fixed,
+    fixed: 'img/icons/marker/circle.svg',
+  },
 };
 
-export const MARKERS_LAYER_ID = "markers";
+export const MARKERS_LAYER_ID = 'markers';
 
 // Used by default when nothing is configured
-export const defaultMarkersConfig:MapLayerOptions<MarkersConfig> = {
+export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   type: MARKERS_LAYER_ID,
   config: defaultOptions,
   location: {
     mode: FrameGeometrySourceMode.Auto,
-  }
-}
+  },
+};
 
 /**
  * Map layer configuration for circle overlay
@@ -75,31 +93,44 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       ...options?.config,
     };
 
-    const legendProps= new ReplaySubject<MarkersLegendProps>(1);
-    let legend:ReactNode = null;
+    const legendProps = new ReplaySubject<MarkersLegendProps>(1);
+    let legend: ReactNode = null;
     if (config.showLegend) {
-      legend = <ObservablePropsWrapper 
-        watch={legendProps}  
-        initialSubProps={{}}  
-        child={MarkersLegend}
-      />
+      legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
-    const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
-    
+
     return {
       init: () => vectorLayer,
       legend: legend,
       update: (data: PanelData) => {
-        if(!data.series?.length) {
+        if (!data.series?.length) {
           return; // ignore empty
         }
 
-        const features: Feature[] = [];
+        const markerPath =
+          getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
 
-        for(const frame of data.series) {
+        const marker = getMarkerFromPath(config.markerSymbol?.fixed);
+
+        const makeIconStyle = (color: string, fillColor: string, radius: number) => {
+          return new style.Style({
+            image: new style.Icon({
+              src: markerPath,
+              color,
+              //  opacity,
+              scale: (DEFAULT_SIZE + radius) / 100,
+            }),
+          });
+        };
+
+        const shape: StyleMaker = marker?.make ?? makeIconStyle;
+
+        const features: Feature<Point>[] = [];
+
+        for (const frame of data.series) {
           const info = dataFrameToPoints(frame, matchers);
-          if(info.warning) {
-            console.log( 'Could not find locations', info.warning);
+          if (info.warning) {
+            console.log('Could not find locations', info.warning);
             continue; // ???
           }
 
@@ -117,15 +148,14 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             const radius = sizeDim.get(i);
 
             // Create a new Feature for each point returned from dataFrameToPoints
-            const dot = new Feature( info.points[i] );
+            const dot = new Feature(info.points[i]);
             dot.setProperties({
               frame,
               rowIndex: i,
             });
-
-            dot.setStyle(shape!.make(color, fillColor, radius));
+            dot.setStyle(shape(color, fillColor, radius));
             features.push(dot);
-          };
+          }
 
           // Post updates to the legend component
           if (legend) {
@@ -147,16 +177,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   registerOptionsUI: (builder) => {
     builder
       .addCustomEditor({
-        id: 'config.color',
-        path: 'config.color',
-        name: 'Marker Color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: { // Configured values
-          fixed: 'grey',
-        },
-      })
-      .addCustomEditor({
         id: 'config.size',
         path: 'config.size',
         name: 'Marker Size',
@@ -165,19 +185,35 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           min: 1,
           max: 100, // possible in the UI
         },
-        defaultValue: { // Configured values
-          fixed: 5,
+        defaultValue: {
+          // Configured values
+          fixed: DEFAULT_SIZE,
           min: 1,
           max: 20,
         },
       })
-      .addSelect({
-        path: 'config.shape',
-        name: 'Marker Shape',
+      .addCustomEditor({
+        id: 'config.markerSymbol',
+        path: 'config.markerSymbol',
+        name: 'Marker Symbol',
+        editor: ResourceDimensionEditor,
+        defaultValue: defaultOptions.markerSymbol,
         settings: {
-          options: markerMakers.selectOptions().options,
+          resourceType: 'icon',
+          showSourceRadio: false,
+          folderName: ResourceFolderName.Marker,
         },
-        defaultValue: 'circle',
+      })
+      .addCustomEditor({
+        id: 'config.color',
+        path: 'config.color',
+        name: 'Marker Color',
+        editor: ColorDimensionEditor,
+        settings: {},
+        defaultValue: {
+          // Configured values
+          fixed: 'grey',
+        },
       })
       .addSliderInput({
         path: 'config.fillOpacity',
@@ -188,7 +224,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           max: 1,
           step: 0.1,
         },
-        showIf: (cfg) => (markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill),
       })
       .addBooleanSwitch({
         path: 'config.showLegend',

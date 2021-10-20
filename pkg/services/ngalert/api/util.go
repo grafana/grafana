@@ -23,8 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/pkg/errors"
-	"gopkg.in/macaron.v1"
 	"gopkg.in/yaml.v3"
 )
 
@@ -40,7 +40,7 @@ func toMacaronPath(path string) string {
 }
 
 func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
-	recipient := ctx.Params("Recipient")
+	recipient := web.Params(ctx.Req)[":Recipient"]
 	if recipient == apimodels.GrafanaBackend.String() {
 		return apimodels.GrafanaBackend, nil
 	}
@@ -77,13 +77,13 @@ func replacedResponseWriter(ctx *models.ReqContext) (*models.ReqContext, *respon
 	resp := response.CreateNormalResponse(make(http.Header), nil, 0)
 	cpy := *ctx
 	cpyMCtx := *cpy.Context
-	cpyMCtx.Resp = macaron.NewResponseWriter(ctx.Req.Method, &safeMacaronWrapper{resp})
+	cpyMCtx.Resp = web.NewResponseWriter(ctx.Req.Method, &safeMacaronWrapper{resp})
 	cpy.Context = &cpyMCtx
 	return &cpy, resp
 }
 
 type AlertingProxy struct {
-	DataProxy *datasourceproxy.DatasourceProxyService
+	DataProxy *datasourceproxy.DataSourceProxyService
 }
 
 // withReq proxies a different request
@@ -103,8 +103,8 @@ func (p *AlertingProxy) withReq(
 		req.Header.Add(h, v)
 	}
 	newCtx, resp := replacedResponseWriter(ctx)
-	newCtx.Req.Request = req
-	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64("Recipient"))
+	newCtx.Req = req
+	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64(":Recipient"))
 
 	status := resp.Status()
 	if status >= 400 {

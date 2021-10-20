@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +36,7 @@ func TestPluginManager_Init(t *testing.T) {
 			pm.Cfg.BundledPluginsPath = bundledPluginsPath
 			pm.Cfg.StaticRootPath = staticRootPath
 		})
-		err = pm.Init()
+		err = pm.init()
 		require.NoError(t, err)
 
 		assert.Empty(t, pm.scanningErrors)
@@ -51,7 +52,7 @@ func TestPluginManager_Init(t *testing.T) {
 				},
 			}
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 
 		assert.Empty(t, pm.scanningErrors)
@@ -68,7 +69,7 @@ func TestPluginManager_Init(t *testing.T) {
 			pm.Cfg.PluginsPath = "testdata/unsigned-datasource"
 			pm.Cfg.Env = setting.Prod
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		const pluginID = "test"
 
@@ -82,7 +83,7 @@ func TestPluginManager_Init(t *testing.T) {
 			pm.Cfg.PluginsPath = "testdata/unsigned-datasource"
 			pm.Cfg.Env = setting.Dev
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		const pluginID = "test"
 
@@ -99,7 +100,7 @@ func TestPluginManager_Init(t *testing.T) {
 			pm.Cfg.PluginsPath = "testdata/unsigned-panel"
 			pm.Cfg.Env = setting.Prod
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		const pluginID = "test-panel"
 
@@ -113,7 +114,7 @@ func TestPluginManager_Init(t *testing.T) {
 			pm.Cfg.PluginsPath = "testdata/unsigned-panel"
 			pm.Cfg.Env = setting.Dev
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		pluginID := "test-panel"
 
@@ -130,7 +131,7 @@ func TestPluginManager_Init(t *testing.T) {
 			pm.Cfg.PluginsPath = "testdata/unsigned-datasource"
 			pm.Cfg.PluginsAllowUnsigned = []string{"test"}
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 
 		assert.Empty(t, pm.scanningErrors)
@@ -140,7 +141,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/invalid-v1-signature"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 
 		const pluginID = "test"
@@ -155,7 +156,7 @@ func TestPluginManager_Init(t *testing.T) {
 			pm.Cfg.PluginsPath = "testdata/lacking-files"
 			pm.BackendPluginManager = fm
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 
 		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
@@ -167,7 +168,7 @@ func TestPluginManager_Init(t *testing.T) {
 			pm.Cfg.PluginsPath = "testdata/behind-feature-flag"
 			pm.BackendPluginManager = &fm
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 
 		assert.Empty(t, pm.scanningErrors)
@@ -178,7 +179,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/duplicate-plugins"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 
 		assert.Len(t, pm.scanningErrors, 1)
@@ -191,7 +192,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(manager *PluginManager) {
 			manager.Cfg.PluginsPath = pluginsDir
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		require.Empty(t, pm.scanningErrors)
 
@@ -231,6 +232,7 @@ func TestPluginManager_Init(t *testing.T) {
 				Signature:     plugins.PluginSignatureValid,
 				SignatureType: plugins.GrafanaType,
 				SignatureOrg:  "Grafana Labs",
+				SignedFiles:   plugins.PluginFiles{"plugin.json": {}},
 				Dependencies: plugins.PluginDependencies{
 					GrafanaVersion: "*",
 					Plugins:        []plugins.PluginDependencyItem{},
@@ -277,7 +279,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 
 		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has an invalid signature`)}, pm.scanningErrors)
@@ -297,7 +299,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature-root-url-uri"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		require.Empty(t, pm.scanningErrors)
 
@@ -323,7 +325,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		require.Empty(t, pm.scanningErrors)
 
@@ -349,7 +351,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/invalid-v2-signature"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
 		assert.Nil(t, pm.plugins[("test")])
@@ -365,7 +367,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/invalid-v2-signature-2"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
 		assert.Nil(t, pm.plugins[("test")])
@@ -381,7 +383,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/includes-symlinks"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		require.Empty(t, pm.scanningErrors)
 
@@ -410,7 +412,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/symbolic-plugin-dirs"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		// This plugin should be properly registered, even though it is symlinked to plugins dir
 		require.Empty(t, pm.scanningErrors)
@@ -446,7 +448,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			pm.BackendPluginManager = fm
 		})
 
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 
 		// mock installer
@@ -496,6 +498,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			Signature:     plugins.PluginSignatureValid,
 			SignatureType: plugins.GrafanaType,
 			SignatureOrg:  "Grafana Labs",
+			SignedFiles:   plugins.PluginFiles{"plugin.json": {}},
 			Dependencies: plugins.PluginDependencies{
 				GrafanaVersion: "*",
 				Plugins:        []plugins.PluginDependencyItem{},
@@ -712,12 +715,13 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	staticRootPath, err := filepath.Abs("../../../public/")
 	require.NoError(t, err)
 
-	pm := newManager(&setting.Cfg{
+	cfg := &setting.Cfg{
 		Raw:            ini.Empty(),
 		Env:            setting.Prod,
 		StaticRootPath: staticRootPath,
-	})
-	pm.BackendPluginManager = &fakeBackendPluginManager{}
+	}
+	pm := newManager(cfg, &sqlstore.SQLStore{}, &fakeBackendPluginManager{})
+
 	for _, cb := range cbs {
 		cb(pm)
 	}

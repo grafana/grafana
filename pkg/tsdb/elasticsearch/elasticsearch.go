@@ -14,38 +14,34 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 var eslog = log.New("tsdb.elasticsearch")
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "ElasticSearchService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
-
 type Service struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	HTTPClientProvider   httpclient.Provider   `inject:""`
-	intervalCalculator   tsdb.Calculator
-	im                   instancemgmt.InstanceManager
+	HTTPClientProvider httpclient.Provider
+	intervalCalculator intervalv2.Calculator
+	im                 instancemgmt.InstanceManager
 }
 
-func (s *Service) Init() error {
+func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
 	eslog.Debug("initializing")
+
 	im := datasource.NewInstanceManager(newInstanceSettings())
+	s := newService(im, httpClientProvider)
+
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: newService(im, s.HTTPClientProvider),
 	})
-	if err := s.BackendPluginManager.Register("elasticsearch", factory); err != nil {
+
+	if err := backendPluginManager.Register("elasticsearch", factory); err != nil {
 		eslog.Error("Failed to register plugin", "error", err)
+		return nil, err
 	}
-	return nil
+
+	return s, nil
 }
 
 // newService creates a new executor func.
@@ -53,7 +49,7 @@ func newService(im instancemgmt.InstanceManager, httpClientProvider httpclient.P
 	return &Service{
 		im:                 im,
 		HTTPClientProvider: httpClientProvider,
-		intervalCalculator: tsdb.NewCalculator(),
+		intervalCalculator: intervalv2.NewCalculator(),
 	}
 }
 
@@ -86,6 +82,11 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 		httpCliOpts, err := settings.HTTPClientOptions()
 		if err != nil {
 			return nil, fmt.Errorf("error getting http options: %w", err)
+		}
+
+		// Set SigV4 service namespace
+		if httpCliOpts.SigV4 != nil {
+			httpCliOpts.SigV4.Service = "es"
 		}
 
 		version, err := coerceVersion(jsonData["esVersion"])

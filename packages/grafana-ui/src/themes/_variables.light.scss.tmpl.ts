@@ -137,7 +137,7 @@ $divider-border-color: $gray-2;
 
 // Graphite Target Editor
 $tight-form-func-bg: ${theme.v1.colors.bg2};
-$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.v1.colors.bg2, theme.v1)};
+$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.background.secondary, theme)};
 
 $modal-backdrop-bg: ${theme.v1.colors.bg1};
 $code-tag-bg: $gray-6;
@@ -308,7 +308,7 @@ $checkboxImageUrl: '../img/checkbox_white.png';
 $info-box-border-color: $blue-base;
 
 // footer
-$footer-link-color: $gray-3;
+$footer-link-color: $gray-1;
 $footer-link-hover: $dark-2;
 
 // json explorer

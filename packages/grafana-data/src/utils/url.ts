@@ -48,7 +48,8 @@ function toUrlParams(a: any) {
     if (typeof v !== 'boolean') {
       s[s.length] = encodeURIComponentAsAngularJS(k, true) + '=' + encodeURIComponentAsAngularJS(v, true);
     } else {
-      s[s.length] = encodeURIComponentAsAngularJS(k, true);
+      const valueQueryPart = v ? '' : '=' + encodeURIComponentAsAngularJS('false', true);
+      s[s.length] = encodeURIComponentAsAngularJS(k, true) + valueQueryPart;
     }
   };
 

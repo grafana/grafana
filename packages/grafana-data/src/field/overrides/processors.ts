@@ -39,6 +39,7 @@ export interface SliderFieldConfigSettings {
   min: number;
   max: number;
   step?: number;
+  ariaLabelForHandle?: string;
 }
 
 export interface DataLinksFieldConfigSettings {}
@@ -182,4 +183,14 @@ export interface FieldNamePickerConfigSettings {
    * information, including validation etc
    */
   info?: ComponentType<FieldNamePickerInfoProps> | null;
+
+  /**
+   * Sets the width to a pixel value.
+   */
+  width?: number;
+
+  /**
+   * Placeholder text to display when nothing is selected.
+   */
+  placeholderText?: string;
 }

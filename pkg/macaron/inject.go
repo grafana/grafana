@@ -26,10 +26,6 @@ import (
 type Injector interface {
 	Invoker
 	TypeMapper
-	// SetParent sets the parent of the injector. If the injector cannot find a
-	// dependency in its Type map it will check its parent before returning an
-	// error.
-	SetParent(Injector)
 }
 
 // Invoker represents an interface for calling functions via reflection.
@@ -84,7 +80,6 @@ type TypeMapper interface {
 
 type injector struct {
 	values map[reflect.Type]reflect.Value
-	parent Injector
 }
 
 // InterfaceOf dereferences a pointer to an Interface type.
@@ -135,7 +130,7 @@ func (inj *injector) fastInvoke(f FastInvoker, t reflect.Type, numIn int) ([]ref
 			argType = t.In(i)
 			val = inj.GetVal(argType)
 			if !val.IsValid() {
-				return nil, fmt.Errorf("Value not found for type %v", argType)
+				return nil, fmt.Errorf("value not found for type %v", argType)
 			}
 
 			in[i] = val.Interface()
@@ -155,7 +150,7 @@ func (inj *injector) callInvoke(f interface{}, t reflect.Type, numIn int) ([]ref
 			argType = t.In(i)
 			val = inj.GetVal(argType)
 			if !val.IsValid() {
-				return nil, fmt.Errorf("Value not found for type %v", argType)
+				return nil, fmt.Errorf("value not found for type %v", argType)
 			}
 
 			in[i] = val
@@ -193,16 +188,5 @@ func (i *injector) GetVal(t reflect.Type) reflect.Value {
 			}
 		}
 	}
-
-	// Still no type found, try to look it up on the parent
-	if !val.IsValid() && i.parent != nil {
-		val = i.parent.GetVal(t)
-	}
-
 	return val
-
-}
-
-func (i *injector) SetParent(parent Injector) {
-	i.parent = parent
 }

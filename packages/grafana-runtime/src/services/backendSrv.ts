@@ -140,14 +140,14 @@ export interface FetchError<T extends FetchErrorDataProps = any> {
  */
 export interface BackendSrv {
   get(url: string, params?: any, requestId?: string): Promise<any>;
-  delete(url: string): Promise<any>;
+  delete(url: string, data?: any): Promise<any>;
   post(url: string, data?: any): Promise<any>;
   patch(url: string, data?: any): Promise<any>;
   put(url: string, data?: any): Promise<any>;
 
   /**
    * @deprecated Use the fetch function instead. If you prefer to work with a promise
-   * call the toPromise() function on the Observable returned by fetch.
+   * wrap the Observable returned by fetch with the lastValueFrom function.
    */
   request(options: BackendSrvRequest): Promise<any>;
 

@@ -1,9 +1,12 @@
 package api
 
 import (
+	"bytes"
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -20,10 +23,10 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -105,10 +108,11 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
 	hs := &HTTPServer{
-		Cfg:              cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
-		License:          &licensing.OSSLicensingService{},
-		SocialService:    &mockSocialService{},
+		Cfg:               cfg,
+		SettingsProvider:  &setting.OSSImpl{Cfg: cfg},
+		License:           &licensing.OSSLicensingService{},
+		SocialService:     &mockSocialService{},
+		EncryptionService: ossencryption.ProvideService(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
@@ -121,7 +125,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	setting.OAuthAutoLogin = true
 
 	oauthError := errors.New("User not a member of one of the required organizations")
-	encryptedError, err := util.Encrypt([]byte(oauthError.Error()), setting.SecretKey)
+	encryptedError, err := hs.EncryptionService.Encrypt(context.Background(), []byte(oauthError.Error()), setting.SecretKey)
 	require.NoError(t, err)
 	expCookiePath := "/"
 	if len(setting.AppSubUrl) > 0 {
@@ -334,11 +338,9 @@ func TestLoginPostRedirect(t *testing.T) {
 	hs.Cfg.CookieSecure = true
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
-		cmd := dtos.LoginCommand{
-			User:     "admin",
-			Password: "admin",
-		}
-		return hs.LoginPost(c, cmd)
+		c.Req.Header.Set("Content-Type", "application/json")
+		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
+		return hs.LoginPost(c)
 	})
 
 	bus.AddHandler("grafana-auth", func(query *models.LoginUserQuery) error {
@@ -612,11 +614,10 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 	}
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
-		cmd := dtos.LoginCommand{
-			User:     "admin",
-			Password: "admin",
-		}
-		return hs.LoginPost(c, cmd)
+		c.Req.Header.Set("Content-Type", "application/json")
+		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
+		x := hs.LoginPost(c)
+		return x
 	})
 
 	testHook := loginHookTest{}

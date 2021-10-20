@@ -20,14 +20,14 @@ import {
   AlertQuery,
   Labels,
   PostableRuleGrafanaRuleDTO,
-  RulerAlertingRuleDTO,
+  RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { Annotation } from './constants';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
+import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
 
 export const getDefaultFormValues = (): RuleFormValues =>
@@ -59,15 +59,24 @@ export const getDefaultFormValues = (): RuleFormValues =>
     forTimeUnit: 'm',
   });
 
-export function formValuesToRulerAlertingRuleDTO(values: RuleFormValues): RulerAlertingRuleDTO {
-  const { name, expression, forTime, forTimeUnit } = values;
-  return {
-    alert: name,
-    for: `${forTime}${forTimeUnit}`,
-    annotations: arrayToRecord(values.annotations || []),
-    labels: arrayToRecord(values.labels || []),
-    expr: expression,
-  };
+export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
+  const { name, expression, forTime, forTimeUnit, type } = values;
+  if (type === RuleFormType.cloudAlerting) {
+    return {
+      alert: name,
+      for: `${forTime}${forTimeUnit}`,
+      annotations: arrayToRecord(values.annotations || []),
+      labels: arrayToRecord(values.labels || []),
+      expr: expression,
+    };
+  } else if (type === RuleFormType.cloudRecording) {
+    return {
+      record: name,
+      labels: arrayToRecord(values.labels || []),
+      expr: expression,
+    };
+  }
+  throw new Error(`unexpected rule type: ${type}`);
 }
 
 function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Array<{ key: string; value: string }> {
@@ -125,7 +134,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       return {
         ...defaultFormValues,
         name: rule.alert,
-        type: RuleFormType.cloud,
+        type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
@@ -135,8 +144,19 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
       };
+    } else if (isRecordingRulerRule(rule)) {
+      return {
+        ...defaultFormValues,
+        name: rule.record,
+        type: RuleFormType.cloudRecording,
+        dataSourceName: ruleSourceName,
+        namespace,
+        group: group.name,
+        expression: rule.expr,
+        labels: listifyLabelsOrAnnotations(rule.labels),
+      };
     } else {
-      throw new Error('Editing recording rules not supported (yet)');
+      throw new Error('Unexpected type of rule for cloud rules source');
     }
   }
 }
@@ -209,8 +229,8 @@ const dataQueriesToGrafanaQueries = async (
 ): Promise<AlertQuery[]> => {
   const result: AlertQuery[] = [];
   for (const target of queries) {
-    const dsName = target.datasource || datasourceName;
-    const datasource = await getDataSourceSrv().get(dsName);
+    const datasource = await getDataSourceSrv().get(target.datasource || datasourceName);
+    const dsName = datasource.name;
 
     const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
     const { interval, intervalMs } = getIntervals(range, minInterval ?? datasource.interval, maxDataPoints);
@@ -261,7 +281,7 @@ export const panelToRuleFormValues = async (
   dashboard: DashboardModel
 ): Promise<Partial<RuleFormValues> | undefined> => {
   const { targets } = panel;
-  if (!panel.editSourceId || !dashboard.uid) {
+  if (!panel.id || !dashboard.uid) {
     return undefined;
   }
 
@@ -304,7 +324,7 @@ export const panelToRuleFormValues = async (
       },
       {
         key: Annotation.panelID,
-        value: String(panel.editSourceId),
+        value: String(panel.id),
       },
     ],
   };

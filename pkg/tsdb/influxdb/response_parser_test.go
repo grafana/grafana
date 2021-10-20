@@ -269,6 +269,20 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
+		query = &Query{Alias: "alias $tag_datacenter/$tag_datacenter"}
+		result = parser.Parse(prepare(response), query)
+		frame = result.Responses["A"]
+		name = "alias America/America"
+		testFrame.Name = name
+		newField = data.NewField("value", labels, []*float64{
+			pointer.Float64(222),
+		})
+		testFrame.Fields[1] = newField
+		testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+
 		query = &Query{Alias: "alias [[col]]", Measurement: "10m"}
 		result = parser.Parse(prepare(response), query)
 		frame = result.Responses["A"]

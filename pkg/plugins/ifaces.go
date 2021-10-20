@@ -28,7 +28,6 @@ type Manager interface {
 	// AppCount gets the number of apps.
 	AppCount() int
 	// GetEnabledPlugins gets enabled plugins.
-	// GetEnabledPlugins gets enabled plugins.
 	GetEnabledPlugins(orgID int64) (*EnabledPlugins, error)
 	// GrafanaLatestVersion gets the latest Grafana version.
 	GrafanaLatestVersion() string

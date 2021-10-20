@@ -1,25 +1,29 @@
 import { SelectableValue } from '@grafana/data';
 import { Validate } from 'react-hook-form';
-import { Matcher, Route } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../types/amroutes';
 import { parseInterval, timeOptions } from './time';
-import { parseMatcher, stringifyMatcher } from './alertmanager';
 import { isUndefined, omitBy } from 'lodash';
+import { MatcherFieldValue } from '../types/silence-form';
+import { matcherToMatcherField, parseMatcher } from './alertmanager';
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
-const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefined, isRegex: boolean): Matcher[] =>
-  Object.entries(matchers ?? {}).reduce<Matcher[]>(
+const matchersToArrayFieldMatchers = (
+  matchers: Record<string, string> | undefined,
+  isRegex: boolean
+): MatcherFieldValue[] =>
+  Object.entries(matchers ?? {}).reduce<MatcherFieldValue[]>(
     (acc, [name, value]) => [
       ...acc,
       {
         name,
         value,
-        isRegex: isRegex,
-        isEqual: true,
+        operator: isRegex ? MatcherOperator.regex : MatcherOperator.equal,
       },
     ],
-    [] as Matcher[]
+    [] as MatcherFieldValue[]
   );
 
 const intervalToValueAndType = (strValue: string | undefined): [string, string] => {
@@ -43,17 +47,16 @@ const selectableValueToString = (selectableValue: SelectableValue<string>): stri
 const selectableValuesToStrings = (arr: Array<SelectableValue<string>> | undefined): string[] =>
   (arr ?? []).map(selectableValueToString);
 
-export const emptyArrayFieldMatcher: Matcher = {
+export const emptyArrayFieldMatcher: MatcherFieldValue = {
   name: '',
   value: '',
-  isRegex: false,
-  isEqual: true,
+  operator: MatcherOperator.equal,
 };
 
 export const emptyRoute: FormAmRoute = {
   id: '',
   groupBy: [],
-  matchers: [],
+  object_matchers: [],
   routes: [],
   continue: false,
   receiver: '',
@@ -86,11 +89,18 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
     Object.assign(id2route, subId2Route);
   });
 
+  // Frontend migration to use object_matchers instead of matchers
+  const matchers = route.matchers
+    ? route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? []
+    : route.object_matchers?.map(
+        (matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] } as MatcherFieldValue)
+      ) ?? [];
+
   return [
     {
       id,
-      matchers: [
-        ...(route.matchers?.map(parseMatcher) ?? []),
+      object_matchers: [
+        ...matchers,
         ...matchersToArrayFieldMatchers(route.match, false),
         ...matchersToArrayFieldMatchers(route.match_re, true),
       ],
@@ -109,13 +119,19 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
   ];
 };
 
-export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute, id2ExistingRoute: Record<string, Route>): Route => {
+export const formAmRouteToAmRoute = (
+  alertManagerSourceName: string | undefined,
+  formAmRoute: FormAmRoute,
+  id2ExistingRoute: Record<string, Route>
+): Route => {
   const existing: Route | undefined = id2ExistingRoute[formAmRoute.id];
   const amRoute: Route = {
     ...(existing ?? {}),
     continue: formAmRoute.continue,
     group_by: formAmRoute.groupBy,
-    matchers: formAmRoute.matchers.length ? formAmRoute.matchers.map(stringifyMatcher) : undefined,
+    object_matchers: formAmRoute.object_matchers.length
+      ? formAmRoute.object_matchers.map((matcher) => [matcher.name, matcher.operator, matcher.value])
+      : undefined,
     match: undefined,
     match_re: undefined,
     group_wait: formAmRoute.groupWaitValue
@@ -127,8 +143,17 @@ export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute, id2ExistingRoute:
     repeat_interval: formAmRoute.repeatIntervalValue
       ? `${formAmRoute.repeatIntervalValue}${formAmRoute.repeatIntervalValueType}`
       : undefined,
-    routes: formAmRoute.routes.map((subRoute) => formAmRouteToAmRoute(subRoute, id2ExistingRoute)),
+    routes: formAmRoute.routes.map((subRoute) =>
+      formAmRouteToAmRoute(alertManagerSourceName, subRoute, id2ExistingRoute)
+    ),
   };
+
+  if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+    amRoute.matchers = formAmRoute.object_matchers.map(({ name, operator, value }) => `${name}${operator}${value}`);
+    amRoute.object_matchers = undefined;
+  } else {
+    amRoute.matchers = undefined;
+  }
 
   if (formAmRoute.receiver) {
     amRoute.receiver = formAmRoute.receiver;

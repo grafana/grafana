@@ -15,6 +15,7 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 import { LokiQuery } from './types';
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, DataQuery, DataSourceApi } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
+import { GraphiteQuery } from '../graphite/types';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
@@ -334,16 +335,20 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   }
 
-  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
+  async importQueries(
+    queries: PromQuery[] | GraphiteQuery[] | DataQuery[],
+    originDataSource: DataSourceApi
+  ): Promise<LokiQuery[]> {
     const datasourceType = originDataSource.meta.id;
     if (datasourceType === 'prometheus') {
       return Promise.all(
-        queries.map(async (query) => {
-          const expr = await this.importPrometheusQuery((query as PromQuery).expr);
-          const { ...rest } = query as PromQuery;
+        [...(queries as PromQuery[])].map(async (query) => {
+          const expr = await this.importPrometheusQuery(query.expr);
+          const { refId } = query;
           return {
-            ...rest,
             expr,
+            refId,
+            range: true,
           };
         })
       );
@@ -454,7 +459,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     if (!value) {
       // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
       this.seriesCache.set(cacheKey, {});
-      const params = { match, start, end };
+      const params = { 'match[]': match, start, end };
       const data = await this.request(url, params);
       const { values } = processLabels(data);
       value = values;
@@ -470,7 +475,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
     const url = '/loki/api/v1/series';
     const { start, end } = this.datasource.getTimeRangeParams();
-    const params = { match, start, end };
+    const params = { 'match[]': match, start, end };
     return await this.request(url, params);
   };
 

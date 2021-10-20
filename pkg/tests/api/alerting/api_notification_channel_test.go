@@ -34,11 +34,13 @@ func TestTestReceivers(t *testing.T) {
 	t.Run("assert no receivers returns 400 Bad Request", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"ngalert"},
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
 		})
-		store := testinfra.SetUpDatabase(t, dir)
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 		store.Bus = bus.GetBus()
-		grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 		createUser(t, store, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
@@ -63,11 +65,13 @@ func TestTestReceivers(t *testing.T) {
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"ngalert"},
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
 		})
-		store := testinfra.SetUpDatabase(t, dir)
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 		store.Bus = bus.GetBus()
-		grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 		createUser(t, store, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
@@ -129,11 +133,13 @@ func TestTestReceivers(t *testing.T) {
 	t.Run("assert invalid receiver returns 400 Bad Request", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"ngalert"},
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
 		})
-		store := testinfra.SetUpDatabase(t, dir)
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 		store.Bus = bus.GetBus()
-		grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 		createUser(t, store, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
@@ -191,11 +197,13 @@ func TestTestReceivers(t *testing.T) {
 	t.Run("assert timed out receiver returns 408 Request Timeout", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"ngalert"},
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
 		})
-		store := testinfra.SetUpDatabase(t, dir)
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 		store.Bus = bus.GetBus()
-		grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 		createUser(t, store, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
@@ -262,11 +270,13 @@ func TestTestReceivers(t *testing.T) {
 	t.Run("assert multiple different errors returns 207 Multi Status", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"ngalert"},
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
 		})
-		store := testinfra.SetUpDatabase(t, dir)
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 		store.Bus = bus.GetBus()
-		grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 		createUser(t, store, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
@@ -354,13 +364,13 @@ func TestTestReceivers(t *testing.T) {
 
 func TestNotificationChannels(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
 	})
 
-	s := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
 	s.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, s)
 
 	mockChannel := newMockNotificationChannel(t, grafanaListedAddr)
 	amConfig := getAlertmanagerConfig(mockChannel.server.Addr)
@@ -1717,7 +1727,7 @@ var expEmailNotifications = []*models.SendEmailCommandSync{
 				"Message": "",
 				"Status":  "firing",
 				"Alerts": channels.ExtendedAlerts{
-					{
+					channels.ExtendedAlert{
 						Status:       "firing",
 						Labels:       template.KV{"alertname": "EmailAlert"},
 						Annotations:  template.KV{},
@@ -1874,6 +1884,7 @@ var expNonEmailNotifications = map[string][]string{
 		`{
 		  "receiver": "webhook_recv",
 		  "status": "firing",
+		  "orgId": 1,
 		  "alerts": [
 			{
 			  "status": "firing",

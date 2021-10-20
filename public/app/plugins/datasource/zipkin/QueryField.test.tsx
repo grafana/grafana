@@ -1,16 +1,16 @@
-import { ButtonCascader, CascaderOption } from '@grafana/ui';
+import { CascaderOption } from '@grafana/ui';
 import { act, renderHook } from '@testing-library/react-hooks';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { ZipkinDatasource } from './datasource';
-import { QueryField, useLoadOptions, useServices } from './QueryField';
+import { ZipkinQueryField, useLoadOptions, useServices } from './QueryField';
 import { ZipkinQuery } from './types';
 
 describe('QueryField', () => {
   it('renders properly', () => {
     const ds = {} as ZipkinDatasource;
-    const wrapper = shallow(
-      <QueryField
+    render(
+      <ZipkinQueryField
         history={[]}
         datasource={ds}
         query={{ query: '1234' } as ZipkinQuery}
@@ -19,9 +19,8 @@ describe('QueryField', () => {
       />
     );
 
-    expect(wrapper.find(ButtonCascader).length).toBe(1);
-    expect(wrapper.find('input').length).toBe(1);
-    expect(wrapper.find('input').props().value).toBe('1234');
+    expect(screen.getByText(/1234/i)).toBeInTheDocument();
+    expect(screen.getByText(/Traces/i)).toBeInTheDocument();
   });
 });
 
@@ -52,7 +51,6 @@ describe('useLoadOptions', () => {
           return Promise.resolve(['span1', 'span2']);
         }
 
-        console.log({ url });
         if (url === '/api/v2/traces' && params?.serviceName === 'service1' && params?.spanName === 'span1') {
           return Promise.resolve([[{ name: 'trace1', duration: 10_000, traceId: 'traceId1' }]]);
         }

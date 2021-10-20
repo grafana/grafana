@@ -7,76 +7,49 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/ngalert"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/model"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
-	"github.com/grafana/grafana/pkg/api/routing"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
 // SetupTestEnv initializes a store to used by the tests.
-func SetupTestEnv(t *testing.T, baseIntervalSeconds int64) *store.DBstore {
+func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
+	t.Helper()
+
 	cfg := setting.NewCfg()
-	// AlertNG is disabled by default and only if it's enabled
-	// its database migrations run and the relative database tables are created
-	cfg.FeatureToggles = map[string]bool{"ngalert": true}
+	cfg.AlertingBaseInterval = baseInterval
+	// AlertNG database migrations run and the relative database tables are created only when it's enabled
+	cfg.UnifiedAlerting.Enabled = true
 
-	ng := overrideAlertNGInRegistry(t, cfg)
-	ng.SQLStore = sqlstore.InitTestDB(t)
-
-	err := ng.Init()
+	m := metrics.NewNGAlert(prometheus.NewRegistry())
+	ng, err := ngalert.ProvideService(
+		cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t),
+		nil, nil, nil, nil, ossencryption.ProvideService(), m,
+	)
 	require.NoError(t, err)
-	return &store.DBstore{
+	return ng, &store.DBstore{
 		SQLStore:     ng.SQLStore,
-		BaseInterval: time.Duration(baseIntervalSeconds) * time.Second,
+		BaseInterval: baseInterval * time.Second,
 		Logger:       log.New("ngalert-test"),
 	}
 }
 
-func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
-	ng := ngalert.AlertNG{
-		Cfg:           cfg,
-		RouteRegister: routing.NewRouteRegister(),
-		Log:           log.New("ngalert-test"),
-		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
-	}
-
-	// hook for initialising the service after the Cfg is populated
-	// so that database migrations will run
-	overrideServiceFunc := func(descriptor registry.Descriptor) (*registry.Descriptor, bool) {
-		if _, ok := descriptor.Instance.(*ngalert.AlertNG); ok {
-			return &registry.Descriptor{
-				Name:         descriptor.Name,
-				Instance:     &ng,
-				InitPriority: descriptor.InitPriority,
-			}, true
-		}
-		return nil, false
-	}
-
-	registry.RegisterOverride(overrideServiceFunc)
-
-	return ng
-}
-
-// createTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertRule {
+// CreateTestAlertRule creates a dummy alert definition to be used by the tests.
+func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
 	d := rand.Intn(1000)
 	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
 	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
-		OrgID:        1,
+		OrgID:        orgID,
 		NamespaceUID: "namespace",
 		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
 			Name:     ruleGroup,
@@ -111,7 +84,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 	require.NoError(t, err)
 
 	q := models.ListRuleGroupAlertRulesQuery{
-		OrgID:        1,
+		OrgID:        orgID,
 		NamespaceUID: "namespace",
 		RuleGroup:    ruleGroup,
 	}

@@ -4,10 +4,10 @@ import { Router } from 'react-router-dom';
 import Receivers from './Receivers';
 import React from 'react';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { act, render } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { getAllDataSources } from './utils/config';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus } from './api/alertmanager';
+import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
 import {
   mockDataSource,
   MockDataSourceSrv,
@@ -18,12 +18,13 @@ import {
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { fetchNotifiers } from './api/grafana';
 import { grafanaNotifiersMock } from './mocks/grafana-notifiers';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 import userEvent from '@testing-library/user-event';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
 import { selectOptionInTest } from '@grafana/ui';
+import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
@@ -37,6 +38,7 @@ const mocks = {
     fetchStatus: typeAsJestMock(fetchStatus),
     updateConfig: typeAsJestMock(updateAlertManagerConfig),
     fetchNotifiers: typeAsJestMock(fetchNotifiers),
+    testReceivers: typeAsJestMock(testReceivers),
   },
 };
 
@@ -62,12 +64,21 @@ const dataSources = {
     name: 'CloudManager',
     type: DataSourceType.Alertmanager,
   }),
+  promAlertManager: mockDataSource<AlertManagerDataSourceJsonData>({
+    name: 'PromManager',
+    type: DataSourceType.Alertmanager,
+    jsonData: {
+      implementation: AlertManagerImplementation.prometheus,
+    },
+  }),
 };
 
 const ui = {
   newContactPointButton: byRole('link', { name: /new contact point/i }),
   saveContactButton: byRole('button', { name: /save contact point/i }),
   newContactPointTypeButton: byRole('button', { name: /new contact point type/i }),
+  testContactPointButton: byRole('button', { name: /Test/ }),
+  cancelButton: byTestId('cancel-button'),
 
   receiversTable: byTestId('receivers-table'),
   templatesTable: byTestId('templates-table'),
@@ -76,9 +87,10 @@ const ui = {
   channelFormContainer: byTestId('item-container'),
 
   inputs: {
-    name: byLabelText('Name'),
+    name: byPlaceholderText('Name'),
     email: {
-      addresses: byLabelText('Addresses'),
+      addresses: byLabelText(/Addresses/),
+      toEmails: byLabelText(/To/),
     },
     hipchat: {
       url: byLabelText('Hip Chat Url'),
@@ -149,6 +161,46 @@ describe('Receivers', () => {
     expect(locationService.getSearchObject()[ALERTMANAGER_NAME_QUERY_KEY]).toEqual('CloudManager');
   });
 
+  it('Grafana receiver can be tested', async () => {
+    mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
+
+    await renderReceivers();
+
+    // go to new contact point page
+    userEvent.click(await ui.newContactPointButton.find());
+
+    await byRole('heading', { name: /create contact point/i }).find();
+    expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
+
+    // type in a name for the new receiver
+    userEvent.type(ui.inputs.name.get(), 'my new receiver');
+
+    // enter some email
+    const email = ui.inputs.email.addresses.get();
+    userEvent.clear(email);
+    userEvent.type(email, 'tester@grafana.com');
+
+    // try to test the contact point
+    userEvent.click(ui.testContactPointButton.get());
+
+    await waitFor(() => expect(mocks.api.testReceivers).toHaveBeenCalled());
+
+    expect(mocks.api.testReceivers).toHaveBeenCalledWith('grafana', [
+      {
+        grafana_managed_receiver_configs: [
+          {
+            disableResolveMessage: false,
+            name: 'test',
+            secureSettings: {},
+            settings: { addresses: 'tester@grafana.com', singleEmail: false },
+            type: 'email',
+          },
+        ],
+        name: 'test',
+      },
+    ]);
+  });
+
   it('Grafana receiver can be created', async () => {
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
@@ -161,10 +213,10 @@ describe('Receivers', () => {
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
 
     // type in a name for the new receiver
-    await userEvent.type(byLabelText('Name').get(), 'my new receiver');
+    userEvent.type(byPlaceholderText('Name').get(), 'my new receiver');
 
     // check that default email form is rendered
-    await ui.inputs.name.find();
+    await ui.inputs.email.addresses.find();
 
     // select hipchat
     await clickSelectOption(byTestId('items.0.type').get(), 'HipChat');
@@ -175,8 +227,8 @@ describe('Receivers', () => {
     const urlInput = ui.inputs.hipchat.url.get();
     const apiKeyInput = ui.inputs.hipchat.apiKey.get();
 
-    await userEvent.type(urlInput, 'http://hipchat');
-    await userEvent.type(apiKeyInput, 'foobarbaz');
+    userEvent.type(urlInput, 'http://hipchat');
+    userEvent.type(apiKeyInput, 'foobarbaz');
 
     // it seems react-hook-form does some async state updates after submit
     await act(async () => {
@@ -244,7 +296,7 @@ describe('Receivers', () => {
     await userEvent.click(byText(/Actions \(1\)/i).get(slackContainer));
     await userEvent.click(await byTestId('items.1.settings.actions.0.confirm.add-button').find());
     const confirmSubform = byTestId('items.1.settings.actions.0.confirm.container').get();
-    await userEvent.type(byLabelText('Text').get(confirmSubform), 'confirm this');
+    userEvent.type(byLabelText('Text').get(confirmSubform), 'confirm this');
 
     // delete a field
     await userEvent.click(byText(/Fields \(2\)/i).get(slackContainer));
@@ -254,7 +306,7 @@ describe('Receivers', () => {
     // add another channel
     await userEvent.click(ui.newContactPointTypeButton.get());
     await clickSelectOption(await byTestId('items.2.type').find(), 'Webhook');
-    await userEvent.type(await ui.inputs.webhook.URL.find(), 'http://webhookurl');
+    userEvent.type(await ui.inputs.webhook.URL.find(), 'http://webhookurl');
 
     // it seems react-hook-form does some async state updates after submit
     await act(async () => {
@@ -309,6 +361,42 @@ describe('Receivers', () => {
         ],
       },
     });
+  }, 10000);
+
+  it('Prometheus Alertmanager receiver cannot be edited', async () => {
+    mocks.api.fetchStatus.mockResolvedValue({
+      ...someCloudAlertManagerStatus,
+      config: someCloudAlertManagerConfig.alertmanager_config,
+    });
+    await renderReceivers(dataSources.promAlertManager.name);
+
+    const receiversTable = await ui.receiversTable.find();
+    // there's no templates table for vanilla prom, API does not return templates
+    expect(ui.templatesTable.query()).not.toBeInTheDocument();
+
+    // click view button on the receiver
+    const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
+    expect(byTestId('edit').query(receiverRows[0])).not.toBeInTheDocument();
+    await userEvent.click(byTestId('view').get(receiverRows[0]));
+
+    // check that form is open
+    await byRole('heading', { name: /contact point/i }).find();
+    expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/cloud-receiver/edit');
+    const channelForms = ui.channelFormContainer.queryAll();
+    expect(channelForms).toHaveLength(2);
+
+    // check that inputs are disabled and there is no save button
+    expect(ui.inputs.name.queryAll()[0]).toHaveAttribute('readonly');
+    expect(ui.inputs.email.toEmails.get(channelForms[0])).toHaveAttribute('readonly');
+    expect(ui.inputs.slack.webhookURL.get(channelForms[1])).toHaveAttribute('readonly');
+    expect(ui.newContactPointButton.query()).not.toBeInTheDocument();
+    expect(ui.testContactPointButton.query()).not.toBeInTheDocument();
+    expect(ui.saveContactButton.query()).not.toBeInTheDocument();
+    expect(ui.cancelButton.query()).toBeInTheDocument();
+
+    expect(mocks.api.fetchConfig).not.toHaveBeenCalled();
+    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
   }, 10000);
 
   it('Loads config from status endpoint if there is no user config', async () => {
