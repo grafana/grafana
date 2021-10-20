@@ -4,7 +4,7 @@ import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { GraphNG, GraphNGProps, PlotLegend, UPlotConfigBuilder, usePanelContext, useTheme2 } from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
 import { BarChartOptions } from './types';
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { isLegendOrdered, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 
 /**
@@ -43,6 +43,10 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
     let field = frame0Ref.current!.fields.find(
       (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIdx - 1
     );
+    // When sorted by legend state.seriesIndex is not changed and is not equal to the sorted index of the field
+    if (isLegendOrdered(props.legend)) {
+      field = frame0Ref.current!.fields[seriesIdx];
+    }
     return field!.values.get(valueIdx);
   };
 

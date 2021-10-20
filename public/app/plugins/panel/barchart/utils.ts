@@ -13,7 +13,14 @@ import {
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
-import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
+import {
+  AxisPlacement,
+  ScaleDirection,
+  ScaleDistribution,
+  ScaleOrientation,
+  StackingMode,
+  VizLegendOptions,
+} from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
 import { collectStackingGroups, orderIdsByCalcs } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { orderBy } from 'lodash';
@@ -147,9 +154,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
       dataFrameFieldIndex: {
-        fieldIndex: allFrames[0].fields.findIndex(
-          (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
-        ),
+        fieldIndex: isLegendOrdered(legend)
+          ? i
+          : allFrames[0].fields.findIndex(
+              (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
+            ),
         frameIndex: 0,
       },
     });
@@ -299,7 +308,7 @@ export function prepareGraphableFrames(
 
     let orderedFields: Field[] | undefined;
 
-    if (options.legend?.sortBy && options.legend.sortDesc !== null) {
+    if (isLegendOrdered(options.legend)) {
       orderedFields = orderBy(
         fields,
         ({ state }) => {
@@ -321,3 +330,5 @@ export function prepareGraphableFrames(
 
   return { frames };
 }
+
+export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);
