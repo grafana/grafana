@@ -10,20 +10,13 @@ interface RoleRadioButtonProps {
   onChange: () => void;
 }
 
-export const RoleRadioButton: FC<RoleRadioButtonProps> = ({ children, checked = false, onChange, id }) => {
+export const RoleRadioButton: FC<RoleRadioButtonProps> = ({ children, checked = false, onChange, id, name }) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.inlineContainer}>
       <div className={styles.radioButton}>
-        <input
-          type="radio"
-          name="built-in_role_selector"
-          id={id}
-          value="Viewer"
-          checked={checked}
-          onChange={onChange}
-        />
+        <input type="radio" name="built-in_role_selector" id={id} value={name} checked={checked} onChange={onChange} />
         <label htmlFor={id} />
       </div>
       <label className={cx(styles.inlineLabel, 'inline-radio-label')} htmlFor={id}>
