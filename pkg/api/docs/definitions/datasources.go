@@ -8,7 +8,7 @@ import (
 
 // swagger:route GET /datasources datasources getDatasources
 //
-// Get all data sources
+// Get all data sources.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scope: `datasources:*`.
@@ -21,7 +21,7 @@ import (
 
 // swagger:route POST /datasources datasources addDatasource
 //
-// Create a data source
+// Create a data source.
 //
 // By defining `password` and `basicAuthPassword` under secureJsonData property
 // Grafana encrypts them securely as an encrypted blob in the database.
@@ -40,7 +40,7 @@ import (
 
 // swagger:route PUT /datasources/{datasource_id} datasources updateDatasource
 //
-// Update an existing data source
+// Update an existing data source.
 //
 // Similar to creating a data source, `password` and `basicAuthPassword` should be defined under
 // secureJsonData in order to be stored securely as an encrypted blob in the database. Then, the
@@ -57,7 +57,7 @@ import (
 
 // swagger:route DELETE /datasources/{datasource_id} datasources deleteDatasourceByID
 //
-// Delete an existing data source by id
+// Delete an existing data source by id.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
@@ -71,7 +71,7 @@ import (
 
 // swagger:route DELETE /datasources/uid/{datasource_uid} datasources deleteDatasourceByUID
 //
-// Delete an existing data source by UID
+// Delete an existing data source by UID.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).
@@ -85,7 +85,7 @@ import (
 
 // swagger:route DELETE /datasources/name/{datasource_name} datasources deleteDatasourceByName
 //
-// Delete an existing data source by name
+// Delete an existing data source by name.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
@@ -99,7 +99,7 @@ import (
 
 // swagger:route GET /datasources/{datasource_id} datasources getDatasourceByID
 //
-// Get a single data source by Id
+// Get a single data source by Id.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
@@ -114,7 +114,7 @@ import (
 
 // swagger:route GET /datasources/uid/{datasource_uid} datasources getDatasourceByUID
 //
-// Get a single data source by UID
+// Get a single data source by UID.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).
@@ -129,7 +129,7 @@ import (
 
 // swagger:route GET /datasources/name/{datasource_name} datasources getDatasourceByName
 //
-// Get a single data source by Name
+// Get a single data source by Name.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
@@ -142,7 +142,7 @@ import (
 
 // swagger:route GET /datasources/id/{datasource_name} datasources getDatasourceIdByName
 //
-// Get data source Id by Name
+// Get data source Id by Name.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
@@ -156,7 +156,7 @@ import (
 
 // swagger:route GET /datasources/proxy/{datasource_id} datasources datasourceProxyCalls
 //
-// Data source proxy calls
+// Data source proxy calls.
 //
 // Proxies all calls to the actual data source.
 //
@@ -169,7 +169,7 @@ import (
 
 // swagger:route GET /api/tsdb/query datasources queryDatasource
 //
-// Query a data source by ID
+// Query a data source by ID.
 //
 // Queries a data source having backend implementation.
 //

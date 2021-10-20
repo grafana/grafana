@@ -8,7 +8,7 @@ import (
 
 // swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
 //
-// Get dashboard by uid
+// Get dashboard by uid.
 //
 // Will return the dashboard given the dashboard unique identifier (uid).
 //
@@ -21,7 +21,7 @@ import (
 
 // DeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
 //
-// Delete dashboard by uid
+// Delete dashboard by uid.
 //
 // Will delete the dashboard given the specified unique identifier (uid).
 //
@@ -34,7 +34,7 @@ import (
 
 // swagger:route POST /dashboards/calculate-diff dashboards calcDashboardDiff
 //
-// Perform diff on two dashboards
+// Perform diff on two dashboards.
 //
 // Produces:
 // - application/json
@@ -48,7 +48,7 @@ import (
 
 // swagger:route POST /dashboards/trim dashboards trimDashboard
 //
-// Trim defaults from dashboard
+// Trim defaults from dashboard.
 //
 // Responses:
 // 200: trimDashboardResponse
@@ -73,7 +73,7 @@ import (
 
 // swagger:route GET /dashboards/home dashboards getHomeDashboard
 //
-// Get home dashboard
+// Get home dashboard.
 //
 // Responses:
 // 200: getHomeDashboardResponse
@@ -82,7 +82,7 @@ import (
 
 // swagger:route GET /dashboards/tags dashboards getDashboardTags
 //
-// Get all dashboards tags of an organisation
+// Get all dashboards tags of an organisation.
 //
 // Responses:
 // 200: dashboardsTagsResponse
@@ -91,7 +91,7 @@ import (
 
 // swagger:route POST /dashboards/import dashboards importDashboard
 //
-// Import dashboard
+// Import dashboard.
 //
 // Responses:
 // 200: importDashboardResponse

@@ -7,7 +7,7 @@ import (
 
 // swagger:route GET /auth/keys apikeys getAPIkeys
 //
-// Get auth keys
+// Get auth keys.
 //
 // Will return auth keys.
 //
@@ -20,7 +20,7 @@ import (
 
 // swagger:route POST /auth/keys apikeys addAPIkey
 //
-// Creates an API key
+// Creates an API key.
 //
 // Will return details of the created API key
 //
@@ -35,7 +35,7 @@ import (
 
 // swagger:route DELETE /auth/keys/{id} apikeys deleteAPIkey
 //
-// Delete API key
+// Delete API key.
 //
 // Responses:
 // 200: okResponse

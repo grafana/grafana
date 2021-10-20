@@ -33,7 +33,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Query a data source by ID",
+        "summary": "Query a data source by ID.",
         "operationId": "queryDatasource",
         "parameters": [
           {
@@ -60,7 +60,7 @@
         "tags": [
           "apikeys"
         ],
-        "summary": "Get auth keys",
+        "summary": "Get auth keys.",
         "operationId": "getAPIkeys",
         "parameters": [
           {
@@ -95,7 +95,7 @@
         "tags": [
           "apikeys"
         ],
-        "summary": "Creates an API key",
+        "summary": "Creates an API key.",
         "operationId": "addAPIkey",
         "parameters": [
           {
@@ -130,10 +130,10 @@
     },
     "/auth/keys/{id}": {
       "delete": {
-        "description": "Delete API key",
         "tags": [
           "apikeys"
         ],
+        "summary": "Delete API key.",
         "operationId": "deleteAPIkey",
         "parameters": [
           {
@@ -166,7 +166,6 @@
     },
     "/dashboards/calculate-diff": {
       "post": {
-        "description": "Perform diff on two dashboards",
         "produces": [
           "application/json",
           "text/html"
@@ -174,6 +173,7 @@
         "tags": [
           "dashboards"
         ],
+        "summary": "Perform diff on two dashboards.",
         "operationId": "calcDashboardDiff",
         "parameters": [
           {
@@ -266,10 +266,10 @@
     },
     "/dashboards/home": {
       "get": {
-        "description": "Get home dashboard",
         "tags": [
           "dashboards"
         ],
+        "summary": "Get home dashboard.",
         "operationId": "getHomeDashboard",
         "responses": {
           "200": {
@@ -499,10 +499,10 @@
     },
     "/dashboards/import": {
       "post": {
-        "description": "Import dashboard",
         "tags": [
           "dashboards"
         ],
+        "summary": "Import dashboard.",
         "operationId": "importDashboard",
         "parameters": [
           {
@@ -538,10 +538,10 @@
     },
     "/dashboards/tags": {
       "get": {
-        "description": "Get all dashboards tags of an organisation",
         "tags": [
           "dashboards"
         ],
+        "summary": "Get all dashboards tags of an organisation.",
         "operationId": "getDashboardTags",
         "responses": {
           "200": {
@@ -558,10 +558,10 @@
     },
     "/dashboards/trim": {
       "post": {
-        "description": "Trim defaults from dashboard",
         "tags": [
           "dashboards"
         ],
+        "summary": "Trim defaults from dashboard.",
         "operationId": "trimDashboard",
         "parameters": [
           {
@@ -592,7 +592,7 @@
         "tags": [
           "dashboards"
         ],
-        "summary": "Get dashboard by uid",
+        "summary": "Get dashboard by uid.",
         "operationId": "getDashboardByUID",
         "parameters": [
           {
@@ -626,7 +626,7 @@
         "tags": [
           "dashboards"
         ],
-        "summary": "Delete dashboard by uid",
+        "summary": "Delete dashboard by uid.",
         "operationId": "deleteDashboardByUID",
         "parameters": [
           {
@@ -662,7 +662,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get all data sources",
+        "summary": "Get all data sources.",
         "operationId": "getDatasources",
         "responses": {
           "200": {
@@ -684,7 +684,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Create a data source",
+        "summary": "Create a data source.",
         "operationId": "addDatasource",
         "parameters": [
           {
@@ -720,7 +720,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get data source Id by Name",
+        "summary": "Get data source Id by Name.",
         "operationId": "getDatasourceIdByName",
         "parameters": [
           {
@@ -756,7 +756,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get a single data source by Name",
+        "summary": "Get a single data source by Name.",
         "operationId": "getDatasourceByName",
         "parameters": [
           {
@@ -787,7 +787,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Delete an existing data source by name",
+        "summary": "Delete an existing data source by name.",
         "operationId": "deleteDatasourceByName",
         "parameters": [
           {
@@ -823,7 +823,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Data source proxy calls",
+        "summary": "Data source proxy calls.",
         "operationId": "datasourceProxyCalls",
         "parameters": [
           {
@@ -859,7 +859,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get a single data source by UID",
+        "summary": "Get a single data source by UID.",
         "operationId": "getDatasourceByUID",
         "parameters": [
           {
@@ -896,7 +896,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Delete an existing data source by UID",
+        "summary": "Delete an existing data source by UID.",
         "operationId": "deleteDatasourceByUID",
         "parameters": [
           {
@@ -932,7 +932,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get a single data source by Id",
+        "summary": "Get a single data source by Id.",
         "operationId": "getDatasourceByID",
         "parameters": [
           {
@@ -969,7 +969,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Update an existing data source",
+        "summary": "Update an existing data source.",
         "operationId": "updateDatasource",
         "parameters": [
           {
@@ -1007,7 +1007,7 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Delete an existing data source by id",
+        "summary": "Delete an existing data source by id.",
         "operationId": "deleteDatasourceByID",
         "parameters": [
           {
