@@ -2,12 +2,19 @@ import { PanelData, VisualizationSuggestion, VisualizationSuggestionsBuilder, Pa
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): Promise<VisualizationSuggestion[]> {
-  const plugins = ['timeseries', 'barchart', 'gauge', 'stat', 'piechart', 'bargauge', 'table', 'state-timeline'];
+  const plugins = [
+    'timeseries',
+    'barchart',
+    'gauge',
+    'stat',
+    'piechart',
+    'bargauge',
+    'table',
+    'state-timeline',
+    'text',
+    'dashlist',
+  ];
   const builder = new VisualizationSuggestionsBuilder(data, panel);
-
-  if (!builder.dataSummary.hasData) {
-    return builder.getList();
-  }
 
   for (const pluginId of plugins) {
     const plugin = await importPanelPlugin(pluginId);

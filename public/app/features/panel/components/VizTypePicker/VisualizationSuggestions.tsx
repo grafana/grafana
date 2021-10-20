@@ -35,6 +35,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
         return (
           <div>
             <div className={styles.filterRow}>
+              <div className={styles.infoText}>Based on current data</div>
               <Field label="Size">
                 <RadioButtonGroup size="sm" options={getSizeOptions()} value={columnCount} onChange={setColumnCount} />
               </Field>
@@ -74,7 +75,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     filterRow: css({
       display: 'flex',
       flexDirection: 'row',
-      justifyContent: 'flex-end',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    infoText: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      fontStyle: 'italic',
     }),
     grid: css({
       display: 'grid',

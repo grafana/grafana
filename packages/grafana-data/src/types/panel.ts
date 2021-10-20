@@ -234,7 +234,7 @@ export class VisualizationSuggestionsBuilder {
 
   private list: VisualizationSuggestion[] = [];
 
-  constructor(data: PanelData | undefined, panel?: PanelModel) {
+  constructor(data?: PanelData, panel?: PanelModel) {
     this.data = data;
     this.panel = panel;
     this.dataSummary = this.computeDataSummary();
