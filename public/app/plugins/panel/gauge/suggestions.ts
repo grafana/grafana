@@ -23,7 +23,7 @@ export class GaugeSuggestionsSupplier {
       },
       previewModifier: (s) => {
         if (s.options!.reduceOptions.values) {
-          s.options!.reduceOptions.limit = 1;
+          s.options!.reduceOptions.limit = 2;
         }
       },
     });

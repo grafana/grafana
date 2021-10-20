@@ -74,7 +74,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
     { label: 'Visualizations', value: ListMode.Visualizations },
     { label: 'Suggestions', value: ListMode.Suggestions },
     {
-      label: 'Panels',
+      label: 'Library panels',
       value: ListMode.LibraryPanels,
       description: 'Reusable panels you can share between multiple dashboards.',
     },

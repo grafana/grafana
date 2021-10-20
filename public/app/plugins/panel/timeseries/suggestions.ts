@@ -27,7 +27,7 @@ export class TimeSeriesSuggestionsSupplier {
         s.options!.legend.displayMode = LegendDisplayMode.Hidden;
 
         if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-          s.fieldConfig!.defaults.custom!.lineWidth = 4;
+          s.fieldConfig!.defaults.custom!.lineWidth = 3;
         }
       },
     });

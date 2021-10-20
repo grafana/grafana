@@ -68,4 +68,46 @@ export class BarChartSuggestionsSupplier {
       });
     }
   }
+
+  getOptionSuggestions(builder: VisualizationSuggestionsBuilder) {
+    const list = this.getListWithDefaults(builder);
+    const { dataSummary } = builder;
+
+    if (dataSummary.frameCount !== 1) {
+      return;
+    }
+
+    if (!dataSummary.hasNumberField || !dataSummary.hasStringField) {
+      return;
+    }
+
+    // if you have this many rows barchart might not be a good fit
+    if (dataSummary.rowCountTotal > 50) {
+      return;
+    }
+
+    list.append({});
+    list.append({
+      name: 'Bar chart horizontal',
+      options: {
+        orientation: VizOrientation.Horizontal,
+      },
+    });
+
+    if (dataSummary.numberFieldCount > 1) {
+      list.append({
+        name: 'Bar chart stacked',
+        options: {
+          stacking: StackingMode.Normal,
+        },
+      });
+      list.append({
+        name: 'Bar chart stacked horizontal',
+        options: {
+          stacking: StackingMode.Normal,
+          orientation: VizOrientation.Horizontal,
+        },
+      });
+    }
+  }
 }
