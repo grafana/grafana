@@ -261,7 +261,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
       <small className={cx(styles.TracePageHeaderTraceId, uTxMuted)}>{trace.traceID}</small>{' '}
       {focusedSpanId == null ? null : (
         <Button fill="text" size="sm" onClick={() => setFocusedSpanId()}>
-          View full trace
+          View complete trace
         </Button>
       )}
     </h1>

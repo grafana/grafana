@@ -29,7 +29,6 @@ import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsVolumePanel } from './LogsVolumePanel';
-import { TempoQuery, TempoQueryType } from 'app/plugins/datasource/tempo/datasource';
 import { FocusedSpanContextProvider } from '@jaegertracing/jaeger-ui-components';
 
 const getStyles = (theme: GrafanaTheme2) => {

@@ -183,25 +183,46 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
           </div>
         )}
         {query.queryType === 'traceId' && (
-          <InlineFieldRow>
-            <InlineField label="Trace ID" labelWidth={14} grow>
-              <QueryField
-                query={query.query}
-                onChange={(val) => {
-                  onChange({
-                    ...query,
-                    query: val,
-                    queryType: 'traceId',
-                    linkedQuery: undefined,
-                  });
-                }}
-                onBlur={this.props.onBlur}
-                onRunQuery={this.props.onRunQuery}
-                placeholder={'Enter a Trace ID (run with Shift+Enter)'}
-                portalOrigin="tempo"
-              />
-            </InlineField>
-          </InlineFieldRow>
+          <>
+            <InlineFieldRow>
+              <InlineField label="Trace ID" labelWidth={14} grow>
+                <QueryField
+                  query={query.query}
+                  onChange={(val) => {
+                    onChange({
+                      ...query,
+                      query: val,
+                      queryType: 'traceId',
+                      linkedQuery: undefined,
+                    });
+                  }}
+                  onBlur={this.props.onBlur}
+                  onRunQuery={this.props.onRunQuery}
+                  placeholder={'Enter a Trace ID (run with Shift+Enter)'}
+                  portalOrigin="tempo"
+                />
+              </InlineField>
+            </InlineFieldRow>
+            <InlineFieldRow>
+              <InlineField label="Span ID" labelWidth={14} grow>
+                <QueryField
+                  query={query.focusedSpanId}
+                  onChange={(val) => {
+                    onChange({
+                      ...query,
+                      focusedSpanId: val,
+                      queryType: 'traceId',
+                      linkedQuery: undefined,
+                    });
+                  }}
+                  onBlur={this.props.onBlur}
+                  onRunQuery={this.props.onRunQuery}
+                  placeholder={'Enter a Span ID'}
+                  portalOrigin="tempo"
+                />
+              </InlineField>
+            </InlineFieldRow>
+          </>
         )}
         {query.queryType === 'serviceMap' && <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} />}
       </>
