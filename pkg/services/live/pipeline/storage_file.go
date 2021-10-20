@@ -16,16 +16,19 @@ type FileStorage struct {
 }
 
 func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error) {
-	backendBytes, err := ioutil.ReadFile(filepath.Join(f.DataPath, "pipeline", "remote-write-backends.json"))
+	cfgfile := filepath.Join(f.DataPath, "pipeline", "remote-write-backends.json")
+	var backends []RemoteWriteBackend
+	// Safe to ignore gosec warning G304.
+	// nolint:gosec
+	backendBytes, err := ioutil.ReadFile(cfgfile)
 	if err != nil {
-		return nil, fmt.Errorf("can't read ./pipeline/remote-write-backends.json file: %w", err)
+		return backends, fmt.Errorf("can't read %s file: %w", cfgfile, err)
 	}
 	var remoteWriteBackends RemoteWriteBackends
 	err = json.Unmarshal(backendBytes, &remoteWriteBackends)
 	if err != nil {
 		return nil, fmt.Errorf("can't unmarshal remote-write-backends.json data: %w", err)
 	}
-	var backends []RemoteWriteBackend
 	for _, b := range remoteWriteBackends.Backends {
 		if b.OrgId == orgID || (orgID == 1 && b.OrgId == 0) {
 			backends = append(backends, b)
@@ -114,7 +117,7 @@ func (f *FileStorage) readRules() (ChannelRules, error) {
 	// nolint:gosec
 	ruleBytes, err := ioutil.ReadFile(ruleFile)
 	if err != nil {
-		return ChannelRules{}, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
+		return ChannelRules{}, fmt.Errorf("can't read pipeline rules: %s: %w", f.ruleFilePath(), err)
 	}
 	var channelRules ChannelRules
 	err = json.Unmarshal(ruleBytes, &channelRules)

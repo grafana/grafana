@@ -1,25 +1,36 @@
 import React, { useRef, useEffect } from 'react';
-import { CodeEditor, CodeEditorMonacoOptions, Monaco, monacoTypes } from '@grafana/ui';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
 import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
 import { getCompletionProvider } from './monaco-completion-provider';
 import { Props } from './MonacoQueryFieldProps';
 
-const options: CodeEditorMonacoOptions = {
-  lineNumbers: 'off',
-  minimap: { enabled: false },
-  lineDecorationsWidth: 0,
-  wordWrap: 'off',
-  overviewRulerLanes: 0,
-  overviewRulerBorder: false,
-  folding: false,
-  scrollBeyondLastLine: false,
-  renderLineHighlight: 'none',
-  fontSize: 14,
-  suggestFontSize: 12,
+const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
+  codeLens: false,
+  contextmenu: false,
   // we need `fixedOverflowWidgets` because otherwise in grafana-dashboards
   // the popup is clipped by the panel-visualizations.
   fixedOverflowWidgets: true,
+  folding: false,
+  fontSize: 14,
+  lineDecorationsWidth: 8,
+  lineNumbers: 'off',
+  minimap: { enabled: false },
+  overviewRulerBorder: false,
+  overviewRulerLanes: 0,
+  padding: {
+    top: 4,
+    bottom: 4,
+  },
+  renderLineHighlight: 'none',
+  scrollbar: {
+    vertical: 'hidden',
+  },
+  scrollBeyondLastLine: false,
+  suggestFontSize: 12,
+  wordWrap: 'off',
 };
 
 const PROMQL_LANG_ID = promLanguageDefinition.id;
@@ -40,14 +51,44 @@ function ensurePromQL(monaco: Monaco) {
   }
 }
 
+const THEME_NAME = 'grafana-prometheus-query-field';
+
+let MONACO_THEME_SETUP_STARTED = false;
+function ensureMonacoTheme(monaco: Monaco, theme: GrafanaTheme2) {
+  if (MONACO_THEME_SETUP_STARTED === false) {
+    MONACO_THEME_SETUP_STARTED = true;
+    monaco.editor.defineTheme(THEME_NAME, {
+      base: theme.isDark ? 'vs-dark' : 'vs',
+      inherit: true,
+      colors: {
+        'editor.background': theme.components.input.background,
+      },
+      rules: [],
+    });
+  }
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    container: css`
+      border-radius: ${theme.shape.borderRadius()};
+      border: 1px solid ${theme.components.input.borderColor};
+    `,
+  };
+};
+
 const MonacoQueryField = (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { languageProvider, history, onChange, initialValue } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
+  const onChangeRef = useLatest(onChange);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
+
+  const theme = useTheme2();
+  const styles = getStyles(theme);
 
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
@@ -58,25 +99,25 @@ const MonacoQueryField = (props: Props) => {
 
   return (
     <div
+      className={styles.container}
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}
-      style={{
-        // FIXME:
-        // this is how the non-monaco query-editor is styled,
-        // through the "gf-form" class
-        // so to have the same effect, we do the same.
-        // this should be applied somehow differently probably,
-        // like a min-height on the whole row.
-        marginBottom: '4px',
-      }}
     >
-      <CodeEditor
-        onBlur={onChange}
-        monacoOptions={options}
+      <ReactMonacoEditor
+        options={options}
         language="promql"
+        theme={THEME_NAME}
         value={initialValue}
-        onBeforeEditorMount={ensurePromQL}
-        onEditorDidMount={(editor, monaco) => {
+        beforeMount={(monaco) => {
+          ensurePromQL(monaco);
+          ensureMonacoTheme(monaco, theme);
+        }}
+        onMount={(editor, monaco) => {
+          // we setup on-blur
+          editor.onDidBlurEditorWidget(() => {
+            onChangeRef.current(editor.getValue());
+          });
+
           // we construct a DataProvider object
           const getSeries = (selector: string) => lpRef.current.getSeries(selector);
 
