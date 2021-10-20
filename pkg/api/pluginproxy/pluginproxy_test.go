@@ -18,6 +18,9 @@ import (
 )
 
 func TestPluginProxy(t *testing.T) {
+	setting.SecretKey = "password"
+	secretsService := secretsManager.SetupTestService(t, nil)
+
 	t.Run("When getting proxy headers", func(t *testing.T) {
 		route := &plugins.AppPluginRoute{
 			Headers: []plugins.AppPluginRouteHeader{
@@ -25,8 +28,6 @@ func TestPluginProxy(t *testing.T) {
 			},
 		}
 
-		//setting.SecretKey = "password"
-		secretsService := secretsManager.SetupTestService(t, nil)
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
 			key, err := secretsService.Encrypt(ctx, []byte("123"), secrets.WithoutScope())
 			if err != nil {
@@ -68,7 +69,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
-			secretsManager.SetupTestService(t, nil),
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -91,7 +92,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
-			secretsManager.SetupTestService(t, nil),
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -113,7 +114,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
-			secretsManager.SetupTestService(t, nil),
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{IsAnonymous: true},
 				Context: &macaron.Context{
@@ -148,7 +149,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
-			secretsManager.SetupTestService(t, nil),
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -180,7 +181,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
-			secretsManager.SetupTestService(t, nil),
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -202,7 +203,6 @@ func TestPluginProxy(t *testing.T) {
 			Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
 		}
 
-		secretsService := secretsManager.SetupTestService(t, nil)
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
 			encryptedJsonData, err := secretsService.EncryptJsonData(
 				ctx,
