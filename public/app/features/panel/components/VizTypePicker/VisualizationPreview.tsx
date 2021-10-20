@@ -10,13 +10,13 @@ export interface Props {
   data: PanelData;
   width: number;
   suggestion: VisualizationSuggestion;
+  showTitle?: boolean;
   onChange: (details: VizTypeChangeDetails) => void;
 }
 
-export function VisualizationPreview({ data, suggestion, onChange, width }: Props) {
+export function VisualizationPreview({ data, suggestion, onChange, width, showTitle }: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
-  const showName = false;
 
   const onClick = () => {
     onChange({
@@ -34,7 +34,7 @@ export function VisualizationPreview({ data, suggestion, onChange, width }: Prop
 
   return (
     <div onClick={onClick}>
-      {showName && <div className={styles.name}>{suggestion.name}</div>}
+      {showTitle && <div className={styles.name}>{suggestion.name}</div>}
       <div className={styles.vizBox} style={outerStyles}>
         <Tooltip content={suggestion.name}>
           <div style={innerStyles} className={styles.renderContainer}>

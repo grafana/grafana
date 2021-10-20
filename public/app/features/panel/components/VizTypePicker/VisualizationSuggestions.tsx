@@ -20,7 +20,9 @@ export interface Props {
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
   const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
-  const [columnCount, setColumnCount] = useLocalStorage(`VisualizationSuggestions.ColumnCount`, 1);
+  const [columnCount, setColumnCount] = useLocalStorage(`VisualizationSuggestions.columnCount`, 1);
+  // temp test
+  const [showTitle, setShowTitle] = useLocalStorage(`VisualizationSuggestions.showTitle`, false);
 
   return (
     <AutoSizer disableHeight style={{ width: '100%', height: '100%' }}>
@@ -35,7 +37,9 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
         return (
           <div>
             <div className={styles.filterRow}>
-              <div className={styles.infoText}>Based on current data</div>
+              <div className={styles.infoText} onClick={() => setShowTitle(!showTitle)}>
+                Based on current data
+              </div>
               <Field label="Size">
                 <RadioButtonGroup size="sm" options={getSizeOptions()} value={columnCount} onChange={setColumnCount} />
               </Field>
@@ -49,6 +53,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                     suggestion={suggestion}
                     onChange={onChange}
                     width={previewWidth}
+                    showTitle={showTitle}
                   />
                 ))}
             </div>
