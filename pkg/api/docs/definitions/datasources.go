@@ -291,5 +291,6 @@ type DeleteDatasourceByNameResponse struct {
 type QueryDatasourceResponse struct {
 	// The response message
 	// in: body
+	//nolint: staticcheck // plugins.DataResponse deprecated
 	Body plugins.DataResponse `json:"body"`
 }
