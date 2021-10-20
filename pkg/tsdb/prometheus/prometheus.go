@@ -175,7 +175,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 
 		if query.ExemplarQuery {
-			exemplarResponse, err := client.QueryExemplars(ctx, "}", timeRange.Start, timeRange.End)
+			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
