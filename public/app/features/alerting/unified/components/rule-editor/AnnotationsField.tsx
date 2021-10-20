@@ -6,7 +6,11 @@ import { useFormContext } from 'react-hook-form';
 import { RuleFormValues } from '../../types/rule-form';
 import { AnnotationKeyInput } from './AnnotationKeyInput';
 
-const AnnotationsField: FC = () => {
+type Props = {
+  reservedKeys?: string[];
+};
+
+const AnnotationsField: FC<Props> = ({ reservedKeys = [] }: Props) => {
   const styles = useStyles(getStyles);
   const {
     control,
@@ -17,8 +21,11 @@ const AnnotationsField: FC = () => {
   const annotations = watch('annotations') as RuleFormValues['annotations'];
 
   const existingKeys = useCallback(
-    (index: number): string[] => annotations.filter((_, idx: number) => idx !== index).map(({ key }) => key),
-    [annotations]
+    (index: number): string[] => [
+      ...reservedKeys,
+      ...annotations.filter((_, idx: number) => idx !== index).map(({ key }) => key),
+    ],
+    [annotations, reservedKeys]
   );
 
   return (

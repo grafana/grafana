@@ -42,8 +42,7 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
 
 export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceName, config }) => {
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
-  const [testContactPointModalOpen, setTestContactPointModalOpen] = useState(false);
-  const [channelValues, setChannelValues] = useState<GrafanaChannelValues>();
+  const [testChannelValues, setTestChannelValues] = useState<GrafanaChannelValues>();
 
   const dispatch = useDispatch();
 
@@ -78,14 +77,13 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
   };
 
   const onTestChannel = (values: GrafanaChannelValues) => {
-    setTestContactPointModalOpen(true);
-    setChannelValues(values);
+    setTestChannelValues(values);
   };
 
   const testNotification = (alert?: TestReceiversAlert) => {
-    if (channelValues) {
-      const existing: GrafanaManagedReceiverConfig | undefined = id2original[channelValues.__id];
-      const chan = formChannelValuesToGrafanaChannelConfig(channelValues, defaultChannelValues, 'test', existing);
+    if (testChannelValues) {
+      const existing: GrafanaManagedReceiverConfig | undefined = id2original[testChannelValues.__id];
+      const chan = formChannelValuesToGrafanaChannelConfig(testChannelValues, defaultChannelValues, 'test', existing);
 
       const payload = {
         alertManagerSourceName,
@@ -122,8 +120,8 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
           commonSettingsComponent={GrafanaCommonChannelSettings}
         />
         <TestNotificationChannelModal
-          onDismiss={() => setTestContactPointModalOpen(false)}
-          isOpen={testContactPointModalOpen}
+          onDismiss={() => setTestChannelValues(undefined)}
+          isOpen={!!testChannelValues}
           onTest={(alert) => testNotification(alert)}
         />
       </>
