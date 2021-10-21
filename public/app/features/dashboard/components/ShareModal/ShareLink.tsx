@@ -140,7 +140,7 @@ export class ShareLink extends PureComponent<Props, State> {
                 <p>
                   <>To render a panel image, you must install the </>
                   <a
-                    href="https://www.percona.com/doc/percona-monitoring-and-management/2.x/metrics-monitor-dashboards.html#rendering-dashboard-images"
+                    href="https://www.percona.com/doc/percona-monitoring-and-management/2.x/how-to/render-dashboard-images.html"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="external-link"
