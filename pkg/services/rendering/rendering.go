@@ -95,6 +95,11 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
+	if !rs.IsAvailable() {
+		rs.log.Debug("Could not render image, no image renderer found/installed. " +
+			"For image rendering support please install the grafana-image-renderer plugin. " +
+			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+	}
 	<-ctx.Done()
 
 	p := rs.RendererPluginManager.Renderer()
