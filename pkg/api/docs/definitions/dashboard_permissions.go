@@ -42,6 +42,7 @@ type GetDashboardPermissionsResponse struct {
 	Body []*models.DashboardAclInfoDTO `json:"body"`
 }
 
+// DashboardAclUpdateItem is same as dtos.DashboardAclUpdateItem but with swagger annotations
 // swagger:model
 type DashboardAclUpdateItem struct {
 	UserID int64            `json:"userId"`

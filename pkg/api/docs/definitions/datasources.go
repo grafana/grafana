@@ -2,6 +2,7 @@ package apidocs
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -154,22 +155,52 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /datasources/proxy/{datasource_id} datasources datasourceProxyCalls
+// swagger:route GET /datasources/proxy/{datasource_id}/{datasource_proxy_route} datasources datasourceProxyGETcalls
 //
-// Data source proxy calls.
+// Data source proxy GET calls.
 //
 // Proxies all calls to the actual data source.
 //
 // Responses:
+// 200:
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /api/tsdb/query datasources queryDatasource
+// swagger:route POST /datasources/proxy/{datasource_id}/{datasource_proxy_route} datasources datasourceProxyPOSTcalls
 //
-// Query a data source by ID.
+// Data source proxy POST calls.
+//
+// Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined
+//
+// Responses:
+// 201:
+// 202:
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route DELETE /datasources/proxy/{datasource_id}/{datasource_proxy_route} datasources datasourceProxyDELETEcalls
+//
+// Data source proxy DELETE calls.
+//
+// Proxies all calls to the actual data source.
+//
+// Responses:
+// 202:
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route POST /tsdb/query datasources queryDatasource
+//
+// Query metrics.
 //
 // Queries a data source having backend implementation.
 //
@@ -178,8 +209,11 @@ import (
 // Responses:
 // 200: queryDatasourceResponse
 // 400: badRequestError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 
-// swagger:parameters updateDatasource deleteDatasourceByID getDatasourceByID datasourceProxyCalls
+// swagger:parameters updateDatasource deleteDatasourceByID getDatasourceByID datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
 type DatasourceID struct {
 	// in:path
 	// required:true
@@ -200,6 +234,18 @@ type DatasourceName struct {
 	DatasourceName string `json:"datasource_name"`
 }
 
+// swagger:parameters datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
+type DatasourceProxyRouteParam struct {
+	// in:path
+	DatasourceProxyRoute string `json:"datasource_proxy_route"`
+}
+
+// swagger:parameters datasourceProxyPOSTcalls
+type DatasourceProxyParam struct {
+	// in:body
+	DatasourceProxyParam interface{}
+}
+
 // swagger:parameters addDatasource
 type AddDatasourceParam struct {
 	// in:body
@@ -215,7 +261,7 @@ type UpdateDatasource struct {
 // swagger:parameters queryDatasource
 type QueryDatasource struct {
 	// in:body
-	Body dtos.MetricRequest
+	Body MetricRequest
 }
 
 // swagger:response getDatasourcesResponse
@@ -293,4 +339,26 @@ type QueryDatasourceResponse struct {
 	// in: body
 	//nolint: staticcheck // plugins.DataResponse deprecated
 	Body plugins.DataResponse `json:"body"`
+}
+
+// MetricRequest same as dtos.MetricRequest but with swagger annotations
+// swagger:model
+type MetricRequest struct {
+	// From Start time in epoch timestamps in milliseconds or relative using Grafana time units.
+	// required: true
+	// example: now-1h
+	From string `json:"from"`
+	// To End time in epoch timestamps in milliseconds or relative using Grafana time units.
+	// required: true
+	// example: now
+	To string `json:"to"`
+	// queries.refId – Specifies an identifier of the query. Is optional and default to “A”.
+	// queries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.
+	// queries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
+	// queries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+	// required: true
+	// example: [ { "refId": "A", "intervalMs": 86400000, "maxDataPoints": 1092, "datasourceId": 86, "rawSql": "SELECT 1 as valueOne, 2 as valueTwo", "format": "table" } ]
+	Queries []*simplejson.Json `json:"queries"`
+	// required: false
+	Debug bool `json:"debug"`
 }

@@ -27,33 +27,6 @@
   "host": "localhost:10081",
   "basePath": "/api",
   "paths": {
-    "/api/tsdb/query": {
-      "get": {
-        "description": "Queries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Query a data source by ID.",
-        "operationId": "queryDatasource",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/MetricRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/queryDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          }
-        }
-      }
-    },
     "/auth/keys": {
       "get": {
         "description": "Will return auth keys.",
@@ -817,14 +790,14 @@
         }
       }
     },
-    "/datasources/proxy/{datasource_id}": {
+    "/datasources/proxy/{datasource_id}/{datasource_proxy_route}": {
       "get": {
         "description": "Proxies all calls to the actual data source.",
         "tags": [
           "datasources"
         ],
-        "summary": "Data source proxy calls.",
-        "operationId": "datasourceProxyCalls",
+        "summary": "Data source proxy GET calls.",
+        "operationId": "datasourceProxyGETcalls",
         "parameters": [
           {
             "type": "string",
@@ -832,9 +805,117 @@
             "name": "datasource_id",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Data source proxy POST calls.",
+        "operationId": "datasourceProxyPOSTcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "DatasourceProxyParam",
+            "in": "body",
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Data source proxy DELETE calls.",
+        "operationId": "datasourceProxyDELETEcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          },
           "400": {
             "$ref": "#/responses/badRequestError"
           },
@@ -1024,6 +1105,42 @@
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/tsdb/query": {
+      "post": {
+        "description": "Queries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.",
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Query metrics.",
+        "operationId": "queryDatasource",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MetricRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/queryDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
@@ -1330,6 +1447,7 @@
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "DashboardAclUpdateItem": {
+      "description": "DashboardAclUpdateItem is same as dtos.DashboardAclUpdateItem but with swagger annotations",
       "type": "object",
       "properties": {
         "permission": {
@@ -2031,29 +2149,50 @@
       "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
     },
     "MetricRequest": {
+      "description": "MetricRequest same as dtos.MetricRequest but with swagger annotations",
       "type": "object",
+      "required": [
+        "from",
+        "to",
+        "queries"
+      ],
       "properties": {
         "debug": {
           "type": "boolean",
           "x-go-name": "Debug"
         },
         "from": {
+          "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
           "type": "string",
-          "x-go-name": "From"
+          "x-go-name": "From",
+          "example": "now-1h"
         },
         "queries": {
+          "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Json"
           },
-          "x-go-name": "Queries"
+          "x-go-name": "Queries",
+          "example": [
+            {
+              "datasourceId": 86,
+              "format": "table",
+              "intervalMs": 86400000,
+              "maxDataPoints": 1092,
+              "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
+              "refId": "A"
+            }
+          ]
         },
         "to": {
+          "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
           "type": "string",
-          "x-go-name": "To"
+          "x-go-name": "To",
+          "example": "now"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
     },
     "NewApiKeyResult": {
       "type": "object",
