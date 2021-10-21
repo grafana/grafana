@@ -20,12 +20,13 @@ interface TabInfo {
   type?: RuleType;
   isTest?: boolean;
   isConverter?: boolean;
+  icon?: string;
 }
 const tabs: TabInfo[] = [
   { label: 'Converter', type: 'converter', isConverter: true },
   { label: 'Processors', type: 'frameProcessors' },
   { label: 'Outputs', type: 'frameOutputs' },
-  { label: 'Test', isTest: true },
+  { label: 'Test', isTest: true, icon: 'flask' },
 ];
 
 export const RuleModal: React.FC<Props> = (props) => {
@@ -77,7 +78,8 @@ export const RuleModal: React.FC<Props> = (props) => {
             <Tab
               key={index}
               label={tab.label}
-              active={tab.type === activeTab}
+              active={tab === activeTab}
+              icon={tab.icon as any}
               onChangeTab={() => {
                 setActiveTab(tab);
                 if (tab.type) {

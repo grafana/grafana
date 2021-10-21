@@ -54,7 +54,7 @@ export const PipelineTable: React.FC<Props> = (props) => {
         if (ds) {
           return (
             <div>
-              <Tag name={ds.name} colorIndex={2} /> &nbsp;
+              <Tag name={ds.name} colorIndex={1} /> &nbsp;
               <span>{pattern.substring(idx + 1)}</span>
             </div>
           );
@@ -70,7 +70,7 @@ export const PipelineTable: React.FC<Props> = (props) => {
         <table className="filter-table filter-table--hover form-inline">
           <thead>
             <tr>
-              <th>Pattern</th>
+              <th>Channel</th>
               <th>Converter</th>
               <th>Processor</th>
               <th>Output</th>

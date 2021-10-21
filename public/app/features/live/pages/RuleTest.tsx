@@ -63,7 +63,7 @@ export const RuleTest: React.FC<Props> = (props) => {
       {response?.length &&
         response.map((r) => (
           <Field key={r.channel} label={r.channel}>
-            <Table data={r.frame} width={650} height={10 * r.frame.length + 10} showTypeIcons></Table>
+            <Table data={r.frame} width={700} height={Math.min(10 * r.frame.length + 10, 150)} showTypeIcons></Table>
           </Field>
         ))}
     </div>
