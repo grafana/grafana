@@ -14,13 +14,14 @@ Cortex/Loki rules section lists all rules for external Prometheus or Loki data s
 - [View alerting rules](#view-alerting-rule)
 - [Filter alerting rules](#filter-alerting-rules)
 - [Edit or delete an alerting rule](#edit-or-delete-an-alerting-rule)
+
 ## View alerting rules
 
 To view alerting details:
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page. By default, the group view displays. 
+1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page. By default, the group view displays.
 1. In **View as**, toggle between group or state views by clicking the relevant option. See [Group view](#group-view) and [State view](#state-view) for more information.
-1. Expand the rule row and view the rule labels, annotations, data sources the rule queries, and a list of alert instances spawned from this rule. 
+1. Expand the rule row and view the rule labels, annotations, data sources the rule queries, and a list of alert instances spawned from this rule.
 
 {{< figure src="/static/img/docs/alerting/unified/rule-details-8-0.png" max-width="650px" caption="Alerting rule details" >}}
 

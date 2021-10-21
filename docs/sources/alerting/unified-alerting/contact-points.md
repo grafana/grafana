@@ -7,18 +7,18 @@ weight = 430
 
 # Contact points
 
-Use contact points to define how your contacts are notified when an alert fires. A contact point can have one or more contact point types, for example, email, slack, webhook, and so on. When an alert fires, a notification is sent to all contact point types listed for a contact point. Optionally, use [mesasge templates]({{< relref "./message-templating/_index.md" >}}) to customize notification messages for the contact point types. 
+Use contact points to define how your contacts are notified when an alert fires. A contact point can have one or more contact point types, for example, email, slack, webhook, and so on. When an alert fires, a notification is sent to all contact point types listed for a contact point. Optionally, use [mesasge templates]({{< relref "./message-templating/_index.md" >}}) to customize notification messages for the contact point types.
 
-You can configure Grafana managed contact points as well as contact points for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./basics/alertmanager.md" >}}). 
+You can configure Grafana managed contact points as well as contact points for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./basics/alertmanager.md" >}}).
 
 ## Add a contact point
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. Click **Contact points** to open the page listing existing contact points. 
+1. Click **Contact points** to open the page listing existing contact points.
 1. Click **New contact point**.
 1. From the **Alertmanager** dropdown, select an Alertmanager. By default, the Grafana Alertmanager is selected.
 1. In **Name**, enter a descriptive name for the contact point.
-1. From **Contact point type**, select a type and fill out mandatory fields. For example, if you choose email, enter the email addresses. Or if you choose slack, enter the slack channels and users who should be contacted. 
+1. From **Contact point type**, select a type and fill out mandatory fields. For example, if you choose email, enter the email addresses. Or if you choose slack, enter the slack channels and users who should be contacted.
 1. Some contact point types, like email or webhook, have optional settings. In **Optional settings**, specify additional settings for the selected contact point type.
 1. In Notification settings, optionally select **Disable resolved message** if you do not want to be notified when an alert resolves.
 1. To add another contact point type, click **New contact point type** and repeat steps 6 through 8.
@@ -33,7 +33,7 @@ You can configure Grafana managed contact points as well as contact points for a
 ## Delete a contact point
 
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
-1. Find the contact point you want to delete, then click **Delete** (trash icon). 
+1. Find the contact point you want to delete, then click **Delete** (trash icon).
 1. In the confirmation dialog, click **Yes, delete**. This deletes the content point.
 
 > **Note:** You cannot delete contact points that are in use by a notification policy. You will have to either delete the [notification policy]({{< relref "./notification-policies.md" >}}) or update it to use another contact point.
@@ -45,7 +45,7 @@ To edit global configuration options for an external Alertmanager, like SMTP ser
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
 1. From the **Alertmanager** drop down, select an external Alertmanager data source.
 1. Click the **Edit global config** option.
-1. Add global configuration settings. 
+1. Add global configuration settings.
 1. Click **Save global config** to save your changes.
 
 > **Note** This option is available only for external Alertmanagers. You can configure some global options for Grafana contact types, like email settings, via [Grafana configuration]({{< relref "../../administration/configuration.md" >}}).
@@ -179,7 +179,6 @@ Example JSON body:
 | silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
 | dashboardURL | string | **Will be deprecated soon**                                                        |
 | panelURL     | string | **Will be deprecated soon**                                                        |
-
 
 #### Removed fields related to dashboards
 

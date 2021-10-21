@@ -25,13 +25,12 @@ A new namespace is created and all groups are copied into this namespace from th
 The rules within a group are run sequentially at a regular interval, the default interval is one (1) minute. You can modify this interval using the following instructions.
 
 1. n the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. Find a Cortex or Loki managed rule with the group you want to edit. 
+1. Find a Cortex or Loki managed rule with the group you want to edit.
 1. Click **Edit** (pen) icon.
 1. Modify the **Rule group** and **Rule group evaluation interval** information as necessary.
 1. Click **Save changes**.
 
 When you rename the group, a new group with all the rules from the old group is created. The old group is deleted.
-
 
 ![Group list](/static/img/docs/alerting/unified/rule-list-edit-cortex-loki-icon-8-2.png 'Rule group list screenshot')
 ![Group edit modal](/static/img/docs/alerting/unified/rule-list-cortex-loki-edit-ns-group-8-2.png 'Rule group edit modal screenshot')

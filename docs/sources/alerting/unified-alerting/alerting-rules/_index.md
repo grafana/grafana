@@ -8,7 +8,7 @@ weight = 130
 
 An alerting rule is evaluation criteria that determine whether an alert will fire. It consists of one or more queries and expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
 
-While queries and expressions select the data set to evaluate, a condition sets the threshold that an alert must meet or exceed to create an alert. An interval specifies how frequently an alerting rule is evaluated. Duration, when configured, indicates how long a condition must be met. The rules can also define alerting behavior in the absence of data. 
+While queries and expressions select the data set to evaluate, a condition sets the threshold that an alert must meet or exceed to create an alert. An interval specifies how frequently an alerting rule is evaluated. Duration, when configured, indicates how long a condition must be met. The rules can also define alerting behavior in the absence of data.
 
 In Grafana 8 alerting, you can:
 

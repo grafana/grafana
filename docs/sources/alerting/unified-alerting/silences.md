@@ -9,7 +9,7 @@ weight = 400
 
 Use silences to stop notifications from one or more alerting rules. Silences do not prevent alert rules from being evaluated. Nor do they not stop alerting instances from being shown in the user interface. Silences only stop notifications from getting created. A silence lasts for only a specified window of time.
 
-You can configure Grafana managed silences as well as silences for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./basics/alertmanager.md" >}}). 
+You can configure Grafana managed silences as well as silences for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./basics/alertmanager.md" >}}).
 
 ## Add a silence
 
@@ -20,7 +20,7 @@ To add a silence:
 1. From [Alertmanager]({{< relref "./contact-points.md/#alertmanager" >}}) drop down, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
 1. Click **New Silence** to open the Create silence page.
 1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
-1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the  **Silence start and end** field.
+1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
 1. In the **Name** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. For more information, see [Label matching for alert suppression](#label-matching-for-alert-suppression).
 1. In **Comment**, add details about the silence.
 1. In **Creator**, enter the name of the silence owner or keep the default owner.
@@ -47,7 +47,7 @@ Grafana suppresses notifications only for alerts with labels that match all the 
 ## Remove silences
 
 1. In the Alerting page, click **Silences** to view the list of existing silences.
-1. Find the silence you want to end, then click **Unsilence**. 
+1. Find the silence you want to end, then click **Unsilence**.
 
 > **Note:** Silences that have ended are retained and listed for five days. You cannot remove a silence manually.
 
