@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +21,7 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			name: "when a slack receiver does not have a valid URL - it should error",
 			receivers: []*PostableGrafanaReceiver{
 				{
-					UID:            "3ff445",
+					UID:            util.GenerateShortUID(),
 					Name:           "SlackWithBadURL",
 					Type:           "slack",
 					Settings:       simplejson.NewFromAny(map[string]interface{}{}),
@@ -33,7 +34,7 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			name: "when a slack receiver has an invalid recipient - it should error",
 			receivers: []*PostableGrafanaReceiver{
 				{
-					UID:            "3ff445",
+					UID:            util.GenerateShortUID(),
 					Name:           "SlackWithBadRecipient",
 					Type:           "slack",
 					Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "this-doesnt-pass"}),
@@ -46,7 +47,7 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			name: "when the configuration is valid - it should not error",
 			receivers: []*PostableGrafanaReceiver{
 				{
-					UID:            "3ff445",
+					UID:            util.GenerateShortUID(),
 					Name:           "SlackWithBadURL",
 					Type:           "slack",
 					Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "#a-good-channel"}),

@@ -458,6 +458,8 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				err error
 			)
 
+			// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
+			// given that the previous alerting will never support it.
 			decryptFunc := func(_ context.Context, sjd map[string][]byte, key string, fallback string, secret string) string {
 				if value, ok := sjd[key]; ok {
 					decryptedData, err := util.Decrypt(value, secret)
