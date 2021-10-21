@@ -52,6 +52,9 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
   batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     const runnableQueries = mixed.filter(this.isQueryable);
+    const numberOfQueries = runnableQueries
+      .map((queries) => queries.targets.length)
+      .reduce((previousValue, currentValue) => previousValue + currentValue);
     let firstError: DataQueryResponse | undefined;
     let finishedQueries = 0;
 
@@ -69,13 +72,13 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
               map((response) => {
                 finishedQueries++;
                 // If there was an error we should return that as a last result
-                if (finishedQueries === runnableQueries.length && firstError) {
+                if (finishedQueries === numberOfQueries && firstError) {
                   return firstError;
                 }
                 return {
                   ...response,
                   data: response.data || [],
-                  state: finishedQueries === runnableQueries.length ? LoadingState.Done : LoadingState.Loading,
+                  state: finishedQueries === numberOfQueries ? LoadingState.Done : LoadingState.Loading,
                   key: `mixed-${i}-${response.key || ''}`,
                 } as DataQueryResponse;
               }),

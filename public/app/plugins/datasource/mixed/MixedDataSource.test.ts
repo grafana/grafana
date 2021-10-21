@@ -92,7 +92,9 @@ describe('MixedDatasource', () => {
       expect(results).toHaveLength(3);
       expect(results[0].key).toBe('mixed-0-A');
       expect(results[1].key).toBe('mixed-0-B');
+      expect(results[1].state).toBe(LoadingState.Loading);
       expect(results[2].key).toBe('mixed-1-');
+      expect(results[2].state).toBe(LoadingState.Done);
     });
   });
 
