@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -65,7 +66,7 @@ func NewWebHookNotifier(model *models.AlertNotification, fn alerting.GetDecrypte
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
-	password := fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString())
+	password := fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString(), setting.SecretKey)
 
 	return &WebhookNotifier{
 		NotifierBase: NewNotifierBase(model),

@@ -8,14 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestPushoverNotifier(t *testing.T) {
 	Convey("Pushover notifier tests", t, func() {
-		secretsService := secretsManager.SetupTestService(t, nil)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -27,7 +26,7 @@ func TestPushoverNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewPushoverNotifier(model, secretsService.GetDecryptedValue)
+				_, err := NewPushoverNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -49,7 +48,7 @@ func TestPushoverNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPushoverNotifier(model, secretsService.GetDecryptedValue)
+				not, err := NewPushoverNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				pushoverNotifier := not.(*PushoverNotifier)
 
 				So(err, ShouldBeNil)

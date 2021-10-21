@@ -9,15 +9,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/secrets"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSlackNotifier(t *testing.T) {
-	secretsService := secretsManager.SetupTestService(t, nil)
-
 	t.Run("empty settings should return error", func(t *testing.T) {
 		json := `{ }`
 
@@ -29,7 +27,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewSlackNotifier(model, secretsService.GetDecryptedValue)
+		_, err = NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		assert.EqualError(t, err, "alert validation error: recipient must be specified when using the Slack chat API")
 	})
 
@@ -47,7 +45,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model, secretsService.GetDecryptedValue)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "ops", slackNotifier.Name)
@@ -85,7 +83,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model, secretsService.GetDecryptedValue)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "ops", slackNotifier.Name)
@@ -118,11 +116,12 @@ func TestSlackNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 
-		securedSettingsJSON, err := secretsService.EncryptJsonData(
+		encryptionService := ossencryption.ProvideService()
+		securedSettingsJSON, err := encryptionService.EncryptJsonData(
 			context.Background(),
 			map[string]string{
 				"token": "xenc-XXXXXXXX-XXXXXXXX-XXXXXXXXXX",
-			}, secrets.WithoutScope())
+			}, setting.SecretKey)
 		require.NoError(t, err)
 
 		model := &models.AlertNotification{
@@ -132,7 +131,7 @@ func TestSlackNotifier(t *testing.T) {
 			SecureSettings: securedSettingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model, secretsService.GetDecryptedValue)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "ops", slackNotifier.Name)
@@ -163,7 +162,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewSlackNotifier(model, secretsService.GetDecryptedValue)
+		_, err = NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		assert.EqualError(t, err, "alert validation error: recipient on invalid format: \"#open tsdb\"")
 	})
 
@@ -182,7 +181,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewSlackNotifier(model, secretsService.GetDecryptedValue)
+		_, err = NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		assert.EqualError(t, err, "alert validation error: recipient on invalid format: \"@user name\"")
 	})
 
@@ -201,7 +200,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewSlackNotifier(model, secretsService.GetDecryptedValue)
+		_, err = NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		assert.EqualError(t, err, "alert validation error: recipient on invalid format: \"@User\"")
 	})
 
@@ -220,7 +219,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model, secretsService.GetDecryptedValue)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "1ABCDE", slackNotifier.recipient)

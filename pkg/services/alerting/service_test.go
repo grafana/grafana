@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -16,8 +16,7 @@ import (
 func TestService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 
-	secretsService := secretsManager.SetupTestService(t, sqlStore)
-	s := ProvideService(bus.New(), sqlStore, secretsService)
+	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService())
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "alert_notification_service_test"
@@ -37,7 +36,7 @@ func TestService(t *testing.T) {
 		require.NoError(t, err)
 
 		an = cmd.Result
-		decrypted, err := s.SecretsService.DecryptJsonData(ctx, an.SecureSettings)
+		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, an.SecureSettings, setting.SecretKey)
 		require.NoError(t, err)
 		require.Equal(t, ss, decrypted)
 	})
@@ -50,7 +49,7 @@ func TestService(t *testing.T) {
 		err := s.UpdateAlertNotification(ctx, &cmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.SecretsService.DecryptJsonData(ctx, cmd.Result.SecureSettings)
+		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, cmd.Result.SecureSettings, setting.SecretKey)
 		require.NoError(t, err)
 		require.Equal(t, ss, decrypted)
 	})

@@ -5,13 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestKafkaNotifier(t *testing.T) {
 	Convey("Kafka notifier tests", t, func() {
-		secretsService := secretsManager.SetupTestService(t, nil)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -23,7 +22,7 @@ func TestKafkaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewKafkaNotifier(model, secretsService.GetDecryptedValue)
+				_, err := NewKafkaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -41,7 +40,7 @@ func TestKafkaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewKafkaNotifier(model, secretsService.GetDecryptedValue)
+				not, err := NewKafkaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				kafkaNotifier := not.(*KafkaNotifier)
 
 				So(err, ShouldBeNil)

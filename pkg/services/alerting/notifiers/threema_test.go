@@ -7,13 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestThreemaNotifier(t *testing.T) {
 	Convey("Threema notifier tests", t, func() {
-		secretsService := secretsManager.SetupTestService(t, nil)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -25,7 +24,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewThreemaNotifier(model, secretsService.GetDecryptedValue)
+				_, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -44,7 +43,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model, secretsService.GetDecryptedValue)
+				not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldBeNil)
 				threemaNotifier := not.(*ThreemaNotifier)
 
@@ -71,7 +70,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model, secretsService.GetDecryptedValue)
+				not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
 				So(errors.As(err, &valErr), ShouldBeTrue)
@@ -93,7 +92,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model, secretsService.GetDecryptedValue)
+				not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
 				So(errors.As(err, &valErr), ShouldBeTrue)
@@ -115,7 +114,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model, secretsService.GetDecryptedValue)
+				not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
 				So(errors.As(err, &valErr), ShouldBeTrue)

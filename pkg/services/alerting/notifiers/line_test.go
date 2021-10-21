@@ -5,13 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestLineNotifier(t *testing.T) {
 	Convey("Line notifier tests", t, func() {
-		secretsService := secretsManager.SetupTestService(t, nil)
 		Convey("empty settings should return error", func() {
 			json := `{ }`
 
@@ -22,7 +21,7 @@ func TestLineNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewLINENotifier(model, secretsService.GetDecryptedValue)
+			_, err := NewLINENotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 			So(err, ShouldNotBeNil)
 		})
 		Convey("settings should trigger incident", func() {
@@ -37,7 +36,7 @@ func TestLineNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewLINENotifier(model, secretsService.GetDecryptedValue)
+			not, err := NewLINENotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 			lineNotifier := not.(*LineNotifier)
 
 			So(err, ShouldBeNil)

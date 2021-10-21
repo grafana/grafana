@@ -4,12 +4,12 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/encryption"
 )
 
 // Provision alert notifiers
-func Provision(configDirectory string, secretsService secrets.Service) error {
-	dc := newNotificationProvisioner(secretsService, log.New("provisioning.notifiers"))
+func Provision(configDirectory string, encryptionService encryption.Service) error {
+	dc := newNotificationProvisioner(encryptionService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(configDirectory)
 }
 
@@ -19,12 +19,12 @@ type NotificationProvisioner struct {
 	cfgProvider *configReader
 }
 
-func newNotificationProvisioner(secretsService secrets.Service, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(encryptionService encryption.Service, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
 		log: log,
 		cfgProvider: &configReader{
-			secretsService: secretsService,
-			log:            log,
+			encryptionService: encryptionService,
+			log:               log,
 		},
 	}
 }

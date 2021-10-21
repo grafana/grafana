@@ -7,14 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDingDingNotifier(t *testing.T) {
 	Convey("Dingding notifier tests", t, func() {
-		secretsService := secretsManager.SetupTestService(t, nil)
 		Convey("empty settings should return error", func() {
 			json := `{ }`
 
@@ -25,7 +24,7 @@ func TestDingDingNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := newDingDingNotifier(model, secretsService.GetDecryptedValue)
+			_, err := newDingDingNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 			So(err, ShouldNotBeNil)
 		})
 		Convey("settings should trigger incident", func() {
@@ -38,7 +37,7 @@ func TestDingDingNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := newDingDingNotifier(model, secretsService.GetDecryptedValue)
+			not, err := newDingDingNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 			notifier := not.(*DingDingNotifier)
 
 			So(err, ShouldBeNil)

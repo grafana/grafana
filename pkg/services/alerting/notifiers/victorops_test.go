@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -24,7 +24,6 @@ func presenceComparerInt(a, b int64) bool {
 }
 func TestVictoropsNotifier(t *testing.T) {
 	Convey("Victorops notifier tests", t, func() {
-		secretsService := secretsManager.SetupTestService(t, nil)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -36,7 +35,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewVictoropsNotifier(model, secretsService.GetDecryptedValue)
+				_, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -53,7 +52,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewVictoropsNotifier(model, secretsService.GetDecryptedValue)
+				not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				victoropsNotifier := not.(*VictoropsNotifier)
 
 				So(err, ShouldBeNil)
@@ -77,7 +76,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewVictoropsNotifier(model, secretsService.GetDecryptedValue)
+				not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldBeNil)
 
 				victoropsNotifier := not.(*VictoropsNotifier)
@@ -125,7 +124,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewVictoropsNotifier(model, secretsService.GetDecryptedValue)
+				not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldBeNil)
 
 				victoropsNotifier := not.(*VictoropsNotifier)

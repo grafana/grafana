@@ -5,13 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDiscordNotifier(t *testing.T) {
 	Convey("Discord notifier tests", t, func() {
-		secretsService := secretsManager.SetupTestService(t, nil)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -23,7 +22,7 @@ func TestDiscordNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := newDiscordNotifier(model, secretsService.GetDecryptedValue)
+				_, err := newDiscordNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -42,7 +41,7 @@ func TestDiscordNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := newDiscordNotifier(model, secretsService.GetDecryptedValue)
+				not, err := newDiscordNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				discordNotifier := not.(*DiscordNotifier)
 
 				So(err, ShouldBeNil)

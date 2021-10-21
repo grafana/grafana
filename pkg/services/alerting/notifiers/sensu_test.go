@@ -5,13 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestSensuNotifier(t *testing.T) {
 	Convey("Sensu notifier tests", t, func() {
-		secretsService := secretsManager.SetupTestService(t, nil)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -23,7 +22,7 @@ func TestSensuNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewSensuNotifier(model, secretsService.GetDecryptedValue)
+				_, err := NewSensuNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -42,7 +41,7 @@ func TestSensuNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewSensuNotifier(model, secretsService.GetDecryptedValue)
+				not, err := NewSensuNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				sensuNotifier := not.(*SensuNotifier)
 
 				So(err, ShouldBeNil)
