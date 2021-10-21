@@ -409,10 +409,10 @@ function createDataQuery(query: RichHistoryQuery, individualQuery: DataQuery | s
     // the current format
     return individualQuery;
   } else if (isParsable(individualQuery)) {
-    // ElasticSearch (maybe other datasoures too) queries before grafana7
+    // ElasticSearch (maybe other datasoures too) before grafana7
     return JSON.parse(individualQuery);
   }
-  // prometehus (maybe other datasources too) queries before grafana7
+  // prometehus (maybe other datasources too) before grafana7
   return { expr: individualQuery, refId: letters[index] };
 }
 
