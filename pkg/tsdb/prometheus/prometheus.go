@@ -181,8 +181,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			if err != nil {
 				plog.Error("Exemplar query", query.Expr, "failed with", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+			} else {
+				response[ExemplarQueryType] = exemplarResponse
 			}
-			response[ExemplarQueryType] = exemplarResponse
 		}
 
 		frames, err := parseResponse(response, query)
