@@ -106,7 +106,7 @@ steps:
   name: init-backend
 - commands:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --binary grafana-server
+    --variants linux-x64,linux-x64-musl,osx64,win64,armv6 --binary grafana-server
   depends_on:
   - init-backend
   environment: {}
@@ -114,7 +114,7 @@ steps:
   name: build-binary-grafana-server
 - commands:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --binary grafana-cli
+    --variants linux-x64,linux-x64-musl,osx64,win64,armv6 --binary grafana-cli
   depends_on:
   - init-backend
   environment: {}
@@ -3629,6 +3629,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 79880563981fcd3058d6c0b0fe3d551b8f5cb60d5f8b8bd1a2716e2550a3d1ee
+hmac: 6516791e45de7e38a99ec142cf4e0bfaa7c55fd3f8ba2986b9f861cf0b89a5a8
 
 ...
