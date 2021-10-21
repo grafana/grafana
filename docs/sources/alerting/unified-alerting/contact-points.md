@@ -179,7 +179,6 @@ consists of an array of alerts.
 #### Removed fields related to dashboards
 
 Alerts are not coupled to dashboards anymore therefore the fields related to dashboards `dashboardId` and `panelId` have been removed.
-where removed. The removed fields are `dashboardId` and `panelId`.
 
 ## Manage contact points for an external Alertmanager
 
