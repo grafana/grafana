@@ -13,22 +13,21 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   props
 ) => {
   const { value, onChange, item } = props;
+  const settings: StyleRuleEditorSettings = item.settings;
 
-  const WIDTH = 10;
   const styles = useStyles2(getStyles);
 
-  const settings: StyleRuleEditorSettings = item.settings;
+  const LABEL_WIDTH = 10;
 
   const onChangeComparisonProperty = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      const style = value;
       onChange({
-        ...style,
+        ...value,
         rule: {
-          ...style.rule,
+          ...value.rule,
           property: e.currentTarget.value,
-          operation: style.rule?.operation ?? ComparisonOperation.EQ,
-          value: style.rule?.value ?? '',
+          operation: value.rule?.operation ?? ComparisonOperation.EQ,
+          value: value.rule?.value ?? '',
         },
       });
     },
@@ -37,14 +36,13 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
 
   const onChangeComparison = useCallback(
     (selection: SelectableValue) => {
-      const style = value;
       onChange({
-        ...style,
+        ...value,
         rule: {
-          ...style.rule,
+          ...value.rule,
           operation: selection.value ?? ComparisonOperation.EQ,
-          property: style.rule?.property ?? '',
-          value: style.rule?.value ?? '',
+          property: value.rule?.property ?? '',
+          value: value.rule?.value ?? '',
         },
       });
     },
@@ -53,14 +51,13 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
 
   const onChangeComparisonValue = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      const style = value;
       onChange({
-        ...style,
+        ...value,
         rule: {
-          ...style.rule,
+          ...value.rule,
           value: e.currentTarget.value,
-          operation: style.rule?.operation ?? ComparisonOperation.EQ,
-          property: style.rule?.property ?? '',
+          operation: value.rule?.operation ?? ComparisonOperation.EQ,
+          property: value.rule?.property ?? '',
         },
       });
     },
@@ -69,16 +66,14 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
 
   const onChangeColor = useCallback(
     (c: string) => {
-      const style = value;
-      onChange({ ...style, fillColor: c });
+      onChange({ ...value, fillColor: c });
     },
     [onChange, value]
   );
 
   const onChangeStrokeWidth = useCallback(
     (num: number | undefined) => {
-      const style = value;
-      onChange({ ...style, strokeWidth: num ?? style.strokeWidth ?? 1 });
+      onChange({ ...value, strokeWidth: num ?? value.strokeWidth ?? 1 });
     },
     [onChange, value]
   );
@@ -88,61 +83,69 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   }, [onChange]);
 
   return (
-    <InlineFieldRow className={styles.row}>
-      <Input
-        type="text"
-        placeholder={'Feature property'}
-        value={`${value?.rule?.property}`}
-        onChange={onChangeComparisonProperty}
-        aria-label={'Feature property'}
-        width={WIDTH}
-      />
-      <InlineField className={styles.inline} grow={true}>
-        <Select
-          menuShouldPortal
-          value={`${value?.rule?.operation}` ?? ComparisonOperation.EQ}
-          options={settings.options}
-          onChange={onChangeComparison}
-          aria-label={'Comparison operator'}
-          width={WIDTH}
-        />
-      </InlineField>
-      <Input
-        type="text"
-        placeholder={'value'}
-        value={`${value?.rule?.value}`}
-        onChange={onChangeComparisonValue}
-        aria-label={'Comparison value'}
-      />
-      <InlineField className={styles.color}>
-        <ColorPicker color={value?.fillColor} onChange={onChangeColor} />
-      </InlineField>
-      <InlineField label="Stroke" className={styles.inline}>
-        <NumberInput
-          value={value?.strokeWidth ?? 1}
-          min={1}
-          max={20}
-          step={0.5}
-          aria-label={'Stroke width'}
-          onChange={onChangeStrokeWidth}
-        />
-      </InlineField>
-      <Button
-        size="md"
-        icon="trash-alt"
-        onClick={() => onDelete()}
-        variant="secondary"
-        aria-label={'Delete style rule'}
-        className={styles.button}
-      ></Button>
-    </InlineFieldRow>
+    <div className={styles.rule}>
+      <InlineFieldRow className={styles.row}>
+        <InlineField label="Rule" labelWidth={LABEL_WIDTH} grow={true}>
+          <Input
+            type="text"
+            placeholder={'Feature property'}
+            value={`${value?.rule?.property}`}
+            onChange={onChangeComparisonProperty}
+            aria-label={'Feature property'}
+          />
+        </InlineField>
+        <InlineField className={styles.inline} grow={true}>
+          <Select
+            menuShouldPortal
+            value={`${value?.rule?.operation}` ?? ComparisonOperation.EQ}
+            options={settings.options}
+            onChange={onChangeComparison}
+            aria-label={'Comparison operator'}
+          />
+        </InlineField>
+        <InlineField className={styles.inline} grow={true}>
+          <Input
+            type="text"
+            placeholder={'value'}
+            value={`${value?.rule?.value}`}
+            onChange={onChangeComparisonValue}
+            aria-label={'Comparison value'}
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow className={styles.row}>
+        <InlineField label="Style" labelWidth={LABEL_WIDTH} className={styles.color}>
+          <ColorPicker color={value?.fillColor} onChange={onChangeColor} />
+        </InlineField>
+        <InlineField label="Stroke" className={styles.inline} grow={true}>
+          <NumberInput
+            value={value?.strokeWidth ?? 1}
+            min={1}
+            max={20}
+            step={0.5}
+            aria-label={'Stroke width'}
+            onChange={onChangeStrokeWidth}
+          />
+        </InlineField>
+        <Button
+          size="md"
+          icon="trash-alt"
+          onClick={() => onDelete()}
+          variant="secondary"
+          aria-label={'Delete style rule'}
+          className={styles.button}
+        ></Button>
+      </InlineFieldRow>
+    </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  rule: css`
+    margin-bottom: ${theme.spacing(1)};
+  `,
   row: css`
     display: flex;
-    flex-wrap: nowrap;
     margin-bottom: 4px;
   `,
   inline: css`
@@ -153,7 +156,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     margin-bottom: 0;
     margin-right: 4px;
-    margin-left: ${theme.spacing(2)};
   `,
   button: css`
     margin-left: 4px;
