@@ -14,6 +14,12 @@ export interface ErrorBoundaryApi {
 
 interface Props {
   children: (r: ErrorBoundaryApi) => ReactNode;
+  /** Will re-render children after error if recover values changes */
+  recover?: any[];
+  /** Callback called on error */
+  onError?: (error: Error) => void;
+  /** Callback error state is cleared due to recover props change */
+  onRecover?: () => void;
 }
 
 interface State {
@@ -29,10 +35,29 @@ export class ErrorBoundary extends PureComponent<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
-    this.setState({
-      error: error,
-      errorInfo: errorInfo,
-    });
+    this.setState({ error, errorInfo });
+
+    if (this.props.onError) {
+      this.props.onError(error);
+    }
+  }
+
+  componentDidUpdate(prevProps: ErrorBoundaryAlertProps) {
+    const { recover, onRecover } = this.props;
+
+    if (this.state.error) {
+      if (recover && prevProps.recover) {
+        for (let i = 0; i < recover.length; i++) {
+          if (recover[i] !== prevProps.recover[i]) {
+            this.setState({ error: null, errorInfo: null });
+            if (onRecover) {
+              onRecover();
+            }
+            break;
+          }
+        }
+      }
+    }
   }
 
   render() {
@@ -60,6 +85,9 @@ export interface ErrorBoundaryAlertProps {
 
   /** 'page' will render full page error with stacktrace. 'alertbox' will render an <Alert />. Default 'alertbox' */
   style?: 'page' | 'alertbox';
+
+  /** Will re-render children after error if recover values changes */
+  recover?: any[];
 }
 
 export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
@@ -69,10 +97,10 @@ export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
   };
 
   render() {
-    const { title, children, style } = this.props;
+    const { title, children, style, recover } = this.props;
 
     return (
-      <ErrorBoundary>
+      <ErrorBoundary recover={recover}>
         {({ error, errorInfo }) => {
           if (!errorInfo) {
             return children;

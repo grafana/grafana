@@ -41,6 +41,10 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     );
   }
 
+  if (frames.length === 2) {
+    throw new Error('AAA');
+  }
+
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   return (
