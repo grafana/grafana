@@ -7,10 +7,10 @@ import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { CatalogPlugin, PluginTabIds, RequestStatus, ReducerState } from '../types';
+import { CatalogPlugin, PluginTabIds, ReducerState, RequestStatus } from '../types';
 import * as api from '../api';
 import { fetchRemotePlugins } from '../state/actions';
-import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
+import { getCatalogPluginMock, getPluginsStateMock, mockPluginApis } from '../__mocks__';
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -253,6 +253,13 @@ describe('Plugin details page', () => {
 
   it('should not display install / uninstall buttons for disabled plugins', async () => {
     const { queryByRole } = renderPluginDetails({ id, isInstalled: true, isDisabled: true });
+
+    await waitFor(() => expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
+  });
+
+  it('should not display install / uninstall buttons for renderer plugins', async () => {
+    const { queryByRole } = renderPluginDetails({ id, type: PluginType.renderer });
 
     await waitFor(() => expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument());
     await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
