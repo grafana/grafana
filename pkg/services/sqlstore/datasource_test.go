@@ -234,7 +234,7 @@ func TestDataAccess(t *testing.T) {
 			s := InitTestDB(t)
 			ds := initDatasource(s)
 
-			err := s.DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id})
+			err := s.DeleteDataSource(context.Background(), &models.DeleteDataSourceCommand{ID: ds.Id})
 			require.ErrorIs(t, err, models.ErrDataSourceIdentifierNotSet)
 		})
 	})
@@ -272,7 +272,7 @@ func TestDataAccess(t *testing.T) {
 			return nil
 		})
 
-		err := s.DeleteDataSource(&models.DeleteDataSourceCommand{ID: 99999999, UID: "example-missing", Name: "example-missing-datasource", OrgID: ds.OrgId})
+		err := s.DeleteDataSource(context.Background(), &models.DeleteDataSourceCommand{ID: 99999999, UID: "example-missing", Name: "example-missing-datasource", OrgID: ds.OrgId})
 		require.Error(t, err)
 
 		require.Never(t, func() bool {

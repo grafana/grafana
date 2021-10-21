@@ -129,7 +129,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 					setupBusHandlers(overrides)
 
 					dc := newDatasourceProvisioner(logger)
-					err := dc.applyChanges(twoDatasourcesConfigPurgeOthers)
+					err := dc.applyChanges(context.Background(), twoDatasourcesConfigPurgeOthers)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
@@ -146,7 +146,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 					setupBusHandlers(overrides)
 
 					dc := newDatasourceProvisioner(logger)
-					err := dc.applyChanges(twoDatasourcesConfigPurgeOthers)
+					err := dc.applyChanges(context.Background(), twoDatasourcesConfigPurgeOthers)
 
 					So(err, ShouldBeError, models.ErrDataSourceIdentifierNotSet)
 				})
