@@ -29,7 +29,6 @@ import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsVolumePanel } from './LogsVolumePanel';
-import { config } from '@grafana/runtime';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
