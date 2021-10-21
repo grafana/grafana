@@ -29,7 +29,10 @@ describe('panel state actions', () => {
         panels: {},
       })
         .givenThunk(changePanelPlugin)
-        .whenThunkIsDispatched(sourcePanel, 'table');
+        .whenThunkIsDispatched({
+          panel: sourcePanel,
+          pluginId: 'table',
+        });
 
       expect(dispatchedActions.length).toBe(2);
       expect(dispatchedActions[0].type).toBe(panelPluginLoaded.type);

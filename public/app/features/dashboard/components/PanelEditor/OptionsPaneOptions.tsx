@@ -104,7 +104,7 @@ export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
         <div className={styles.formRow}>
-          <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search...'} />
+          <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </div>
         {showSearchRadioButtons && (
           <div className={styles.formRow}>
