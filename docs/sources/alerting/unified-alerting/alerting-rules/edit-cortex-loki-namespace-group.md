@@ -1,11 +1,11 @@
 +++
-title = "Edit Cortex or Loki rule groups and namespaces"
+title = "Cortex or Loki rule groups and namespaces"
 description = "Edit Cortex or Loki rule groups and namespaces"
 keywords = ["grafana", "alerting", "guide", "group", "namespace", "cortex", "loki"]
-weight = 400
+weight = 405
 +++
 
-# Edit Cortex or Loki rule groups and namespaces
+# Cortex or Loki rule groups and namespaces
 
 A namespace contains one or more groups. The rules within a group are run sequentially at a regular interval, the default interval is one (1) minute. You can rename Cortex or Loki rule namespaces and groups, and edit group evaluation intervals.
 

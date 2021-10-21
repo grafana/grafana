@@ -15,25 +15,3 @@ Grafana includes built-in support for Prometheus Alertmanager. By default, notif
 Grafana 8 alerting added support for external Alertmanager configuration. When you add an [Alertmanager data source]({{< relref "../../../datasources/alertmanager.md" >}}), the Alertmanager drop down shows a list of available external Alertmanager data sources. Select a data source to create and manage alerting for standalone Cortex or Loki data sources.
 
 {{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" max-width="250px" caption="Select Alertmanager" >}}
-
-## Evaluating Grafana managed alerts
-
-Grafana managed alerts query backend data sources which has alerting enabled:
-
-- built-in data sources or those developed and maintained by Grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
-  `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Monitor`
-- community developed backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "../../../developers/plugins/metadata.md" >}}))
-
-### Metrics from the alerting engine
-
-The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../../administration/view-server/internal-metrics.md" >}}). See also, [View alert rules and their current state]({{< relref "../alerting-rules/rule-list.md" >}}).
-
-| Metric Name                                       | Type      | Description                                                                              |
-| ------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
-| `grafana_alerting_alerts`                         | gauge     | How many alerts by state                                                                 |
-| `grafana_alerting_request_duration`               | histogram | Histogram of requests to the Alerting API                                                |
-| `grafana_alerting_active_configurations`          | gauge     | The number of active, non default Alertmanager configurations for grafana managed alerts |
-| `grafana_alerting_rule_evaluations_total`         | counter   | The total number of rule evaluations                                                     |
-| `grafana_alerting_rule_evaluation_failures_total` | counter   | The total number of rule evaluation failures                                             |
-| `grafana_alerting_rule_evaluation_duration`       | summary   | The duration for a rule to execute                                                       |
-| `grafana_alerting_rule_group_rules`               | gauge     | The number of rules                                                                      |
