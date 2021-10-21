@@ -9,7 +9,7 @@ weight = 400
 
 Use silences to stop notifications from one or more alerting rules. Silences do not prevent alert rules from being evaluated. Nor do they not stop alerting instances from being shown in the user interface. Silences only stop notifications from getting created. A silence lasts for only a specified window of time.
 
-You can configure Grafana managed silences as well as silences for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./alertmanager.md" >}}). 
+You can configure Grafana managed silences as well as silences for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./basics/alertmanager.md" >}}). 
 
 ## Add a silence
 
@@ -17,7 +17,7 @@ To add a silence:
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. In the Alerting page, click **Silences** to open the page listing existing contact points.
-1. From [Alertmanager]({{< relref "../contact-points.md/#alertmanager" >}}) drop down, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
+1. From [Alertmanager]({{< relref "./contact-points.md/#alertmanager" >}}) drop down, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
 1. Click **New Silence** to open the Create silence page.
 1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
 1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the  **Silence start and end** field.

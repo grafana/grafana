@@ -9,7 +9,7 @@ weight = 430
 
 Use contact points to define how your contacts are notified when an alert fires. A contact point can have one or more contact point types, for example, email, slack, webhook, and so on. When an alert fires, a notification is sent to all contact point types listed for a contact point. Optionally, use [mesasge templates]({{< relref "./message-templating/_index.md" >}}) to customize notification messages for the contact point types. 
 
-You can configure Grafana managed contact points as well as contact points for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./alertmanager.md" >}}). 
+You can configure Grafana managed contact points as well as contact points for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./basics/alertmanager.md" >}}). 
 
 ## Add a contact point
 
@@ -180,17 +180,7 @@ Example JSON body:
 | dashboardURL | string | **Will be deprecated soon**                                                        |
 | panelURL     | string | **Will be deprecated soon**                                                        |
 
-### Breaking changes when updating to unified alerting
-
-Grafana 8 alerts introduce a new way to manage your alerting rules and alerts in Grafana.
-As part of this change, there are some breaking changes that we will explain in details.
-
-#### Multiple Alerts in one payload
-
-As we now enable [multi dimensional alerting]({{< relref "../difference-old-new.md#multi-dimensional-alerting" >}}) a payload
-consists of an array of alerts.
 
 #### Removed fields related to dashboards
 
 Alerts are not coupled to dashboards anymore therefore the fields related to dashboards `dashboardId` and `panelId` have been removed.
-

@@ -1,10 +1,10 @@
 +++
-title = "Alerting fundamentals"
+title = "Alerting basics"
 aliases = ["/docs/grafana/latest/alerting/metrics/"]
 weight = 120
 +++
 
-# Alerting fundamentals
+# Alerting basics
 
 This section describes some of the fundamental concepts of Grafana 8 alerting. 
 

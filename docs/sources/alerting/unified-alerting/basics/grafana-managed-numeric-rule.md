@@ -1,7 +1,8 @@
 +++
-title = "Grafana managed alert rules for numeric data"
+title = "Alerting on numeric data"
 description = "Grafana managed alert rules for numeric data"
 keywords = ["grafana", "alerting", "guide", "rules", "create"]
+aliases = ["/docs/grafana/llatest/alerting/unified-alerting/grafana-managed-numeric-rule/"]
 weight = 400
 +++
 
