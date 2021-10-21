@@ -78,7 +78,7 @@ func NewRendererPlugin(pluginID, executablePath string, startFn StartRendererFun
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
-		managed:        false,
+		managed:        true,
 		versionedPlugins: map[int]goplugin.PluginSet{
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},

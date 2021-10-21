@@ -47,7 +47,6 @@ type RenderingService struct {
 	domain          string
 	inProgressCount int32
 	version         string
-	startedPlugin   bool
 
 	Cfg                   *setting.Cfg
 	RemoteCacheService    *remotecache.RemoteCache
@@ -120,10 +119,6 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 
 func (rs *RenderingService) pluginAvailable() bool {
 	return rs.RendererPluginManager.Renderer() != nil
-}
-
-func (rs *RenderingService) pluginStarted() bool {
-	return rs.startedPlugin
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
@@ -211,13 +206,6 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 
 	if rs.pluginAvailable() {
 		rs.log = pluginRendererLog
-
-		if !rs.pluginStarted() {
-			if err := rs.StartRenderer(ctx); err != nil {
-				return nil, err
-			}
-			rs.startedPlugin = true
-		}
 
 		rs.version = rs.RendererPluginManager.Renderer().Info.Version
 		rs.renderAction = rs.renderViaPlugin
