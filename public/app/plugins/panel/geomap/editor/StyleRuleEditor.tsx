@@ -12,75 +12,75 @@ export interface StyleRuleEditorSettings {
 export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, any, StyleRuleEditorSettings>> = (
   props
 ) => {
-  const { value: style, onChange, item } = props;
+  const { value, onChange, item } = props;
 
-  const LABEL_WIDTH = 20;
+  const WIDTH = 10;
   const styles = useStyles2(getStyles);
 
   const settings: StyleRuleEditorSettings = item.settings;
 
   const onChangeComparisonProperty = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      const copyStyle = style;
+      const style = value;
       onChange({
-        ...copyStyle,
+        ...style,
         rule: {
-          ...copyStyle.rule,
+          ...style.rule,
           property: e.currentTarget.value,
-          operation: copyStyle.rule?.operation ?? ComparisonOperation.EQ,
-          value: copyStyle.rule?.value ?? '',
+          operation: style.rule?.operation ?? ComparisonOperation.EQ,
+          value: style.rule?.value ?? '',
         },
       });
     },
-    [onChange, style]
+    [onChange, value]
   );
 
   const onChangeComparison = useCallback(
     (selection: SelectableValue) => {
-      const copyStyle = style;
+      const style = value;
       onChange({
-        ...copyStyle,
+        ...style,
         rule: {
-          ...copyStyle.rule,
+          ...style.rule,
           operation: selection.value ?? ComparisonOperation.EQ,
-          property: copyStyle.rule?.property ?? '',
-          value: copyStyle.rule?.value ?? '',
+          property: style.rule?.property ?? '',
+          value: style.rule?.value ?? '',
         },
       });
     },
-    [onChange, style]
+    [onChange, value]
   );
 
   const onChangeComparisonValue = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      const copyStyle = style;
+      const style = value;
       onChange({
-        ...copyStyle,
+        ...style,
         rule: {
-          ...copyStyle.rule,
+          ...style.rule,
           value: e.currentTarget.value,
-          operation: copyStyle.rule?.operation ?? ComparisonOperation.EQ,
-          property: copyStyle.rule?.property ?? '',
+          operation: style.rule?.operation ?? ComparisonOperation.EQ,
+          property: style.rule?.property ?? '',
         },
       });
     },
-    [onChange, style]
+    [onChange, value]
   );
 
   const onChangeColor = useCallback(
     (c: string) => {
-      const copyStyle = style;
-      onChange({ ...copyStyle, fillColor: c });
+      const style = value;
+      onChange({ ...style, fillColor: c });
     },
-    [onChange, style]
+    [onChange, value]
   );
 
   const onChangeStrokeWidth = useCallback(
     (num: number | undefined) => {
-      const copyStyle = style;
-      onChange({ ...copyStyle, strokeWidth: num ?? copyStyle.strokeWidth ?? 1 });
+      const style = value;
+      onChange({ ...style, strokeWidth: num ?? style.strokeWidth ?? 1 });
     },
-    [onChange, style]
+    [onChange, value]
   );
 
   const onDelete = useCallback(() => {
@@ -92,33 +92,34 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
       <Input
         type="text"
         placeholder={'Feature property'}
-        value={`${style?.rule?.property}`}
+        value={`${value?.rule?.property}`}
         onChange={onChangeComparisonProperty}
         aria-label={'Feature property'}
+        width={WIDTH}
       />
       <InlineField className={styles.inline} grow={true}>
         <Select
           menuShouldPortal
-          value={`${style?.rule?.operation}` ?? ComparisonOperation.EQ}
+          value={`${value?.rule?.operation}` ?? ComparisonOperation.EQ}
           options={settings.options}
           onChange={onChangeComparison}
           aria-label={'Comparison operator'}
-          width={LABEL_WIDTH}
+          width={WIDTH}
         />
       </InlineField>
       <Input
         type="text"
         placeholder={'value'}
-        value={`${style?.rule?.value}`}
+        value={`${value?.rule?.value}`}
         onChange={onChangeComparisonValue}
         aria-label={'Comparison value'}
       />
       <InlineField className={styles.color}>
-        <ColorPicker color={style?.fillColor} onChange={onChangeColor} />
+        <ColorPicker color={value?.fillColor} onChange={onChangeColor} />
       </InlineField>
       <InlineField label="Stroke" className={styles.inline}>
         <NumberInput
-          value={style?.strokeWidth ?? 1}
+          value={value?.strokeWidth ?? 1}
           min={1}
           max={20}
           step={0.5}

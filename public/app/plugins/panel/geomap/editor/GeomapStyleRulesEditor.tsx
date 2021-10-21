@@ -6,31 +6,31 @@ import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonMapper';
 import { StyleRuleEditor, StyleRuleEditorSettings } from './StyleRuleEditor';
 
 export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[], any, any>> = (props) => {
-  const { value: styles, onChange, context } = props;
+  const { value, onChange, context } = props;
 
-  const OPTIONS = useComparisonOptions();
+  const OPTIONS = getComparisonOperatorOptions();
 
   const onAddRule = useCallback(() => {
-    onChange([...styles, DEFAULT_STYLE_RULE]);
-  }, [onChange, styles]);
+    onChange([...value, DEFAULT_STYLE_RULE]);
+  }, [onChange, value]);
 
   const onRuleChange = useCallback(
     (idx) => (style: FeatureStyleConfig | undefined) => {
-      const copyStyles = [...styles];
+      const copyStyles = [...value];
       if (style) {
         copyStyles[idx] = style;
       } else {
         //assume undefined is only returned on delete
         copyStyles.splice(idx, 1);
       }
-      onChange([...copyStyles]);
+      onChange(copyStyles);
     },
-    [onChange, styles]
+    [onChange, value]
   );
 
   const styleOptions =
-    styles &&
-    styles.map((style, idx: number) => {
+    value &&
+    value.map((style, idx: number) => {
       const itemSettings: StandardEditorsRegistryItem<any, StyleRuleEditorSettings> = {
         settings: { options: OPTIONS },
       } as any;
@@ -56,7 +56,7 @@ export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[]
   );
 };
 
-const useComparisonOptions = () => {
+const getComparisonOperatorOptions = () => {
   const options = [];
   for (const value of Object.values(ComparisonOperation)) {
     options.push({ value: value, label: value });
