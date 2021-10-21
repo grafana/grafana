@@ -92,14 +92,14 @@ func TestTestReceivers(t *testing.T) {
 		"name":"receiver-1",
 		"grafana_managed_receiver_configs": [
 			{
-				"uid":"",
-				"name":"receiver-1",
-				"type":"email",
-				"disableResolveMessage":false,
-				"settings":{
+				"uid": "",
+				"name": "receiver-1",
+				"type": "email",
+				"disableResolveMessage": false,
+				"settings": {
 					"addresses":"example@email.com"
 				},
-				"secureFields":{}
+				"secureFields": {}
 			}
 		]
 	}]
@@ -109,22 +109,39 @@ func TestTestReceivers(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		var result apimodels.TestReceiversResult
-		require.NoError(t, json.NewDecoder(resp.Body).Decode(&result))
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
 
+		var result apimodels.TestReceiversResult
+		require.NoError(t, json.Unmarshal(b, &result))
 		require.Len(t, result.Receivers, 1)
 		require.Len(t, result.Receivers[0].Configs, 1)
-		require.Equal(t, apimodels.TestReceiversResult{
-			Receivers: []apimodels.TestReceiverResult{{
-				Name: "receiver-1",
-				Configs: []apimodels.TestReceiverConfigResult{{
-					Name:   "receiver-1",
-					UID:    result.Receivers[0].Configs[0].UID,
-					Status: "ok",
-				}},
-			}},
-			NotifedAt: result.NotifedAt,
-		}, result)
+
+		expectedJSON := fmt.Sprintf(`{
+	"alert": {
+		"annotations": {
+			"summary": "Notification test"
+		},
+		"labels": {
+			"alertname": "TestAlert",
+			"instance": "Grafana"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"name": "receiver-1",
+				"uid": "%s",
+				"status": "ok"
+			}
+		]
+	}],
+	"notified_at": "%s"
+}`,
+			result.Receivers[0].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
 
 		require.Len(t, mockEmails.emails, 1)
 		require.Equal(t, []string{"example@email.com"}, mockEmails.emails[0].To)
@@ -160,38 +177,54 @@ func TestTestReceivers(t *testing.T) {
 		"name":"receiver-1",
 		"grafana_managed_receiver_configs": [
 			{
-				"uid":"",
-				"name":"receiver-1",
-				"type":"email",
-				"disableResolveMessage":false,
-				"settings":{},
-				"secureFields":{}
+				"uid": "",
+				"name": "receiver-1",
+				"type": "email",
+				"disableResolveMessage": false,
+				"settings": {},
+				"secureFields": {}
 			}
 		]
 	}]
 }`, http.StatusBadRequest)
-		b, err := ioutil.ReadAll(resp.Body)
-		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, resp.Body.Close())
 		})
+
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
 		require.NoError(t, json.Unmarshal(b, &result))
 		require.Len(t, result.Receivers, 1)
 		require.Len(t, result.Receivers[0].Configs, 1)
-		require.Equal(t, apimodels.TestReceiversResult{
-			Receivers: []apimodels.TestReceiverResult{{
-				Name: "receiver-1",
-				Configs: []apimodels.TestReceiverConfigResult{{
-					Name:   "receiver-1",
-					UID:    result.Receivers[0].Configs[0].UID,
-					Status: "failed",
-					Error:  "the receiver is invalid: failed to validate receiver \"receiver-1\" of type \"email\": could not find addresses in settings",
-				}},
-			}},
-			NotifedAt: result.NotifedAt,
-		}, result)
+
+		expectedJSON := fmt.Sprintf(`{
+	"alert": {
+		"annotations": {
+			"summary": "Notification test"
+		},
+		"labels": {
+			"alertname": "TestAlert",
+			"instance": "Grafana"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"name": "receiver-1",
+				"uid": "%s",
+				"status": "failed",
+				"error": "the receiver is invalid: failed to validate receiver \"receiver-1\" of type \"email\": could not find addresses in settings"
+			}
+		]
+	}],
+	"notified_at": "%s"
+}`,
+			result.Receivers[0].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
 	})
 
 	t.Run("assert timed out receiver returns 408 Request Timeout", func(t *testing.T) {
@@ -225,14 +258,14 @@ func TestTestReceivers(t *testing.T) {
 		"name":"receiver-1",
 		"grafana_managed_receiver_configs": [
 			{
-				"uid":"",
-				"name":"receiver-1",
-				"type":"email",
-				"disableResolveMessage":false,
-				"settings":{
+				"uid": "",
+				"name": "receiver-1",
+				"type": "email",
+				"disableResolveMessage": false,
+				"settings": {
 					"addresses":"example@email.com"
 				},
-				"secureFields":{}
+				"secureFields": {}
 			}
 		]
 	}]
@@ -248,23 +281,40 @@ func TestTestReceivers(t *testing.T) {
 		})
 		require.Equal(t, http.StatusRequestTimeout, resp.StatusCode)
 
-		var result apimodels.TestReceiversResult
-		require.NoError(t, json.NewDecoder(resp.Body).Decode(&result))
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
 
+		var result apimodels.TestReceiversResult
+		require.NoError(t, json.Unmarshal(b, &result))
 		require.Len(t, result.Receivers, 1)
 		require.Len(t, result.Receivers[0].Configs, 1)
-		require.Equal(t, apimodels.TestReceiversResult{
-			Receivers: []apimodels.TestReceiverResult{{
-				Name: "receiver-1",
-				Configs: []apimodels.TestReceiverConfigResult{{
-					Name:   "receiver-1",
-					UID:    result.Receivers[0].Configs[0].UID,
-					Status: "failed",
-					Error:  "the receiver timed out: context deadline exceeded",
-				}},
-			}},
-			NotifedAt: result.NotifedAt,
-		}, result)
+
+		expectedJSON := fmt.Sprintf(`{
+	"alert": {
+		"annotations": {
+			"summary": "Notification test"
+		},
+		"labels": {
+			"alertname": "TestAlert",
+			"instance": "Grafana"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"name": "receiver-1",
+				"uid": "%s",
+				"status": "failed",
+				"error": "the receiver timed out: context deadline exceeded"
+			}
+		]
+	}],
+	"notified_at": "%s"
+}`,
+			result.Receivers[0].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
 	})
 
 	t.Run("assert multiple different errors returns 207 Multi Status", func(t *testing.T) {
@@ -298,26 +348,26 @@ func TestTestReceivers(t *testing.T) {
 		"name":"receiver-1",
 		"grafana_managed_receiver_configs": [
 			{
-				"uid":"",
-				"name":"receiver-1",
-				"type":"email",
-				"disableResolveMessage":false,
-				"settings":{},
-				"secureFields":{}
+				"uid": "",
+				"name": "receiver-1",
+				"type": "email",
+				"disableResolveMessage": false,
+				"settings": {},
+				"secureFields": {}
 			}
 		]
 	}, {
 		"name":"receiver-2",
 		"grafana_managed_receiver_configs": [
 			{
-				"uid":"",
-				"name":"receiver-2",
-				"type":"email",
-				"disableResolveMessage":false,
-				"settings":{
+				"uid": "",
+				"name": "receiver-2",
+				"type": "email",
+				"disableResolveMessage": false,
+				"settings": {
 					"addresses":"example@email.com"
 				},
-				"secureFields":{}
+				"secureFields": {}
 			}
 		]
 	}]
@@ -333,32 +383,329 @@ func TestTestReceivers(t *testing.T) {
 		})
 		require.Equal(t, http.StatusMultiStatus, resp.StatusCode)
 
-		var result apimodels.TestReceiversResult
-		require.NoError(t, json.NewDecoder(resp.Body).Decode(&result))
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
 
+		var result apimodels.TestReceiversResult
+		require.NoError(t, json.Unmarshal(b, &result))
 		require.Len(t, result.Receivers, 2)
 		require.Len(t, result.Receivers[0].Configs, 1)
 		require.Len(t, result.Receivers[1].Configs, 1)
-		require.Equal(t, apimodels.TestReceiversResult{
-			Receivers: []apimodels.TestReceiverResult{{
-				Name: "receiver-1",
-				Configs: []apimodels.TestReceiverConfigResult{{
-					Name:   "receiver-1",
-					UID:    result.Receivers[0].Configs[0].UID,
-					Status: "failed",
-					Error:  "the receiver is invalid: failed to validate receiver \"receiver-1\" of type \"email\": could not find addresses in settings",
-				}},
-			}, {
-				Name: "receiver-2",
-				Configs: []apimodels.TestReceiverConfigResult{{
-					Name:   "receiver-2",
-					UID:    result.Receivers[1].Configs[0].UID,
-					Status: "failed",
-					Error:  "the receiver timed out: context deadline exceeded",
-				}},
-			}},
-			NotifedAt: result.NotifedAt,
-		}, result)
+
+		expectedJSON := fmt.Sprintf(`{
+	"alert": {
+		"annotations": {
+			"summary": "Notification test"
+		},
+		"labels": {
+			"alertname": "TestAlert",
+			"instance": "Grafana"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"name": "receiver-1",
+				"uid": "%s",
+				"status": "failed",
+				"error": "the receiver is invalid: failed to validate receiver \"receiver-1\" of type \"email\": could not find addresses in settings"
+			}
+		]
+	}, {
+		"name":"receiver-2",
+		"grafana_managed_receiver_configs": [
+			{
+				"name": "receiver-2",
+				"uid": "%s",
+				"status": "failed",
+				"error": "the receiver timed out: context deadline exceeded"
+			}
+		]
+	}],
+	"notified_at": "%s"
+}`,
+			result.Receivers[0].Configs[0].UID,
+			result.Receivers[1].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
+	})
+}
+
+func TestTestReceiversAlertCustomization(t *testing.T) {
+	t.Run("assert custom annotations and labels are sent", func(t *testing.T) {
+		// Setup Grafana and its Database
+		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+		})
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+		store.Bus = bus.GetBus()
+
+		createUser(t, store, models.CreateUserCommand{
+			DefaultOrgRole: string(models.ROLE_EDITOR),
+			Login:          "grafana",
+			Password:       "password",
+		})
+
+		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
+		mockEmails := &mockEmailHandler{}
+		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		t.Cleanup(func() {
+			bus.AddHandlerCtx("", oldEmailBus)
+		})
+
+		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
+		// nolint
+		resp := postRequest(t, testReceiversURL, `{
+	"alert": {
+		"annotations": {
+			"annotation1": "value1"
+		},
+		"labels": {
+			"label1": "value1"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"uid":"",
+				"name":"receiver-1",
+				"type":"email",
+				"disableResolveMessage":false,
+				"settings":{
+					"addresses":"example@email.com"
+				},
+				"secureFields":{}
+			}
+		]
+	}]
+}`, http.StatusOK)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var result apimodels.TestReceiversResult
+		require.NoError(t, json.Unmarshal(b, &result))
+		require.Len(t, result.Receivers, 1)
+		require.Len(t, result.Receivers[0].Configs, 1)
+
+		expectedJSON := fmt.Sprintf(`{
+	"alert": {
+		"annotations": {
+			"annotation1": "value1",
+			"summary": "Notification test"
+		},
+		"labels": {
+			"alertname": "TestAlert",
+			"instance": "Grafana",
+			"label1": "value1"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"name": "receiver-1",
+				"uid": "%s",
+				"status": "ok"
+			}
+		]
+	}],
+	"notified_at": "%s"
+}`,
+			result.Receivers[0].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
+
+		require.Len(t, mockEmails.emails, 1)
+		require.Equal(t, []string{"example@email.com"}, mockEmails.emails[0].To)
+	})
+
+	t.Run("assert custom annotations can replace default annotations", func(t *testing.T) {
+		// Setup Grafana and its Database
+		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+		})
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+		store.Bus = bus.GetBus()
+
+		createUser(t, store, models.CreateUserCommand{
+			DefaultOrgRole: string(models.ROLE_EDITOR),
+			Login:          "grafana",
+			Password:       "password",
+		})
+
+		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
+		mockEmails := &mockEmailHandler{}
+		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		t.Cleanup(func() {
+			bus.AddHandlerCtx("", oldEmailBus)
+		})
+
+		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
+		// nolint
+		resp := postRequest(t, testReceiversURL, `{
+	"alert": {
+		"annotations": {
+			"summary": "This is a custom annotation"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"uid":"",
+				"name":"receiver-1",
+				"type":"email",
+				"disableResolveMessage":false,
+				"settings":{
+					"addresses":"example@email.com"
+				},
+				"secureFields":{}
+			}
+		]
+	}]
+}`, http.StatusOK)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var result apimodels.TestReceiversResult
+		require.NoError(t, json.Unmarshal(b, &result))
+		require.Len(t, result.Receivers, 1)
+		require.Len(t, result.Receivers[0].Configs, 1)
+
+		expectedJSON := fmt.Sprintf(`{
+	"alert": {
+		"annotations": {
+			"summary": "This is a custom annotation"
+		},
+		"labels": {
+			"alertname": "TestAlert",
+			"instance": "Grafana"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"name": "receiver-1",
+				"uid": "%s",
+				"status": "ok"
+			}
+		]
+	}],
+	"notified_at": "%s"
+}`,
+			result.Receivers[0].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
+
+		require.Len(t, mockEmails.emails, 1)
+		require.Equal(t, []string{"example@email.com"}, mockEmails.emails[0].To)
+	})
+
+	t.Run("assert custom labels can replace default label", func(t *testing.T) {
+		// Setup Grafana and its Database
+		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+		})
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+		store.Bus = bus.GetBus()
+
+		createUser(t, store, models.CreateUserCommand{
+			DefaultOrgRole: string(models.ROLE_EDITOR),
+			Login:          "grafana",
+			Password:       "password",
+		})
+
+		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
+		mockEmails := &mockEmailHandler{}
+		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		t.Cleanup(func() {
+			bus.AddHandlerCtx("", oldEmailBus)
+		})
+
+		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
+		// nolint
+		resp := postRequest(t, testReceiversURL, `{
+	"alert": {
+		"labels": {
+			"alertname": "This is a custom label"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"uid":"",
+				"name":"receiver-1",
+				"type":"email",
+				"disableResolveMessage":false,
+				"settings":{
+					"addresses":"example@email.com"
+				},
+				"secureFields":{}
+			}
+		]
+	}]
+}`, http.StatusOK)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var result apimodels.TestReceiversResult
+		require.NoError(t, json.Unmarshal(b, &result))
+		require.Len(t, result.Receivers, 1)
+		require.Len(t, result.Receivers[0].Configs, 1)
+
+		expectedJSON := fmt.Sprintf(`{
+	"alert": {
+		"annotations": {
+			"summary": "Notification test"
+		},
+		"labels": {
+			"alertname": "This is a custom label",
+			"instance": "Grafana"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"name": "receiver-1",
+				"uid": "%s",
+				"status": "ok"
+			}
+		]
+	}],
+	"notified_at": "%s"
+}`,
+			result.Receivers[0].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
+
+		require.Len(t, mockEmails.emails, 1)
+		require.Equal(t, []string{"example@email.com"}, mockEmails.emails[0].To)
 	})
 }
 
