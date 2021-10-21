@@ -34,7 +34,7 @@ You can configure Grafana managed notification policies as well as notification 
 1. To add a top level specific policy, go to the **Specific routing** section and click **New specific policy**.
 1. In **Matching labels** section, add one or more rules for matching alert labels. For more information, see ["How label matching works"](#how-label-matching-works).
 1. In **Contact point**, add the [contact point]({{< relref "./contact-points.md" >}}) to send notification to if alert matches only this specific policy and not any of the nested policies.
-1. Optionaly, enable **Continue matching subsequent sibling nodes** to continue matching nested policies even after the alert matched the parent policy. When this option is enabled, you can get more than one notification. Use it to send notification to a catch-all contact point as well as to one of more specific contact points handled by nested policies.
+1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching nested policies even after the alert matched the parent policy. When this option is enabled, you can get more than one notification. Use it to send notification to a catch-all contact point as well as to one of more specific contact points handled by nested policies.
 1. Optionally, enable **Override grouping** to specify the same grouping as the root policy. If this option is not enabled, the root policy grouping is used.
 1. Optionally, enable **Override general timings** to override the timing options configured in the group notification policy. 
 1. Click **Save policy** to save your changes.
