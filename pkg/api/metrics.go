@@ -37,7 +37,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		if dsType == expr.DatasourceName {
 			return hs.handleExpressions(c, reqDTO)
 		}
-		if prevType != "" && prevType != dsType {
+		if prevType != "" && prevType != dsType && dsType != "" {
 			// For mixed datasource case, each data source is sent in a single request.
 			// So only the datasource from the first query is needed. As all requests
 			// should be the same data source.
