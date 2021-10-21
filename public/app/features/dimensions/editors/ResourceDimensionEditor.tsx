@@ -101,7 +101,7 @@ export const ResourceDimensionEditor: FC<
         <InlineFieldRow>
           <InlineField label={null} grow>
             <Input
-              value={value?.fixed}
+              value={niceName(value?.fixed)}
               placeholder="Resource URL"
               readOnly={true}
               onClick={openModal}
@@ -121,6 +121,17 @@ export const ResourceDimensionEditor: FC<
     </>
   );
 };
+
+export function niceName(value?: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const idx = value.lastIndexOf('/');
+  if (idx > 0) {
+    return value.substring(idx + 1);
+  }
+  return value;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   icon: css`

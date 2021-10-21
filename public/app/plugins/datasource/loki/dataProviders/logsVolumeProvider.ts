@@ -14,11 +14,17 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { LokiQuery } from '../types';
-import { Observable } from 'rxjs';
+import { Observable, throwError, timeout } from 'rxjs';
 import { cloneDeep } from 'lodash';
 import LokiDatasource, { isMetricsQuery } from '../datasource';
 import { LogLevelColor } from '../../../../core/logs_model';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
+
+/**
+ * Logs volume query may be expensive as it requires counting all logs in the selected range. If such query
+ * takes too much time it may need be made more specific to limit number of logs processed under the hood.
+ */
+const TIMEOUT = 10000;
 
 export function createLokiLogsVolumeProvider(
   datasource: LokiDatasource,
@@ -30,6 +36,7 @@ export function createLokiLogsVolumeProvider(
     .map((target) => {
       return {
         ...target,
+        instant: false,
         expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
       };
     });
@@ -42,28 +49,44 @@ export function createLokiLogsVolumeProvider(
       data: [],
     });
 
-    const subscription = datasource.query(logsVolumeRequest).subscribe({
-      complete: () => {
-        const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume);
-        observer.next({
-          state: LoadingState.Done,
-          error: undefined,
-          data: aggregatedLogsVolume,
-        });
-        observer.complete();
-      },
-      next: (dataQueryResponse: DataQueryResponse) => {
-        rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
-      },
-      error: (error) => {
-        observer.next({
-          state: LoadingState.Error,
-          error: error,
-          data: [],
-        });
-        observer.error(error);
-      },
-    });
+    const subscription = datasource
+      .query(logsVolumeRequest)
+      .pipe(
+        timeout({
+          each: TIMEOUT,
+          with: () => throwError(new Error('Request timed-out. Please make your query more specific and try again.')),
+        })
+      )
+      .subscribe({
+        complete: () => {
+          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume);
+          if (aggregatedLogsVolume[0]) {
+            aggregatedLogsVolume[0].meta = {
+              custom: {
+                targets: dataQueryRequest.targets,
+                absoluteRange: { from: dataQueryRequest.range.from.valueOf(), to: dataQueryRequest.range.to.valueOf() },
+              },
+            };
+          }
+          observer.next({
+            state: LoadingState.Done,
+            error: undefined,
+            data: aggregatedLogsVolume,
+          });
+          observer.complete();
+        },
+        next: (dataQueryResponse: DataQueryResponse) => {
+          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+        },
+        error: (error) => {
+          observer.next({
+            state: LoadingState.Error,
+            error: error,
+            data: [],
+          });
+          observer.error(error);
+        },
+      });
     return () => {
       subscription?.unsubscribe();
     };

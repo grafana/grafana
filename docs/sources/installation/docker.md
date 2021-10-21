@@ -48,7 +48,7 @@ You can run the latest Grafana version, run a specific version, or run an unstab
 
 ### Run the latest stable version of Grafana
 
-> **Note:** If you are on a Linux system, you might need to add `sudo` before the command.
+> **Note:** If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
 
 ```bash
 docker run -d -p 3000:3000 grafana/grafana-enterprise
@@ -56,7 +56,7 @@ docker run -d -p 3000:3000 grafana/grafana-enterprise
 
 ### Run a specific version of Grafana
 
-> **Note:** If you are on a Linux system, you might need to add `sudo` before the command.
+> **Note:** If you are on a Linux system, you might need to add `sudo` before the command add your user to the `docker` group.
 
 ```bash
 docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:<version number>

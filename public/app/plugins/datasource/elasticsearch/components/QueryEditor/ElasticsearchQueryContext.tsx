@@ -36,7 +36,7 @@ export const ElasticsearchProvider = ({
     [onChange, onRunQuery]
   );
 
-  const reducer = combineReducers({
+  const reducer = combineReducers<Pick<ElasticsearchQuery, 'query' | 'alias' | 'metrics' | 'bucketAggs'>>({
     query: queryReducer,
     alias: aliasPatternReducer,
     metrics: metricsReducer,

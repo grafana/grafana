@@ -10,6 +10,8 @@ weight = 200
 
 If you are running Grafana in a Docker image, then you configure Grafana using [environment variables]({{< relref "../administration/configuration.md#configure-with-environment-variables" >}}) rather than directly editing the configuration file. If you want to save your data, then you also need to designate persistent storage or bind mounts for the Grafana container.
 
+> **Note:** These examples use the Grafana Enterprise docker image. You can use the Grafana Open Source edition by changing the docker image to `grafana/grafana-oss`.
+
 ## Save your Grafana data
 
 If you do not designate a location for information storage, then all your Grafana data disappears as soon as you stop your container. To save your data, you need to set up persistent storage or bind mounts for your container.
@@ -21,7 +23,7 @@ If you do not designate a location for information storage, then all your Grafan
 docker volume create grafana-storage
 
 # start grafana
-docker run -d -p 3000:3000 --name=grafana -v grafana-storage:/var/lib/grafana grafana/grafana
+docker run -d -p 3000:3000 --name=grafana -v grafana-storage:/var/lib/grafana grafana/grafana-enterprise
 ```
 
 ### Run Grafana container using bind mounts
@@ -33,7 +35,7 @@ mkdir data # creates a folder for your data
 ID=$(id -u) # saves your user id in the ID variable
 
 # starts grafana with your user id and using the data folder
-docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 grafana/grafana:7.2.1
+docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 grafana/grafana-enterprise:8.2.1
 ```
 
 ## Default paths
@@ -57,7 +59,7 @@ Example:
 
 ```bash
 # Run Grafana while logging to both standard out and /var/log/grafana/grafana.log
-docker run -p 3000:3000 -e "GF_LOG_MODE=console file" grafana/grafana
+docker run -p 3000:3000 -e "GF_LOG_MODE=console file" grafana/grafana-enterprise
 ```
 
 ## Configure Grafana with Docker Secrets
@@ -83,7 +85,7 @@ docker run -d \
 -e "GF_AWS_default_ACCESS_KEY_ID=YOUR_ACCESS_KEY" \
 -e "GF_AWS_default_SECRET_ACCESS_KEY=YOUR_SECRET_KEY" \
 -e "GF_AWS_default_REGION=us-east-1" \
-grafana/grafana
+grafana/grafana-enterprise
 ```
 
 You may also specify multiple profiles to `GF_AWS_PROFILES` (e.g.
