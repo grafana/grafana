@@ -2,7 +2,8 @@ import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
-import { getTimeField, sortDataFrame } from '../../dataframe';
+import { sortDataFrame } from '../../dataframe';
+import { getTimeField } from '../../dataframe/utils';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);

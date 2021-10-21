@@ -8,7 +8,7 @@ import { FieldMatcherID } from '../matchers/ids';
 import { RowVector } from '../../vector/RowVector';
 import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
 import { AsNumberVector } from '../../vector/AsNumberVector';
-import { getTimeField } from '../../dataframe/processDataFrame';
+import { getTimeField } from '../../dataframe/utils';
 import { defaults } from 'lodash';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 import { ensureColumnsTransformer } from './ensureColumns';

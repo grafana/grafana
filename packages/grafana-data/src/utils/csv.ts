@@ -3,8 +3,8 @@ import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
 import { defaults } from 'lodash';
 
 // Types
-import { DataFrame, Field, FieldConfig, FieldType } from '../types';
-import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { DataFrame, Field, FieldConfig, FieldType } from '../types/dataFrame';
+import { guessFieldTypeFromValue } from '../dataframe/utils';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 import { getFieldDisplayName } from '../field';
 import { formattedValueToString } from '../valueFormats';
