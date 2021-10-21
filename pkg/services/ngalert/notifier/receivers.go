@@ -41,8 +41,6 @@ type TestReceiverConfigResult struct {
 	Error  error
 }
 
-type InvalidAlertError error
-
 type InvalidReceiverError struct {
 	Receiver *apimodels.PostableGrafanaReceiver
 	Err      error
@@ -64,10 +62,7 @@ func (e ReceiverTimeoutError) Error() string {
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigParams) (*TestReceiversResult, error) {
 	// now represents the start time of the test
 	now := time.Now()
-	testAlert, err := newTestAlert(c, now, now)
-	if err != nil {
-		return nil, InvalidAlertError(err)
-	}
+	testAlert := newTestAlert(c, now, now)
 
 	// we must set a group key that is unique per test as some receivers use this key to deduplicate alerts
 	ctx = notify.WithGroupKey(ctx, testAlert.Labels.String()+now.String())
@@ -160,7 +155,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}
 
 	if len(jobs) == 0 {
-		return newTestReceiversResult(*testAlert, invalid, now), nil
+		return newTestReceiversResult(testAlert, invalid, now), nil
 	}
 
 	numWorkers := maxTestReceiversWorkers
@@ -183,7 +178,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 					Config:       next.Config,
 					ReceiverName: next.ReceiverName,
 				}
-				if _, err := next.Notifier.Notify(ctx, testAlert); err != nil {
+				if _, err := next.Notifier.Notify(ctx, &testAlert); err != nil {
 					v.Error = err
 				}
 				resultCh <- v
@@ -199,15 +194,15 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		results = append(results, next)
 	}
 
-	return newTestReceiversResult(*testAlert, append(invalid, results...), now), nil
+	return newTestReceiversResult(testAlert, append(invalid, results...), now), nil
 }
 
-func newTestAlert(c apimodels.TestReceiversConfigParams, startsAt, updatedAt time.Time) (*types.Alert, error) {
+func newTestAlert(c apimodels.TestReceiversConfigParams, startsAt, updatedAt time.Time) types.Alert {
 	var (
-		reservedAnnotations = model.LabelSet{
+		defaultAnnotations = model.LabelSet{
 			"summary": "Notification test",
 		}
-		reservedLabels = model.LabelSet{
+		defaultLabels = model.LabelSet{
 			"alertname": "TestAlert",
 			"instance":  "Grafana",
 		}
@@ -215,8 +210,8 @@ func newTestAlert(c apimodels.TestReceiversConfigParams, startsAt, updatedAt tim
 
 	alert := types.Alert{
 		Alert: model.Alert{
-			Labels:      reservedLabels,
-			Annotations: reservedAnnotations,
+			Labels:      defaultLabels,
+			Annotations: defaultAnnotations,
 			StartsAt:    startsAt,
 		},
 		UpdatedAt: updatedAt,
@@ -225,23 +220,17 @@ func newTestAlert(c apimodels.TestReceiversConfigParams, startsAt, updatedAt tim
 	if c.Alert != nil {
 		if c.Alert.Annotations != nil {
 			for k, v := range c.Alert.Annotations {
-				if _, ok := reservedAnnotations[k]; ok {
-					return nil, fmt.Errorf("%s is a reserved annotation", k)
-				}
 				alert.Annotations[k] = v
 			}
 		}
 		if c.Alert.Labels != nil {
 			for k, v := range c.Alert.Labels {
-				if _, ok := reservedLabels[k]; ok {
-					return nil, fmt.Errorf("%s is a reserved label", k)
-				}
 				alert.Labels[k] = v
 			}
 		}
 	}
 
-	return &alert, nil
+	return alert
 }
 
 func processNotifierError(config *apimodels.PostableGrafanaReceiver, err error) error {

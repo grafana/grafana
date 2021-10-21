@@ -528,7 +528,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		require.Equal(t, []string{"example@email.com"}, mockEmails.emails[0].To)
 	})
 
-	t.Run("assert reserved annotation returns 400 Bad Request", func(t *testing.T) {
+	t.Run("assert custom annotations can replace default annotations", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
@@ -556,7 +556,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		resp := postRequest(t, testReceiversURL, `{
 	"alert": {
 		"annotations": {
-			"summary": "This is a reserved annotation"
+			"summary": "This is a custom annotation"
 		}
 	},
 	"receivers": [{
@@ -574,7 +574,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 			}
 		]
 	}]
-}`, http.StatusBadRequest)
+}`, http.StatusOK)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
 			require.NoError(t, err)
@@ -582,10 +582,43 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"error":"summary is a reserved annotation"}`, string(b))
+
+		var result apimodels.TestReceiversResult
+		require.NoError(t, json.Unmarshal(b, &result))
+		require.Len(t, result.Receivers, 1)
+		require.Len(t, result.Receivers[0].Configs, 1)
+
+		expectedJSON := fmt.Sprintf(`{
+	"alert": {
+		"annotations": {
+			"summary": "This is a custom annotation"
+		},
+		"labels": {
+			"alertname": "TestAlert",
+			"instance": "Grafana"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"name": "receiver-1",
+				"uid": "%s",
+				"status": "ok"
+			}
+		]
+	}],
+	"notified_at": "%s"
+}`,
+			result.Receivers[0].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
+
+		require.Len(t, mockEmails.emails, 1)
+		require.Equal(t, []string{"example@email.com"}, mockEmails.emails[0].To)
 	})
 
-	t.Run("assert reserved label returns 400 Bad Request", func(t *testing.T) {
+	t.Run("assert custom labels can replace default label", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
@@ -613,7 +646,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		resp := postRequest(t, testReceiversURL, `{
 	"alert": {
 		"labels": {
-			"alertname": "This is a reserved label"
+			"alertname": "This is a custom label"
 		}
 	},
 	"receivers": [{
@@ -631,7 +664,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 			}
 		]
 	}]
-}`, http.StatusBadRequest)
+}`, http.StatusOK)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
 			require.NoError(t, err)
@@ -639,7 +672,40 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"error":"alertname is a reserved label"}`, string(b))
+
+		var result apimodels.TestReceiversResult
+		require.NoError(t, json.Unmarshal(b, &result))
+		require.Len(t, result.Receivers, 1)
+		require.Len(t, result.Receivers[0].Configs, 1)
+
+		expectedJSON := fmt.Sprintf(`{
+	"alert": {
+		"annotations": {
+			"summary": "Notification test"
+		},
+		"labels": {
+			"alertname": "This is a custom label",
+			"instance": "Grafana"
+		}
+	},
+	"receivers": [{
+		"name":"receiver-1",
+		"grafana_managed_receiver_configs": [
+			{
+				"name": "receiver-1",
+				"uid": "%s",
+				"status": "ok"
+			}
+		]
+	}],
+	"notified_at": "%s"
+}`,
+			result.Receivers[0].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
+
+		require.Len(t, mockEmails.emails, 1)
+		require.Equal(t, []string{"example@email.com"}, mockEmails.emails[0].To)
 	})
 }
 
