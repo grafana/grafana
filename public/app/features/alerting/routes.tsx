@@ -147,7 +147,7 @@ const alertingRoutes = [
 ];
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
-  if (cfg.featureToggles['alerting']) {
+  if (cfg.alertingEnabled || cfg.unifiedAlertingEnabled) {
     return alertingRoutes;
   }
 

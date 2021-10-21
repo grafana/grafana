@@ -9,12 +9,22 @@ export default function FeatureTogglePage() {
     <Page navModel={navModel}>
       <Page.Contents>
         <h1>Alerting is not enabled</h1>
-        To enable alerting, enable it in the server config:
-        <pre>
-          {`[alerting]
+        To enable alerting, enable it in the Grafana config:
+        <div>
+          <pre>
+            {`[unified_alerting]
 enable = true
 `}
-        </pre>
+          </pre>
+        </div>
+        <div>
+          For legacy alerting
+          <pre>
+            {`[alerting]
+enable = true
+`}
+          </pre>
+        </div>
       </Page.Contents>
     </Page>
   );
