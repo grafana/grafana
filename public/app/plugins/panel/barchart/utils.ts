@@ -11,7 +11,13 @@ import {
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
+import {
+  BarChartFieldConfig,
+  BarChartOptions,
+  defaultBarChartFieldConfig,
+  ValueRotationConfig,
+  ValueRotationMode,
+} from './types';
 import { BarsOptions, getConfig } from './bars';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
 import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
@@ -89,7 +95,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
-  const rawRotation = valueRotation.presetRotation ?? valueRotation.customRotation ?? 0;
+  const rawRotation = getRotationAngle(frame, valueRotation);
   if (vizOrientation.xOri === ScaleOrientation.Horizontal) {
     builder.setPadding(getRotationPadding(frame, rawRotation, theme, valueMaxLength));
   }
@@ -219,6 +225,23 @@ function shortenValue(value: string, length: number) {
     return value.substring(0, length).concat('...');
   } else {
     return value;
+  }
+}
+
+function getRotationAngle(frame: DataFrame, config: ValueRotationConfig): number {
+  switch (config.mode) {
+    case ValueRotationMode.None: {
+      return 0;
+    }
+    case ValueRotationMode.Custom: {
+      return config.customRotation || 0;
+    }
+    case ValueRotationMode.Slope: {
+      return -45;
+    }
+    case ValueRotationMode.Vertical: {
+      return -90;
+    }
   }
 }
 

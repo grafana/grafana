@@ -17,6 +17,7 @@ import {
   BarChartOptions,
   defaultBarChartFieldConfig,
   ValueRotationConfig,
+  ValueRotationMode,
 } from 'app/plugins/panel/barchart/types';
 import React from 'react';
 
@@ -83,7 +84,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
         defaultValue: VizOrientation.Auto,
       })
-      .addCustomEditor<void, ValueRotationConfig>({
+      .addCustomEditor({
         id: 'valueRotation',
         path: 'valueRotation',
         name: 'Rotate values',
@@ -96,7 +97,10 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       .addNumberInput({
         path: 'valueMaxLength',
         name: 'Value max length',
-        defaultValue: 20,
+        settings: {
+          placeholder: 'Auto',
+          min: 0,
+        },
       })
       .addRadio({
         path: 'showValue',
@@ -164,27 +168,29 @@ function countNumberFields(data?: DataFrame[]): number {
   return count;
 }
 
-const ROTATION_OPTIONS: Array<SelectableValue<number | undefined>> = [
-  { label: 'No rotation', value: 0 },
-  { label: '45°', value: -45 },
-  { label: '90°', value: -90 },
-  { label: 'Custom', value: undefined },
+const ROTATION_OPTIONS: Array<SelectableValue<ValueRotationMode>> = [
+  { label: 'None', value: ValueRotationMode.None },
+  { label: 'Slope', value: ValueRotationMode.Slope },
+  { label: 'Vertical', value: ValueRotationMode.Vertical },
+  { label: 'Custom', value: ValueRotationMode.Custom },
 ];
 
 const ValueRotationEditor: React.FC<StandardEditorProps<ValueRotationConfig>> = ({ value, onChange }) => {
   return (
     <HorizontalGroup>
       <RadioButtonGroup
-        value={value.presetRotation}
+        value={value.mode}
         options={ROTATION_OPTIONS}
-        onChange={(v: number | undefined) => {
-          onChange({ ...value, presetRotation: v });
+        onChange={(v: ValueRotationMode) => {
+          onChange({ mode: v, customRotation: value.customRotation });
         }}
       ></RadioButtonGroup>
-      {value.presetRotation === undefined && (
+      {value.mode === ValueRotationMode.Custom && (
         <Input
           value={value.customRotation || 0}
           type="number"
+          min={-90}
+          max={90}
           onChange={(e) => {
             onChange({ ...value, customRotation: e.currentTarget.valueAsNumber });
           }}

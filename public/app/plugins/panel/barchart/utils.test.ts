@@ -16,7 +16,7 @@ import {
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartFieldConfig, BarChartOptions } from './types';
+import { BarChartFieldConfig, BarChartOptions, ValueRotationMode } from './types';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({
@@ -87,7 +87,7 @@ describe('BarChart utils', () => {
         placement: 'bottom',
         calcs: [],
       },
-      valueRotation: { customRotation: -45 },
+      valueRotation: { mode: ValueRotationMode.None },
       valueMaxLength: 20,
       stacking: StackingMode.None,
       tooltip: {

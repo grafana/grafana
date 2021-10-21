@@ -10,11 +10,18 @@ import {
 } from '@grafana/schema';
 import { VizOrientation } from '@grafana/data';
 
+export enum ValueRotationMode {
+  None = 'none',
+  Slope = 'slope',
+  Vertical = 'vertical',
+  Custom = 'custom',
+}
+
 /**
  * @alpha
  */
 export interface ValueRotationConfig {
-  presetRotation?: number;
+  mode: ValueRotationMode;
   customRotation?: number;
 }
 
