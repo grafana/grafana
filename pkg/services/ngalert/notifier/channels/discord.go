@@ -19,11 +19,12 @@ import (
 
 type DiscordNotifier struct {
 	old_notifiers.NotifierBase
-	log        log.Logger
-	tmpl       *template.Template
-	Content    string
-	AvatarURL  string
-	WebhookURL string
+	log                log.Logger
+	tmpl               *template.Template
+	Content            string
+	AvatarURL          string
+	WebhookURL         string
+	UseDiscordUsername bool
 }
 
 func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) (*DiscordNotifier, error) {
@@ -38,6 +39,8 @@ func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) 
 		return nil, receiverInitError{Reason: "could not find webhook url property in settings", Cfg: *model}
 	}
 
+	useDiscordUsername := model.Settings.Get("use_discord_username").MustBool(false)
+
 	content := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
 
 	return &DiscordNotifier{
@@ -49,11 +52,12 @@ func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) 
 			Settings:              model.Settings,
 			SecureSettings:        model.SecureSettings,
 		}),
-		Content:    content,
-		AvatarURL:  avatarURL,
-		WebhookURL: discordURL,
-		log:        log.New("alerting.notifier.discord"),
-		tmpl:       t,
+		Content:            content,
+		AvatarURL:          avatarURL,
+		WebhookURL:         discordURL,
+		log:                log.New("alerting.notifier.discord"),
+		tmpl:               t,
+		UseDiscordUsername: useDiscordUsername,
 	}, nil
 }
 
@@ -61,7 +65,10 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	alerts := types.Alerts(as...)
 
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("username", "Grafana")
+
+	if !d.UseDiscordUsername {
+		bodyJSON.Set("username", "Grafana")
+	}
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
