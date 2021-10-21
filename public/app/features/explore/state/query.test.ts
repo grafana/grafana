@@ -3,7 +3,6 @@ import {
   addResultsToCache,
   cancelQueries,
   cancelQueriesAction,
-  changeAutoLogsVolume,
   clearCache,
   importQueries,
   loadLogsVolumeData,
@@ -338,7 +337,6 @@ describe('reducer', () => {
         explore: {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
-            autoLoadLogsVolume: false,
             datasourceInstance: {
               query: jest.fn(),
               meta: {
@@ -354,63 +352,6 @@ describe('reducer', () => {
 
       dispatch = store.dispatch;
       getState = store.getState;
-    });
-
-    it('should not load logs volume automatically after running the query if auto-loading is disabled', async () => {
-      setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = false;
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-    });
-
-    it('should load logs volume automatically after running the query if auto-loading is enabled', async () => {
-      setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = true;
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('when auto-load is enabled after running the query it should load logs volume data after changing auto-load option', async () => {
-      setupQueryResponse(getState());
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-
-      await dispatch(changeAutoLogsVolume(ExploreId.left, true));
-
-      expect(getState().explore.autoLoadLogsVolume).toEqual(true);
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('should allow loading logs volume on demand if auto-load is disabled', async () => {
-      setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = false;
-
-      await dispatch(runQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-
-      await dispatch(loadLogsVolumeData(ExploreId.left));
-
-      expect(getState().explore.autoLoadLogsVolume).toEqual(false);
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
     });
 
     it('should cancel any unfinished logs volume queries', async () => {
