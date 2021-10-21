@@ -16,7 +16,7 @@ export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[]
 
   const onRuleChange = useCallback(
     (idx) => (style: FeatureStyleConfig | undefined) => {
-      const copyStyles = styles;
+      const copyStyles = [...styles];
       if (style) {
         copyStyles[idx] = style;
       } else {
