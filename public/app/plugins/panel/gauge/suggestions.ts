@@ -10,6 +10,11 @@ export class GaugeSuggestionsSupplier {
       return;
     }
 
+    // for many fields / series this is probably not a good fit
+    if (dataSummary.numberFieldCount >= 50) {
+      return;
+    }
+
     const list = builder.getListAppender<GaugeOptions, {}>({
       name: SuggestionName.Gauge,
       pluginId: 'gauge',

@@ -173,6 +173,42 @@ scenario('Single time series with 100 data points', (ctx) => {
   });
 });
 
+scenario('30 time series with 100 data points', (ctx) => {
+  ctx.setData(
+    repeatFrame(
+      30,
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [...Array(100).keys()] },
+          { name: 'ServerA', type: FieldType.number, values: [...Array(100).keys()] },
+        ],
+      })
+    )
+  );
+
+  it('should not suggest timeline', () => {
+    expect(ctx.suggestions.find((x) => x.pluginId === 'state-timeline')).toBe(undefined);
+  });
+});
+
+scenario('50 time series with 100 data points', (ctx) => {
+  ctx.setData(
+    repeatFrame(
+      50,
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [...Array(100).keys()] },
+          { name: 'ServerA', type: FieldType.number, values: [...Array(100).keys()] },
+        ],
+      })
+    )
+  );
+
+  it('should not suggest gauge', () => {
+    expect(ctx.suggestions.find((x) => x.pluginId === 'gauge')).toBe(undefined);
+  });
+});
+
 scenario('Single frame with string and number field', (ctx) => {
   ctx.setData([
     toDataFrame({
@@ -259,3 +295,11 @@ scenario('Single frame with string with only string field', (ctx) => {
     }
   });
 });
+
+function repeatFrame(count: number, frame: DataFrame): DataFrame[] {
+  const frames: DataFrame[] = [];
+  for (let i = 0; i < count; i++) {
+    frames.push(frame);
+  }
+  return frames;
+}
