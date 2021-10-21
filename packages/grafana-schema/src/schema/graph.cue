@@ -7,6 +7,7 @@ LineInterpolation:  "linear" | "smooth" | "stepBefore" | "stepAfter"        @cue
 ScaleDistribution:  "linear" | "log" | "ordinal"                            @cuetsy(kind="enum")
 GraphGradientMode:  "none" | "opacity" | "hue" | "scheme"                   @cuetsy(kind="enum")
 StackingMode:       "none" | "normal" | "percent"                           @cuetsy(kind="enum")
+GraphTransform:     "constant" | "negative-Y"                               @cuetsy(kind="enum")
 BarAlignment:       -1 | 0 | 1                                              @cuetsy(kind="enum",memberNames="Before|Center|After")
 ScaleOrientation:   0 | 1                                                   @cuetsy(kind="enum",memberNames="Horizontal|Vertical")
 ScaleDirection:     1 | 1 | -1 | -1                                         @cuetsy(kind="enum",memberNames="Up|Right|Down|Left")
@@ -84,4 +85,5 @@ GraphFieldConfig: {
 	drawStyle?:       GraphDrawStyle
 	gradientMode?:    GraphGradientMode
 	thresholdsStyle?: GraphThresholdsStyleConfig
+	transform?:       GraphTransform
 } @cuetsy(kind="interface")
