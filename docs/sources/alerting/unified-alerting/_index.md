@@ -6,7 +6,7 @@ weight = 113
 
 # Overview of Grafana 8 alerts
 
-Grafana 8 alerts is an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerting. See also, [What's New with Grafana 8 alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
+Grafana 8 alerts is an [opt-in]({{< relref "./opt-in.md" >}}) feature. We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerting. See also, [What's New with Grafana 8 alerting]({{< relref "./difference-old-new.md" >}}).
 
 When Grafana 8 alerting is enabled, you can:
 

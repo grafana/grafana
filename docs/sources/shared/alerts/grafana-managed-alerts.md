@@ -18,7 +18,7 @@ Alerting rules can only query backend data sources with alerting enabled:
 
 ## Metrics from the alerting engine
 
-The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}). See also, [View alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}}).
+The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}). See also, [View alert rules and their current state]({{< relref "../../alerting/old-alerting/view-alerts.md" >}}).
 
 | Metric Name                                 | Type      | Description                                                                              |
 | ------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |

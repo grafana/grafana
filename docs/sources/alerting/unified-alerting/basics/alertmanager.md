@@ -12,7 +12,7 @@ Grafana includes built-in support for Prometheus Alertmanager. By default, notif
 
 > **Note:** Before v8.2, the configuration of the embedded Alertmanager was shared across organizations. If you are on an older Grafana version, we recommend that you use Grafana 8 Alerts only if you have one organization. Otherwise, your contact points are visible to all organizations.
 
-Grafana 8 alerting added support for external Alertmanager configuration. When you add an [Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}), the Alertmanager drop down shows a list of available external Alertmanager data sources. Select a data source to create and manage alerting for standalone Cortex or Loki data sources.
+Grafana 8 alerting added support for external Alertmanager configuration. When you add an [Alertmanager data source]({{< relref "../../../datasources/alertmanager.md" >}}), the Alertmanager drop down shows a list of available external Alertmanager data sources. Select a data source to create and manage alerting for standalone Cortex or Loki data sources.
 
 {{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" max-width="250px" caption="Select Alertmanager" >}}
 
@@ -26,7 +26,7 @@ Grafana managed alerts query backend data sources which has alerting enabled:
 
 ### Metrics from the alerting engine
 
-The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../../administration/view-server/internal-metrics.md" >}}). See also, [View alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}}).
+The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../../administration/view-server/internal-metrics.md" >}}). See also, [View alert rules and their current state]({{< relref "../alerting-rules/rule-list.md" >}}).
 
 | Metric Name                                       | Type      | Description                                                                              |
 | ------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
