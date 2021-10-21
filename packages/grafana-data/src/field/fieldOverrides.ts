@@ -29,7 +29,7 @@ import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { getFrameDisplayName } from './fieldState';
-import { getTimeField } from '../dataframe/processDataFrame';
+import { getTimeField } from '../dataframe/utils';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { getTemplateProxyForField } from './templateProxies';
 import { asHexString } from '../themes/colorManipulator';

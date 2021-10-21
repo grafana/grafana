@@ -18,7 +18,7 @@ import { DataFrameView } from '../dataframe/DataFrameView';
 import { GrafanaTheme2 } from '../themes';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
-import { getTimeField } from '../dataframe/processDataFrame';
+import { getTimeField } from '../dataframe/utils';
 import { getFieldMatcher } from '../transformations';
 import { FieldMatcherID } from '../transformations/matchers/ids';
 import { getFieldDisplayName } from './fieldState';
