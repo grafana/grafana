@@ -411,14 +411,10 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 
 		for i, k := range v.Values {
 			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
-
-			// We are replacing all NaN values with nil
-			var pointer *float64
 			value := float64(k.Value)
 			if !math.IsNaN(value) {
-				pointer = &value
+				valueField.Set(i, &value)
 			}
-			valueField.Set(i, pointer)
 		}
 
 		name := formatLegend(v.Metric, query)
