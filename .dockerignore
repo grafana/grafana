@@ -14,5 +14,6 @@ dump.rdb
 node_modules
 /local
 /tmp
-#*.yml
+*.yml
+!.yarnrc.yml
 *.md
