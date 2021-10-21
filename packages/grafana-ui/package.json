@@ -111,7 +111,7 @@
     "@types/react-table": "7.7.2",
     "@types/react-test-renderer": "17.0.1",
     "@types/react-transition-group": "4.4.0",
-    "@types/rollup-plugin-visualizer": "2.6.0",
+    "@types/rollup-plugin-visualizer": "4.2.1",
     "@types/slate": "0.47.2",
     "@types/slate-react": "0.22.5",
     "@types/tinycolor2": "1.4.1",
