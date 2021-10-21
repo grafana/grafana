@@ -1022,7 +1022,7 @@ def validate_scuemata_step():
         'name': 'validate-scuemata',
         'image': build_image,
         'depends_on': [
-            'build-backend',
+            'build-binary',
         ],
         'commands': [
             './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',

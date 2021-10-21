@@ -129,7 +129,7 @@ steps:
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
-  - build-backend
+  - build-binary
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
@@ -413,7 +413,7 @@ steps:
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
-  - build-backend
+  - build-binary
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
@@ -882,7 +882,7 @@ steps:
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
-  - build-backend
+  - build-binary
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
@@ -1275,7 +1275,7 @@ steps:
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
-  - build-backend
+  - build-binary
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
@@ -1846,7 +1846,7 @@ steps:
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
-  - build-backend
+  - build-binary
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
@@ -2228,7 +2228,7 @@ steps:
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
-  - build-backend
+  - build-binary
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
@@ -2792,7 +2792,7 @@ steps:
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
-  - build-backend
+  - build-binary
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
@@ -3144,7 +3144,7 @@ steps:
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
-  - build-backend
+  - build-binary
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
@@ -3557,6 +3557,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 667cbd9da7e2987a6cb9e15647b863036e0f2425316050bf49245c1527ca3497
+hmac: e43b329be55ea34ad50dae23edbe5eeaaf732f9f505e7738a02247703c90bdcc
 
 ...
