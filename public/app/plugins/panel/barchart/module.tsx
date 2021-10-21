@@ -97,6 +97,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       .addNumberInput({
         path: 'valueMaxLength',
         name: 'Value max length',
+        description: 'Axis value labels will be truncated to the length provided',
         settings: {
           placeholder: 'Auto',
           min: 0,
