@@ -456,14 +456,10 @@ func TestPrometheus_parseResponse(t *testing.T) {
 		}
 		res, err := parseResponse(value, query)
 		require.NoError(t, err)
-		var nilPointer *float64
 
+		var nilPointer *float64
 		require.Equal(t, res[0].Fields[1].Name, "Value")
 		require.Equal(t, res[0].Fields[1].At(0), nilPointer)
-
-		// Ensure the timestamps are UTC zoned
-		testValue := res[0].Fields[0].At(0)
-		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
 	})
 
 	t.Run("vector response should be parsed normally", func(t *testing.T) {
