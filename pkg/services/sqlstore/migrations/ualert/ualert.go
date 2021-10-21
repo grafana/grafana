@@ -220,6 +220,7 @@ func (m *migration) SQL(dialect migrator.Dialect) string {
 	return "code migration"
 }
 
+//nolint: gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
@@ -508,11 +509,9 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
 
-			// TODO: collect all errors
 			if err != nil {
 				return err
 			}
-
 		}
 	}
 
