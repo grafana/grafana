@@ -167,18 +167,18 @@ function createServiceMapDataFrames() {
   const nodes = createDF('Nodes', [
     { name: Fields.id },
     { name: Fields.title },
-    { name: Fields.mainStat, config: { unit: 'ms/t', displayName: 'Average response time' } },
+    { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
-      config: { unit: 't/min', displayName: 'Transactions per minute' },
+      config: { unit: 'r/sec', displayName: 'Requests per second' },
     },
   ]);
   const edges = createDF('Edges', [
     { name: Fields.id },
     { name: Fields.source },
     { name: Fields.target },
-    { name: Fields.mainStat, config: { unit: 't', displayName: 'Transactions' } },
-    { name: Fields.secondaryStat, config: { unit: 'ms/t', displayName: 'Average response time' } },
+    { name: Fields.mainStat, config: { unit: 'r', displayName: 'Requests' } },
+    { name: Fields.secondaryStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
   ]);
 
   return [nodes, edges];
@@ -257,8 +257,8 @@ function convertToDataFrames(
       title: nodeId,
       // NaN will not be shown in the node graph. This happens for a root client node which did not process
       // any requests itself.
-      mainStat: node.total ? (node.seconds / node.total) * 1000 : Number.NaN,
-      secondaryStat: node.total ? node.total / (rangeMs / (1000 * 60)) : Number.NaN,
+      mainStat: node.total ? (node.seconds / node.total) * 1000 : Number.NaN, // Average response time
+      secondaryStat: node.total ? Math.round((node.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });
   }
   for (const edgeId of Object.keys(edgesMap)) {
@@ -267,8 +267,8 @@ function convertToDataFrames(
       id: edgeId,
       source: edge.source,
       target: edge.target,
-      mainStat: edge.total,
-      secondaryStat: edge.total ? (edge.seconds / edge.total) * 1000 : Number.NaN,
+      mainStat: edge.total, // Requests
+      secondaryStat: edge.total ? (edge.seconds / edge.total) * 1000 : Number.NaN, // Average response time
     });
   }
 
