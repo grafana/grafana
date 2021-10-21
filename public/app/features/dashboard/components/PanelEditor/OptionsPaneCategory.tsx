@@ -31,26 +31,25 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     const styles = useStyles2(getStyles);
     const [queryParams, updateQueryParams] = useQueryParams();
     const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
-    const isManualClick = useRef(false);
+    const manualClickTime = useRef(0);
     const ref = useRef<HTMLDivElement>(null);
     const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
 
     useEffect(() => {
-      if (!isExpanded) {
-        if (forceOpen && forceOpen > 0) {
-          setIsExpanded(true);
-        }
-        // opened via url
-        if (isOpenFromUrl && !isManualClick.current && ref.current) {
-          setIsExpanded(true);
-          ref.current.scrollIntoView();
-        }
+      const elapsed = Date.now() - manualClickTime.current;
+      if (elapsed < 200) {
+        return; // ignore changes since the click handled the expected behavior
       }
-      isManualClick.current = false;
-    }, [forceOpen, isExpanded, isOpenFromUrl, isManualClick]);
+      if (isOpenFromUrl || (forceOpen && forceOpen > 0)) {
+        if (!isExpanded) {
+          setIsExpanded(true);
+        }
+        ref.current?.scrollIntoView();
+      }
+    }, [forceOpen, isExpanded, isOpenFromUrl, manualClickTime]);
 
     const onToggle = useCallback(() => {
-      isManualClick.current = true;
+      manualClickTime.current = Date.now();
       updateQueryParams({
         [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
       });
