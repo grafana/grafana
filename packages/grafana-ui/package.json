@@ -81,7 +81,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "16.0.0",
     "@rollup/plugin-image": "2.0.5",
-    "@rollup/plugin-node-resolve": "10.0.0",
+    "@rollup/plugin-node-resolve": "13.0.6",
     "@storybook/addon-a11y": "6.3.7",
     "@storybook/addon-essentials": "6.3.7",
     "@storybook/addon-knobs": "6.3.0",

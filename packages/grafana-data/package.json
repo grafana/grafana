@@ -36,7 +36,7 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "16.0.0",
     "@rollup/plugin-json": "4.1.0",
-    "@rollup/plugin-node-resolve": "10.0.0",
+    "@rollup/plugin-node-resolve": "13.0.6",
     "@types/braintree__sanitize-url": "4.1.0",
     "@types/jest": "26.0.15",
     "@types/jquery": "3.3.38",
