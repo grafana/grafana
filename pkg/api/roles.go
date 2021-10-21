@@ -97,7 +97,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Role: accesscontrol.RoleDTO{
 				Version:     1,
 				Name:        "fixed:datasources:compatibility:querier",
-				Description: "Gives access to query data sources when data source permissions is not available",
+				Description: "Query data sources when data source permissions is not in use",
 				Permissions: []accesscontrol.Permission{
 					{Action: ActionDatasourcesQuery},
 				},
