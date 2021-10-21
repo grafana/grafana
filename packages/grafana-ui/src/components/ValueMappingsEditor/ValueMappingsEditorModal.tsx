@@ -128,18 +128,16 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
 
       <Modal.ButtonRow
         leftItems={
-          <div style={{ width: '22em' }}>
-            <ValuePicker
-              label="Add a new mapping"
-              variant="secondary"
-              size="md"
-              icon="plus"
-              menuPlacement="auto"
-              isFullWidth={false}
-              options={mappingTypes}
-              onChange={onAddValueMapping}
-            />
-          </div>
+          <ValuePicker
+            label="Add a new mapping"
+            variant="secondary"
+            size="md"
+            icon="plus"
+            menuPlacement="auto"
+            minWidth={28}
+            options={mappingTypes}
+            onChange={onAddValueMapping}
+          />
         }
       >
         <Button variant="secondary" fill="outline" onClick={onClose}>
