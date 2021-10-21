@@ -10,6 +10,7 @@ type RoleMap = { [key: string]: Role };
 
 interface RolePickerMenuProps {
   builtInRole: string;
+  builtInRoles: { [key: string]: Role[] };
   options: Role[];
   appliedRoles: { [key: string]: boolean };
   onUpdate: (newBuiltInRole: string, newRoles: string[]) => void;
@@ -21,7 +22,7 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
-  const { builtInRole, options, appliedRoles, onUpdate, onClear } = props;
+  const { builtInRole, builtInRoles, options, appliedRoles, onUpdate, onClear } = props;
 
   const [selectedOptions, setSelectedOptions] = useState<RoleMap>({});
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState(builtInRole);
@@ -98,7 +99,10 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
                 <RoleMenuOption
                   data={option}
                   key={i}
-                  isSelected={!!(option.uid && selectedOptions[option.uid])}
+                  isSelected={
+                    !!selectedOptions[option.uid] || builtinRoleContainsFixed(builtInRoles, selectedBuiltInRole, option)
+                  }
+                  disabled={builtinRoleContainsFixed(builtInRoles, selectedBuiltInRole, option)}
                   onSelect={onSelect}
                   hideDescription
                 />
@@ -122,38 +126,58 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
 };
 
 const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:');
+
 const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
 
-interface SelectMenuOptionProps<T> {
+const builtinRoleContainsFixed = (builtInRoles: { [key: string]: Role[] }, selectedBuiltInRole: string, role: Role) => {
+  const fixedRoles = builtInRoles[selectedBuiltInRole];
+  if (!fixedRoles) {
+    return false;
+  }
+
+  return !!fixedRoles.find((fixedRole) => fixedRole.uid === role.uid);
+};
+
+interface RoleMenuOptionProps<T> {
   data: Role;
   onSelect: (value: Role) => void;
   isSelected: boolean;
   isFocused?: boolean;
+  disabled?: boolean;
   hideDescription?: boolean;
 }
 
-export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectMenuOptionProps<any>>>(
+export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps<any>>>(
   (props, ref) => {
-    const { data, isFocused, isSelected, onSelect, hideDescription } = props;
+    const { data, isFocused, isSelected, disabled, onSelect, hideDescription } = props;
 
     const theme = useTheme2();
     const styles = getSelectStyles(theme);
     const customStyles = useStyles2(getStyles);
 
+    const wrapperClassName = cx(
+      styles.option,
+      isFocused && styles.optionFocused,
+      disabled && customStyles.menuOptionDisabled
+    );
+
     const onChange = (event: FormEvent<HTMLElement>) => {
+      if (disabled) {
+        return;
+      }
       event.preventDefault();
       event.stopPropagation();
       onSelect(data);
     };
 
     return (
-      <div
-        ref={ref}
-        className={cx(styles.option, isFocused && styles.optionFocused)}
-        aria-label="Role picker option"
-        onClick={onChange}
-      >
-        <Checkbox value={isSelected} className={customStyles.menuOptionCheckbox} onChange={onChange} />
+      <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onChange}>
+        <Checkbox
+          value={isSelected}
+          className={customStyles.menuOptionCheckbox}
+          onChange={onChange}
+          disabled={disabled}
+        />
         <div className={styles.optionBody}>
           <span>{data.displayName || data.name}</span>
           {!hideDescription && data.description && <div className={styles.optionDescription}>{data.description}</div>}
@@ -193,6 +217,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
     menuButtonRow: css`
       background-color: ${theme.colors.background.primary};
       padding: ${theme.spacing(1)};
+    `,
+    menuOptionDisabled: css`
+      color: ${theme.colors.text.disabled};
+      cursor: not-allowed;
     `,
   };
 };

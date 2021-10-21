@@ -26,6 +26,7 @@ export const RolePicker = ({
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [appliedRoles, setAppliedRoles] = useState<{ [key: string]: boolean }>({});
+  const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [query, setQuery] = useState('');
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -42,13 +43,10 @@ export const RolePicker = ({
       for (const role of roles) {
         rolesMap[role] = true;
       }
+      setAppliedRoles(rolesMap);
 
       const builtinRoles = await getBuiltinRoles();
-      const selectedBuiltinRole = builtinRoles[builtinRole];
-      for (const fixedRole of selectedBuiltinRole) {
-        rolesMap[fixedRole.uid] = true;
-      }
-      setAppliedRoles(rolesMap);
+      setBuiltinRoles(builtinRoles);
     }
 
     fetchOptions();
@@ -108,6 +106,7 @@ export const RolePicker = ({
                 : roleOptions
             }
             builtInRole={builtinRole}
+            builtInRoles={builtinRoles}
             appliedRoles={appliedRoles}
             onUpdate={onUpdate}
             onClose={onClose}
