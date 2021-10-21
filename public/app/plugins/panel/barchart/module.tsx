@@ -170,7 +170,7 @@ function countNumberFields(data?: DataFrame[]): number {
 }
 
 const ROTATION_OPTIONS: Array<SelectableValue<ValueRotationMode>> = [
-  { label: 'None', value: ValueRotationMode.None },
+  { label: 'Off', value: ValueRotationMode.None },
   { label: 'Slope', value: ValueRotationMode.Slope },
   { label: 'Vertical', value: ValueRotationMode.Vertical },
   { label: 'Custom', value: ValueRotationMode.Custom },
