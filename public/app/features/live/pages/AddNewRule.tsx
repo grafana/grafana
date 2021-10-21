@@ -3,9 +3,10 @@ import { Input, Field, Button, ValuePicker, HorizontalGroup } from '@grafana/ui'
 import { DataSourcePicker, getBackendSrv } from '@grafana/runtime';
 import { AppEvents, DatasourceRef, LiveChannelScope, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
+import { Rule } from './types';
 
 interface Props {
-  onRuleAdded: () => void;
+  onRuleAdded: (rule: Rule) => void;
 }
 
 type PatternType = 'ds' | 'any';
@@ -53,10 +54,11 @@ export function AddNewRule({ onRuleAdded }: Props) {
           ],
         },
       })
-      .then(() => {
+      .then((v: any) => {
+        console.log('ADDED', v);
         setPattern(undefined);
         setPatternType(undefined);
-        onRuleAdded();
+        onRuleAdded(v.rule);
       })
       .catch((e) => {
         appEvents.emit(AppEvents.alertError, ['Error adding rule', e]);

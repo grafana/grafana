@@ -10,6 +10,7 @@ import { AddNewRule } from './AddNewRule';
 export default function PipelineAdminPage() {
   const [rules, setRules] = useState<Rule[]>([]);
   const [defaultRules, setDefaultRules] = useState<any[]>([]);
+  const [newRule, setNewRule] = useState<Rule>();
   const navModel = useNavModel('live-pipeline');
   const [error, setError] = useState<string>();
 
@@ -49,9 +50,15 @@ export default function PipelineAdminPage() {
           </div>
         </div>
 
-        <PipelineTable rules={rules} onRuleChanged={loadRules} />
+        <PipelineTable rules={rules} onRuleChanged={loadRules} selectRule={newRule} />
 
-        <AddNewRule onRuleAdded={loadRules} />
+        <AddNewRule
+          onRuleAdded={(r: Rule) => {
+            console.log('GOT', r, 'vs', rules[0]);
+            setNewRule(r);
+            loadRules();
+          }}
+        />
       </Page.Contents>
     </Page>
   );

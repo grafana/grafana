@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import { Tag, useStyles, IconButton } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -17,6 +17,7 @@ function renderOutputTags(key: string, output?: Output): React.ReactNode {
 interface Props {
   rules: Rule[];
   onRuleChanged: () => void;
+  selectRule?: Rule;
 }
 
 export const PipelineTable: React.FC<Props> = (props) => {
@@ -26,8 +27,11 @@ export const PipelineTable: React.FC<Props> = (props) => {
   const [clickColumn, setClickColumn] = useState<RuleType>('converter');
   const styles = useStyles(getStyles);
 
-  const onRowClick = (rule: Rule, event: any) => {
-    let column = event.target.getAttribute('data-column');
+  const onRowClick = (rule: Rule, event?: any) => {
+    if (!rule) {
+      return;
+    }
+    let column = event?.target?.getAttribute('data-column');
     if (!column || column === 'pattern') {
       column = 'converter';
     }
@@ -35,6 +39,13 @@ export const PipelineTable: React.FC<Props> = (props) => {
     setSelectedRule(rule);
     setOpen(true);
   };
+
+  // Supports selecting a rule from external config (after add rule)
+  useEffect(() => {
+    if (props.selectRule) {
+      onRowClick(props.selectRule);
+    }
+  }, [props.selectRule]);
 
   const onRemoveRule = (pattern: string) => {
     getBackendSrv()
