@@ -1,6 +1,8 @@
 package ualert
 
 import (
+	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,11 +11,12 @@ import (
 	"strings"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/util"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 const GENERAL_FOLDER = "General Alerting"
@@ -377,7 +380,20 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		if err := m.writeAlertmanagerConfig(orgID, amConfig, allChannelsPerOrg[orgID]); err != nil {
+		if len(allChannelsPerOrg[orgID]) == 0 {
+			// No channels, hence don't require Alertmanager config - skip it.
+			m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
+			continue
+		}
+
+		if err := amConfig.EncryptSecureSettings(); err != nil {
+			return err
+		}
+
+		if err := m.validateAlertmanagerConfig(orgID, amConfig); err != nil {
+		}
+
+		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
 			return err
 		}
 
@@ -389,16 +405,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	return nil
 }
 
-func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel) error {
-	if len(allChannels) == 0 {
-		// No channels, hence don't require Alertmanager config.
-		m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
-		return nil
-	}
-
-	if err := amConfig.EncryptSecureSettings(); err != nil {
-		return err
-	}
+func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserConfig) error {
 	rawAmConfig, err := json.Marshal(amConfig)
 	if err != nil {
 		return err
@@ -414,6 +421,95 @@ func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserC
 	})
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+//TODO: Test cases to test: failure at decryption, failure at invalid data (e.g. no slack URL), verify encryption layer - are they not-encrypted at this point?
+func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUserConfig) error {
+	for _, r := range config.AlertmanagerConfig.Receivers {
+		for _, gr := range r.GrafanaManagedReceivers {
+			// First, let's decode the secure settings - given they're stored as base64.
+			secureSettings := make(map[string][]byte, len(gr.SecureSettings))
+			for k, v := range gr.SecureSettings {
+				d, err := base64.StdEncoding.DecodeString(v)
+				if err != nil {
+					return err
+				}
+				secureSettings[k] = d
+			}
+
+			var (
+				cfg = &channels.NotificationChannelConfig{
+					UID:                   gr.UID,
+					OrgID:                 orgID,
+					Name:                  gr.Name,
+					Type:                  gr.Type,
+					DisableResolveMessage: gr.DisableResolveMessage,
+					Settings:              gr.Settings,
+					SecureSettings:        secureSettings,
+				}
+				err error
+			)
+
+			decryptFunc := func(_ context.Context, sjd map[string][]byte, key string, fallback string, secret string) string {
+				if value, ok := sjd[key]; ok {
+					decryptedData, err := util.Decrypt(value, secret)
+					if err != nil {
+						m.mg.Logger.Warn("unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
+						return fallback
+					}
+					return string(decryptedData)
+				}
+				return fallback
+			}
+
+			switch gr.Type {
+			case "email":
+				_, err = channels.NewEmailNotifier(cfg, nil) // Email notifier already has a default template.
+			case "pagerduty":
+				_, err = channels.NewPagerdutyNotifier(cfg, nil, decryptFunc)
+			case "pushover":
+				_, err = channels.NewPushoverNotifier(cfg, nil, decryptFunc)
+			case "slack":
+				_, err = channels.NewSlackNotifier(cfg, nil, decryptFunc)
+			case "telegram":
+				_, err = channels.NewTelegramNotifier(cfg, nil, decryptFunc)
+			case "victorops":
+				_, err = channels.NewVictoropsNotifier(cfg, nil)
+			case "teams":
+				_, err = channels.NewTeamsNotifier(cfg, nil)
+			case "dingding":
+				_, err = channels.NewDingDingNotifier(cfg, nil)
+			case "kafka":
+				_, err = channels.NewKafkaNotifier(cfg, nil)
+			case "webhook":
+				_, err = channels.NewWebHookNotifier(cfg, nil, decryptFunc)
+			case "sensugo":
+				_, err = channels.NewSensuGoNotifier(cfg, nil, decryptFunc)
+			case "discord":
+				_, err = channels.NewDiscordNotifier(cfg, nil)
+			case "googlechat":
+				_, err = channels.NewGoogleChatNotifier(cfg, nil)
+			case "LINE":
+				_, err = channels.NewLineNotifier(cfg, nil, decryptFunc)
+			case "threema":
+				_, err = channels.NewThreemaNotifier(cfg, nil, decryptFunc)
+			case "opsgenie":
+				_, err = channels.NewOpsgenieNotifier(cfg, nil, decryptFunc)
+			case "prometheus-alertmanager":
+				_, err = channels.NewAlertmanagerNotifier(cfg, nil, decryptFunc)
+			default:
+				return fmt.Errorf("notifier %s is not supported", gr.Type)
+			}
+
+			// TODO: collect all errors
+			if err != nil {
+				return err
+			}
+
+		}
 	}
 
 	return nil
