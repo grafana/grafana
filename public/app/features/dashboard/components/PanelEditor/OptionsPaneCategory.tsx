@@ -6,7 +6,6 @@ import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { getLocationSrv } from '@grafana/runtime';
 
 export interface OptionsPaneCategoryProps {
   id: string;
@@ -29,35 +28,35 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       isExpanded: initialIsExpanded,
     });
 
-    const [queryParams] = useQueryParams();
-    const isSelected = queryParams[CATEGORY_PARAM_NAME] === id;
-    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
-    const [toggleTime, setToggleTime] = useState<number>(0);
     const styles = useStyles2(getStyles);
+    const [queryParams, updateQueryParams] = useQueryParams();
+    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
+    const isManualClick = useRef(false);
     const ref = useRef<HTMLDivElement>(null);
+    const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
 
     useEffect(() => {
-      const elapsed = Date.now() - toggleTime;
-      if ((!isExpanded && forceOpen && forceOpen > 0) || isSelected) {
-        setIsExpanded(true);
-        // scroll on query change and not toggle change
-        if (elapsed > 100 && ref.current) {
+      if (!isExpanded) {
+        if (forceOpen && forceOpen > 0) {
+          setIsExpanded(true);
+        }
+        // opened via url
+        if (isOpenFromUrl && !isManualClick.current && ref.current) {
+          setIsExpanded(true);
           ref.current.scrollIntoView();
         }
       }
-    }, [forceOpen, isExpanded, isSelected, toggleTime]);
+      isManualClick.current = false;
+    }, [forceOpen, isExpanded, isOpenFromUrl, isManualClick]);
 
     const onToggle = useCallback(() => {
-      setToggleTime(Date.now());
-      getLocationSrv().update({
-        query: {
-          [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
-        },
-        partial: true,
+      isManualClick.current = true;
+      updateQueryParams({
+        [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
       });
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-    }, [setSavedState, setIsExpanded, isExpanded, id]);
+    }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
