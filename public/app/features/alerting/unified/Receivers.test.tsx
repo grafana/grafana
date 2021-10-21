@@ -78,6 +78,13 @@ const ui = {
   saveContactButton: byRole('button', { name: /save contact point/i }),
   newContactPointTypeButton: byRole('button', { name: /new contact point type/i }),
   testContactPointButton: byRole('button', { name: /Test/ }),
+  testContactPointModal: byRole('heading', { name: /test contact point/i }),
+  customContactPointOption: byRole('radio', { name: /custom/i }),
+  contactPointAnnotationSelect: (idx: number) => byTestId(`annotation-key-${idx}`),
+  contactPointAnnotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
+  contactPointLabelKey: (idx: number) => byTestId(`label-key-${idx}`),
+  contactPointLabelValue: (idx: number) => byTestId(`label-value-${idx}`),
+  testContactPoint: byRole('button', { name: /send test notification/i }),
   cancelButton: byTestId('cancel-button'),
 
   receiversTable: byTestId('receivers-table'),
@@ -183,22 +190,37 @@ describe('Receivers', () => {
     // try to test the contact point
     userEvent.click(ui.testContactPointButton.get());
 
+    await waitFor(() => expect(ui.testContactPointModal.get()).toBeInTheDocument());
+    userEvent.click(ui.customContactPointOption.get());
+    await waitFor(() => expect(ui.contactPointAnnotationSelect(0).get()).toBeInTheDocument());
+
+    // enter custom annotations and labels
+    await clickSelectOption(ui.contactPointAnnotationSelect(0).get(), 'Description');
+    await userEvent.type(ui.contactPointAnnotationValue(0).get(), 'Test contact point');
+    await userEvent.type(ui.contactPointLabelKey(0).get(), 'foo');
+    await userEvent.type(ui.contactPointLabelValue(0).get(), 'bar');
+    userEvent.click(ui.testContactPoint.get());
+
     await waitFor(() => expect(mocks.api.testReceivers).toHaveBeenCalled());
 
-    expect(mocks.api.testReceivers).toHaveBeenCalledWith('grafana', [
-      {
-        grafana_managed_receiver_configs: [
-          {
-            disableResolveMessage: false,
-            name: 'test',
-            secureSettings: {},
-            settings: { addresses: 'tester@grafana.com', singleEmail: false },
-            type: 'email',
-          },
-        ],
-        name: 'test',
-      },
-    ]);
+    expect(mocks.api.testReceivers).toHaveBeenCalledWith(
+      'grafana',
+      [
+        {
+          grafana_managed_receiver_configs: [
+            {
+              disableResolveMessage: false,
+              name: 'test',
+              secureSettings: {},
+              settings: { addresses: 'tester@grafana.com', singleEmail: false },
+              type: 'email',
+            },
+          ],
+          name: 'test',
+        },
+      ],
+      { annotations: { description: 'Test contact point' }, labels: { foo: 'bar' } }
+    );
   });
 
   it('Grafana receiver can be created', async () => {

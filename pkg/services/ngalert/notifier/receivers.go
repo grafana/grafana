@@ -41,8 +41,6 @@ type TestReceiverConfigResult struct {
 	Error  error
 }
 
-type InvalidAlertError error
-
 type InvalidReceiverError struct {
 	Receiver *apimodels.PostableGrafanaReceiver
 	Err      error
