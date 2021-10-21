@@ -300,7 +300,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         'commands': cmds,
     }
 
-def build_binary_step(edition, ver_mode, variants=None, is_downstream=False):
+def build_binary_step(binary, edition, ver_mode, variants=None, is_downstream=False):
     variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
@@ -311,8 +311,8 @@ def build_binary_step(edition, ver_mode, variants=None, is_downstream=False):
             'GITHUB_TOKEN': from_secret(github_token),
         }
         cmds = [
-            './bin/grabpl build-binary --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --binary grafana-server ${{DRONE_TAG}}'.format(
-                edition,
+            './bin/grabpl build-binary --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --binary {} ${{DRONE_TAG}}'.format(
+                edition, binary
             ),
         ]
     elif ver_mode == 'test-release':
@@ -320,8 +320,8 @@ def build_binary_step(edition, ver_mode, variants=None, is_downstream=False):
             'GITHUB_TOKEN': from_secret(github_token),
         }
         cmds = [
-            './bin/grabpl build-binary --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --binary grafana-server {}'.format(
-                edition, test_release_ver,
+            './bin/grabpl build-binary --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --binary {} {}'.format(
+                edition, binary, test_release_ver,
             ),
         ]
     else:
@@ -331,16 +331,16 @@ def build_binary_step(edition, ver_mode, variants=None, is_downstream=False):
             build_no = '$${SOURCE_BUILD_NUMBER}'
         env = {}
         cmds = [
-            './bin/grabpl build-binary --jobs 8 --edition {} --build-id {}{} --binary grafana-server'.format(
-                edition, build_no, variants_str,
+            './bin/grabpl build-binary --jobs 8 --edition {} --build-id {}{} --binary {}'.format(
+                edition, build_no, variants_str, binary,
             ),
         ]
 
     return {
-        'name': 'build-binary',
+        'name': 'build-binary' + '-' + binary,
         'image': build_image,
         'depends_on': [
-            'build-backend' + enterprise2_suffix(edition),
+            'initialize',
         ],
         'environment': env,
         'commands': cmds,
@@ -1022,7 +1022,7 @@ def validate_scuemata_step():
         'name': 'validate-scuemata',
         'image': build_image,
         'depends_on': [
-            'build-binary',
+            'build-binary-grafana-cli',
         ],
         'commands': [
             './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
