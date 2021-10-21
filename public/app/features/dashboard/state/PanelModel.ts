@@ -2,7 +2,7 @@
 import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 // Utils
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
@@ -27,7 +27,6 @@ import {
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
   PanelTransformationsChangedEvent,
-  RefreshEvent,
   RenderEvent,
 } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
