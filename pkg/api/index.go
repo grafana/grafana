@@ -314,7 +314,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
 			Text: "Cloud", Id: "live-cloud", Url: hs.Cfg.AppSubURL + "/live/cloud", Icon: "cloud-upload",
 		})
-
+		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
+			Text: "Test", Id: "live-test", Url: hs.Cfg.AppSubURL + "/live/test", Icon: "arrow",
+		})
 		navTree = append(navTree, &dtos.NavLink{
 			Id:           "live",
 			Text:         "Live",
@@ -484,6 +486,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			LightTheme:                 prefs.Theme == lightName,
 			Timezone:                   prefs.Timezone,
+			WeekStart:                  prefs.WeekStart,
 			Locale:                     locale,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,

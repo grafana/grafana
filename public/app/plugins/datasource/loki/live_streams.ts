@@ -38,7 +38,7 @@ export class LiveStreams {
     data.meta = { ...data.meta, preferredVisualisationType: 'logs' };
     data.refId = target.refId;
 
-    stream = webSocket(target.url).pipe(
+    stream = webSocket<LokiTailResponse>(target.url).pipe(
       map((response: LokiTailResponse) => {
         appendResponseToBufferedData(response, data);
         return [data];

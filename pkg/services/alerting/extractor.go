@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,14 +33,14 @@ func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.Sig
 func (e *DashAlertExtractor) lookupDatasourceID(dsName string) (*models.DataSource, error) {
 	if dsName == "" {
 		query := &models.GetDefaultDataSourceQuery{OrgId: e.OrgID}
-		if err := bus.Dispatch(query); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), query); err != nil {
 			return nil, err
 		}
 		return query.Result, nil
 	}
 
 	query := &models.GetDataSourceQuery{Name: dsName, OrgId: e.OrgID}
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), query); err != nil {
 		return nil, err
 	}
 

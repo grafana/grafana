@@ -28,7 +28,7 @@ import {
 import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { StyleMaker, getMarkerFromPath, MarkerShapePath } from '../../utils/regularShapes';
+import { StyleMaker, getMarkerFromPath } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
 
 // Configuration options for Circle overlays
@@ -55,7 +55,7 @@ const defaultOptions: MarkersConfig = {
   showLegend: true,
   markerSymbol: {
     mode: ResourceDimensionMode.Fixed,
-    fixed: MarkerShapePath.Circle,
+    fixed: 'img/icons/marker/circle.svg',
   },
 };
 
@@ -108,7 +108,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         }
 
         const markerPath =
-          getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl(MarkerShapePath.Circle);
+          getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
 
         const marker = getMarkerFromPath(config.markerSymbol?.fixed);
 
