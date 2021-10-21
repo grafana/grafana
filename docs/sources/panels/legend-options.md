@@ -10,8 +10,13 @@ Use the legend to adjust how a visualization displays series. This legend functi
 
 This topic currently applies to the following visualizations:
 
+- [Bar chart panel]({{< relref "../visualizations/bar-chart.md">}})
+- [Histogram panel]({{< relref "../visualizations/histogram.md">}})
 - [Pie chart panel]({{< relref "../visualizations/pie-chart-panel.md">}})
+- [State timeline panel]({{< relref "../visualizations/state-timeline.md">}})
+- [Status history panel]({{< relref "../visualizations/status-history.md">}})
 - [Time series panel]({{< relref "../visualizations/time-series/_index.md" >}})
+- XY Chart panel
 
 ## Toggle series
 
@@ -34,3 +39,11 @@ This creates a system override that hides the other series. You can view this ov
 Click on the series icon (colored line beside the series label) in the legend to change selected series color.
 
 ![Change legend series color](/static/img/docs/legend/legend-series-color-7-5.png)
+
+## Sort series
+
+To sort the series you need to change Legend mode to Table and add [calculations]({{< relref "./calculations-list.md" >}}) to the Legend values. Click the arrow to sort the values in the table by ascending or descending order. The ordering also affects the positions of the bars in Bar chart panel and the order of the stacking in Time series and Bar chart panel as well.
+
+> **Note:** This feature is only supported in these panels: Bar chart, Histogram, Time series, XY Chart.
+
+![Sort legend series](/static/img/docs/legend/legend-series-sort-8-3.png)
