@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { TooltipDisplayMode, StackingMode } from '@grafana/schema';
 import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
-import { TooltipPlugin, useTheme2 } from '@grafana/ui';
+import { measureText, TooltipPlugin, useTheme2 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
-import { prepareGraphableFrames } from './utils';
+import { getRotationAngle, prepareGraphableFrames } from './utils';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
@@ -26,6 +26,23 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
 
     return options.orientation;
   }, [width, height, options.orientation]);
+
+  const valueMaxLength = useMemo(() => {
+    // If no max length is set, limit the number of characters to a length where it will use a maximum of half of the height of the viz.
+    if (!options.valueMaxLength) {
+      const rotationAngle = getRotationAngle(options.valueRotation);
+      const textSize = measureText('M', theme.typography.fontSize).width; // M is usually the widest character so let's use that as an aproximation.
+      const maxHeightForValues = height / 2;
+
+      return (
+        maxHeightForValues /
+          (Math.sin(((rotationAngle >= 0 ? rotationAngle : rotationAngle * -1) * Math.PI) / 180) * textSize) -
+        3 //Subtract 3 for the "..." added to the end.
+      );
+    } else {
+      return options.valueMaxLength;
+    }
+  }, [height, options.valueRotation, theme, options.valueMaxLength]);
 
   // Force 'multi' tooltip setting or stacking mode
   const tooltip = useMemo(() => {
@@ -53,6 +70,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       height={height}
       {...options}
       orientation={orientation}
+      valueMaxLength={valueMaxLength}
     >
       {(config, alignedFrame) => {
         return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;

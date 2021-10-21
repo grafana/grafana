@@ -95,7 +95,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
-  const rawRotation = getRotationAngle(frame, valueRotation);
+  const rawRotation = getRotationAngle(valueRotation);
   if (vizOrientation.xOri === ScaleOrientation.Horizontal) {
     builder.setPadding(getRotationPadding(frame, rawRotation, theme, valueMaxLength));
   }
@@ -228,7 +228,7 @@ function shortenValue(value: string, length: number) {
   }
 }
 
-function getRotationAngle(frame: DataFrame, config: ValueRotationConfig): number {
+export function getRotationAngle(config: ValueRotationConfig): number {
   switch (config.mode) {
     case ValueRotationMode.None: {
       return 0;
