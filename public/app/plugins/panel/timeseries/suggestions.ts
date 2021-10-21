@@ -7,12 +7,13 @@ import {
   LineInterpolation,
   StackingMode,
 } from '@grafana/schema';
+import { SuggestionName } from 'app/types/suggestions';
 import { TimeSeriesOptions } from './types';
 
 export class TimeSeriesSuggestionsSupplier {
   getSuggestions(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<TimeSeriesOptions, GraphFieldConfig>({
-      name: 'Line chart',
+      name: SuggestionName.LineChart,
       pluginId: 'timeseries',
       options: {
         legend: {} as any,
@@ -38,11 +39,13 @@ export class TimeSeriesSuggestionsSupplier {
       return;
     }
 
-    list.append({});
+    list.append({
+      name: SuggestionName.LineChart,
+    });
 
     if (dataSummary.rowCountMax < 200) {
       list.append({
-        name: 'Line chart smooth',
+        name: SuggestionName.LineChartSmooth,
         fieldConfig: {
           defaults: {
             custom: {
@@ -54,30 +57,14 @@ export class TimeSeriesSuggestionsSupplier {
       });
     }
 
+    // Single series suggestions
     if (dataSummary.numberFieldCount === 1) {
       list.append({
-        name: 'Area chart',
+        name: SuggestionName.AreaChart,
         fieldConfig: {
           defaults: {
             custom: {
               fillOpacity: 25,
-            },
-          },
-          overrides: [],
-        },
-      });
-    } else {
-      // If more than 1 series suggest stacked chart
-      list.append({
-        name: 'Area chart stacked',
-        fieldConfig: {
-          defaults: {
-            custom: {
-              fillOpacity: 25,
-              stacking: {
-                mode: StackingMode.Normal,
-                group: 'A',
-              },
             },
           },
           overrides: [],
@@ -85,25 +72,60 @@ export class TimeSeriesSuggestionsSupplier {
       });
 
       list.append({
-        name: 'Area chart 100% stacked',
+        name: SuggestionName.BarChart,
         fieldConfig: {
           defaults: {
             custom: {
-              fillOpacity: 25,
-              stacking: {
-                mode: StackingMode.Percent,
-                group: 'A',
-              },
+              drawStyle: GraphDrawStyle.Bars,
+              fillOpacity: 100,
+              lineWidth: 1,
+              gradientMode: GraphGradientMode.Hue,
             },
           },
           overrides: [],
         },
       });
+
+      return;
     }
+
+    // Multiple series suggestions
+
+    list.append({
+      name: SuggestionName.AreaChartStacked,
+      fieldConfig: {
+        defaults: {
+          custom: {
+            fillOpacity: 25,
+            stacking: {
+              mode: StackingMode.Normal,
+              group: 'A',
+            },
+          },
+        },
+        overrides: [],
+      },
+    });
+
+    list.append({
+      name: SuggestionName.AreaChartStackedPercent,
+      fieldConfig: {
+        defaults: {
+          custom: {
+            fillOpacity: 25,
+            stacking: {
+              mode: StackingMode.Percent,
+              group: 'A',
+            },
+          },
+        },
+        overrides: [],
+      },
+    });
 
     if (dataSummary.rowCountTotal / dataSummary.numberFieldCount < 100) {
       list.append({
-        name: 'Bar chart stacked',
+        name: SuggestionName.BarChartStacked,
         fieldConfig: {
           defaults: {
             custom: {
@@ -122,7 +144,7 @@ export class TimeSeriesSuggestionsSupplier {
       });
 
       list.append({
-        name: 'Bar chart 100% stacked',
+        name: SuggestionName.BarChartStackedPercent,
         fieldConfig: {
           defaults: {
             custom: {

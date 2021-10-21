@@ -1,11 +1,12 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { BigValueColorMode, BigValueGraphMode } from '@grafana/ui';
+import { SuggestionName } from 'app/types/suggestions';
 import { StatPanelOptions } from './types';
 
 export class StatSuggestionsSupplier {
   getSuggestions(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<StatPanelOptions, {}>({
-      name: 'Stat',
+      name: SuggestionName.Stat,
       pluginId: 'stat',
       options: {},
       fieldConfig: {
@@ -35,6 +36,7 @@ export class StatSuggestionsSupplier {
         },
       });
       list.append({
+        name: SuggestionName.StatColoredBackground,
         options: {
           reduceOptions: {
             values: true,
@@ -55,6 +57,7 @@ export class StatSuggestionsSupplier {
       });
 
       list.append({
+        name: SuggestionName.StatColoredBackground,
         options: {
           reduceOptions: {
             values: false,

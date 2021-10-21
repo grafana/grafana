@@ -1,11 +1,12 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
+import { SuggestionName } from 'app/types/suggestions';
 import { PieChartLabels, PieChartOptions, PieChartType } from './types';
 
 export class PieChartSuggestionsSupplier {
   getSuggestions(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<PieChartOptions, {}>({
-      name: 'Piechart',
+      name: SuggestionName.PieChart,
       pluginId: 'piechart',
       options: {
         reduceOptions: {
@@ -39,7 +40,7 @@ export class PieChartSuggestionsSupplier {
 
       list.append({});
       list.append({
-        name: 'Piechart donut',
+        name: SuggestionName.PieChartDonut,
         options: {
           pieType: PieChartType.Donut,
         },
@@ -62,7 +63,7 @@ export class PieChartSuggestionsSupplier {
     });
 
     list.append({
-      name: 'Piechart donut',
+      name: SuggestionName.PieChartDonut,
       options: {
         reduceOptions: {
           values: false,
