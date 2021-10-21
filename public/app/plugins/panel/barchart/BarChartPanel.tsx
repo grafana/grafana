@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { TooltipDisplayMode, StackingMode } from '@grafana/schema';
 import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
-import { measureText, TooltipPlugin, useTheme2 } from '@grafana/ui';
+import { measureText, TooltipPlugin, UPLOT_AXIS_FONT_SIZE, useTheme2 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 import { getRotationAngle, prepareGraphableFrames } from './utils';
@@ -31,7 +31,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     // If no max length is set, limit the number of characters to a length where it will use a maximum of half of the height of the viz.
     if (!options.valueMaxLength) {
       const rotationAngle = getRotationAngle(options.valueRotation);
-      const textSize = measureText('M', theme.typography.fontSize).width; // M is usually the widest character so let's use that as an aproximation.
+      const textSize = measureText('M', UPLOT_AXIS_FONT_SIZE).width; // M is usually the widest character so let's use that as an aproximation.
       const maxHeightForValues = height / 2;
 
       return (

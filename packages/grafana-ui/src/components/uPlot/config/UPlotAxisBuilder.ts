@@ -24,6 +24,7 @@ export interface AxisProps {
   timeZone?: TimeZone;
 }
 
+export const UPLOT_AXIS_FONT_SIZE = 12;
 const labelPad = 8;
 
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
@@ -52,7 +53,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       const maxTicks = plotDim / defaultSpacing;
       const increment = (scaleMax - scaleMin) / maxTicks;
       const sample = formatTime(self, [scaleMin], axisIdx, defaultSpacing, increment);
-      const width = measureText(sample[0], this.props.theme.typography.fontSize).width + 18;
+      const width = measureText(sample[0], UPLOT_AXIS_FONT_SIZE).width + 18;
       return width;
     }
 
@@ -66,10 +67,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     let axisSize = axis.ticks!.size!;
 
     if (axis.side === 2) {
-      axisSize += axis!.gap! + this.props.theme.typography.fontSize;
+      axisSize += axis!.gap! + UPLOT_AXIS_FONT_SIZE;
     } else if (values?.length) {
       let maxTextWidth = values.reduce(
-        (acc, value) => Math.max(acc, measureText(value, this.props.theme.typography.fontSize).width),
+        (acc, value) => Math.max(acc, measureText(value, UPLOT_AXIS_FONT_SIZE).width),
         0
       );
       axisSize += axis!.gap! + axis!.labelGap! + maxTextWidth;
@@ -97,7 +98,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       size,
     } = this.props;
 
-    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
+    const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
 
     const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
 
@@ -141,7 +142,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     if (label != null && label.length > 0) {
       config.label = label;
-      config.labelSize = theme.typography.fontSize + labelPad;
+      config.labelSize = UPLOT_AXIS_FONT_SIZE + labelPad;
       config.labelFont = font;
       config.labelGap = labelPad;
     }

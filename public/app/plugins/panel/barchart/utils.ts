@@ -20,7 +20,7 @@ import {
 } from './types';
 import { BarsOptions, getConfig } from './bars';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
-import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
+import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
 import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { Padding } from 'uplot';
 
@@ -252,7 +252,7 @@ function getRotationPadding(
   valueMaxLength: number
 ): Padding {
   const values = frame.fields[0].values;
-  const fontSize = theme.typography.fontSize;
+  const fontSize = UPLOT_AXIS_FONT_SIZE;
   const displayProcessor = frame.fields[0].display ?? ((v) => v);
   let maxLength = 0;
   for (let i = 0; i < values.length; i++) {
