@@ -43,6 +43,25 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
     setIsOpen(false);
   };
 
+  const sanitizeLabel = (item: T | undefined) => {
+    const timeUnits = {
+      s: 'Second',
+      m: 'Minute',
+      h: 'Hour',
+      d: 'Day',
+    };
+    if (item !== undefined) {
+      const newItem = item?.split('');
+      const unit = newItem.pop();
+      if (Number(newItem.join('')) !== 1) {
+        return newItem.join('') + timeUnits[unit] + 's';
+      }
+      return newItem.join('') + timeUnits[unit];
+    } else {
+      return '';
+    }
+  };
+
   return (
     <ButtonGroup className={styles.wrapper}>
       <ToolbarButton
@@ -66,6 +85,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
                     label={(item.label || item.value) as string}
                     onClick={() => onChangeInternal(item)}
                     active={item.value === value?.value}
+                    ariaLabel={sanitizeLabel(item.value)}
                   />
                 ))}
               </Menu>
