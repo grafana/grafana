@@ -793,8 +793,6 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
     dependencies = [
         'end-to-end-tests' + enterprise2_suffix(edition),
-        'mysql-integration-tests',
-        'postgres-integration-tests',
     ]
 
     if edition in ('enterprise', 'enterprise2'):
