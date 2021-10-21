@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import MonacoEditor, { loader as monacoEditorLoader, useMonaco } from '@monaco-editor/react';
 import defineThemes from './theme';
 import { useTheme2 } from '../../themes';
-import type { Monaco, ReactMonacoEditorProps } from './types';
+import type { ReactMonacoEditorProps } from './types';
 
 let initalized = false;
 function initMonaco() {
