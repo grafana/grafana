@@ -403,19 +403,24 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 
 	for _, v := range matrix {
 		tags := make(map[string]string, len(v.Metric))
-		timeVector := make([]time.Time, 0, len(v.Values))
-		values := make([]float64, 0, len(v.Values))
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-		for _, k := range v.Values {
-			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
-			values = append(values, float64(k.Value))
+
+		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
+		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, len(v.Values))
+
+		for i, k := range v.Values {
+			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			valueField.Set(i, float64(k.Value))
 		}
+
 		name := formatLegend(v.Metric, query)
-		frame := data.NewFrame(name,
-			data.NewField("Time", nil, timeVector),
-			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
+		timeField.Name = data.TimeSeriesTimeFieldName
+		valueField.Name = data.TimeSeriesValueFieldName
+		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+
+		frame := data.NewFrame(name, timeField, valueField)
 		frame.Meta = &data.FrameMeta{
 			Custom: map[string]string{
 				"resultType": "matrix",
