@@ -26,8 +26,8 @@ For Cortex and Loki data sources to work with Grafana 8.0 alerting, enable the r
 1. In Step 1, add the rule name, type, and storage location.
     - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
     - From the **Rule type** drop down, select **Cortex / Loki managed alert**.
-    - From the **Select data source** drop down, select a Prometheus or Loki data source. (Only Prometheus data sources that support Cortex ruler API are available for selection).
-    - From the **Namespace** drop down, select an existing rule namespace. Otherwise click **Add new** and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose.
+    - From the **Select data source** drop down, select an external  Prometheus, an external Loki, or a Grafana Cloud data source. 
+    - From the **Namespace** drop down, select an existing rule namespace. Otherwise, click **Add new** and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose.
     - From the **Group** drop down, select an existing group within the selected namespace. Otherwise, click **Add new** and enter a name to create a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
     {{< figure src="/static/img/docs/alerting/unified/rule-edit-cortex-alert-type-8-0.png" max-width="550px" caption="Alert details" >}}
 1. In Step 2, add the query to evaluate.
@@ -35,7 +35,7 @@ For Cortex and Loki data sources to work with Grafana 8.0 alerting, enable the r
     {{< figure src="/static/img/docs/alerting/unified/rule-edit-cortex-query-8-0.png" max-width="550px" caption="Alert details" >}}
 1. In Step 3, add conditions.
     - In the **For** text box, specify the duration for which the condition must be true before an alert fires. If you specify `5m`, the condition must be true for 5 minutes before the alert fires.
-        > **Note:** Once a condition is breached, the alert goes into the Pending state.  If the condition remains breached for the duration specified, the alert transitions to the Firing state, else it reverts back to the Normal state.  
+        > **Note:** Once a condition is breached, the alert goes into the Pending state.  If the condition remains breached for the duration specified, the alert transitions to the Firing state, else it reverts to the Normal state.  
 1. In Step 4, add additional metadata associated with the rule.
     - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "./alert-annotation-label.md" >}}).
     -  Add Runbook URL, panel, dashboard, and alert IDs.  

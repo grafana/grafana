@@ -7,7 +7,7 @@ weight = 114
 
 # What's new in Grafana 8 alerting
 
-Grafana 8.0 alerting centralize alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts, as well as see alerting information from Prometheus-compatible data sources in a single, searchable view.
+Grafana 8.0 alerting has several enhancements over legacy dashboard alerting.
 
 ## Multi-dimensional alerting
 
@@ -15,7 +15,7 @@ You can now create alerts that give you system-wide visibility with a single ale
 
 ## Create alerts outside of Dashboards
 
-Unlike legacy dashboard alerts, Grafana 8 Alerts allow you to create queries and expressions that combine data from multiple sources in unique ways. You can still link dashboards and panels to alerting rules using their ID and quickly troubleshoot the system under observation.
+Unlike legacy dashboard alerts, Grafana 8 alerts allow you to create queries and expressions that combine data from multiple sources in unique ways. You can still link dashboards and panels to alerting rules using their ID and quickly troubleshoot the system under observation.
 
 ## Create Loki and Cortex alerting rules
 

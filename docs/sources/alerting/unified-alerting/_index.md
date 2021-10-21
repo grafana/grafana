@@ -6,7 +6,7 @@ weight = 113
 
 # Overview of Grafana 8 alerts
 
-Grafana 8 alerts is an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerts. See also, [What's New with Grafana 8 alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
+Grafana 8 alerts is an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerting. See also, [What's New with Grafana 8 alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
 
 When Grafana 8 alerting is enabled, you can:
 
@@ -20,5 +20,5 @@ When Grafana 8 alerting is enabled, you can:
 
 ## Limitation
 
-- Grafana 8 alerting doesn’t support high availability. Alert notifications are not de-duplicated and load balancing is not supported between instances. For example, silences from one instance will not appear in the other.
+- Grafana 8 alerting doesn’t support high availability. Alert notifications are not de-duplicated and load balancing is not supported between instances. For example, silences from one instance will not appear in another.
 - Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch rules from all other supported data sources at this time.

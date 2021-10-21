@@ -1,15 +1,15 @@
 +++
-title = "Silence alert notifications"
-description = "Silence alert notifications"
+title = "Silences"
+description = "Silences alert notifications"
 keywords = ["grafana", "alerting", "silence", "mute"]
 weight = 400
 +++
 
-# Silence alert notifications
+# Silences
 
-You can use silences to stop notifications from one or more alerting rules. Silences do not prevent alert rules from being evaluated. Nor do they not stop alerting instances from being shown in the user interface. Silences only stop notifications from getting created. A silence lasts for only a specified window of time.
+Use silences to stop notifications from one or more alerting rules. Silences do not prevent alert rules from being evaluated. Nor do they not stop alerting instances from being shown in the user interface. Silences only stop notifications from getting created. A silence lasts for only a specified window of time.
 
-Grafana 8 alerting supports managing of silences for an external Alertmanager. 
+You can configure Grafana managed silences as well as silences for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./alertmanager.md" >}}). 
 
 ## Add a silence
 

@@ -17,4 +17,4 @@ In Grafana 8 alerting, you can:
 - [Edit Cortex or Loki rule groups and namespaces]({{< relref "./edit-cortex-loki-namespace-group.md" >}})
 - [Create Grafana managed alert rule]({{< relref "./create-grafana-managed-rule.md" >}})
 - [State and Health of alerting rules]({{< relref "./state-and-health.md" >}})
-- [View existing alert rules and their current state]({{< relref "./rule-list.md" >}})
+- [Manage alerting rules]({{< relref "./rule-list.md" >}})

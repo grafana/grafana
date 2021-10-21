@@ -8,15 +8,15 @@ weight = 110
 Alerts allow you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
 Grafana 8.0 has new and improved alerting that centralizes alerting information in a single, searchable view and allows you to:
-- Create and manage Grafana managed alerts.
+- Create and manage Grafana managed alerts
 - Create and manage Cortex and Loki managed alerts
 - View alerting information from Prometheus compatible data sources
 
 Grafana 8 alerting have four key components:
 
-- Alerting rule - An evaluation criteria that determine whether an alert will fire. It consists of one or more queries and/or expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
-- Contact point - A channel for sending notifications when the conditions of an alerting rule are met.
-- Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications.
+- Alerting rule - Evaluation criteria that determine whether an alert will fire. It consists of one or more queries and/or expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
+- Contact point - Channel for sending notifications when the conditions of an alerting rule are met.
+- Notification policy - Set of matching and grouping criteria used to determine where and how frequently to send notifications.
 - Silences - Date and matching criteria used to silence notifications.
 
 To learn more, see [What's New with Grafana 8 alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).

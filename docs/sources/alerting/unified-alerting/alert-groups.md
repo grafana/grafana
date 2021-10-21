@@ -7,18 +7,16 @@ weight = 400
 
 # Alert groups
 
-Alert groups show alerts from an Alertmanager instance. The Alertmanager group alerts are based on common label values. By default, grouping is by the label keys for the root policy in [notification policies]({{< relref "./notification-policies.md" >}}).
-
-Grouping common alerts into a single alert group prevent duplicate alerts from being fired by grouping common alerts into a single alert group. 
+Alert groups show grouped alerts from an Alertmanager instance.  By default, the alerts are grouped by the label keys for the root policy in [notification policies]({{< relref "./notification-policies.md" >}}). Grouping common alerts into a single alert group prevents duplicate alerts from being fired.
 
 ## View alert groupings
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **Alert grouping** to open the page listing existing groups. 
 1. From the **Alertmanager** drop down, select an external Alertmanager as your data source. By default, the `Grafana` Alertmanager is selected.
-1. From **custom group by** drop down, select a combination of labels to view a grouping other than the default. This is useful for debugging and verifying your notification policies grouping.
+1. From **custom group by** drop down, select a combination of labels to view a grouping other than the default. This is useful for debugging and verifying your grouping of notification policies.
 
-If an alert does not contain labels specified in the grouping of the route policy or the custom grouping it is added to a catch all group with a header of `No grouping`.
+If an alert does not contain labels specified in the grouping of the root policy or the custom grouping, it is added to a catch all group with a header of `No grouping`.
 
 ## Filter alerts
 
