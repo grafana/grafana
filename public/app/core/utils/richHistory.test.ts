@@ -281,7 +281,7 @@ describe('richHistory', () => {
       deleteAllFromRichHistory();
       expect(store.exists(key)).toBeFalsy();
     });
-    it('should load from localStorage data in old format', () => {
+    it('should load from localStorage data in old format #1', () => {
       const oldHistoryItem = { ...mock.storedHistory[0], queries: ['test query 1', 'test query 2', 'test query 3'] };
       store.setObject(key, [oldHistoryItem]);
       const expectedHistoryItem = {
@@ -298,6 +298,32 @@ describe('richHistory', () => {
           {
             expr: 'test query 3',
             refId: 'C',
+          },
+        ],
+      };
+
+      const result = getRichHistory();
+      expect(result).toStrictEqual([expectedHistoryItem]);
+    });
+
+    it('should load from localStorage data in old format #2', () => {
+      const oldHistoryItem = {
+        ...mock.storedHistory[0],
+        queries: ['{"refId":"A","key":"key1","metrics":[]}', '{"refId":"B","key":"key2","metrics":[]}'],
+      };
+      store.setObject(key, [oldHistoryItem]);
+      const expectedHistoryItem = {
+        ...mock.storedHistory[0],
+        queries: [
+          {
+            refId: 'A',
+            key: 'key1',
+            metrics: [],
+          },
+          {
+            refId: 'B',
+            key: 'key2',
+            metrics: [],
           },
         ],
       };
