@@ -11,4 +11,12 @@ export enum SuggestionName {
   PieChartDonut = 'Pie chart donut',
   Stat = 'Stat',
   StatColoredBackground = 'Stat colored background',
+  Gauge = 'Gauge',
+  GaugeNoThresholds = 'Gauge no thresholds',
+  BarGaugeBasic = 'Bar gauge basic',
+  BarGaugeLCD = 'Bar gauge LCD',
+  Table = 'Table',
+  StateTimeline = 'StateTimeline',
+  TextPanel = 'Text panel',
+  DashboardList = 'Dashboard list',
 }

@@ -5,6 +5,12 @@ import { StatPanelOptions } from './types';
 
 export class StatSuggestionsSupplier {
   getSuggestions(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
+
+    if (!dataSummary.hasData) {
+      return;
+    }
+
     const list = builder.getListAppender<StatPanelOptions, {}>({
       name: SuggestionName.Stat,
       pluginId: 'stat',
@@ -22,8 +28,6 @@ export class StatSuggestionsSupplier {
         }
       },
     });
-
-    const { dataSummary } = builder;
 
     if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
       list.append({

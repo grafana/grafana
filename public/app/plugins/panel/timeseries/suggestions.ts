@@ -12,6 +12,12 @@ import { TimeSeriesOptions } from './types';
 
 export class TimeSeriesSuggestionsSupplier {
   getSuggestions(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
+
+    if (!dataSummary.hasTimeField || !dataSummary.hasNumberField || dataSummary.rowCountTotal < 2) {
+      return;
+    }
+
     const list = builder.getListAppender<TimeSeriesOptions, GraphFieldConfig>({
       name: SuggestionName.LineChart,
       pluginId: 'timeseries',
@@ -33,11 +39,7 @@ export class TimeSeriesSuggestionsSupplier {
       },
     });
 
-    const { dataSummary } = builder;
-
-    if (!dataSummary.hasTimeField || !dataSummary.hasNumberField) {
-      return;
-    }
+    const maxBarsCount = 100;
 
     list.append({
       name: SuggestionName.LineChart,
@@ -71,21 +73,22 @@ export class TimeSeriesSuggestionsSupplier {
         },
       });
 
-      list.append({
-        name: SuggestionName.BarChart,
-        fieldConfig: {
-          defaults: {
-            custom: {
-              drawStyle: GraphDrawStyle.Bars,
-              fillOpacity: 100,
-              lineWidth: 1,
-              gradientMode: GraphGradientMode.Hue,
+      if (dataSummary.rowCountMax < maxBarsCount) {
+        list.append({
+          name: SuggestionName.BarChart,
+          fieldConfig: {
+            defaults: {
+              custom: {
+                drawStyle: GraphDrawStyle.Bars,
+                fillOpacity: 100,
+                lineWidth: 1,
+                gradientMode: GraphGradientMode.Hue,
+              },
             },
+            overrides: [],
           },
-          overrides: [],
-        },
-      });
-
+        });
+      }
       return;
     }
 
@@ -123,7 +126,7 @@ export class TimeSeriesSuggestionsSupplier {
       },
     });
 
-    if (dataSummary.rowCountTotal / dataSummary.numberFieldCount < 100) {
+    if (dataSummary.rowCountTotal / dataSummary.numberFieldCount < maxBarsCount) {
       list.append({
         name: SuggestionName.BarChartStacked,
         fieldConfig: {

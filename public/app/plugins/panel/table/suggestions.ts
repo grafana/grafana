@@ -1,10 +1,11 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { SuggestionName } from 'app/types/suggestions';
 import { PanelOptions, PanelFieldConfig } from './models.gen';
 
 export class TableSuggestionsSupplier {
   getSuggestions(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<PanelOptions, PanelFieldConfig>({
-      name: 'Table',
+      name: '',
       pluginId: 'table',
       options: {},
       fieldConfig: {
@@ -16,6 +17,6 @@ export class TableSuggestionsSupplier {
       previewModifier: (s) => {},
     });
 
-    list.append({});
+    list.append({ name: SuggestionName.Table });
   }
 }

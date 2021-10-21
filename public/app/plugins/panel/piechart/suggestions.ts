@@ -10,8 +10,8 @@ export class PieChartSuggestionsSupplier {
       pluginId: 'piechart',
       options: {
         reduceOptions: {
-          values: true,
-          calcs: [],
+          values: false,
+          calcs: ['lastNotNull'],
         },
         displayLabels: [PieChartLabels.Percent],
         legend: {
@@ -32,13 +32,22 @@ export class PieChartSuggestionsSupplier {
       return;
     }
 
-    if (dataSummary.frameCount === 1) {
+    if (dataSummary.hasStringField && dataSummary.frameCount === 1) {
       // if many values this or single value PieChart is not a good option
       if (dataSummary.rowCountTotal > 30 || dataSummary.rowCountTotal < 2) {
         return;
       }
 
-      list.append({});
+      list.append({
+        name: SuggestionName.PieChart,
+        options: {
+          reduceOptions: {
+            values: true,
+            calcs: [],
+          },
+        },
+      });
+
       list.append({
         name: SuggestionName.PieChartDonut,
         options: {
@@ -54,21 +63,12 @@ export class PieChartSuggestionsSupplier {
     }
 
     list.append({
-      options: {
-        reduceOptions: {
-          values: false,
-          calcs: ['lastNotNull'],
-        },
-      },
+      name: SuggestionName.PieChart,
     });
 
     list.append({
       name: SuggestionName.PieChartDonut,
       options: {
-        reduceOptions: {
-          values: false,
-          calcs: ['lastNotNull'],
-        },
         pieType: PieChartType.Donut,
       },
     });

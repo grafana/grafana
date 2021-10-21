@@ -1,10 +1,17 @@
 import { ThresholdsMode, VisualizationSuggestionsBuilder } from '@grafana/data';
+import { SuggestionName } from 'app/types/suggestions';
 import { GaugeOptions } from './types';
 
 export class GaugeSuggestionsSupplier {
   getSuggestions(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
+
+    if (!dataSummary.hasData || !dataSummary.hasNumberField) {
+      return;
+    }
+
     const list = builder.getListAppender<GaugeOptions, {}>({
-      name: 'Gauge',
+      name: SuggestionName.Gauge,
       pluginId: 'gauge',
       options: {},
       fieldConfig: {
@@ -28,14 +35,9 @@ export class GaugeSuggestionsSupplier {
       },
     });
 
-    const { dataSummary } = builder;
-
-    if (!dataSummary.hasNumberField) {
-      return;
-    }
-
-    if (dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
+    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
       list.append({
+        name: SuggestionName.Gauge,
         options: {
           reduceOptions: {
             values: true,
@@ -44,7 +46,7 @@ export class GaugeSuggestionsSupplier {
         },
       });
       list.append({
-        name: 'Gauge without thresholds markers',
+        name: SuggestionName.GaugeNoThresholds,
         options: {
           reduceOptions: {
             values: true,
@@ -55,6 +57,7 @@ export class GaugeSuggestionsSupplier {
       });
     } else {
       list.append({
+        name: SuggestionName.Gauge,
         options: {
           reduceOptions: {
             values: false,
@@ -63,7 +66,7 @@ export class GaugeSuggestionsSupplier {
         },
       });
       list.append({
-        name: 'Gauge without thresholds markers',
+        name: SuggestionName.GaugeNoThresholds,
         options: {
           reduceOptions: {
             values: false,

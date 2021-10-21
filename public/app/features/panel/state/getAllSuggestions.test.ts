@@ -42,12 +42,8 @@ class ScenarioContext {
     this.suggestions = await getAllSuggestions(panelData);
   }
 
-  expectSuggestions(names: string[]) {
-    for (const name of names) {
-      it(`${name} should be suggested`, () => {
-        expect(this.suggestions.find((x) => x.name === name)).toBeDefined();
-      });
-    }
+  names() {
+    return this.suggestions.map((x) => x.name);
   }
 }
 
@@ -58,7 +54,30 @@ function scenario(name: string, setup: (ctx: ScenarioContext) => void) {
   });
 }
 
-scenario('Single data frame with time and number field', (ctx) => {
+scenario('No series', (ctx) => {
+  ctx.setData([]);
+
+  it('should return correct suggestions', () => {
+    expect(ctx.names()).toEqual([SuggestionName.Table, SuggestionName.TextPanel, SuggestionName.DashboardList]);
+  });
+});
+
+scenario('No rows', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [] },
+        { name: 'Max', type: FieldType.number, values: [] },
+      ],
+    }),
+  ]);
+
+  it('should return correct suggestions', () => {
+    expect(ctx.names()).toEqual([SuggestionName.Table, SuggestionName.TextPanel, SuggestionName.DashboardList]);
+  });
+});
+
+scenario('Single frame with time and number field', (ctx) => {
   ctx.setData([
     toDataFrame({
       fields: [
@@ -68,12 +87,84 @@ scenario('Single data frame with time and number field', (ctx) => {
     }),
   ]);
 
-  ctx.expectSuggestions([
-    SuggestionName.LineChart,
-    SuggestionName.BarChart,
-    SuggestionName.PieChart,
-    SuggestionName.PieChartDonut,
-    SuggestionName.Stat,
-    SuggestionName.StatColoredBackground,
+  it('should return correct suggestions', () => {
+    expect(ctx.names()).toEqual([
+      SuggestionName.LineChart,
+      SuggestionName.LineChartSmooth,
+      SuggestionName.AreaChart,
+      SuggestionName.BarChart,
+      SuggestionName.Gauge,
+      SuggestionName.GaugeNoThresholds,
+      SuggestionName.Stat,
+      SuggestionName.StatColoredBackground,
+      SuggestionName.BarGaugeBasic,
+      SuggestionName.BarGaugeLCD,
+      SuggestionName.Table,
+      SuggestionName.StateTimeline,
+    ]);
+  });
+
+  it('Stat panels have reduce values disabled', () => {
+    for (const suggestion of ctx.suggestions) {
+      if (suggestion.options?.reduceOptions?.values) {
+        throw new Error(`Suggestion ${suggestion.name} reduce.values set to true when it should be false`);
+      }
+    }
+  });
+});
+
+scenario('Single frame with time 2 number fields', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3, 4, 5] },
+        { name: 'ServerA', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+        { name: 'ServerB', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+      ],
+    }),
   ]);
+
+  it('should return correct suggestions', () => {
+    expect(ctx.names()).toEqual([
+      SuggestionName.LineChart,
+      SuggestionName.LineChartSmooth,
+      SuggestionName.AreaChartStacked,
+      SuggestionName.AreaChartStackedPercent,
+      SuggestionName.BarChartStacked,
+      SuggestionName.BarChartStackedPercent,
+      SuggestionName.Gauge,
+      SuggestionName.GaugeNoThresholds,
+      SuggestionName.Stat,
+      SuggestionName.StatColoredBackground,
+      SuggestionName.PieChart,
+      SuggestionName.PieChartDonut,
+      SuggestionName.BarGaugeBasic,
+      SuggestionName.BarGaugeLCD,
+      SuggestionName.Table,
+      SuggestionName.StateTimeline,
+    ]);
+  });
+
+  it('Stat panels have reduce values disabled', () => {
+    for (const suggestion of ctx.suggestions) {
+      if (suggestion.options?.reduceOptions?.values) {
+        throw new Error(`Suggestion ${suggestion.name} reduce.values set to true when it should be false`);
+      }
+    }
+  });
+});
+
+scenario('Single time series with 1000 data points', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [...Array(100).keys()] },
+        { name: 'ServerA', type: FieldType.number, values: [...Array(100).keys()] },
+      ],
+    }),
+  ]);
+
+  it('should not suggest bar chart', () => {
+    expect(ctx.suggestions.find((x) => x.name === SuggestionName.BarChart)).toBe(undefined);
+  });
 });

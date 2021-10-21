@@ -1,11 +1,18 @@
 import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/ui';
+import { SuggestionName } from 'app/types/suggestions';
 import { BarGaugeOptions } from './types';
 
 export class BarGaugeSuggestionsSupplier {
   getSuggestions(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
+
+    if (!dataSummary.hasData || !dataSummary.hasNumberField) {
+      return;
+    }
+
     const list = builder.getListAppender<BarGaugeOptions, {}>({
-      name: 'Bar gauge',
+      name: '',
       pluginId: 'bargauge',
       options: {},
       fieldConfig: {
@@ -17,12 +24,6 @@ export class BarGaugeSuggestionsSupplier {
       previewModifier: (s) => {},
     });
 
-    const { dataSummary } = builder;
-
-    if (!dataSummary.hasNumberField) {
-      return;
-    }
-
     // This is probably not a good option for many numeric fields
     if (dataSummary.numberFieldCount > 50) {
       return;
@@ -31,7 +32,7 @@ export class BarGaugeSuggestionsSupplier {
     // To use show individual row values we also need a string field to give each value a name
     if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 30) {
       list.append({
-        name: 'Bar gauge',
+        name: SuggestionName.BarGaugeBasic,
         options: {
           reduceOptions: {
             values: true,
@@ -51,7 +52,7 @@ export class BarGaugeSuggestionsSupplier {
       });
 
       list.append({
-        name: 'Bar gauge LCD',
+        name: SuggestionName.BarGaugeLCD,
         options: {
           reduceOptions: {
             values: true,
@@ -71,7 +72,7 @@ export class BarGaugeSuggestionsSupplier {
       });
     } else {
       list.append({
-        name: 'Bar gauge',
+        name: SuggestionName.BarGaugeBasic,
         options: {
           displayMode: BarGaugeDisplayMode.Basic,
           orientation: VizOrientation.Horizontal,
@@ -91,7 +92,7 @@ export class BarGaugeSuggestionsSupplier {
       });
 
       list.append({
-        name: 'Bar gauge LCD',
+        name: SuggestionName.BarGaugeLCD,
         options: {
           displayMode: BarGaugeDisplayMode.Lcd,
           orientation: VizOrientation.Horizontal,
