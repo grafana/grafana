@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
 import { Button, Container, Icon, IconButton, stylesFactory, ValuePicker } from '@grafana/ui';
-import { GrafanaTheme, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { AppEvents, GrafanaTheme, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
@@ -9,6 +9,7 @@ import { PanelOptions } from '../models.gen';
 import { InstanceState } from '../CanvasPanel';
 import { LayerActionID } from '../types';
 import { canvasElementRegistry } from 'app/features/canvas';
+import appEvents from 'app/core/app_events';
 
 type Props = StandardEditorProps<any, InstanceState, PanelOptions>;
 
@@ -36,7 +37,11 @@ export class LayerElementListEditor extends PureComponent<Props> {
     const { settings } = this.props.item;
 
     if (settings?.scene && settings?.scene?.selecto) {
-      settings.scene.selecto.clickTarget(item, item?.div);
+      try {
+        settings.scene.selecto.clickTarget(item, item?.div);
+      } catch (error) {
+        appEvents.emit(AppEvents.alertError, ['Unable to select element with inline editing disabled']);
+      }
     }
   };
 

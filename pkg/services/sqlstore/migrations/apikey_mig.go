@@ -82,4 +82,8 @@ func addApiKeyMigrations(mg *Migrator) {
 	mg.AddMigration("Add expires to api_key table", NewAddColumnMigration(apiKeyV2, &Column{
 		Name: "expires", Type: DB_BigInt, Nullable: true,
 	}))
+
+	mg.AddMigration("Add service account foreign key", NewAddColumnMigration(apiKeyV2, &Column{
+		Name: "service_account_id", Type: DB_BigInt, Nullable: true,
+	}))
 }

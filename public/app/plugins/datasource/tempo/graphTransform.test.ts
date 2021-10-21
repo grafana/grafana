@@ -73,7 +73,7 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'id', values: new ArrayVector(['db', 'app', 'lb']) },
       { name: 'title', values: new ArrayVector(['db', 'app', 'lb']) },
       { name: 'mainStat', values: new ArrayVector([1000, 2000, NaN]) },
-      { name: 'secondaryStat', values: new ArrayVector([10, 20, NaN]) },
+      { name: 'secondaryStat', values: new ArrayVector([0.17, 0.33, NaN]) },
     ]);
     expect(edges.fields).toMatchObject([
       { name: 'id', values: new ArrayVector(['app_db', 'lb_app']) },
@@ -110,7 +110,7 @@ const missingSpanResponse = new MutableDataFrame({
 });
 
 const totalsPromMetric = new MutableDataFrame({
-  refId: 'tempo_service_graph_request_total',
+  refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
     { name: 'client', values: ['app', 'lb'] },
@@ -118,12 +118,12 @@ const totalsPromMetric = new MutableDataFrame({
     { name: 'job', values: ['local_scrape', 'local_scrape'] },
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #tempo_service_graph_request_total', values: [10, 20] },
+    { name: 'Value #traces_service_graph_request_total', values: [10, 20] },
   ],
 });
 
 const secondsPromMetric = new MutableDataFrame({
-  refId: 'tempo_service_graph_request_server_seconds_sum',
+  refId: 'traces_service_graph_request_server_seconds_sum',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
     { name: 'client', values: ['app', 'lb'] },
@@ -131,6 +131,6 @@ const secondsPromMetric = new MutableDataFrame({
     { name: 'job', values: ['local_scrape', 'local_scrape'] },
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #tempo_service_graph_request_server_seconds_sum', values: [10, 40] },
+    { name: 'Value #traces_service_graph_request_server_seconds_sum', values: [10, 40] },
   ],
 });

@@ -19,7 +19,6 @@ jest.mock('@grafana/runtime', () => ({
 const addQueryRowButtonSelector = '[aria-label="Add row button"]';
 const richHistoryButtonSelector = '[aria-label="Rich history button"]';
 const queryInspectorButtonSelector = '[aria-label="Query inspector button"]';
-const onClickLoadLogsVolumeSelector = '[aria-label="Load logs volume button"]';
 
 describe('SecondaryActions', () => {
   it('should render component two buttons', () => {
@@ -28,7 +27,6 @@ describe('SecondaryActions', () => {
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
-        onClickLoadLogsVolume={noop}
       />
     );
     expect(wrapper.find(addQueryRowButtonSelector)).toHaveLength(1);
@@ -42,7 +40,6 @@ describe('SecondaryActions', () => {
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
-        onClickLoadLogsVolume={noop}
       />
     );
     expect(wrapper.find(addQueryRowButtonSelector)).toHaveLength(0);
@@ -56,7 +53,6 @@ describe('SecondaryActions', () => {
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
-        onClickLoadLogsVolume={noop}
       />
     );
     expect(wrapper.find(addQueryRowButtonSelector).props().disabled).toBe(true);
@@ -66,14 +62,11 @@ describe('SecondaryActions', () => {
     const onClickAddRow = jest.fn();
     const onClickHistory = jest.fn();
     const onClickQueryInspector = jest.fn();
-    const onClickLoadLogsVolumeInspector = jest.fn();
     const wrapper = shallow(
       <SecondaryActions
         onClickAddQueryRowButton={onClickAddRow}
         onClickRichHistoryButton={onClickHistory}
         onClickQueryInspectorButton={onClickQueryInspector}
-        loadingLogsVolumeAvailable={true}
-        onClickLoadLogsVolume={onClickLoadLogsVolumeInspector}
       />
     );
 
@@ -84,9 +77,6 @@ describe('SecondaryActions', () => {
     expect(onClickHistory).toBeCalled();
 
     wrapper.find(queryInspectorButtonSelector).simulate('click');
-    expect(onClickQueryInspector).toBeCalled();
-
-    wrapper.find(onClickLoadLogsVolumeSelector).simulate('click');
     expect(onClickQueryInspector).toBeCalled();
   });
 
