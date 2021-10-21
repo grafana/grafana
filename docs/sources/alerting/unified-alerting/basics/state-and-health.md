@@ -5,7 +5,7 @@ keywords = ["grafana", "alerting", "guide", "state"]
 aliases = ["/docs/grafana/llatest/alerting/unified-alerting/alerting-rules/state-and-health/"]
 +++
 
-# State and health of alerting rule
+# State and health of alerting rules
 
 The state and health of alerting rules help you understand several key status indicators about your alerts. There are three key components - alert state, alerting rule state, and alerting rule health. Although related, each component conveys subtly different information.
 

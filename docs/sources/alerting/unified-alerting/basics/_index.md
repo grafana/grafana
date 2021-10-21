@@ -6,8 +6,8 @@ weight = 120
 
 # Alerting basics
 
-This section describes some of the fundamental concepts of Grafana 8 alerting.
+This section will help you familiarize yourself with some of the fundamental concepts of Grafana 8 alerting.
 
 - [Alertmanager]({{< relref "./alertmanager.md" >}})
-- [State and health of alerting rule]({{< relref "./state-and-health.md" >}})
-- [Alerting on numeric data]({{< relref "./grafana-managed-numeric-rule.md" >}})
+- [State and health of alerting rules]({{< relref "./state-and-health.md" >}})
+- [Evaluating Grafana managed alerts]({{< relref "./evaluate-grafana-alerts.md" >}})

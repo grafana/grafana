@@ -1,12 +1,12 @@
 +++
-title = "Evaluate Grafana alerts"
+title = "Evaluate Grafana managed alerts"
 aliases = ["/docs/grafana/latest/alerting/metrics/"]
 weight = 116
 +++
 
-# Evalaute Grafana managed alerts
+# Evaluating Grafana managed alerts
 
-This topic describes Grafana managed alerts are evaluaed by the backend engine. It also discusses how Grafana handles alerting on numeric instead of time series data.
+This topic describes Grafana managed alerts are evaluated by the backend engine. It also discusses how Grafana handles alerting on numeric instead of time series data.
 
 - [Alert evaluation](#alert-evaluation)
 - [Alerting on numeric data](#alerting-on-numeric-data)
