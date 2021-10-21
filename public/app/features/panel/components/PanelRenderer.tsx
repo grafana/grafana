@@ -51,7 +51,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   const PanelComponent = plugin.panel;
 
   return (
-    <ErrorBoundaryAlert recover={[plugin, data]}>
+    <ErrorBoundaryAlert dependencies={[plugin, data]}>
       <PanelComponent
         id={1}
         data={dataWithOverrides}

@@ -494,7 +494,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           alertState={alertState}
           data={data}
         />
-        <ErrorBoundary recover={[data, plugin]} onError={this.onPanelError} onRecover={this.onPanelErrorRecover}>
+        <ErrorBoundary dependencies={[data, plugin]} onError={this.onPanelError} onRecover={this.onPanelErrorRecover}>
           {({ error }) => {
             if (error) {
               return null;

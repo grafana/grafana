@@ -15,7 +15,7 @@ export interface ErrorBoundaryApi {
 interface Props {
   children: (r: ErrorBoundaryApi) => ReactNode;
   /** Will re-render children after error if recover values changes */
-  recover?: any[];
+  dependencies?: any[];
   /** Callback called on error */
   onError?: (error: Error) => void;
   /** Callback error state is cleared due to recover props change */
@@ -42,13 +42,13 @@ export class ErrorBoundary extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: ErrorBoundaryAlertProps) {
-    const { recover, onRecover } = this.props;
+  componentDidUpdate(prevProps: Props) {
+    const { dependencies, onRecover } = this.props;
 
     if (this.state.error) {
-      if (recover && prevProps.recover) {
-        for (let i = 0; i < recover.length; i++) {
-          if (recover[i] !== prevProps.recover[i]) {
+      if (dependencies && prevProps.dependencies) {
+        for (let i = 0; i < dependencies.length; i++) {
+          if (dependencies[i] !== prevProps.dependencies[i]) {
             this.setState({ error: null, errorInfo: null });
             if (onRecover) {
               onRecover();
@@ -87,7 +87,7 @@ export interface ErrorBoundaryAlertProps {
   style?: 'page' | 'alertbox';
 
   /** Will re-render children after error if recover values changes */
-  recover?: any[];
+  dependencies?: any[];
 }
 
 export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
@@ -97,10 +97,10 @@ export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
   };
 
   render() {
-    const { title, children, style, recover } = this.props;
+    const { title, children, style, dependencies } = this.props;
 
     return (
-      <ErrorBoundary recover={recover}>
+      <ErrorBoundary dependencies={dependencies}>
         {({ error, errorInfo }) => {
           if (!errorInfo) {
             return children;
