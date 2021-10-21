@@ -158,7 +158,7 @@ scenario('Single frame with time 2 number fields', (ctx) => {
   });
 });
 
-scenario('Single time series with 1000 data points', (ctx) => {
+scenario('Single time series with 100 data points', (ctx) => {
   ctx.setData([
     toDataFrame({
       fields: [
