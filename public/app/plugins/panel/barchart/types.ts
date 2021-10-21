@@ -12,7 +12,7 @@ import { VizOrientation } from '@grafana/data';
 
 export enum ValueRotationMode {
   None = 'none',
-  Slope = 'slope',
+  Angled = 'angled',
   Vertical = 'vertical',
   Custom = 'custom',
 }

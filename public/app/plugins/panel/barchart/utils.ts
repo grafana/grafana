@@ -119,7 +119,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     grid: { show: false },
     ticks: false,
     gap: 15,
-    valueRotation: rawRotation,
+    valueRotation: rawRotation * -1,
     theme,
   });
 
@@ -236,11 +236,11 @@ export function getRotationAngle(config: ValueRotationConfig): number {
     case ValueRotationMode.Custom: {
       return config.customRotation || 0;
     }
-    case ValueRotationMode.Slope: {
-      return -45;
+    case ValueRotationMode.Angled: {
+      return 45;
     }
     case ValueRotationMode.Vertical: {
-      return -90;
+      return 90;
     }
   }
 }
@@ -265,8 +265,8 @@ function getRotationPadding(
 
   // Add padding to the right if the labels are rotated in a way that makes the last label extend outside the graph.
   const paddingRight =
-    rotateLabel < 0
-      ? Math.cos((rotateLabel * -1 * Math.PI) / 180) *
+    rotateLabel > 0
+      ? Math.cos((rotateLabel * Math.PI) / 180) *
         measureText(
           shortenValue(formattedValueToString(displayProcessor(values.get(values.length - 1))), valueMaxLength),
           fontSize
@@ -275,8 +275,8 @@ function getRotationPadding(
 
   // Add padding to the left if the labels are rotated in a way that makes the first label extend outside the graph.
   const paddingLeft =
-    rotateLabel > 0
-      ? Math.cos((rotateLabel * Math.PI) / 180) *
+    rotateLabel < 0
+      ? Math.cos((rotateLabel * -1 * Math.PI) / 180) *
         measureText(shortenValue(formattedValueToString(displayProcessor(values.get(0))), valueMaxLength), fontSize)
           .width
       : 0;
