@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.5.5'
+grabpl_version = 'test-build-binary'
 build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -35,7 +35,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     download_grabpl_cmds = [
         'mkdir -p bin',
-        'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+        'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/grabpl'.format(
             grabpl_version
         ),
         'chmod +x bin/grabpl',
@@ -295,6 +295,52 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         'image': build_image,
         'depends_on': [
             'test-backend' + enterprise2_suffix(edition),
+        ],
+        'environment': env,
+        'commands': cmds,
+    }
+
+def build_binary_step(edition, ver_mode, variants=None, is_downstream=False):
+    variants_str = ''
+    if variants:
+        variants_str = ' --variants {}'.format(','.join(variants))
+
+    # TODO: Convert number of jobs to percentage
+    if ver_mode == 'release':
+        env = {
+            'GITHUB_TOKEN': from_secret(github_token),
+        }
+        cmds = [
+            './bin/grabpl build-binary --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --binary grafana-server ${{DRONE_TAG}}'.format(
+                edition,
+            ),
+        ]
+    elif ver_mode == 'test-release':
+        env = {
+            'GITHUB_TOKEN': from_secret(github_token),
+        }
+        cmds = [
+            './bin/grabpl build-binary --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --binary grafana-server {}'.format(
+                edition, test_release_ver,
+            ),
+        ]
+    else:
+        if not is_downstream:
+            build_no = '${DRONE_BUILD_NUMBER}'
+        else:
+            build_no = '$${SOURCE_BUILD_NUMBER}'
+        env = {}
+        cmds = [
+            './bin/grabpl build-binary --jobs 8 --edition {} --build-id {}{} --binary grafana-server'.format(
+                edition, build_no, variants_str,
+            ),
+        ]
+
+    return {
+        'name': 'build-binary',
+        'image': build_image,
+        'depends_on': [
+            'build-backend' + enterprise2_suffix(edition),
         ],
         'environment': env,
         'commands': cmds,
@@ -867,7 +913,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     else:
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
         ])
     steps = [
         {
@@ -938,7 +984,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
         download_grabpl_cmds = [
             '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
         ]
         clone_cmds = [
             'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
