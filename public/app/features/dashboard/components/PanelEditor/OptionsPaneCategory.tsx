@@ -36,17 +36,21 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
 
     useEffect(() => {
-      const elapsed = Date.now() - manualClickTime.current;
-      if (elapsed < 200) {
-        return; // ignore changes since the click handled the expected behavior
+      if (manualClickTime.current) {
+        // ignore changes since the click handled the expected behavior
+        if (Date.now() - manualClickTime.current < 200) {
+          return;
+        }
       }
-      if (isOpenFromUrl || (forceOpen && forceOpen > 0)) {
+      if (isOpenFromUrl || forceOpen) {
         if (!isExpanded) {
           setIsExpanded(true);
         }
-        ref.current?.scrollIntoView();
+        if (isOpenFromUrl) {
+          ref.current?.scrollIntoView();
+        }
       }
-    }, [forceOpen, isExpanded, isOpenFromUrl, manualClickTime]);
+    }, [forceOpen, isExpanded, isOpenFromUrl]);
 
     const onToggle = useCallback(() => {
       manualClickTime.current = Date.now();
