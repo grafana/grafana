@@ -49,8 +49,6 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 
     const onToggle = useCallback(() => {
       setToggleTime(Date.now());
-      // TODO: this call will cause the panel to not close on the first click
-      // updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? null : id });
       getLocationSrv().update({
         query: {
           [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
