@@ -215,16 +215,19 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		navTree = append(navTree, hs.getProfileNode(c))
 	}
 
-	if setting.AlertingEnabled || hs.Cfg.UnifiedAlerting.Enabled {
+	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
+	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.Enabled && !uaIsDisabledForOrg
+
+	if setting.AlertingEnabled || uaVisibleForOrg {
 		alertChildNavs := []*dtos.NavLink{
 			{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
 		}
-		if hs.Cfg.UnifiedAlerting.Enabled {
+		if uaVisibleForOrg {
 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.Cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
 		}
 		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
-			if hs.Cfg.UnifiedAlerting.Enabled {
+			if uaVisibleForOrg {
 				alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 					Text: "Contact points", Id: "receivers", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
 					Icon: "comment-alt-share",
@@ -237,7 +240,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 				})
 			}
 		}
-		if c.OrgRole == models.ROLE_ADMIN && hs.Cfg.UnifiedAlerting.Enabled {
+		if c.OrgRole == models.ROLE_ADMIN && uaVisibleForOrg {
 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 				Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
 				Icon: "cog",
