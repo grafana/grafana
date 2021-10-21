@@ -100,7 +100,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-x64,linux-x64-musl,osx64,win64,armv6 --no-pull-enterprise
   depends_on:
-  - initialize
+  - test-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: init-backend
@@ -108,7 +108,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --binary grafana-server
   depends_on:
-  - initialize
+  - init-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: build-binary-grafana-server
@@ -116,7 +116,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --binary grafana-cli
   depends_on:
-  - initialize
+  - init-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: build-binary-grafana-cli
@@ -124,13 +124,13 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
     ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
+  - test-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   depends_on:
-  - initialize
+  - lint-backend
   environment: null
   image: grafana/build-container:1.4.3
   name: build-plugins
@@ -390,7 +390,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
   depends_on:
-  - initialize
+  - test-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: init-backend
@@ -398,7 +398,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --binary grafana-server
   depends_on:
-  - initialize
+  - init-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: build-binary-grafana-server
@@ -406,7 +406,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --binary grafana-cli
   depends_on:
-  - initialize
+  - init-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: build-binary-grafana-cli
@@ -414,13 +414,13 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
     ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
+  - test-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
   depends_on:
-  - initialize
+  - lint-backend
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -863,7 +863,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
+  - test-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -873,7 +873,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
     --binary grafana-server ${DRONE_TAG}
   depends_on:
-  - initialize
+  - init-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -883,7 +883,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
     --binary grafana-cli ${DRONE_TAG}
   depends_on:
-  - initialize
+  - init-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -893,13 +893,13 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
     --edition oss --no-pull-enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
+  - test-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
   depends_on:
-  - initialize
+  - lint-backend
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -1265,7 +1265,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
+  - test-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1275,7 +1275,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --binary grafana-server ${DRONE_TAG}
   depends_on:
-  - initialize
+  - init-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1285,7 +1285,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --binary grafana-cli ${DRONE_TAG}
   depends_on:
-  - initialize
+  - init-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1295,14 +1295,14 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
     --edition enterprise --no-pull-enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
+  - test-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
     --signing-admin
   depends_on:
-  - initialize
+  - lint-backend
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -1360,7 +1360,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
+  - test-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1847,7 +1847,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise v7.3.0-test
   depends_on:
-  - initialize
+  - test-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1857,7 +1857,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
     --binary grafana-server v7.3.0-test
   depends_on:
-  - initialize
+  - init-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1867,7 +1867,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
     --binary grafana-cli v7.3.0-test
   depends_on:
-  - initialize
+  - init-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1877,13 +1877,13 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
     --edition oss --no-pull-enterprise v7.3.0-test
   depends_on:
-  - initialize
+  - test-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
   depends_on:
-  - initialize
+  - lint-backend
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -2238,7 +2238,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise v7.3.0-test
   depends_on:
-  - initialize
+  - test-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2248,7 +2248,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --binary grafana-server v7.3.0-test
   depends_on:
-  - initialize
+  - init-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2258,7 +2258,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --binary grafana-cli v7.3.0-test
   depends_on:
-  - initialize
+  - init-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2268,14 +2268,14 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
     --edition enterprise --no-pull-enterprise v7.3.0-test
   depends_on:
-  - initialize
+  - test-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
     --signing-admin
   depends_on:
-  - initialize
+  - lint-backend
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -2333,7 +2333,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise v7.3.0-test
   depends_on:
-  - initialize
+  - test-backend
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2817,7 +2817,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
   depends_on:
-  - initialize
+  - test-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: init-backend
@@ -2825,7 +2825,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --binary grafana-server
   depends_on:
-  - initialize
+  - init-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: build-binary-grafana-server
@@ -2833,7 +2833,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --binary grafana-cli
   depends_on:
-  - initialize
+  - init-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: build-binary-grafana-cli
@@ -2841,13 +2841,13 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
     ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
+  - test-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
   depends_on:
-  - initialize
+  - lint-backend
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -3176,7 +3176,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
   depends_on:
-  - initialize
+  - test-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: init-backend
@@ -3184,7 +3184,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
     --binary grafana-server
   depends_on:
-  - initialize
+  - init-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: build-binary-grafana-server
@@ -3192,7 +3192,7 @@ steps:
   - ./bin/grabpl build-binary --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
     --binary grafana-cli
   depends_on:
-  - initialize
+  - init-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: build-binary-grafana-cli
@@ -3200,14 +3200,14 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition enterprise --build-id
     ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
+  - test-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
     --signing-admin
   depends_on:
-  - initialize
+  - lint-backend
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -3265,7 +3265,7 @@ steps:
   - ./bin/grabpl init-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-x64 --no-pull-enterprise
   depends_on:
-  - initialize
+  - test-backend
   environment: {}
   image: grafana/build-container:1.4.3
   name: init-backend-enterprise2
@@ -3629,6 +3629,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 9440fec7a74f8198dbd9d8512de399dad8e6ecad5a911101defd19b33e7c1a65
+hmac: 79880563981fcd3058d6c0b0fe3d551b8f5cb60d5f8b8bd1a2716e2550a3d1ee
 
 ...

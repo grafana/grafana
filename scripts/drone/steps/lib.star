@@ -294,7 +294,7 @@ def init_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         'name': 'init-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'test-backend',
         ],
         'environment': env,
         'commands': cmds,
@@ -340,7 +340,7 @@ def build_binary_step(binary, edition, ver_mode, variants=None, is_downstream=Fa
         'name': 'build-binary' + '-' + binary,
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'init-backend',
         ],
         'environment': env,
         'commands': cmds,
@@ -373,7 +373,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'name': 'build-frontend',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'test-frontend',
         ],
         'commands': cmds,
     }
@@ -403,7 +403,7 @@ def build_plugins_step(edition, sign=False):
         'name': 'build-plugins',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'lint-backend',
         ],
         'environment': env,
         'commands': [
