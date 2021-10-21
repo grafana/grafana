@@ -380,17 +380,21 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
+		// No channels, hence don't require Alertmanager config - skip it.
 		if len(allChannelsPerOrg[orgID]) == 0 {
-			// No channels, hence don't require Alertmanager config - skip it.
 			m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
 			continue
 		}
 
+		// Encrypt the secure settings before we continue.
 		if err := amConfig.EncryptSecureSettings(); err != nil {
 			return err
 		}
 
+		// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
+		// Validation between legacy and unified alerting can be different (e.g. due to bug fixes) so this would fail the migration in that case.
 		if err := m.validateAlertmanagerConfig(orgID, amConfig); err != nil {
+			return err
 		}
 
 		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
@@ -411,7 +415,7 @@ func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserC
 		return err
 	}
 
-	// TODO: should we apply the config here? Because Alertmanager can take upto 1 min to pick it up.
+	// We don't need to apply the configuration, given the multi org alertmanager will do an initial sync before the server is ready.
 	_, err = m.sess.Insert(AlertConfiguration{
 		AlertmanagerConfiguration: string(rawAmConfig),
 		// Since we are migration for a snapshot of the code, it is always going to migrate to
@@ -426,7 +430,7 @@ func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserC
 	return nil
 }
 
-//TODO: Test cases to test: failure at decryption, failure at invalid data (e.g. no slack URL), verify encryption layer - are they not-encrypted at this point?
+// validateAlertmanagerConfig validates the alertmanager configuration produced by the migration against the receivers.
 func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUserConfig) error {
 	for _, r := range config.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
