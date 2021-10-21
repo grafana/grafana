@@ -13,7 +13,6 @@ load(
     'build_backend_step',
     'build_frontend_step',
     'build_plugins_step',
-    'gen_version_step',
     'package_step',
     'e2e_tests_server_step',
     'e2e_tests_step',
@@ -97,7 +96,6 @@ def get_steps(edition, ver_mode):
         ensure_cuetsified_step(),
     ]
 
-    # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
     if include_enterprise2:
         edition2 = 'enterprise2'
         steps.extend([
@@ -109,8 +107,7 @@ def get_steps(edition, ver_mode):
 
     # Insert remaining steps
     steps.extend([
-        gen_version_step(ver_mode=ver_mode, include_enterprise2=include_enterprise2),
-        package_step(edition=edition, ver_mode=ver_mode),
+        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
         e2e_tests_server_step(edition=edition),
         e2e_tests_step(edition=edition, tries=3),
         copy_packages_for_docker_step(),
@@ -142,7 +139,7 @@ def get_steps(edition, ver_mode):
     if include_enterprise2:
         edition2 = 'enterprise2'
         steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
+            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002, tries=3),
             upload_cdn_step(edition=edition2),
