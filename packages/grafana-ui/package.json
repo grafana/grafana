@@ -142,7 +142,7 @@
     "@types/react-test-renderer": "17.0.1",
     "@types/react-transition-group": "4.4.0",
     "@types/react-window": "1.8.1",
-    "@types/rollup-plugin-visualizer": "2.6.0",
+    "@types/rollup-plugin-visualizer": "4.2.1",
     "@types/slate": "0.47.2",
     "@types/slate-plain-serializer": "0.6.1",
     "@types/slate-react": "0.22.5",

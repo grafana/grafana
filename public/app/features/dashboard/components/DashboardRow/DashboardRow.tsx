@@ -5,8 +5,8 @@ import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import appEvents from 'app/core/app_events';
 import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
-import { getTemplateSrv } from '@grafana/runtime';
-import { RefreshEvent, ShowConfirmModalEvent } from '../../../../types/events';
+import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
+import { ShowConfirmModalEvent } from '../../../../types/events';
 import { Unsubscribable } from 'rxjs';
 
 export interface DashboardRowProps {

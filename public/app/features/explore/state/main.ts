@@ -138,11 +138,8 @@ export const navigateToExplore = (
   return async (dispatch) => {
     const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
     const datasourceSrv = getDataSourceSrv();
-    const datasource = await datasourceSrv.get(panel.datasource);
     const path = await getExploreUrl({
       panel,
-      panelTargets: panel.targets,
-      panelDatasource: datasource,
       datasourceSrv,
       timeSrv: getTimeSrv(),
     });

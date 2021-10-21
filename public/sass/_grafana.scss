@@ -71,7 +71,7 @@
 @import 'components/query_part';
 @import 'components/jsontree';
 @import 'components/edit_sidemenu';
-@import 'components/row.scss';
+@import 'components/row';
 @import 'components/json_explorer';
 @import 'components/code_editor';
 @import 'components/dashboard_grid';
@@ -79,7 +79,7 @@
 @import 'components/page_header';
 @import 'components/dashboard_settings';
 @import 'components/toolbar';
-@import 'components/add_data_source.scss';
+@import 'components/add_data_source';
 @import 'components/page_loader';
 @import 'components/toggle_button_group';
 @import 'components/popover-box';
@@ -100,4 +100,4 @@
 @import 'pages/explore';
 @import 'pages/plugins';
 @import 'old_responsive';
-@import 'components/view_states.scss';
+@import 'components/view_states';
