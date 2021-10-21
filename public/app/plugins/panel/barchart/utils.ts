@@ -118,7 +118,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   });
 
   let seriesIndex = 0;
-
+  const legendOrdered = isLegendOrdered(legend);
   const stackingGroups: Map<string, number[]> = new Map();
 
   // iterate the y values
@@ -154,7 +154,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
       dataFrameFieldIndex: {
-        fieldIndex: isLegendOrdered(legend)
+        fieldIndex: legendOrdered
           ? i
           : allFrames[0].fields.findIndex(
               (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
@@ -263,6 +263,7 @@ export function prepareGraphableFrames(
     };
   }
 
+  const legendOrdered = isLegendOrdered(options.legend);
   let seriesIndex = 0;
 
   for (let frame of series) {
@@ -308,7 +309,7 @@ export function prepareGraphableFrames(
 
     let orderedFields: Field[] | undefined;
 
-    if (isLegendOrdered(options.legend)) {
+    if (legendOrdered) {
       orderedFields = orderBy(
         fields,
         ({ state }) => {

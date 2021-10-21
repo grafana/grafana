@@ -40,13 +40,14 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {
+    // When sorted by legend state.seriesIndex is not changed and is not equal to the sorted index of the field
+    if (isLegendOrdered(props.legend)) {
+      return frame0Ref.current!.fields[seriesIdx].values.get(valueIdx);
+    }
+
     let field = frame0Ref.current!.fields.find(
       (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIdx - 1
     );
-    // When sorted by legend state.seriesIndex is not changed and is not equal to the sorted index of the field
-    if (isLegendOrdered(props.legend)) {
-      field = frame0Ref.current!.fields[seriesIdx];
-    }
     return field!.values.get(valueIdx);
   };
 
