@@ -419,6 +419,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 		timeField.Name = data.TimeSeriesTimeFieldName
 		valueField.Name = data.TimeSeriesValueFieldName
 		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+		valueField.Labels = tags
 
 		frame := data.NewFrame(name, timeField, valueField)
 		frame.Meta = &data.FrameMeta{
