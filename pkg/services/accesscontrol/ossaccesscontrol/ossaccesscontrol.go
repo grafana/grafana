@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -14,9 +15,10 @@ import (
 
 func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		Cfg:        cfg,
-		UsageStats: usageStats,
-		Log:        log.New("accesscontrol"),
+		Cfg:           cfg,
+		UsageStats:    usageStats,
+		Log:           log.New("accesscontrol"),
+		scopeResolver: accesscontrol.NewScopeResolver(),
 	}
 	s.registerUsageMetrics()
 	return s
@@ -28,6 +30,7 @@ type OSSAccessControlService struct {
 	UsageStats    usagestats.Service
 	Log           log.Logger
 	registrations accesscontrol.RegistrationList
+	scopeResolver accesscontrol.ScopeResolver
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -65,7 +68,23 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	if err != nil {
 		return false, err
 	}
+
 	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
+}
+
+// GetUserRoles returns user permissions based on built-in roles
+func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
+	return nil, errors.New("unsupported function") //OSS users will continue to use builtin roles via GetUserPermissions
+}
+
+// CloneUserToServiceAccount creates a service account with permissions based on a user
+func (ac *OSSAccessControlService) CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error) {
+	return nil, errors.New("clone user not implemented yet in service accounts") //Please switch on Enterprise to test this
+}
+
+// Link creates a service account with permissions based on a user
+func (ac *OSSAccessControlService) LinkAPIKeyToServiceAccount(context.Context, *models.ApiKey, *models.User) error {
+	return errors.New("link SA not implemented yet in service accounts") //Please switch on Enterprise to test this
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
@@ -83,8 +102,12 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 					continue
 				}
 				for _, p := range role.Permissions {
-					permission := p
-					permissions = append(permissions, &permission)
+					// if the permission has a keyword in its scope it will be resolved
+					permission, err := ac.scopeResolver.ResolveKeyword(user, p)
+					if err != nil {
+						return nil, err
+					}
+					permissions = append(permissions, permission)
 				}
 			}
 		}

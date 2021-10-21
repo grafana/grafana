@@ -5,9 +5,17 @@ import { PromQuery } from '../types';
 import { PrometheusDatasource } from '../datasource';
 import PromLink from './PromLink';
 
+jest.mock('@grafana/data', () => ({
+  ...(jest.requireActual('@grafana/data') as any),
+  rangeUtil: {
+    intervalToSeconds: jest.fn(() => 15),
+  },
+}));
+
 const getPanelData = (panelDataOverrides?: Partial<PanelData>) => {
   const panelData = {
     request: {
+      scopedVars: [{ __interval: { text: '15s', value: '15s' } }],
       targets: [
         { refId: 'A', datasource: 'prom1' },
         { refId: 'B', datasource: 'prom2' },
@@ -30,6 +38,7 @@ const getDataSource = (datasourceOverrides?: Partial<PrometheusDatasource>) => {
     getPrometheusTime: () => 123,
     createQuery: () => ({ expr: 'up', step: 15 }),
     directUrl: 'prom1',
+    getRateIntervalScopedVariable: jest.fn(() => ({ __rate_interval: { text: '60s', value: '60s' } })),
   };
 
   return (Object.assign(datasource, datasourceOverrides) as unknown) as PrometheusDatasource;

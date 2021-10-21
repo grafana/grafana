@@ -10,6 +10,7 @@ const (
 	ActionProvisioningReload = "provisioning:reload"
 
 	ActionDatasourcesRead   = "datasources:read"
+	ActionDatasourcesQuery  = "datasources:query"
 	ActionDatasourcesCreate = "datasources:create"
 	ActionDatasourcesWrite  = "datasources:write"
 	ActionDatasourcesDelete = "datasources:delete"
@@ -63,9 +64,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 						Action: ActionDatasourcesWrite,
 						Scope:  ScopeDatasourcesAll,
 					},
-					{Action: ActionDatasourcesCreate},
+					{
+						Action: ActionDatasourcesCreate,
+					},
 					{
 						Action: ActionDatasourcesDelete,
+						Scope:  ScopeDatasourcesAll,
+					},
+					{
+						Action: ActionDatasourcesQuery,
 						Scope:  ScopeDatasourcesAll,
 					},
 				},
@@ -82,6 +89,17 @@ func (hs *HTTPServer) declareFixedRoles() error {
 						Action: ActionDatasourcesIDRead,
 						Scope:  ScopeDatasourcesAll,
 					},
+				},
+			},
+			Grants: []string{string(models.ROLE_VIEWER)},
+		},
+		{
+			Role: accesscontrol.RoleDTO{
+				Version:     1,
+				Name:        "fixed:datasources:compatibility:querier",
+				Description: "Query data sources when data source permissions are not in use",
+				Permissions: []accesscontrol.Permission{
+					{Action: ActionDatasourcesQuery},
 				},
 			},
 			Grants: []string{string(models.ROLE_VIEWER)},

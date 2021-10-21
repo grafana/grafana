@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Subscription } from 'rxjs';
-import { locationService } from '@grafana/runtime';
+import { locationService, RefreshEvent } from '@grafana/runtime';
 import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
@@ -30,7 +30,7 @@ import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
-import { RefreshEvent, RenderEvent } from 'app/types/events';
+import { RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';

@@ -1785,6 +1785,10 @@ Set this to `true` to have date formats automatically derived from your browser 
 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
 
+### default_week_start
+
+Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
+
 ## [expressions]
 
 > **Note:** This feature is available in Grafana v7.4 and later versions.

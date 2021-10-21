@@ -63,7 +63,7 @@ class DashboardWatcher {
       };
       this.leave();
       if (uid) {
-        this.subscription = live.getStream(this.channel).subscribe(this.observer);
+        this.subscription = live.getStream<DashboardEvent>(this.channel).subscribe(this.observer);
       }
       this.uid = uid;
     }

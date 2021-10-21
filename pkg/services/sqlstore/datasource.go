@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -15,24 +16,28 @@ import (
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as
 // either uid (preferred), id, or name and is added to the bus.
-func (ss *SQLStore) GetDataSource(query *models.GetDataSourceQuery) error {
+func (ss *SQLStore) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
 	metrics.MDBDataSourceQueryByID.Inc()
-	if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
-		return models.ErrDataSourceIdentifierNotSet
-	}
 
-	datasource := models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
-	has, err := x.Get(&datasource)
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
+			return models.ErrDataSourceIdentifierNotSet
+		}
 
-	if err != nil {
-		sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
-		return err
-	} else if !has {
-		return models.ErrDataSourceNotFound
-	}
+		datasource := &models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
+		has, err := sess.Get(datasource)
 
-	query.Result = &datasource
-	return nil
+		if err != nil {
+			sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
+			return err
+		} else if !has {
+			return models.ErrDataSourceNotFound
+		}
+
+		query.Result = datasource
+
+		return nil
+	})
 }
 
 func (ss *SQLStore) GetDataSources(query *models.GetDataSourcesQuery) error {
@@ -71,14 +76,14 @@ func (ss *SQLStore) GetDefaultDataSource(query *models.GetDefaultDataSourceQuery
 	return err
 }
 
-// DeleteDataSource deletes a datasource by org_id and either uid (preferred), id, or name.
-// Zero values (0, or "") should be used for the parameters that will not be queried.
-func (ss *SQLStore) DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
+// DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
+// and is added to the bus.
+func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
 	if cmd.OrgID == 0 {
 		return models.ErrDataSourceIdentifierNotSet
 	}
 
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		query := &models.GetDataSourceQuery{
 			Id:    cmd.ID,
 			Uid:   cmd.UID,
@@ -86,7 +91,7 @@ func (ss *SQLStore) DeleteDataSource(cmd *models.DeleteDataSourceCommand) error 
 			OrgId: cmd.OrgID,
 		}
 
-		if err := ss.GetDataSource(query); err != nil {
+		if err := ss.GetDataSource(ctx, query); err != nil {
 			return err
 		}
 
@@ -112,8 +117,8 @@ func (ss *SQLStore) DeleteDataSource(cmd *models.DeleteDataSourceCommand) error 
 	})
 }
 
-func (ss *SQLStore) AddDataSource(cmd *models.AddDataSourceCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existing := models.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
 
@@ -190,8 +195,8 @@ func updateIsDefaultFlag(ds *models.DataSource, sess *DBSession) error {
 	return nil
 }
 
-func (ss *SQLStore) UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
