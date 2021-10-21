@@ -85,6 +85,7 @@ export const PipelineTable: React.FC<Props> = (props) => {
               <th>Converter</th>
               <th>Processor</th>
               <th>Output</th>
+              <th style={{ width: 10 }}>&nbsp;</th>
             </tr>
           </thead>
           <tbody>
