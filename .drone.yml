@@ -233,8 +233,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -250,8 +249,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -548,8 +546,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -565,8 +562,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -957,8 +953,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -974,8 +969,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1375,8 +1369,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1392,8 +1385,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1893,8 +1885,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1910,8 +1901,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2300,8 +2290,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2317,8 +2306,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2821,8 +2809,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2838,8 +2825,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -3198,8 +3184,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -3215,8 +3200,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - test-backend
-  - test-frontend
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -3485,6 +3469,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 0d26eda19dc6e530d02c734704c8a9d01beb5082c7e14b2609577b8695ed06f5
+hmac: 525f087ff1c1f4fb68d45fb4be223e35fec81ec1782e306d31e9090fda5aeb30
 
 ...
