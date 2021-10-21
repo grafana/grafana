@@ -96,7 +96,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
   const rawRotation = getRotationAngle(valueRotation);
-  if (vizOrientation.xOri === ScaleOrientation.Horizontal) {
+  if (vizOrientation.xOri === ScaleOrientation.Horizontal && rawRotation !== 0) {
     builder.setPadding(getRotationPadding(frame, rawRotation, theme, valueMaxLength));
   }
 
