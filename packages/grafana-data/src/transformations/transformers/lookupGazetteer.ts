@@ -6,6 +6,7 @@ import { DataTransformerID } from './ids';
 export interface LookupGazetteerOptions {
   mappingField?: string;
   lookupField?: string;
+  gazetteer?: string;
 }
 
 export const lookupGazetteerTransformer: SynchronousDataTransformerInfo<LookupGazetteerOptions> = {

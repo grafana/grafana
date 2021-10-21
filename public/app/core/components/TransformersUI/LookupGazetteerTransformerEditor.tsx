@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   DataTransformerID,
   FieldNamePickerConfigSettings,
@@ -9,11 +9,17 @@ import {
 } from '@grafana/data';
 
 import { LookupGazetteerOptions } from '@grafana/data/src/transformations/transformers/lookupGazetteer';
-import { InlineFieldRow } from '@grafana/ui';
+import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { GazetteerPathEditor } from 'app/plugins/panel/geomap/editor/GazetteerPathEditor';
+import { GazetteerPathEditorConfigSettings } from 'app/plugins/panel/geomap/types';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: { width: 24 },
+} as any;
+
+const gazetteerSettings: StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings> = {
+  settings: {},
 } as any;
 
 export const LookupGazetteerTransformerEditor: React.FC<TransformerUIProps<LookupGazetteerOptions>> = ({
@@ -21,7 +27,16 @@ export const LookupGazetteerTransformerEditor: React.FC<TransformerUIProps<Looku
   options,
   onChange,
 }) => {
-  const onPickField = React.useCallback(
+  const onPickMappingField = useCallback(
+    (value: string | undefined) => {
+      onChange({
+        ...options,
+        mappingField: value,
+      });
+    },
+    [onChange, options]
+  );
+  const onPickTargetField = useCallback(
     (value: string | undefined) => {
       onChange({
         ...options,
@@ -30,16 +45,42 @@ export const LookupGazetteerTransformerEditor: React.FC<TransformerUIProps<Looku
     },
     [onChange, options]
   );
+
+  const onPickGazetteer = useCallback(
+    (value: string | undefined) => {
+      onChange({
+        ...options,
+        gazetteer: value,
+      });
+    },
+    [onChange, options]
+  );
   return (
     <InlineFieldRow>
-      <InlineFieldRow label={'Field'}>
+      <InlineField label={'Current field'}>
         <FieldNamePicker
           context={{ data: input }}
-          value={options.lookupField ?? ''}
-          onChange={onPickField}
+          value={options?.lookupField ?? ''}
+          onChange={onPickMappingField}
           item={fieldNamePickerSettings}
         />
-      </InlineFieldRow>
+      </InlineField>
+      <InlineField label={'Gazetteer'}>
+        <GazetteerPathEditor
+          value={options?.gazetteer ?? ''}
+          context={{ data: input }}
+          item={gazetteerSettings}
+          onChange={onPickGazetteer}
+        />
+      </InlineField>
+      <InlineField label={'lookup field'}>
+        <FieldNamePicker
+          context={{ data: input }}
+          value={options?.lookupField ?? ''}
+          onChange={onPickTargetField}
+          item={fieldNamePickerSettings}
+        />
+      </InlineField>
     </InlineFieldRow>
   );
 };

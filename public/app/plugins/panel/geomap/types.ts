@@ -1,4 +1,4 @@
-import { MapLayerOptions } from '@grafana/data';
+import { MapLayerOptions, SelectableValue } from '@grafana/data';
 import { Units } from 'ol/proj/Units';
 import { MapCenterID } from './view';
 
@@ -60,4 +60,8 @@ export enum ComparisonOperation {
   LTE = 'lte',
   GT = 'gt',
   GTE = 'gte',
+}
+
+export interface GazetteerPathEditorConfigSettings {
+  options?: Array<SelectableValue<string>>;
 }
