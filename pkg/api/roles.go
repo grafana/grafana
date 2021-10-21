@@ -119,8 +119,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 			Grants: []string{string(models.ROLE_VIEWER)},
 		},
-		// TODO should I add display names
-		// TODO work on the name and descriptions
 		{
 			Role: accesscontrol.RoleDTO{
 				Version:     1,
