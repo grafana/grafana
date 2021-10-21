@@ -90,7 +90,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -124,6 +124,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -134,6 +138,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -365,7 +371,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -401,6 +407,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -411,6 +421,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -823,7 +835,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -861,6 +873,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -871,6 +887,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -1206,7 +1224,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -1245,6 +1263,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -1255,6 +1277,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -1765,7 +1789,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -1803,6 +1827,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -1813,6 +1841,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -2137,7 +2167,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -2176,6 +2206,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -2186,6 +2220,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -2693,7 +2729,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -2729,6 +2765,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -2739,6 +2779,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -3037,7 +3079,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -3074,6 +3116,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -3084,6 +3130,8 @@ steps:
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.4.3
@@ -3481,6 +3529,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 914bf2e3e06c65f7bc587a77e72e773858e864b4f0636d00f0edf6ede3f6d54d
+hmac: 96d23b144a0a27bce871f7faf782827c17cc132492fe058a7c56768c543078c9
 
 ...

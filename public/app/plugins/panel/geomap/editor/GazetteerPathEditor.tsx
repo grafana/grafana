@@ -7,13 +7,18 @@ import { css } from '@emotion/css';
 const paths: Array<SelectableValue<string>> = [
   {
     label: 'Countries',
-    description: 'Lookup countries by name, two letter code, or three leter code',
+    description: 'Lookup countries by name, two letter code, or three letter code',
     value: COUNTRIES_GAZETTEER_PATH,
   },
   {
     label: 'USA States',
     description: 'Lookup states by name or 2 ',
     value: 'public/gazetteer/usa-states.json',
+  },
+  {
+    label: 'Airports',
+    description: 'Lookup airports by id or code',
+    value: 'public/gazetteer/airports.geojson',
   },
 ];
 
@@ -60,8 +65,8 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({
               <b>({gaz.count})</b>
               {gaz.examples(10).map((k) => (
                 <span key={k}>{k},</span>
-              ))}{' '}
-              &ellipsis;
+              ))}
+              {gaz.count > 10 && ' ...'}
             </div>
           )}
         </>

@@ -6,15 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
-import {
-  AbsoluteTimeRange,
-  DataFrame,
-  DataQuery,
-  GrafanaTheme2,
-  hasLogsVolumeSupport,
-  LoadingState,
-  RawTimeRange,
-} from '@grafana/data';
+import { AbsoluteTimeRange, DataFrame, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
 import { QueryRows } from './QueryRows';
@@ -302,8 +294,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
-      logsVolumeDataProvider,
-      loadLogsVolumeData,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -326,11 +316,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 addQueryRowButtonHidden={false}
                 richHistoryButtonActive={showRichHistory}
                 queryInspectorButtonActive={showQueryInspector}
-                loadingLogsVolumeAvailable={hasLogsVolumeSupport(datasourceInstance) && !!logsVolumeDataProvider}
                 onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                 onClickRichHistoryButton={this.toggleShowRichHistory}
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
-                onClickLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
               />
               <ResponseErrorContainer exploreId={exploreId} />
             </div>
@@ -392,7 +380,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeDataProvider,
     logsVolumeData,
     logsResult,
     showLogs,
@@ -411,7 +398,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeDataProvider,
     logsVolumeData,
     logsResult: logsResult ?? undefined,
     absoluteRange,
