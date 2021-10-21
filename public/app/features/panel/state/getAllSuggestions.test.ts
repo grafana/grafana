@@ -104,6 +104,10 @@ scenario('Single frame with time and number field', (ctx) => {
     ]);
   });
 
+  it('Bar chart suggestion should be using timeseries panel', () => {
+    expect(ctx.suggestions.find((x) => x.name === SuggestionName.BarChart)?.pluginId).toBe('timeseries');
+  });
+
   it('Stat panels have reduce values disabled', () => {
     for (const suggestion of ctx.suggestions) {
       if (suggestion.options?.reduceOptions?.values) {
@@ -145,7 +149,7 @@ scenario('Single frame with time 2 number fields', (ctx) => {
     ]);
   });
 
-  it('Stat panels have reduce values disabled', () => {
+  it('Stat panels have reduceOptions.values disabled', () => {
     for (const suggestion of ctx.suggestions) {
       if (suggestion.options?.reduceOptions?.values) {
         throw new Error(`Suggestion ${suggestion.name} reduce.values set to true when it should be false`);
@@ -166,5 +170,92 @@ scenario('Single time series with 1000 data points', (ctx) => {
 
   it('should not suggest bar chart', () => {
     expect(ctx.suggestions.find((x) => x.name === SuggestionName.BarChart)).toBe(undefined);
+  });
+});
+
+scenario('Single frame with string and number field', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      fields: [
+        { name: 'Name', type: FieldType.string, values: ['Hugo', 'Dominik', 'Marcus'] },
+        { name: 'ServerA', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    }),
+  ]);
+
+  it('should return correct suggestions', () => {
+    expect(ctx.names()).toEqual([
+      SuggestionName.BarChart,
+      SuggestionName.BarChartHorizontal,
+      SuggestionName.Gauge,
+      SuggestionName.GaugeNoThresholds,
+      SuggestionName.Stat,
+      SuggestionName.StatColoredBackground,
+      SuggestionName.PieChart,
+      SuggestionName.PieChartDonut,
+      SuggestionName.BarGaugeBasic,
+      SuggestionName.BarGaugeLCD,
+      SuggestionName.Table,
+    ]);
+  });
+
+  it('Stat/Gauge/BarGauge/PieChart panels to have reduceOptions.values enabled', () => {
+    for (const suggestion of ctx.suggestions) {
+      if (suggestion.options?.reduceOptions && !suggestion.options?.reduceOptions?.values) {
+        throw new Error(`Suggestion ${suggestion.name} reduce.values set to false when it should be true`);
+      }
+    }
+  });
+});
+
+scenario('Single frame with string and 2 number field', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      fields: [
+        { name: 'Name', type: FieldType.string, values: ['Hugo', 'Dominik', 'Marcus'] },
+        { name: 'ServerA', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'ServerB', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    }),
+  ]);
+
+  it('should return correct suggestions', () => {
+    expect(ctx.names()).toEqual([
+      SuggestionName.BarChart,
+      SuggestionName.BarChartStacked,
+      SuggestionName.BarChartStackedPercent,
+      SuggestionName.BarChartHorizontal,
+      SuggestionName.BarChartHorizontalStacked,
+      SuggestionName.BarChartHorizontalStackedPercent,
+      SuggestionName.Gauge,
+      SuggestionName.GaugeNoThresholds,
+      SuggestionName.Stat,
+      SuggestionName.StatColoredBackground,
+      SuggestionName.PieChart,
+      SuggestionName.PieChartDonut,
+      SuggestionName.BarGaugeBasic,
+      SuggestionName.BarGaugeLCD,
+      SuggestionName.Table,
+    ]);
+  });
+});
+
+scenario('Single frame with string with only string field', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      fields: [{ name: 'Name', type: FieldType.string, values: ['Hugo', 'Dominik', 'Marcus'] }],
+    }),
+  ]);
+
+  it('should return correct suggestions', () => {
+    expect(ctx.names()).toEqual([SuggestionName.Stat, SuggestionName.StatColoredBackground, SuggestionName.Table]);
+  });
+
+  it('Stat panels have reduceOptions.fields set to show all fields', () => {
+    for (const suggestion of ctx.suggestions) {
+      if (suggestion.options?.reduceOptions) {
+        expect(suggestion.options.reduceOptions.fields).toBe('/.*/');
+      }
+    }
   });
 });

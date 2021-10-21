@@ -1,11 +1,12 @@
 import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
 import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema';
+import { SuggestionName } from 'app/types/suggestions';
 import { BarChartFieldConfig, BarChartOptions } from './types';
 
 export class BarChartSuggestionsSupplier {
   getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
     return builder.getListAppender<BarChartOptions, BarChartFieldConfig>({
-      name: 'Bar chart',
+      name: SuggestionName.BarChart,
       pluginId: 'barchart',
       options: {
         showValue: VisibilityMode.Never,
@@ -45,17 +46,19 @@ export class BarChartSuggestionsSupplier {
     }
 
     // Vertical bars
-    list.append({});
+    list.append({
+      name: SuggestionName.BarChart,
+    });
 
     if (dataSummary.numberFieldCount > 1) {
       list.append({
-        name: 'Bar chart stacked',
+        name: SuggestionName.BarChartStacked,
         options: {
           stacking: StackingMode.Normal,
         },
       });
       list.append({
-        name: 'Bar chart 100% stacked',
+        name: SuggestionName.BarChartStackedPercent,
         options: {
           stacking: StackingMode.Percent,
         },
@@ -64,7 +67,7 @@ export class BarChartSuggestionsSupplier {
 
     // horizontal bars
     list.append({
-      name: 'Bar chart horizontal',
+      name: SuggestionName.BarChartHorizontal,
       options: {
         orientation: VizOrientation.Horizontal,
       },
@@ -72,7 +75,7 @@ export class BarChartSuggestionsSupplier {
 
     if (dataSummary.numberFieldCount > 1) {
       list.append({
-        name: 'Bar chart horizontal stacked',
+        name: SuggestionName.BarChartHorizontalStacked,
         options: {
           stacking: StackingMode.Normal,
           orientation: VizOrientation.Horizontal,
@@ -80,7 +83,7 @@ export class BarChartSuggestionsSupplier {
       });
 
       list.append({
-        name: 'Bar chart horizontal 100% stacked',
+        name: SuggestionName.BarChartHorizontalStackedPercent,
         options: {
           orientation: VizOrientation.Horizontal,
           stacking: StackingMode.Percent,

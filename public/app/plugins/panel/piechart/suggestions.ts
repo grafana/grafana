@@ -51,6 +51,10 @@ export class PieChartSuggestionsSupplier {
       list.append({
         name: SuggestionName.PieChartDonut,
         options: {
+          reduceOptions: {
+            values: true,
+            calcs: [],
+          },
           pieType: PieChartType.Donut,
         },
       });

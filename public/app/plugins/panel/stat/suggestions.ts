@@ -31,6 +31,7 @@ export class StatSuggestionsSupplier {
 
     if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
       list.append({
+        name: SuggestionName.Stat,
         options: {
           reduceOptions: {
             values: true,
