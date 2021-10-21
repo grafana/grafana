@@ -1,11 +1,11 @@
 import { Style, Stroke, Fill } from 'ol/style';
-import { FeatureStyleRuleConfig } from '../types';
+import { FeatureStyleConfig } from '../types';
 
 /**
  * Gets a geomap style based on fill, stroke, and stroke width
  * @returns ol style
  */
-export const getGeoMapStyle = (config: FeatureStyleRuleConfig, property: any) => {
+export const getGeoMapStyle = (config: FeatureStyleConfig, property: any) => {
   return new Style({
     fill: new Fill({
       color: `${config.fillColor ?? '#1F60C4'}`,

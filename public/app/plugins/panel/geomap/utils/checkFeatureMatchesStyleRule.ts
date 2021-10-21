@@ -1,5 +1,5 @@
 import { FeatureLike } from 'ol/Feature';
-import { FeatureStyleRuleConfig, ComparisonOperation } from '../types';
+import { FeatureRuleConfig, ComparisonOperation } from '../types';
 
 /**
  * Check whether feature has property value that matches rule
@@ -7,12 +7,18 @@ import { FeatureStyleRuleConfig, ComparisonOperation } from '../types';
  * @param feature - feature with properties and values
  * @returns boolean
  */
-export const checkFeatureMatchesStyleRule = (rule: FeatureStyleRuleConfig, feature: FeatureLike) => {
+export const checkFeatureMatchesStyleRule = (rule: FeatureRuleConfig, feature: FeatureLike) => {
+  if (!rule.property || !rule.value) {
+    return false;
+  }
+
   switch (rule.operation) {
     case ComparisonOperation.EQ:
-      return feature.get(rule.property) === rule.value;
+      return feature.get(rule?.property) === rule.value;
     case ComparisonOperation.GT:
-      return feature.get(rule.property) > rule.value;
+      if (rule.property) {
+        return feature.get(rule.property) > rule.value;
+      }
     case ComparisonOperation.GTE:
       return feature.get(rule.property) >= rule.value;
     case ComparisonOperation.LT:

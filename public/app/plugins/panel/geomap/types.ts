@@ -43,9 +43,12 @@ export interface GeomapPanelOptions {
   basemap: MapLayerOptions;
   layers: MapLayerOptions[];
 }
-export interface FeatureStyleRuleConfig {
+export interface FeatureStyleConfig {
   fillColor: string; //eventually be ColorDimensionConfig
   strokeWidth?: number;
+  rule?: FeatureRuleConfig;
+}
+export interface FeatureRuleConfig {
   property: string;
   operation: ComparisonOperation;
   value: string | boolean | number;

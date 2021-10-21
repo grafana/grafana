@@ -7,7 +7,7 @@ import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
 import { getGeoMapStyle } from '../../utils/getGeoMapStyle';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
-import { ComparisonOperation, FeatureStyleRuleConfig } from '../../types';
+import { ComparisonOperation, FeatureStyleConfig } from '../../types';
 import { Stroke, Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
@@ -16,20 +16,22 @@ export interface GeoJSONMapperConfig {
   src?: string;
 
   // Styles that can be applied
-  styles: FeatureStyleRuleConfig[];
+  styles: FeatureStyleConfig[];
 }
-
-export const DEFAULT_STYLE_RULE: FeatureStyleRuleConfig = {
-  fillColor: '#1F60C4',
-  strokeWidth: 1,
-  property: '',
-  operation: ComparisonOperation.EQ,
-  value: '',
-};
 
 const defaultOptions: GeoJSONMapperConfig = {
   src: 'public/maps/countries.geojson',
   styles: [],
+};
+
+export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
+  fillColor: '#1F60C4',
+  strokeWidth: 1,
+  rule: {
+    property: '',
+    operation: ComparisonOperation.EQ,
+    value: '',
+  },
 };
 
 export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
@@ -64,10 +66,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         if (feature && config?.styles?.length) {
           for (const style of config.styles) {
             //check if there is no style rule or if the rule matches feature property
-            if (
-              (!style.property && !style.value) ||
-              checkFeatureMatchesStyleRule(style, feature as Feature<Geometry>)
-            ) {
+            if (!style.rule || checkFeatureMatchesStyleRule(style.rule, feature as Feature<Geometry>)) {
               return getGeoMapStyle(style, feature);
             }
           }
