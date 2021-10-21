@@ -1,5 +1,5 @@
 +++
-title = "Opt-in to Grafana 8 Alerting"
+title = "Opt-in to Grafana 8 alerting"
 description = "Enable Grafana 8 Alerts"
 weight = 115
 +++
@@ -21,13 +21,13 @@ To enable Grafana 8 alerts:
 
 > **Note:** The `ngalert` feature toggle previously used to enable or disable Grafana 8 alerting is no longer available.
 
-Moreover, before v8.2, notification logs and silences were stored on a disk. If you did not use persistent disks, you would lose any configured silences and logs on a restart, resulting in unwanted or duplicate notifications. We no longer require the use of a persistent disk. Instead, the notification logs and silences are stored regularly (every 15 minutes), and a clean shutdown to the database. If you used the file-based approach, Grafana reads the existing file and persists it eventually.
+Before v8.2, notification logs and silences were stored on a disk. If you did not use persistent disks, you would have lost any configured silences and logs on a restart, resulting in unwanted or duplicate notifications. We no longer require the use of a persistent disk. Instead, the notification logs and silences are stored regularly (every 15 minutes). If you used the file-based approach, Grafana reads the existing file and persists it eventually.
 
 ## Migrating legacy alerts to Grafana 8 alerting system
 
 When Grafana 8 alerting is enabled, existing legacy dashboard alerts migrate in a format compatible with the Grafana 8 alerting. In the Alerting page of your Grafana instance, you can view the migrated alerts alongside new alerts.
 
-Read and write access to legacy dashboard alerts and to Grafana 8 alerts are governed by the permissions of the folders storing them. During migration, legacy dashboard alert permissions are matched to the new rules permissions as follows:
+Read and write access to legacy dashboard alerts and Grafana 8 alerts are governed by the permissions of the folders storing them. During migration, legacy dashboard alert permissions are matched to the new rules permissions as follows:
 
 - If alert's dashboard has permissions, it will create a folder named like `Migrated {"dashboardUid": "UID", "panelId": 1, "alertId": 1}` to match permissions of the dashboard (including the inherited permissions from the folder).
 - If there are no dashboard permissions and the dashboard is under a folder, then the rule is linked to this folder and inherits its permissions.

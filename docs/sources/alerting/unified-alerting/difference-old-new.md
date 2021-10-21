@@ -1,5 +1,5 @@
 +++
-title = "What's New with Grafana 8 alerts"
+title = "What's new in Grafana 8 alerting"
 description = "What's New with Grafana 8 Alerts"
 keywords = ["grafana", "alerting", "guide"]
 weight = 114

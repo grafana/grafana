@@ -6,9 +6,9 @@ weight = 116
 
 # Alertmanager
 
-Prometheus Alertmanager helps in grouping and managing rules, which adds a layer of orchestration on top of the alerting engines. To learn more, see [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/).
+The Alertmanager helps in grouping and managing rules, which adds a layer of orchestration on top of the alerting engines. To learn more, see [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/).
 
-Grafana includes built-in support for Prometheus Alertmanager. By default, notifications for Grafana managed alerts are handled by the embedded Alertmanager that is part of core Grafana. You can configure its contact points, notification policies, silences, and templates from the alerting UI by selecting the `Grafana` option from the Alertmanager drop down.
+Grafana includes built-in support for Prometheus Alertmanager. By default, notifications for Grafana managed alerts are handled by this embedded Alertmanager that is part of core Grafana. You can configure its contact points, notification policies, silences, and templates from the alerting UI by selecting the `Grafana` option from the Alertmanager drop down.
 
 > **Note:** Before v8.2, the configuration of the embedded Alertmanager was shared across organizations. If you are on an older Grafana version, we recommend that you use Grafana 8 Alerts only if you have one organization. Otherwise, your contact points are visible to all organizations.
 
