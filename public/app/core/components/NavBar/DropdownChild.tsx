@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, textUtil } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -29,13 +29,15 @@ const DropdownChild = ({ isDivider = false, icon, onClick, target, text, url }: 
     </button>
   );
   if (url) {
+    const sanitizedUrl = textUtil.sanitizeAngularInterpolation(url);
+
     element =
       !target && url.startsWith('/') ? (
-        <Link className={styles.element} onClick={onClick} href={url}>
+        <Link className={styles.element} onClick={onClick} href={sanitizedUrl}>
           {linkContent}
         </Link>
       ) : (
-        <a className={styles.element} href={url} target={target} rel="noopener" onClick={onClick}>
+        <a className={styles.element} href={sanitizedUrl} target={target} rel="noopener" onClick={onClick}>
           {linkContent}
         </a>
       );
