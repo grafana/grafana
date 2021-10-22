@@ -9,6 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 )
 
+func (rs *RenderingService) startPlugin(ctx context.Context) error {
+	return rs.pluginInfo.Start(ctx)
+}
+
 func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	// gives plugin some additional time to timeout and return possible errors.
 	ctx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)

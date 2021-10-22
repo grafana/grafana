@@ -230,7 +230,7 @@ func (m *PluginManager) Plugins(pluginTypes ...plugins.Type) []*plugins.Plugin {
 
 func (m *PluginManager) Renderer() *plugins.Plugin {
 	for _, p := range m.plugins {
-		if p.IsRenderer() && p.Renderer != nil {
+		if p.IsRenderer() {
 			return p
 		}
 	}

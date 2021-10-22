@@ -42,6 +42,7 @@ type RenderUser struct {
 
 type RenderingService struct {
 	log             log.Logger
+	pluginInfo      *plugins.Plugin
 	renderAction    renderFunc
 	renderCSVAction renderCSVFunc
 	domain          string
@@ -94,17 +95,37 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
-	if !rs.IsAvailable() {
-		rs.log.Debug("Could not render image, no image renderer found/installed. " +
-			"For image rendering support please install the grafana-image-renderer plugin. " +
-			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
-	}
-	<-ctx.Done()
+	if rs.remoteAvailable() {
+		rs.log = rs.log.New("renderer", "http")
 
-	p := rs.RendererPluginManager.Renderer()
-	if p != nil {
+		version, err := rs.getRemotePluginVersion()
+		if err != nil {
+			rs.log.Info("Couldn't get remote renderer version", "err", err)
+		}
+
+		rs.log.Info("Backend rendering via external http server", "version", version)
+		rs.version = version
+		rs.renderAction = rs.renderViaHTTP
+		rs.renderCSVAction = rs.renderCSVViaHTTP
+		<-ctx.Done()
+		return nil
+	}
+
+	if rs.pluginAvailable() {
+		rs.log = rs.log.New("renderer", "plugin")
+		rs.pluginInfo = rs.RendererPluginManager.Renderer()
+
+		if err := rs.startPlugin(ctx); err != nil {
+			return err
+		}
+
+		rs.version = rs.pluginInfo.Info.Version
+		rs.renderAction = rs.renderViaPlugin
+		rs.renderCSVAction = rs.renderCSVViaPlugin
+		<-ctx.Done()
+
 		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
-		debugFilePath := path.Join(p.PluginDir, "chrome-win/debug.log")
+		debugFilePath := path.Join(rs.pluginInfo.PluginDir, "chrome-win/debug.log")
 		if _, err := os.Stat(debugFilePath); err == nil {
 			err = os.Remove(debugFilePath)
 			if err != nil {
@@ -112,8 +133,15 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 					"err", err)
 			}
 		}
+
+		return nil
 	}
 
+	rs.log.Debug("No image renderer found/installed. " +
+		"For image rendering support please install the grafana-image-renderer plugin. " +
+		"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+
+	<-ctx.Done()
 	return nil
 }
 
