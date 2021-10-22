@@ -20,14 +20,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // SlackNotifier is responsible for sending
 // alert notification to Slack.
 type SlackNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	log  log.Logger
 	tmpl *template.Template
 
@@ -107,7 +106,7 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*
 	}
 
 	return &SlackNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
