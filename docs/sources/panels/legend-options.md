@@ -43,7 +43,7 @@ Click on the series icon (colored line beside the series label) in the legend to
 ## Sort series
 
 Change legend mode to **Table** and choose [calculations]({{< relref "./calculations-list.md" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
-The sort order affects the positions of the bars in the bar-chart panel as well as the order of stacked series in the time-series and bar-chart panels.
+The sort order affects the positions of the bars in the Bar chart panel as well as the order of stacked series in the Time series and Bar chart panels.
 
 > **Note:** This feature is only supported in these panels: Bar chart, Histogram, Time series, XY Chart.
 
