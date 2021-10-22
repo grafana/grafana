@@ -1,5 +1,6 @@
 import {
   addToRichHistory,
+  getRichHistory,
   updateStarredInRichHistory,
   updateCommentInRichHistory,
   mapNumbertoTimeInSlider,
@@ -272,6 +273,37 @@ describe('richHistory', () => {
     it('should correctly create heading for queries when sort order is datasourceAZ ', () => {
       const heading = createQueryHeading(mock.storedHistory[0], SortOrder.DatasourceAZ);
       expect(heading).toEqual(mock.storedHistory[0].datasourceName);
+    });
+  });
+
+  describe('getRichHistory', () => {
+    afterEach(() => {
+      deleteAllFromRichHistory();
+      expect(store.exists(key)).toBeFalsy();
+    });
+    it('should load from localStorage data in old format', () => {
+      const oldHistoryItem = { ...mock.storedHistory[0], queries: ['test query 1', 'test query 2', 'test query 3'] };
+      store.setObject(key, [oldHistoryItem]);
+      const expectedHistoryItem = {
+        ...mock.storedHistory[0],
+        queries: [
+          {
+            expr: 'test query 1',
+            refId: 'A',
+          },
+          {
+            expr: 'test query 2',
+            refId: 'B',
+          },
+          {
+            expr: 'test query 3',
+            refId: 'C',
+          },
+        ],
+      };
+
+      const result = getRichHistory();
+      expect(result).toStrictEqual([expectedHistoryItem]);
     });
   });
 });

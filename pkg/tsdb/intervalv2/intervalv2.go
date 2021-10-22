@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
@@ -120,7 +121,7 @@ func ParseIntervalStringToTimeDuration(interval string) (time.Duration, error) {
 	if isPureNum {
 		formattedInterval += "s"
 	}
-	parsedInterval, err := time.ParseDuration(formattedInterval)
+	parsedInterval, err := gtime.ParseDuration(formattedInterval)
 	if err != nil {
 		return time.Duration(0), err
 	}

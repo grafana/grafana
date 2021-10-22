@@ -159,7 +159,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if query.RangeQuery {
 			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+				plog.Error("Range query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				continue
 			}
 			response[RangeQueryType] = rangeResponse
 		}
@@ -167,18 +169,21 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if query.InstantQuery {
 			instantResponse, _, err := client.Query(ctx, query.Expr, query.End)
 			if err != nil {
-				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+				plog.Error("Instant query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				continue
 			}
 			response[InstantQueryType] = instantResponse
 		}
-		// For now, we ignore exemplar errors and continue with processing of other results
+
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
-				exemplarResponse = nil
 				plog.Error("Exemplar query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+			} else {
+				response[ExemplarQueryType] = exemplarResponse
 			}
-			response[ExemplarQueryType] = exemplarResponse
 		}
 
 		frames, err := parseResponse(response, query)
@@ -398,19 +403,28 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 
 	for _, v := range matrix {
 		tags := make(map[string]string, len(v.Metric))
-		timeVector := make([]time.Time, 0, len(v.Values))
-		values := make([]float64, 0, len(v.Values))
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-		for _, k := range v.Values {
-			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
-			values = append(values, float64(k.Value))
+
+		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
+		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
+
+		for i, k := range v.Values {
+			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			value := float64(k.Value)
+			if !math.IsNaN(value) {
+				valueField.Set(i, &value)
+			}
 		}
+
 		name := formatLegend(v.Metric, query)
-		frame := data.NewFrame(name,
-			data.NewField("Time", nil, timeVector),
-			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
+		timeField.Name = data.TimeSeriesTimeFieldName
+		valueField.Name = data.TimeSeriesValueFieldName
+		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+		valueField.Labels = tags
+
+		frame := data.NewFrame(name, timeField, valueField)
 		frame.Meta = &data.FrameMeta{
 			Custom: map[string]string{
 				"resultType": "matrix",

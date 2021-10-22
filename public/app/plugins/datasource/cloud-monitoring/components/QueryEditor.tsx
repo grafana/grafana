@@ -33,7 +33,7 @@ export class QueryEditor extends PureComponent<Props> {
     }
   }
 
-  onQueryChange(prop: string, value: any) {
+  onQueryChange(prop: string, value: MetricQuery | SLOQuery) {
     this.props.onChange({ ...this.props.query, [prop]: value });
     this.props.onRunQuery();
   }
