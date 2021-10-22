@@ -24,7 +24,7 @@ type SecretsService struct {
 	enc      encryption.Service
 	settings setting.Provider
 
-	defaultProvider string
+	currentProvider string
 	providers       map[string]secrets.Provider
 	dataKeyCache    map[string]dataKeyCacheItem
 }
@@ -39,7 +39,7 @@ func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Serv
 		bus:             bus,
 		enc:             enc,
 		settings:        settings,
-		defaultProvider: defaultProvider,
+		currentProvider: defaultProvider,
 		providers:       providers,
 		dataKeyCache:    make(map[string]dataKeyCacheItem),
 	}
@@ -56,7 +56,7 @@ var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
 	scope := opt()
-	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.defaultProvider)
+	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.currentProvider)
 
 	dataKey, err := s.dataKey(ctx, keyName)
 	if err != nil {
@@ -175,9 +175,9 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	if err != nil {
 		return nil, err
 	}
-	provider, exists := s.providers[s.defaultProvider]
+	provider, exists := s.providers[s.currentProvider]
 	if !exists {
-		return nil, fmt.Errorf("could not find encryption provider '%s'", s.defaultProvider)
+		return nil, fmt.Errorf("could not find encryption provider '%s'", s.currentProvider)
 	}
 
 	// 2. Encrypt it
@@ -190,7 +190,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	err = s.store.CreateDataKey(ctx, secrets.DataKey{
 		Active:        true, // TODO: right now we never mark a key as deactivated
 		Name:          name,
-		Provider:      s.defaultProvider,
+		Provider:      s.currentProvider,
 		EncryptedData: encrypted,
 		Scope:         scope,
 	})
