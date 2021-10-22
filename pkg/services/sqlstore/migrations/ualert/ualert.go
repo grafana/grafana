@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -460,9 +462,9 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 
 			// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
 			// given that the previous alerting will never support it.
-			decryptFunc := func(_ context.Context, sjd map[string][]byte, key string, fallback string, secret string) string {
+			decryptFunc := func(_ context.Context, sjd map[string][]byte, key string, fallback string) string {
 				if value, ok := sjd[key]; ok {
-					decryptedData, err := util.Decrypt(value, secret)
+					decryptedData, err := util.Decrypt(value, setting.SecretKey)
 					if err != nil {
 						m.mg.Logger.Warn("unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
 						return fallback
