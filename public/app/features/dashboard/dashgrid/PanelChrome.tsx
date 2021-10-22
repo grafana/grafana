@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Subscription } from 'rxjs';
-import { locationService } from '@grafana/runtime';
+import { locationService, RefreshEvent } from '@grafana/runtime';
 import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
@@ -30,7 +30,7 @@ import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
-import { RefreshEvent, RenderEvent } from 'app/types/events';
+import { RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
@@ -309,10 +309,15 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.props.panel.updateFieldConfig(config);
   };
 
-  onPanelError = (message: string) => {
-    if (this.state.errorMessage !== message) {
-      this.setState({ errorMessage: message });
+  onPanelError = (error: Error) => {
+    const errorMessage = error.message || DEFAULT_PLUGIN_ERROR;
+    if (this.state.errorMessage !== errorMessage) {
+      this.setState({ errorMessage });
     }
+  };
+
+  onPanelErrorRecover = () => {
+    this.setState({ errorMessage: undefined });
   };
 
   onAnnotationCreate = async (event: AnnotationEventUIModel) => {
@@ -458,7 +463,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, width, height } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -489,10 +494,13 @@ export class PanelChrome extends PureComponent<Props, State> {
           alertState={alertState}
           data={data}
         />
-        <ErrorBoundary>
+        <ErrorBoundary
+          dependencies={[data, plugin, panel.getOptions()]}
+          onError={this.onPanelError}
+          onRecover={this.onPanelErrorRecover}
+        >
           {({ error }) => {
             if (error) {
-              this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
               return null;
             }
             return this.renderPanel(width, height);
