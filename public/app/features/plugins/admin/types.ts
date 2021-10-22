@@ -75,6 +75,16 @@ export interface CatalogPluginInfo {
   };
 }
 
+export type RemotePluginJson = {
+  dependencies: PluginDependencies;
+  info: {
+    links: Array<{
+      name: string;
+      url: string;
+    }>;
+  };
+};
+
 export type RemotePlugin = {
   createdAt: string;
   description: string;
@@ -83,15 +93,7 @@ export type RemotePlugin = {
   featured: number;
   id: number;
   internal: boolean;
-  json?: {
-    dependencies: PluginDependencies;
-    info: {
-      links: Array<{
-        name: string;
-        url: string;
-      }>;
-    };
-  };
+  json?: RemotePluginJson;
   links: Array<{ rel: string; href: string }>;
   name: string;
   orgId: number;
@@ -171,6 +173,7 @@ export interface Build {
 export interface Version {
   version: string;
   createdAt: string;
+  grafanaDependency?: string;
 }
 
 export interface PluginDetails {
@@ -268,5 +271,6 @@ export type PluginVersion = {
   verified: boolean;
   status: string;
   downloadSlug: string;
+  json?: RemotePluginJson;
   links: Array<{ rel: string; href: string }>;
 };

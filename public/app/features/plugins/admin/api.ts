@@ -91,7 +91,11 @@ async function getPluginVersions(id: string): Promise<Version[]> {
       `${GRAFANA_API_ROOT}/plugins/${id}/versions`
     );
 
-    return (versions.items || []).map(({ version, createdAt }) => ({ version, createdAt }));
+    return (versions.items || []).map((pluginVersion) => ({
+      version: pluginVersion.version,
+      createdAt: pluginVersion.createdAt,
+      grafanaDependency: pluginVersion.json?.dependencies?.grafanaDependency,
+    }));
   } catch (error) {
     // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
     error.isHandled = true;
