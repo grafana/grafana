@@ -9,18 +9,21 @@ import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import {
   ColorDimensionConfig,
   getColorDimension,
+  getScaledDimension,
   getTextDimension,
+  ScaleDimensionConfig,
   TextDimensionConfig,
   TextDimensionMode,
 } from 'app/features/dimensions';
 import tinycolor from 'tinycolor2';
-import { ColorDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
+import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 import { Fill, Stroke } from 'ol/style';
 
 interface TextLabelsConfig {
   labelText: TextDimensionConfig;
   color: ColorDimensionConfig;
   fillOpacity: number;
+  fontSize: ScaleDimensionConfig;
 }
 
 export const TEXT_LABELS_LAYER = 'text-labels';
@@ -33,7 +36,12 @@ const defaultOptions: TextLabelsConfig = {
   color: {
     fixed: 'dark-blue',
   },
-  fillOpacity: 0.4,
+  fillOpacity: 0.6,
+  fontSize: {
+    fixed: 12,
+    min: 8,
+    max: 200,
+  },
 };
 
 export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
@@ -53,6 +61,8 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
       ...options?.config,
     };
 
+    const fontFamily = theme.typography.fontFamily;
+
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
@@ -62,17 +72,18 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
 
         const features: Feature<Point>[] = [];
 
-        const getTextStyle = (text: string, fillColor: string) => {
+        const getTextStyle = (text: string, fillColor: string, fontsize: number) => {
           return new style.Text({
             text: text,
             fill: new Fill({ color: fillColor }),
             stroke: new Stroke({ color: fillColor }),
+            font: `normal ${fontsize}px ${fontFamily}`,
           });
         };
 
-        const getStyle = (text: string, fillColor: string) => {
+        const getStyle = (text: string, fillColor: string, fontsize: number) => {
           return new style.Style({
-            text: getTextStyle(text, fillColor),
+            text: getTextStyle(text, fillColor, fontsize),
           });
         };
 
@@ -85,14 +96,15 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
 
           const colorDim = getColorDimension(frame, config.color, theme);
           const textDim = getTextDimension(frame, config.labelText);
+          const scaleDim = getScaledDimension(frame, config.fontSize);
           const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
 
           // Map each data value into new points
           for (let i = 0; i < frame.length; i++) {
             // Get the color for the feature based on color scheme
             const color = colorDim.get(i);
-            // Get the text for the feature based on text dimension
             const label = textDim.get(i);
+            const fontSize = scaleDim.get(i);
 
             // Set the opacity determined from user configuration
             const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
@@ -103,7 +115,7 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
               frame,
               rowIndex: i,
             });
-            dot.setStyle(getStyle(label, fillColor));
+            dot.setStyle(getStyle(label, fillColor, fontSize));
             features.push(dot);
           }
         }
@@ -114,7 +126,6 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
       },
     };
   },
-  // Marker overlay options
   registerOptionsUI: (builder) => {
     builder
       .addCustomEditor({
@@ -138,6 +149,17 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
           min: 0,
           max: 1,
           step: 0.1,
+        },
+      })
+      .addCustomEditor({
+        id: 'config.fontSize',
+        path: 'config.fontSize',
+        name: 'Font size',
+        editor: ScaleDimensionEditor,
+        settings: {
+          fixed: defaultOptions.fontSize.fixed,
+          min: defaultOptions.fontSize.min,
+          max: defaultOptions.fontSize.max,
         },
       });
   },
