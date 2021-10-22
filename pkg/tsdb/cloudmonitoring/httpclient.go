@@ -46,14 +46,11 @@ func getMiddleware(model *datasourceInfo) (httpclient.Middleware, error) {
 	case gceAuthentication:
 		provider = tokenprovider.NewGceAccessTokenProvider(providerConfig)
 	case jwtAuthentication:
-
-		jwtConf := &tokenprovider.JwtTokenConfig{
+		providerConfig.JwtTokenConfig = &tokenprovider.JwtTokenConfig{
 			Email:      model.clientEmail,
 			URI:        model.tokenUri,
 			PrivateKey: model.privateKey,
 		}
-		providerConfig.JwtTokenConfig = jwtConf
-
 		provider = tokenprovider.NewJwtAccessTokenProvider(providerConfig)
 	}
 
