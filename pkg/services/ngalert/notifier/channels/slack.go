@@ -230,6 +230,8 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 		Err string `json:"error"`
 	}{}
 	if err := json.Unmarshal(body, &rslt); err != nil {
+		logger.Warn("Failed to unmarshal Slack API response", "url", request.URL.String(), "statusCode", resp.Status,
+			"body", string(body))
 		return fmt.Errorf("failed to unmarshal Slack API response: %s", err)
 	}
 

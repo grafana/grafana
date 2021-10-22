@@ -389,7 +389,9 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 			Err string `json:"error"`
 		}{}
 		if err := json.Unmarshal(body, &rslt); err != nil {
-			return fmt.Errorf("failed to unmarshal Slack API response: %s", err)
+			sn.log.Warn("Failed to unmarshal Slack API response", "url", sn.url.String(), "statusCode", resp.Status,
+				"err", err)
+			return fmt.Errorf("failed to unmarshal Slack API response with status code %d: %s", resp.StatusCode, err)
 		}
 
 		if !rslt.Ok && rslt.Err != "" {
