@@ -418,11 +418,6 @@ export class DashboardModel {
     getTimeSrv().resumeAutoRefresh();
   }
 
-  /*
-   * @deprecated used to be used internally by variables
-   * */
-  setChangeAffectsAllPanels() {}
-
   private ensureListExist(data: any) {
     if (!data) {
       data = {};
