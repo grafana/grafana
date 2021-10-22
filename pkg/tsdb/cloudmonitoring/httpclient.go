@@ -46,14 +46,11 @@ func getMiddleware(model *datasourceInfo) (httpclient.Middleware, error) {
 	case gceAuthentication:
 		provider = tokenprovider.NewGceAccessTokenProvider(providerConfig)
 	case jwtAuthentication:
-		data := templateData{
-			JsonData:       model.jsonData,
-			SecureJsonData: model.decryptedSecureJSONData,
-		}
 
-		jwtConf, err := interpolateAuthParams(cloudMonitoringRoute.params, data)
-		if err != nil {
-			return nil, err
+		jwtConf := &tokenprovider.JwtTokenConfig{
+			Email:      model.clientEmail,
+			URI:        model.tokenUri,
+			PrivateKey: model.privateKey,
 		}
 		providerConfig.JwtTokenConfig = jwtConf
 
@@ -71,24 +68,4 @@ func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvide
 
 	opts.Middlewares = append(opts.Middlewares, m)
 	return clientProvider.New(opts)
-}
-
-func interpolateAuthParams(params jwtParams, data templateData) (*tokenprovider.JwtTokenConfig, error) {
-	var err error
-	config := &tokenprovider.JwtTokenConfig{}
-	config.URI, err = interpolateString(params.uri, data)
-	if err != nil {
-		return nil, err
-	}
-	config.Email, err = interpolateString(params.email, data)
-	if err != nil {
-		return nil, err
-	}
-	privateKey, err := interpolateString(params.privateKey, data)
-	if err != nil {
-		return nil, err
-	}
-	config.PrivateKey = []byte(privateKey)
-
-	return config, nil
 }
