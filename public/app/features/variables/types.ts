@@ -48,6 +48,7 @@ export interface AdHocVariableFilter {
 }
 
 export interface AdHocVariableModel extends VariableModel {
+  // Can be data source name or UID
   datasource: string | null;
   filters: AdHocVariableFilter[];
 }
