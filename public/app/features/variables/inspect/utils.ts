@@ -150,9 +150,6 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
       const newResult = getPropsWithVariable(variableId, { key, value }, {});
 
       if (Object.keys(newResult).length) {
-        if (all[id]) {
-          console.log({ id, all });
-        }
         all = {
           ...all,
           [id]: newResult,
