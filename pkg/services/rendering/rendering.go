@@ -335,14 +335,6 @@ func (rs *RenderingService) deleteRenderKey(key string) {
 	}
 }
 
-func (rs *RenderingService) StartRenderer(ctx context.Context) error {
-	if rs.RendererPluginManager.Renderer() != nil {
-		return rs.RendererPluginManager.Renderer().Start(ctx)
-	}
-
-	return fmt.Errorf("could not start renderer plugin as it was not found in the plugin store")
-}
-
 func isoTimeOffsetToPosixTz(isoOffset string) string {
 	// invert offset
 	if strings.HasPrefix(isoOffset, "UTC+") {
