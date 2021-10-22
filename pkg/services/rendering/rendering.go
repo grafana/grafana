@@ -212,7 +212,6 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	}()
 
 	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
-
 	return rs.renderAction(ctx, renderKey, opts)
 }
 
