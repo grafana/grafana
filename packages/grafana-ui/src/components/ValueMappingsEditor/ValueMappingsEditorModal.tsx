@@ -153,7 +153,8 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   tableWrap: css`
-    max-height: 60vh;
+    max-height: calc(80vh - 170px);
+    min-height: 40px;
     overflow: auto;
   `,
 
