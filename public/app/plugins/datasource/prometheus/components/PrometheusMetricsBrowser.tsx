@@ -17,8 +17,6 @@ import { FixedSizeList } from 'react-window';
 import { GrafanaTheme } from '@grafana/data';
 
 // Hard limit on labels to render
-const MAX_LABEL_COUNT = 10000;
-const MAX_VALUE_COUNT = 50000;
 const EMPTY_SELECTOR = '{}';
 const METRIC_LABEL = '__name__';
 const LIST_ITEM_SIZE = 25;
@@ -321,12 +319,6 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       const selectedLabels: string[] = lastUsedLabels;
       languageProvider.start().then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
-        // TODO too-many-metrics
-        if (rawLabels.length > MAX_LABEL_COUNT) {
-          const error = `Too many labels found (showing only ${MAX_LABEL_COUNT} of ${rawLabels.length})`;
-          rawLabels = rawLabels.slice(0, MAX_LABEL_COUNT);
-          this.setState({ error });
-        }
         // Get metrics
         this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
         // Auto-select previously selected labels
@@ -393,11 +385,6 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       if (selector !== buildSelector(this.state.labels)) {
         this.updateLabelState(name, { loading: false });
         return;
-      }
-      if (rawValues.length > MAX_VALUE_COUNT) {
-        const error = `Too many values for ${name} (showing only ${MAX_VALUE_COUNT} of ${rawValues.length})`;
-        rawValues = rawValues.slice(0, MAX_VALUE_COUNT);
-        this.setState({ error });
       }
       const values: FacettableValue[] = [];
       const { metricsMetadata } = languageProvider;

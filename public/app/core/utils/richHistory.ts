@@ -394,7 +394,6 @@ export function filterAndSortQueries(
   return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
-/* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */
 function migrateRichHistory(richHistory: RichHistoryQuery[]) {
   const transformedRichHistory = richHistory.map((query) => {
     const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
