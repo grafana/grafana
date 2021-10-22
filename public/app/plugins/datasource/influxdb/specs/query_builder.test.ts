@@ -169,13 +169,31 @@ describe('InfluxQueryBuilder', () => {
       expect(query).toBe(`SHOW MEASUREMENTS WHERE "app" == 42 LIMIT 100`);
     });
 
-    it('should handle tag-value=number-ish getting tag-keys', () => {
+    it('should handle tag-value=finite-number-ish getting tag-keys', () => {
       const builder = new InfluxQueryBuilder(
         { measurement: undefined, tags: [{ key: 'app', value: '42', operator: '==' }] },
         undefined
       );
       const query = builder.buildExploreQuery('TAG_KEYS');
       expect(query).toBe(`SHOW TAG KEYS WHERE "app" == 42`);
+    });
+
+    it('should handle tag-value=positive-infinite-number-ish getting tag-keys', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: '1e1000', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('TAG_KEYS');
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == '1e1000'`);
+    });
+
+    it('should handle tag-value=negative-infinite-number-ish getting tag-keys', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: '-1e1000', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('TAG_KEYS');
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == '-1e1000'`);
     });
 
     it('should handle tag-value-contains-backslash-character getting tag-keys', () => {
