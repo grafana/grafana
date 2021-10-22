@@ -1,8 +1,7 @@
 import { Fill, RegularShape, Stroke, Style, Circle } from 'ol/style';
 import { Registry, RegistryItem } from '@grafana/data';
 
-export type StyleMaker = (color: string, fillColor: string, radius: number, markerPath?: string) => Style;
-
+export type StyleMaker = (color: string, fillColor: string, size: number, markerPath?: string, text?: string) => Style;
 export interface MarkerMaker extends RegistryItem {
   // path to icon that will be shown (but then replaced)
   aliasIds: string[];

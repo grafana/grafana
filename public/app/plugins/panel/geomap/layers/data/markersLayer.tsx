@@ -12,8 +12,6 @@ import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import * as style from 'ol/style';
-
-import tinycolor from 'tinycolor2';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import {
   ColorDimensionConfig,
@@ -30,6 +28,7 @@ import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper'
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { StyleMaker, getMarkerFromPath } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
+import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -138,23 +137,17 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           const sizeDim = getScaledDimension(frame, config.size);
           const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
 
-          // Map each data value into new points
-          for (let i = 0; i < frame.length; i++) {
-            // Get the circle color for a specific data value depending on color scheme
-            const color = colorDim.get(i);
-            // Set the opacity determined from user configuration
-            const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
-            // Get circle size from user configuration
-            const radius = sizeDim.get(i);
+          const featureDimensionConfig: FeaturesStylesBuilderConfig = {
+            colorDim: colorDim,
+            sizeDim: sizeDim,
+            opacity: opacity,
+            styleMaker: shape,
+          };
 
-            // Create a new Feature for each point returned from dataFrameToPoints
-            const dot = new Feature(info.points[i]);
-            dot.setProperties({
-              frame,
-              rowIndex: i,
-            });
-            dot.setStyle(shape(color, fillColor, radius));
-            features.push(dot);
+          const frameFeatures = getFeatures(frame, info, featureDimensionConfig);
+
+          if (frameFeatures) {
+            features.push(...frameFeatures);
           }
 
           // Post updates to the legend component

@@ -1,7 +1,5 @@
 import { GrafanaTheme2, MapLayerOptions, MapLayerRegistryItem, PanelData, PluginState } from '@grafana/data';
 import Map from 'ol/Map';
-import Feature from 'ol/Feature';
-import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import * as style from 'ol/style';
@@ -15,9 +13,12 @@ import {
   TextDimensionConfig,
   TextDimensionMode,
 } from 'app/features/dimensions';
-import tinycolor from 'tinycolor2';
 import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 import { Fill, Stroke } from 'ol/style';
+import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
+import { StyleMaker } from '../../utils/regularShapes';
+import { Feature } from 'ol';
+import { Point } from 'ol/geom';
 
 interface TextLabelsConfig {
   labelText: TextDimensionConfig;
@@ -38,9 +39,9 @@ const defaultOptions: TextLabelsConfig = {
   },
   fillOpacity: 0.6,
   fontSize: {
-    fixed: 12,
-    min: 8,
-    max: 200,
+    fixed: 10,
+    min: 5,
+    max: 100,
   },
 };
 
@@ -63,6 +64,21 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
 
     const fontFamily = theme.typography.fontFamily;
 
+    const getTextStyle = (text: string, fillColor: string, fontSize: number) => {
+      return new style.Text({
+        text: text,
+        fill: new Fill({ color: fillColor }),
+        stroke: new Stroke({ color: fillColor }),
+        font: `normal ${fontSize}px ${fontFamily}`,
+      });
+    };
+
+    const getStyle: StyleMaker = (color: string, fillColor: string, fontSize: number, text: string) => {
+      return new style.Style({
+        text: getTextStyle(text, fillColor, fontSize),
+      });
+    };
+
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
@@ -71,21 +87,6 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
         }
 
         const features: Feature<Point>[] = [];
-
-        const getTextStyle = (text: string, fillColor: string, fontsize: number) => {
-          return new style.Text({
-            text: text,
-            fill: new Fill({ color: fillColor }),
-            stroke: new Stroke({ color: fillColor }),
-            font: `normal ${fontsize}px ${fontFamily}`,
-          });
-        };
-
-        const getStyle = (text: string, fillColor: string, fontsize: number) => {
-          return new style.Style({
-            text: getTextStyle(text, fillColor, fontsize),
-          });
-        };
 
         for (const frame of data.series) {
           const info = dataFrameToPoints(frame, matchers);
@@ -96,27 +97,21 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
 
           const colorDim = getColorDimension(frame, config.color, theme);
           const textDim = getTextDimension(frame, config.labelText);
-          const scaleDim = getScaledDimension(frame, config.fontSize);
+          const sizeDim = getScaledDimension(frame, config.fontSize);
           const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
 
-          // Map each data value into new points
-          for (let i = 0; i < frame.length; i++) {
-            // Get the color for the feature based on color scheme
-            const color = colorDim.get(i);
-            const label = textDim.get(i);
-            const fontSize = scaleDim.get(i);
+          const featureDimensionConfig: FeaturesStylesBuilderConfig = {
+            colorDim: colorDim,
+            sizeDim: sizeDim,
+            textDim: textDim,
+            opacity: opacity,
+            styleMaker: getStyle,
+          };
 
-            // Set the opacity determined from user configuration
-            const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
+          const frameFeatures = getFeatures(frame, info, featureDimensionConfig);
 
-            // Create a new Feature for each point returned from dataFrameToPoints
-            const dot = new Feature(info.points[i]);
-            dot.setProperties({
-              frame,
-              rowIndex: i,
-            });
-            dot.setStyle(getStyle(label, fillColor, fontSize));
-            features.push(dot);
+          if (frameFeatures) {
+            features.push(...frameFeatures);
           }
         }
 
