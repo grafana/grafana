@@ -2416,7 +2416,6 @@ __metadata:
     "@types/node": 14.17.27
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
-    commander: 8.3.0
     execa: 5.1.1
     rollup: 2.33.3
     rollup-plugin-sourcemaps: 0.6.3
