@@ -44,7 +44,8 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey strin
 		Headers:           headers,
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
-	rsp, err := rs.renderer().Render(ctx, req)
+
+	rsp, err := rs.pluginInfo.Renderer.Render(ctx, req)
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		rs.log.Info("Rendering timed out")
 		return nil, ErrTimeout
@@ -86,7 +87,8 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 		Headers:   headers,
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
-	rsp, err := rs.renderer().RenderCSV(ctx, req)
+
+	rsp, err := rs.pluginInfo.Renderer.RenderCSV(ctx, req)
 	if err != nil {
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			rs.log.Info("Rendering timed out")
@@ -101,8 +103,4 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 	}
 
 	return &RenderCSVResult{FilePath: filePath, FileName: rsp.FileName}, nil
-}
-
-func (rs *RenderingService) renderer() pluginextensionv2.RendererPlugin {
-	return rs.RendererPluginManager.Renderer().Renderer
 }
