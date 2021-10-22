@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/template"
@@ -26,7 +25,7 @@ import (
 // SlackNotifier is responsible for sending
 // alert notification to Slack.
 type SlackNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	log  log.Logger
 	tmpl *template.Template
 
@@ -106,7 +105,7 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 	}
 
 	return &SlackNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -219,19 +218,21 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	if resp.StatusCode/100 != 2 {
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		logger.Warn("Slack API request failed", "url", request.URL.String(), "statusCode", resp.Status, "body", string(body))
 		return fmt.Errorf("request to Slack API failed with status code %d", resp.StatusCode)
 	}
 
-	var rslt map[string]interface{}
 	// Slack responds to some requests with a JSON document, that might contain an error
+	rslt := struct {
+		Ok  bool   `json:"ok"`
+		Err string `json:"error"`
+	}{}
 	if err := json.Unmarshal(body, &rslt); err == nil {
-		if !rslt["ok"].(bool) {
-			errMsg := rslt["error"].(string)
+		if !rslt.Ok && rslt.Err != "" {
 			logger.Warn("Sending Slack API request failed", "url", request.URL.String(), "statusCode", resp.Status,
-				"err", errMsg)
-			return fmt.Errorf("failed to make Slack API request: %s", errMsg)
+				"err", rslt.Err)
+			return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 		}
 	}
 

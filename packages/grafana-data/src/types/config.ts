@@ -53,6 +53,7 @@ export interface FeatureToggles {
   prometheusMonaco: boolean;
   newNavigation: boolean;
   fullRangeLogsVolume: boolean;
+  autoLoadFullRangeLogsVolume: boolean;
 }
 
 /**

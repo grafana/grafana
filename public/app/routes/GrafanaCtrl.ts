@@ -11,6 +11,7 @@ import {
   setLegacyAngularInjector,
   setLocationSrv,
   locationService,
+  setAppEvents,
 } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
@@ -56,6 +57,7 @@ export class GrafanaCtrl {
     datasourceSrv.init(config.datasources, config.defaultDatasource);
 
     setLocationSrv(locationService);
+    setAppEvents(appEvents);
 
     initGrafanaLive();
 
