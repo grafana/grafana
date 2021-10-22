@@ -1,6 +1,7 @@
 package ualert
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -8,10 +9,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 const GENERAL_FOLDER = "General Alerting"
@@ -215,6 +217,7 @@ func (m *migration) SQL(dialect migrator.Dialect) string {
 	return "code migration"
 }
 
+//nolint: gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
@@ -375,7 +378,24 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		if err := m.writeAlertmanagerConfig(orgID, amConfig, allChannelsPerOrg[orgID]); err != nil {
+		// No channels, hence don't require Alertmanager config - skip it.
+		if len(allChannelsPerOrg[orgID]) == 0 {
+			m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
+			continue
+		}
+
+		// Encrypt the secure settings before we continue.
+		if err := amConfig.EncryptSecureSettings(); err != nil {
+			return err
+		}
+
+		// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
+		// Validation between legacy and unified alerting can be different (e.g. due to bug fixes) so this would fail the migration in that case.
+		if err := m.validateAlertmanagerConfig(orgID, amConfig); err != nil {
+			return err
+		}
+
+		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
 			return err
 		}
 
@@ -387,22 +407,13 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	return nil
 }
 
-func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel) error {
-	if len(allChannels) == 0 {
-		// No channels, hence don't require Alertmanager config.
-		m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
-		return nil
-	}
-
-	if err := amConfig.EncryptSecureSettings(); err != nil {
-		return err
-	}
+func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserConfig) error {
 	rawAmConfig, err := json.Marshal(amConfig)
 	if err != nil {
 		return err
 	}
 
-	// TODO: should we apply the config here? Because Alertmanager can take upto 1 min to pick it up.
+	// We don't need to apply the configuration, given the multi org alertmanager will do an initial sync before the server is ready.
 	_, err = m.sess.Insert(AlertConfiguration{
 		AlertmanagerConfiguration: string(rawAmConfig),
 		// Since we are migration for a snapshot of the code, it is always going to migrate to
@@ -412,6 +423,80 @@ func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserC
 	})
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// validateAlertmanagerConfig validates the alertmanager configuration produced by the migration against the receivers.
+func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUserConfig) error {
+	for _, r := range config.AlertmanagerConfig.Receivers {
+		for _, gr := range r.GrafanaManagedReceivers {
+			// First, let's decode the secure settings - given they're stored as base64.
+			secureSettings := make(map[string][]byte, len(gr.SecureSettings))
+			for k, v := range gr.SecureSettings {
+				d, err := base64.StdEncoding.DecodeString(v)
+				if err != nil {
+					return err
+				}
+				secureSettings[k] = d
+			}
+
+			var (
+				cfg = &channels.NotificationChannelConfig{
+					UID:                   gr.UID,
+					Name:                  gr.Name,
+					Type:                  gr.Type,
+					DisableResolveMessage: gr.DisableResolveMessage,
+					Settings:              gr.Settings,
+					SecureSettings:        secureSettings,
+				}
+				err error
+			)
+
+			switch gr.Type {
+			case "email":
+				_, err = channels.NewEmailNotifier(cfg, nil) // Email notifier already has a default template.
+			case "pagerduty":
+				_, err = channels.NewPagerdutyNotifier(cfg, nil)
+			case "pushover":
+				_, err = channels.NewPushoverNotifier(cfg, nil)
+			case "slack":
+				_, err = channels.NewSlackNotifier(cfg, nil)
+			case "telegram":
+				_, err = channels.NewTelegramNotifier(cfg, nil)
+			case "victorops":
+				_, err = channels.NewVictoropsNotifier(cfg, nil)
+			case "teams":
+				_, err = channels.NewTeamsNotifier(cfg, nil)
+			case "dingding":
+				_, err = channels.NewDingDingNotifier(cfg, nil)
+			case "kafka":
+				_, err = channels.NewKafkaNotifier(cfg, nil)
+			case "webhook":
+				_, err = channels.NewWebHookNotifier(cfg, nil)
+			case "sensugo":
+				_, err = channels.NewSensuGoNotifier(cfg, nil)
+			case "discord":
+				_, err = channels.NewDiscordNotifier(cfg, nil)
+			case "googlechat":
+				_, err = channels.NewGoogleChatNotifier(cfg, nil)
+			case "LINE":
+				_, err = channels.NewLineNotifier(cfg, nil)
+			case "threema":
+				_, err = channels.NewThreemaNotifier(cfg, nil)
+			case "opsgenie":
+				_, err = channels.NewOpsgenieNotifier(cfg, nil)
+			case "prometheus-alertmanager":
+				_, err = channels.NewAlertmanagerNotifier(cfg, nil)
+			default:
+				return fmt.Errorf("notifier %s is not supported", gr.Type)
+			}
+
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

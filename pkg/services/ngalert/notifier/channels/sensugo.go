@@ -10,14 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 )
 
 type SensuGoNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	log  log.Logger
 	tmpl *template.Template
 
@@ -47,7 +47,7 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template) 
 	}
 
 	return &SensuGoNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
