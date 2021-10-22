@@ -36,10 +36,10 @@ describe('ErrorBoundary', () => {
 
   it('should recover when when recover props change', async () => {
     const problem = new Error('things went terribly wrong');
-    const renderCount = 0;
+    let renderCount = 0;
 
     const { rerender } = render(
-      <ErrorBoundary recover={[1, 2]}>
+      <ErrorBoundary dependencies={[1, 2]}>
         {({ error }) => {
           if (!error) {
             renderCount += 1;
@@ -54,7 +54,7 @@ describe('ErrorBoundary', () => {
     await screen.findByText(problem.message);
 
     rerender(
-      <ErrorBoundary recover={[1, 3]}>
+      <ErrorBoundary dependencies={[1, 3]}>
         {({ error }) => {
           if (!error) {
             renderCount += 1;
