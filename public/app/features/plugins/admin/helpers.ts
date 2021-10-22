@@ -1,8 +1,10 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
 import { PluginSignatureStatus, dateTimeParse, PluginError } from '@grafana/data';
-import { CatalogPlugin, LocalPlugin, RemotePlugin } from './types';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { Settings } from 'app/core/config';
+import { CatalogPlugin, LocalPlugin, RemotePlugin } from './types';
 
 export function isGrafanaAdmin(): boolean {
   return config.bootData.user.isGrafanaAdmin;
@@ -15,7 +17,7 @@ export function isOrgAdmin() {
 export function mergeLocalsAndRemotes(
   local: LocalPlugin[] = [],
   remote: RemotePlugin[] = [],
-  errors: PluginError[]
+  errors?: PluginError[]
 ): CatalogPlugin[] {
   const catalogPlugins: CatalogPlugin[] = [];
   const errorByPluginId = groupErrorsByPluginId(errors);
@@ -143,7 +145,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const hasUpdate =
     local?.hasUpdate || Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
   const id = remote?.slug || local?.id || '';
-  const hasRemoteSignature = remote?.signatureType !== '' || remote?.versionSignatureType !== '';
+  const hasRemoteSignature = remote?.signatureType || remote?.versionSignatureType;
   const isDisabled = !!error;
 
   let logos = {
@@ -215,9 +217,17 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
   return plugins;
 };
 
-function groupErrorsByPluginId(errors: PluginError[]): Record<string, PluginError | undefined> {
+function groupErrorsByPluginId(errors: PluginError[] = []): Record<string, PluginError | undefined> {
   return errors.reduce((byId, error) => {
     byId[error.pluginId] = error;
     return byId;
   }, {} as Record<string, PluginError | undefined>);
 }
+
+// Updates the core Grafana config to have the correct list available panels
+export const updatePanels = () =>
+  getBackendSrv()
+    .get('/api/frontend/settings')
+    .then((settings: Settings) => {
+      config.panels = settings.panels;
+    });

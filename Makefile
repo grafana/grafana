@@ -15,6 +15,9 @@ SH_FILES ?= $(shell find ./scripts -name *.sh)
 
 all: deps build
 
+drone-version:
+    DRONE_VERSION := $(shell drone -v | cut -d' ' -f3)
+
 ##@ Dependencies
 
 deps-go: ## Install backend dependencies.
@@ -26,7 +29,7 @@ deps: deps-js ## Install all dependencies.
 
 node_modules: package.json yarn.lock ## Install node modules.
 	@echo "install frontend dependencies"
-	yarn install --pure-lockfile --no-progress
+	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
 
 ##@ Building
 
@@ -86,7 +89,7 @@ golangci-lint: scripts/go/bin/golangci-lint
 		--config ./scripts/go/configs/.golangci.toml \
 		$(GO_FILES)
 
-lint-go: golangci-lint # Run all code checks for backend.
+lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
@@ -150,10 +153,13 @@ clean: ## Clean up intermediate build artifacts.
 # This repository's configuration is protected (https://readme.drone.io/signature/).
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
-drone:
-	drone starlark
-	drone lint
-	drone --server https://drone.grafana.net sign --save grafana/grafana
+drone: $(DRONE)
+	@if [ "$(DRONE_VERSION)" != "1.4.0" ]; then\
+		echo "WARN: You are using drone-cli ${DRONE_VERSION}. Please update your LOCAL version to 1.4.0. Using latest bingo version...";\
+	fi
+	$(DRONE) starlark --format
+	$(DRONE) lint .drone.yml
+	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
 
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

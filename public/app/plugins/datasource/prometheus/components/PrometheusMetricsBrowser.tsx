@@ -10,8 +10,8 @@ import {
   BrowserLabel as PromLabel,
 } from '@grafana/ui';
 import PromQlLanguageProvider from '../language_provider';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
 import { css, cx } from '@emotion/css';
-import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme } from '@grafana/data';
@@ -23,14 +23,15 @@ const EMPTY_SELECTOR = '{}';
 const METRIC_LABEL = '__name__';
 const LIST_ITEM_SIZE = 25;
 
-export const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
-
 export interface BrowserProps {
   languageProvider: PromQlLanguageProvider;
   onChange: (selector: string) => void;
   theme: GrafanaTheme;
   autoSelect?: number;
   hide?: () => void;
+  lastUsedLabels: string[];
+  storeLastUsedLabels: (labels: string[]) => void;
+  deleteLastUsedLabels: () => void;
 }
 
 interface BrowserState {
@@ -65,12 +66,12 @@ export function buildSelector(labels: SelectableLabel[]): string {
     if ((label.name === METRIC_LABEL || label.selected) && label.values && label.values.length > 0) {
       const selectedValues = label.values.filter((value) => value.selected).map((value) => value.name);
       if (selectedValues.length > 1) {
-        selectedLabels.push(`${label.name}=~"${selectedValues.join('|')}"`);
+        selectedLabels.push(`${label.name}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`);
       } else if (selectedValues.length === 1) {
         if (label.name === METRIC_LABEL) {
           singleMetric = selectedValues[0];
         } else {
-          selectedLabels.push(`${label.name}="${selectedValues[0]}"`);
+          selectedLabels.push(`${label.name}="${escapeLabelValueInExactSelector(selectedValues[0])}"`);
         }
       }
     }
@@ -242,7 +243,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         valueSearchTerm: '',
       };
     });
-    store.delete(LAST_USED_LABELS_KEY);
+    this.props.deleteLastUsedLabels();
     // Get metrics
     this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
   };
@@ -315,9 +316,9 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
   }
 
   componentDidMount() {
-    const { languageProvider } = this.props;
+    const { languageProvider, lastUsedLabels } = this.props;
     if (languageProvider) {
-      const selectedLabels: string[] = store.getObject(LAST_USED_LABELS_KEY, []);
+      const selectedLabels: string[] = lastUsedLabels;
       languageProvider.start().then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
         // TODO too-many-metrics
@@ -352,7 +353,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       return;
     }
     const selectedLabels = this.state.labels.filter((label) => label.selected).map((label) => label.name);
-    store.setObject(LAST_USED_LABELS_KEY, selectedLabels);
+    this.props.storeLastUsedLabels(selectedLabels);
     if (label.selected) {
       // Refetch values for newly selected label...
       if (!label.values) {
@@ -404,7 +405,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         const value: FacettableValue = { name: labelValue };
         // Adding type/help text to metrics
         if (name === METRIC_LABEL && metricsMetadata) {
-          const meta = metricsMetadata[labelValue]?.[0];
+          const meta = metricsMetadata[labelValue];
           if (meta) {
             value.details = `(${meta.type}) ${meta.help}`;
           }

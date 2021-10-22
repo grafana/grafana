@@ -766,6 +766,64 @@ describe('DashboardModel', () => {
       }
     );
   });
+
+  describe('canEditPanel', () => {
+    it('returns false if the dashboard cannot be edited', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      dashboard.meta.canEdit = false;
+      const panel = dashboard.getPanelById(2);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns false if no panel is passed in', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      expect(dashboard.canEditPanel()).toBe(false);
+    });
+
+    it('returns false if the panel is a repeat', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+          { id: 3, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 }, repeatPanelId: 2 },
+        ],
+      });
+      const panel = dashboard.getPanelById(3);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns false if the panel is a row', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      const panel = dashboard.getPanelById(1);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns true otherwise', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      const panel = dashboard.getPanelById(2);
+      expect(dashboard.canEditPanel(panel)).toBe(true);
+    });
+  });
 });
 
 describe('exitViewPanel', () => {

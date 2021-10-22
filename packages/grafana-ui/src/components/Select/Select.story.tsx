@@ -98,7 +98,6 @@ export const Basic: Story<StoryProps> = (args) => {
           setValue(v);
           action('onChange')(v);
         }}
-        prefix={getPrefix(args.icon)}
         {...args}
       />
     </>

@@ -3,7 +3,7 @@ import { Meta, Story } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './CodeEditor.mdx';
-import { CodeEditor } from './CodeEditorLazy';
+import { CodeEditor } from './CodeEditor';
 
 export default {
   title: 'CodeEditor',

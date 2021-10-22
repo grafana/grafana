@@ -83,6 +83,8 @@ const dummyProps: Props = {
   showTrace: true,
   showNodeGraph: true,
   splitOpen: (() => {}) as any,
+  logsVolumeData: undefined,
+  loadLogsVolumeData: () => {},
 };
 
 describe('Explore', () => {

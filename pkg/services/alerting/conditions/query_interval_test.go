@@ -137,13 +137,14 @@ func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *
 //nolint: staticcheck // plugins.DataResponse deprecated
 func applyScenario(timeRange string, dataSourceJsonData *simplejson.Json, queryModel string, verifier func(query plugins.DataSubQuery)) {
 	Convey("desc", func() {
-		bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
 			return nil
 		})
 
 		ctx := &queryIntervalTestContext{}
 		ctx.result = &alerting.EvalContext{
+			Ctx:              context.Background(),
 			Rule:             &alerting.Rule{},
 			RequestValidator: &validations.OSSPluginRequestValidator{},
 		}

@@ -33,6 +33,8 @@ This section describes the fields you fill out to create an alert.
 
 Add one or more [queries]({{< relref "../../../panels/queries.md" >}}) or [expressions]({{< relref "../../../panels/expressions.md" >}}). You can use classic condition expression to create a rule that will trigger a single alert if it's threshold is met, or use reduce and math expressions to create a multi dimensional alert rule that can trigger multiple alerts, one per matching series in the query result.
 
+> **Note:** Grafana does not support alert queries with template variables. More information is available at <https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514>.
+
 #### Rule with classic condition
 
 You can use classic condition expression to create a rule that will trigger a single alert if it's conditions is met. It works about the same way as dashboard alerts in previous versions of Grafana.
@@ -111,6 +113,36 @@ The following template variables are available when expanding annotations and la
 | $labels | The labels from the query or condition. For example, `{{ $labels.instance }}` and `{{ $labels.job }}`. This is unavailable when the rule uses a classic condition.                                                                                                                  |
 | $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the expression. This is unavailable when the rule uses a classic condition. |
 | $value  | The value string of the alert instance. For example, `[ var='A' labels={instance=foo} value=10 ]`.                                                                                                                                                                                  |
+
+#### Template functions
+
+The following template functions are available when expanding annotations and labels.
+
+| Name               | Argument                   | Return                 | Description                                                                                                                        |
+| ------------------ | -------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| humanize           | number or string           | string                 | Converts a number to a more readable format, using metric prefixes.                                                                |
+| humanize1024       | number or string           | string                 | Like humanize, but uses 1024 as the base rather than 1000.                                                                         |
+| humanizeDuration   | number or string           | string                 | Converts a duration in seconds to a more readable format.                                                                          |
+| humanizePercentage | number or string           | string                 | Converts a ratio value to a fraction of 100.                                                                                       |
+| humanizeTimestamp  | number or string           | string                 | Converts a Unix timestamp in seconds to a more readable format.                                                                    |
+| title              | string                     | string                 | strings.Title, capitalises first character of each word.                                                                           |
+| toUpper            | string                     | string                 | strings.ToUpper, converts all characters to upper case.                                                                            |
+| toLower            | string                     | string                 | strings.ToLower, converts all characters to lower case.                                                                            |
+| match              | pattern, text              | boolean                | regexp.MatchString Tests for a unanchored regexp match.                                                                            |
+| reReplaceAll       | pattern, replacement, text | string                 | Regexp.ReplaceAllString Regexp substitution, unanchored.                                                                           |
+| graphLink          | expr                       | string                 | Not supported                                                                                                                      |
+| tableLink          | expr                       | string                 | Not supported                                                                                                                      |
+| args               | []interface{}              | map[string]interface{} | Converts a list of objects to a map with keys, for example, arg0, arg1. Use this function to pass multiple arguments to templates. |
+| externalURL        | nothing                    | string                 | Returns a string representing the external URL.                                                                                    |
+| pathPrefix         | nothing                    | string                 | Returns the path of the external URL.                                                                                              |
+| tmpl               | string, []interface{}      | nothing                | Not supported.                                                                                                                     |
+| safeHtml           | string                     | string                 | Not supported.                                                                                                                     |
+| query              | query string               | []sample               | Not supported.                                                                                                                     |
+| first              | []sample                   | sample                 | Not supported.                                                                                                                     |
+| label              | label, sample              | string                 | Not supported.                                                                                                                     |
+| strvalue           | []sample                   | string                 | Not supported.                                                                                                                     |
+| value              | sample                     | float64                | Not supported.                                                                                                                     |
+| sortByLabel        | label, []samples           | []sample               | Not supported.                                                                                                                     |
 
 ## Preview alerts
 

@@ -9,8 +9,10 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
@@ -29,29 +31,32 @@ type AlertEngine struct {
 	DataService      plugins.DataRequestHandler
 	Cfg              *setting.Cfg
 
-	execQueue     chan *Job
-	ticker        *Ticker
-	scheduler     scheduler
-	evalHandler   evalHandler
-	ruleReader    ruleReader
-	log           log.Logger
-	resultHandler resultHandler
+	execQueue         chan *Job
+	ticker            *Ticker
+	scheduler         scheduler
+	evalHandler       evalHandler
+	ruleReader        ruleReader
+	log               log.Logger
+	resultHandler     resultHandler
+	usageStatsService usagestats.Service
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
 func (e *AlertEngine) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.IsNgAlertEnabled()
+	return !setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.UnifiedAlerting.Enabled
 }
 
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
-	dataService plugins.DataRequestHandler, cfg *setting.Cfg) *AlertEngine {
+	dataService plugins.DataRequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Service,
+	cfg *setting.Cfg) *AlertEngine {
 	e := &AlertEngine{
-		Cfg:              cfg,
-		RenderService:    renderer,
-		Bus:              bus,
-		RequestValidator: requestValidator,
-		DataService:      dataService,
+		Cfg:               cfg,
+		RenderService:     renderer,
+		Bus:               bus,
+		RequestValidator:  requestValidator,
+		DataService:       dataService,
+		usageStatsService: usageStatsService,
 	}
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)
@@ -59,7 +64,9 @@ func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidato
 	e.evalHandler = NewEvalHandler(e.DataService)
 	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
-	e.resultHandler = newResultHandler(e.RenderService)
+	e.resultHandler = newResultHandler(e.RenderService, encryptionService.GetDecryptedValue)
+
+	e.registerUsageMetrics()
 
 	return e
 }
@@ -236,4 +243,28 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 		close(attemptChan)
 	}()
+}
+
+func (e *AlertEngine) registerUsageMetrics() {
+	e.usageStatsService.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+		alertingUsageStats, err := e.QueryUsageStats()
+		if err != nil {
+			return nil, err
+		}
+
+		alertingOtherCount := 0
+		metrics := map[string]interface{}{}
+
+		for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
+			if e.usageStatsService.ShouldBeReported(dsType) {
+				metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
+			} else {
+				alertingOtherCount += usageCount
+			}
+		}
+
+		metrics["stats.alerting.ds.other.count"] = alertingOtherCount
+
+		return metrics, nil
+	})
 }

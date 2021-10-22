@@ -40,7 +40,9 @@ const rangeOptions: TimeOption[] = [
   },
   { from: 'now-1w/w', to: 'now-1w/w', display: 'Previous week' },
   { from: 'now-1M/M', to: 'now-1M/M', display: 'Previous month' },
+  { from: 'now-1Q/fQ', to: 'now-1Q/fQ', display: 'Previous fiscal quarter' },
   { from: 'now-1y/y', to: 'now-1y/y', display: 'Previous year' },
+  { from: 'now-1y/fy', to: 'now-1y/fy', display: 'Previous fiscal year' },
 
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
   { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
@@ -58,6 +60,10 @@ const rangeOptions: TimeOption[] = [
   { from: 'now-1y', to: 'now', display: 'Last 1 year' },
   { from: 'now-2y', to: 'now', display: 'Last 2 years' },
   { from: 'now-5y', to: 'now', display: 'Last 5 years' },
+  { from: 'now/fQ', to: 'now', display: 'This fiscal quarter so far' },
+  { from: 'now/fQ', to: 'now/fQ', display: 'This fiscal quarter' },
+  { from: 'now/fy', to: 'now', display: 'This fiscal year so far' },
+  { from: 'now/fy', to: 'now/fy', display: 'This fiscal year' },
 ];
 
 const hiddenRangeOptions: TimeOption[] = [
@@ -192,9 +198,9 @@ export const describeTimeRangeAbbreviation = (range: TimeRange, timeZone?: TimeZ
   return parsed ? timeZoneAbbrevation(parsed, { timeZone }) : '';
 };
 
-export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeRange => {
-  const from = dateTimeParse(raw.from, { roundUp: false, timeZone });
-  const to = dateTimeParse(raw.to, { roundUp: true, timeZone });
+export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone, fiscalYearStartMonth?: number): TimeRange => {
+  const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth });
+  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth });
 
   if (dateMath.isMathString(raw.from) || dateMath.isMathString(raw.to)) {
     return { from, to, raw };
@@ -206,6 +212,15 @@ export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeR
 function isRelativeTime(v: DateTime | string) {
   if (typeof v === 'string') {
     return (v as string).indexOf('now') >= 0;
+  }
+  return false;
+}
+
+export function isFiscal(timeRange: TimeRange) {
+  if (typeof timeRange.raw.from === 'string' && timeRange.raw.from.indexOf('f') > 0) {
+    return true;
+  } else if (typeof timeRange.raw.to === 'string' && timeRange.raw.to.indexOf('f') > 0) {
+    return true;
   }
   return false;
 }

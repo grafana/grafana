@@ -87,7 +87,7 @@ function getItemsRenderer<T extends NodeDatum | EdgeDatum>(
   const items = getItems(links);
   return () => {
     let groups = items?.map((group, index) => (
-      <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+      <MenuGroup key={`${group.label}${index}`} label={group.label}>
         {(group.items || []).map(mapMenuItem(item))}
       </MenuGroup>
     ));
@@ -106,7 +106,7 @@ function mapMenuItem<T extends NodeDatum | EdgeDatum>(item: T) {
         key={link.label}
         url={link.url}
         label={link.label}
-        ariaLabel={link.ariaLabel || link.label}
+        ariaLabel={link.ariaLabel}
         onClick={link.onClick ? () => link.onClick?.(item) : undefined}
         target={'_self'}
       />
