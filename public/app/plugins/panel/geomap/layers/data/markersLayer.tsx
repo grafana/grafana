@@ -26,9 +26,10 @@ import {
 import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { StyleMaker, getMarkerFromPath } from '../../utils/regularShapes';
+import { getMarkerFromPath } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
+import { StyleMaker, StyleMakerConfig } from '../../types';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -111,13 +112,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
         const marker = getMarkerFromPath(config.markerSymbol?.fixed);
 
-        const makeIconStyle = (color: string, fillColor: string, radius: number) => {
+        const makeIconStyle = (cfg: StyleMakerConfig) => {
           return new style.Style({
             image: new style.Icon({
               src: markerPath,
-              color,
+              color: cfg.color,
               //  opacity,
-              scale: (DEFAULT_SIZE + radius) / 100,
+              scale: (DEFAULT_SIZE + cfg.size) / 100,
             }),
           });
         };

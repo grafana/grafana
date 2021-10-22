@@ -16,9 +16,9 @@ import {
 import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 import { Fill, Stroke } from 'ol/style';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
-import { StyleMaker } from '../../utils/regularShapes';
 import { Feature } from 'ol';
 import { Point } from 'ol/geom';
+import { StyleMaker, StyleMakerConfig } from '../../types';
 
 interface TextLabelsConfig {
   labelText: TextDimensionConfig;
@@ -73,9 +73,9 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
       });
     };
 
-    const getStyle: StyleMaker = (color: string, fillColor: string, fontSize: number, text: string) => {
+    const getStyle: StyleMaker = (cfg: StyleMakerConfig) => {
       return new style.Style({
-        text: getTextStyle(text, fillColor, fontSize),
+        text: getTextStyle(cfg.text ?? defaultOptions.labelText.fixed, cfg.fillColor, cfg.size),
       });
     };
 
@@ -125,14 +125,14 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
     builder
       .addCustomEditor({
         id: 'config.labelText',
-        name: 'Label text',
+        name: 'Text label',
         path: 'config.labelText',
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         id: 'config.color',
         path: 'config.color',
-        name: 'Label text color',
+        name: 'Text color',
         editor: ColorDimensionEditor,
         settings: {},
       })
@@ -149,7 +149,7 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
       .addCustomEditor({
         id: 'config.fontSize',
         path: 'config.fontSize',
-        name: 'Font size',
+        name: 'Text size',
         editor: ScaleDimensionEditor,
         settings: {
           fixed: defaultOptions.fontSize.fixed,

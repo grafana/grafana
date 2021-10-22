@@ -3,8 +3,8 @@ import { DimensionSupplier } from 'app/features/dimensions';
 import { Feature } from 'ol';
 import { Point } from 'ol/geom';
 import tinycolor from 'tinycolor2';
+import { StyleMaker } from '../types';
 import { LocationInfo } from './location';
-import { StyleMaker } from './regularShapes';
 
 export interface FeaturesStylesBuilderConfig {
   colorDim: DimensionSupplier<string>;
@@ -43,9 +43,9 @@ export const getFeatures = (
     });
 
     if (config?.textDim) {
-      dot.setStyle(config.styleMaker(color, fillColor, size, label));
+      dot.setStyle(config.styleMaker({ color, fillColor, size, text: label }));
     } else {
-      dot.setStyle(config.styleMaker(color, fillColor, size));
+      dot.setStyle(config.styleMaker({ color, fillColor, size }));
     }
     features.push(dot);
   }
