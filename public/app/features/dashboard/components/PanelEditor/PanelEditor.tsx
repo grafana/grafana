@@ -533,9 +533,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       position: relative;
       flex-direction: column;
     `,
-    suggestionsWrapper: css`
-      height: 50px;
-    `,
   };
 });
 

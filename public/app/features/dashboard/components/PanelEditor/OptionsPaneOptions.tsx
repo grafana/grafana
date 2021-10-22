@@ -32,13 +32,6 @@ export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
     [panel.configRev, props.data, props.instanceState]
   );
 
-  // const optionSuggestions = useMemo(
-  //   () => getOptionSuggestions(plugin, panel, props.data),
-
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  //   [plugin, panel, panel.configRev, props.data]
-  // );
-
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
   const optionRadioFilters = useMemo(getOptionRadioFilters, []);
