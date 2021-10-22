@@ -272,7 +272,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), evalState)
 
 		go func() {
-			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, make(chan struct{}))
+			stop := make(chan struct{})
+			t.Cleanup(func() {
+				close(stop)
+			})
+			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -400,7 +404,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
 		go func() {
-			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, make(chan struct{}))
+			stop := make(chan struct{})
+			t.Cleanup(func() {
+				close(stop)
+			})
+			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -452,7 +460,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
 		go func() {
-			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, make(chan struct{}))
+			stop := make(chan struct{})
+			t.Cleanup(func() {
+				close(stop)
+			})
+			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -532,7 +544,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			rule := CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting)
 
 			go func() {
-				_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, make(chan struct{}))
+				stop := make(chan struct{})
+				t.Cleanup(func() {
+					close(stop)
+				})
+				_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
 			}()
 
 			evalChan <- &evalContext{
