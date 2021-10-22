@@ -84,6 +84,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       font-size: ${theme.typography.bodySmall.fontSize};
       white-space: nowrap;
       overflow: hidden;
+      color: ${theme.colors.text.secondary};
+      font-weight: ${theme.typography.fontWeightMedium};
       text-overflow: ellipsis;
     `,
     renderContainer: css`
