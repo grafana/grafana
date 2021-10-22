@@ -103,12 +103,6 @@ export class AngularApp {
   }
 
   bootstrap() {
-    // Do not initalize angular when the path contains an interpolation directive
-    const { pathname } = window.location;
-    if (pathname && (pathname.includes('%7B%7B') || pathname.includes('{{'))) {
-      return;
-    }
-
     const injector = angular.bootstrap(document, this.ngModuleDependencies);
 
     monkeyPatchInjectorWithPreAssignedBindings(injector);
