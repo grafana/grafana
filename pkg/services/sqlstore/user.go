@@ -206,17 +206,18 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand
 
 		// create user
 		user = &models.User{
-			Email:         cmd.Email,
-			Name:          cmd.Name,
-			Login:         cmd.Login,
-			Company:       cmd.Company,
-			IsAdmin:       cmd.IsAdmin,
-			IsDisabled:    cmd.IsDisabled,
-			OrgId:         orgId,
-			EmailVerified: cmd.EmailVerified,
-			Created:       time.Now(),
-			Updated:       time.Now(),
-			LastSeenAt:    time.Now().AddDate(-10, 0, 0),
+			Email:            cmd.Email,
+			Name:             cmd.Name,
+			Login:            cmd.Login,
+			Company:          cmd.Company,
+			IsAdmin:          cmd.IsAdmin,
+			IsDisabled:       cmd.IsDisabled,
+			OrgId:            orgId,
+			EmailVerified:    cmd.EmailVerified,
+			Created:          time.Now(),
+			Updated:          time.Now(),
+			LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+			IsServiceAccount: cmd.IsServiceAccount,
 		}
 
 		salt, err := util.GetRandomString(10)
@@ -767,7 +768,7 @@ func DeleteServiceAccount(ctx context.Context, cmd *models.DeleteServiceAccountC
 
 func serviceAccountDeletions() []string {
 	deletes := []string{
-		"DELETE FROM api_keys WHERE service_account_id = ?",
+		"DELETE FROM api_key WHERE service_account_id = ?",
 	}
 	deletes = append(deletes, userDeletions()...)
 	return deletes
