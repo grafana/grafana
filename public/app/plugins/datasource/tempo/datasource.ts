@@ -19,7 +19,7 @@ import Prism from 'prismjs';
 import { LokiOptions, LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
-import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
+import { failedMetric, mapPromMetricsToServiceMap, serviceMapMetrics, totalsMetric } from './graphTransform';
 import {
   transformTrace,
   transformTraceList,
@@ -299,8 +299,36 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         throw new Error(errorRes.error!.message);
       }
 
+      const frames = mapPromMetricsToServiceMap(responses, request.range);
+      frames[0].fields[0].config = {
+        links: [
+          {
+            url: '',
+            title: 'Requests total metric',
+            internal: {
+              query: {
+                expr: totalsMetric,
+              } as PromQuery,
+              datasourceUid,
+              datasourceName: 'Prometheus',
+            },
+          },
+          {
+            url: '',
+            title: 'Requests failed metric',
+            internal: {
+              query: {
+                expr: failedMetric,
+              } as PromQuery,
+              datasourceUid,
+              datasourceName: 'Prometheus',
+            },
+          },
+        ],
+      };
+
       return {
-        data: mapPromMetricsToServiceMap(responses, request.range),
+        data: frames,
         state: LoadingState.Done,
       };
     })

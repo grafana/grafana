@@ -9,6 +9,8 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
+import PrometheusMetricFindQuery from '../prometheus/metric_find_query';
+import { PromQuery } from '../prometheus/types';
 
 /**
  * Row in a trace dataFrame
@@ -130,9 +132,9 @@ function findTraceDuration(view: DataFrameView<Row>): number {
   return traceEndTime - traceStartTime;
 }
 
-const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
-const totalsMetric = 'traces_service_graph_request_total';
-const failedMetric = 'traces_service_graph_request_failed_total';
+export const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
+export const totalsMetric = 'traces_service_graph_request_total';
+export const failedMetric = 'traces_service_graph_request_failed_total';
 
 export const serviceMapMetrics = [
   secondsMetric,
@@ -171,8 +173,10 @@ function createServiceMapDataFrames() {
   }
 
   const nodes = createDF('Nodes', [
-    { name: Fields.id },
-    { name: Fields.title },
+    {
+      name: Fields.id,
+    },
+    { name: Fields.title, config: { displayName: 'Service name' } },
     { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
