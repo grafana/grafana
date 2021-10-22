@@ -14,13 +14,13 @@ spec.json: $(GO_PKG_FILES)
 	-v $$(pwd)/../../..:${HOME}/grafana \
 	-v $$(pwd)/definitions:/src \
 	-w $$(pwd) quay.io/goswagger/swagger:$(SWAGGER_TAG) \
-	generate spec -m -o spec.json
+	generate spec -m -o spec.json -i ${HOME}/grafana/pkg/api/docs/tags.json
 
 ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
 spec-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
-	swagger generate spec -m -w $(API_DIR) -o spec.json
+	swagger generate spec -m -w $(API_DIR) -o spec.json -i tags.json
 
 .PHONY: openapi
 openapi: spec.json

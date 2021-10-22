@@ -39,7 +39,6 @@
           {
             "type": "boolean",
             "default": false,
-            "x-go-name": "IncludeExpired",
             "description": "Show expired keys",
             "name": "includeExpired",
             "in": "query"
@@ -112,7 +111,6 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "ID",
             "name": "id",
             "in": "path",
             "required": true
@@ -165,8 +163,7 @@
                   "enum": [
                     "basic",
                     "json"
-                  ],
-                  "x-go-name": "DiffType"
+                  ]
                 },
                 "new": {
                   "$ref": "#/definitions/CalculateDiffTarget"
@@ -394,7 +391,6 @@
             "type": "integer",
             "format": "int64",
             "default": 0,
-            "x-go-name": "Limit",
             "description": "Maximum number of results to return",
             "name": "limit",
             "in": "query"
@@ -403,7 +399,6 @@
             "type": "integer",
             "format": "int64",
             "default": 0,
-            "x-go-name": "Start",
             "description": "Version to start from when returning queries",
             "name": "start",
             "in": "query"
@@ -570,7 +565,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "UID",
             "name": "uid",
             "in": "path",
             "required": true
@@ -604,7 +598,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "UID",
             "name": "uid",
             "in": "path",
             "required": true
@@ -698,7 +691,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceName",
             "name": "datasource_name",
             "in": "path",
             "required": true
@@ -734,7 +726,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceName",
             "name": "datasource_name",
             "in": "path",
             "required": true
@@ -765,7 +756,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceName",
             "name": "datasource_name",
             "in": "path",
             "required": true
@@ -801,14 +791,12 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
             "name": "datasource_id",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "DatasourceProxyRoute",
             "name": "datasource_proxy_route",
             "in": "path",
             "required": true
@@ -845,14 +833,12 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
             "name": "datasource_id",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "DatasourceProxyRoute",
             "name": "datasource_proxy_route",
             "in": "path",
             "required": true
@@ -899,14 +885,12 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
             "name": "datasource_id",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "DatasourceProxyRoute",
             "name": "datasource_proxy_route",
             "in": "path",
             "required": true
@@ -945,7 +929,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceUID",
             "name": "datasource_uid",
             "in": "path",
             "required": true
@@ -982,7 +965,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceUID",
             "name": "datasource_uid",
             "in": "path",
             "required": true
@@ -1018,7 +1000,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
             "name": "datasource_id",
             "in": "path",
             "required": true
@@ -1055,7 +1036,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
             "name": "datasource_id",
             "in": "path",
             "required": true
@@ -1093,7 +1073,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
             "name": "datasource_id",
             "in": "path",
             "required": true
@@ -1102,6 +1081,245 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders": {
+      "get": {
+        "description": "Returns all folders that the authenticated user has permission to view.",
+        "tags": [
+          "folders"
+        ],
+        "summary": "Get all folders.",
+        "operationId": "getFolders",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1000,
+            "description": "Limit the maximum number of folders to return",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "description": "Page index for starting fetching folders",
+            "name": "page",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getFoldersResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "folders"
+        ],
+        "summary": "Create folder.",
+        "operationId": "createFolder",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateFolderCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/folderResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders/id/{folder_id}": {
+      "get": {
+        "description": "Returns the folder identified by id.",
+        "tags": [
+          "folders"
+        ],
+        "summary": "Get folder by id.",
+        "operationId": "getFolderByID",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "folder_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/folderResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders/{folder_uid}": {
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "summary": "Get folder by uid.",
+        "operationId": "getFolderByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "To change the unique identifier (uid), provide another one.\nTo overwrite an existing folder with newer version, set `overwrite` to `true`.\nProvide the current version to safelly update the folder: if the provided version differs from the stored one the request will fail, unless `overwrite` is `true`.",
+        "tags": [
+          "folders"
+        ],
+        "summary": "Update folder.",
+        "operationId": "updateFolder",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateFolderCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/folderResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.",
+        "tags": [
+          "folders"
+        ],
+        "summary": "Delete folder.",
+        "operationId": "deleteFolder",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "If `true` any Grafana 8 Alerts under this folder will be deleted.\nSet to `false` so that the request will fail if the folder contains any Grafana 8 Alerts.",
+            "name": "forceDeleteRules",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deleteFolderResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -1142,6 +1360,9 @@
           "400": {
             "$ref": "#/responses/badRequestError"
           },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
           "403": {
             "$ref": "#/responses/forbiddenError"
           },
@@ -1161,19 +1382,16 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "x-go-name": "Name"
+          "type": "string"
         },
         "role": {
           "$ref": "#/definitions/RoleType"
         },
         "secondsToLive": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "SecondsToLive"
+          "format": "int64"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
     },
     "AddDataSourceCommand": {
       "description": "Also acts as api DTO",
@@ -1186,107 +1404,100 @@
           "$ref": "#/definitions/DsAccess"
         },
         "basicAuth": {
-          "type": "boolean",
-          "x-go-name": "BasicAuth"
+          "type": "boolean"
         },
         "basicAuthPassword": {
-          "type": "string",
-          "x-go-name": "BasicAuthPassword"
+          "type": "string"
         },
         "basicAuthUser": {
-          "type": "string",
-          "x-go-name": "BasicAuthUser"
+          "type": "string"
         },
         "database": {
-          "type": "string",
-          "x-go-name": "Database"
+          "type": "string"
         },
         "isDefault": {
-          "type": "boolean",
-          "x-go-name": "IsDefault"
+          "type": "boolean"
         },
         "jsonData": {
           "$ref": "#/definitions/Json"
         },
         "name": {
-          "type": "string",
-          "x-go-name": "Name"
+          "type": "string"
         },
         "password": {
-          "type": "string",
-          "x-go-name": "Password"
+          "type": "string"
         },
         "secureJsonData": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "x-go-name": "SecureJsonData"
+          }
         },
         "type": {
-          "type": "string",
-          "x-go-name": "Type"
+          "type": "string"
         },
         "uid": {
-          "type": "string",
-          "x-go-name": "Uid"
+          "type": "string"
         },
         "url": {
-          "type": "string",
-          "x-go-name": "Url"
+          "type": "string"
         },
         "user": {
-          "type": "string",
-          "x-go-name": "User"
+          "type": "string"
         },
         "withCredentials": {
-          "type": "boolean",
-          "x-go-name": "WithCredentials"
+          "type": "boolean"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
     },
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
         "expiration": {
           "type": "string",
-          "format": "date-time",
-          "x-go-name": "Expiration"
+          "format": "date-time"
         },
         "id": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Id"
+          "format": "int64"
         },
         "name": {
-          "type": "string",
-          "x-go-name": "Name"
+          "type": "string"
         },
         "role": {
           "$ref": "#/definitions/RoleType"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
     },
     "CalculateDiffTarget": {
       "type": "object",
       "properties": {
         "dashboardId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "DashboardId"
+          "format": "int64"
         },
         "unsavedDashboard": {
           "$ref": "#/definitions/Json"
         },
         "version": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Version"
+          "format": "int64"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      }
+    },
+    "CreateFolderCommand": {
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/Folder"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
     },
     "Dashboard": {
       "description": "Dashboard model",
@@ -1349,102 +1560,81 @@
           "type": "integer",
           "format": "int64"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
     },
     "DashboardAclInfoDTO": {
       "type": "object",
       "properties": {
         "created": {
           "type": "string",
-          "format": "date-time",
-          "x-go-name": "Created"
+          "format": "date-time"
         },
         "dashboardId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "DashboardId"
+          "format": "int64"
         },
         "folderId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "FolderId"
+          "format": "int64"
         },
         "inherited": {
-          "type": "boolean",
-          "x-go-name": "Inherited"
+          "type": "boolean"
         },
         "isFolder": {
-          "type": "boolean",
-          "x-go-name": "IsFolder"
+          "type": "boolean"
         },
         "permission": {
           "$ref": "#/definitions/PermissionType"
         },
         "permissionName": {
-          "type": "string",
-          "x-go-name": "PermissionName"
+          "type": "string"
         },
         "role": {
           "$ref": "#/definitions/RoleType"
         },
         "slug": {
-          "type": "string",
-          "x-go-name": "Slug"
+          "type": "string"
         },
         "team": {
-          "type": "string",
-          "x-go-name": "Team"
+          "type": "string"
         },
         "teamAvatarUrl": {
-          "type": "string",
-          "x-go-name": "TeamAvatarUrl"
+          "type": "string"
         },
         "teamEmail": {
-          "type": "string",
-          "x-go-name": "TeamEmail"
+          "type": "string"
         },
         "teamId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "TeamId"
+          "format": "int64"
         },
         "title": {
-          "type": "string",
-          "x-go-name": "Title"
+          "type": "string"
         },
         "uid": {
-          "type": "string",
-          "x-go-name": "Uid"
+          "type": "string"
         },
         "updated": {
           "type": "string",
-          "format": "date-time",
-          "x-go-name": "Updated"
+          "format": "date-time"
         },
         "url": {
-          "type": "string",
-          "x-go-name": "Url"
+          "type": "string"
         },
         "userAvatarUrl": {
-          "type": "string",
-          "x-go-name": "UserAvatarUrl"
+          "type": "string"
         },
         "userEmail": {
-          "type": "string",
-          "x-go-name": "UserEmail"
+          "type": "string"
         },
         "userId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "UserId"
+          "format": "int64"
         },
         "userLogin": {
-          "type": "string",
-          "x-go-name": "UserLogin"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
     },
     "DashboardAclUpdateItem": {
       "description": "DashboardAclUpdateItem is same as dtos.DashboardAclUpdateItem but with swagger annotations",
@@ -1458,24 +1648,20 @@
             1,
             2,
             4
-          ],
-          "x-go-name": "Permission"
+          ]
         },
         "role": {
           "$ref": "#/definitions/RoleType"
         },
         "teamId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "TeamID"
+          "format": "int64"
         },
         "userId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "UserID"
+          "format": "int64"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      }
     },
     "DashboardFullWithMeta": {
       "type": "object",
@@ -1486,140 +1672,109 @@
         "meta": {
           "$ref": "#/definitions/DashboardMeta"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      }
     },
     "DashboardMeta": {
       "type": "object",
       "properties": {
         "canAdmin": {
-          "type": "boolean",
-          "x-go-name": "CanAdmin"
+          "type": "boolean"
         },
         "canEdit": {
-          "type": "boolean",
-          "x-go-name": "CanEdit"
+          "type": "boolean"
         },
         "canSave": {
-          "type": "boolean",
-          "x-go-name": "CanSave"
+          "type": "boolean"
         },
         "canStar": {
-          "type": "boolean",
-          "x-go-name": "CanStar"
+          "type": "boolean"
         },
         "created": {
           "type": "string",
-          "format": "date-time",
-          "x-go-name": "Created"
+          "format": "date-time"
         },
         "createdBy": {
-          "type": "string",
-          "x-go-name": "CreatedBy"
+          "type": "string"
         },
         "expires": {
           "type": "string",
-          "format": "date-time",
-          "x-go-name": "Expires"
+          "format": "date-time"
         },
         "folderId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "FolderId"
+          "format": "int64"
         },
         "folderTitle": {
-          "type": "string",
-          "x-go-name": "FolderTitle"
+          "type": "string"
         },
         "folderUid": {
-          "type": "string",
-          "x-go-name": "FolderUid"
+          "type": "string"
         },
         "folderUrl": {
-          "type": "string",
-          "x-go-name": "FolderUrl"
+          "type": "string"
         },
         "hasAcl": {
-          "type": "boolean",
-          "x-go-name": "HasAcl"
+          "type": "boolean"
         },
         "isFolder": {
-          "type": "boolean",
-          "x-go-name": "IsFolder"
+          "type": "boolean"
         },
         "isHome": {
-          "type": "boolean",
-          "x-go-name": "IsHome"
+          "type": "boolean"
         },
         "isSnapshot": {
-          "type": "boolean",
-          "x-go-name": "IsSnapshot"
+          "type": "boolean"
         },
         "isStarred": {
-          "type": "boolean",
-          "x-go-name": "IsStarred"
+          "type": "boolean"
         },
         "provisioned": {
-          "type": "boolean",
-          "x-go-name": "Provisioned"
+          "type": "boolean"
         },
         "provisionedExternalId": {
-          "type": "string",
-          "x-go-name": "ProvisionedExternalId"
+          "type": "string"
         },
         "slug": {
-          "type": "string",
-          "x-go-name": "Slug"
+          "type": "string"
         },
         "type": {
-          "type": "string",
-          "x-go-name": "Type"
+          "type": "string"
         },
         "updated": {
           "type": "string",
-          "format": "date-time",
-          "x-go-name": "Updated"
+          "format": "date-time"
         },
         "updatedBy": {
-          "type": "string",
-          "x-go-name": "UpdatedBy"
+          "type": "string"
         },
         "url": {
-          "type": "string",
-          "x-go-name": "Url"
+          "type": "string"
         },
         "version": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Version"
+          "format": "int64"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      }
     },
     "DashboardRedirect": {
       "type": "object",
       "properties": {
         "redirectUri": {
-          "type": "string",
-          "x-go-name": "RedirectUri"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      }
     },
     "DashboardTagCloudItem": {
       "type": "object",
       "properties": {
         "count": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Count"
+          "format": "int64"
         },
         "term": {
-          "type": "string",
-          "x-go-name": "Term"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
     },
     "DashboardVersionDTO": {
       "description": "DashboardVersionDTO represents a dashboard version, without the dashboard\nmap.",
@@ -1627,44 +1782,35 @@
       "properties": {
         "created": {
           "type": "string",
-          "format": "date-time",
-          "x-go-name": "Created"
+          "format": "date-time"
         },
         "createdBy": {
-          "type": "string",
-          "x-go-name": "CreatedBy"
+          "type": "string"
         },
         "dashboardId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "DashboardId"
+          "format": "int64"
         },
         "id": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Id"
+          "format": "int64"
         },
         "message": {
-          "type": "string",
-          "x-go-name": "Message"
+          "type": "string"
         },
         "parentVersion": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "ParentVersion"
+          "format": "int64"
         },
         "restoredFrom": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "RestoredFrom"
+          "format": "int64"
         },
         "version": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Version"
+          "format": "int64"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
     },
     "DashboardVersionMeta": {
       "description": "DashboardVersionMeta extends the dashboard version model with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersion model.",
@@ -1672,53 +1818,43 @@
       "properties": {
         "created": {
           "type": "string",
-          "format": "date-time",
-          "x-go-name": "Created"
+          "format": "date-time"
         },
         "createdBy": {
-          "type": "string",
-          "x-go-name": "CreatedBy"
+          "type": "string"
         },
         "dashboardId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "DashboardId"
+          "format": "int64"
         },
         "data": {
           "$ref": "#/definitions/Json"
         },
         "id": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Id"
+          "format": "int64"
         },
         "message": {
-          "type": "string",
-          "x-go-name": "Message"
+          "type": "string"
         },
         "parentVersion": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "ParentVersion"
+          "format": "int64"
         },
         "restoredFrom": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "RestoredFrom"
+          "format": "int64"
         },
         "version": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Version"
+          "format": "int64"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
     },
     "DataFrames": {
       "description": "See NewDecodedDataFrames and NewEncodedDataFrames for more information.",
       "type": "object",
-      "title": "DataFrames is an interface for retrieving encoded and decoded data frames.",
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "title": "DataFrames is an interface for retrieving encoded and decoded data frames."
     },
     "DataQueryResult": {
       "description": "Deprecated: DataQueryResult should use backend.QueryDataResponse",
@@ -1728,15 +1864,13 @@
           "$ref": "#/definitions/DataFrames"
         },
         "error": {
-          "type": "string",
-          "x-go-name": "ErrorString"
+          "type": "string"
         },
         "meta": {
           "$ref": "#/definitions/Json"
         },
         "refId": {
-          "type": "string",
-          "x-go-name": "RefID"
+          "type": "string"
         },
         "series": {
           "$ref": "#/definitions/DataTimeSeriesSlice"
@@ -1745,36 +1879,30 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/DataTable"
-          },
-          "x-go-name": "Tables"
+          }
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      }
     },
     "DataResponse": {
       "description": "Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse",
       "type": "object",
       "properties": {
         "message": {
-          "type": "string",
-          "x-go-name": "Message"
+          "type": "string"
         },
         "results": {
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/DataQueryResult"
-          },
-          "x-go-name": "Results"
+          }
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      }
     },
     "DataRowValues": {
       "type": "array",
       "items": {
         "type": "object"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      }
     },
     "DataSource": {
       "type": "object",
@@ -1783,95 +1911,75 @@
           "$ref": "#/definitions/DsAccess"
         },
         "basicAuth": {
-          "type": "boolean",
-          "x-go-name": "BasicAuth"
+          "type": "boolean"
         },
         "basicAuthPassword": {
-          "type": "string",
-          "x-go-name": "BasicAuthPassword"
+          "type": "string"
         },
         "basicAuthUser": {
-          "type": "string",
-          "x-go-name": "BasicAuthUser"
+          "type": "string"
         },
         "database": {
-          "type": "string",
-          "x-go-name": "Database"
+          "type": "string"
         },
         "id": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Id"
+          "format": "int64"
         },
         "isDefault": {
-          "type": "boolean",
-          "x-go-name": "IsDefault"
+          "type": "boolean"
         },
         "jsonData": {
           "$ref": "#/definitions/Json"
         },
         "name": {
-          "type": "string",
-          "x-go-name": "Name"
+          "type": "string"
         },
         "orgId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "OrgId"
+          "format": "int64"
         },
         "password": {
-          "type": "string",
-          "x-go-name": "Password"
+          "type": "string"
         },
         "readOnly": {
-          "type": "boolean",
-          "x-go-name": "ReadOnly"
+          "type": "boolean"
         },
         "secureJsonFields": {
           "type": "object",
           "additionalProperties": {
             "type": "boolean"
-          },
-          "x-go-name": "SecureJsonFields"
+          }
         },
         "type": {
-          "type": "string",
-          "x-go-name": "Type"
+          "type": "string"
         },
         "typeLogoUrl": {
-          "type": "string",
-          "x-go-name": "TypeLogoUrl"
+          "type": "string"
         },
         "uid": {
-          "type": "string",
-          "x-go-name": "UID"
+          "type": "string"
         },
         "url": {
-          "type": "string",
-          "x-go-name": "Url"
+          "type": "string"
         },
         "user": {
-          "type": "string",
-          "x-go-name": "User"
+          "type": "string"
         },
         "version": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Version"
+          "format": "int64"
         },
         "withCredentials": {
-          "type": "boolean",
-          "x-go-name": "WithCredentials"
+          "type": "boolean"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      }
     },
     "DataSourceList": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/DataSourceListItemDTO"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      }
     },
     "DataSourceListItemDTO": {
       "type": "object",
@@ -1880,68 +1988,53 @@
           "$ref": "#/definitions/DsAccess"
         },
         "basicAuth": {
-          "type": "boolean",
-          "x-go-name": "BasicAuth"
+          "type": "boolean"
         },
         "database": {
-          "type": "string",
-          "x-go-name": "Database"
+          "type": "string"
         },
         "id": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Id"
+          "format": "int64"
         },
         "isDefault": {
-          "type": "boolean",
-          "x-go-name": "IsDefault"
+          "type": "boolean"
         },
         "jsonData": {
           "$ref": "#/definitions/Json"
         },
         "name": {
-          "type": "string",
-          "x-go-name": "Name"
+          "type": "string"
         },
         "orgId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "OrgId"
+          "format": "int64"
         },
         "password": {
-          "type": "string",
-          "x-go-name": "Password"
+          "type": "string"
         },
         "readOnly": {
-          "type": "boolean",
-          "x-go-name": "ReadOnly"
+          "type": "boolean"
         },
         "type": {
-          "type": "string",
-          "x-go-name": "Type"
+          "type": "string"
         },
         "typeLogoUrl": {
-          "type": "string",
-          "x-go-name": "TypeLogoUrl"
+          "type": "string"
         },
         "typeName": {
-          "type": "string",
-          "x-go-name": "TypeName"
+          "type": "string"
         },
         "uid": {
-          "type": "string",
-          "x-go-name": "UID"
+          "type": "string"
         },
         "url": {
-          "type": "string",
-          "x-go-name": "Url"
+          "type": "string"
         },
         "user": {
-          "type": "string",
-          "x-go-name": "User"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      }
     },
     "DataTable": {
       "type": "object",
@@ -1950,43 +2043,36 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/DataTableColumn"
-          },
-          "x-go-name": "Columns"
+          }
         },
         "rows": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/DataRowValues"
-          },
-          "x-go-name": "Rows"
+          }
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      }
     },
     "DataTableColumn": {
       "type": "object",
       "properties": {
         "text": {
-          "type": "string",
-          "x-go-name": "Text"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      }
     },
     "DataTimePoint": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Float"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      }
     },
     "DataTimeSeries": {
       "description": "DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK",
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "x-go-name": "Name"
+          "type": "string"
         },
         "points": {
           "$ref": "#/definitions/DataTimeSeriesPoints"
@@ -1995,29 +2081,24 @@
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "x-go-name": "Tags"
+          }
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      }
     },
     "DataTimeSeriesPoints": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/DataTimePoint"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      }
     },
     "DataTimeSeriesSlice": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/DataTimeSeries"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      }
     },
     "DsAccess": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "type": "string"
     },
     "ErrorResponseBody": {
       "type": "object",
@@ -2027,21 +2108,17 @@
       "properties": {
         "error": {
           "description": "Error An optional detailed description of the actual error. Only included if running in developer mode.",
-          "type": "string",
-          "x-go-name": "Error"
+          "type": "string"
         },
         "message": {
           "description": "a human readable version of the error",
-          "type": "string",
-          "x-go-name": "Message"
+          "type": "string"
         },
         "status": {
           "description": "Status An optional status to denote the cause of the error.\n\nFor example, a 412 Precondition Failed error may include additional information of why that error happened.",
-          "type": "string",
-          "x-go-name": "Status"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      }
     },
     "Float": {
       "description": "It does not consider zero values to be null.\nIt will decode to null, not zero, if null.",
@@ -2055,8 +2132,70 @@
         "Valid": {
           "type": "boolean"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/components/null"
+      }
+    },
+    "Folder": {
+      "type": "object",
+      "properties": {
+        "canAdmin": {
+          "type": "boolean"
+        },
+        "canEdit": {
+          "type": "boolean"
+        },
+        "canSave": {
+          "type": "boolean"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "hasAcl": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedBy": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "FolderSearchHit": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
     },
     "GetHomeDashboardResponse": {
       "title": "Get home dashboard response.",
@@ -2076,14 +2215,11 @@
           "type": "object",
           "properties": {
             "redirectUri": {
-              "type": "string",
-              "x-go-name": "RedirectUri"
+              "type": "string"
             }
           }
         }
-      ],
-      "x-go-name": "GetHomeDashboardResponseBody",
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      ]
     },
     "ImportDashboardCommand": {
       "type": "object",
@@ -2093,60 +2229,47 @@
         },
         "folderId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "FolderId"
+          "format": "int64"
         },
         "folderUid": {
-          "type": "string",
-          "x-go-name": "FolderUid"
+          "type": "string"
         },
         "inputs": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/ImportDashboardInput"
-          },
-          "x-go-name": "Inputs"
+          }
         },
         "overwrite": {
-          "type": "boolean",
-          "x-go-name": "Overwrite"
+          "type": "boolean"
         },
         "path": {
-          "type": "string",
-          "x-go-name": "Path"
+          "type": "string"
         },
         "pluginId": {
-          "type": "string",
-          "x-go-name": "PluginId"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      }
     },
     "ImportDashboardInput": {
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "x-go-name": "Name"
+          "type": "string"
         },
         "pluginId": {
-          "type": "string",
-          "x-go-name": "PluginId"
+          "type": "string"
         },
         "type": {
-          "type": "string",
-          "x-go-name": "Type"
+          "type": "string"
         },
         "value": {
-          "type": "string",
-          "x-go-name": "Value"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      }
     },
     "Json": {
-      "type": "object",
-      "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
+      "type": "object"
     },
     "MetricRequest": {
       "description": "MetricRequest same as dtos.MetricRequest but with swagger annotations",
@@ -2158,13 +2281,11 @@
       ],
       "properties": {
         "debug": {
-          "type": "boolean",
-          "x-go-name": "Debug"
+          "type": "boolean"
         },
         "from": {
           "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
           "type": "string",
-          "x-go-name": "From",
           "example": "now-1h"
         },
         "queries": {
@@ -2173,7 +2294,6 @@
           "items": {
             "$ref": "#/definitions/Json"
           },
-          "x-go-name": "Queries",
           "example": [
             {
               "datasourceId": 86,
@@ -2188,39 +2308,31 @@
         "to": {
           "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
           "type": "string",
-          "x-go-name": "To",
           "example": "now"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      }
     },
     "NewApiKeyResult": {
       "type": "object",
       "properties": {
         "id": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "ID"
+          "format": "int64"
         },
         "key": {
-          "type": "string",
-          "x-go-name": "Key"
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "x-go-name": "Name"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      }
     },
     "PermissionType": {
       "type": "integer",
-      "format": "int64",
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "format": "int64"
     },
     "RoleType": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "type": "string"
     },
     "SaveDashboardCommand": {
       "type": "object",
@@ -2237,42 +2349,33 @@
         },
         "folderId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "FolderId"
+          "format": "int64"
         },
         "folderUid": {
-          "type": "string",
-          "x-go-name": "FolderUid"
+          "type": "string"
         },
         "isFolder": {
-          "type": "boolean",
-          "x-go-name": "IsFolder"
+          "type": "boolean"
         },
         "message": {
-          "type": "string",
-          "x-go-name": "Message"
+          "type": "string"
         },
         "overwrite": {
-          "type": "boolean",
-          "x-go-name": "Overwrite"
+          "type": "boolean"
         },
         "userId": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "UserId"
+          "format": "int64"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
     },
     "SuccessResponseBody": {
       "type": "object",
       "properties": {
         "message": {
-          "type": "string",
-          "x-go-name": "Message"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      }
     },
     "TrimDashboardCommand": {
       "type": "object",
@@ -2286,8 +2389,7 @@
         "meta": {
           "$ref": "#/definitions/Json"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
     },
     "TrimDashboardFullWithMeta": {
       "type": "object",
@@ -2298,8 +2400,7 @@
         "meta": {
           "$ref": "#/definitions/Json"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      }
     },
     "UpdateDataSourceCommand": {
       "description": "Also acts as api DTO",
@@ -2312,70 +2413,76 @@
           "$ref": "#/definitions/DsAccess"
         },
         "basicAuth": {
-          "type": "boolean",
-          "x-go-name": "BasicAuth"
+          "type": "boolean"
         },
         "basicAuthPassword": {
-          "type": "string",
-          "x-go-name": "BasicAuthPassword"
+          "type": "string"
         },
         "basicAuthUser": {
-          "type": "string",
-          "x-go-name": "BasicAuthUser"
+          "type": "string"
         },
         "database": {
-          "type": "string",
-          "x-go-name": "Database"
+          "type": "string"
         },
         "isDefault": {
-          "type": "boolean",
-          "x-go-name": "IsDefault"
+          "type": "boolean"
         },
         "jsonData": {
           "$ref": "#/definitions/Json"
         },
         "name": {
-          "type": "string",
-          "x-go-name": "Name"
+          "type": "string"
         },
         "password": {
-          "type": "string",
-          "x-go-name": "Password"
+          "type": "string"
         },
         "secureJsonData": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "x-go-name": "SecureJsonData"
+          }
         },
         "type": {
-          "type": "string",
-          "x-go-name": "Type"
+          "type": "string"
         },
         "uid": {
-          "type": "string",
-          "x-go-name": "Uid"
+          "type": "string"
         },
         "url": {
-          "type": "string",
-          "x-go-name": "Url"
+          "type": "string"
         },
         "user": {
-          "type": "string",
-          "x-go-name": "User"
+          "type": "string"
         },
         "version": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Version"
+          "format": "int64"
         },
         "withCredentials": {
-          "type": "boolean",
-          "x-go-name": "WithCredentials"
+          "type": "boolean"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      }
+    },
+    "UpdateFolderCommand": {
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/Folder"
+        },
+        "overwrite": {
+          "type": "boolean"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     }
   },
   "responses": {
@@ -2409,20 +2516,17 @@
             "description": "ID Identifier of the new data source.",
             "type": "integer",
             "format": "int64",
-            "x-go-name": "ID",
             "example": 65
           },
           "message": {
             "description": "Message Message of the deleted dashboard.",
             "type": "string",
-            "x-go-name": "Message",
-            "example": "Dashboard My Dashboard deleted"
+            "example": "Data source added"
           },
           "name": {
-            "description": "Name of the new dashboard.",
+            "description": "Name of the new data source.",
             "type": "string",
-            "x-go-name": "Name",
-            "example": "My Dashboard"
+            "example": "My Data source"
           }
         }
       }
@@ -2481,19 +2585,16 @@
             "description": "ID Identifier of the deleted dashboard.",
             "type": "integer",
             "format": "int64",
-            "x-go-name": "ID",
             "example": 65
           },
           "message": {
             "description": "Message Message of the deleted dashboard.",
             "type": "string",
-            "x-go-name": "Message",
             "example": "Dashboard My Dashboard deleted"
           },
           "title": {
             "description": "Title Title of the deleted dashboard.",
             "type": "string",
-            "x-go-name": "Title",
             "example": "My Dashboard"
           }
         }
@@ -2512,14 +2613,41 @@
             "description": "ID Identifier of the deleted data source.",
             "type": "integer",
             "format": "int64",
-            "x-go-name": "ID",
             "example": 65
           },
           "message": {
             "description": "Message Message of the deleted dashboard.",
             "type": "string",
-            "x-go-name": "Message",
             "example": "Dashboard My Dashboard deleted"
+          }
+        }
+      }
+    },
+    "deleteFolderResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the deleted folder.",
+            "type": "integer",
+            "format": "int64",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the deleted folder.",
+            "type": "string",
+            "example": "Folder My Folder deleted"
+          },
+          "title": {
+            "description": "Title of the deleted folder.",
+            "type": "string",
+            "example": "My Folder"
           }
         }
       }
@@ -2528,6 +2656,12 @@
       "description": "DublicateAPIkeyError is returned when the API key conflicts with another",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "folderResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/Folder"
       }
     },
     "forbiddenError": {
@@ -2572,7 +2706,6 @@
             "description": "ID Identifier of the data source.",
             "type": "integer",
             "format": "int64",
-            "x-go-name": "ID",
             "example": 65
           }
         }
@@ -2588,6 +2721,15 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/DataSourceList"
+      }
+    },
+    "getFoldersResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/FolderSearchHit"
+        }
       }
     },
     "getHomeDashboardResponse": {
@@ -2642,38 +2784,32 @@
           "id": {
             "description": "ID The unique identifier (id) of the created/updated dashboard.",
             "type": "string",
-            "x-go-name": "ID",
             "example": "1"
           },
           "status": {
             "description": "Status status of the response.",
             "type": "string",
-            "x-go-name": "Status",
             "example": "success"
           },
           "title": {
             "description": "Slug The slug of the dashboard.",
             "type": "string",
-            "x-go-name": "Slug",
             "example": "my-dashboard"
           },
           "uid": {
             "description": "UID The unique identifier (uid) of the created/updated dashboard.",
             "type": "string",
-            "x-go-name": "UID",
             "example": "nHz3SXiiz"
           },
           "url": {
             "description": "URL The relative URL for accessing the created/updated dashboard.",
             "type": "string",
-            "x-go-name": "URL",
             "example": "/d/nHz3SXiiz/my-dashboard"
           },
           "version": {
             "description": "Version The version of the dashboard.",
             "type": "integer",
             "format": "int64",
-            "x-go-name": "Verion",
             "example": 2
           }
         }
@@ -2732,6 +2868,16 @@
     },
     {
       "api_key": []
+    }
+  ],
+  "tags": [
+    {
+      "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
+      "name": "datasources"
+    },
+    {
+      "description": "Folders are identified by the identifier (id) and the unique identifier (uid).\nThe identifier (id) of a folder is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a folder can be used for uniquely identify folders between multiple Grafana installs. It’s automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.\nThe uid can have a maximum length of 40 characters.\n\nThe General folder (id=0) is special and is not part of the Folder API which means that you cannot use this API for retrieving information about the General folder.",
+      "name": "folders"
     }
   ]
 }

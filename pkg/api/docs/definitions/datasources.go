@@ -208,6 +208,7 @@ import (
 //
 // Responses:
 // 200: queryDatasourceResponse
+// 401: unauthorisedError
 // 400: badRequestError
 // 403: forbiddenError
 // 404: notFoundError
@@ -288,14 +289,14 @@ type CreateOrUpdateDatasourceResponse struct {
 		// example: 65
 		ID int64 `json:"id"`
 
-		// Name of the new dashboard.
+		// Name of the new data source.
 		// required: true
-		// example: My Dashboard
+		// example: My Data source
 		Name string `json:"name"`
 
 		// Message Message of the deleted dashboard.
 		// required: true
-		// example: Dashboard My Dashboard deleted
+		// example: Data source added
 		Message string `json:"message"`
 
 		// Datasource properties
