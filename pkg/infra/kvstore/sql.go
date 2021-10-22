@@ -88,7 +88,7 @@ func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, ke
 // Del deletes an item from the store.
 func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, key string) error {
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		_, err := dbSession.Exec("DELETE FROM kv_store WHERE org_id=? and namespace=? and key=?", orgId, namespace, key)
+		_, err := dbSession.Exec("DELETE FROM kv_store WHERE org_id=? and namespace=? and \"key\"=?", orgId, namespace, key)
 		return err
 	})
 	return err
