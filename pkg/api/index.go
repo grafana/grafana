@@ -333,7 +333,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		Text:         "Help",
 		SubTitle:     helpVersion,
 		Id:           "help",
-		Url:          "#",
+		Url:          "/",
 		Icon:         "question-circle",
 		HideFromMenu: true,
 		SortWeight:   dtos.WeightHelp,
