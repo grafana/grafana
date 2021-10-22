@@ -419,9 +419,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		// Now update the rule
 		newRule := *rule
 		newRule.Version++
-		ruleStore.rules[rule.OrgID][rule.RuleGroup][rule.NamespaceUID] = []*models.AlertRule{
-			&newRule,
-		}
+		ruleStore.putRule(&newRule)
 
 		// and call with new version
 		expectedTime = expectedTime.Add(time.Duration(rand.Intn(10)) * time.Second)

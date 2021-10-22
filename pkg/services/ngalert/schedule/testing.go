@@ -60,6 +60,15 @@ type fakeRuleStore struct {
 	recordedOps []interface{}
 }
 
+// putRule puts the rule in the rules map. If there are existing rule in the same namespace, they will be overwritten
+func (f *fakeRuleStore) putRule(r *models.AlertRule) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{
+		r,
+	}
+}
+
 func (f *fakeRuleStore) DeleteAlertRuleByUID(_ int64, _ string) error { return nil }
 func (f *fakeRuleStore) DeleteNamespaceAlertRules(_ int64, _ string) ([]string, error) {
 	return []string{}, nil
