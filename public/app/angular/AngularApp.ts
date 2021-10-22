@@ -104,7 +104,7 @@ export class AngularApp {
   }
 
   bootstrap() {
-    const injector = angular.bootstrap(document, this.ngModuleDependencies);
+    const injector = angular.bootstrap(document.getElementById('ngRoot')!, this.ngModuleDependencies);
 
     monkeyPatchInjectorWithPreAssignedBindings(injector);
 
