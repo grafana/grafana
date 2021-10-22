@@ -34,15 +34,16 @@ describe('MixedDatasource', () => {
     });
     const results: any[] = [];
 
-    beforeEach(async (done) => {
-      const ds = await getDataSourceSrv().get('-- Mixed --');
-
-      from(ds.query(requestMixed)).subscribe((result) => {
-        results.push(result);
-        if (result.state === LoadingState.Done) {
-          done();
-        }
+    beforeEach((done) => {
+      getDataSourceSrv().get('-- Mixed --').then((ds) => {
+        from(ds.query(requestMixed)).subscribe((result) => {
+          results.push(result);
+          if (result.state === LoadingState.Done) {
+            done();
+          }
+        });
       });
+
     });
 
     it('direct query should return results', async () => {
@@ -68,14 +69,14 @@ describe('MixedDatasource', () => {
     });
     const results: any[] = [];
 
-    beforeEach(async (done) => {
-      const ds = await getDataSourceSrv().get('-- Mixed --');
-
-      from(ds.query(requestMixed)).subscribe((result) => {
-        results.push(result);
-        if (results.length === 5) {
-          done();
-        }
+    beforeEach((done) => {
+      getDataSourceSrv().get('-- Mixed --').then((ds) => {
+        from(ds.query(requestMixed)).subscribe((result) => {
+          results.push(result);
+          if (results.length === 5) {
+            done();
+          }
+        });
       });
     });
 
