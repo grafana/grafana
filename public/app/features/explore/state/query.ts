@@ -485,6 +485,9 @@ export const runQueries = (
         const { logsVolumeData, absoluteRange } = getState().explore[exploreId]!;
         if (!canReuseLogsVolumeData(logsVolumeData, queries, absoluteRange)) {
           dispatch(cleanLogsVolumeAction({ exploreId }));
+          if (config.featureToggles.autoLoadFullRangeLogsVolume) {
+            dispatch(loadLogsVolumeData(exploreId));
+          }
         }
       } else {
         dispatch(

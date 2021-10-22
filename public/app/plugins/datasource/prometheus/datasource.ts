@@ -813,7 +813,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   async areExemplarsAvailable() {
     try {
       const res = await this.metadataRequest('/api/v1/query_exemplars', { query: 'test' });
-      if (res.statusText === 'OK') {
+      if (res.data.status === 'success') {
         return true;
       }
       return false;
@@ -894,6 +894,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
     return {
       ...target,
+      legendFormat: this.templateSrv.replace(target.legendFormat, variables),
       expr: this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
     };
   }

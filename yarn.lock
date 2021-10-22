@@ -2379,11 +2379,11 @@ __metadata:
     "@rollup/plugin-node-resolve": 10.0.0
     "@types/braintree__sanitize-url": 4.1.0
     "@types/d3-interpolate": ^1.3.1
-    "@types/jest": 26.0.15
+    "@types/jest": 27.0.2
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/marked": 1.1.0
-    "@types/node": 10.14.1
+    "@types/node": 14.17.27
     "@types/papaparse": 5.2.0
     "@types/react": 17.0.30
     "@types/rollup-plugin-visualizer": 4.2.1
@@ -2413,7 +2413,7 @@ __metadata:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@rollup/plugin-commonjs": 16.0.0
     "@rollup/plugin-node-resolve": 10.0.0
-    "@types/node": 13.7.7
+    "@types/node": 14.17.27
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
     commander: 5.0.0
@@ -2440,7 +2440,7 @@ __metadata:
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 16.0.0
     "@rollup/plugin-node-resolve": 10.0.0
-    "@types/node": 13.7.7
+    "@types/node": 14.17.27
     "@types/rollup-plugin-visualizer": 4.2.1
     blink-diff: 1.0.13
     commander: 5.0.0
@@ -2494,7 +2494,7 @@ __metadata:
     "@rollup/plugin-commonjs": 16.0.0
     "@rollup/plugin-node-resolve": 10.0.0
     "@types/history": ^4.7.8
-    "@types/jest": 26.0.15
+    "@types/jest": 27.0.2
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
     history: 4.10.1
@@ -2572,8 +2572,8 @@ __metadata:
     "@types/command-exists": ^1.2.0
     "@types/fs-extra": ^9.0.13
     "@types/inquirer": ^6.0.3
-    "@types/jest": 26.0.15
-    "@types/node": ^12.0.4
+    "@types/jest": 27.0.2
+    "@types/node": ^14.0.0
     "@types/prettier": ^2.4.0
     "@types/react-dev-utils": ^9.0.4
     "@types/rimraf": ^3.0.0
@@ -2680,11 +2680,11 @@ __metadata:
     "@types/d3": 7.0.0
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.1
-    "@types/jest": 26.0.15
+    "@types/jest": 27.0.2
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/mock-raf": 1.0.2
-    "@types/node": 10.14.1
+    "@types/node": 14.17.27
     "@types/papaparse": 5.2.0
     "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
@@ -7568,23 +7568,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:*":
+"@types/jest@npm:*, @types/jest@npm:27.0.2":
   version: 27.0.2
   resolution: "@types/jest@npm:27.0.2"
   dependencies:
     jest-diff: ^27.0.0
     pretty-format: ^27.0.0
   checksum: 814ad5f5d2f277849f47e52906da4b745758e555630fc8cb46a071bde648eefeffb1b35710c530a8cea7fc4ea7c1d813812c120484bf7902ab6c5e473cdd49c9
-  languageName: node
-  linkType: hard
-
-"@types/jest@npm:26.0.15":
-  version: 26.0.15
-  resolution: "@types/jest@npm:26.0.15"
-  dependencies:
-    jest-diff: ^26.0.0
-    pretty-format: ^26.0.0
-  checksum: 5bbed3d3afa40bcac9eb2e8e76957b40b7cb86228a7a1dd455f7e30cb283a7314f7d7afaf2d46ca52ba5ce62168e0f60c57e0ab7509a6b91eab42460709b6bf1
   languageName: node
   linkType: hard
 
@@ -7767,13 +7757,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:10.14.1":
-  version: 10.14.1
-  resolution: "@types/node@npm:10.14.1"
-  checksum: be0881716c81f6355035fe64fa16d6830e3f27f1e657738c46dd5605d6c4248681ceb64f8df738bf3e2107df608c4a057668dd618fa32e5697be3959fa056c4c
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:12.20.24":
   version: 12.20.24
   resolution: "@types/node@npm:12.20.24"
@@ -7781,24 +7764,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:13.7.0":
-  version: 13.7.0
-  resolution: "@types/node@npm:13.7.0"
-  checksum: ccc4eb30fd225dfdbf15307704b4acdb34fe57b13ff0942b1122723fe27b218d8d30915d7ff61f63e58a8213304ec3bd58bbb9cb0bcf13e687e57f5b25af6ec6
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:13.7.7":
-  version: 13.7.7
-  resolution: "@types/node@npm:13.7.7"
-  checksum: 834f382e965ddf6eb8aed11a949e48254cdcd7b29fa41e226c1b3d54f820e0e09cebb78db7ad20e6c18d688b7337b4376c6e08b598f49ac985ec6b07c524931a
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^12.0.4":
-  version: 12.20.28
-  resolution: "@types/node@npm:12.20.28"
-  checksum: 09811db5eabb02062cc04ab887cf20dcae87e904ccbe4d1767ebd8c88ab31eeea9c62f6c94b16f52230a4e2f1ab0d8a411e3b3cb744c7d0e6fbc4fa5f0f25ba8
+"@types/node@npm:14.17.27, @types/node@npm:^14.0.0":
+  version: 14.17.27
+  resolution: "@types/node@npm:14.17.27"
+  checksum: 4f7eeaa329f4b2b9ff4bb0bb4582ad92e328a4e66f62d5b96ac4e3b51210ed092bb56726c30643beb860f6df633a29e08ed94adad2d573c85b4794d0bf0bbc06
   languageName: node
   linkType: hard
 
@@ -17666,14 +17635,14 @@ fsevents@~2.1.2:
     "@types/file-saver": 2.0.1
     "@types/history": ^4.7.8
     "@types/hoist-non-react-statics": 3.3.1
-    "@types/jest": 26.0.15
+    "@types/jest": 27.0.2
     "@types/jquery": 3.3.38
     "@types/jsurl": ^1.2.28
     "@types/lodash": 4.14.149
     "@types/logfmt": ^1.2.1
     "@types/lru-cache": ^5.1.0
     "@types/mousetrap": 1.6.3
-    "@types/node": 13.7.0
+    "@types/node": 14.17.27
     "@types/ol": ^6.5.1
     "@types/papaparse": 5.2.0
     "@types/pluralize": ^0.0.29
