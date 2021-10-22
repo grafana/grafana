@@ -256,26 +256,6 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		return sch, ruleStore, instanceStore, adminConfigStore
 	}
 
-	evaluateSync := func(c chan time.Time) time.Time {
-		select {
-		case result := <-c:
-			return result
-		case <-time.After(time.Duration(10) * time.Second):
-			require.Fail(t, "Evaluation did not happen but should have")
-		}
-		return time.UnixMicro(0)
-	}
-
-	waitForStopped := func(c chan error) error {
-		select {
-		case result := <-c:
-			return result
-		case <-time.After(time.Duration(10) * time.Second):
-			require.Fail(t, "Evaluation did not happen but should have")
-		}
-		return nil
-	}
-
 	randomNormalState := func() eval.State {
 		// pick only supported cases
 		return []eval.State{eval.Normal, eval.Alerting, eval.Pending}[rand.Intn(3)]
@@ -302,7 +282,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			version: rule.Version,
 		}
 
-		actualTime := evaluateSync(evalAppliedChan)
+		actualTime := waitForTimeChannel(t, evalAppliedChan)
 		require.Equal(t, expectedTime, actualTime)
 
 		t.Run("should get rule from database when run the first time", func(t *testing.T) {
@@ -391,7 +371,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			}()
 
 			stopChan <- struct{}{}
-			err := waitForStopped(stoppedChan)
+			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
 		})
 
@@ -406,7 +386,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			}()
 
 			cancel()
-			err := waitForStopped(stoppedChan)
+			err := waitForErrChannel(t, stoppedChan)
 			require.ErrorIs(t, err, context.Canceled)
 		})
 	})
@@ -429,7 +409,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			version: rule.Version,
 		}
 
-		actualTime := evaluateSync(evalAppliedChan)
+		actualTime := waitForTimeChannel(t, evalAppliedChan)
 		require.Equal(t, expectedTime, actualTime)
 
 		// Now update the rule
@@ -446,7 +426,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			version: newRule.Version,
 		}
 
-		actualTime = evaluateSync(evalAppliedChan)
+		actualTime = waitForTimeChannel(t, evalAppliedChan)
 		require.Equal(t, expectedTime, actualTime)
 
 		queries := make([]models.GetAlertRuleByUIDQuery, 0)
@@ -481,7 +461,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			version: rule.Version,
 		}
 
-		actualTime := evaluateSync(evalAppliedChan)
+		actualTime := waitForTimeChannel(t, evalAppliedChan)
 		require.Equal(t, expectedTime, actualTime)
 
 		// try again with the same version
@@ -490,7 +470,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			now:     expectedTime,
 			version: rule.Version,
 		}
-		actualTime = evaluateSync(evalAppliedChan)
+		actualTime = waitForTimeChannel(t, evalAppliedChan)
 		require.Equal(t, expectedTime, actualTime)
 
 		expectedTime = expectedTime.Add(time.Duration(rand.Intn(10)) * time.Second)
@@ -498,7 +478,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			now:     expectedTime,
 			version: rule.Version - 1,
 		}
-		actualTime = evaluateSync(evalAppliedChan)
+		actualTime = waitForTimeChannel(t, evalAppliedChan)
 		require.Equal(t, expectedTime, actualTime)
 
 		queries := make([]models.GetAlertRuleByUIDQuery, 0)
@@ -559,7 +539,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				now:     time.Now(),
 				version: rule.Version,
 			}
-			evaluateSync(evalAppliedChan)
+			waitForTimeChannel(t, evalAppliedChan)
 
 			var count int
 			require.Eventuallyf(t, func() bool {
