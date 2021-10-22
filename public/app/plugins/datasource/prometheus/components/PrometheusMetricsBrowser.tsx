@@ -12,7 +12,6 @@ import {
 import PromQlLanguageProvider from '../language_provider';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
 import { css, cx } from '@emotion/css';
-import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme } from '@grafana/data';
@@ -24,14 +23,15 @@ const EMPTY_SELECTOR = '{}';
 const METRIC_LABEL = '__name__';
 const LIST_ITEM_SIZE = 25;
 
-export const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
-
 export interface BrowserProps {
   languageProvider: PromQlLanguageProvider;
   onChange: (selector: string) => void;
   theme: GrafanaTheme;
   autoSelect?: number;
   hide?: () => void;
+  lastUsedLabels: string[];
+  storeLastUsedLabels: (labels: string[]) => void;
+  deleteLastUsedLabels: () => void;
 }
 
 interface BrowserState {
@@ -243,7 +243,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         valueSearchTerm: '',
       };
     });
-    store.delete(LAST_USED_LABELS_KEY);
+    this.props.deleteLastUsedLabels();
     // Get metrics
     this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
   };
@@ -316,9 +316,9 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
   }
 
   componentDidMount() {
-    const { languageProvider } = this.props;
+    const { languageProvider, lastUsedLabels } = this.props;
     if (languageProvider) {
-      const selectedLabels: string[] = store.getObject(LAST_USED_LABELS_KEY, []);
+      const selectedLabels: string[] = lastUsedLabels;
       languageProvider.start().then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
         // TODO too-many-metrics
@@ -353,7 +353,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       return;
     }
     const selectedLabels = this.state.labels.filter((label) => label.selected).map((label) => label.name);
-    store.setObject(LAST_USED_LABELS_KEY, selectedLabels);
+    this.props.storeLastUsedLabels(selectedLabels);
     if (label.selected) {
       // Refetch values for newly selected label...
       if (!label.values) {

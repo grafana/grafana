@@ -173,12 +173,12 @@ describe('Receivers', () => {
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
 
     // type in a name for the new receiver
-    await userEvent.type(ui.inputs.name.get(), 'my new receiver');
+    userEvent.type(ui.inputs.name.get(), 'my new receiver');
 
     // enter some email
     const email = ui.inputs.email.addresses.get();
     userEvent.clear(email);
-    await userEvent.type(email, 'tester@grafana.com');
+    userEvent.type(email, 'tester@grafana.com');
 
     // try to test the contact point
     userEvent.click(ui.testContactPointButton.get());
@@ -213,7 +213,7 @@ describe('Receivers', () => {
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
 
     // type in a name for the new receiver
-    await userEvent.type(byPlaceholderText('Name').get(), 'my new receiver');
+    userEvent.type(byPlaceholderText('Name').get(), 'my new receiver');
 
     // check that default email form is rendered
     await ui.inputs.email.addresses.find();
@@ -227,8 +227,8 @@ describe('Receivers', () => {
     const urlInput = ui.inputs.hipchat.url.get();
     const apiKeyInput = ui.inputs.hipchat.apiKey.get();
 
-    await userEvent.type(urlInput, 'http://hipchat');
-    await userEvent.type(apiKeyInput, 'foobarbaz');
+    userEvent.type(urlInput, 'http://hipchat');
+    userEvent.type(apiKeyInput, 'foobarbaz');
 
     // it seems react-hook-form does some async state updates after submit
     await act(async () => {
@@ -296,7 +296,7 @@ describe('Receivers', () => {
     await userEvent.click(byText(/Actions \(1\)/i).get(slackContainer));
     await userEvent.click(await byTestId('items.1.settings.actions.0.confirm.add-button').find());
     const confirmSubform = byTestId('items.1.settings.actions.0.confirm.container').get();
-    await userEvent.type(byLabelText('Text').get(confirmSubform), 'confirm this');
+    userEvent.type(byLabelText('Text').get(confirmSubform), 'confirm this');
 
     // delete a field
     await userEvent.click(byText(/Fields \(2\)/i).get(slackContainer));
@@ -306,7 +306,7 @@ describe('Receivers', () => {
     // add another channel
     await userEvent.click(ui.newContactPointTypeButton.get());
     await clickSelectOption(await byTestId('items.2.type').find(), 'Webhook');
-    await userEvent.type(await ui.inputs.webhook.URL.find(), 'http://webhookurl');
+    userEvent.type(await ui.inputs.webhook.URL.find(), 'http://webhookurl');
 
     // it seems react-hook-form does some async state updates after submit
     await act(async () => {

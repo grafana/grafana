@@ -124,8 +124,8 @@ var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*
 const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier.
-func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	urlStr := model.DecryptedValue("url", model.Settings.Get("url").MustString())
+func NewSlackNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+	urlStr := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString(), setting.SecretKey)
 	if urlStr == "" {
 		urlStr = slackAPIEndpoint
 	}
@@ -150,7 +150,7 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
-	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
+	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString(), setting.SecretKey)
 	if token == "" && apiURL.String() == slackAPIEndpoint {
 		return nil, alerting.ValidationError{
 			Reason: "token must be specified when using the Slack chat API",
@@ -382,15 +382,17 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	if resp.StatusCode/100 == 2 {
-		var rslt map[string]interface{}
+	if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
 		// Slack responds to some requests with a JSON document, that might contain an error
+		rslt := struct {
+			Ok  bool   `json:"ok"`
+			Err string `json:"error"`
+		}{}
 		if err := json.Unmarshal(body, &rslt); err == nil {
-			if !rslt["ok"].(bool) {
-				errMsg := rslt["error"].(string)
+			if !rslt.Ok && rslt.Err != "" {
 				sn.log.Warn("Sending Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status,
-					"err", errMsg)
-				return fmt.Errorf("failed to make Slack API request: %s", errMsg)
+					"err", rslt.Err)
+				return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 			}
 		}
 

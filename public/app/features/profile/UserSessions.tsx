@@ -42,7 +42,12 @@ export class UserSessions extends PureComponent<Props> {
                         {session.browser} on {session.os} {session.osVersion}
                       </td>
                       <td>
-                        <Button size="sm" variant="destructive" onClick={() => revokeUserSession(session.id)}>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => revokeUserSession(session.id)}
+                          aria-label="Revoke user session"
+                        >
                           <Icon name="power" />
                         </Button>
                       </td>

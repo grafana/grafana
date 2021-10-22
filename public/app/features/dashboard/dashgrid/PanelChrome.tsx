@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Subscription } from 'rxjs';
-import { locationService } from '@grafana/runtime';
+import { locationService, RefreshEvent } from '@grafana/runtime';
 import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
@@ -30,14 +30,14 @@ import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
-import { RefreshEvent, RenderEvent } from 'app/types/events';
+import { RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { liveTimer } from './liveTimer';
 import { isSoloRoute } from '../../../routes/utils';
-import { setPanelInstanceState } from '../state/reducers';
+import { setPanelInstanceState } from '../../panel/state/reducers';
 import { store } from 'app/store/store';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -63,7 +63,7 @@ export interface State {
   liveTime?: TimeRange;
 }
 
-export class PanelChrome extends Component<Props, State> {
+export class PanelChrome extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
@@ -103,7 +103,7 @@ export class PanelChrome extends Component<Props, State> {
     });
 
     // Set redux panel state so panel options can get notified
-    store.dispatch(setPanelInstanceState({ panelId: this.props.panel.id, value }));
+    store.dispatch(setPanelInstanceState({ key: this.props.panel.key, value }));
   };
 
   getPanelContextApp() {
@@ -219,19 +219,6 @@ export class PanelChrome extends Component<Props, State> {
     if (width !== prevProps.width) {
       liveTimer.updateInterval(this);
     }
-  }
-
-  shouldComponentUpdate(prevProps: Props, prevState: State) {
-    const { plugin, panel } = this.props;
-
-    // If plugin changed we need to process fieldOverrides again
-    // We do this by asking panel query runner to resend last result
-    if (prevProps.plugin !== plugin) {
-      panel.getQueryRunner().resendLastResult();
-      return false;
-    }
-
-    return true;
   }
 
   // Updates the response with information from the stream
@@ -475,7 +462,7 @@ export class PanelChrome extends Component<Props, State> {
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    let alertState = config.unifiedAlertingEnabled ? undefined : data.alertState?.state;
+    const alertState = data.alertState?.state;
 
     const containerClassNames = classNames({
       'panel-container': true,

@@ -257,8 +257,7 @@ export class PanelQueryRunner {
 
     if (dataSupport.alertStates || dataSupport.annotations) {
       const panel = (this.dataConfigSource as unknown) as PanelModel;
-      const id = panel.editSourceId ?? panel.id;
-      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(id));
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panel.id));
     }
 
     this.subscription = panelData.subscribe({
@@ -291,6 +290,12 @@ export class PanelQueryRunner {
       this.subject.next(this.lastResult);
     }
   };
+
+  clearLastResult() {
+    this.lastResult = undefined;
+    // A new subject is also needed since it's a replay subject that remembers/sends last value
+    this.subject = new ReplaySubject(1);
+  }
 
   /**
    * Called when the panel is closed

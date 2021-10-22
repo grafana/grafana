@@ -52,6 +52,8 @@ export interface FeatureToggles {
   recordedQueries: boolean;
   prometheusMonaco: boolean;
   newNavigation: boolean;
+  fullRangeLogsVolume: boolean;
+  autoLoadFullRangeLogsVolume: boolean;
 }
 
 /**
