@@ -134,7 +134,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
             size="md"
             icon="plus"
             menuPlacement="auto"
-            minWidth={28}
+            minWidth={40}
             options={mappingTypes}
             onChange={onAddValueMapping}
           />
