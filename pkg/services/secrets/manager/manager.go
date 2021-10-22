@@ -247,3 +247,11 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 func (s *SecretsService) RegisterProvider(providerID string, provider secrets.Provider) {
 	s.providers[providerID] = provider
 }
+
+func (s *SecretsService) CurrentProvider() string {
+	return s.currentProvider
+}
+
+func (s *SecretsService) GetProviders() map[string]secrets.Provider {
+	return s.providers
+}
