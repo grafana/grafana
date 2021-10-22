@@ -40,5 +40,5 @@ export function escapeHtml(str: string): string {
 }
 
 export function sanitizeAngularInterpolation(url: string): string {
-  return url.replaceAll('{{', '%7B%7B').replaceAll('}}', '%7D%7D');
+  return url.replace(/\{\{/g, '%7B%7B').replace(/\}\}/g, '%7D%7D');
 }
