@@ -53,7 +53,7 @@
     "commander": "^5.0.0",
     "concurrently": "4.1.0",
     "copy-webpack-plugin": "5.1.2",
-    "css-loader": "3.4.2",
+    "css-loader": "6.4.0",
     "eslint": "7.21.0",
     "execa": "^5.1.1",
     "file-loader": "5.0.2",

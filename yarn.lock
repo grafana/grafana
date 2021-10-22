@@ -2589,7 +2589,7 @@ __metadata:
     commander: ^5.0.0
     concurrently: 4.1.0
     copy-webpack-plugin: 5.1.2
-    css-loader: 3.4.2
+    css-loader: 6.4.0
     eslint: 7.21.0
     execa: ^5.1.1
     file-loader: 5.0.2
@@ -13031,28 +13031,6 @@ __metadata:
     hyphenate-style-name: ^1.0.2
     isobject: ^3.0.1
   checksum: c9964c4708216954c468b69bbee2d971fd759ada4f40637b8ca4d3f79caba4818d0532a4f190ac560227c08742ad063ffec7a30afddc4d96b66a18c3a008f0d8
-  languageName: node
-  linkType: hard
-
-"css-loader@npm:3.4.2":
-  version: 3.4.2
-  resolution: "css-loader@npm:3.4.2"
-  dependencies:
-    camelcase: ^5.3.1
-    cssesc: ^3.0.0
-    icss-utils: ^4.1.1
-    loader-utils: ^1.2.3
-    normalize-path: ^3.0.0
-    postcss: ^7.0.23
-    postcss-modules-extract-imports: ^2.0.0
-    postcss-modules-local-by-default: ^3.0.2
-    postcss-modules-scope: ^2.1.1
-    postcss-modules-values: ^3.0.0
-    postcss-value-parser: ^4.0.2
-    schema-utils: ^2.6.0
-  peerDependencies:
-    webpack: ^4.0.0 || ^5.0.0
-  checksum: dbd80f052b41ea7c33d96a2fbeabca82773f7e3567300c636ffb079ffcf8ba111b02f315346942334ed27ffc137323c9a4ac1e446eaed5837abbdd3fdd371a0c
   languageName: node
   linkType: hard
 
@@ -25729,7 +25707,7 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"postcss-modules-scope@npm:^2.1.1, postcss-modules-scope@npm:^2.2.0":
+"postcss-modules-scope@npm:^2.2.0":
   version: 2.2.0
   resolution: "postcss-modules-scope@npm:2.2.0"
   dependencies:
@@ -26350,7 +26328,7 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"postcss@npm:^7.0.0, postcss@npm:^7.0.1, postcss@npm:^7.0.14, postcss@npm:^7.0.17, postcss@npm:^7.0.2, postcss@npm:^7.0.21, postcss@npm:^7.0.23, postcss@npm:^7.0.26, postcss@npm:^7.0.27, postcss@npm:^7.0.31, postcss@npm:^7.0.32, postcss@npm:^7.0.35, postcss@npm:^7.0.36, postcss@npm:^7.0.5, postcss@npm:^7.0.6":
+"postcss@npm:^7.0.0, postcss@npm:^7.0.1, postcss@npm:^7.0.14, postcss@npm:^7.0.17, postcss@npm:^7.0.2, postcss@npm:^7.0.21, postcss@npm:^7.0.26, postcss@npm:^7.0.27, postcss@npm:^7.0.31, postcss@npm:^7.0.32, postcss@npm:^7.0.35, postcss@npm:^7.0.36, postcss@npm:^7.0.5, postcss@npm:^7.0.6":
   version: 7.0.39
   resolution: "postcss@npm:7.0.39"
   dependencies:
@@ -29669,7 +29647,7 @@ resolve@~1.19.0:
   languageName: node
   linkType: hard
 
-"schema-utils@npm:^2.5.0, schema-utils@npm:^2.6.0, schema-utils@npm:^2.6.1, schema-utils@npm:^2.6.4, schema-utils@npm:^2.6.5, schema-utils@npm:^2.6.6, schema-utils@npm:^2.7.0":
+"schema-utils@npm:^2.5.0, schema-utils@npm:^2.6.1, schema-utils@npm:^2.6.4, schema-utils@npm:^2.6.5, schema-utils@npm:^2.6.6, schema-utils@npm:^2.7.0":
   version: 2.7.1
   resolution: "schema-utils@npm:2.7.1"
   dependencies:
