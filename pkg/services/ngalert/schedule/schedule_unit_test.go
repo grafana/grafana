@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
-	"os"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/inconshreveable/log15"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/model"
@@ -247,8 +245,6 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		adminConfigStore := newFakeAdminConfigStore(t)
 
 		sch, _ := setupScheduler(t, ruleStore, instanceStore, adminConfigStore)
-		// TODO comment
-		sch.log.SetHandler(log15.StreamHandler(os.Stdout, log15.LogfmtFormat())) // Uncomment when debugging
 
 		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
 			evalAppliedChan <- t
@@ -261,7 +257,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		return []eval.State{eval.Normal, eval.Alerting, eval.Pending}[rand.Intn(3)]
 	}
 
-	t.Run("evaluates rule when channel 'eval' is not empty", func(t *testing.T) {
+	t.Run("when rule evaluation happens", func(t *testing.T) {
 		evalChan := make(chan *evalContext)
 		evalAppliedChan := make(chan time.Time)
 
@@ -289,7 +285,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		actualTime := waitForTimeChannel(t, evalAppliedChan)
 		require.Equal(t, expectedTime, actualTime)
 
-		t.Run("should get rule from database when run the first time", func(t *testing.T) {
+		t.Run("it should get rule from database when run the first time", func(t *testing.T) {
 			queries := make([]models.GetAlertRuleByUIDQuery, 0)
 			for _, op := range ruleStore.recordedOps {
 				switch q := op.(type) {
@@ -298,11 +294,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				}
 			}
 			require.NotEmptyf(t, queries, "Expected a %T request to rule store but nothing was recorded", models.GetAlertRuleByUIDQuery{})
-			require.Len(t, queries, 1, "Expected exactly one request of %T but got many", models.GetAlertRuleByUIDQuery{})
+			require.Len(t, queries, 1, "Expected exactly one request of %T but got %d", models.GetAlertRuleByUIDQuery{}, len(queries))
 			require.Equal(t, rule.UID, queries[0].UID)
 			require.Equal(t, rule.OrgID, queries[0].OrgID)
 		})
-		t.Run("should process evaluation results via state manager", func(t *testing.T) {
+		t.Run("it should process evaluation results via state manager", func(t *testing.T) {
 			states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, states, 1)
 			s := states[0]
@@ -316,7 +312,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			require.Equal(t, expectedStatus.String(), s.Results[0].EvaluationState.String())
 			require.Equal(t, expectedTime, s.Results[0].EvaluationTime)
 		})
-		t.Run("it saves alert instances to storage", func(t *testing.T) {
+		t.Run("it should save alert instances to storage", func(t *testing.T) {
 			states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, states, 1)
 			s := states[0]
@@ -340,7 +336,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			require.Equal(t, evalState.String(), string(cmd.State))
 			require.Equal(t, s.Labels, data.Labels(cmd.Labels))
 		})
-		t.Run("it increases counters", func(t *testing.T) {
+		t.Run("it reports metrics", func(t *testing.T) {
 			totalCounter, err := sch.metrics.EvalTotal.GetMetricWithLabelValues(strconv.FormatInt(rule.OrgID, 10))
 			require.NoError(t, err)
 			m := &dto.Metric{}
@@ -363,7 +359,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	})
 
 	t.Run("should exit", func(t *testing.T) {
-		t.Run("when stop channel is not empty", func(t *testing.T) {
+		t.Run("when we signal it to stop", func(t *testing.T) {
 			stopChan := make(chan struct{})
 			stoppedChan := make(chan error)
 
@@ -533,7 +529,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			require.Eventuallyf(t, func() bool {
 				return len(s.Alertmanagers()) == 1
-			}, 20*time.Second, 200*time.Millisecond, "Sender did not initialize.")
+			}, 20*time.Second, 200*time.Millisecond, "external Alertmanager was not discovered.")
 
 			evalChan := make(chan *evalContext)
 			evalAppliedChan := make(chan time.Time)
