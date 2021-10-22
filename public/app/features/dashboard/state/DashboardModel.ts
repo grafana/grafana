@@ -171,7 +171,7 @@ export class DashboardModel {
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
     this.appEventsSubscription = appEvents.subscribe(VariableChanged, (event) => {
-      this.processRepeats(event.payload.panelIds);
+      this.processRepeats();
       this.startRefresh(event.payload.panelIds);
     });
   }
@@ -418,6 +418,11 @@ export class DashboardModel {
     getTimeSrv().resumeAutoRefresh();
   }
 
+  /*
+   * @deprecated used to be used internally by variables
+   * */
+  setChangeAffectsAllPanels() {}
+
   private ensureListExist(data: any) {
     if (!data) {
       data = {};
@@ -539,7 +544,7 @@ export class DashboardModel {
     this.events.publish(new DashboardPanelsChangedEvent());
   }
 
-  processRepeats(affectedPanelIds?: number[]) {
+  processRepeats() {
     if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
     }
@@ -551,17 +556,7 @@ export class DashboardModel {
     for (let i = 0; i < this.panels.length; i++) {
       const panel = this.panels[i];
       if (panel.repeat) {
-        if (!affectedPanelIds) {
-          this.repeatPanel(panel, i);
-          continue;
-        }
-
-        if (
-          affectedPanelIds.includes(panel.id) ||
-          (panel.repeatPanelId && affectedPanelIds.includes(panel.repeatPanelId))
-        ) {
-          this.repeatPanel(panel, i);
-        }
+        this.repeatPanel(panel, i);
       }
     }
 
