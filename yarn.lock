@@ -1687,8 +1687,8 @@ __metadata:
   linkType: hard
 
 "@babel/preset-modules@npm:^0.1.4":
-  version: 0.1.4
-  resolution: "@babel/preset-modules@npm:0.1.4"
+  version: 0.1.5
+  resolution: "@babel/preset-modules@npm:0.1.5"
   dependencies:
     "@babel/helper-plugin-utils": ^7.0.0
     "@babel/plugin-proposal-unicode-property-regex": ^7.4.4
@@ -1697,7 +1697,7 @@ __metadata:
     esutils: ^2.0.2
   peerDependencies:
     "@babel/core": ^7.0.0-0
-  checksum: 7c6500be06be9a341e377eb63292a4a22d0da2b4fb8c68714aff703ddb341cbd58e37d4119d64fc3e602f73801103af471fca2c60b4c1e48e08eea3e6b1afc93
+  checksum: 8430e0e9e9d520b53e22e8c4c6a5a080a12b63af6eabe559c2310b187bd62ae113f3da82ba33e9d1d0f3230930ca702843aae9dd226dec51f7d7114dc1f51c10
   languageName: node
   linkType: hard
 
@@ -2374,7 +2374,7 @@ __metadata:
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/marked": 1.1.0
-    "@types/node": 10.14.1
+    "@types/node": 14.17.27
     "@types/papaparse": 5.2.0
     "@types/react": 17.0.30
     "@types/rollup-plugin-visualizer": 4.2.1
@@ -2418,7 +2418,7 @@ __metadata:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@rollup/plugin-commonjs": 16.0.0
     "@rollup/plugin-node-resolve": 10.0.0
-    "@types/node": 13.7.7
+    "@types/node": 14.17.27
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
     commander: 5.0.0
@@ -2449,7 +2449,7 @@ __metadata:
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 16.0.0
     "@rollup/plugin-node-resolve": 10.0.0
-    "@types/node": 13.7.7
+    "@types/node": 14.17.27
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/uuid": 8.3.0
     babel-loader: 8.2.2
@@ -2603,7 +2603,7 @@ __metadata:
     "@types/inquirer": ^6.0.3
     "@types/jest": 26.0.15
     "@types/lodash": 4.14.149
-    "@types/node": ^12.0.4
+    "@types/node": ^14.0.0
     "@types/prettier": ^2.4.0
     "@types/react-dev-utils": ^9.0.4
     "@types/rimraf": ^3.0.0
@@ -2732,7 +2732,7 @@ __metadata:
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/mock-raf": 1.0.2
-    "@types/node": 10.14.1
+    "@types/node": 14.17.27
     "@types/papaparse": 5.2.0
     "@types/prismjs": 1.16.0
     "@types/react": 17.0.30
@@ -7500,12 +7500,12 @@ __metadata:
   linkType: hard
 
 "@types/eslint@npm:*, @types/eslint@npm:^7.2.14":
-  version: 7.28.1
-  resolution: "@types/eslint@npm:7.28.1"
+  version: 7.28.2
+  resolution: "@types/eslint@npm:7.28.2"
   dependencies:
     "@types/estree": "*"
     "@types/json-schema": "*"
-  checksum: 16086d00c2f56b16471fd02c2b495b07e3b84b57113fe34d94b57fb9fc0a5a85f6b87d787051f5d6acb859f6addda9b1e747d1a83ee08cac330d0f26c357fb9e
+  checksum: d177f3eec22971baeef8f244693687ee4c0357125f4a8fb7e614b83e36b98318a0b1a13b31230199d2a91af54122b67883faa7b4d2c29f0c83e2650f6b0d4d9c
   languageName: node
   linkType: hard
 
@@ -7964,16 +7964,9 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*, @types/node@npm:>=13.7.0":
-  version: 16.11.2
-  resolution: "@types/node@npm:16.11.2"
-  checksum: 1617b61160943121165ff89d72d3f7b4d55265a0129fd2ab6eb0ce81a3340ce9b3bd2ce8ec2d9f0f8b3702b434870596cd327ba472ba6e7d1faa5eedb8208e3a
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:10.14.1":
-  version: 10.14.1
-  resolution: "@types/node@npm:10.14.1"
-  checksum: be0881716c81f6355035fe64fa16d6830e3f27f1e657738c46dd5605d6c4248681ceb64f8df738bf3e2107df608c4a057668dd618fa32e5697be3959fa056c4c
+  version: 16.11.3
+  resolution: "@types/node@npm:16.11.3"
+  checksum: 65682d01d2c10b9658d9b3c160ae72f0b2d626d7d02459434b21a9476518dbab38c852586c160a7a10f7e4271266e11001dd9fa605b4c7a53d3c0c045eaf4a65
   languageName: node
   linkType: hard
 
@@ -7984,31 +7977,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:13.7.0":
-  version: 13.7.0
-  resolution: "@types/node@npm:13.7.0"
-  checksum: ccc4eb30fd225dfdbf15307704b4acdb34fe57b13ff0942b1122723fe27b218d8d30915d7ff61f63e58a8213304ec3bd58bbb9cb0bcf13e687e57f5b25af6ec6
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:13.7.7":
-  version: 13.7.7
-  resolution: "@types/node@npm:13.7.7"
-  checksum: 834f382e965ddf6eb8aed11a949e48254cdcd7b29fa41e226c1b3d54f820e0e09cebb78db7ad20e6c18d688b7337b4376c6e08b598f49ac985ec6b07c524931a
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^12.0.4":
-  version: 12.20.33
-  resolution: "@types/node@npm:12.20.33"
-  checksum: 2b7a6ce348760003d0564bda87a8360e534c7099da12513d17c06f82a336cd39be0b485cc1a6f0ddce9661135affe8dc3d2673d4f219d988c6f065aebfb30970
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^14.0.10, @types/node@npm:^14.14.31":
+"@types/node@npm:14.17.27":
   version: 14.17.27
   resolution: "@types/node@npm:14.17.27"
   checksum: 4f7eeaa329f4b2b9ff4bb0bb4582ad92e328a4e66f62d5b96ac4e3b51210ed092bb56726c30643beb860f6df633a29e08ed94adad2d573c85b4794d0bf0bbc06
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^14.0.0, @types/node@npm:^14.0.10, @types/node@npm:^14.14.31":
+  version: 14.17.28
+  resolution: "@types/node@npm:14.17.28"
+  checksum: 84af4d39adb08756205ab77773dac6d796fe04c129fe554510e94f9a60c3599047a43fe499778d51a56258a14aa8afd0e8545dc658bfcaf67362e2e2028fb2fd
   languageName: node
   linkType: hard
 
@@ -8349,11 +8328,11 @@ __metadata:
   linkType: hard
 
 "@types/react-transition-group@npm:*":
-  version: 4.4.3
-  resolution: "@types/react-transition-group@npm:4.4.3"
+  version: 4.4.4
+  resolution: "@types/react-transition-group@npm:4.4.4"
   dependencies:
     "@types/react": "*"
-  checksum: 7e45c6bf50cdfdc482d9ce4c302cda65134b3a44306c749d46d2f3256ca8c95cbbc1cbe28c32010b9273f5db78c8d434a8cea3688ac6e5327443b8a8d1c1caac
+  checksum: 86e9ff9731798e12bc2afe0304678918769633b531dcf6397f86af81718fb7930ef8648e894eeb3718fc6eab6eb885cfb9b82a44d1d74e10951ee11ebc4643ae
   languageName: node
   linkType: hard
 
@@ -11805,9 +11784,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30000981, caniuse-lite@npm:^1.0.30001109, caniuse-lite@npm:^1.0.30001125, caniuse-lite@npm:^1.0.30001230, caniuse-lite@npm:^1.0.30001265":
-  version: 1.0.30001270
-  resolution: "caniuse-lite@npm:1.0.30001270"
-  checksum: bee685ddf96f707f124c417f9bf7d84e4e57d5cfeaa3d0ccb79c50a09d7c74786fbe7ec89d733ccc1d0fddd593e9eb3fded5ae12b1ad5a3998a32eecbe0b191c
+  version: 1.0.30001271
+  resolution: "caniuse-lite@npm:1.0.30001271"
+  checksum: 0271e234e17c588fa203a34523f90c5a21ab62f41a2c3acabe96f0251593ac92f192cadd7a3dcbcf49bb28de4f57ca274d775c75700c3f38e9c42028d3becb0f
   languageName: node
   linkType: hard
 
@@ -12588,9 +12567,9 @@ __metadata:
   linkType: hard
 
 "commander@npm:^8.1.0":
-  version: 8.2.0
-  resolution: "commander@npm:8.2.0"
-  checksum: e868805bc266777f7a9c8a740e15b9e02b8148d8251f577ea9b9ef373ac0bdeb77b9b60cfc033592c9e1affea89993be08c13c623f0c619f9bf152c0e4d12cb0
+  version: 8.3.0
+  resolution: "commander@npm:8.3.0"
+  checksum: 0f82321821fc27b83bd409510bb9deeebcfa799ff0bf5d102128b500b7af22872c0c92cb6a0ebc5a4cf19c6b550fba9cedfa7329d18c6442a625f851377bacf0
   languageName: node
   linkType: hard
 
@@ -15227,9 +15206,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.3.564, electron-to-chromium@npm:^1.3.867":
-  version: 1.3.876
-  resolution: "electron-to-chromium@npm:1.3.876"
-  checksum: 22004fa6ea0bd3f963836a5b82c45d70983e69c406ac2c27a72162e35b4446d9f3cf37c2218c3167797743f7a0e4055280c930a39124aa56bb42d5ec9db29428
+  version: 1.3.877
+  resolution: "electron-to-chromium@npm:1.3.877"
+  checksum: 1642a7dc06fb6a9f1612c9b451d6b7daf7c0ef9a1caf8137c1359f9c855fdbcc58079ecd269edf8fd1db24c0c29a210317c03cf451f7507b3240f4208fb84f4b
   languageName: node
   linkType: hard
 
@@ -18102,7 +18081,7 @@ fsevents@^1.2.7:
     "@types/logfmt": ^1.2.1
     "@types/lru-cache": ^5.1.0
     "@types/mousetrap": 1.6.3
-    "@types/node": 13.7.0
+    "@types/node": 14.17.27
     "@types/ol": ^6.5.1
     "@types/papaparse": 5.2.0
     "@types/pluralize": ^0.0.29
