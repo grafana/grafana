@@ -44,10 +44,6 @@ import (
 //
 // Update folder.
 //
-// To change the unique identifier (uid), provide another one.
-// To overwrite an existing folder with newer version, set `overwrite` to `true`.
-// Provide the current version to safelly update the folder: if the provided version differs from the stored one the request will fail, unless `overwrite` is `true`.
-//
 // Responses:
 // 200: folderResponse
 // 400: badRequestError
@@ -121,6 +117,10 @@ type CreateFolderParam struct {
 
 // swagger:parameters updateFolder
 type UpdateFolderParam struct {
+	// To change the unique identifier (uid), provide another one.
+	// To overwrite an existing folder with newer version, set `overwrite` to `true`.
+	// Provide the current version to safelly update the folder: if the provided version differs from the stored one the request will fail, unless `overwrite` is `true`.
+	//
 	// in:body
 	// required:true
 	Body models.UpdateFolderCommand `json:"body"`
