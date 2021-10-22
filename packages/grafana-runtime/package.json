@@ -55,7 +55,7 @@
     "rollup-plugin-typescript2": "0.29.0",
     "rollup-plugin-visualizer": "4.2.0",
     "typescript": "4.4.3",
-    "webpack": "5.51.1"
+    "webpack": "5.58.1"
   },
   "types": "src/index.ts"
 }

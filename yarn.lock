@@ -2325,7 +2325,7 @@ __metadata:
     react-router-dom: ^5.2.0
     ts-loader: 8.0.11
     tslib: 2.3.1
-    webpack: 5.51.1
+    webpack: 5.58.1
   languageName: unknown
   linkType: soft
 
@@ -2531,7 +2531,7 @@ __metadata:
     systemjs-plugin-css: 0.1.37
     tslib: 2.3.1
     typescript: 4.4.3
-    webpack: 5.51.1
+    webpack: 5.58.1
   languageName: unknown
   linkType: soft
 
@@ -2826,7 +2826,7 @@ __metadata:
     typescript: 4.4.3
     uplot: 1.6.16
     uuid: 8.3.0
-    webpack: 5.51.1
+    webpack: 5.58.1
     webpack-filter-warnings-plugin: 1.2.1
   languageName: unknown
   linkType: soft
@@ -2904,7 +2904,7 @@ __metadata:
     "@grafana/ui": 8.3.0-pre
     "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
-    "@types/grafana__slate-react": "link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react"
+    "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
     "@types/lodash": ^4.14.123
     "@types/react": 17.0.30
@@ -2939,7 +2939,7 @@ __metadata:
     tslib: 2.3.1
     tween-functions: ^1.2.0
     typescript: 4.4.3
-    webpack: 5.51.1
+    webpack: 5.58.1
   languageName: unknown
   linkType: soft
 
@@ -7623,12 +7623,6 @@ __metadata:
   checksum: d076bb61f45d0fc42dee496ef8b1c2f8742e15d5e47e90e20d0243386e426c04d4efd408a48875ab432f7960b4ce3414db20ed0fbbfc7bcc89d84e574f6e045a
   languageName: node
   linkType: hard
-
-"@types/grafana__slate-react@link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react::locator=%40jaegertracing%2Fjaeger-ui-components%40workspace%3Apackages%2Fjaeger-ui-components":
-  version: 0.0.0-use.local
-  resolution: "@types/grafana__slate-react@link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react::locator=%40jaegertracing%2Fjaeger-ui-components%40workspace%3Apackages%2Fjaeger-ui-components"
-  languageName: node
-  linkType: soft
 
 "@types/grafana__slate-react@npm:@types/slate-react@0.22.5, @types/slate-react@npm:0.22.5":
   version: 0.22.5

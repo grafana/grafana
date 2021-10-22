@@ -18,7 +18,7 @@
     "@types/jest": "26.0.15",
     "@types/react": "17.0.30",
     "ts-loader": "8.0.11",
-    "webpack": "5.51.1"
+    "webpack": "5.58.1"
   },
   "dependencies": {
     "@grafana/data": "8.3.0-pre",
