@@ -11,7 +11,20 @@ import {
   CatalogPluginDetails,
   Version,
   PluginVersion,
+  RemotePluginJson,
 } from './types';
+
+const getGrafanaDependency = (json?: RemotePluginJson) => {
+  const dependencies = json?.dependencies;
+
+  // Prepend semver range when we fallback to grafanaVersion (deprecated in favour of grafanaDependency)
+  // otherwise plugins cannot be installed.
+  return dependencies?.grafanaDependency
+    ? dependencies?.grafanaDependency
+    : dependencies?.grafanaVersion
+    ? `>=${dependencies?.grafanaVersion}`
+    : '';
+};
 
 export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
   const { local, remote } = await getPlugin(id);
@@ -28,18 +41,10 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     getPluginVersions(id),
     getLocalPluginReadme(id),
   ]);
-  const dependencies = remote?.json?.dependencies;
-  // Prepend semver range when we fallback to grafanaVersion (deprecated in favour of grafanaDependency)
-  // otherwise plugins cannot be installed.
-  const grafanaDependency = dependencies?.grafanaDependency
-    ? dependencies?.grafanaDependency
-    : dependencies?.grafanaVersion
-    ? `>=${dependencies?.grafanaVersion}`
-    : '';
 
   return {
-    grafanaDependency,
-    pluginDependencies: dependencies?.plugins || [],
+    grafanaDependency: getGrafanaDependency(remote?.json),
+    pluginDependencies: remote?.json?.dependencies?.plugins || [],
     links: remote?.json?.info.links || local?.info.links || [],
     readme: localReadme || remote?.readme,
     versions,
@@ -94,7 +99,7 @@ async function getPluginVersions(id: string): Promise<Version[]> {
     return (versions.items || []).map((pluginVersion) => ({
       version: pluginVersion.version,
       createdAt: pluginVersion.createdAt,
-      grafanaDependency: pluginVersion.json?.dependencies?.grafanaDependency,
+      grafanaDependency: getGrafanaDependency(pluginVersion.json),
     }));
   } catch (error) {
     // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
