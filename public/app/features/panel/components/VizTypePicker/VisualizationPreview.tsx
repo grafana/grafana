@@ -5,6 +5,7 @@ import { css } from '@emotion/css';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 import { VizTypeChangeDetails } from './types';
 import { cloneDeep } from 'lodash';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   data: PanelData;
@@ -33,7 +34,7 @@ export function VisualizationPreview({ data, suggestion, onChange, width, showTi
   }
 
   return (
-    <div onClick={onClick}>
+    <div onClick={onClick} data-testid={selectors.components.VisualizationPreview.card(suggestion.name)}>
       {showTitle && <div className={styles.name}>{suggestion.name}</div>}
       <div className={styles.vizBox} style={outerStyles}>
         <Tooltip content={suggestion.name}>
