@@ -47,7 +47,6 @@ export default class BottomNavLinks extends PureComponent<Props, State> {
     }
 
     const sanitizedUrl = textUtil.sanitizeAngularInterpolation(link.url ?? '');
-    console.log({ sanitizedUrl });
     return (
       <div className="sidemenu-item dropdown dropup">
         <Link href={sanitizedUrl} className="sidemenu-link" target={link.target}>
