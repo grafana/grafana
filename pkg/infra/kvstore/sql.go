@@ -99,7 +99,7 @@ func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, ke
 func (kv *kvStoreSQL) Keys(ctx context.Context, orgId int64, namespace string, keyPrefix string) ([]Key, error) {
 	var keys []Key
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		query := dbSession.Where("namespace = ?", namespace).And("key LIKE ?", keyPrefix+"%")
+		query := dbSession.Where("namespace = ?", namespace).And("\"key\" LIKE ?", keyPrefix+"%")
 		if orgId != AllOrganizations {
 			query.And("org_id = ?", orgId)
 		}

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -31,7 +30,7 @@ var (
 
 // OpsgenieNotifier is responsible for sending alert notifications to Opsgenie.
 type OpsgenieNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	APIKey           string
 	APIUrl           string
 	AutoClose        bool
@@ -62,7 +61,7 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template,
 	}
 
 	return &OpsgenieNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
