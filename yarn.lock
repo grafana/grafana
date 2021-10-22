@@ -2272,24 +2272,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/icu-messageformat-parser@npm:2.0.13":
-  version: 2.0.13
-  resolution: "@formatjs/icu-messageformat-parser@npm:2.0.13"
+"@formatjs/icu-messageformat-parser@npm:2.0.14":
+  version: 2.0.14
+  resolution: "@formatjs/icu-messageformat-parser@npm:2.0.14"
   dependencies:
     "@formatjs/ecma402-abstract": 1.10.0
-    "@formatjs/icu-skeleton-parser": 1.3.0
+    "@formatjs/icu-skeleton-parser": 1.3.1
     tslib: ^2.1.0
-  checksum: 572cdde48872f0ffb833fc78658824abf510d5f9b67f76a78dafcfc8c166415d570abe703994f698b18b85c12eb247cf8011f33ec76e315656f3f9b4c00432f3
+  checksum: efbf72704cf462bf832b1f309daee0b16cc7ea5fe533a2f7ff470f4ba863b5958bef9f4fa222de6ecd18c00c2997dde12d5d36f2e9faaffca42a4c1e96da074e
   languageName: node
   linkType: hard
 
-"@formatjs/icu-skeleton-parser@npm:1.3.0":
-  version: 1.3.0
-  resolution: "@formatjs/icu-skeleton-parser@npm:1.3.0"
+"@formatjs/icu-skeleton-parser@npm:1.3.1":
+  version: 1.3.1
+  resolution: "@formatjs/icu-skeleton-parser@npm:1.3.1"
   dependencies:
     "@formatjs/ecma402-abstract": 1.10.0
     tslib: ^2.1.0
-  checksum: 3b2e9cf444ee2a3d6b50b4dd80714d2336dabbe05628338a936536a9bf67d4dde1d95eab478a3e71b4f4c85592780c3a8590c7eecc4ec9bc3f83650198dc647f
+  checksum: 03aae4b10c824fc675e68bac9bbb3a9cb73f35af242e17dcee120e1b85061e7d421ca1f468dce7fe9e7d0efbcfff718469e662de97b24ae37182ac3c11ed6b10
   languageName: node
   linkType: hard
 
@@ -2370,7 +2370,7 @@ __metadata:
     "@testing-library/user-event": 13.3.0
     "@types/braintree__sanitize-url": 4.1.0
     "@types/d3-interpolate": ^1.3.1
-    "@types/jest": 26.0.15
+    "@types/jest": 27.0.2
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/marked": 1.1.0
@@ -2511,7 +2511,7 @@ __metadata:
     "@sentry/browser": 5.25.0
     "@types/angular": 1.6.56
     "@types/history": ^4.7.8
-    "@types/jest": 26.0.15
+    "@types/jest": 27.0.2
     "@types/lodash": 4.14.149
     "@types/react": 16.9.9
     "@types/rollup-plugin-visualizer": 4.2.1
@@ -2601,7 +2601,7 @@ __metadata:
     "@types/expect-puppeteer": 3.3.1
     "@types/fs-extra": ^9.0.13
     "@types/inquirer": ^6.0.3
-    "@types/jest": 26.0.15
+    "@types/jest": 27.0.2
     "@types/lodash": 4.14.149
     "@types/node": ^14.0.0
     "@types/prettier": ^2.4.0
@@ -2728,7 +2728,7 @@ __metadata:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.1
-    "@types/jest": 26.0.15
+    "@types/jest": 27.0.2
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/mock-raf": 1.0.2
@@ -7765,7 +7765,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:*":
+"@types/jest@npm:*, @types/jest@npm:27.0.2":
   version: 27.0.2
   resolution: "@types/jest@npm:27.0.2"
   dependencies:
@@ -18068,7 +18068,7 @@ fsevents@^1.2.7:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/history": ^4.7.8
     "@types/hoist-non-react-statics": 3.3.1
-    "@types/jest": 26.0.15
+    "@types/jest": 27.0.2
     "@types/jquery": 3.3.38
     "@types/jsurl": ^1.2.28
     "@types/lodash": 4.14.149
@@ -19577,13 +19577,13 @@ fsevents@^1.2.7:
   linkType: hard
 
 "intl-messageformat@npm:^9.6.12":
-  version: 9.9.3
-  resolution: "intl-messageformat@npm:9.9.3"
+  version: 9.9.4
+  resolution: "intl-messageformat@npm:9.9.4"
   dependencies:
     "@formatjs/fast-memoize": 1.2.0
-    "@formatjs/icu-messageformat-parser": 2.0.13
+    "@formatjs/icu-messageformat-parser": 2.0.14
     tslib: ^2.1.0
-  checksum: 78eb2a1e6531669bcd860478eebb4a6541edcb475053b3d0436f5862ac1957d0b2a0d40cace7a37e6f5c7ccead0ecc1ac44dde3d38037aa7c046f3c22c1e922b
+  checksum: a54fcd0138ed5c4e33fcd6b447a9c34622c4c3f7b18f0282e133c26bb638fdfbbd2a31211cd85e9df3a88c335392db8a185e6b6d82ad11fb7ae8a418d79d782a
   languageName: node
   linkType: hard
 
@@ -33231,9 +33231,9 @@ typescript@~4.4.2:
   linkType: hard
 
 "ua-parser-js@npm:^0.7.18":
-  version: 0.7.28
-  resolution: "ua-parser-js@npm:0.7.28"
-  checksum: a7da4ad54527211e878ee016c2ef64efad5c2f5a31277d36c9da93b4c89ecaa64f391ad4cf158ada76a9ad8e53004a950705ff1c2f27a52ca8bfb3f1381c39ff
+  version: 0.7.30
+  resolution: "ua-parser-js@npm:0.7.30"
+  checksum: 19aad6e1b9e93cf3c57e139858811c2c94031ed769f1ac36dc3cda1e1e5d2c73c2e02ddf4f9e0ea140069f803315484f955488961172a6a01e9322b6c042ae98
   languageName: node
   linkType: hard
 

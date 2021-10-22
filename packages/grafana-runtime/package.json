@@ -41,7 +41,7 @@
     "@rollup/plugin-node-resolve": "10.0.0",
     "@types/angular": "1.6.56",
     "@types/history": "^4.7.8",
-    "@types/jest": "26.0.15",
+    "@types/jest": "27.0.2",
     "@types/lodash": "4.14.149",
     "@types/react": "16.9.9",
     "@types/rollup-plugin-visualizer": "4.2.1",

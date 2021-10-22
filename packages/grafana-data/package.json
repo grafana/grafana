@@ -48,7 +48,7 @@
     "@testing-library/react-hooks": "^3.2.1",
     "@testing-library/user-event": "13.3.0",
     "@types/braintree__sanitize-url": "4.1.0",
-    "@types/jest": "26.0.15",
+    "@types/jest": "27.0.2",
     "@types/jquery": "3.3.38",
     "@types/lodash": "4.14.123",
     "@types/marked": "1.1.0",

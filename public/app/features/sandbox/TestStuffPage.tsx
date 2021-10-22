@@ -1,4 +1,3 @@
-import { LegendDisplayMode } from '@grafana/schema';
 import {
   ApplyFieldOverrideOptions,
   DataTransformerConfig,
@@ -7,7 +6,7 @@ import {
   NavModelItem,
   PanelData,
 } from '@grafana/data';
-import { Table, TimeSeries } from '@grafana/ui';
+import { Table } from '@grafana/ui';
 import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
@@ -16,6 +15,7 @@ import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 import { QueryGroupOptions } from 'app/types';
 import Page from '../../core/components/Page/Page';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { PanelRenderer } from '../panel/components/PanelRenderer';
 
 interface State {
   queryRunner: PanelQueryRunner;
@@ -66,12 +66,14 @@ export const TestStuffPage: FC = () => {
             {({ width }) => {
               return (
                 <div>
-                  <TimeSeries
+                  <PanelRenderer
+                    title="Hello"
+                    pluginId="timeseries"
                     width={width}
                     height={300}
-                    frames={data.series}
-                    legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
-                    timeRange={data.timeRange}
+                    data={data}
+                    options={{}}
+                    fieldConfig={{ defaults: {}, overrides: [] }}
                     timeZone="browser"
                   />
                   <Table data={data.series[0]} width={width} height={300} />

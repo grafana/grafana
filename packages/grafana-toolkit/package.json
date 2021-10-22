@@ -39,7 +39,7 @@
     "@types/expect-puppeteer": "3.3.1",
     "@types/fs-extra": "^9.0.13",
     "@types/inquirer": "^6.0.3",
-    "@types/jest": "26.0.15",
+    "@types/jest": "27.0.2",
     "@types/lodash": "4.14.149",
     "@types/node": "^14.0.0",
     "@types/prettier": "^2.4.0",
