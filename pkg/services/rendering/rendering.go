@@ -22,11 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	pluginRendererLog = log.New("renderer.plugin")
-	httpRendererLog   = log.New("renderer.http")
-)
-
 func init() {
 	remotecache.Register(&RenderUser{})
 }
@@ -217,28 +212,6 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	}()
 
 	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
-
-	if rs.remoteAvailable() {
-		rs.log = httpRendererLog
-
-		version, err := rs.getRemotePluginVersion()
-		if err != nil {
-			rs.log.Info("Couldn't get remote renderer version", "err", err)
-		}
-
-		rs.log.Info("Backend rendering via external http server", "version", version)
-		rs.version = version
-		rs.renderAction = rs.renderViaHTTP
-		rs.renderCSVAction = rs.renderCSVViaHTTP
-	}
-
-	if rs.pluginAvailable() {
-		rs.log = pluginRendererLog
-
-		rs.version = rs.RendererPluginManager.Renderer().Info.Version
-		rs.renderAction = rs.renderViaPlugin
-		rs.renderCSVAction = rs.renderCSVViaPlugin
-	}
 
 	return rs.renderAction(ctx, renderKey, opts)
 }
