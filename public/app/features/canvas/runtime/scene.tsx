@@ -46,11 +46,11 @@ export class Scene {
   selecto?: Selecto;
   div?: HTMLDivElement;
 
-  constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
-    this.root = this.load(cfg);
+  constructor(cfg: CanvasGroupOptions, enableEditing: boolean, public onSave: (cfg: CanvasGroupOptions) => void) {
+    this.root = this.load(cfg, enableEditing);
   }
 
-  load(cfg: CanvasGroupOptions) {
+  load(cfg: CanvasGroupOptions, enableEditing: boolean) {
     this.root = new RootElement(
       cfg ?? {
         type: 'group',
@@ -66,7 +66,7 @@ export class Scene {
     });
 
     setTimeout(() => {
-      if (this.div) {
+      if (this.div && enableEditing) {
         this.initMoveable();
       }
     }, 100);
@@ -158,10 +158,6 @@ export class Scene {
   };
 
   initMoveable = () => {
-    if (this.selecto) {
-      this.selecto.destroy();
-    }
-
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);

@@ -2383,10 +2383,10 @@ __metadata:
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/marked": 1.1.0
-    "@types/node": 10.14.1
+    "@types/node": 14.17.27
     "@types/papaparse": 5.2.0
     "@types/react": 17.0.30
-    "@types/rollup-plugin-visualizer": 2.6.0
+    "@types/rollup-plugin-visualizer": 4.2.1
     "@types/sinon": ^10.0.4
     date-fns: 2.21.3
     eventemitter3: 4.0.7
@@ -2413,8 +2413,8 @@ __metadata:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@rollup/plugin-commonjs": 16.0.0
     "@rollup/plugin-node-resolve": 10.0.0
-    "@types/node": 13.7.7
-    "@types/rollup-plugin-visualizer": 2.6.0
+    "@types/node": 14.17.27
+    "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
     commander: 5.0.0
     execa: 5.1.1
@@ -2440,8 +2440,8 @@ __metadata:
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 16.0.0
     "@rollup/plugin-node-resolve": 10.0.0
-    "@types/node": 13.7.7
-    "@types/rollup-plugin-visualizer": 2.6.0
+    "@types/node": 14.17.27
+    "@types/rollup-plugin-visualizer": 4.2.1
     blink-diff: 1.0.13
     commander: 5.0.0
     cypress: 8.4.1
@@ -2495,7 +2495,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 10.0.0
     "@types/history": ^4.7.8
     "@types/jest": 26.0.15
-    "@types/rollup-plugin-visualizer": 2.6.0
+    "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
     history: 4.10.1
     lodash: 4.17.21
@@ -2519,7 +2519,7 @@ __metadata:
     "@rollup/plugin-commonjs": 16.0.0
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 10.0.0
-    "@types/rollup-plugin-visualizer": 2.6.0
+    "@types/rollup-plugin-visualizer": 4.2.1
     rollup: 2.33.3
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
@@ -2573,7 +2573,7 @@ __metadata:
     "@types/fs-extra": ^9.0.13
     "@types/inquirer": ^6.0.3
     "@types/jest": 26.0.15
-    "@types/node": ^12.0.4
+    "@types/node": ^14.0.0
     "@types/prettier": ^2.4.0
     "@types/react-dev-utils": ^9.0.4
     "@types/rimraf": ^3.0.0
@@ -2684,7 +2684,7 @@ __metadata:
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/mock-raf": 1.0.2
-    "@types/node": 10.14.1
+    "@types/node": 14.17.27
     "@types/papaparse": 5.2.0
     "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
@@ -2695,7 +2695,7 @@ __metadata:
     "@types/react-table": 7.7.2
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.0
-    "@types/rollup-plugin-visualizer": 2.6.0
+    "@types/rollup-plugin-visualizer": 4.2.1
     "@types/slate": 0.47.2
     "@types/slate-react": 0.22.5
     "@types/tinycolor2": 1.4.1
@@ -6670,16 +6670,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/react-hooks@npm:^3.2.1":
-  version: 3.7.0
-  resolution: "@testing-library/react-hooks@npm:3.7.0"
+"@testing-library/react-hooks@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@testing-library/react-hooks@npm:7.0.2"
   dependencies:
     "@babel/runtime": ^7.12.5
-    "@types/testing-library__react-hooks": ^3.4.0
+    "@types/react": ">=16.9.0"
+    "@types/react-dom": ">=16.9.0"
+    "@types/react-test-renderer": ">=16.9.0"
+    react-error-boundary: ^3.1.0
   peerDependencies:
     react: ">=16.9.0"
+    react-dom: ">=16.9.0"
     react-test-renderer: ">=16.9.0"
-  checksum: 7ada35cb4114056908990250033527ffd554d055eced797083aca752fb9789b3bc70291077f1d57b8cf64ab5eb7b3827f9de3bcaa38655f2b975c65a33a418d6
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+    react-test-renderer:
+      optional: true
+  checksum: 27c6169b5c9832bd02dcea232e6a0a3cd8d4504e13ecb49d57eb5ab6bea5e2f1bff65f3102068b7e57eec3cbd671326dc0b277335014b0edfbdedf11a1fe6db5
   languageName: node
   linkType: hard
 
@@ -7758,13 +7767,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:10.14.1":
-  version: 10.14.1
-  resolution: "@types/node@npm:10.14.1"
-  checksum: be0881716c81f6355035fe64fa16d6830e3f27f1e657738c46dd5605d6c4248681ceb64f8df738bf3e2107df608c4a057668dd618fa32e5697be3959fa056c4c
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:12.20.24":
   version: 12.20.24
   resolution: "@types/node@npm:12.20.24"
@@ -7772,24 +7774,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:13.7.0":
-  version: 13.7.0
-  resolution: "@types/node@npm:13.7.0"
-  checksum: ccc4eb30fd225dfdbf15307704b4acdb34fe57b13ff0942b1122723fe27b218d8d30915d7ff61f63e58a8213304ec3bd58bbb9cb0bcf13e687e57f5b25af6ec6
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:13.7.7":
-  version: 13.7.7
-  resolution: "@types/node@npm:13.7.7"
-  checksum: 834f382e965ddf6eb8aed11a949e48254cdcd7b29fa41e226c1b3d54f820e0e09cebb78db7ad20e6c18d688b7337b4376c6e08b598f49ac985ec6b07c524931a
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^12.0.4":
-  version: 12.20.28
-  resolution: "@types/node@npm:12.20.28"
-  checksum: 09811db5eabb02062cc04ab887cf20dcae87e904ccbe4d1767ebd8c88ab31eeea9c62f6c94b16f52230a4e2f1ab0d8a411e3b3cb744c7d0e6fbc4fa5f0f25ba8
+"@types/node@npm:14.17.27, @types/node@npm:^14.0.0":
+  version: 14.17.27
+  resolution: "@types/node@npm:14.17.27"
+  checksum: 4f7eeaa329f4b2b9ff4bb0bb4582ad92e328a4e66f62d5b96ac4e3b51210ed092bb56726c30643beb860f6df633a29e08ed94adad2d573c85b4794d0bf0bbc06
   languageName: node
   linkType: hard
 
@@ -7978,7 +7966,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:*":
+"@types/react-dom@npm:*, @types/react-dom@npm:>=16.9.0":
   version: 17.0.9
   resolution: "@types/react-dom@npm:17.0.9"
   dependencies:
@@ -7987,12 +7975,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:16.9.9":
-  version: 16.9.9
-  resolution: "@types/react-dom@npm:16.9.9"
+"@types/react-dom@npm:17.0.10":
+  version: 17.0.10
+  resolution: "@types/react-dom@npm:17.0.10"
   dependencies:
     "@types/react": "*"
-  checksum: b42a788b6a40a79a738346044c21e6c536f136e9b919fce90847aaaba7298e0b7d4d6845a1449d92a5678c5c221f060d66207a7f4968f7f5991e2511aa8e6860
+  checksum: cc7d8d5b77ee2f3b989c107abd8ec0f2460ba1b1ee6e6d637124e1939594b5619fa4166ef0ea7632a69b68358e0b71aa618de446ccc416dcc0017175549da601
   languageName: node
   linkType: hard
 
@@ -8118,7 +8106,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-test-renderer@npm:*, @types/react-test-renderer@npm:17.0.1":
+"@types/react-test-renderer@npm:*, @types/react-test-renderer@npm:17.0.1, @types/react-test-renderer@npm:>=16.9.0":
   version: 17.0.1
   resolution: "@types/react-test-renderer@npm:17.0.1"
   dependencies:
@@ -8174,7 +8162,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:17.0.30":
+"@types/react@npm:17.0.30, @types/react@npm:>=16.9.0":
   version: 17.0.30
   resolution: "@types/react@npm:17.0.30"
   dependencies:
@@ -8254,13 +8242,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/rollup-plugin-visualizer@npm:2.6.0":
-  version: 2.6.0
-  resolution: "@types/rollup-plugin-visualizer@npm:2.6.0"
+"@types/rollup-plugin-visualizer@npm:4.2.1":
+  version: 4.2.1
+  resolution: "@types/rollup-plugin-visualizer@npm:4.2.1"
   dependencies:
     "@types/node": "*"
-    rollup: ^0.63.4
-  checksum: fe3ca881789eee105313c505d76c61e2c401f561d0e23d4f4694114b6411ee51989946896a9bdba92b3dcf5d0a91482929c2996d9a5a568e5f23d915955d2a4d
+    rollup: ^2.42.3
+  checksum: 4600ba39e863ab6c14739a9de1fe008d204e9e814e9f8afa09e262d34cc5bd67d346eaf31ce274ff867ce700a049125b05a59b8113a46fa82bfdebec0c146ba5
   languageName: node
   linkType: hard
 
@@ -8410,7 +8398,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/testing-library__react-hooks@npm:^3.2.0, @types/testing-library__react-hooks@npm:^3.4.0":
+"@types/testing-library__react-hooks@npm:^3.2.0":
   version: 3.4.1
   resolution: "@types/testing-library__react-hooks@npm:3.4.1"
   dependencies:
@@ -17641,7 +17629,7 @@ fsevents@~2.1.2:
     "@sentry/utils": 6.13.2
     "@testing-library/jest-dom": 5.11.5
     "@testing-library/react": 12.1.2
-    "@testing-library/react-hooks": ^3.2.1
+    "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.3.0
     "@types/angular": 1.6.56
     "@types/angular-route": 1.7.0
@@ -17664,7 +17652,7 @@ fsevents@~2.1.2:
     "@types/logfmt": ^1.2.1
     "@types/lru-cache": ^5.1.0
     "@types/mousetrap": 1.6.3
-    "@types/node": 13.7.0
+    "@types/node": 14.17.27
     "@types/ol": ^6.5.1
     "@types/papaparse": 5.2.0
     "@types/pluralize": ^0.0.29
@@ -17672,7 +17660,7 @@ fsevents@~2.1.2:
     "@types/rc-time-picker": ^3
     "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
-    "@types/react-dom": 16.9.9
+    "@types/react-dom": 17.0.10
     "@types/react-grid-layout": 1.1.1
     "@types/react-highlight-words": ^0.16.2
     "@types/react-loadable": 5.5.2
@@ -27669,6 +27657,17 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
+"react-error-boundary@npm:^3.1.0":
+  version: 3.1.3
+  resolution: "react-error-boundary@npm:3.1.3"
+  dependencies:
+    "@babel/runtime": ^7.12.5
+  peerDependencies:
+    react: ">=16.13.1"
+  checksum: 0a05af404aa054c54d7bc65a1814810093bf136c3ad4b3576a51d8509ee8fc302adfb66405da501fc01e839db557dd0d994b487e651897e36293907bb61458cf
+  languageName: node
+  linkType: hard
+
 "react-error-overlay@npm:^6.0.9":
   version: 6.0.9
   resolution: "react-error-overlay@npm:6.0.9"
@@ -29347,15 +29346,17 @@ resolve@~1.19.0:
   languageName: node
   linkType: hard
 
-"rollup@npm:^0.63.4":
-  version: 0.63.5
-  resolution: "rollup@npm:0.63.5"
+"rollup@npm:^2.42.3":
+  version: 2.58.0
+  resolution: "rollup@npm:2.58.0"
   dependencies:
-    "@types/estree": 0.0.39
-    "@types/node": "*"
+    fsevents: ~2.3.2
+  dependenciesMeta:
+    fsevents:
+      optional: true
   bin:
-    rollup: ./bin/rollup
-  checksum: a8af189d03e402b1ea70788c4c8bffc3af7db612e8c1effbea63f411b1d683378b9e8d10c9b2fae81aaf6f12c8a0aad6802ab7e1a7dee006229398b03e92e5e5
+    rollup: dist/bin/rollup
+  checksum: a5e5642f2b1e239e3698eeee93b19d905e55e3012c63978cebc71e76c0a4eb2de5cff06a2a80d68bf87fe6869c57647cccc335daba280a5449a9214abdeca247
   languageName: node
   linkType: hard
 

@@ -33,9 +33,14 @@ To add a silence:
 Alert instances that have labels that match all of the "Matching Labels" specified in the silence will have their notifications suppressed.
 
 - The **Label** field is the name of the label to match. It must exactly match the label name.
-- The **Value** field matches against the corresponding value for the specified **Label** name. How it matches depends on the **Regex** and **Equal** checkboxes.
-- The **Regex** checkbox specifies if the inputted **Value** should be matched against labels as a regular expression. The regular expression is always anchored. If not selected it is an exact string match.
-- The **Equal** checkbox specifies if the match should include alert instances that match or do not match. If not checked, the silence includes alert instances _do not_ match.
+- The **Operator** field is the operator to match against the label value. The available operators are:
+
+  - `=`: Select labels that are exactly equal to the provided string.
+  - `!=`: Select labels that are not equal to the provided string.
+  - `=~`: Select labels that regex-match the provided string.
+  - `!~`: Select labels that do not regex-match the provided string.
+
+- The **Value** field matches against the corresponding value for the specified **Label** name. How it matches depends on the **Operator** value.
 
 ## Viewing and editing silences
 
@@ -52,6 +57,6 @@ Grafana alerting UI supports managing external Alertmanager silences. Once you a
 
 When linking to a silence form, provide the default matching labels and comment via `matchers` and `comment` query parameters. The `matchers` parameter requires one more matching labels of the type `[label][operator][value]` joined by a comma while the `operator` parameter can be one of the following: `=` (equals, not regex), `!=` (not equals, not regex), `=~` (equals, regex), `!~` (not equals, regex).
 
-For example, to link to silence form with matching labels `severity=critical` & `cluster!~europe-.*` and comment `Silence critical EU alerts`, create a URL `https://mygrafana/aleting/silence/new?matchers=severity%3Dcritical%2Ccluster!~europe-*&comment=Silence%20critical%20EU%20alert`.
+For example, to link to silence form with matching labels `severity=critical` & `cluster!~europe-.*` and comment `Silence critical EU alerts`, create a URL `https://mygrafana/alerting/silence/new?matchers=severity%3Dcritical%2Ccluster!~europe-*&comment=Silence%20critical%20EU%20alert`.
 
 To link to a new silence page for an [external Alertmanager]({{< relref "../../datasources/alertmanager.md" >}}), add a `alertmanager` query parameter with the Alertmanager data source name.

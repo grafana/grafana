@@ -73,7 +73,7 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'id', values: new ArrayVector(['db', 'app', 'lb']) },
       { name: 'title', values: new ArrayVector(['db', 'app', 'lb']) },
       { name: 'mainStat', values: new ArrayVector([1000, 2000, NaN]) },
-      { name: 'secondaryStat', values: new ArrayVector([10, 20, NaN]) },
+      { name: 'secondaryStat', values: new ArrayVector([0.17, 0.33, NaN]) },
     ]);
     expect(edges.fields).toMatchObject([
       { name: 'id', values: new ArrayVector(['app_db', 'lb_app']) },
