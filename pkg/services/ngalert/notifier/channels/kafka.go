@@ -13,13 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
 // KafkaNotifier is responsible for sending
 // alert notifications to Kafka.
 type KafkaNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	Endpoint string
 	Topic    string
 	log      log.Logger
@@ -38,7 +37,7 @@ func NewKafkaNotifier(model *NotificationChannelConfig, t *template.Template) (*
 	}
 
 	return &KafkaNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
