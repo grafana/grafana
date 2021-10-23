@@ -79,7 +79,7 @@ export class QueryRunner implements QueryRunnerSrv {
           // Attach the datasource name to each query
           request.targets = request.targets.map((query) => {
             if (!query.datasource) {
-              query.datasource = { uid: ds.name };
+              query.datasource = ds.getRef();
             }
             return query;
           });
