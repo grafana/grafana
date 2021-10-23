@@ -2,7 +2,7 @@ import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 
 export class DashListSuggestionsSupplier {
-  getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary } = builder;
 
     if (dataSummary.hasData) {

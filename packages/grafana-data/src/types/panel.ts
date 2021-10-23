@@ -301,11 +301,7 @@ export type VisualizationSuggestionsSupplier = {
   /**
    * Adds good suitable suggestions for the current data
    */
-  getSuggestions: (builder: VisualizationSuggestionsBuilder) => void;
-  /**
-   * When the user wants to explore more options for a specific panel
-   */
-  getOptionSuggestions?: (builder: VisualizationSuggestionsBuilder) => void;
+  getSuggestionsForData: (builder: VisualizationSuggestionsBuilder) => void;
 };
 
 /**

@@ -3,7 +3,7 @@ import { SuggestionName } from 'app/types/suggestions';
 import { GaugeOptions } from './types';
 
 export class GaugeSuggestionsSupplier {
-  getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary } = builder;
 
     if (!dataSummary.hasData || !dataSummary.hasNumberField) {

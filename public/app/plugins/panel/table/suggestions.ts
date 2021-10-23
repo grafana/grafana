@@ -3,7 +3,7 @@ import { SuggestionName } from 'app/types/suggestions';
 import { PanelOptions, PanelFieldConfig } from './models.gen';
 
 export class TableSuggestionsSupplier {
-  getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<PanelOptions, PanelFieldConfig>({
       name: '',
       pluginId: 'table',

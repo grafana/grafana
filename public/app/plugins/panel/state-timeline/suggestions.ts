@@ -3,7 +3,7 @@ import { SuggestionName } from 'app/types/suggestions';
 import { TimelineFieldConfig, TimelineOptions } from './types';
 
 export class StatTimelineSuggestionsSupplier {
-  getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary } = builder;
 
     if (!dataSummary.hasData) {

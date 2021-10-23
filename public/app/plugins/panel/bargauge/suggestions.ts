@@ -4,7 +4,7 @@ import { SuggestionName } from 'app/types/suggestions';
 import { BarGaugeOptions } from './types';
 
 export class BarGaugeSuggestionsSupplier {
-  getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary } = builder;
 
     if (!dataSummary.hasData || !dataSummary.hasNumberField) {

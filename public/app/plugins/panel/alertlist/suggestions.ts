@@ -2,7 +2,7 @@ import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { AlertListOptions } from './types';
 
 export class AlertListSuggestionsSupplier {
-  getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary } = builder;
 
     if (dataSummary.hasData) {

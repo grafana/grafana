@@ -4,7 +4,7 @@ import { SuggestionName } from 'app/types/suggestions';
 import { StatPanelOptions } from './types';
 
 export class StatSuggestionsSupplier {
-  getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary } = builder;
 
     if (!dataSummary.hasData) {

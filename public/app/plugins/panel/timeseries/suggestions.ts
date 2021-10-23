@@ -11,7 +11,7 @@ import { SuggestionName } from 'app/types/suggestions';
 import { TimeSeriesOptions } from './types';
 
 export class TimeSeriesSuggestionsSupplier {
-  getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary } = builder;
 
     if (!dataSummary.hasTimeField || !dataSummary.hasNumberField || dataSummary.rowCountTotal < 2) {

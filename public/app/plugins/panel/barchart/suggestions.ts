@@ -28,7 +28,7 @@ export class BarChartSuggestionsSupplier {
     });
   }
 
-  getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const list = this.getListWithDefaults(builder);
     const { dataSummary } = builder;
 

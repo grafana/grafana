@@ -4,7 +4,7 @@ import { SuggestionName } from 'app/types/suggestions';
 import { PieChartLabels, PieChartOptions, PieChartType } from './types';
 
 export class PieChartSuggestionsSupplier {
-  getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<PieChartOptions, {}>({
       name: SuggestionName.PieChart,
       pluginId: 'piechart',
