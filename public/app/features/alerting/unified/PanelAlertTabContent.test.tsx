@@ -199,6 +199,7 @@ describe('PanelAlertTabContent', () => {
       expr: 'sum(some_metric [5m])) by (app)',
       refId: 'A',
       datasource: {
+        type: 'prometheus',
         uid: 'mock-ds-2',
       },
       interval: '',
@@ -247,6 +248,7 @@ describe('PanelAlertTabContent', () => {
       expr: 'sum(some_metric [7m])) by (app)',
       refId: 'A',
       datasource: {
+        type: 'prometheus',
         uid: 'mock-ds-2',
       },
       interval: '',
@@ -285,6 +287,7 @@ describe('PanelAlertTabContent', () => {
             expr: 'sum(some_metric [15s])) by (app)',
             refId: 'A',
             datasource: {
+              type: 'prometheus',
               uid: 'mock-ds-2',
             },
             interval: '',

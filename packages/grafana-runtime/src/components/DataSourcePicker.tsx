@@ -3,11 +3,16 @@ import React, { PureComponent } from 'react';
 
 // Components
 import { HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@grafana/ui';
-import { DataSourceInstanceSettings, DataSourceRef, isUnsignedPluginSignature, SelectableValue } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  DataSourceRef,
+  getDataSourceUid,
+  isUnsignedPluginSignature,
+  SelectableValue,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 import { css, cx } from '@emotion/css';
-import { isString } from 'lodash';
 
 /**
  * Component props description for the {@link DataSourcePicker}
