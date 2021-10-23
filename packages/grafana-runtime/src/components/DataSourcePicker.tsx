@@ -180,20 +180,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 }
 
-function isDataSourceRef(ref: DataSourceRef | string | null): ref is DataSourceRef {
-  return typeof ref === 'object' && (typeof ref?.uid === 'string' || typeof ref?.uid === 'undefined');
-}
-
-function getDataSourceUid(ref: DataSourceRef | string | null): string | undefined {
-  if (isDataSourceRef(ref)) {
-    return ref.uid;
-  }
-  if (isString(ref)) {
-    return ref;
-  }
-  return undefined;
-}
-
 const getStyles = stylesFactory(() => ({
   select: cx(
     css({

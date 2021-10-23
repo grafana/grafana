@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, DataSourceRef, getDataSourceRef } from '@grafana/data';
 
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
@@ -27,7 +27,7 @@ export function updateQueries(
   extensionID: string, // pass this in because importing it creates a circular dependency
   dsSettings?: DataSourceInstanceSettings
 ): DataQuery[] {
-  const datasource: DataSourceRef = { uid: newSettings.uid, type: newSettings.type };
+  const datasource = getDataSourceRef(newSettings);
 
   if (!newSettings.meta.mixed && dsSettings?.meta.mixed) {
     return queries.map((q) => {
