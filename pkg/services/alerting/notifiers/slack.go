@@ -382,18 +382,22 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		// Slack responds to some requests with a JSON document, that might contain an error
 		rslt := struct {
 			Ok  bool   `json:"ok"`
 			Err string `json:"error"`
 		}{}
-		if err := json.Unmarshal(body, &rslt); err == nil {
-			if !rslt.Ok && rslt.Err != "" {
-				sn.log.Warn("Sending Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status,
-					"err", rslt.Err)
-				return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
-			}
+		if err := json.Unmarshal(body, &rslt); err != nil {
+			sn.log.Warn("Failed to unmarshal Slack API response", "url", sn.url.String(), "statusCode", resp.Status,
+				"err", err)
+			return fmt.Errorf("failed to unmarshal Slack API response with status code %d: %s", resp.StatusCode, err)
+		}
+
+		if !rslt.Ok && rslt.Err != "" {
+			sn.log.Warn("Sending Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status,
+				"err", rslt.Err)
+			return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 		}
 
 		sn.log.Debug("Sending Slack API request succeeded", "url", sn.url.String(), "statusCode", resp.Status)

@@ -1,7 +1,6 @@
 package pluginproxy
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -13,104 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/jwt"
 )
 
 var (
 	token map[string]interface{}
 )
-
-func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
-	pluginRoute := &plugins.AppPluginRoute{
-		Path:   "pathwithjwttoken1",
-		URL:    "https://api.jwt.io/some/path",
-		Method: "GET",
-		JwtTokenAuth: &plugins.JwtTokenAuth{
-			Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
-			Scopes: []string{
-				"https://www.testapi.com/auth/monitoring.read",
-				"https://www.testapi.com/auth/cloudplatformprojects.readonly",
-			},
-			Params: map[string]string{
-				"token_uri":    "{{.JsonData.tokenUri}}",
-				"client_email": "{{.JsonData.clientEmail}}",
-				"private_key":  "{{.SecureJsonData.privateKey}}",
-			},
-		},
-	}
-
-	authParams := &plugins.JwtTokenAuth{
-		Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
-		Scopes: []string{
-			"https://www.testapi.com/auth/monitoring.read",
-			"https://www.testapi.com/auth/cloudplatformprojects.readonly",
-		},
-		Params: map[string]string{
-			"token_uri":    "login.url.com/token",
-			"client_email": "test@test.com",
-			"private_key":  "testkey",
-		},
-	}
-
-	setUp := func(t *testing.T, fn func(*jwt.Config, context.Context) (*oauth2.Token, error)) {
-		origFn := getTokenSource
-		t.Cleanup(func() {
-			getTokenSource = origFn
-		})
-
-		getTokenSource = fn
-	}
-
-	ds := DSInfo{ID: 1, Updated: time.Now()}
-
-	t.Run("should fetch token using JWT private key", func(t *testing.T) {
-		setUp(t, func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
-			return &oauth2.Token{AccessToken: "abc"}, nil
-		})
-		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, authParams)
-		token, err := provider.GetAccessToken()
-		require.NoError(t, err)
-
-		assert.Equal(t, "abc", token)
-	})
-
-	t.Run("should set JWT config values", func(t *testing.T) {
-		setUp(t, func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
-			assert.Equal(t, "test@test.com", conf.Email)
-			assert.Equal(t, []byte("testkey"), conf.PrivateKey)
-			assert.Equal(t, 2, len(conf.Scopes))
-			assert.Equal(t, "https://www.testapi.com/auth/monitoring.read", conf.Scopes[0])
-			assert.Equal(t, "https://www.testapi.com/auth/cloudplatformprojects.readonly", conf.Scopes[1])
-			assert.Equal(t, "login.url.com/token", conf.TokenURL)
-
-			return &oauth2.Token{AccessToken: "abc"}, nil
-		})
-
-		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, authParams)
-		_, err := provider.GetAccessToken()
-		require.NoError(t, err)
-	})
-
-	t.Run("should use cached token on second call", func(t *testing.T) {
-		setUp(t, func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
-			return &oauth2.Token{
-				AccessToken: "abc",
-				Expiry:      time.Now().Add(1 * time.Minute)}, nil
-		})
-		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, authParams)
-		token1, err := provider.GetAccessToken()
-		require.NoError(t, err)
-		assert.Equal(t, "abc", token1)
-
-		getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
-			return &oauth2.Token{AccessToken: "error: cache not used"}, nil
-		}
-		token2, err := provider.GetAccessToken()
-		require.NoError(t, err)
-		assert.Equal(t, "abc", token2)
-	})
-}
 
 func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 	apiHandler := http.NewServeMux()
