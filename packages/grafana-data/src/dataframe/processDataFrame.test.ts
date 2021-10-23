@@ -11,7 +11,6 @@ import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
 import { dateTime } from '../datetime/moment_wrapper';
 import { MutableDataFrame } from './MutableDataFrame';
 import { ArrayDataFrame } from './ArrayDataFrame';
-import { DataFrameJSON } from '.';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
@@ -177,16 +176,16 @@ describe('toDataFrame', () => {
   });
 
   it('converts JSON response to dataframes', () => {
-    const msg: DataFrameJSON = {
+    const msg = {
       schema: {
         fields: [
           {
             name: 'First',
-            type: FieldType.string,
+            type: 'string',
           },
           {
             name: 'Second',
-            type: FieldType.number,
+            type: 'number',
           },
         ],
       },
