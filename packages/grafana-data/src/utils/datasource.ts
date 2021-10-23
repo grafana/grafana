@@ -26,7 +26,7 @@ function isDataSourceRef(ref: DataSourceRef | string | null): ref is DataSourceR
  *
  * @public
  */
-export function getDataSourceUid(ref: DataSourceRef | string | null): string | undefined {
+export function getDataSourceUID(ref: DataSourceRef | string | null): string | undefined {
   if (isDataSourceRef(ref)) {
     return ref.uid;
   }

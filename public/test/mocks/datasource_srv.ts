@@ -5,7 +5,7 @@ import {
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
   DataSourceRef,
-  getDataSourceUid,
+  getDataSourceUID,
 } from '@grafana/data';
 import { Observable } from 'rxjs';
 
@@ -18,7 +18,7 @@ export class DatasourceSrvMock {
     if (!ref) {
       return Promise.resolve(this.defaultDS);
     }
-    const uid = getDataSourceUid(ref) ?? '';
+    const uid = getDataSourceUID(ref) ?? '';
     const ds = this.datasources[uid];
     if (ds) {
       return Promise.resolve(ds);

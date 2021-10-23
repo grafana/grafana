@@ -11,10 +11,10 @@ import { ScopedVars, DataSourceApi, DataSourceInstanceSettings, DataSourceRef } 
 export interface DataSourceSrv {
   /**
    * Returns the requested dataSource. If it cannot be found it rejects the promise.
-   * @param nameOrUid - name or Uid of the datasource plugin you want to use.
+   * @param ref - The datasource identifier, typically an object with UID and type,
    * @param scopedVars - variables used to interpolate a templated passed as name.
    */
-  get(ref?: string | null | DataSourceRef, scopedVars?: ScopedVars): Promise<DataSourceApi>;
+  get(ref?: DataSourceRef | string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
   /**
    * Get a list of data sources
@@ -24,7 +24,7 @@ export interface DataSourceSrv {
   /**
    * Get settings and plugin metadata by name or uid
    */
-  getInstanceSettings(nameOrUid: string | null | undefined | DataSourceRef): DataSourceInstanceSettings | undefined;
+  getInstanceSettings(ref?: DataSourceRef | string | null): DataSourceInstanceSettings | undefined;
 }
 
 /** @public */

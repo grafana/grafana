@@ -6,7 +6,7 @@ import { HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@g
 import {
   DataSourceInstanceSettings,
   DataSourceRef,
-  getDataSourceUid,
+  getDataSourceUID,
   isUnsignedPluginSignature,
   SelectableValue,
 } from '@grafana/data';
@@ -107,7 +107,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       };
     }
 
-    const uid = getDataSourceUid(current);
+    const uid = getDataSourceUID(current);
     return {
       label: (uid ?? 'no name') + ' - not found',
       value: uid ?? undefined,

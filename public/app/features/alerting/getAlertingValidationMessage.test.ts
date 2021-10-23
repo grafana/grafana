@@ -131,6 +131,7 @@ describe('getAlertingValidationMessage', () => {
         meta: ({ alerting: false } as any) as PluginMeta,
         targetContainsTemplate: () => false,
         name: 'some name',
+        uid: 'theid',
       } as any) as DataSourceApi;
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
