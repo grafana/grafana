@@ -1,7 +1,7 @@
 import { Field, DataFrame, FieldType, Labels, QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
-import { guessFieldTypeFromValue } from './utils';
+import { guessFieldTypeFromValue } from './processDataFrame';
 import { join } from '../transformations/transformers/joinDataFrames';
 import { AlignedData } from 'uplot';
 

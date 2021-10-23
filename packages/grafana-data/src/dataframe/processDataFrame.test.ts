@@ -1,9 +1,17 @@
-import { isDataFrame, isTableData, sortDataFrame, toDataFrame, toLegacyResponseData } from './processDataFrame';
+import {
+  guessFieldTypeFromValue,
+  guessFieldTypes,
+  isDataFrame,
+  isTableData,
+  sortDataFrame,
+  toDataFrame,
+  toLegacyResponseData,
+} from './processDataFrame';
 import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
 import { dateTime } from '../datetime/moment_wrapper';
 import { MutableDataFrame } from './MutableDataFrame';
 import { ArrayDataFrame } from './ArrayDataFrame';
-import { guessFieldTypeFromValue, guessFieldTypes } from './utils';
+import { DataFrameJSON } from '.';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
@@ -169,16 +177,16 @@ describe('toDataFrame', () => {
   });
 
   it('converts JSON response to dataframes', () => {
-    const msg = {
+    const msg: DataFrameJSON = {
       schema: {
         fields: [
           {
             name: 'First',
-            type: 'string',
+            type: FieldType.string,
           },
           {
             name: 'Second',
-            type: 'number',
+            type: FieldType.number,
           },
         ],
       },

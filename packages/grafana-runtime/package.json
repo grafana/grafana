@@ -36,7 +36,7 @@
     "@rollup/plugin-commonjs": "16.0.0",
     "@rollup/plugin-node-resolve": "10.0.0",
     "@types/history": "^4.7.8",
-    "@types/jest": "26.0.15",
+    "@types/jest": "27.0.2",
     "@types/rollup-plugin-visualizer": "4.2.1",
     "@types/systemjs": "^0.20.6",
     "lodash": "4.17.21",

@@ -2,8 +2,8 @@ import { difference } from 'lodash';
 
 import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
-import { Field, FieldType } from '../types/dataFrame';
-import { guessFieldTypeFromValue } from '../dataframe/utils';
+import { Field, FieldType } from '../types/index';
+import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 import { ArrayVector } from '../vector/ArrayVector';
 

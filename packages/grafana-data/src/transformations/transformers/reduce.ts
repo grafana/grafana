@@ -7,7 +7,7 @@ import { alwaysFieldMatcher, notTimeFieldMatcher } from '../matchers/predicates'
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { KeyValue } from '../../types/data';
-import { guessFieldTypeForField } from '../../dataframe/utils';
+import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldMatcher } from '../matchers';
 import { getFieldDisplayName } from '../../field';
 

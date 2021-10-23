@@ -1,6 +1,6 @@
 import { seriesToColumnsTransformer } from './seriesToColumns';
 import { DataFrame } from '../../types/dataFrame';
-import { getTimeField } from '../../dataframe/utils';
+import { getTimeField } from '../../dataframe/processDataFrame';
 import { SynchronousDataTransformerInfo } from '../../types/transformations';
 import { DataTransformerID } from './ids';
 import { map } from 'rxjs/operators';

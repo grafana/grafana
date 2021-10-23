@@ -1,6 +1,6 @@
 import { DataFrame, FieldType, FieldConfig, Labels, QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
-import { guessFieldTypeFromNameAndValue } from './utils';
+import { guessFieldTypeFromNameAndValue } from './processDataFrame';
 
 /**
  * The JSON transfer object for DataFrames.  Values are stored in simple JSON
