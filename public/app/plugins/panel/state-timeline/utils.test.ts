@@ -1,5 +1,6 @@
-import { ArrayVector, createTheme, FieldType, toDataFrame } from '@grafana/data';
-import { findNextStateIndex, prepareTimelineFields } from './utils';
+import { ArrayVector, createTheme, FieldType, ThresholdsMode, toDataFrame } from '@grafana/data';
+import { LegendDisplayMode } from '@grafana/schema';
+import { findNextStateIndex, getThresholdItems, prepareTimelineFields, prepareTimelineLegendItems } from './utils';
 
 const theme = createTheme();
 
@@ -134,5 +135,89 @@ describe('findNextStateIndex', () => {
       const result = findNextStateIndex(field, 1);
       expect(result).toEqual(2);
     });
+  });
+});
+
+describe('getThresholdItems', () => {
+  it('should handle only one threshold', () => {
+    const result = getThresholdItems(
+      { thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'black', value: 0 }] } },
+      theme
+    );
+
+    expect(result).toHaveLength(1);
+  });
+});
+
+describe('prepareTimelineLegendItems', () => {
+  it('should return legend items', () => {
+    const frame: any = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            config: {
+              color: {
+                mode: 'thresholds',
+              },
+              thresholds: {
+                mode: 'absolute',
+                steps: [
+                  {
+                    color: 'green',
+                    value: null,
+                  },
+                ],
+              },
+            },
+            values: new ArrayVector([
+              1634092733455,
+              1634092763455,
+              1634092793455,
+              1634092823455,
+              1634092853455,
+              1634092883455,
+              1634092913455,
+              1634092943455,
+              1634092973455,
+              1634093003455,
+            ]),
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'A-series',
+            config: {
+              color: {
+                mode: 'thresholds',
+              },
+              thresholds: {
+                mode: 'absolute',
+                steps: [
+                  {
+                    color: 'green',
+                    value: null,
+                  },
+                ],
+              },
+            },
+            values: new ArrayVector(['< -∞', null, null, null, null, null, null, null, null, null]),
+            display: (value?: string) => ({
+              text: value || '',
+              color: 'green',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ];
+
+    const result = prepareTimelineLegendItems(frame, { displayMode: LegendDisplayMode.List } as any, theme);
+
+    expect(result).toHaveLength(1);
   });
 });

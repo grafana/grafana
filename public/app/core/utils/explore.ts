@@ -49,40 +49,35 @@ const MAX_HISTORY_ITEMS = 100;
 export const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
 export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
 
-/**
- * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
- *
- * @param panelTargets The origin panel's query targets
- * @param panelDatasource The origin panel's datasource
- * @param datasourceSrv Datasource service to query other datasources in case the panel datasource is mixed
- * @param timeSrv Time service to get the current dashboard range from
- */
 export interface GetExploreUrlArguments {
   panel: PanelModel;
-  panelTargets: DataQuery[];
-  panelDatasource: DataSourceApi;
+  /** Datasource service to query other datasources in case the panel datasource is mixed */
   datasourceSrv: DataSourceSrv;
+  /** Time service to get the current dashboard range from */
   timeSrv: TimeSrv;
 }
 
+/**
+ * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
+ */
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
-  const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
-  let exploreDatasource = panelDatasource;
+  const { panel, datasourceSrv, timeSrv } = args;
+  let exploreDatasource = await datasourceSrv.get(panel.datasource);
 
   /** In Explore, we don't have legend formatter and we don't want to keep
    * legend formatting as we can't change it
    */
-  let exploreTargets: DataQuery[] = panelTargets.map((t) => omit(t, 'legendFormat'));
+  let exploreTargets: DataQuery[] = panel.targets.map((t) => omit(t, 'legendFormat'));
   let url: string | undefined;
 
   // Mixed datasources need to choose only one datasource
-  if (panelDatasource.meta?.id === 'mixed' && exploreTargets) {
+  if (exploreDatasource.meta?.id === 'mixed' && exploreTargets) {
     // Find first explore datasource among targets
     for (const t of exploreTargets) {
       const datasource = await datasourceSrv.get(t.datasource || undefined);
       if (datasource) {
         exploreDatasource = datasource;
-        exploreTargets = panelTargets.filter((t) => t.datasource === datasource.name);
+        exploreTargets = panel.targets.filter((t) => t.datasource === datasource.name);
         break;
       }
     }

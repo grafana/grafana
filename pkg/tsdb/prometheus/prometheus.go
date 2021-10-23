@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
@@ -27,6 +26,16 @@ import (
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+)
+
+// Internal interval and range variables
+const (
+	varInterval     = "$__interval"
+	varIntervalMs   = "$__interval_ms"
+	varRange        = "$__range"
+	varRangeS       = "$__range_s"
+	varRangeMs      = "$__range_ms"
+	varRateInterval = "$__rate_interval"
 )
 
 var (
@@ -62,7 +71,6 @@ func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		defaultHttpMethod := http.MethodPost
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
@@ -78,19 +86,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			httpCliOpts.SigV4.Service = "aps"
 		}
 
-		httpMethod, ok := jsonData["httpMethod"].(string)
-		if !ok {
-			httpMethod = defaultHttpMethod
-		}
-
 		// timeInterval can be a string or can be missing.
 		// if it is missing, we set it to empty-string
-
 		timeInterval := ""
 
 		timeIntervalJson := jsonData["timeInterval"]
 		if timeIntervalJson != nil {
 			// if it is not nil, it must be a string
+			var ok bool
 			timeInterval, ok = timeIntervalJson.(string)
 			if !ok {
 				return nil, errors.New("invalid time-interval provided")
@@ -105,7 +108,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		mdl := DatasourceInfo{
 			ID:           settings.ID,
 			URL:          settings.URL,
-			HTTPMethod:   httpMethod,
 			TimeInterval: timeInterval,
 			promClient:   client,
 		}
@@ -157,26 +159,31 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if query.RangeQuery {
 			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+				plog.Error("Range query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+			} else {
+				response[RangeQueryType] = rangeResponse
 			}
-			response[Range] = rangeResponse
 		}
 
 		if query.InstantQuery {
 			instantResponse, _, err := client.Query(ctx, query.Expr, query.End)
 			if err != nil {
-				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+				plog.Error("Instant query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+			} else {
+				response[InstantQueryType] = instantResponse
 			}
-			response[Instant] = instantResponse
 		}
-		// For now, we ignore exemplar errors and continue with processing of other results
+
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
-				exemplarResponse = nil
 				plog.Error("Exemplar query", query.Expr, "failed with", err)
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+			} else {
+				response[ExemplarQueryType] = exemplarResponse
 			}
-			response[Exemplar] = exemplarResponse
 		}
 
 		frames, err := parseResponse(response, query)
@@ -259,11 +266,13 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		if err != nil {
 			return nil, err
 		}
+		//Final interval value
+		var interval time.Duration
 
 		//Calculate interval
 		queryInterval := model.Interval
 		//If we are using variable or interval/step, we will replace it with calculated interval
-		if queryInterval == "$__interval" || queryInterval == "$__interval_ms" {
+		if queryInterval == varInterval || queryInterval == varIntervalMs || queryInterval == varRateInterval {
 			queryInterval = ""
 		}
 		minInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, model.IntervalMS, 15*time.Second)
@@ -273,29 +282,34 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 
 		calculatedInterval := s.intervalCalculator.Calculate(query.TimeRange, minInterval, query.MaxDataPoints)
 		safeInterval := s.intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
-
 		adjustedInterval := safeInterval.Value
+
 		if calculatedInterval.Value > safeInterval.Value {
 			adjustedInterval = calculatedInterval.Value
 		}
 
-		intervalFactor := model.IntervalFactor
-		if intervalFactor == 0 {
-			intervalFactor = 1
+		if queryInterval == varRateInterval {
+			// Rate interval is final and is not affected by resolution
+			interval = calculateRateInterval(adjustedInterval, dsInfo.TimeInterval, s.intervalCalculator)
+		} else {
+			intervalFactor := model.IntervalFactor
+			if intervalFactor == 0 {
+				intervalFactor = 1
+			}
+			interval = time.Duration(int64(adjustedInterval) * intervalFactor)
 		}
 
-		interval := time.Duration(int64(adjustedInterval) * intervalFactor)
 		intervalMs := int64(interval / time.Millisecond)
 		rangeS := query.TimeRange.To.Unix() - query.TimeRange.From.Unix()
 
 		// Interpolate variables in expr
 		expr := model.Expr
-		expr = strings.ReplaceAll(expr, "$__interval_ms", strconv.FormatInt(intervalMs, 10))
-		expr = strings.ReplaceAll(expr, "$__interval", intervalv2.FormatDuration(interval))
-		expr = strings.ReplaceAll(expr, "$__range_ms", strconv.FormatInt(rangeS*1000, 10))
-		expr = strings.ReplaceAll(expr, "$__range_s", strconv.FormatInt(rangeS, 10))
-		expr = strings.ReplaceAll(expr, "$__range", strconv.FormatInt(rangeS, 10)+"s")
-		expr = strings.ReplaceAll(expr, "$__rate_interval", intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
+		expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(intervalMs, 10))
+		expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
+		expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeS*1000, 10))
+		expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeS, 10))
+		expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeS, 10)+"s")
+		expr = strings.ReplaceAll(expr, varRateInterval, intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
 
 		rangeQuery := model.RangeQuery
 		if !model.InstantQuery && !model.RangeQuery {
@@ -320,37 +334,32 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 }
 
 func parseResponse(value map[PrometheusQueryType]interface{}, query *PrometheusQuery) (data.Frames, error) {
-	frames := data.Frames{}
+	var (
+		frames     = data.Frames{}
+		nextFrames = data.Frames{}
+	)
 
 	for _, value := range value {
-		matrix, ok := value.(model.Matrix)
-		if ok {
-			matrixFrames := matrixToDataFrames(matrix, query)
-			frames = append(frames, matrixFrames...)
+		// Zero out the slice to prevent data corruption.
+		nextFrames = nextFrames[:0]
+
+		switch v := value.(type) {
+		case model.Matrix:
+			nextFrames = matrixToDataFrames(v, query, nextFrames)
+		case model.Vector:
+			nextFrames = vectorToDataFrames(v, query, nextFrames)
+		case *model.Scalar:
+			nextFrames = scalarToDataFrames(v, query, nextFrames)
+		case []apiv1.ExemplarQueryResult:
+			nextFrames = exemplarToDataFrames(v, query, nextFrames)
+		default:
+			plog.Error("Query", query.Expr, "returned unexpected result type", v)
 			continue
 		}
 
-		vector, ok := value.(model.Vector)
-		if ok {
-			vectorFrames := vectorToDataFrames(vector, query)
-			frames = append(frames, vectorFrames...)
-			continue
-		}
-
-		scalar, ok := value.(*model.Scalar)
-		if ok {
-			scalarFrames := scalarToDataFrames(scalar, query)
-			frames = append(frames, scalarFrames...)
-			continue
-		}
-
-		exemplar, ok := value.([]apiv1.ExemplarQueryResult)
-		if ok {
-			exemplarFrames := exemplarToDataFrames(exemplar, query)
-			frames = append(frames, exemplarFrames...)
-			continue
-		}
+		frames = append(frames, nextFrames...)
 	}
+
 	return frames, nil
 }
 
@@ -384,78 +393,82 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 	return rateInterval
 }
 
-func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames {
-	frames := data.Frames{}
-
+func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
 	for _, v := range matrix {
 		tags := make(map[string]string, len(v.Metric))
-		timeVector := make([]time.Time, 0, len(v.Values))
-		values := make([]float64, 0, len(v.Values))
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-		for _, k := range v.Values {
-			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
-			values = append(values, float64(k.Value))
+
+		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
+		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
+
+		for i, k := range v.Values {
+			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			value := float64(k.Value)
+			if !math.IsNaN(value) {
+				valueField.Set(i, &value)
+			}
 		}
+
 		name := formatLegend(v.Metric, query)
-		frame := data.NewFrame(name,
-			data.NewField("Time", nil, timeVector),
-			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
-		frame.Meta = &data.FrameMeta{
-			Custom: map[string]string{
-				"resultType": "matrix",
-			},
-		}
-		frames = append(frames, frame)
+		timeField.Name = data.TimeSeriesTimeFieldName
+		valueField.Name = data.TimeSeriesValueFieldName
+		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+		valueField.Labels = tags
+
+		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
 	}
+
 	return frames
 }
 
-func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery) data.Frames {
+func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, frames data.Frames) data.Frames {
 	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
 	values := []float64{float64(scalar.Value)}
 	name := fmt.Sprintf("%g", values[0])
-	frame := data.NewFrame(name,
-		data.NewField("Time", nil, timeVector),
-		data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
-	frame.Meta = &data.FrameMeta{
-		Custom: map[string]string{
-			"resultType": "scalar",
-		},
-	}
 
-	frames := data.Frames{frame}
-	return frames
+	return append(
+		frames,
+		newDataFrame(
+			name,
+			"scalar",
+			data.NewField("Time", nil, timeVector),
+			data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}),
+		),
+	)
 }
 
-func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames {
-	frames := data.Frames{}
+func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, frames data.Frames) data.Frames {
 	for _, v := range vector {
 		name := formatLegend(v.Metric, query)
 		tags := make(map[string]string, len(v.Metric))
 		timeVector := []time.Time{time.Unix(v.Timestamp.Unix(), 0).UTC()}
 		values := []float64{float64(v.Value)}
+
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-		frame := data.NewFrame(name,
-			data.NewField("Time", nil, timeVector),
-			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
-		frame.Meta = &data.FrameMeta{
-			Custom: map[string]string{
-				"resultType": "vector",
-			},
-		}
-		frames = append(frames, frame)
+
+		frames = append(
+			frames,
+			newDataFrame(
+				name,
+				"vector",
+				data.NewField("Time", nil, timeVector),
+				data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}),
+			),
+		)
 	}
 
 	return frames
 }
 
-func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery) data.Frames {
-	frames := data.Frames{}
-	events := make([]ExemplarEvent, 0)
+func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, frames data.Frames) data.Frames {
+	// TODO: this preallocation is very naive.
+	// We should figure out a better approximation here.
+	events := make([]ExemplarEvent, 0, len(response)*2)
+
 	for _, exemplarData := range response {
 		for _, exemplar := range exemplarData.Exemplars {
 			event := ExemplarEvent{}
@@ -463,9 +476,11 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 			event.Time = exemplarTime
 			event.Value = float64(exemplar.Value)
 			event.Labels = make(map[string]string)
+
 			for label, value := range exemplar.Labels {
 				event.Labels[string(label)] = string(value)
 			}
+
 			for seriesLabel, seriesValue := range exemplarData.SeriesLabels {
 				event.Labels[string(seriesLabel)] = string(seriesValue)
 			}
@@ -474,11 +489,11 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		}
 	}
 
-	//Sampling of exemplars
+	// Sampling of exemplars
 	bucketedExemplars := make(map[string][]ExemplarEvent)
-	values := make([]float64, 0)
+	values := make([]float64, 0, len(events))
 
-	//Create bucketed exemplars based on aligned timestamp
+	// Create bucketed exemplars based on aligned timestamp
 	for _, event := range events {
 		alignedTs := fmt.Sprintf("%.0f", math.Floor(float64(event.Time.Unix())/query.Step.Seconds())*query.Step.Seconds())
 		_, ok := bucketedExemplars[alignedTs]
@@ -490,18 +505,18 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		values = append(values, event.Value)
 	}
 
-	//Calculate standard deviation
+	// Calculate standard deviation
 	standardDeviation := deviation(values)
 
-	//Create slice with all of the bucketed exemplars
+	// Create slice with all of the bucketed exemplars
 	sampledBuckets := make([]string, len(bucketedExemplars))
 	for bucketTimes := range bucketedExemplars {
 		sampledBuckets = append(sampledBuckets, bucketTimes)
 	}
 	sort.Strings(sampledBuckets)
 
-	//Sample exemplars based ona value, so we are not showing too many of them
-	sampleExemplars := make([]ExemplarEvent, 0)
+	// Sample exemplars based ona value, so we are not showing too many of them
+	sampleExemplars := make([]ExemplarEvent, 0, len(sampledBuckets))
 	for _, bucket := range sampledBuckets {
 		exemplarsInBucket := bucketedExemplars[bucket]
 		if len(exemplarsInBucket) == 1 {
@@ -538,13 +553,15 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 	}
 
 	// Create DF from sampled exemplars
-	timeVector := make([]time.Time, 0, len(sampleExemplars))
-	valuesVector := make([]float64, 0, len(sampleExemplars))
+	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(sampleExemplars))
+	timeField.Name = "Time"
+	valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, len(sampleExemplars))
+	valueField.Name = "Value"
 	labelsVector := make(map[string][]string, len(sampleExemplars))
 
-	for _, exemplar := range sampleExemplars {
-		timeVector = append(timeVector, exemplar.Time)
-		valuesVector = append(valuesVector, exemplar.Value)
+	for i, exemplar := range sampleExemplars {
+		timeField.Set(i, exemplar.Time)
+		valueField.Set(i, exemplar.Value)
 
 		for label, value := range exemplar.Labels {
 			if labelsVector[label] == nil {
@@ -555,22 +572,13 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		}
 	}
 
-	frame := data.NewFrame("exemplar",
-		data.NewField("Time", nil, timeVector),
-		data.NewField("Value", nil, valuesVector))
-
+	dataFields := make([]*data.Field, 0, len(labelsVector)+2)
+	dataFields = append(dataFields, timeField, valueField)
 	for label, vector := range labelsVector {
-		frame.Fields = append(frame.Fields, data.NewField(label, nil, vector))
+		dataFields = append(dataFields, data.NewField(label, nil, vector))
 	}
 
-	frame.Meta = &data.FrameMeta{
-		Custom: map[string]PrometheusQueryType{
-			"resultType": "exemplar",
-		},
-	}
-
-	frames = append(frames, frame)
-	return frames
+	return append(frames, newDataFrame("exemplar", "exemplar", dataFields...))
 }
 
 func deviation(values []float64) float64 {
@@ -584,4 +592,15 @@ func deviation(values []float64) float64 {
 		sd += math.Pow(values[j]-mean, 2)
 	}
 	return math.Sqrt(sd / (valuesLen - 1))
+}
+
+func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
+	frame := data.NewFrame(name, fields...)
+	frame.Meta = &data.FrameMeta{
+		Custom: map[string]string{
+			"resultType": typ,
+		},
+	}
+
+	return frame
 }

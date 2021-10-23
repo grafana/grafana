@@ -170,6 +170,10 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       cursor: pointer;
       padding: 0 ${theme.spacing(0.025)};
     `,
+    typeIcon: css`
+      margin-right: ${theme.spacing(1)};
+      color: ${theme.colors.text.secondary};
+    `,
     noData: css`
       align-items: center;
       display: flex;

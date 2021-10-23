@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
 const defaultDingdingMsgType = "link"
@@ -31,7 +30,7 @@ func NewDingDingNotifier(model *NotificationChannelConfig, t *template.Template)
 	msgType := model.Settings.Get("msgType").MustString(defaultDingdingMsgType)
 
 	return &DingDingNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -48,7 +47,7 @@ func NewDingDingNotifier(model *NotificationChannelConfig, t *template.Template)
 
 // DingDingNotifier is responsible for sending alert notifications to ding ding.
 type DingDingNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	MsgType string
 	URL     string
 	Message string

@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -384,7 +385,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 			},
 		}
 
-		value[Exemplar] = exemplars
+		value[ExemplarQueryType] = exemplars
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
@@ -413,7 +414,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 			{Value: 5, Timestamp: 5000},
 		}
 		value := make(map[PrometheusQueryType]interface{})
-		value[Range] = p.Matrix{
+		value[RangeQueryType] = p.Matrix{
 			&p.SampleStream{
 				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
 				Values: values,
@@ -440,9 +441,30 @@ func TestPrometheus_parseResponse(t *testing.T) {
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
 	})
 
+	t.Run("matrix response with NaN value should be changed to null", func(t *testing.T) {
+		value := make(map[PrometheusQueryType]interface{})
+		value[RangeQueryType] = p.Matrix{
+			&p.SampleStream{
+				Metric: p.Metric{"app": "Application"},
+				Values: []p.SamplePair{
+					{Value: p.SampleValue(math.NaN()), Timestamp: 1000},
+				},
+			},
+		}
+		query := &PrometheusQuery{
+			LegendFormat: "",
+		}
+		res, err := parseResponse(value, query)
+		require.NoError(t, err)
+
+		var nilPointer *float64
+		require.Equal(t, res[0].Fields[1].Name, "Value")
+		require.Equal(t, res[0].Fields[1].At(0), nilPointer)
+	})
+
 	t.Run("vector response should be parsed normally", func(t *testing.T) {
 		value := make(map[PrometheusQueryType]interface{})
-		value[Range] = p.Vector{
+		value[RangeQueryType] = p.Vector{
 			&p.Sample{
 				Metric:    p.Metric{"app": "Application", "tag2": "tag2"},
 				Value:     1,
@@ -473,7 +495,7 @@ func TestPrometheus_parseResponse(t *testing.T) {
 
 	t.Run("scalar response should be parsed normally", func(t *testing.T) {
 		value := make(map[PrometheusQueryType]interface{})
-		value[Range] = &p.Scalar{
+		value[RangeQueryType] = &p.Scalar{
 			Value:     1,
 			Timestamp: 1000,
 		}
