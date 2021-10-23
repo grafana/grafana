@@ -7,6 +7,7 @@ import { DataSourceInstanceSettings, DataSourceRef, isUnsignedPluginSignature, S
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 import { css, cx } from '@emotion/css';
+import { isString } from 'lodash';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -101,13 +102,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       };
     }
 
-    let uid = '?';
-    if (typeof current === 'string') {
-      uid = current as string;
-    } else {
-      uid = (current as any).uid;
-    }
-
+    const uid = getDataSourceUid(current);
     return {
       label: (uid ?? 'no name') + ' - not found',
       value: uid ?? undefined,
@@ -183,6 +178,20 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       </div>
     );
   }
+}
+
+function isDataSourceRef(ref: DataSourceRef | string | null): ref is DataSourceRef {
+  return typeof ref === 'object' && (typeof ref?.uid === 'string' || typeof ref?.uid === 'undefined');
+}
+
+function getDataSourceUid(ref: DataSourceRef | string | null): string | undefined {
+  if (isDataSourceRef(ref)) {
+    return ref.uid;
+  }
+  if (isString(ref)) {
+    return ref;
+  }
+  return undefined;
 }
 
 const getStyles = stylesFactory(() => ({

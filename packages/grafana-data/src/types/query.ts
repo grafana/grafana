@@ -1,5 +1,3 @@
-import { ModelVersion } from './dashboard';
-
 /**
  * Attached to query results (not persisted)
  *
@@ -18,9 +16,6 @@ export interface DataSourceRef {
 
   /** Specific datasource instance */
   uid?: string;
-
-  /** The schema version for query target JSON  */
-  modelVersion?: ModelVersion;
 }
 
 /**

@@ -40,10 +40,9 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     for (const key in sets) {
       const targets = sets[key];
-      const dsId = targets[0].datasource?.uid;
 
       mixed.push({
-        datasource: getDataSourceSrv().get(dsId, request.scopedVars),
+        datasource: getDataSourceSrv().get(targets[0].datasource, request.scopedVars),
         targets,
       });
     }

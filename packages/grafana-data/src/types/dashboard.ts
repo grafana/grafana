@@ -7,9 +7,6 @@ export enum DashboardCursorSync {
   Tooltip,
 }
 
-/** The scuemata version for the panel plugin */
-export type ModelVersion = [number, number];
-
 /**
  * @public
  */
@@ -31,9 +28,6 @@ export interface PanelModel<TOptions = any, TCustomFieldConfig extends object = 
 
   /** Version of the panel plugin */
   pluginVersion?: string;
-
-  /** The plugin model version */
-  modelVersion?: ModelVersion;
 
   /** The datasource used in all targets */
   datasource?: DataSourceRef | null;

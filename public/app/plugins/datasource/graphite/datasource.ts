@@ -231,7 +231,7 @@ export class GraphiteDatasource extends DataSourceApi<
       expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
-          datasource: { uid: this.uid },
+          datasource: this.getRef(),
           target: this.templateSrv.replace(query.target ?? '', scopedVars),
         };
         return expandedQuery;

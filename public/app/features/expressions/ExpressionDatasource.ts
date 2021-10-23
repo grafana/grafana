@@ -19,7 +19,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     return {
       refId: '--', // Replaced with query
       type: query?.type ?? ExpressionQueryType.math,
-      datasource: { uid: ExpressionDatasourceID },
+      datasource: ExpressionDatasourceRef,
       conditions: query?.conditions ?? undefined,
     };
   }
@@ -28,6 +28,10 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 // MATCHES the constant in DataSourceWithBackend
 export const ExpressionDatasourceID = '__expr__';
 export const ExpressionDatasourceUID = '-100';
+export const ExpressionDatasourceRef = Object.freeze({
+  type: ExpressionDatasourceID,
+  uid: ExpressionDatasourceID,
+});
 
 export const instanceSettings: DataSourceInstanceSettings = {
   id: -100,

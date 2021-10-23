@@ -62,7 +62,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
       expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
-          datasource: { uid: this.uid },
+          datasource: this.getRef(),
           rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
           rawQuery: true,
         };
