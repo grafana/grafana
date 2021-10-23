@@ -218,7 +218,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		logger.Warn("Slack API request failed", "url", request.URL.String(), "statusCode", resp.Status, "body", string(body))
 		return fmt.Errorf("request to Slack API failed with status code %d", resp.StatusCode)
 	}
@@ -228,12 +228,16 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 		Ok  bool   `json:"ok"`
 		Err string `json:"error"`
 	}{}
-	if err := json.Unmarshal(body, &rslt); err == nil {
-		if !rslt.Ok && rslt.Err != "" {
-			logger.Warn("Sending Slack API request failed", "url", request.URL.String(), "statusCode", resp.Status,
-				"err", rslt.Err)
-			return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
-		}
+	if err := json.Unmarshal(body, &rslt); err != nil {
+		logger.Warn("Failed to unmarshal Slack API response", "url", request.URL.String(), "statusCode", resp.Status,
+			"body", string(body))
+		return fmt.Errorf("failed to unmarshal Slack API response: %s", err)
+	}
+
+	if !rslt.Ok && rslt.Err != "" {
+		logger.Warn("Sending Slack API request failed", "url", request.URL.String(), "statusCode", resp.Status,
+			"err", rslt.Err)
+		return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 	}
 
 	logger.Debug("Sending Slack API request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
