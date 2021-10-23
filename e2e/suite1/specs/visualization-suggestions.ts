@@ -15,6 +15,7 @@ e2e.scenario({
     // Try visualization suggestions
     e2e.components.PanelEditor.toggleVizPicker().click();
     e2e().contains('Suggestions').click();
+    cy.wait(500);
 
     // Verify we see suggestions
     e2e.components.VisualizationPreview.card('Line chart').should('be.visible');
