@@ -11,8 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -171,7 +170,7 @@ func TestSlackNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			secretsService := secretsManager.SetupTestService(t, nil)
+			secretsService := fakes.NewFakeSecretsService()
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewSlackNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {

@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -13,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
 func TestThreemaNotifier(t *testing.T) {
@@ -107,7 +108,7 @@ func TestThreemaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			secretsService := secretsManager.SetupTestService(t, nil)
+			secretsService := fakes.NewFakeSecretsService()
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewThreemaNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
