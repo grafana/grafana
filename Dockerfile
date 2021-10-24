@@ -35,8 +35,7 @@ COPY .bingo .bingo
 COPY Makefile build.go package.json ./
 
 RUN go mod verify
-RUN make gen-go
-RUN go run build.go build
+RUN make build-go
 
 # Final stage
 FROM alpine:3.14.2

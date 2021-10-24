@@ -32,9 +32,8 @@ COPY cue.mod cue.mod/
 COPY packages/grafana-schema packages/grafana-schema/
 COPY public/app/plugins public/app/plugins/
 
-RUN make gen-go
 RUN go mod verify
-RUN go run build.go build
+RUN make build-go
 
 FROM ubuntu:20.04
 
