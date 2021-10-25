@@ -21,6 +21,12 @@ standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
 
 const mockStore = configureMockStore<any, any>();
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
+jest.mock('react-router-dom', () => ({
+  ...(jest.requireActual('react-router-dom') as any),
+  useLocation: () => ({
+    pathname: 'localhost:3000/example/path',
+  }),
+}));
 
 class OptionsPaneOptionsTestScenario {
   onFieldConfigsChange = jest.fn();

@@ -53,14 +53,25 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       );
     }
 
-    builder.addNestedOptions(
-      getLayerEditor({
-        category: ['Data layer'],
-        path: 'layers[0]', // only one for now
-        basemaps: false,
-        current: context.options?.layers?.[0],
-      })
-    );
+    let layerCount = context.options?.layers?.length;
+    if (layerCount == null || layerCount < 1) {
+      layerCount = 1;
+    }
+
+    for (let i = 0; i < layerCount; i++) {
+      let name = 'Data layer';
+      if (i > 0) {
+        name += ` (${i + 1})`;
+      }
+      builder.addNestedOptions(
+        getLayerEditor({
+          category: [name],
+          path: `layers[${i}]`, // only one for now
+          basemaps: false,
+          current: context.options?.layers?.[i],
+        })
+      );
+    }
 
     // The controls section
     category = ['Map controls'];

@@ -174,6 +174,48 @@ describe('toDataFrame', () => {
     expect(v0.length).toEqual(1);
     expect(v0.get(0)).toEqual(input1.datapoints[0]);
   });
+
+  it('converts JSON response to dataframes', () => {
+    const msg = {
+      schema: {
+        fields: [
+          {
+            name: 'First',
+            type: 'string',
+          },
+          {
+            name: 'Second',
+            type: 'number',
+          },
+        ],
+      },
+      data: {
+        values: [
+          ['2019-02-15', '2019-03-15', '2019-04-15'],
+          [3, 9, 16],
+        ],
+      },
+    };
+    const dataFrame = toDataFrame(msg);
+    expect(dataFrame.fields.map((f) => ({ [f.name]: f.values.toArray() }))).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "First": Array [
+            "2019-02-15",
+            "2019-03-15",
+            "2019-04-15",
+          ],
+        },
+        Object {
+          "Second": Array [
+            3,
+            9,
+            16,
+          ],
+        },
+      ]
+    `);
+  });
 });
 
 describe('SeriesData backwards compatibility', () => {

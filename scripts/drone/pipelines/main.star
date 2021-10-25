@@ -10,7 +10,6 @@ load(
     'build_backend_step',
     'build_frontend_step',
     'build_plugins_step',
-    'gen_version_step',
     'package_step',
     'e2e_tests_server_step',
     'e2e_tests_step',
@@ -62,6 +61,8 @@ def get_steps(edition, is_downstream=False):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
@@ -69,7 +70,6 @@ def get_steps(edition, is_downstream=False):
         ensure_cuetsified_step(),
     ]
 
-    # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
     if include_enterprise2:
         edition2 = 'enterprise2'
         steps.extend([
@@ -81,8 +81,7 @@ def get_steps(edition, is_downstream=False):
 
     # Insert remaining steps
     steps.extend([
-        gen_version_step(ver_mode=ver_mode, is_downstream=is_downstream, include_enterprise2=include_enterprise2),
-        package_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
+        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, is_downstream=is_downstream),
         e2e_tests_server_step(edition=edition),
         e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
@@ -93,8 +92,6 @@ def get_steps(edition, is_downstream=False):
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=publish),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=publish),
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
     ])
 
     if include_enterprise2:
@@ -109,7 +106,7 @@ def get_steps(edition, is_downstream=False):
     if include_enterprise2:
         edition2 = 'enterprise2'
         steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream),
+            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64'], is_downstream=is_downstream),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002),
             upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),

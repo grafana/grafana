@@ -8,7 +8,7 @@ import { preparePlotConfigBuilder } from './utils';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 
-const propsToDiff: string[] = [];
+const propsToDiff: string[] = ['legend'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
@@ -18,7 +18,7 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { eventBus, sync } = this.context;
-    const { theme, timeZone } = this.props;
+    const { theme, timeZone, legend } = this.props;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -28,6 +28,7 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
       eventBus,
       sync,
       allFrames,
+      legend,
     });
   };
 
