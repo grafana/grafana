@@ -524,6 +524,8 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 		n, err = channels.NewWebHookNotifier(cfg, tmpl, am.decryptFn)
 	case "sensugo":
 		n, err = channels.NewSensuGoNotifier(cfg, tmpl, am.decryptFn)
+	case "swit":
+		n, err = channels.NewSwitNotifier(cfg, tmpl, am.decryptFn)
 	case "discord":
 		n, err = channels.NewDiscordNotifier(cfg, tmpl)
 	case "googlechat":
