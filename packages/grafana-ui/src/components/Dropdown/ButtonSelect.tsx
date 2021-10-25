@@ -43,20 +43,27 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
     setIsOpen(false);
   };
 
-  const sanitizeLabel = (item: T | undefined) => {
+  const sanitizeLabel = (item: string | undefined) => {
     const timeUnits = {
       s: 'Second',
       m: 'Minute',
       h: 'Hour',
       d: 'Day',
     };
+    const isInterval = /^([0-9]).*(s|m|h|d)$/gim.test(item as string);
+
+    if (isInterval === false) {
+      return item;
+    }
     if (item !== undefined) {
-      const newItem = item?.split('');
+      const newItem = item.split('');
       const unit = newItem.pop();
-      if (Number(newItem.join('')) !== 1) {
-        return newItem.join('') + timeUnits[unit] + 's';
+
+      if (Number(newItem.join('')) !== 1 && unit !== undefined) {
+        return `${newItem.join('') + timeUnits[unit]}s`;
       }
-      return newItem.join('') + timeUnits[unit];
+
+      return newItem.join('') + timeUnits[unit!];
     } else {
       return '';
     }
@@ -85,7 +92,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
                     label={(item.label || item.value) as string}
                     onClick={() => onChangeInternal(item)}
                     active={item.value === value?.value}
-                    ariaLabel={sanitizeLabel(item.value)}
+                    ariaLabel={sanitizeLabel(item.label)}
                   />
                 ))}
               </Menu>
