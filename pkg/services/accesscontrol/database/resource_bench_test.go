@@ -59,7 +59,6 @@ func getDSPermissions(b *testing.B, store accesscontrol.ResourceStore, dataSourc
 		Resource:    dsResource,
 		ResourceIDs: []string{strconv.Itoa(int(dsId))},
 	})
-	fmt.Println(len(permissions))
 	require.NoError(b, err)
 	assert.GreaterOrEqual(b, len(permissions), 2)
 }
@@ -87,12 +86,9 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 
 	userIds, teamIds := generateTeamsAndUsers(b, db, usersNum)
 
-	fmt.Println("num users: ", len(userIds))
-
 	for _, dsID := range dataSources {
 		// Add DS permissions for the users
 		maxPermissions := int(math.Min(float64(permissionsPerDs), float64(len(userIds))))
-		fmt.Println(maxPermissions)
 		for i := 0; i < maxPermissions; i++ {
 			_, err := ac.SetUserResourcePermissions(
 				context.Background(),
