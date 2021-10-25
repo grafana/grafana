@@ -252,111 +252,116 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		return sch, ruleStore, instanceStore, adminConfigStore
 	}
 
+	// normal states do not include NoData and Error because currently it is not possible to perform any sensible test
+	normalStates := []eval.State{eval.Normal, eval.Alerting, eval.Pending}
 	randomNormalState := func() eval.State {
 		// pick only supported cases
-		return []eval.State{eval.Normal, eval.Alerting, eval.Pending}[rand.Intn(3)]
+		return normalStates[rand.Intn(3)]
 	}
 
-	t.Run("when rule evaluation happens", func(t *testing.T) {
-		evalChan := make(chan *evalContext)
-		evalAppliedChan := make(chan time.Time)
+	for _, evalState := range normalStates {
+		// TODO rewrite when we are able to mock/fake state manager
+		t.Run(fmt.Sprintf("when rule evaluation happens (evaluation state %s)", evalState), func(t *testing.T) {
+			evalChan := make(chan *evalContext)
+			evalAppliedChan := make(chan time.Time)
 
-		sch, ruleStore, instanceStore, _ := createSchedule(evalAppliedChan)
+			sch, ruleStore, instanceStore, _ := createSchedule(evalAppliedChan)
 
-		evalState := randomNormalState()
-		t.Logf("Rule evaluation state: %s", evalState)
-		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), evalState)
+			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), evalState)
 
-		go func() {
-			stop := make(chan struct{})
-			t.Cleanup(func() {
-				close(stop)
+			go func() {
+				stop := make(chan struct{})
+				t.Cleanup(func() {
+					close(stop)
+				})
+				_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
+			}()
+
+			expectedTime := time.UnixMicro(rand.Int63())
+
+			evalChan <- &evalContext{
+				now:     expectedTime,
+				version: rule.Version,
+			}
+
+			actualTime := waitForTimeChannel(t, evalAppliedChan)
+			require.Equal(t, expectedTime, actualTime)
+
+			t.Run("it should get rule from database when run the first time", func(t *testing.T) {
+				queries := make([]models.GetAlertRuleByUIDQuery, 0)
+				for _, op := range ruleStore.recordedOps {
+					switch q := op.(type) {
+					case models.GetAlertRuleByUIDQuery:
+						queries = append(queries, q)
+					}
+				}
+				require.NotEmptyf(t, queries, "Expected a %T request to rule store but nothing was recorded", models.GetAlertRuleByUIDQuery{})
+				require.Len(t, queries, 1, "Expected exactly one request of %T but got %d", models.GetAlertRuleByUIDQuery{}, len(queries))
+				require.Equal(t, rule.UID, queries[0].UID)
+				require.Equal(t, rule.OrgID, queries[0].OrgID)
 			})
-			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
-		}()
-
-		expectedTime := time.UnixMicro(rand.Int63())
-
-		evalChan <- &evalContext{
-			now:     expectedTime,
-			version: rule.Version,
-		}
-
-		actualTime := waitForTimeChannel(t, evalAppliedChan)
-		require.Equal(t, expectedTime, actualTime)
-
-		t.Run("it should get rule from database when run the first time", func(t *testing.T) {
-			queries := make([]models.GetAlertRuleByUIDQuery, 0)
-			for _, op := range ruleStore.recordedOps {
-				switch q := op.(type) {
-				case models.GetAlertRuleByUIDQuery:
-					queries = append(queries, q)
+			t.Run("it should process evaluation results via state manager", func(t *testing.T) {
+				// TODO rewrite when we are able to mock/fake state manager
+				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				require.Len(t, states, 1)
+				s := states[0]
+				t.Logf("State: %v", s)
+				require.Equal(t, rule.UID, s.AlertRuleUID)
+				require.Len(t, s.Results, 1)
+				var expectedStatus = evalState
+				if evalState == eval.Pending {
+					expectedStatus = eval.Alerting
 				}
-			}
-			require.NotEmptyf(t, queries, "Expected a %T request to rule store but nothing was recorded", models.GetAlertRuleByUIDQuery{})
-			require.Len(t, queries, 1, "Expected exactly one request of %T but got %d", models.GetAlertRuleByUIDQuery{}, len(queries))
-			require.Equal(t, rule.UID, queries[0].UID)
-			require.Equal(t, rule.OrgID, queries[0].OrgID)
-		})
-		t.Run("it should process evaluation results via state manager", func(t *testing.T) {
-			states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
-			require.Len(t, states, 1)
-			s := states[0]
-			t.Logf("State: %v", s)
-			require.Equal(t, rule.UID, s.AlertRuleUID)
-			require.Len(t, s.Results, 1)
-			var expectedStatus = evalState
-			if evalState == eval.Pending {
-				expectedStatus = eval.Alerting
-			}
-			require.Equal(t, expectedStatus.String(), s.Results[0].EvaluationState.String())
-			require.Equal(t, expectedTime, s.Results[0].EvaluationTime)
-		})
-		t.Run("it should save alert instances to storage", func(t *testing.T) {
-			states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
-			require.Len(t, states, 1)
-			s := states[0]
+				require.Equal(t, expectedStatus.String(), s.Results[0].EvaluationState.String())
+				require.Equal(t, expectedTime, s.Results[0].EvaluationTime)
+			})
+			t.Run("it should save alert instances to storage", func(t *testing.T) {
+				// TODO rewrite when we are able to mock/fake state manager
+				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				require.Len(t, states, 1)
+				s := states[0]
 
-			var cmd *models.SaveAlertInstanceCommand
-			for _, op := range instanceStore.recordedOps {
-				switch q := op.(type) {
-				case models.SaveAlertInstanceCommand:
-					cmd = &q
+				var cmd *models.SaveAlertInstanceCommand
+				for _, op := range instanceStore.recordedOps {
+					switch q := op.(type) {
+					case models.SaveAlertInstanceCommand:
+						cmd = &q
+					}
+					if cmd != nil {
+						break
+					}
 				}
-				if cmd != nil {
-					break
-				}
-			}
 
-			require.NotNil(t, cmd)
-			t.Logf("Saved alert instance: %v", cmd)
-			require.Equal(t, rule.OrgID, cmd.RuleOrgID)
-			require.Equal(t, expectedTime, cmd.LastEvalTime)
-			require.Equal(t, cmd.RuleUID, cmd.RuleUID)
-			require.Equal(t, evalState.String(), string(cmd.State))
-			require.Equal(t, s.Labels, data.Labels(cmd.Labels))
+				require.NotNil(t, cmd)
+				t.Logf("Saved alert instance: %v", cmd)
+				require.Equal(t, rule.OrgID, cmd.RuleOrgID)
+				require.Equal(t, expectedTime, cmd.LastEvalTime)
+				require.Equal(t, cmd.RuleUID, cmd.RuleUID)
+				require.Equal(t, evalState.String(), string(cmd.State))
+				require.Equal(t, s.Labels, data.Labels(cmd.Labels))
+			})
+			t.Run("it reports metrics", func(t *testing.T) {
+				totalCounter, err := sch.metrics.EvalTotal.GetMetricWithLabelValues(strconv.FormatInt(rule.OrgID, 10))
+				require.NoError(t, err)
+				m := &dto.Metric{}
+				err = totalCounter.Write(m)
+				require.NoError(t, err)
+				require.Equal(t, float64(1), *m.Counter.Value)
+
+				failureCounter, err := sch.metrics.EvalFailures.GetMetricWithLabelValues(strconv.FormatInt(rule.OrgID, 10))
+				require.NoError(t, err)
+				err = failureCounter.Write(m)
+				require.NoError(t, err)
+				require.Equal(t, float64(0), *m.Counter.Value)
+
+				duration, err := sch.metrics.EvalDuration.MetricVec.GetMetricWithLabelValues(strconv.FormatInt(rule.OrgID, 10))
+				require.NoError(t, err)
+				err = duration.Write(m)
+				require.NoError(t, err)
+				require.Equal(t, uint64(1), *m.Summary.SampleCount)
+			})
 		})
-		t.Run("it reports metrics", func(t *testing.T) {
-			totalCounter, err := sch.metrics.EvalTotal.GetMetricWithLabelValues(strconv.FormatInt(rule.OrgID, 10))
-			require.NoError(t, err)
-			m := &dto.Metric{}
-			err = totalCounter.Write(m)
-			require.NoError(t, err)
-			require.Equal(t, float64(1), *m.Counter.Value)
-
-			failureCounter, err := sch.metrics.EvalFailures.GetMetricWithLabelValues(strconv.FormatInt(rule.OrgID, 10))
-			require.NoError(t, err)
-			err = failureCounter.Write(m)
-			require.NoError(t, err)
-			require.Equal(t, float64(0), *m.Counter.Value)
-
-			duration, err := sch.metrics.EvalDuration.MetricVec.GetMetricWithLabelValues(strconv.FormatInt(rule.OrgID, 10))
-			require.NoError(t, err)
-			err = duration.Write(m)
-			require.NoError(t, err)
-			require.Equal(t, uint64(1), *m.Summary.SampleCount)
-		})
-	})
+	}
 
 	t.Run("should exit", func(t *testing.T) {
 		t.Run("when we signal it to stop", func(t *testing.T) {
@@ -496,6 +501,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		}
 		require.Len(t, queries, 1, "Expected exactly one request of %T", models.GetAlertRuleByUIDQuery{})
 	})
+
 	t.Run("when evaluation fails", func(t *testing.T) {
 		t.Run("it should increase failure counter", func(t *testing.T) {
 			t.Skip()
