@@ -49,7 +49,7 @@ func init() {
 			},
 			{
 				Label:        "Use Discord's Webhook Username",
-				Description:  "Enable this to use the username configured in Discord's webhook settings.  Otherwise, the username will be 'Grafana'",
+				Description:  "Use the username configured in Discord's webhook settings. Otherwise, the username will be 'Grafana'",
 				Element:      alerting.ElementTypeCheckbox,
 				PropertyName: "use_discord_username",
 			},
