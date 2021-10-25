@@ -1,11 +1,12 @@
 import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, Icon, Spinner, Select, Input, LinkButton, Field, Modal } from '@grafana/ui';
+import { Button, ClipboardButton, Field, Icon, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
 import { VariableRefresh } from '../../../variables/types';
+import { ShareModalTabProps } from './types';
 
 const snapshotApiUrl = '/api/snapshots';
 
@@ -16,11 +17,7 @@ const expireOptions: Array<SelectableValue<number>> = [
   { label: '7 Days', value: 60 * 60 * 24 * 7 },
 ];
 
-interface Props {
-  dashboard: DashboardModel;
-  panel?: PanelModel;
-  onDismiss(): void;
-}
+interface Props extends ShareModalTabProps {}
 
 interface State {
   isLoading: boolean;

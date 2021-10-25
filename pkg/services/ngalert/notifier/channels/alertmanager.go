@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -49,7 +48,7 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Templ
 	basicAuthPassword := fn(context.Background(), model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString(), setting.SecretKey)
 
 	return &AlertmanagerNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			DisableResolveMessage: model.DisableResolveMessage,
@@ -64,7 +63,7 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Templ
 
 // AlertmanagerNotifier sends alert notifications to the alert manager
 type AlertmanagerNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 
 	urls              []*url.URL
 	basicAuthUser     string

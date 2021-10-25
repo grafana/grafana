@@ -270,7 +270,8 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 	return dash, nil
 }
 
-func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
+func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO,
+	allowUiUpdate bool) (*models.Dashboard, error) {
 	if err := validateDashboardRefreshInterval(dto.Dashboard); err != nil {
 		dr.log.Warn("Changing refresh interval for imported dashboard to minimum refresh interval",
 			"dashboardUid", dto.Dashboard.Uid, "dashboardTitle", dto.Dashboard.Title, "minRefreshInterval",

@@ -12,6 +12,7 @@ import {
   GENERAL_FOLDER,
   ReadonlyFolderPicker,
 } from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
+import { AlertListSuggestionsSupplier } from './suggestions';
 
 function showIfCurrentState(options: AlertListOptions) {
   return options.showOptions === ShowOption.Current;
@@ -145,7 +146,8 @@ const alertList = new PanelPlugin<AlertListOptions>(AlertList)
         showIf: showIfCurrentState,
       });
   })
-  .setMigrationHandler(alertListPanelMigrationHandler);
+  .setMigrationHandler(alertListPanelMigrationHandler)
+  .setSuggestionsSupplier(new AlertListSuggestionsSupplier());
 
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertList).setPanelOptions((builder) => {
   builder

@@ -10,6 +10,7 @@ import { TablePanel } from './TablePanel';
 import { PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
+import { TableSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -130,4 +131,5 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
         defaultValue: '',
         showIf: (cfg) => cfg.footer?.show,
       });
-  });
+  })
+  .setSuggestionsSupplier(new TableSuggestionsSupplier());

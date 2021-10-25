@@ -42,10 +42,11 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
-import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 import { isOnTheSameGridRow } from './utils';
+import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -78,6 +79,7 @@ export class DashboardModel {
   tags: any;
   style: any;
   timezone: any;
+  weekStart: any;
   editable: any;
   graphTooltip: DashboardCursorSync;
   time: any;
@@ -139,6 +141,7 @@ export class DashboardModel {
     this.tags = data.tags ?? [];
     this.style = data.style ?? 'dark';
     this.timezone = data.timezone ?? '';
+    this.weekStart = data.weekStart ?? '';
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };

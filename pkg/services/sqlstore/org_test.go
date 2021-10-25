@@ -320,7 +320,6 @@ func TestAccountDataAccess(t *testing.T) {
 					query := models.GetOrgUsersQuery{OrgId: ac1.OrgId}
 					err = sqlStore.GetOrgUsers(context.Background(), &query)
 					require.NoError(t, err)
-					fmt.Println(query.Result)
 					// require.Equal(t, len(query.Result), 3)
 
 					dash1 := insertTestDashboard(t, sqlStore, "1 test dash", ac1.OrgId, 0, false, "prod", "webapp")

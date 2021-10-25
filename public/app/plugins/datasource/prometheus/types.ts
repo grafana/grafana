@@ -20,10 +20,10 @@ export interface PromQuery extends DataQuery {
 }
 
 export interface PromOptions extends DataSourceJsonData {
-  timeInterval: string;
-  queryTimeout: string;
-  httpMethod: string;
-  directUrl: string;
+  timeInterval?: string;
+  queryTimeout?: string;
+  httpMethod?: string;
+  directUrl?: string;
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
