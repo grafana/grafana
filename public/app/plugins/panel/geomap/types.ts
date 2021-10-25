@@ -67,8 +67,10 @@ export enum ComparisonOperation {
 // Runtime model
 //-------------------
 export interface MapLayerState<TConfig = any> {
+  uid: number; // value changes with each initalization
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
   layer: BaseLayer; // the openlayers instance
   onChange: (cfg: MapLayerOptions<TConfig>) => void;
+  isBasemap?: boolean;
 }
