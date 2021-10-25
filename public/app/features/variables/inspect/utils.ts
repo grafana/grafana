@@ -228,7 +228,7 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
 export function getAllAffectedPanelIdsForVariableChange(
   variableId: string,
   variables: VariableModel[],
-  panels?: PanelModel[]
+  panels: PanelModel[]
 ): number[] {
   let affectedPanelIds: number[] = getAffectedPanelIdsForVariable(variableId, panels);
 
@@ -267,8 +267,8 @@ export function getDependenciesForVariable(
   return deps;
 }
 
-export function getAffectedPanelIdsForVariable(variableId: string, panels?: PanelModel[]): number[] {
-  if (!panels || !panels.length) {
+export function getAffectedPanelIdsForVariable(variableId: string, panels: PanelModel[]): number[] {
+  if (!panels.length) {
     return [];
   }
 

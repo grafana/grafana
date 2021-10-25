@@ -499,10 +499,11 @@ export const variableUpdated = (
   events: typeof appEvents = appEvents
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id, getState());
+    const state = getState();
+    const variableInState = getVariable(identifier.id, state);
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
-    if (getState().templating.transaction.status === TransactionStatus.Fetching) {
+    if (state.templating.transaction.status === TransactionStatus.Fetching) {
       if (getVariableRefresh(variableInState) === VariableRefresh.never) {
         // for variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
         await dispatch(upgradeLegacyQueries(toVariableIdentifier(variableInState)));
@@ -511,10 +512,13 @@ export const variableUpdated = (
       return Promise.resolve();
     }
 
-    const variables = getVariables(getState());
+    const variables = getVariables(state);
     const g = createGraph(variables);
-    const panels = getState().dashboard.getModel()?.panels;
-    const affectedPanelIds = getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels);
+    const panels = state.dashboard.getModel()?.panels ?? [];
+    const strictPanelRefreshMode = state.templating.settings.strictPanelRefreshMode;
+    const affectedPanelIds = strictPanelRefreshMode
+      ? getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels)
+      : panels.map((p) => p.id);
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
