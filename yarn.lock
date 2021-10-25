@@ -15393,6 +15393,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-config-prettier@npm:8.3.0":
+  version: 8.3.0
+  resolution: "eslint-config-prettier@npm:8.3.0"
+  peerDependencies:
+    eslint: ">=7.0.0"
+  bin:
+    eslint-config-prettier: bin/cli.js
+  checksum: df4cea3032671995bb5ab07e016169072f7fa59f44a53251664d9ca60951b66cdc872683b5c6a3729c91497c11490ca44a79654b395dd6756beb0c3903a37196
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-jsdoc@npm:31.6.1":
   version: 31.6.1
   resolution: "eslint-plugin-jsdoc@npm:31.6.1"
@@ -17702,7 +17713,7 @@ fsevents@~2.1.2:
     es6-promise: 4.2.8
     es6-shim: 0.35.5
     eslint: 7.21.0
-    eslint-config-prettier: 7.2.0
+    eslint-config-prettier: 8.3.0
     eslint-plugin-jsdoc: 37.0.0
     eslint-plugin-lodash: ^7.2.0
     eslint-plugin-no-only-tests: 2.4.0
