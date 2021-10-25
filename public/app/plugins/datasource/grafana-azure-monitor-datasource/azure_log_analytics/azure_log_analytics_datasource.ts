@@ -60,7 +60,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
-    return !!(item.hide !== true && !!item.azureLogAnalytics?.query && !!item.azureLogAnalytics?.resource);
+    return item.hide !== true && !!item.azureLogAnalytics?.query && !!item.azureLogAnalytics.resource;
   }
 
   async getSubscriptions(): Promise<Array<{ text: string; value: string }>> {

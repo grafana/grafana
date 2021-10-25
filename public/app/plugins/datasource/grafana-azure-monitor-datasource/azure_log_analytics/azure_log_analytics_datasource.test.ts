@@ -411,6 +411,19 @@ describe('AzureLogAnalyticsDatasource', () => {
       expect(laDatasource.filterQuery(query)).toBeFalsy();
     });
 
+    it('should not run hidden queries', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        hide: true,
+        azureLogAnalytics: {
+          resource: '/sub/124/rg/cloud/vm/server',
+          query: 'perf | take 100',
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
+
     it('should not run queries missing a kusto query', () => {
       const query: AzureMonitorQuery = {
         refId: 'A',
