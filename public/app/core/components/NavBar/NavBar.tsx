@@ -1,17 +1,17 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useTheme2 } from '@grafana/ui';
+import { cloneDeep } from 'lodash';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 import appEvents from '../../app_events';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
 import { CoreEvents, KioskMode } from 'app/types';
-import { isSearchActive } from './utils';
-import TopSection from './TopSection';
-import BottomSection from './BottomSection';
-import PluginSection from './PluginSection';
+import { enrichConfigItems, isLinkActive, isSearchActive } from './utils';
+import { OrgSwitcher } from '../OrgSwitcher';
+import NavBarSection from './NavBarSection';
 import NavBarItem from './NavBarItem';
 
 const homeUrl = config.appSubUrl || '/';
@@ -23,6 +23,20 @@ export const NavBar: FC = React.memo(() => {
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const kiosk = query.get('kiosk') as KioskMode;
+  const [showSwitcherModal, setShowSwitcherModal] = useState(false);
+  const toggleSwitcherModal = () => {
+    setShowSwitcherModal(!showSwitcherModal);
+  };
+  const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
+  const coreItems = navTree.filter((item) => {
+    if (newNavigationEnabled) {
+      return !item.hideFromMenu && !item.id?.startsWith('plugin-page-');
+    }
+    return !item.hideFromMenu;
+  });
+  const pluginItems = navTree.filter((item) => !item.hideFromMenu && item.id?.startsWith('plugin-page-'));
+  const configItems = enrichConfigItems(navTree.filter((item) => item.hideFromMenu), location, toggleSwitcherModal);
+  const activeItemId = isSearchActive(location) ? 'search' : navTree.find((item) => isLinkActive(location.pathname, item))?.id;
 
   const toggleNavBarSmallBreakpoint = useCallback(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
@@ -38,21 +52,25 @@ export const NavBar: FC = React.memo(() => {
 
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
+
       {!newNavigationEnabled && (
         <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
           <Branding.MenuLogo />
         </NavBarItem>
       )}
       {newNavigationEnabled && (
-        <NavBarItem
-          className={cx(styles.grafanaLogo, styles.section)}
-          label="Full menu"
-          onClick={toggleNavBarSmallBreakpoint}
-          showMenu={false}
-        >
-          <Branding.MenuLogo />
-        </NavBarItem>
+        <NavBarSection>
+          <NavBarItem
+            className={styles.grafanaLogo}
+            label="Full menu"
+            onClick={toggleNavBarSmallBreakpoint}
+            showMenu={false}
+          >
+            <Branding.MenuLogo />
+          </NavBarItem>
+        </NavBarSection>
       )}
+
       <div className={styles.mobileSidemenuLogo} onClick={toggleNavBarSmallBreakpoint} key="hamburger">
         <Icon name="bars" size="xl" />
         <span className={styles.closeButton}>
@@ -60,20 +78,78 @@ export const NavBar: FC = React.memo(() => {
           Close
         </span>
       </div>
-      {newNavigationEnabled && (
+
+      <NavBarSection className={styles.searchContainer}>
         <NavBarItem
-          className={cx(styles.search, styles.section)}
-          isActive={isSearchActive(location)}
+          className={styles.search}
+          isActive={activeItemId === 'search'}
           label="Search dashboards"
           onClick={onOpenSearch}
         >
           <Icon name="search" size="xl" />
         </NavBarItem>
+      </NavBarSection>
+
+      <NavBarSection>
+        {coreItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={activeItemId === link.id}
+            label={link.text}
+            menuItems={link.children}
+            menuSubTitle={link.subTitle}
+            onClick={link.onClick}
+            target={link.target}
+            url={link.url}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
+      </NavBarSection>
+
+      {newNavigationEnabled && pluginItems.length > 0 && (
+        <NavBarSection>
+          {pluginItems.map((link, index) => (
+            <NavBarItem
+              key={`${link.id}-${index}`}
+              isActive={activeItemId === link.id}
+              label={link.text}
+              menuItems={link.children}
+              menuSubTitle={link.subTitle}
+              onClick={link.onClick}
+              target={link.target}
+              url={link.url}
+            >
+              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+              {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+            </NavBarItem>
+          ))}
+        </NavBarSection>
       )}
-      <TopSection />
-      {newNavigationEnabled && <PluginSection />}
+
       <div className={styles.spacer} />
-      <BottomSection />
+
+      <NavBarSection>
+        {configItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={activeItemId === link.id}
+            label={link.text}
+            menuItems={link.children}
+            menuSubTitle={link.subTitle}
+            onClick={link.onClick}
+            reverseMenuDirection
+            target={link.target}
+            url={link.url}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
+      </NavBarSection>
+
+      {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
     </nav>
   );
 });
@@ -81,6 +157,9 @@ export const NavBar: FC = React.memo(() => {
 NavBar.displayName = 'NavBar';
 
 const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
+  searchContainer: css`
+    margin-top: ${newNavigationEnabled ? 'none' : theme.spacing(5)};
+  `,
   search: css`
     display: none;
 
@@ -92,11 +171,6 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
       display: block;
     }
   `,
-  section: css`
-    background-color: ${theme.colors.background.primary};
-    border: 1px solid ${theme.components.panel.borderColor};
-    border-radius: 2px;
-  `,
   sidemenu: css`
     display: flex;
     flex-direction: column;
@@ -107,6 +181,7 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
       background: ${newNavigationEnabled ? 'none' : theme.colors.background.primary};
       border-right: ${newNavigationEnabled ? 'none' : `1px solid ${theme.components.panel.borderColor}`};
       gap: ${theme.spacing(newNavigationEnabled ? 1 : 0)};
+      padding: ${theme.spacing(1)} 0;
       position: relative;
       width: ${theme.components.sidemenu.width}px;
     }
@@ -133,7 +208,6 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
   `,
   grafanaLogo: css`
     display: none;
-    margin-top: ${newNavigationEnabled ? theme.spacing(1) : 'none'};
 
     ${theme.breakpoints.up('md')} {
       align-items: center;
