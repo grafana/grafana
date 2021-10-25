@@ -9,9 +9,11 @@ import {
   RequestStatus,
   PluginListDisplayMode,
 } from '../types';
+import * as permissions from '../permissions';
 import remotePluginMock from './remotePlugin.mock';
 import localPluginMock from './localPlugin.mock';
 import catalogPluginMock from './catalogPlugin.mock';
+import { mocked } from 'ts-jest/utils';
 
 // Returns a sample mock for a CatalogPlugin plugin with the possibility to extend it
 export const getCatalogPluginMock = (overrides?: Partial<CatalogPlugin>) => ({ ...catalogPluginMock, ...overrides });
@@ -98,3 +100,16 @@ export const mockPluginApis = ({
     },
   });
 };
+
+type UserAccessTestContext = {
+  isAdmin: boolean;
+  isOrgAdmin: boolean;
+  isDataSourceEditor: boolean;
+};
+
+export function mockUserPermissions(options: UserAccessTestContext): void {
+  const mock = mocked(permissions);
+  mock.isDataSourceEditor.mockReturnValue(options.isDataSourceEditor);
+  mock.isOrgAdmin.mockReturnValue(options.isOrgAdmin);
+  mock.isGrafanaAdmin.mockReturnValue(options.isAdmin);
+}

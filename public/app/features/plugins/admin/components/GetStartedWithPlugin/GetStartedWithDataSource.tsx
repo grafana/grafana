@@ -1,10 +1,9 @@
 import { DataSourcePluginMeta } from '@grafana/data';
 import { Button } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { addDataSource } from 'app/features/datasources/state/actions';
-import { AccessControlAction } from 'app/types';
 import React, { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
+import { isDataSourceEditor } from '../../permissions';
 import { CatalogPlugin } from '../../types';
 
 type Props = {
@@ -22,7 +21,7 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
     dispatch(addDataSource(meta));
   }, [dispatch, plugin]);
 
-  if (!hasPermissionToCreateDataSource()) {
+  if (!isDataSourceEditor()) {
     return null;
   }
 
@@ -30,12 +29,5 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
     <Button variant="primary" onClick={onAddDataSource}>
       Create a {plugin.name} data source
     </Button>
-  );
-}
-
-function hasPermissionToCreateDataSource(): boolean {
-  return (
-    contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
-    contextSrv.hasPermission(AccessControlAction.DataSourcesWrite)
   );
 }
