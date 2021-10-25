@@ -1,4 +1,5 @@
-import { MapLayerOptions } from '@grafana/data';
+import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
+import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
 import { MapCenterID } from './view';
 
@@ -60,4 +61,14 @@ export enum ComparisonOperation {
   LTE = 'lte',
   GT = 'gt',
   GTE = 'gte',
+}
+
+//-------------------
+// Runtime model
+//-------------------
+export interface MapLayerState<TConfig = any> {
+  options: MapLayerOptions<TConfig>;
+  handler: MapLayerHandler;
+  layer: BaseLayer; // the openlayers instance
+  onChange: (cfg: MapLayerOptions<TConfig>) => void;
 }

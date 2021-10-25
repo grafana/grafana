@@ -171,8 +171,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         const vectorSource = new source.Vector({ features });
         vectorLayer.setSource(vectorSource);
       },
-    };
-  },
+
   // Marker overlay options
   registerOptionsUI: (builder) => {
     builder
@@ -231,6 +230,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         description: 'Show legend',
         defaultValue: defaultOptions.showLegend,
       });
+  },
+    };
   },
 
   // fill in the default values

@@ -4,13 +4,11 @@ import { Map, MapBrowserEvent, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
-import BaseLayer from 'ol/layer/Base';
 import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 
 import {
   PanelData,
-  MapLayerHandler,
   MapLayerOptions,
   PanelProps,
   GrafanaTheme,
@@ -20,7 +18,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from './types';
+import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig } from './types';
 import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
@@ -33,12 +31,6 @@ import { Global } from '@emotion/react';
 import { GeomapHoverFeature, GeomapHoverPayload } from './event';
 import { DataHoverView } from './components/DataHoverView';
 
-interface MapLayerState {
-  config: MapLayerOptions;
-  handler: MapLayerHandler;
-  layer: BaseLayer; // used to add|remove
-}
-
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
 
@@ -47,15 +39,24 @@ interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
 }
 
+export interface GeomapInstanceState {
+  map?: Map;
+  basemap?: MapLayerState;
+  layers: MapLayerState[];
+}
+
 export class GeomapPanel extends Component<Props, State> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
+  instanceState: GeomapInstanceState = {
+    layers: [],
+  };
 
   globalCSS = getGlobalStyles(config.theme2);
 
   counter = 0;
   map?: Map;
-  basemap?: BaseLayer;
+  basemap?: MapLayerState;
   layers: MapLayerState[] = [];
   mouseWheelZoom?: MouseWheelZoom;
   style = getStyles(config.theme);
@@ -69,9 +70,6 @@ export class GeomapPanel extends Component<Props, State> {
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
-    if (this.panelContext.onInstanceStateChange) {
-      this.panelContext.onInstanceStateChange(this);
-    }
   }
 
   shouldComponentUpdate(nextProps: Props) {
@@ -234,12 +232,32 @@ export class GeomapPanel extends Component<Props, State> {
     const item = geomapLayerRegistry.getIfExists(cfg.type) ?? defaultBaseLayer;
     const handler = await item.create(this.map, cfg, config.theme2);
     const layer = handler.init();
+
     if (this.basemap) {
-      this.map.removeLayer(this.basemap);
-      this.basemap.dispose();
+      this.map.removeLayer(this.basemap.layer);
+      this.basemap.layer.dispose();
     }
-    this.basemap = layer;
-    this.map.getLayers().insertAt(0, this.basemap);
+    this.basemap = {
+      options: cfg,
+      handler,
+      layer,
+      onChange: (cfg: MapLayerOptions) => {
+        this.props.onOptionsChange({
+          ...this.props.options,
+          basemap: cfg,
+        });
+      },
+    };
+    this.map.getLayers().insertAt(0, this.basemap.layer);
+
+    // actually update the layers?
+    if (this.panelContext.onInstanceStateChange) {
+      this.panelContext.onInstanceStateChange({
+        map: this.map,
+        layers: this.layers,
+        basemap: this.basemap,
+      });
+    }
   }
 
   async initLayers(layers: MapLayerOptions[]) {
@@ -254,8 +272,9 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     const legends: React.ReactNode[] = [];
-    this.layers = [];
-    for (const overlay of layers) {
+    const state: MapLayerState[] = [];
+    for (let i = 0; i < layers.length; i++) {
+      const overlay = layers[i];
       const item = geomapLayerRegistry.getIfExists(overlay.type);
       if (!item) {
         console.warn('unknown layer type: ', overlay);
@@ -264,22 +283,43 @@ export class GeomapPanel extends Component<Props, State> {
 
       const handler = await item.create(this.map!, overlay, config.theme2);
       const layer = handler.init();
-      (layer as any).___handler = handler;
+      (layer as any).___handler = handler; // save reference on the ol layer
       this.map!.addLayer(layer);
-      this.layers.push({
-        config: overlay,
+      state.push({
+        options: overlay,
         layer,
         handler,
+
+        // Used by the editors
+        onChange: (cfg) => {
+          const { options } = this.props;
+          const layers = { ...options.layers };
+          layers[i] = cfg;
+          this.props.onOptionsChange({
+            ...options,
+            layers,
+          });
+        },
       });
 
       if (handler.legend) {
         legends.push(<div key={`${this.counter++}`}>{handler.legend}</div>);
       }
     }
+    this.layers = state;
     this.setState({ bottomLeft: legends });
 
     // Update data after init layers
     this.dataChanged(this.props.data);
+
+    // actually update the layers?
+    if (this.panelContext.onInstanceStateChange) {
+      this.panelContext.onInstanceStateChange({
+        map: this.map,
+        layers: state,
+        basemap: this.basemap,
+      });
+    }
   }
 
   initMapView(config: MapViewConfig): View {

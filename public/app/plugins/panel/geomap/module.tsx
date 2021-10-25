@@ -1,6 +1,6 @@
 import React from 'react';
 import { PanelPlugin } from '@grafana/data';
-import { GeomapPanel } from './GeomapPanel';
+import { GeomapInstanceState, GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
@@ -32,45 +32,48 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
-    // Check server settings to disable custom basemap settings
-    if (config.geomapDisableCustomBaseLayer) {
-      builder.addCustomEditor({
-        category: ['Base layer'],
-        id: 'layers',
-        path: '',
-        name: '',
-        // eslint-disable-next-line react/display-name
-        editor: () => <div>The base layer is configured by the server admin.</div>,
-      });
+    const panel = context.instanceState as GeomapInstanceState;
+    if (!panel) {
+      // TODO? show spinner?
     } else {
-      builder.addNestedOptions(
-        getLayerEditor({
+      // Check server settings to disable custom basemap settings
+      if (config.geomapDisableCustomBaseLayer) {
+        builder.addCustomEditor({
           category: ['Base layer'],
-          path: 'basemap', // only one for now
-          basemaps: true,
-          current: context.options?.layers?.[0],
-        })
-      );
-    }
-
-    let layerCount = context.options?.layers?.length;
-    if (layerCount == null || layerCount < 1) {
-      layerCount = 1;
-    }
-
-    for (let i = 0; i < layerCount; i++) {
-      let name = 'Data layer';
-      if (i > 0) {
-        name += ` (${i + 1})`;
+          id: 'layers',
+          path: '',
+          name: '',
+          // eslint-disable-next-line react/display-name
+          editor: () => <div>The base layer is configured by the server admin.</div>,
+        });
+      } else if (panel.basemap) {
+        builder.addNestedOptions(
+          getLayerEditor({
+            state: panel.basemap,
+            category: ['Base layer'],
+            basemaps: true,
+          })
+        );
       }
-      builder.addNestedOptions(
-        getLayerEditor({
-          category: [name],
-          path: `layers[${i}]`, // only one for now
-          basemaps: false,
-          current: context.options?.layers?.[i],
-        })
-      );
+
+      let layerCount = panel.layers.length;
+      // if (layerCount == null || layerCount < 1) {
+      //   layerCount = 1;
+      // }
+
+      for (let i = 0; i < layerCount; i++) {
+        let name = 'Data layer';
+        if (i > 0) {
+          name += ` (${i + 1})`;
+        }
+        builder.addNestedOptions(
+          getLayerEditor({
+            state: panel.layers[i],
+            category: [name],
+            basemaps: false,
+          })
+        );
+      }
     }
 
     // The controls section

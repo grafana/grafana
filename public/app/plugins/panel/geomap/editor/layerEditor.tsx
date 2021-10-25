@@ -11,38 +11,47 @@ import { GazetteerPathEditor } from './GazetteerPathEditor';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { defaultMarkersConfig } from '../layers/data/markersLayer';
 import { hasAlphaPanels } from 'app/core/config';
+import { MapLayerState } from '../types';
+import { get as lodashGet } from 'lodash';
+import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
 export interface LayerEditorOptions {
+  state: MapLayerState;
   category: string[];
-  path: string;
   basemaps: boolean; // only basemaps
-  current?: MapLayerOptions;
 }
 
 export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<MapLayerOptions> {
   return {
     category: opts.category,
-    path: opts.path,
+    path: '', // Empty path will get the current object from the accessor below
     defaultValue: opts.basemaps ? DEFAULT_BASEMAP_CONFIG : defaultMarkersConfig,
     values: (parent: NestedValueAccess) => ({
-      getValue: (path: string) => parent.getValue(`${opts.path}.${path}`),
+      getValue: (path: string) => (path ? lodashGet(opts.state.options, path) : opts.state.options),
       onChange: (path: string, value: any) => {
+        const { state } = opts;
+        const { options } = state;
         if (path === 'type' && value) {
           const layer = geomapLayerRegistry.getIfExists(value);
           if (layer) {
-            parent.onChange(opts.path, {
-              ...opts.current, // keep current shared options
+            state.onChange({
+              ...options, // keep current shared options
               type: layer.id,
               config: { ...layer.defaultOptions }, // clone?
             });
-            return; // reset current values
+            return;
           }
         }
-        parent.onChange(`${opts.path}.${path}`, value);
+        state.onChange(setOptionImmutably(options, path, value));
       },
     }),
     build: (builder, context) => {
-      const { options } = context;
+      if (!opts.state) {
+        console.log('MISSING LAYER!!!', opts);
+        return;
+      }
+
+      const { handler, options } = opts.state;
       const layer = geomapLayerRegistry.getIfExists(options?.type);
 
       const layerTypes = geomapLayerRegistry.selectOptions(
@@ -59,6 +68,11 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           options: layerTypes.options,
         },
       });
+
+      // Don't show UI for default configuration
+      if (options.type === DEFAULT_BASEMAP_CONFIG.type) {
+        return;
+      }
 
       if (layer) {
         if (layer.showLocation) {
@@ -123,8 +137,8 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
               showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
             });
         }
-        if (layer.registerOptionsUI) {
-          layer.registerOptionsUI(builder);
+        if (handler.registerOptionsUI) {
+          handler.registerOptionsUI(builder);
         }
         if (layer.showOpacity) {
           // TODO -- add opacity check

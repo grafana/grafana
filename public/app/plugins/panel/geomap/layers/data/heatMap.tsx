@@ -110,8 +110,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         }
         vectorLayer.setGradient(colors);
       },
-    };
-  },
+
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
     builder
@@ -155,6 +154,8 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
           step: 1,
         },
       });
+  },
+    };
   },
   // fill in the default values
   defaultOptions,
