@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel } from '@grafana/data';
+import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel, VisualizationSuggestion } from '@grafana/data';
 import { css } from '@emotion/css';
 import { VizTypeChangeDetails } from './types';
 import { VisualizationPreview } from './VisualizationPreview';
@@ -17,11 +17,12 @@ export interface Props {
   onClose: () => void;
 }
 
-export function VisualizationSuggestions({ onChange, data, panel }: Props) {
+export function VisualizationSuggestions({ onChange, data, panel, searchQuery }: Props) {
   const styles = useStyles2(getStyles);
   const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
   // temp test
   const [showTitle, setShowTitle] = useLocalStorage(`VisualizationSuggestions.showTitle`, false);
+  const filteredSuggestions = filterSuggestionsBySearch(searchQuery, suggestions);
 
   return (
     <AutoSizer disableHeight style={{ width: '100%', height: '100%' }}>
@@ -42,23 +43,38 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
               </div>
             </div>
             <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth - 1}px)` }}>
-              {suggestions &&
-                suggestions.map((suggestion, index) => (
-                  <VisualizationPreview
-                    key={index}
-                    data={data!}
-                    suggestion={suggestion}
-                    onChange={onChange}
-                    width={previewWidth}
-                    showTitle={showTitle}
-                  />
-                ))}
+              {filteredSuggestions.map((suggestion, index) => (
+                <VisualizationPreview
+                  key={index}
+                  data={data!}
+                  suggestion={suggestion}
+                  onChange={onChange}
+                  width={previewWidth}
+                  showTitle={showTitle}
+                />
+              ))}
+              {searchQuery && filteredSuggestions.length === 0 && (
+                <div className={styles.infoText}>No results matched your query</div>
+              )}
             </div>
           </div>
         );
       }}
     </AutoSizer>
   );
+}
+
+function filterSuggestionsBySearch(
+  searchQuery: string,
+  suggestions?: VisualizationSuggestion[]
+): VisualizationSuggestion[] {
+  if (!searchQuery || !suggestions) {
+    return suggestions || [];
+  }
+
+  const regex = new RegExp(searchQuery, 'i');
+
+  return suggestions.filter((s) => regex.test(s.name) || regex.test(s.pluginId));
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
