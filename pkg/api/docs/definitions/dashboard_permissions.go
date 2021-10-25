@@ -29,17 +29,23 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:parameters postDashboardPermissions
+// swagger:parameters postDashboardPermissions updateFolderPermissions
 type PostDashboardPermissionsParam struct {
 	// in:body
 	// required:true
-	Body []DashboardAclUpdateItem
+	Body UpdateDashboardAclCommand
 }
 
 // swagger:response getDashboardPermissionsResponse
 type GetDashboardPermissionsResponse struct {
 	// in: body
 	Body []*models.DashboardAclInfoDTO `json:"body"`
+}
+
+// UpdateDashboardAclCommand is same as dtos.UpdateDashboardAclCommand but with swagger annotations
+// swagger:model
+type UpdateDashboardAclCommand struct {
+	Items []DashboardAclUpdateItem `json:"items"`
 }
 
 // DashboardAclUpdateItem is same as dtos.DashboardAclUpdateItem but with swagger annotations

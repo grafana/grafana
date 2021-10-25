@@ -304,10 +304,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/DashboardAclUpdateItem"
-              }
+              "$ref": "#/definitions/UpdateDashboardAclCommand"
             }
           },
           {
@@ -1350,6 +1347,82 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders/{folder_uid}/permissions": {
+      "get": {
+        "tags": [
+          "folder_permissions"
+        ],
+        "summary": "Gets all existing permissions for the folder with the given `uid`.",
+        "operationId": "getFolderPermissions",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "FolderUID",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDashboardPermissionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "folder_permissions"
+        ],
+        "summary": "Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.",
+        "operationId": "updateFolderPermissions",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDashboardAclCommand"
+            }
+          },
+          {
+            "type": "string",
+            "x-go-name": "FolderUID",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2650,6 +2723,20 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "UpdateDashboardAclCommand": {
+      "description": "UpdateDashboardAclCommand is same as dtos.UpdateDashboardAclCommand but with swagger annotations",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardAclUpdateItem"
+          },
+          "x-go-name": "Items"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+    },
     "UpdateDataSourceCommand": {
       "description": "Also acts as api DTO",
       "type": "object",
@@ -3164,6 +3251,10 @@
     {
       "description": "Folders are identified by the identifier (id) and the unique identifier (uid).\nThe identifier (id) of a folder is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a folder can be used for uniquely identify folders between multiple Grafana installs. It’s automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.\nThe uid can have a maximum length of 40 characters.\n\nThe General folder (id=0) is special and is not part of the Folder API which means that you cannot use this API for retrieving information about the General folder.",
       "name": "folders"
+    },
+    {
+      "description": "Permissions with `folderId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.",
+      "name": "folder_permissions"
     }
   ]
 }

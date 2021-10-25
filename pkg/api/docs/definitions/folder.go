@@ -95,6 +95,7 @@ type GetFoldersParams struct {
 }
 
 // swagger:parameters getFolderByUID updateFolder deleteFolder
+// swagger:parameters getFolderPermissions updateFolderPermissions
 type FolderUIDParam struct {
 	// in:path
 	// required:true
