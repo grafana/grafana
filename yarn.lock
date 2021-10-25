@@ -7055,17 +7055,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-force@npm:*":
+"@types/d3-force@npm:*, @types/d3-force@npm:3.0.3":
   version: 3.0.3
   resolution: "@types/d3-force@npm:3.0.3"
   checksum: 1082a07c028b454fccbb250381e1388818606faff0a7b81d80bc4ab53c5f86f2618fcbb12226402880476d96be9bb24c6c38f175c5e697e94ea4cf8af389be6c
-  languageName: node
-  linkType: hard
-
-"@types/d3-force@npm:^2.1.0":
-  version: 2.1.4
-  resolution: "@types/d3-force@npm:2.1.4"
-  checksum: 635a070c68f7ed9ad3962ec7d2fca7c590349648a1b80e6e1a6084885962f84bcaf12b6998fb3aa190fe97b5d8ed2669084145dcd6b89fec6624a5a2d157beb6
   languageName: node
   linkType: hard
 
@@ -17615,7 +17608,7 @@ fsevents@~2.1.2:
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.0.0
-    "@types/d3-force": ^2.1.0
+    "@types/d3-force": 3.0.3
     "@types/d3-scale-chromatic": 1.3.1
     "@types/debounce-promise": 3.1.3
     "@types/enzyme": 3.10.5
