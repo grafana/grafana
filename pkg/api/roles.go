@@ -171,7 +171,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Role: accesscontrol.RoleDTO{
 				Version:     1,
 				Name:        "fixed:orgs:writer",
-				Description: "Create, Read, Write, Delete orgs. Read, Write orgs' quotas.",
+				Description: "Create, read, write, or delete an organization. Read or write an organization's quotas.",
 				Permissions: []accesscontrol.Permission{
 					{Action: ActionOrgsCreate},
 					{
