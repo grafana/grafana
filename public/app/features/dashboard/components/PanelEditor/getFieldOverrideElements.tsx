@@ -260,5 +260,6 @@ function getBorderTopStyles(theme: GrafanaTheme2) {
   return css({
     borderTop: `1px solid ${theme.colors.border.weak}`,
     padding: `${theme.spacing(2)}`,
+    display: 'flex',
   });
 }

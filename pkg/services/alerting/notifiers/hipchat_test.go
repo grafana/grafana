@@ -6,75 +6,74 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 //nolint:goconst
 func TestHipChatNotifier(t *testing.T) {
-	Convey("HipChat notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
-				json := `{ }`
+	t.Run("Parsing alert notification from settings", func(t *testing.T) {
+		t.Run("empty settings should return error", func(t *testing.T) {
+			json := `{ }`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &models.AlertNotification{
-					Name:     "ops",
-					Type:     "hipchat",
-					Settings: settingsJSON,
-				}
+			settingsJSON, _ := simplejson.NewJson([]byte(json))
+			model := &models.AlertNotification{
+				Name:     "ops",
+				Type:     "hipchat",
+				Settings: settingsJSON,
+			}
 
-				_, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-				So(err, ShouldNotBeNil)
-			})
+			_, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			require.Error(t, err)
+		})
 
-			Convey("from settings", func() {
-				json := `
+		t.Run("from settings", func(t *testing.T) {
+			json := `
 				{
           			"url": "http://google.com"
 				}`
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &models.AlertNotification{
-					Name:     "ops",
-					Type:     "hipchat",
-					Settings: settingsJSON,
-				}
+			settingsJSON, _ := simplejson.NewJson([]byte(json))
+			model := &models.AlertNotification{
+				Name:     "ops",
+				Type:     "hipchat",
+				Settings: settingsJSON,
+			}
 
-				not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-				hipchatNotifier := not.(*HipChatNotifier)
+			not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			hipchatNotifier := not.(*HipChatNotifier)
 
-				So(err, ShouldBeNil)
-				So(hipchatNotifier.Name, ShouldEqual, "ops")
-				So(hipchatNotifier.Type, ShouldEqual, "hipchat")
-				So(hipchatNotifier.URL, ShouldEqual, "http://google.com")
-				So(hipchatNotifier.APIKey, ShouldEqual, "")
-				So(hipchatNotifier.RoomID, ShouldEqual, "")
-			})
+			require.Nil(t, err)
+			require.Equal(t, "ops", hipchatNotifier.Name)
+			require.Equal(t, "hipchat", hipchatNotifier.Type)
+			require.Equal(t, "http://google.com", hipchatNotifier.URL)
+			require.Equal(t, "", hipchatNotifier.APIKey)
+			require.Equal(t, "", hipchatNotifier.RoomID)
+		})
 
-			Convey("from settings with Recipient and Mention", func() {
-				json := `
+		t.Run("from settings with Recipient and Mention", func(t *testing.T) {
+			json := `
 				{
           "url": "http://www.hipchat.com",
           "apikey": "1234",
           "roomid": "1234"
 				}`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &models.AlertNotification{
-					Name:     "ops",
-					Type:     "hipchat",
-					Settings: settingsJSON,
-				}
+			settingsJSON, _ := simplejson.NewJson([]byte(json))
+			model := &models.AlertNotification{
+				Name:     "ops",
+				Type:     "hipchat",
+				Settings: settingsJSON,
+			}
 
-				not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-				hipchatNotifier := not.(*HipChatNotifier)
+			not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			hipchatNotifier := not.(*HipChatNotifier)
 
-				So(err, ShouldBeNil)
-				So(hipchatNotifier.Name, ShouldEqual, "ops")
-				So(hipchatNotifier.Type, ShouldEqual, "hipchat")
-				So(hipchatNotifier.URL, ShouldEqual, "http://www.hipchat.com")
-				So(hipchatNotifier.APIKey, ShouldEqual, "1234")
-				So(hipchatNotifier.RoomID, ShouldEqual, "1234")
-			})
+			require.Nil(t, err)
+			require.Equal(t, "ops", hipchatNotifier.Name)
+			require.Equal(t, "hipchat", hipchatNotifier.Type)
+			require.Equal(t, "http://www.hipchat.com", hipchatNotifier.URL)
+			require.Equal(t, "1234", hipchatNotifier.APIKey)
+			require.Equal(t, "1234", hipchatNotifier.RoomID)
 		})
 	})
 }

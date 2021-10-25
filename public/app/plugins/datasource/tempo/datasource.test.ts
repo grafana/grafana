@@ -209,7 +209,7 @@ const backendSrvWithPrometheus = {
     if (uid === 'prom') {
       return {
         query() {
-          return of({ data: [totalsPromMetric, secondsPromMetric] });
+          return of({ data: [totalsPromMetric, secondsPromMetric, failedPromMetric] });
         },
       };
     }
@@ -277,6 +277,19 @@ const secondsPromMetric = new MutableDataFrame({
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
     { name: 'Value #traces_service_graph_request_server_seconds_sum', values: [10, 40] },
+  ],
+});
+
+const failedPromMetric = new MutableDataFrame({
+  refId: 'traces_service_graph_request_failed_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #traces_service_graph_request_failed_total', values: [2, 15] },
   ],
 });
 
