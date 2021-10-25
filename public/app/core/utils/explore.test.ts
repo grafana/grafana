@@ -239,7 +239,7 @@ describe('hasNonEmptyQuery', () => {
   });
 
   test('should return false if query is empty', () => {
-    expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'panel' }])).toBeFalsy();
+    expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'panel', datasource: 'some-ds' }])).toBeFalsy();
   });
 
   test('should return false if no queries exist', () => {
