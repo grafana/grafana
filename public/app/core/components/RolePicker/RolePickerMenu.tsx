@@ -71,12 +71,12 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
 
   return (
     <div className={cx(styles.menu, customStyles.menu)} aria-label="Role picker menu">
-      <div className={customStyles.groupHeader}>Built-in roles</div>
-      <BuiltinRoleSelector value={builtInRole} onChange={onSelectedBuiltinRoleChange} />
-      {!!customRoles?.length && (
-        <>
-          <div className={customStyles.groupHeader}>Custom roles</div>
-          <CustomScrollbar autoHide={false} autoHeightMax="200px" hideHorizontalTrack>
+      <CustomScrollbar autoHide={false} autoHeightMax="250px" hideHorizontalTrack>
+        <div className={customStyles.groupHeader}>Built-in roles</div>
+        <BuiltinRoleSelector value={builtInRole} onChange={onSelectedBuiltinRoleChange} />
+        {!!customRoles?.length && (
+          <>
+            <div className={customStyles.groupHeader}>Custom roles</div>
             <div className={styles.optionBody}>
               {customRoles.map((option, i) => (
                 <RoleMenuOption
@@ -87,13 +87,11 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
                 />
               ))}
             </div>
-          </CustomScrollbar>
-        </>
-      )}
-      {!!fixedRoles?.length && (
-        <>
-          <div className={customStyles.groupHeader}>Fixed roles</div>
-          <CustomScrollbar autoHide={false} autoHeightMax="200px" hideHorizontalTrack>
+          </>
+        )}
+        {!!fixedRoles?.length && (
+          <>
+            <div className={customStyles.groupHeader}>Fixed roles</div>
             <div className={styles.optionBody}>
               {fixedRoles.map((option, i) => (
                 <RoleMenuOption
@@ -108,9 +106,9 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
                 />
               ))}
             </div>
-          </CustomScrollbar>
-        </>
-      )}
+          </>
+        )}
+      </CustomScrollbar>
       <div className={customStyles.menuButtonRow}>
         <HorizontalGroup justify="flex-end">
           <Button size="sm" fill="text" onClick={onClearInternal}>
