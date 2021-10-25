@@ -54,9 +54,6 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       format: new GeoJSON(),
     });
 
-    source.addChangeListener('kkkk', (e) => {
-      console.log( 'LOADING', e );
-    });
 
     const key = source.on('change', () => {
       if (source.getState() == 'ready') {
@@ -67,7 +64,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         //     // Only after using setTimeout can I search the feature list... :(
         // }, 100)
 
-        console.log( "READY!!!", source.getFeatures().length );
+        console.log( "SOURCE READY!!!", source.getFeatures().length );
       }
     });
 
@@ -108,7 +105,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       // Geojson source url
       registerOptionsUI: (builder) => {
         const features = source.getFeatures();
-        console.log("FEATURES", source.loading, features.length);
+        console.log("FEATURES", source.getState(), features.length, options);
 
         builder
           .addSelect({

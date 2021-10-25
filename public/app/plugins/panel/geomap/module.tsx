@@ -5,6 +5,7 @@ import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
 import { getLayerEditor } from './editor/layerEditor';
+import { LayersEditor } from './editor/LayersEditor';
 import { config } from '@grafana/runtime';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
@@ -32,11 +33,41 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
-    const panel = context.instanceState as GeomapInstanceState;
-    if (!panel) {
+    const state = context.instanceState as GeomapInstanceState;
+    if (!state?.layers) {
       // TODO? show spinner?
     } else {
-      // Check server settings to disable custom basemap settings
+      builder.addCustomEditor({
+        category: ['Map Layers'],
+        id: 'layers',
+        path: '',
+        name: '',
+        editor: LayersEditor,
+      });
+
+      const selected = state.layers[state.selected];
+      if (state.selected && selected) {
+        builder.addNestedOptions(
+          getLayerEditor({
+            state: selected,
+            category: ['Selected layer'],
+            basemaps: false,
+          })
+        );
+      } else {
+        // For now show each layer
+        for (let i = state.layers.length - 1; i > 0; i--) {
+          builder.addNestedOptions(
+            getLayerEditor({
+              state: state.layers[i],
+              category: [`Layer: ${i}`],
+              basemaps: false,
+            })
+          );
+        }
+      }
+
+      const baselayer = state.layers[0];
       if (config.geomapDisableCustomBaseLayer) {
         builder.addCustomEditor({
           category: ['Base layer'],
@@ -46,31 +77,12 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
           // eslint-disable-next-line react/display-name
           editor: () => <div>The base layer is configured by the server admin.</div>,
         });
-      } else if (panel.basemap) {
+      } else if (baselayer) {
         builder.addNestedOptions(
           getLayerEditor({
-            state: panel.basemap,
+            state: baselayer,
             category: ['Base layer'],
             basemaps: true,
-          })
-        );
-      }
-
-      let layerCount = panel.layers.length;
-      // if (layerCount == null || layerCount < 1) {
-      //   layerCount = 1;
-      // }
-
-      for (let i = 0; i < layerCount; i++) {
-        let name = 'Data layer';
-        if (i > 0) {
-          name += ` (${i + 1})`;
-        }
-        builder.addNestedOptions(
-          getLayerEditor({
-            state: panel.layers[i],
-            category: [name],
-            basemaps: false,
           })
         );
       }
