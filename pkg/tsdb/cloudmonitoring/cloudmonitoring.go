@@ -115,8 +115,9 @@ type datasourceInfo struct {
 	defaultProject     string
 	clientEmail        string
 	tokenUri           string
-	privateKey         []byte
 	client             *http.Client
+
+	decryptedSecureJSONData map[string]string
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -148,14 +149,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		dsInfo := &datasourceInfo{
-			id:                 settings.ID,
-			updated:            settings.Updated,
-			url:                settings.URL,
-			authenticationType: authType,
-			defaultProject:     defaultProject,
-			clientEmail:        clientEmail,
-			tokenUri:           tokenUri,
-			privateKey:         []byte(settings.DecryptedSecureJSONData["privateKey"]),
+			id:                      settings.ID,
+			updated:                 settings.Updated,
+			url:                     settings.URL,
+			authenticationType:      authType,
+			defaultProject:          defaultProject,
+			clientEmail:             clientEmail,
+			tokenUri:                tokenUri,
+			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
 
 		opts, err := settings.HTTPClientOptions()

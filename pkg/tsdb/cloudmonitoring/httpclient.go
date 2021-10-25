@@ -49,7 +49,7 @@ func getMiddleware(model *datasourceInfo) (httpclient.Middleware, error) {
 		providerConfig.JwtTokenConfig = &tokenprovider.JwtTokenConfig{
 			Email:      model.clientEmail,
 			URI:        model.tokenUri,
-			PrivateKey: model.privateKey,
+			PrivateKey: []byte(model.decryptedSecureJSONData["privateKey"]),
 		}
 		provider = tokenprovider.NewJwtAccessTokenProvider(providerConfig)
 	}
