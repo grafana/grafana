@@ -44,6 +44,7 @@ export class ElementState {
     options.placement = this.placement;
   }
 
+  // TODO: validatePlacement vs computePlacement ?
   validatePlacement() {
     const { anchor, placement } = this;
     if (!(anchor.left || anchor.right)) {
@@ -103,8 +104,10 @@ export class ElementState {
 
   // The parent size, need to set our own size based on offsets
   updateSize(width: number, height: number) {
+    // TODO: width and height are set at the end of `validatePlacement`, should we set them here as well?
     this.width = width;
     this.height = height;
+
     this.placement.width = width;
     this.placement.height = height;
     this.validatePlacement();
