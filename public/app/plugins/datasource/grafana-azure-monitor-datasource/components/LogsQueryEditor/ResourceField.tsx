@@ -27,10 +27,10 @@ function parseResourceDetails(resourceURI: string) {
 const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, onQueryChange }) => {
   const styles = useStyles2(getStyles);
   const { resource } = query.azureLogAnalytics ?? {};
-
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
 
-  const handleOpenPicker = useCallback(() => {
+  const handleOpenPicker = useCallback((event) => {
+    event.preventDefault(); // needed when rendered on the template variable page
     setPickerIsOpen(true);
   }, []);
 

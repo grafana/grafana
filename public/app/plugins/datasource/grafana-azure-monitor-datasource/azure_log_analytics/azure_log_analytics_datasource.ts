@@ -218,6 +218,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     };
   }
 
+  /*
+    In 7.5.x it used to be possible to set a default workspace id in the config on the auth page.
+    This has been deprecated, however is still used by a few legacy template queries.
+  */
+  getDeprecatedDefaultWorkSpace() {
+    return this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
+  }
   /**
    * This is named differently than DataSourceApi.metricFindQuery
    * because it's not exposed to Grafana like the main AzureMonitorDataSource.

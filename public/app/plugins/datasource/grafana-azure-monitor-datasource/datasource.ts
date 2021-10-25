@@ -12,8 +12,9 @@ import {
   DataSourceInstanceSettings,
   LoadingState,
   ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, Observable, of, from } from 'rxjs';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 import { datasourceMigrations } from './utils/migrateQuery';
@@ -21,7 +22,7 @@ import { map } from 'rxjs/operators';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import { getAzureCloud } from './credentials';
 import migrateAnnotation from './utils/migrateAnnotation';
-
+import { VariableSupport } from './components/VariableEditor/CustomVariableSupport';
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   annotations = {
     prepareAnnotation: migrateAnnotation,
@@ -71,6 +72,18 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       this.pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
       this.pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
     }
+
+    this.variables = new VariableSupport(this);
+  }
+
+  queryForGrafanaTemplateVariableFn(query: string) {
+    const promisedResults = async () => {
+      const templateVariablesResults = await this.azureMonitorDatasource.metricFindQueryInternal(query);
+      return {
+        data: templateVariablesResults ? [toDataFrame(templateVariablesResults)] : [],
+      };
+    };
+    return from(promisedResults());
   }
 
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
@@ -98,6 +111,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     }
 
     const observables: Array<Observable<DataQueryResponse>> = Array.from(byType.entries()).map(([queryType, req]) => {
+      // TODO: in the future consider if this should also be it's own pseudoDatasource?
+      if (queryType === AzureQueryType.GrafanaTemplateVariableFn) {
+        return this.queryForGrafanaTemplateVariableFn(req.targets[0].grafanaTemplateVariableFn?.query || '');
+      }
+
       const ds = this.pseudoDatasource[queryType];
       if (!ds) {
         throw new Error('Data source not created for query type ' + queryType);
@@ -306,6 +324,9 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
 
     case AzureQueryType.AzureResourceGraph:
       return !!query.azureResourceGraph;
+
+    case AzureQueryType.GrafanaTemplateVariableFn:
+      return !!query.grafanaTemplateVariableFn;
 
     case AzureQueryType.ApplicationInsights:
       return !!query.appInsights;
