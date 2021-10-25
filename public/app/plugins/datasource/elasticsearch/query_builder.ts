@@ -1,3 +1,4 @@
+import { InternalTimeZones } from '@grafana/data';
 import { gte, lt } from 'semver';
 import {
   Filters,
@@ -99,6 +100,9 @@ export class ElasticQueryBuilder {
     esAgg.min_doc_count = settings.min_doc_count || 0;
     esAgg.extended_bounds = { min: '$timeFrom', max: '$timeTo' };
     esAgg.format = 'epoch_millis';
+    if (settings.time_zone && settings.time_zone !== InternalTimeZones.utc) {
+      esAgg.time_zone = settings.time_zone;
+    }
 
     if (settings.offset !== '') {
       esAgg.offset = settings.offset;

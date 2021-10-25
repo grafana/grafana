@@ -1,9 +1,9 @@
 import React from 'react';
-import { InlineField, Input, Select } from '@grafana/ui';
+import { InlineField, Input, Select, TimeZonePicker } from '@grafana/ui';
 import { DateHistogram } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { SelectableValue } from '@grafana/data';
+import { InternalTimeZones, SelectableValue } from '@grafana/data';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { inlineFieldProps } from '.';
 import { uniqueId } from 'lodash';
@@ -97,6 +97,16 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
             dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'offset', newValue: e.target.value }))
           }
           defaultValue={bucketAgg.settings?.offset || bucketAggregationConfig.date_histogram.defaultSettings?.offset}
+        />
+      </InlineField>
+
+      <InlineField label="Timezone" {...inlineFieldProps}>
+        <TimeZonePicker
+          value={bucketAgg.settings?.time_zone || bucketAggregationConfig.date_histogram.defaultSettings?.time_zone}
+          includeInternal={[InternalTimeZones.utc]}
+          onChange={(timeZone) => {
+            dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'time_zone', newValue: timeZone }));
+          }}
         />
       </InlineField>
     </>
