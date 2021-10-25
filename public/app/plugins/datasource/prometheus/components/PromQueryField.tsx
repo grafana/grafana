@@ -22,7 +22,7 @@ import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/Cancela
 import { QueryEditorProps, QueryHint, isDataFrame, toLegacyResponseData, TimeRange } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
-import { MonacoQueryFieldLazy } from './monaco-query-field/MonacoQueryFieldLazy';
+import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 export const RECORDING_RULES_GROUP = '__recording_rules__';
@@ -298,11 +298,12 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
                   {isMonacoEditorEnabled ? (
-                    <MonacoQueryFieldLazy
+                    <MonacoQueryFieldWrapper
                       languageProvider={languageProvider}
                       history={history}
                       onChange={this.onChangeQuery}
                       onRunQuery={this.props.onRunQuery}
+                      onBlur={this.props.onBlur}
                       initialValue={query.expr ?? ''}
                     />
                   ) : (
