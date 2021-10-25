@@ -267,7 +267,6 @@ func TestDashboardFileReader(t *testing.T) {
 			require.NoError(t, err)
 			stat, err := os.Stat(oneDashboard + "/dashboard1.json")
 			require.NoError(t, err)
-
 			fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 				"Default": {
 					{
@@ -466,12 +465,44 @@ func TestDashboardFileReader(t *testing.T) {
 					"folder": unprovision,
 				},
 			}
+		}
+		require.Equal(t, 1, len(fakeService.inserted))
+		require.True(t, inserted)
+	})
 
+	t.Run("Walking the folder with dashboards", func(t *testing.T) {
+		noFiles := map[string]os.FileInfo{}
+
+		t.Run("should skip dirs that starts with .", func(t *testing.T) {
+			shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
+			require.Equal(t, filepath.SkipDir, shouldSkip)
+		})
+
+		t.Run("should keep walking if file is not .json", func(t *testing.T) {
+			shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
+			require.Nil(t, shouldSkip)
+		})
+	})
+
+	t.Run("Given missing dashboard file", func(t *testing.T) {
+		cfg := &config{
+			Name:  "Default",
+			Type:  "file",
+			OrgID: 1,
+			Options: map[string]interface{}{
+				"folder": unprovision,
+			},
+		}
+
+		t.Run("Missing dashboard should be unprovisioned if DisableDeletion = true", func(t *testing.T) {
+			cfg.DisableDeletion = true
+			defer func() { cfg.DisableDeletion = false }()
+
+			fakeService = mockDashboardProvisioningService()
 			fakeService.inserted = []*dashboards.SaveDashboardDTO{
 				{Dashboard: &models.Dashboard{Id: 1}},
 				{Dashboard: &models.Dashboard{Id: 2}},
 			}
-
 			fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 				"Default": {
 					{DashboardId: 1, Name: "Default", ExternalId: absPath1},
