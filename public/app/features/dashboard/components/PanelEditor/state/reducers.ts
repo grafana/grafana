@@ -126,3 +126,7 @@ export const {
 } = pluginsSlice.actions;
 
 export const panelEditorReducer = pluginsSlice.reducer;
+
+export default {
+  panelEditor: panelEditorReducer,
+};
