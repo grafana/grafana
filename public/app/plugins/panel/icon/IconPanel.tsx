@@ -14,6 +14,7 @@ import {
   ScaleDimensionConfig,
   TextDimensionConfig,
 } from 'app/features/dimensions';
+import { CanvasElementOptions } from 'app/features/canvas';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -26,15 +27,18 @@ export class IconPanel extends Component<Props> {
   }
 
   initElement = (props: Props) => {
-    this.element = new ElementState(iconItem, {
+    const canvasOptions: CanvasElementOptions = {
       ...props.options.root,
-      width: props.width,
-      height: props.height,
+      type: '', // TODO: what's the right value for type?
+      anchor: {
+        right: true,
+      },
       placement: {
         width: props.width,
         height: props.height,
       },
-    } as any);
+    };
+    this.element = new ElementState(iconItem, canvasOptions);
     this.element.updateSize(props.width, props.height);
     this.element.updateData(this.dims);
     return this.element;
