@@ -105,6 +105,8 @@ export class ElementState {
   updateSize(width: number, height: number) {
     this.width = width;
     this.height = height;
+    this.placement.width = width;
+    this.placement.height = height;
     this.validatePlacement();
 
     // Update the CSS position

@@ -26,7 +26,15 @@ export class IconPanel extends Component<Props> {
   }
 
   initElement = (props: Props) => {
-    this.element = new ElementState(iconItem, props.options.root as any);
+    this.element = new ElementState(iconItem, {
+      ...props.options.root,
+      width: props.width,
+      height: props.height,
+      placement: {
+        width: props.width,
+        height: props.height,
+      },
+    } as any);
     this.element.updateSize(props.width, props.height);
     this.element.updateData(this.dims);
     return this.element;
