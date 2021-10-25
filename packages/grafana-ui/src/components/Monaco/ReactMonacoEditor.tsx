@@ -35,7 +35,7 @@ export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
     if (monaco !== null) {
       defineThemes(monaco, theme);
     }
-  }, [monaco]);
+  }, [monaco, theme]);
 
   initMonaco();
 
