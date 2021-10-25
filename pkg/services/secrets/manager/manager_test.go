@@ -4,18 +4,22 @@ import (
 	"context"
 	"testing"
 
+	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 func TestSecrets_EnvelopeEncryption(t *testing.T) {
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	svc := setupTestService(t, store)
+	store := sqlstore.InitTestDB(t)
+	svc := setupTestServiceWithDB(t, store)
 	ctx := context.Background()
 
 	t.Run("encrypting with no entity_id should create DEK", func(t *testing.T) {
@@ -28,7 +32,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := store.GetAllDataKeys(ctx)
+		keys, err := svc.store.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -42,7 +46,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := store.GetAllDataKeys(ctx)
+		keys, err := svc.store.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -56,7 +60,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := store.GetAllDataKeys(ctx)
+		keys, err := svc.store.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 2)
 	})
@@ -141,4 +145,24 @@ func TestSecretsService_DataKeys(t *testing.T) {
 		assert.Equal(t, secrets.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
+}
+
+func setupTestServiceWithDB(tb testing.TB, db *sqlstore.SQLStore) *SecretsService {
+	tb.Helper()
+	defaultKey := "SdlklWklckeLS"
+	if len(setting.SecretKey) > 0 {
+		defaultKey = setting.SecretKey
+	}
+	raw, err := ini.Load([]byte(`
+		[security]
+		secret_key = ` + defaultKey))
+	require.NoError(tb, err)
+	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+	return ProvideSecretsService(
+		database.ProvideSecretsStore(db),
+		bus.New(),
+		ossencryption.ProvideService(),
+		settings,
+	)
 }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ import (
 
 func TestDashboardSnapshotsService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	secretsService := secretsManager.SetupTestService(t, sqlStore)
+	secretsService := tests.SetupTestServiceWithDB(t, sqlStore)
 
 	s := &Service{
 		SQLStore:       sqlStore,

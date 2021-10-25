@@ -26,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -108,7 +108,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
-	secretsService := secretsManager.SetupTestService(t, nil)
+	secretsService := fakes.SetupTestServiceWithFakeStore(t)
 	hs := &HTTPServer{
 		Cfg:              cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},

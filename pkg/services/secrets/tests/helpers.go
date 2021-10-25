@@ -1,13 +1,13 @@
-package manager
+package tests
 
 import (
 	"testing"
 
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -15,14 +15,7 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-func SetupTestService(tb testing.TB, db *sqlstore.SQLStore) *SecretsService {
-	if db == nil {
-		return setupTestService(tb, fakes.NewFakeSecretsStore())
-	}
-	return setupTestService(tb, database.ProvideSecretsStore(db))
-}
-
-func setupTestService(tb testing.TB, store secrets.Store) *SecretsService {
+func SetupTestServiceWithDB(tb testing.TB, db *sqlstore.SQLStore) *secretsManager.SecretsService {
 	tb.Helper()
 	defaultKey := "SdlklWklckeLS"
 	if len(setting.SecretKey) > 0 {
@@ -34,8 +27,8 @@ func setupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 	require.NoError(tb, err)
 	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
 
-	return ProvideSecretsService(
-		store,
+	return secretsManager.ProvideSecretsService(
+		database.ProvideSecretsStore(db),
 		bus.New(),
 		ossencryption.ProvideService(),
 		settings,

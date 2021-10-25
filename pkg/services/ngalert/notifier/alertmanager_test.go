@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -47,7 +47,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 	}
 
 	kvStore := newFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, sqlStore)
+	secretsService := tests.SetupTestServiceWithDB(t, sqlStore)
 	decryptFn := secretsService.GetDecryptedValue
 	am, err := newAlertmanager(1, cfg, s, kvStore, &NilPeer{}, decryptFn, m)
 	require.NoError(t, err)
