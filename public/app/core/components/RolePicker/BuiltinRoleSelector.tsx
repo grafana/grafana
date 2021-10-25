@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { useStyles2 } from '@grafana/ui';
@@ -14,7 +14,7 @@ interface BuiltinRoleSelectorProps {
   className?: string;
 }
 
-export const BuiltinRoleSelector: FC<BuiltinRoleSelectorProps> = ({ value, onChange, className }) => {
+export const BuiltinRoleSelector = ({ value, onChange, className }: BuiltinRoleSelectorProps): JSX.Element => {
   const [selectedRole, setSelectedRole] = useState(value);
 
   const handleOnChange = useCallback(
@@ -37,8 +37,8 @@ export const BuiltinRoleSelector: FC<BuiltinRoleSelectorProps> = ({ value, onCha
       {BuiltinRoleOption.map((o, i) => {
         return (
           <RoleRadioButton
-            active={selectedRole === o.value}
-            key={`o.label-${i}`}
+            checked={selectedRole === o.value}
+            key={`${o.label}-${i}`}
             onChange={handleOnChange(o)}
             id={`option-${o.value}-${id}`}
             name={groupName.current}

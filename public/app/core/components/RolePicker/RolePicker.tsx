@@ -1,33 +1,32 @@
-import React, { FC, FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { ClickOutsideWrapper } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
+import { Role } from 'app/types';
 
 export interface Props {
-  /** Primary role selected */
   builtinRole: string;
-  // roles: string[];
   getRoles: () => Promise<string[]>;
-  getRoleOptions: () => Promise<Array<SelectableValue<string>>>;
+  getRoleOptions: () => Promise<Role[]>;
+  getBuiltinRoles: () => Promise<{ [key: string]: Role[] }>;
   onRolesChange: (newRoles: string[]) => void;
   onBuiltinRoleChange: (newRole: string) => void;
   disabled?: boolean;
 }
 
-export const RolePicker: FC<Props> = ({
+export const RolePicker = ({
   builtinRole,
   getRoles,
   getRoleOptions,
+  getBuiltinRoles,
   onRolesChange,
   onBuiltinRoleChange,
   disabled,
-}) => {
+}: Props): JSX.Element => {
   const [isOpen, setOpen] = useState(false);
-  const [roleOptions, setRoleOptions] = useState([] as Array<SelectableValue<string>>);
-  const [filteredOptions, setFilteredOptions] = useState([] as Array<SelectableValue<string>>);
-  const [appliedRoles, setAppliedRoles] = useState({} as { [key: string]: boolean });
-  const [numberOfRoles, setNumberOfRoles] = useState(0);
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [appliedRoles, setAppliedRoles] = useState<{ [key: string]: boolean }>({});
+  const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [query, setQuery] = useState('');
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -35,26 +34,23 @@ export const RolePicker: FC<Props> = ({
     async function fetchOptions() {
       let options = await getRoleOptions();
       options = options.filter((option) => {
-        return (
-          !option.label?.startsWith('grafana:') &&
-          !option.label?.startsWith('fixed:') &&
-          !option.label?.startsWith('managed:')
-        );
+        return !option.name?.startsWith('managed:');
       });
       setRoleOptions(options);
-      setFilteredOptions(options);
 
       const roles = await getRoles();
-      setNumberOfRoles(roles.length);
       const rolesMap = {} as any;
       for (const role of roles) {
         rolesMap[role] = true;
       }
       setAppliedRoles(rolesMap);
+
+      const builtinRoles = await getBuiltinRoles();
+      setBuiltinRoles(builtinRoles);
     }
 
     fetchOptions();
-  }, [getRoles, getRoleOptions]);
+  }, [getRoles, getRoleOptions, getBuiltinRoles, builtinRole]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -69,20 +65,13 @@ export const RolePicker: FC<Props> = ({
   const onClose = useCallback(() => {
     setOpen(false);
     setQuery('');
-    setFilteredOptions(roleOptions);
-  }, [roleOptions]);
+  }, []);
 
   const onInputChange = (query?: string) => {
     if (query) {
       setQuery(query);
-      setFilteredOptions(
-        roleOptions.filter((option) => {
-          return option.label?.toLowerCase().includes(query.toLowerCase());
-        })
-      );
     } else {
       setQuery('');
-      setFilteredOptions(roleOptions);
     }
   };
 
@@ -90,6 +79,10 @@ export const RolePicker: FC<Props> = ({
     onBuiltinRoleChange(newBuiltInRole);
     onRolesChange(newRoles);
   };
+
+  const appliedRolesCount = roleOptions.filter((option) => {
+    return option.uid && appliedRoles[option.uid] && !option.name?.startsWith('fixed:');
+  }).length;
 
   return (
     <div data-testid="role-picker" style={{ position: 'relative' }}>
@@ -101,14 +94,19 @@ export const RolePicker: FC<Props> = ({
           onOpen={onOpen}
           onClose={onClose}
           isFocused={isOpen}
-          numberOfRoles={numberOfRoles}
+          numberOfRoles={appliedRolesCount}
           ref={inputRef}
           disabled={disabled}
         />
         {isOpen && (
           <RolePickerMenu
-            options={filteredOptions}
+            options={
+              query
+                ? roleOptions.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()))
+                : roleOptions
+            }
             builtInRole={builtinRole}
+            builtInRoles={builtinRoles}
             appliedRoles={appliedRoles}
             onUpdate={onUpdate}
             onClose={onClose}

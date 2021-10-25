@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Role } from 'app/types';
 import { RolePicker } from './RolePicker';
@@ -25,23 +24,22 @@ export const UserRolePicker: FC<Props> = ({ builtinRole, userId, orgId, onBuilti
       onBuiltinRoleChange={onBuiltinRoleChange}
       getRoleOptions={getRolesOptions}
       getRoles={getRoles}
+      getBuiltinRoles={getBuiltinRoles}
       disabled={disabled}
     />
   );
 };
 
-export const getRolesOptions = async (query?: string): Promise<Array<SelectableValue<string>>> => {
+export const getRolesOptions = async (query?: string): Promise<Role[]> => {
   const roles = await getBackendSrv().get('/api/access-control/roles');
   if (!roles || !roles.length) {
     return [];
   }
-  return roles.map(
-    (role: Role): SelectableValue => ({
-      value: role.uid,
-      label: role.name,
-      description: role.description,
-    })
-  );
+  return roles;
+};
+
+export const getBuiltinRoles = (): Promise<{ [key: string]: Role[] }> => {
+  return getBackendSrv().get('/api/access-control/builtin-roles');
 };
 
 export const getUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {

@@ -5,24 +5,18 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 interface RoleRadioButtonProps {
   name?: string;
-  active: boolean;
+  checked: boolean;
   id: string;
   onChange: () => void;
 }
 
-export const RoleRadioButton: FC<RoleRadioButtonProps> = ({
-  children,
-  active = false,
-  onChange,
-  id,
-  name = undefined,
-}) => {
+export const RoleRadioButton: FC<RoleRadioButtonProps> = ({ children, checked = false, onChange, id, name }) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.inlineContainer}>
       <div className={styles.radioButton}>
-        <input type="radio" name="built-in_role_selector" id={id} value="Viewer" checked={active} onChange={onChange} />
+        <input type="radio" name="built-in_role_selector" id={id} value={name} checked={checked} onChange={onChange} />
         <label htmlFor={id} />
       </div>
       <label className={cx(styles.inlineLabel, 'inline-radio-label')} htmlFor={id}>
