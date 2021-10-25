@@ -22,8 +22,8 @@ export interface Props {
 }
 
 export class RefreshPicker extends PureComponent<Props> {
-  static offOption = { label: 'Off', value: '' };
-  static liveOption = { label: 'Live', value: 'LIVE' };
+  static offOption = { label: 'Off', value: '', ariaLabel: 'Turn off auto refresh' };
+  static liveOption = { label: 'Live', value: 'LIVE', ariaLabel: 'Live' };
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
 
   constructor(props: Props) {
@@ -89,11 +89,41 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 }
 
+const sanitizeLabel = (item: string | undefined) => {
+  const timeUnits = {
+    s: 'Second',
+    m: 'Minute',
+    h: 'Hour',
+    d: 'Day',
+  };
+  const isInterval = /^([0-9]).*(s|m|h|d)$/gim.test(item as string);
+
+  if (isInterval === false) {
+    return item;
+  }
+  if (item !== undefined) {
+    const newItem = item.split('');
+    const unit = newItem.pop();
+
+    if (Number(newItem.join('')) !== 1 && unit !== undefined) {
+      return `${newItem.join('') + timeUnits[unit]}s`;
+    }
+
+    return newItem.join('') + timeUnits[unit!];
+  } else {
+    return '';
+  }
+};
+
 export function intervalsToOptions({ intervals = defaultIntervals }: { intervals?: string[] } = {}): Array<
   SelectableValue<string>
 > {
   const intervalsOrDefault = intervals || defaultIntervals;
-  const options = intervalsOrDefault.map((interval) => ({ label: interval, value: interval }));
+  const options = intervalsOrDefault.map((interval) => ({
+    label: interval,
+    value: interval,
+    ariaLabel: sanitizeLabel(interval),
+  }));
 
   options.unshift(RefreshPicker.offOption);
   return options;
