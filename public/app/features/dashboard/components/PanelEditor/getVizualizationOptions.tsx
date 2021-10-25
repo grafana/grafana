@@ -137,12 +137,15 @@ export function fillOptionsPaneItems(
     // Nested options get passed up one level
     if (isNestedPanelOptions(pluginOption)) {
       const subAccess = pluginOption.getNestedValueAccess(access);
-      const sub = pluginOption.path ? access.getValue(pluginOption.path) : subAccess.getValue('');
+      const subContext = subAccess.getContext
+        ? subAccess.getContext(context)
+        : { ...context, options: access.getValue(pluginOption.path) };
+
       fillOptionsPaneItems(
         pluginOption.getBuilder(),
         subAccess,
         getOptionsPaneCategory,
-        { ...context, options: sub },
+        subContext,
         category // parent category
       );
       continue;

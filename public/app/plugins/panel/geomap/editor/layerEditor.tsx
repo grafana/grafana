@@ -24,10 +24,13 @@ export interface LayerEditorOptions {
 export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<MapLayerOptions> {
   return {
     category: opts.category,
-    path: '', // Empty path will get the current object from the accessor below
+    path: '--', // Not used
     defaultValue: opts.basemaps ? DEFAULT_BASEMAP_CONFIG : defaultMarkersConfig,
     values: (parent: NestedValueAccess) => ({
-      getValue: (path: string) => (path ? lodashGet(opts.state.options, path) : opts.state.options),
+      getContext: (parent) => {
+        return { ...parent, options: opts.state.options, instanceState: opts.state };
+      },
+      getValue: (path: string) => lodashGet(opts.state.options, path),
       onChange: (path: string, value: any) => {
         const { state } = opts;
         const { options } = state;
@@ -69,80 +72,82 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         },
       });
 
+      if (!layer) {
+        return; // unknown layer type
+      }
+
       // Don't show UI for default configuration
       if (options.type === DEFAULT_BASEMAP_CONFIG.type) {
         return;
       }
 
-      if (layer) {
-        if (layer.showLocation) {
-          builder
-            .addRadio({
-              path: 'location.mode',
-              name: 'Location',
-              description: '',
-              defaultValue: FrameGeometrySourceMode.Auto,
-              settings: {
-                options: [
-                  { value: FrameGeometrySourceMode.Auto, label: 'Auto' },
-                  { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
-                  { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
-                  { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
-                ],
-              },
-            })
-            .addFieldNamePicker({
-              path: 'location.latitude',
-              name: 'Latitude field',
-              settings: {
-                filter: (f: Field) => f.type === FieldType.number,
-                noFieldsMessage: 'No numeric fields found',
-              },
-              showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Coords,
-            })
-            .addFieldNamePicker({
-              path: 'location.longitude',
-              name: 'Longitude field',
-              settings: {
-                filter: (f: Field) => f.type === FieldType.number,
-                noFieldsMessage: 'No numeric fields found',
-              },
-              showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Coords,
-            })
-            .addFieldNamePicker({
-              path: 'location.geohash',
-              name: 'Geohash field',
-              settings: {
-                filter: (f: Field) => f.type === FieldType.string,
-                noFieldsMessage: 'No strings fields found',
-              },
-              showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
-              // eslint-disable-next-line react/display-name
-              // info: (props) => <div>HELLO</div>,
-            })
-            .addFieldNamePicker({
-              path: 'location.lookup',
-              name: 'Lookup field',
-              settings: {
-                filter: (f: Field) => f.type === FieldType.string,
-                noFieldsMessage: 'No strings fields found',
-              },
-              showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
-            })
-            .addCustomEditor({
-              id: 'gazetteer',
-              path: 'location.gazetteer',
-              name: 'Gazetteer',
-              editor: GazetteerPathEditor,
-              showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
-            });
-        }
-        if (handler.registerOptionsUI) {
-          handler.registerOptionsUI(builder);
-        }
-        if (layer.showOpacity) {
-          // TODO -- add opacity check
-        }
+      if (layer.showLocation) {
+        builder
+          .addRadio({
+            path: 'location.mode',
+            name: 'Location',
+            description: '',
+            defaultValue: FrameGeometrySourceMode.Auto,
+            settings: {
+              options: [
+                { value: FrameGeometrySourceMode.Auto, label: 'Auto' },
+                { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
+                { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
+                { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
+              ],
+            },
+          })
+          .addFieldNamePicker({
+            path: 'location.latitude',
+            name: 'Latitude field',
+            settings: {
+              filter: (f: Field) => f.type === FieldType.number,
+              noFieldsMessage: 'No numeric fields found',
+            },
+            showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Coords,
+          })
+          .addFieldNamePicker({
+            path: 'location.longitude',
+            name: 'Longitude field',
+            settings: {
+              filter: (f: Field) => f.type === FieldType.number,
+              noFieldsMessage: 'No numeric fields found',
+            },
+            showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Coords,
+          })
+          .addFieldNamePicker({
+            path: 'location.geohash',
+            name: 'Geohash field',
+            settings: {
+              filter: (f: Field) => f.type === FieldType.string,
+              noFieldsMessage: 'No strings fields found',
+            },
+            showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
+            // eslint-disable-next-line react/display-name
+            // info: (props) => <div>HELLO</div>,
+          })
+          .addFieldNamePicker({
+            path: 'location.lookup',
+            name: 'Lookup field',
+            settings: {
+              filter: (f: Field) => f.type === FieldType.string,
+              noFieldsMessage: 'No strings fields found',
+            },
+            showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+          })
+          .addCustomEditor({
+            id: 'gazetteer',
+            path: 'location.gazetteer',
+            name: 'Gazetteer',
+            editor: GazetteerPathEditor,
+            showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+          });
+      }
+      if (handler.registerOptionsUI) {
+        handler.registerOptionsUI(builder);
+      }
+      if (layer.showOpacity) {
+        // TODO -- add opacity check
       }
     },
   };
