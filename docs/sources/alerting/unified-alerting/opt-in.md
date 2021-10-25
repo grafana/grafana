@@ -8,7 +8,7 @@ weight = 128
 
 This topic describes how to enable Grafana 8 alerts as well as the rules and restrictions that govern the migration of existing dashboard alerts to this new alerting system. You can also [disable Grafana 8 alerts]({{< relref "./opt-in.md#disable-grafana-8-alerts" >}}) if needed.
 
-Before you begin, we recommend that you backup Grafana's database. If you are using PostgreSQL as the backend data source, then the minimum required version is 9.5.
+Before you begin, we recommend that you backup Grafana's database. If you are using PostgreSQL as the backend database, then the minimum required version is 9.5.
 
 ## Enable Grafana 8 alerts
 
