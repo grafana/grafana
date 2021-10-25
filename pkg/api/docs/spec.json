@@ -2728,6 +2728,7 @@
       "type": "object",
       "properties": {
         "items": {
+          "description": "The permission items to add/update. Items that are omitted from the list will be removed.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/DashboardAclUpdateItem"
