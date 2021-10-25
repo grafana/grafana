@@ -3,27 +3,34 @@ package prometheus
 import (
 	"time"
 
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type DatasourceInfo struct {
-	ID             int64
-	HTTPClientOpts sdkhttpclient.Options
-	URL            string
-	HTTPMethod     string
-	TimeInterval   string
+	ID           int64
+	URL          string
+	TimeInterval string
+
+	promClient apiv1.API
 }
 
 type PrometheusQuery struct {
-	Expr         string
-	Step         time.Duration
-	LegendFormat string
-	Start        time.Time
-	End          time.Time
-	RefId        string
-	InstantQuery bool
-	RangeQuery   bool
-	UtcOffsetSec int64
+	Expr          string
+	Step          time.Duration
+	LegendFormat  string
+	Start         time.Time
+	End           time.Time
+	RefId         string
+	InstantQuery  bool
+	RangeQuery    bool
+	ExemplarQuery bool
+	UtcOffsetSec  int64
+}
+
+type ExemplarEvent struct {
+	Time   time.Time
+	Value  float64
+	Labels map[string]string
 }
 
 type QueryModel struct {
@@ -34,6 +41,7 @@ type QueryModel struct {
 	StepMode       string `json:"stepMode"`
 	RangeQuery     bool   `json:"range"`
 	InstantQuery   bool   `json:"instant"`
+	ExemplarQuery  bool   `json:"exemplar"`
 	IntervalFactor int64  `json:"intervalFactor"`
 	UtcOffsetSec   int64  `json:"utcOffsetSec"`
 }
@@ -41,6 +49,7 @@ type QueryModel struct {
 type PrometheusQueryType string
 
 const (
-	Range   PrometheusQueryType = "range"
-	Instant PrometheusQueryType = "instant"
+	RangeQueryType    PrometheusQueryType = "range"
+	InstantQueryType  PrometheusQueryType = "instant"
+	ExemplarQueryType PrometheusQueryType = "exemplar"
 )

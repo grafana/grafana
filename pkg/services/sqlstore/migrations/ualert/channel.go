@@ -127,6 +127,7 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUid
 		if err != nil {
 			return err
 		}
+
 		portedChannels = append(portedChannels, &PostableGrafanaReceiver{
 			UID:                   uid,
 			Name:                  c.Name,

@@ -40,7 +40,7 @@ You can use the [Flux query and scripting language](https://www.influxdata.com/p
 
 ## Supported macros
 
-The macros support copying and pasting from [Chronograph](https://www.influxdata.com/time-series-platform/chronograf/).
+The macros support copying and pasting from [Chronograf](https://www.influxdata.com/time-series-platform/chronograf/).
 
 | Macro example      | Description                                                                                                                                                                             |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

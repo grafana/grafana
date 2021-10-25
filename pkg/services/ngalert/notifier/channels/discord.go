@@ -13,12 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DiscordNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	log        log.Logger
 	tmpl       *template.Template
 	Content    string
@@ -41,7 +40,7 @@ func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) 
 	content := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
 
 	return &DiscordNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,

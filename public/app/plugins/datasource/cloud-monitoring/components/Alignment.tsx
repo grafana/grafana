@@ -1,12 +1,12 @@
 import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { SELECT_WIDTH } from '../constants';
-import { CustomMetaData, MetricQuery } from '../types';
+import { CustomMetaData, MetricQuery, SLOQuery } from '../types';
 import { AlignmentFunction, AlignmentPeriod, AlignmentPeriodLabel, QueryEditorField, QueryEditorRow } from '.';
 import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
-  onChange: (query: MetricQuery) => void;
+  onChange: (query: MetricQuery | SLOQuery) => void;
   query: MetricQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
   customMetaData: CustomMetaData;

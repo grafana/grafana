@@ -29,7 +29,7 @@ import { DashboardLoading } from '../components/DashboardLoading/DashboardLoadin
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import classnames from 'classnames';
-import { PanelEditExitedEvent } from 'app/types/events';
+import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { liveTimer } from '../dashgrid/liveTimer';
 
 export interface DashboardPageRouteParams {
@@ -178,6 +178,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     // entering edit mode
     if (this.state.editPanel && !prevState.editPanel) {
       dashboardWatcher.setEditingState(true);
+
+      // Some panels need to be notified when entering edit mode
+      this.props.dashboard?.events.publish(new PanelEditEnteredEvent(this.state.editPanel.id));
     }
 
     // leaving edit mode
@@ -335,6 +338,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const containerClassNames = classnames(styles.dashboardContainer, {
       'panel-in-fullscreen': viewPanel,
     });
+    const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
 
     return (
       <div className={containerClassNames}>
@@ -364,7 +368,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           >
             <div className={styles.dashboardContent}>
               {initError && <DashboardFailed />}
-              {!editPanel && kioskMode === KioskMode.Off && (
+              {showSubMenu && (
                 <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
                 </section>

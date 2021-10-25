@@ -194,16 +194,12 @@ describe('getExploreUrl', () => {
   const args = ({
     panel: {
       getSavedId: () => 1,
-    },
-    panelTargets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
-    panelDatasource: {
-      name: 'testDataSource',
-      meta: {
-        id: '1',
-      },
+      targets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
     },
     datasourceSrv: {
-      get: jest.fn(),
+      get() {
+        return {};
+      },
       getDataSourceById: jest.fn(),
     },
     timeSrv: {

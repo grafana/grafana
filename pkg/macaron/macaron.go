@@ -16,7 +16,7 @@
 // under the License.
 
 // Package macaron is a high productive and modular web framework in Go.
-package macaron // import "gopkg.in/macaron.v1"
+package macaron // import "gopkg.in/web.v1"
 
 import (
 	"context"
@@ -107,7 +107,7 @@ func New() *Macaron {
 // Macaron stops future process when it returns true.
 type BeforeHandler func(rw http.ResponseWriter, req *http.Request) bool
 
-// macaronContextKey is used to store/fetch macaron.Context inside context.Context
+// macaronContextKey is used to store/fetch web.Context inside context.Context
 type macaronContextKey struct{}
 
 // FromContext returns the macaron context stored in a context.Context, if any.
@@ -137,7 +137,7 @@ func SetURLParams(r *http.Request, vars map[string]string) *http.Request {
 // A middleware is a function that has a reference to the next handler in the chain
 // and returns the actual middleware handler, that may do its job and optionally
 // call next.
-// Due to how Macaron handles/injects requests and responses we patch the macaron.Context
+// Due to how Macaron handles/injects requests and responses we patch the web.Context
 // to use the new ResponseWriter and http.Request here. The caller may only call
 // `next.ServeHTTP(rw, req)` to pass a modified response writer and/or a request to the
 // further middlewares in the chain.
