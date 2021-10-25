@@ -1,5 +1,5 @@
 import { variableAdapters } from '../adapters';
-import { DashboardModel } from '../../dashboard/state';
+import { DashboardModel, PanelModel } from '../../dashboard/state';
 import { isAdHoc } from '../guard';
 import { safeStringifyValue } from '../../../core/utils/explore';
 import { VariableModel } from '../types';
@@ -227,13 +227,14 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
  */
 export function getAllAffectedPanelIdsForVariableChange(
   variableId: string,
-  dashboard: DashboardModel | null
+  variables: VariableModel[],
+  panels?: PanelModel[]
 ): number[] {
-  let affectedPanelIds: number[] = getAffectedPanelIdsForVariable(variableId, dashboard);
+  let affectedPanelIds: number[] = getAffectedPanelIdsForVariable(variableId, panels);
 
-  const dependencies = getDependenciesForVariable(variableId, dashboard, new Set());
+  const dependencies = getDependenciesForVariable(variableId, variables, new Set());
   for (const dependency of dependencies) {
-    const affectedPanelIdsForDependency = getAffectedPanelIdsForVariable(dependency, dashboard);
+    const affectedPanelIdsForDependency = getAffectedPanelIdsForVariable(dependency, panels);
     affectedPanelIds = [...new Set([...affectedPanelIdsForDependency, ...affectedPanelIds])];
   }
 
@@ -242,14 +243,13 @@ export function getAllAffectedPanelIdsForVariableChange(
 
 export function getDependenciesForVariable(
   variableId: string,
-  dashboard: DashboardModel | null,
+  variables: VariableModel[],
   deps: Set<string>
 ): Set<string> {
-  if (!dashboard || !dashboard?.templating?.list?.length) {
+  if (!variables.length) {
     return deps;
   }
 
-  const variables: VariableModel[] = dashboard.templating.list;
   for (const variable of variables) {
     if (variable.name === variableId) {
       continue;
@@ -261,20 +261,20 @@ export function getDependenciesForVariable(
     }
 
     deps.add(variable.name);
-    deps = getDependenciesForVariable(variable.name, dashboard, deps);
+    deps = getDependenciesForVariable(variable.name, variables, deps);
   }
 
   return deps;
 }
 
-export function getAffectedPanelIdsForVariable(variableId: string, dashboard: DashboardModel | null): number[] {
-  if (!dashboard || !dashboard?.panels?.length) {
+export function getAffectedPanelIdsForVariable(variableId: string, panels?: PanelModel[]): number[] {
+  if (!panels || !panels.length) {
     return [];
   }
 
   const affectedPanelIds: number[] = [];
   const repeatRegex = new RegExp(`"repeat":"${variableId}"`);
-  for (const panel of dashboard.panels) {
+  for (const panel of panels) {
     const panelAsJson = safeStringifyValue(panel.getSaveModel());
 
     // check for repeats that don't use variableRegex

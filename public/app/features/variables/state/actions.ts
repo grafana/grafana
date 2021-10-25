@@ -513,10 +513,8 @@ export const variableUpdated = (
 
     const variables = getVariables(getState());
     const g = createGraph(variables);
-    const affectedPanelIds = getAllAffectedPanelIdsForVariableChange(
-      variableInState.id,
-      getState().dashboard.getModel()
-    );
+    const panels = getState().dashboard.getModel()?.panels;
+    const affectedPanelIds = getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels);
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
