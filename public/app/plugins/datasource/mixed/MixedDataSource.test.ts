@@ -71,9 +71,11 @@ describe('MixedDatasource', () => {
         expect(results[3].data).toEqual([]);
         expect(results[3].state).toEqual(LoadingState.Error);
         expect(results[3].error).toEqual({ message: 'DSE: syntax error near WHERE' });
-        expect(results[4].data).toEqual([]);
-        expect(results[4].state).toEqual(LoadingState.Error);
-        expect(results[4].error).toEqual({ message: 'DSD: syntax error near FROM' });
+        expect(results[4].data).toEqual(['CCCC']);
+        expect(results[4].state).toEqual(LoadingState.Loading);
+        expect(results[5].data).toEqual([]);
+        expect(results[5].state).toEqual(LoadingState.Error);
+        expect(results[5].error).toEqual({ message: 'DSD: syntax error near FROM' });
       });
     });
   });
