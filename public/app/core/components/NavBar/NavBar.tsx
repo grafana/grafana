@@ -97,8 +97,6 @@ export const NavBar: FC = React.memo(() => {
             isActive={activeItemId === link.id}
             label={link.text}
             menuItems={link.children}
-            menuSubTitle={link.subTitle}
-            onClick={link.onClick}
             target={link.target}
             url={link.url}
           >
