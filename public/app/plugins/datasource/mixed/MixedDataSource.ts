@@ -116,7 +116,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 }
 
 function flattenRespones(): OperatorFunction<DataQueryResponse[][], DataQueryResponse[]> {
-  return reduce((all, current) => {
+  return reduce((all: DataQueryResponse[], current) => {
     return current.reduce((innerAll, innerCurrent) => {
       innerAll.push.apply(innerAll, innerCurrent);
       return innerAll;
