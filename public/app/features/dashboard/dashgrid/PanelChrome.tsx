@@ -20,6 +20,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { VizLegendOptions } from '@grafana/schema';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
@@ -37,8 +38,6 @@ import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annota
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { liveTimer } from './liveTimer';
 import { isSoloRoute } from '../../../routes/utils';
-import { setPanelInstanceState } from '../../panel/state/reducers';
-import { store } from 'app/store/store';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -51,6 +50,7 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
+  onInstanceStateChange: (value: any) => void;
 }
 
 export interface State {
@@ -89,21 +89,21 @@ export class PanelChrome extends PureComponent<Props, State> {
         onAnnotationDelete: this.onAnnotationDelete,
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
         onInstanceStateChange: this.onInstanceStateChange,
+        onToggleLegendSort: this.onToggleLegendSort,
       },
       data: this.getInitialPanelDataState(),
     };
   }
 
   onInstanceStateChange = (value: any) => {
+    this.props.onInstanceStateChange(value);
+
     this.setState({
       context: {
         ...this.state.context,
         instanceState: value,
       },
     });
-
-    // Set redux panel state so panel options can get notified
-    store.dispatch(setPanelInstanceState({ key: this.props.panel.key, value }));
   };
 
   getPanelContextApp() {
@@ -125,6 +125,35 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.onFieldConfigChange(
       seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
     );
+  };
+
+  onToggleLegendSort = (sortKey: string) => {
+    const legendOptions: VizLegendOptions = this.props.panel.options.legend;
+
+    // We don't want to do anything when legend options are not available
+    if (!legendOptions) {
+      return;
+    }
+
+    let sortDesc = legendOptions.sortDesc;
+    let sortBy = legendOptions.sortBy;
+    if (sortKey !== sortBy) {
+      sortDesc = undefined;
+    }
+
+    // if already sort ascending, disable sorting
+    if (sortDesc === false) {
+      sortBy = undefined;
+      sortDesc = undefined;
+    } else {
+      sortDesc = !sortDesc;
+      sortBy = sortKey;
+    }
+
+    this.onOptionsChange({
+      ...this.props.panel.options,
+      legend: { ...legendOptions, sortBy, sortDesc },
+    });
   };
 
   getInitialPanelDataState(): PanelData {

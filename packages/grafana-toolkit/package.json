@@ -51,7 +51,7 @@
     "chalk": "^2.4.2",
     "command-exists": "^1.2.8",
     "commander": "^5.0.0",
-    "concurrently": "4.1.0",
+    "concurrently": "6.3.0",
     "copy-webpack-plugin": "5.1.2",
     "css-loader": "3.4.2",
     "eslint": "7.21.0",
