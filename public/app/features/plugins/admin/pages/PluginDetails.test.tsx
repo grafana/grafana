@@ -9,6 +9,7 @@ import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { CatalogPlugin, PluginTabIds, RequestStatus, ReducerState } from '../types';
 import * as api from '../api';
+import * as permissions from '../permissions';
 import { fetchRemotePlugins } from '../state/actions';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
@@ -18,10 +19,7 @@ jest.mock('../permissions');
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
   const mockedRuntime = { ...original };
-
-  mockedRuntime.config.bootData.user.isGrafanaAdmin = true;
   mockedRuntime.config.buildInfo.version = 'v8.1.0';
-
   return mockedRuntime;
 });
 
@@ -80,7 +78,7 @@ describe('Plugin details page', () => {
 
   describe('viewed as user with grafana admin permissions', () => {
     beforeAll(() => {
-      mockUserPermissions({
+      mockUserPermissions(permissions, {
         isAdmin: true,
         isDataSourceEditor: true,
         isOrgAdmin: true,
@@ -439,9 +437,53 @@ describe('Plugin details page', () => {
     });
   });
 
+  describe('viewed as user without grafana admin permissions', () => {
+    beforeAll(() => {
+      mockUserPermissions(permissions, {
+        isAdmin: false,
+        isDataSourceEditor: false,
+        isOrgAdmin: false,
+      });
+    });
+
+    it("should not display an install button for a plugin that isn't installed", async () => {
+      const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: false });
+
+      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+
+      expect(queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
+    });
+
+    it('should not display an uninstall button for an already installed plugin', async () => {
+      const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true });
+
+      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+
+      expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
+    });
+
+    it('should not display update or uninstall buttons for a plugin with update', async () => {
+      const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
+
+      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+
+      expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+      expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
+    });
+
+    it('should not display an install button for enterprise plugins if license is valid', async () => {
+      config.licenseInfo.hasValidLicense = true;
+      const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
+
+      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+
+      expect(queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe('viewed as user without data source edit permissions', () => {
     beforeAll(() => {
-      mockUserPermissions({
+      mockUserPermissions(permissions, {
         isAdmin: true,
         isDataSourceEditor: false,
         isOrgAdmin: true,
