@@ -137,6 +137,41 @@
         }
       }
     },
+    "/dashboard/snapshots": {
+      "get": {
+        "tags": [
+          "snapshot"
+        ],
+        "summary": "List snapshots.",
+        "operationId": "getSnapshots",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Query",
+            "description": "Search Query",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1000,
+            "x-go-name": "Limit",
+            "description": "Limit the number of returned results",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getSnapshotsResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/dashboards/calculate-diff": {
       "post": {
         "produces": [
@@ -1577,6 +1612,152 @@
         }
       }
     },
+    "/snapshot/shared-options": {
+      "get": {
+        "tags": [
+          "snapshot"
+        ],
+        "summary": "Get snapshot sharing settings.",
+        "operationId": "getSnapshotSharingOptions",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getSnapshotSharingOptionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          }
+        }
+      }
+    },
+    "/snapshots": {
+      "post": {
+        "description": "Snapshot public mode should be enabled or authentication is required.",
+        "tags": [
+          "snapshot"
+        ],
+        "summary": "When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.",
+        "operationId": "createSnapshot",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CreateDashboardSnapshotCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createSnapshotResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/snapshots-delete/{deleteKey}": {
+      "get": {
+        "description": "Snapshot public mode should be enabled or authentication is required.",
+        "tags": [
+          "snapshot"
+        ],
+        "summary": "Delete Snapshot by deleteKey.",
+        "operationId": "deleteSnapshotByDeleteKey",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DeleteKey",
+            "name": "deleteKey",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/snapshots/{key}": {
+      "get": {
+        "tags": [
+          "snapshot"
+        ],
+        "summary": "Get Snapshot by Key.",
+        "operationId": "getSnapshotByKey",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Key",
+            "name": "key",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/snapshotResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "snapshot"
+        ],
+        "summary": "Delete Snapshot by Key.",
+        "operationId": "deleteSnapshotByKey",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Key",
+            "name": "key",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/tsdb/query": {
       "post": {
         "description": "Queries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.",
@@ -1801,6 +1982,47 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "CreateDashboardSnapshotCommand": {
+      "description": "CreateDashboardSnapshotCommand is same as models.CreateDashboardSnapshotCommand but with swagger annotations",
+      "type": "object",
+      "required": [
+        "dashboard"
+      ],
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "deleteKey": {
+          "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
+          "type": "string",
+          "x-go-name": "DeleteKey"
+        },
+        "expires": {
+          "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
+          "type": "integer",
+          "format": "int64",
+          "default": 0,
+          "x-go-name": "Expires"
+        },
+        "external": {
+          "description": "Save the snapshot on an external server rather than locally.",
+          "type": "boolean",
+          "default": false,
+          "x-go-name": "External"
+        },
+        "key": {
+          "description": "Define the unique key. Required if `external` is `true`.",
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "name": {
+          "description": "Snapshot name",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
     },
     "CreateFolderCommand": {
       "type": "object",
@@ -2136,6 +2358,59 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DashboardSnapshotDTO": {
+      "description": "DashboardSnapshotDTO without dashboard map",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Created"
+        },
+        "expires": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Expires"
+        },
+        "external": {
+          "type": "boolean",
+          "x-go-name": "External"
+        },
+        "externalUrl": {
+          "type": "string",
+          "x-go-name": "ExternalUrl"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "key": {
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgId"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UserId"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "DashboardTagCloudItem": {
       "type": "object",
@@ -3213,6 +3488,38 @@
         }
       }
     },
+    "createSnapshotResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "deleteKey": {
+            "description": "Unique key used to delete the snapshot. It is different from the key so that only the creator can delete the snapshot.",
+            "type": "string",
+            "x-go-name": "DeleteKey"
+          },
+          "deleteUrl": {
+            "type": "string",
+            "x-go-name": "DeleteUrl"
+          },
+          "id": {
+            "description": "Snapshot id",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID"
+          },
+          "key": {
+            "description": "Unique key",
+            "type": "string",
+            "x-go-name": "Key"
+          },
+          "url": {
+            "type": "string",
+            "x-go-name": "URL"
+          }
+        }
+      }
+    },
     "dashboardDiffResponse": {
       "description": "Calculate dashboard diff response.",
       "schema": {
@@ -3429,6 +3736,35 @@
         "$ref": "#/definitions/GetHomeDashboardResponse"
       }
     },
+    "getSnapshotSharingOptionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "externalEnabled": {
+            "type": "boolean",
+            "x-go-name": "ExternalEnabled"
+          },
+          "externalSnapshotName": {
+            "type": "string",
+            "x-go-name": "ExternalSnapshotName"
+          },
+          "externalSnapshotURL": {
+            "type": "string",
+            "x-go-name": "ExternalSnapshotURL"
+          }
+        }
+      }
+    },
+    "getSnapshotsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/DashboardSnapshotDTO"
+        }
+      }
+    },
     "getUserPreferencesResponse": {
       "description": "",
       "schema": {
@@ -3565,6 +3901,9 @@
           }
         }
       }
+    },
+    "snapshotResponse": {
+      "description": ""
     },
     "trimDashboardResponse": {
       "description": "Trimmed dashboard response.",
