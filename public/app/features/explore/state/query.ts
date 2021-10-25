@@ -285,7 +285,6 @@ export const runQueries = (
     const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
-      queries,
       containerWidth,
       isLive: live,
       range,
@@ -298,6 +297,11 @@ export const runQueries = (
       cache,
     } = exploreItemState;
     let newQuerySub;
+
+    const queries = exploreItemState.queries.map((query) => ({
+      ...query,
+      datasource: query.datasource || datasourceInstance?.name,
+    }));
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);
 
