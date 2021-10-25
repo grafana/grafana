@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -14,7 +16,7 @@ import (
 
 func TestDashboardSnapshotsService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	secretsService := secretsManager.SetupTestService(t, sqlStore)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	s := &Service{
 		SQLStore:       sqlStore,

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ import (
 
 func TestPluginProxy(t *testing.T) {
 	setting.SecretKey = "password"
-	secretsService := secretsManager.SetupTestService(t, nil)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 	t.Run("When getting proxy headers", func(t *testing.T) {
 		route := &plugins.AppPluginRoute{

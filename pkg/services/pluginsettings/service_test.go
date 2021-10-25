@@ -8,7 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +18,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 	t.Run("When plugin settings hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
 		ctx := context.Background()
 
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		psService := ProvideService(bus.New(), nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
@@ -54,7 +56,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 	t.Run("When plugin settings is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
 		ctx := context.Background()
 
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		psService := ProvideService(bus.New(), nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(

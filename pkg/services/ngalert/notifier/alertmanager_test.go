@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -47,7 +49,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 	}
 
 	kvStore := newFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, sqlStore)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	decryptFn := secretsService.GetDecryptedValue
 	am, err := newAlertmanager(1, cfg, s, kvStore, &NilPeer{}, decryptFn, m)
 	require.NoError(t, err)

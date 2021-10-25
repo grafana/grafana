@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,7 +33,7 @@ func TestService(t *testing.T) {
 		setting.SecretKey = origSecret
 	})
 
-	secretsService := secretsManager.SetupTestService(t, sqlStore)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	s := ProvideService(bus.New(), sqlStore, secretsService)
 
 	var ds *models.DataSource
@@ -80,7 +82,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Type: "Kubernetes",
 		}
 
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		rt1, err := dsService.GetHTTPTransport(&ds, provider)
@@ -113,7 +115,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
@@ -163,7 +165,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		tlsClientCert, err := secretsService.Encrypt(context.Background(), []byte(clientCert), secrets.WithoutScope())
@@ -206,7 +208,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("tlsAuthWithCACert", true)
 		json.Set("serverName", "server-name")
 
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
@@ -243,7 +245,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsSkipVerify", true)
 
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		ds := models.DataSource{
@@ -274,7 +276,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			"httpHeaderName1": "Authorization",
 		})
 
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		encryptedData, err := secretsService.Encrypt(context.Background(), []byte(`Bearer xf5yhfkpsnmgo`), secrets.WithoutScope())
@@ -333,7 +335,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			"timeout": 19,
 		})
 
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		ds := models.DataSource{
@@ -366,7 +368,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		ds := models.DataSource{
@@ -400,7 +402,7 @@ func TestService_getTimeout(t *testing.T) {
 		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, nil)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	dsService := ProvideService(bus.New(), nil, secretsService)
 
 	for _, tc := range testCases {
@@ -413,7 +415,7 @@ func TestService_getTimeout(t *testing.T) {
 
 func TestService_DecryptedValue(t *testing.T) {
 	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
@@ -451,7 +453,7 @@ func TestService_DecryptedValue(t *testing.T) {
 	})
 
 	t.Run("When datasource is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
-		secretsService := secretsManager.SetupTestService(t, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
 			context.Background(),
@@ -503,7 +505,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 		t.Run("should be disabled if not enabled in JsonData", func(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
-			secretsService := secretsManager.SetupTestService(t, nil)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
@@ -520,7 +522,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				"azureAuth": true,
 			})
 
-			secretsService := secretsManager.SetupTestService(t, nil)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
@@ -540,7 +542,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				},
 			})
 
-			secretsService := secretsManager.SetupTestService(t, nil)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
@@ -564,7 +566,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				},
 			})
 
-			secretsService := secretsManager.SetupTestService(t, nil)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
@@ -582,7 +584,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				"azureCredentials": "invalid",
 			})
 
-			secretsService := secretsManager.SetupTestService(t, nil)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			_, err := dsService.httpClientOptions(&ds)
@@ -596,7 +598,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 			})
 
-			secretsService := secretsManager.SetupTestService(t, nil)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)

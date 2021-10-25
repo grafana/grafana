@@ -18,8 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -237,7 +239,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
 	m := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
-	secretsService := secretsManager.SetupTestService(t, nil)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, decryptFn, nil, log.New("testlogger"))
 	require.NoError(t, err)
