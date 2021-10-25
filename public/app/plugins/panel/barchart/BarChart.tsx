@@ -4,7 +4,7 @@ import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { GraphNG, GraphNGProps, PlotLegend, UPlotConfigBuilder, usePanelContext, useTheme2 } from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
 import { BarChartOptions } from './types';
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { isLegendOrdered, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 
 /**
@@ -20,6 +20,7 @@ const propsToDiff: Array<string | PropDiffFn> = [
   'groupWidth',
   'stacking',
   'showValue',
+  'legend',
   (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
 ];
 
@@ -39,6 +40,11 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {
+    // When sorted by legend state.seriesIndex is not changed and is not equal to the sorted index of the field
+    if (isLegendOrdered(props.legend)) {
+      return frame0Ref.current!.fields[seriesIdx].values.get(valueIdx);
+    }
+
     let field = frame0Ref.current!.fields.find(
       (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIdx - 1
     );
