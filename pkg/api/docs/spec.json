@@ -1570,6 +1570,9 @@
         "responses": {
           "200": {
             "$ref": "#/responses/searchSortingResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
           }
         }
       }
@@ -1606,6 +1609,58 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/preferences": {
+      "get": {
+        "tags": [
+          "user_preferences"
+        ],
+        "summary": "Get user preferences.",
+        "operationId": "getUserPreferences",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getUserPreferencesResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Omitting a key (`theme`, `homeDashboardId`, `timezone`) will cause the current value to be replaced with the system default value.",
+        "tags": [
+          "user_preferences"
+        ],
+        "summary": "Update user preferences.",
+        "operationId": "updateUserPreferences",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdatePrefsCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -2857,6 +2912,25 @@
       "format": "int64",
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "Prefs": {
+      "type": "object",
+      "properties": {
+        "homeDashboardId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "HomeDashboardID"
+        },
+        "theme": {
+          "type": "string",
+          "x-go-name": "Theme"
+        },
+        "timezone": {
+          "type": "string",
+          "x-go-name": "Timezone"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
     "RoleType": {
       "type": "string",
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -3056,6 +3130,38 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "UpdatePrefsCmd": {
+      "description": "UpdatePrefsCmd is same as dtos.UpdatePrefsCmd but with swagger annotations",
+      "type": "object",
+      "properties": {
+        "homeDashboardId": {
+          "description": "The numerical :id of a favorited dashboard",
+          "type": "integer",
+          "format": "int64",
+          "default": 0,
+          "x-go-name": "HomeDashboardID"
+        },
+        "theme": {
+          "type": "string",
+          "enum": [
+            "light",
+            "dark",
+            ""
+          ],
+          "x-go-name": "Theme"
+        },
+        "timezone": {
+          "type": "string",
+          "enum": [
+            "utc",
+            "browser",
+            ""
+          ],
+          "x-go-name": "Timezone"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
     }
   },
   "responses": {
@@ -3321,6 +3427,12 @@
       "description": "Home dashboard response.",
       "schema": {
         "$ref": "#/definitions/GetHomeDashboardResponse"
+      }
+    },
+    "getUserPreferencesResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/Prefs"
       }
     },
     "importDashboardResponse": {
