@@ -6,15 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
-import {
-  AbsoluteTimeRange,
-  DataFrame,
-  DataQuery,
-  ExploreGraphStyle,
-  GrafanaTheme2,
-  LoadingState,
-  RawTimeRange,
-} from '@grafana/data';
+import { AbsoluteTimeRange, DataFrame, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
 import { QueryRows } from './QueryRows';
@@ -38,6 +30,7 @@ import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
+import { ExploreGraphStyle } from 'app/core/utils/explore';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
