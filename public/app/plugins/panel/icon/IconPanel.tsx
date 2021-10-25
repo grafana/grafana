@@ -29,14 +29,7 @@ export class IconPanel extends Component<Props> {
   initElement = (props: Props) => {
     const canvasOptions: CanvasElementOptions = {
       ...props.options.root,
-      type: '', // TODO: what's the right value for type?
-      anchor: {
-        right: true,
-      },
-      placement: {
-        width: props.width,
-        height: props.height,
-      },
+      type: 'icon',
     };
     this.element = new ElementState(iconItem, canvasOptions);
     this.element.updateSize(props.width, props.height);
