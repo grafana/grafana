@@ -80,7 +80,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 			Url:    "http://test",
 		}
 
-		_ = db.AddDataSource(addDSCommand)
+		_ = db.AddDataSource(context.Background(), addDSCommand)
 		dataSources = append(dataSources, addDSCommand.Result.Id)
 	}
 
