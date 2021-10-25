@@ -282,9 +282,12 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
 }
 
 /**
- * A target is non-empty when it has keys (with non-empty values) other than refId, key and context.
+ * A target is non-empty when it has keys (with non-empty values) other than refId, key, context and datasource.
+ * FIXME: While this is reasonable for practical use cases, a query without any propery might still be "non-empty"
+ * in its own scope, for instance when there's no user input needed. This might be the case for an hypothetic datasource in
+ * which query options are only set in its config and the query object itself, as generated from its query editor it's always "empty"
  */
-const validKeys = ['refId', 'key', 'context'];
+const validKeys = ['refId', 'key', 'context', 'datasource'];
 export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): boolean {
   return (
     queries &&
