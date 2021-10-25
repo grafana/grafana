@@ -30,6 +30,7 @@ export class ElementState {
   height = 100;
   data?: any; // depends on the type
 
+  // TODO: options.anchor/options.placement are also modified in validatePlacement. Is this intended?
   // From options, but always set and always valid
   anchor: Anchor;
   placement: Placement;
