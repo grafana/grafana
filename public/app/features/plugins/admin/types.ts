@@ -123,6 +123,8 @@ export type RemotePlugin = {
   versionSignedByOrg: string;
   versionSignedByOrgName: string;
   versionStatus: string;
+  // TODO<mark this as required once https://github.com/grafana/grafana-com/pull/3336 is merged>
+  grafanaDependency?: string;
 };
 
 export type LocalPlugin = {
@@ -273,4 +275,6 @@ export type PluginVersion = {
   downloadSlug: string;
   json?: RemotePluginJson;
   links: Array<{ rel: string; href: string }>;
+  // TODO<mark this as required once https://github.com/grafana/grafana-com/pull/3336 is merged>
+  grafanaDependency?: string;
 };

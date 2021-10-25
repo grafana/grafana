@@ -14,6 +14,7 @@ import {
   RemotePluginJson,
 } from './types';
 
+// TODO<get rid of this logic once https://github.com/grafana/grafana-com/pull/3336 is merged>
 const getGrafanaDependency = (json?: RemotePluginJson) => {
   const dependencies = json?.dependencies;
 
