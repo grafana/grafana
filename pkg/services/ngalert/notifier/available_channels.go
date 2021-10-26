@@ -377,12 +377,11 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Heading:     "Slack settings",
 			Options: []alerting.NotifierOption{
 				{
-					Label:          "Recipient",
-					Element:        alerting.ElementTypeInput,
-					InputType:      alerting.InputTypeText,
-					Description:    "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
-					PropertyName:   "recipient",
-					ValidationRule: channels.SlackRecipientValidationString,
+					Label:        "Recipient",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
+					PropertyName: "recipient",
 				},
 				// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
 				// However, since the UI doesn't allow to say that a field is required or not depending on another field,

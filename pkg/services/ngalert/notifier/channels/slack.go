@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
@@ -42,10 +41,6 @@ type SlackNotifier struct {
 	Token          string
 }
 
-const SlackRecipientValidationString = "^#?[a-zA-Z0-9_-]{1,80}$"
-
-var reRecipient *regexp.Regexp = regexp.MustCompile(SlackRecipientValidationString)
-
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier
@@ -64,11 +59,7 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
-	if recipient != "" {
-		if !reRecipient.MatchString(recipient) {
-			return nil, receiverInitError{Cfg: *model, Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
-		}
-	} else if apiURL.String() == SlackAPIEndpoint {
+	if recipient == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, receiverInitError{Cfg: *model,
 			Reason: "recipient must be specified when using the Slack chat API",
 		}

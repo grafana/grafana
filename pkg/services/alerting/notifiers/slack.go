@@ -13,7 +13,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -33,12 +32,11 @@ func init() {
 		Factory:     NewSlackNotifier,
 		Options: []alerting.NotifierOption{
 			{
-				Label:          "Recipient",
-				Element:        alerting.ElementTypeInput,
-				InputType:      alerting.InputTypeText,
-				Description:    "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
-				PropertyName:   "recipient",
-				ValidationRule: recipientValidationString,
+				Label:        "Recipient",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
+				PropertyName: "recipient",
 			},
 			// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
 			// However, since the UI doesn't allow to say that a field is required or not depending on another field,
@@ -120,11 +118,6 @@ func init() {
 	})
 }
 
-var (
-	recipientValidationString                = "^#?[a-zA-Z0-9_-]{1,80}$"
-	reRecipient               *regexp.Regexp = regexp.MustCompile(recipientValidationString)
-)
-
 const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier.
@@ -139,11 +132,7 @@ func NewSlackNotifier(model *models.AlertNotification, fn alerting.GetDecryptedV
 	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
-	if recipient != "" {
-		if !reRecipient.MatchString(recipient) {
-			return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
-		}
-	} else if apiURL.String() == slackAPIEndpoint {
+	if recipient == "" && apiURL.String() == slackAPIEndpoint {
 		return nil, alerting.ValidationError{
 			Reason: "recipient must be specified when using the Slack chat API",
 		}
