@@ -3,7 +3,7 @@ import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
-import {unByKey} from 'ol/Observable';
+import { unByKey } from 'ol/Observable';
 import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
 import { getGeoMapStyle } from '../../utils/getGeoMapStyle';
@@ -54,7 +54,6 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       format: new GeoJSON(),
     });
 
-
     const key = source.on('change', () => {
       if (source.getState() == 'ready') {
         unByKey(key);
@@ -64,10 +63,9 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         //     // Only after using setTimeout can I search the feature list... :(
         // }, 100)
 
-        console.log( "SOURCE READY!!!", source.getFeatures().length );
+        console.log('SOURCE READY!!!', source.getFeatures().length);
       }
     });
-
 
     const defaultStyle = new Style({
       stroke: new Stroke({
@@ -105,7 +103,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       // Geojson source url
       registerOptionsUI: (builder) => {
         const features = source.getFeatures();
-        console.log("FEATURES", source.getState(), features.length, options);
+        console.log('FEATURES', source.getState(), features.length, options);
 
         builder
           .addSelect({
