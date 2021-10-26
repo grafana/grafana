@@ -8,28 +8,16 @@ import (
 	infrahttp "github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
-type jwtParams struct {
-	email      string
-	uri        string
-	privateKey string
-}
-
 var cloudMonitoringRoute = struct {
 	path   string
 	method string
 	url    string
 	scopes []string
-	params jwtParams
 }{
 	path:   "cloudmonitoring",
 	method: "GET",
 	url:    "https://monitoring.googleapis.com",
 	scopes: []string{"https://www.googleapis.com/auth/monitoring.read"},
-	params: jwtParams{
-		uri:        "{{.JsonData.tokenUri}}",
-		email:      "{{.JsonData.clientEmail}}",
-		privateKey: "{{.SecureJsonData.privateKey}}",
-	},
 }
 
 func getMiddleware(model *datasourceInfo) (httpclient.Middleware, error) {
