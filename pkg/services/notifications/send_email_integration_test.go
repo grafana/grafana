@@ -14,7 +14,6 @@ import (
 func TestEmailIntegrationTest(t *testing.T) {
 	t.Run("Given the notifications service", func(t *testing.T) {
 		t.Skip()
-		return // The original GoConvey test has been skipped
 
 		setting.StaticRootPath = "../../../public/"
 		setting.BuildVersion = "4.0.0"
