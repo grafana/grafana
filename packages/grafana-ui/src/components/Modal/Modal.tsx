@@ -89,9 +89,24 @@ export function Modal(props: PropsWithChildren<Props>) {
   );
 }
 
-function ModalButtonRow({ children }: { children: React.ReactNode }) {
+function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; children: React.ReactNode }) {
   const theme = useTheme2();
   const styles = getModalStyles(theme);
+
+  if (leftItems) {
+    return (
+      <div className={styles.modalButtonRow}>
+        <HorizontalGroup justify="space-between">
+          <HorizontalGroup justify="flex-start" spacing="md">
+            {leftItems}
+          </HorizontalGroup>
+          <HorizontalGroup justify="flex-end" spacing="md">
+            {children}
+          </HorizontalGroup>
+        </HorizontalGroup>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.modalButtonRow}>
