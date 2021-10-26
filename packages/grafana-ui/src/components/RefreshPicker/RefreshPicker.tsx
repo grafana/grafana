@@ -89,7 +89,7 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 }
 
-const sanitizeLabel = (item: string) => {
+const sanitizedIntervalsLabels = (item: string) => {
   const timeUnits: { [key: string]: string } = {
     s: 'second',
     m: 'minute',
@@ -122,7 +122,7 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
   const options = intervalsOrDefault.map((interval) => ({
     label: interval,
     value: interval,
-    ariaLabel: sanitizeLabel(interval),
+    ariaLabel: sanitizedIntervalsLabels(interval),
   }));
 
   options.unshift(RefreshPicker.offOption);
