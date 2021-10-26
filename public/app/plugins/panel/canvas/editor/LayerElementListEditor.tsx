@@ -108,7 +108,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
                             <IconButton
                               name="copy"
-                              title={'duplicate'}
+                              title={'Duplicate'}
                               className={styles.actionIcon}
                               onClick={() => layer.doAction(LayerActionID.Duplicate, element)}
                               surface="header"
@@ -116,7 +116,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
                             <IconButton
                               name="trash-alt"
-                              title={'remove'}
+                              title={'Remove'}
                               className={cx(styles.actionIcon, styles.dragIcon)}
                               onClick={() => layer.doAction(LayerActionID.Delete, element)}
                               surface="header"
