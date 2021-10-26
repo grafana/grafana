@@ -29,9 +29,21 @@ export class IconPanel extends Component<Props> {
   initElement = (props: Props) => {
     const canvasOptions: CanvasElementOptions = {
       ...props.options.root,
+      anchor: {
+        bottom: true,
+        right: true,
+        top: true,
+        left: true,
+      },
+      placement: {
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+      },
       type: 'icon',
     };
-    this.element = new ElementState(iconItem, canvasOptions);
+    this.element = new ElementState(iconItem, canvasOptions, undefined, this.update);
     this.element.updateSize(props.width, props.height);
     this.element.updateData(this.dims);
     return this.element;
@@ -64,6 +76,10 @@ export class IconPanel extends Component<Props> {
     }
     return changed;
   }
+
+  update = () => {
+    this.forceUpdate();
+  };
 
   render() {
     const { width, height } = this.props;

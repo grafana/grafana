@@ -2,7 +2,7 @@ import { CanvasGroupOptions, CanvasElementOptions } from 'app/features/canvas';
 import { GroupState } from './group';
 
 export class RootElement extends GroupState {
-  constructor(public options: CanvasGroupOptions, private changeCallback: () => void) {
+  constructor(public options: CanvasGroupOptions, public changeCallback: () => void) {
     super(options);
   }
 

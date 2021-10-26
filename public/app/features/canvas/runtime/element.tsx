@@ -35,7 +35,12 @@ export class ElementState {
   anchor: Anchor;
   placement: Placement;
 
-  constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
+  constructor(
+    public item: CanvasElementItem,
+    public options: CanvasElementOptions,
+    public parent?: GroupState,
+    public changeCallback?: () => void
+  ) {
     if (!options) {
       this.options = { type: item.id };
     }
@@ -55,8 +60,8 @@ export class ElementState {
       anchor.top = true;
     }
 
-    const w = placement.width ?? 100; // this.div ? this.div.clientWidth : this.width;
-    const h = placement.height ?? 100; // this.div ? this.div.clientHeight : this.height;
+    const w = this.div ? this.div.clientWidth : this.width; // this.div ? this.div.clientWidth : this.width;
+    const h = this.div ? this.div.clientHeight : this.height; // this.div ? this.div.clientHeight : this.height;
 
     if (anchor.top) {
       if (!placement.top) {
@@ -109,8 +114,6 @@ export class ElementState {
     this.width = width;
     this.height = height;
 
-    this.placement.width = width;
-    this.placement.height = height;
     this.validatePlacement();
 
     // Update the CSS position
@@ -118,6 +121,7 @@ export class ElementState {
       ...this.options.placement,
       position: 'absolute',
     };
+    this.onChange(this.options); // force rebind & call of `ref={this.initElement}`
   }
 
   updateData(ctx: DimensionContext) {
@@ -203,6 +207,14 @@ export class ElementState {
 
   initElement = (target: HTMLDivElement) => {
     this.div = target;
+
+    const divSize = { width: target?.clientWidth, height: target?.clientHeight };
+    if (divSize.width && divSize.height && (this.width !== divSize.width || this.height !== divSize.height)) {
+      this.updateSize(target.clientWidth, target.clientHeight);
+      if (this.changeCallback) {
+        this.changeCallback();
+      }
+    }
   };
 
   applyDrag = (event: OnDrag) => {
