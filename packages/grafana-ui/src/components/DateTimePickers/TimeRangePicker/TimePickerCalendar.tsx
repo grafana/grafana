@@ -78,12 +78,11 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen, onClose } = props;
   const ref = React.createRef<HTMLElement>();
-  const useOverlayProps = {
+  const { overlayProps } = useOverlay({
     isDismissable: true,
     isOpen,
     onClose,
-  }
-  const { overlayProps } = useOverlay(useOverlayProps, ref);
+  }, ref);
 
   if (!isOpen) {
     return null;
