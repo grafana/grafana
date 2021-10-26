@@ -120,17 +120,28 @@ export function prepareGraphableFields(data: PanelData, theme: GrafanaTheme2): G
 function getSuggestions(data: PanelData): GraphableFieldsResult {
   let builder = new VisualizationSuggestionsBuilder(data);
   let { dataSummary } = builder;
+  let message = 'No graphable fields';
 
   if (!dataSummary.hasTimeField) {
+    message = 'Missing a time field';
+
     const list = builder.getListAppender<any, any>({
       name: 'Switch to table',
       pluginId: 'table',
       options: {},
     });
     list.append({});
-
-    return { message: 'Data is missing a time field', suggestions: builder.getList() };
   }
 
-  return { message: 'No graphable fields' };
+  if (dataSummary.hasStringField && dataSummary.hasNumberField) {
+    const list = builder.getListAppender<any, any>({
+      name: 'Switch to bar chart',
+      pluginId: 'barchart',
+      options: {},
+    });
+
+    list.append({});
+  }
+
+  return { message, suggestions: builder.getList() };
 }
