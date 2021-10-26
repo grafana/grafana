@@ -30,7 +30,6 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
 
   const handleOpenPicker = useCallback((event) => {
-    event.preventDefault(); // needed when rendered on the template variable page
     setPickerIsOpen(true);
   }, []);
 
@@ -61,7 +60,7 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
       </Modal>
 
       <Field label="Resource">
-        <Button variant="secondary" onClick={handleOpenPicker}>
+        <Button variant="secondary" onClick={handleOpenPicker} type="button">
           <ResourceLabel resource={resource} datasource={datasource} />
         </Button>
       </Field>

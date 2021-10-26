@@ -11,7 +11,7 @@ import {
   AzureQueryType,
   DatasourceValidationResult,
 } from '../types';
-import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
+import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -120,129 +120,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         alias: item.alias,
       },
     };
-  }
-
-  matchesForQuery(query: string) {
-    return {
-      subscriptions: query.match(/^Subscriptions\(\)/i),
-      resourceGroups: query.match(/^ResourceGroups\(\)/i),
-      resourceGroupsWithSub: query.match(/^ResourceGroups\(([^\)]+?)(,\s?([^,]+?))?\)/i),
-      metricDefinitions: query.match(/^Namespaces\(([^\)]+?)(,\s?([^,]+?))?\)/i),
-      metricDefinitionsWithSub: query.match(/^Namespaces\(([^,]+?),\s?([^,]+?)\)/i),
-      resourceNames: query.match(/^ResourceNames\(([^,]+?),\s?([^,]+?)\)/i),
-      resourceNamesWithSub: query.match(/^ResourceNames\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/i),
-      metricNamespace: query.match(/^MetricNamespace\(([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i),
-      metricNamespaceWithSub: query.match(/^metricnamespace\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i),
-      metricNames: query.match(/^MetricNames\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i),
-      metricNamesWithSub: query.match(/^MetricNames\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?(.+?)\)/i),
-    };
-  }
-
-  /*
-    We currently support a handful of helper functions for template variables that let
-    users select resources or groups of resources. This will look at a query string and determine
-    if we are in fact using one of those grafana template functions. 
-  */
-  isGrafanaTemplateVariableFnQuery(query: string) {
-    const matches: Record<string, RegExpMatchArray | null> = this.matchesForQuery(query);
-    return Object.keys(matches).some((key) => !!matches[key]);
-  }
-
-  /**
-   * This is named differently than DataSourceApi.metricFindQuery
-   * because it's not exposed to Grafana like the main AzureMonitorDataSource.
-   * And some of the azure internal data sources return null in this function, which the
-   * external interface does not support
-   */
-  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
-    const matchesForQuery = this.matchesForQuery(query);
-
-    if (matchesForQuery.subscriptions) {
-      return this.getSubscriptions();
-    }
-
-    if (matchesForQuery.resourceGroups && this.defaultSubscriptionId) {
-      return this.getResourceGroups(this.defaultSubscriptionId);
-    }
-
-    if (matchesForQuery.resourceGroupsWithSub) {
-      return this.getResourceGroups(this.toVariable(matchesForQuery.resourceGroupsWithSub[1]));
-    }
-
-    if (matchesForQuery.metricDefinitions && this.defaultSubscriptionId) {
-      if (!matchesForQuery.metricDefinitions[3]) {
-        return this.getMetricDefinitions(
-          this.defaultSubscriptionId,
-          this.toVariable(matchesForQuery.metricDefinitions[1])
-        );
-      }
-    }
-
-    if (matchesForQuery.metricDefinitionsWithSub) {
-      return this.getMetricDefinitions(
-        this.toVariable(matchesForQuery.metricDefinitionsWithSub[1]),
-        this.toVariable(matchesForQuery.metricDefinitionsWithSub[2])
-      );
-    }
-
-    if (matchesForQuery.resourceNames && this.defaultSubscriptionId) {
-      const resourceGroup = this.toVariable(matchesForQuery.resourceNames[1]);
-      const metricDefinition = this.toVariable(matchesForQuery.resourceNames[2]);
-      return this.getResourceNames(this.defaultSubscriptionId, resourceGroup, metricDefinition);
-    }
-
-    if (matchesForQuery.resourceNamesWithSub) {
-      const subscription = this.toVariable(matchesForQuery.resourceNamesWithSub[1]);
-      const resourceGroup = this.toVariable(matchesForQuery.resourceNamesWithSub[2]);
-      const metricDefinition = this.toVariable(matchesForQuery.resourceNamesWithSub[3]);
-      return this.getResourceNames(subscription, resourceGroup, metricDefinition);
-    }
-
-    if (matchesForQuery.metricNamespace && this.defaultSubscriptionId) {
-      const resourceGroup = this.toVariable(matchesForQuery.metricNamespace[1]);
-      const metricDefinition = this.toVariable(matchesForQuery.metricNamespace[2]);
-      const resourceName = this.toVariable(matchesForQuery.metricNamespace[3]);
-      return this.getMetricNamespaces(this.defaultSubscriptionId, resourceGroup, metricDefinition, resourceName);
-    }
-
-    if (matchesForQuery.metricNamespaceWithSub) {
-      const subscription = this.toVariable(matchesForQuery.metricNamespaceWithSub[1]);
-      const resourceGroup = this.toVariable(matchesForQuery.metricNamespaceWithSub[2]);
-      const metricDefinition = this.toVariable(matchesForQuery.metricNamespaceWithSub[3]);
-      const resourceName = this.toVariable(matchesForQuery.metricNamespaceWithSub[4]);
-      return this.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
-    }
-
-    if (matchesForQuery.metricNames && this.defaultSubscriptionId) {
-      if (matchesForQuery.metricNames[3].indexOf(',') === -1) {
-        const resourceGroup = this.toVariable(matchesForQuery.metricNames[1]);
-        const metricDefinition = this.toVariable(matchesForQuery.metricNames[2]);
-        const resourceName = this.toVariable(matchesForQuery.metricNames[3]);
-        const metricNamespace = this.toVariable(matchesForQuery.metricNames[4]);
-        return this.getMetricNames(
-          this.defaultSubscriptionId,
-          resourceGroup,
-          metricDefinition,
-          resourceName,
-          metricNamespace
-        );
-      }
-    }
-
-    if (matchesForQuery.metricNamesWithSub) {
-      const subscription = this.toVariable(matchesForQuery.metricNamesWithSub[1]);
-      const resourceGroup = this.toVariable(matchesForQuery.metricNamesWithSub[2]);
-      const metricDefinition = this.toVariable(matchesForQuery.metricNamesWithSub[3]);
-      const resourceName = this.toVariable(matchesForQuery.metricNamesWithSub[4]);
-      const metricNamespace = this.toVariable(matchesForQuery.metricNamesWithSub[5]);
-      return this.getMetricNames(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace);
-    }
-
-    return null;
-  }
-
-  toVariable(metric: string) {
-    return getTemplateSrv().replace((metric || '').trim());
   }
 
   async getSubscriptions(): Promise<Array<{ text: string; value: string }>> {

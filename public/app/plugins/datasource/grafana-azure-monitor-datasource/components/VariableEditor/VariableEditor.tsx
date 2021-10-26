@@ -6,50 +6,7 @@ import LogsQueryEditor from '../LogsQueryEditor';
 import DataSource from '../../datasource';
 import useLastError from '../../utils/useLastError';
 import { Space } from '../Space';
-
-export const migrateStringQueriesToObjectQueries = (
-  rawQuery: string | AzureMonitorQuery,
-  options: { datasource: DataSource }
-): AzureMonitorQuery => {
-  // no need to migrate already migrated queries
-  if (typeof rawQuery !== 'string') {
-    return rawQuery;
-  }
-
-  if (options.datasource.azureMonitorDatasource.isGrafanaTemplateVariableFnQuery(rawQuery)) {
-    return {
-      refId: 'A',
-      queryType: AzureQueryType.GrafanaTemplateVariableFn,
-      grafanaTemplateVariableFn: {
-        query: rawQuery,
-      },
-      azureLogAnalytics: {
-        query: undefined,
-      },
-    };
-  } else {
-    const createDefaultResourceAndWorkspace = () => {
-      const defaultWorkspaceId = options.datasource.azureLogAnalyticsDatasource.getDeprecatedDefaultWorkSpace();
-      if (defaultWorkspaceId) {
-        return { resource: '', workspace: defaultWorkspaceId };
-      }
-      return { resource: '', workspace: '' };
-    };
-
-    return {
-      refId: 'A',
-      queryType: AzureQueryType.LogAnalytics,
-      azureLogAnalytics: {
-        query: rawQuery,
-        ...createDefaultResourceAndWorkspace(),
-      },
-      grafanaTemplateVariableFn: {
-        query: undefined,
-      },
-      subscription: options.datasource.azureMonitorDatasource.defaultSubscriptionId,
-    };
-  }
-};
+import { migrateStringQueriesToObjectQueries } from '../../grafanaTemplateVariableFns';
 
 const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
   { label: 'Grafana Query Function', value: AzureQueryType.GrafanaTemplateVariableFn },
@@ -86,12 +43,14 @@ const GrafanaTemplateVariableFnInput = ({
     </InlineField>
   );
 };
+
 type Props = {
   query: AzureMonitorQuery | string;
   onChange: (query: AzureMonitorQuery | string) => void;
   onRunQuery: () => void;
   datasource: DataSource;
 };
+
 const VariableEditor = (props: Props) => {
   const migratedQuery = migrateStringQueriesToObjectQueries(props.query, { datasource: props.datasource });
   const [query, setQuery] = useState(migratedQuery);

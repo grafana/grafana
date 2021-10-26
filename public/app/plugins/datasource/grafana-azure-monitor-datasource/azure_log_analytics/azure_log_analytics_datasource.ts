@@ -8,13 +8,7 @@ import {
   AzureQueryType,
   DatasourceValidationResult,
 } from '../types';
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  ScopedVars,
-  DataSourceInstanceSettings,
-  MetricFindValue,
-} from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, ScopedVars, DataSourceInstanceSettings } from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
@@ -224,61 +218,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   */
   getDeprecatedDefaultWorkSpace() {
     return this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
-  }
-  /**
-   * This is named differently than DataSourceApi.metricFindQuery
-   * because it's not exposed to Grafana like the main AzureMonitorDataSource.
-   * And some of the azure internal data sources return null in this function, which the
-   * external interface does not support
-   */
-  metricFindQueryInternal(query: string, optionalOptions?: unknown): Promise<MetricFindValue[]> {
-    // workspaces() - Get workspaces in the default subscription
-    const workspacesQuery = query.match(/^workspaces\(\)/i);
-    if (workspacesQuery) {
-      if (this.defaultSubscriptionId) {
-        return this.getWorkspaces(this.defaultSubscriptionId);
-      } else {
-        throw new Error(
-          'No subscription ID. Specify a default subscription ID in the data source config to use workspaces() without a subscription ID'
-        );
-      }
-    }
-
-    // workspaces("abc-def-etc") - Get workspaces a specified subscription
-    const workspacesQueryWithSub = query.match(/^workspaces\(["']?([^\)]+?)["']?\)/i);
-    if (workspacesQueryWithSub) {
-      return this.getWorkspaces((workspacesQueryWithSub[1] || '').trim());
-    }
-
-    // Execute the query as KQL to the default or first workspace
-    return this.getFirstWorkspace().then((resourceURI) => {
-      if (!resourceURI) {
-        return [];
-      }
-
-      const queries = this.buildQuery(query, optionalOptions, resourceURI);
-      const promises = this.doQueries(queries);
-
-      return Promise.all(promises)
-        .then((results) => {
-          return new ResponseParser(results).parseToVariables();
-        })
-        .catch((err) => {
-          if (
-            err.error &&
-            err.error.data &&
-            err.error.data.error &&
-            err.error.data.error.innererror &&
-            err.error.data.error.innererror.innererror
-          ) {
-            throw { message: err.error.data.error.innererror.innererror.message };
-          } else if (err.error && err.error.data && err.error.data.error) {
-            throw { message: err.error.data.error.message };
-          }
-
-          throw err;
-        });
-    }) as Promise<MetricFindValue[]>;
   }
 
   private buildQuery(query: string, options: any, workspace: string): AdhocQuery[] {
