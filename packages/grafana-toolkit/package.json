@@ -56,7 +56,7 @@
     "css-loader": "3.4.2",
     "eslint": "7.21.0",
     "execa": "^5.1.1",
-    "file-loader": "5.0.2",
+    "file-loader": "6.2.0",
     "fork-ts-checker-webpack-plugin": "1.0.0",
     "fs-extra": "^10.0.0",
     "globby": "^10.0.1",
