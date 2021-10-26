@@ -103,6 +103,7 @@ type SearchUsersParams struct {
 }
 
 // swagger:parameters searchUsersWithPaging
+
 type SearchUsersWithPagingParams struct {
 	// Limit the maximum number of users to return per page
 	// in:query
@@ -136,7 +137,7 @@ type GetUserByLoginOrEmailParam struct {
 }
 
 // swagger:parameters updateUser
-type updateUserParam struct {
+type UpdateUserParam struct {
 	// To change the email, name, login, theme, provide another one.
 	// in:body
 	// required:true
@@ -144,7 +145,7 @@ type updateUserParam struct {
 }
 
 // swagger:response searchUsersResponse
-type searchUsersResponse struct {
+type SearchUsersResponse struct {
 	// The response message
 	// in: body
 	Body models.SearchUserQueryResult `json:"body"`
@@ -158,14 +159,14 @@ type UserResponse struct {
 }
 
 // swagger:response getUserOrgListResponse
-type getUserOrgListResponse struct {
+type GetUserOrgListResponse struct {
 	// The response message
 	// in: body
 	Body []*models.UserOrgDTO `json:"body"`
 }
 
 // swagger:response getUserTeamsResponse
-type getUserTeamsResponse struct {
+type GetUserTeamsResponse struct {
 	// The response message
 	// in: body
 	Body []*models.TeamDTO `json:"body"`
