@@ -72,10 +72,9 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, httpClientProvider httpclient.Provider,
-	registrar plugins.CoreBackendRegistrar, dsService *datasources.Service) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar,
+	dsService *datasources.Service) *Service {
 	s := &Service{
-		pluginStore:        pluginStore,
 		httpClientProvider: httpClientProvider,
 		cfg:                cfg,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
@@ -93,7 +92,6 @@ func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, httpClientProvi
 }
 
 type Service struct {
-	pluginStore        plugins.Store
 	httpClientProvider httpclient.Provider
 	cfg                *setting.Cfg
 	im                 instancemgmt.InstanceManager
@@ -170,9 +168,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
-// Query takes in the frontend queries, parses them into the CloudMonitoring query format
-// executes the queries against the CloudMonitoring API and parses the response into
-// the data frames
+// QueryData takes in the frontend queries, parses them into the CloudMonitoring query format
+// executes the queries against the CloudMonitoring API and parses the response into data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	if len(req.Queries) == 0 {
@@ -568,7 +565,7 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginContext, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
+func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.url)
 	if err != nil {
 		return nil, err
