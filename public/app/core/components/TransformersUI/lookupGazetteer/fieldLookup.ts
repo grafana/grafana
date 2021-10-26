@@ -12,21 +12,21 @@ import {
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from 'app/plugins/panel/geomap/gazetteer/gazetteer';
 import { mergeMap, from } from 'rxjs';
 
-export interface LookupGazetteerOptions {
+export interface FieldLookupOptions {
   lookupField?: string;
   gazetteer?: string;
 }
 
-export const lookupGazetteerTransformer: DataTransformerInfo<LookupGazetteerOptions> = {
-  id: DataTransformerID.lookupGazetteer,
-  name: 'Lookup fields from gazetteer',
+export const fieldLookupTransformer: DataTransformerInfo<FieldLookupOptions> = {
+  id: DataTransformerID.fieldLookup,
+  name: 'Lookup fields from resource',
   description: 'Retrieve matching data based on specified field',
   defaultOptions: {},
 
   operator: (options) => (source) => source.pipe(mergeMap((data) => from(doGazetteerXform(data, options)))),
 };
 
-function doGazetteerXform(frames: DataFrame[], options: LookupGazetteerOptions): Promise<DataFrame[]> {
+function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions): Promise<DataFrame[]> {
   const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get(options?.lookupField);
 
   return getGazetteer(options?.gazetteer ?? COUNTRIES_GAZETTEER_PATH).then((gaz) => {

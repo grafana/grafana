@@ -2,12 +2,12 @@ import { FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
 import { DataTransformerID } from '@grafana/data/src/transformations/transformers/ids';
 import { Gazetteer } from 'app/plugins/panel/geomap/gazetteer/gazetteer';
-import { addFieldsFromGazetteer } from './lookupGazetteer';
+import { addFieldsFromGazetteer } from './fieldLookup';
 
 describe('Lookup gazetteer', () => {
   it('adds lat/lon based on string field', async () => {
     const cfg = {
-      id: DataTransformerID.lookupGazetteer,
+      id: DataTransformerID.fieldLookup,
       options: {
         lookupField: 'location',
         gazetteer: 'public/gazetteer/usa-states.json',

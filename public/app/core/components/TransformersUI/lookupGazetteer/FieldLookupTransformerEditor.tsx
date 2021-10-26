@@ -11,17 +11,17 @@ import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { GazetteerPathEditor } from 'app/plugins/panel/geomap/editor/GazetteerPathEditor';
 import { GazetteerPathEditorConfigSettings } from 'app/plugins/panel/geomap/types';
-import { LookupGazetteerOptions, lookupGazetteerTransformer } from './lookupGazetteer';
+import { FieldLookupOptions, fieldLookupTransformer } from './fieldLookup';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: { width: 24 },
 } as any;
 
-const gazetteerSettings: StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings> = {
+const fieldLookupSettings: StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings> = {
   settings: {},
 } as any;
 
-export const LookupGazetteerTransformerEditor: React.FC<TransformerUIProps<LookupGazetteerOptions>> = ({
+export const FieldLookupTransformerEditor: React.FC<TransformerUIProps<FieldLookupOptions>> = ({
   input,
   options,
   onChange,
@@ -51,7 +51,7 @@ export const LookupGazetteerTransformerEditor: React.FC<TransformerUIProps<Looku
         <GazetteerPathEditor
           value={options?.gazetteer ?? ''}
           context={{ data: input }}
-          item={gazetteerSettings}
+          item={fieldLookupSettings}
           onChange={onPickGazetteer}
         />
       </InlineField>
@@ -67,10 +67,10 @@ export const LookupGazetteerTransformerEditor: React.FC<TransformerUIProps<Looku
   );
 };
 
-export const lookupGazetteerTransformRegistryItem: TransformerRegistryItem<LookupGazetteerOptions> = {
-  id: DataTransformerID.lookupGazetteer,
-  editor: LookupGazetteerTransformerEditor,
-  transformation: lookupGazetteerTransformer,
-  name: 'Lookup gazetteer',
-  description: `Looks up matching data from gazetteer based on selected field`,
+export const fieldLookupTransformRegistryItem: TransformerRegistryItem<FieldLookupOptions> = {
+  id: DataTransformerID.fieldLookup,
+  editor: FieldLookupTransformerEditor,
+  transformation: fieldLookupTransformer,
+  name: 'Field lookup',
+  description: `Looks up matching data from resource based on selected field`,
 };
