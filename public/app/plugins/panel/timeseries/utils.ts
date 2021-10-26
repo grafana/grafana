@@ -138,6 +138,10 @@ function getSuggestions(data: PanelData): GraphableFieldsResult {
       name: 'Switch to bar chart',
       pluginId: 'barchart',
       options: {},
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
     });
 
     list.append({});

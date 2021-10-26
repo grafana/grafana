@@ -18,24 +18,19 @@ export function CannotVisualizeData({ data, message, suggestions }: Props) {
   return (
     <div className={styles.wrapper}>
       <div className={styles.message}>{message}</div>
-      {context.app === CoreApp.PanelEditor && (
-        <>
-          <div className={styles.suggestionsHeading}>Suggestions</div>
-          {suggestions && (
-            <div className={styles.list}>
-              {suggestions.map((suggestion, index) => (
-                <VisualizationPreview
-                  key={index}
-                  data={data!}
-                  suggestion={suggestion}
-                  showTitle={true}
-                  onChange={() => {}}
-                  width={200}
-                />
-              ))}
-            </div>
-          )}
-        </>
+      {context.app === CoreApp.PanelEditor && suggestions && (
+        <div className={styles.suggestions}>
+          {suggestions.map((suggestion, index) => (
+            <VisualizationPreview
+              key={index}
+              data={data!}
+              suggestion={suggestion}
+              showTitle={true}
+              onChange={() => {}}
+              width={200}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
@@ -63,7 +58,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       width: '100%',
     }),
-
-    list: css``,
+    suggestions: css({
+      marginTop: theme.spacing(2),
+      display: 'flex',
+    }),
   };
 };
