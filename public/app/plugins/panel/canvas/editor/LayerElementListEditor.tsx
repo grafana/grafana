@@ -45,6 +45,18 @@ export class LayerElementListEditor extends PureComponent<Props> {
     }
   };
 
+  onClearSelection = () => {
+    const { settings } = this.props.item;
+
+    if (!settings?.layer) {
+      return;
+    }
+
+    const { layer } = settings;
+
+    layer.scene.clearCurrentSelection();
+  };
+
   getRowStyle = (sel: boolean) => {
     return sel ? `${this.style.row} ${this.style.sel}` : this.style.row;
   };
@@ -152,7 +164,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
             isFullWidth={false}
           />
           {selection.length > 0 && (
-            <Button size="sm" variant="secondary" onClick={() => console.log('TODO!')}>
+            <Button size="sm" variant="secondary" onClick={this.onClearSelection}>
               Clear Selection
             </Button>
           )}
