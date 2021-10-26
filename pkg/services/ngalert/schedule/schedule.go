@@ -23,9 +23,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// timeNow makes it possible to test usage of time
-var timeNow = time.Now
-
 // ScheduleService handles scheduling
 type ScheduleService interface {
 	Run(context.Context) error
@@ -428,6 +425,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
 
+	tenant := fmt.Sprint(key.OrgID)
+	evalTotalMetric := sch.metrics.EvalTotal.WithLabelValues(tenant)
+	evalDurationMetric := sch.metrics.EvalDuration.WithLabelValues(tenant)
+	evalTotalFailuresMetric := sch.metrics.EvalFailures.WithLabelValues(tenant)
+
 	updateRule := func() (*models.AlertRule, error) {
 		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
 		err := sch.ruleStore.GetAlertRuleByUID(&q)
@@ -440,7 +442,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 	evaluate := func(alertRule *models.AlertRule, attempt int64, ctx *evalContext) error {
 		logger := logger.New("version", alertRule.Version, "attempt", attempt, "now", ctx.now)
-		start := timeNow()
+		start := sch.clock.Now()
 
 		condition := models.Condition{
 			Condition: alertRule.Condition,
@@ -448,21 +450,16 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 			Data:      alertRule.Data,
 		}
 		results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
-		var (
-			end    = timeNow()
-			tenant = fmt.Sprint(alertRule.OrgID)
-			dur    = end.Sub(start).Seconds()
-		)
-
-		sch.metrics.EvalTotal.WithLabelValues(tenant).Inc()
-		sch.metrics.EvalDuration.WithLabelValues(tenant).Observe(dur)
+		dur := sch.clock.Now().Sub(start)
+		evalTotalMetric.Inc()
+		evalDurationMetric.Observe(dur.Seconds())
 		if err != nil {
-			sch.metrics.EvalFailures.WithLabelValues(tenant).Inc()
+			evalTotalFailuresMetric.Inc()
 			// consider saving alert instance on error
-			logger.Error("failed to evaluate alert rule", "duration", end.Sub(start), "error", err)
+			logger.Error("failed to evaluate alert rule", "duration", dur, "error", err)
 			return err
 		}
-		logger.Debug("alert rule evaluated", "results", results)
+		logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 
 		processedStates := sch.stateManager.ProcessEvalResults(context.Background(), alertRule, results)
 		sch.saveAlertStates(processedStates)
