@@ -86,6 +86,10 @@ export class GroupState extends ElementState {
     this.elements = result;
     this.onChange(this.getSaveModel());
 
+    this.reinitializeMoveable();
+  }
+
+  reinitializeMoveable() {
     // Need to first clear current selection and then re-init moveable with slight delay
     this.scene.clearCurrentSelection();
     setTimeout(() => this.scene.initMoveable(true), 100);
@@ -97,6 +101,7 @@ export class GroupState extends ElementState {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
+        this.reinitializeMoveable();
         break;
       case LayerActionID.Duplicate:
         if (element.item.id === 'group') {
