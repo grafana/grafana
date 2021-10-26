@@ -10,10 +10,10 @@ import (
 
 func evaluatorScenario(t *testing.T, json string, reducedValue float64, datapoints ...float64) bool {
 	jsonModel, err := simplejson.NewJson([]byte(json))
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	evaluator, err := NewAlertEvaluator(jsonModel)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	return evaluator.Eval(null.FloatFrom(reducedValue))
 }
