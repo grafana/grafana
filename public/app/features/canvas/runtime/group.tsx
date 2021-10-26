@@ -121,11 +121,12 @@ export class GroupState extends ElementState {
         if (element.anchor.right) {
           opts.placement!.right! += 10;
         }
-        console.log('DUPLICATE', opts);
+
         const copy = new ElementState(element.item, opts, this);
         copy.updateSize(element.width, element.height);
-        copy.updateData(element.data); // :bomb:  <-- need some way to tell the scene to re-init size and data
+        copy.updateData(this.scene.context);
         this.elements.push(copy);
+        this.reinitializeMoveable();
         break;
       default:
         console.log('DO action', action, element);
