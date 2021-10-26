@@ -19,12 +19,17 @@ interface RolePickerMenuProps {
   onClear?: () => void;
 }
 
-export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
+export const RolePickerMenu = ({
+  builtInRole,
+  builtInRoles,
+  options,
+  appliedRoles,
+  onUpdate,
+  onClear,
+}: RolePickerMenuProps): JSX.Element => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
-  const { builtInRole, builtInRoles, options, appliedRoles, onUpdate, onClear } = props;
-
   const [selectedOptions, setSelectedOptions] = useState<RoleMap>({});
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState(builtInRole);
 
@@ -147,9 +152,7 @@ interface RoleMenuOptionProps<T> {
 }
 
 export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps<any>>>(
-  (props, ref) => {
-    const { data, isFocused, isSelected, disabled, onSelect, hideDescription } = props;
-
+  ({ data, isFocused, isSelected, disabled, onSelect, hideDescription }, ref) => {
     const theme = useTheme2();
     const styles = getSelectStyles(theme);
     const customStyles = useStyles2(getStyles);
@@ -195,6 +198,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       position: absolute;
       z-index: ${theme.zIndex.dropdown};
       overflow: hidden;
+
+      & > div {
+        padding-top: ${theme.spacing(1)};
+      }
     `,
     groupHeader: css`
       padding: ${theme.spacing(0, 4)};

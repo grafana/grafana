@@ -77,6 +77,13 @@ export const RolePicker = ({
     return option.uid && appliedRoles.includes(option.uid) && !option.name?.startsWith('fixed:');
   }).length;
 
+  const getOptions = () => {
+    if (query) {
+      return roleOptions.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()));
+    }
+    return roleOptions;
+  };
+
   return (
     <div data-testid="role-picker" style={{ position: 'relative' }}>
       <ClickOutsideWrapper onClick={onClose}>
@@ -93,11 +100,7 @@ export const RolePicker = ({
         />
         {isOpen && (
           <RolePickerMenu
-            options={
-              query
-                ? roleOptions.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()))
-                : roleOptions
-            }
+            options={getOptions()}
             builtInRole={builtinRole}
             builtInRoles={builtinRoles}
             appliedRoles={appliedRoles}
