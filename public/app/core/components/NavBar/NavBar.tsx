@@ -35,8 +35,14 @@ export const NavBar: FC = React.memo(() => {
     return !item.hideFromMenu;
   });
   const pluginItems = navTree.filter((item) => !item.hideFromMenu && item.id?.startsWith('plugin-page-'));
-  const configItems = enrichConfigItems(navTree.filter((item) => item.hideFromMenu), location, toggleSwitcherModal);
-  const activeItemId = isSearchActive(location) ? 'search' : navTree.find((item) => isLinkActive(location.pathname, item))?.id;
+  const configItems = enrichConfigItems(
+    navTree.filter((item) => item.hideFromMenu),
+    location,
+    toggleSwitcherModal
+  );
+  const activeItemId = isSearchActive(location)
+    ? 'search'
+    : navTree.find((item) => isLinkActive(location.pathname, item))?.id;
 
   const toggleNavBarSmallBreakpoint = useCallback(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
@@ -52,11 +58,28 @@ export const NavBar: FC = React.memo(() => {
 
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
+      <div className={styles.mobileSidemenuLogo} onClick={toggleNavBarSmallBreakpoint} key="hamburger">
+        <Icon name="bars" size="xl" />
+        <span className={styles.closeButton}>
+          <Icon name="times" />
+          Close
+        </span>
+      </div>
 
       {!newNavigationEnabled && (
-        <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
-          <Branding.MenuLogo />
-        </NavBarItem>
+        <NavBarSection>
+          <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
+            <Branding.MenuLogo />
+          </NavBarItem>
+          <NavBarItem
+            className={styles.search}
+            isActive={activeItemId === 'search'}
+            label="Search dashboards"
+            onClick={onOpenSearch}
+          >
+            <Icon name="search" size="xl" />
+          </NavBarItem>
+        </NavBarSection>
       )}
       {newNavigationEnabled && (
         <NavBarSection>
@@ -68,27 +91,16 @@ export const NavBar: FC = React.memo(() => {
           >
             <Branding.MenuLogo />
           </NavBarItem>
+          <NavBarItem
+            className={styles.search}
+            isActive={activeItemId === 'search'}
+            label="Search dashboards"
+            onClick={onOpenSearch}
+          >
+            <Icon name="search" size="xl" />
+          </NavBarItem>
         </NavBarSection>
       )}
-
-      <div className={styles.mobileSidemenuLogo} onClick={toggleNavBarSmallBreakpoint} key="hamburger">
-        <Icon name="bars" size="xl" />
-        <span className={styles.closeButton}>
-          <Icon name="times" />
-          Close
-        </span>
-      </div>
-
-      <NavBarSection className={styles.searchContainer}>
-        <NavBarItem
-          className={styles.search}
-          isActive={activeItemId === 'search'}
-          label="Search dashboards"
-          onClick={onOpenSearch}
-        >
-          <Icon name="search" size="xl" />
-        </NavBarItem>
-      </NavBarSection>
 
       <NavBarSection>
         {coreItems.map((link, index) => (
@@ -155,11 +167,9 @@ export const NavBar: FC = React.memo(() => {
 NavBar.displayName = 'NavBar';
 
 const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
-  searchContainer: css`
-    margin-top: ${newNavigationEnabled ? 'none' : theme.spacing(5)};
-  `,
   search: css`
     display: none;
+    margin-top: ${newNavigationEnabled ? 0 : theme.spacing(5)};
 
     ${theme.breakpoints.up('md')} {
       display: block;
@@ -167,11 +177,13 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
 
     .sidemenu-open--xs & {
       display: block;
+      margin-top: 0;
     }
   `,
   sidemenu: css`
     display: flex;
     flex-direction: column;
+    margin-left: ${newNavigationEnabled ? theme.spacing(1) : 0};
     position: fixed;
     z-index: ${theme.zIndex.sidemenu};
 
@@ -193,6 +205,7 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
       box-shadow: ${theme.shadows.z1};
       gap: ${theme.spacing(1)};
       height: auto;
+      margin-left: 0;
       position: absolute;
       width: 100%;
 

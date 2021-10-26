@@ -41,11 +41,11 @@ const (
 	WeightCreate
 	WeightDashboard
 	WeightExplore
-	WeightProfile
 	WeightAlerting
 	WeightPlugin
 	WeightConfig
 	WeightAdmin
+	WeightProfile
 	WeightHelp
 )
 

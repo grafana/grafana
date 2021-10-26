@@ -168,7 +168,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-		Text: "Manage", Id: "manage-dashboards", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
+		Text: "Browse", Id: "manage-dashboards", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
 	})
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 		Text: "Playlists", Id: "playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play",

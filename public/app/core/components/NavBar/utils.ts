@@ -14,7 +14,11 @@ export const getForcedLoginUrl = (url: string) => {
   return `${getConfig().appSubUrl}${url.split('?')[0]}?${queryParams.toString()}`;
 };
 
-export const enrichConfigItems = (items: NavModelItem[], location: Location<unknown>, toggleOrgSwitcher: () => void) => {
+export const enrichConfigItems = (
+  items: NavModelItem[],
+  location: Location<unknown>,
+  toggleOrgSwitcher: () => void
+) => {
   const { isSignedIn, user } = contextSrv;
   const onOpenShortcuts = () => {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
@@ -36,7 +40,7 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
       target: '_self',
       text: 'Sign In',
       url: forcedLoginUrl,
-    })
+    });
   }
 
   items.forEach((link, index) => {
@@ -61,7 +65,7 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
           icon: 'arrow-random',
           onClick: toggleOrgSwitcher,
         },
-      ]
+      ];
     }
   });
   return items;
