@@ -119,7 +119,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
               <p>
                 <i>
                   If strict panel refresh setting is used then the data in panels not affected by a variable change
-                  might look stale.
+                  might look stale until next refresh.
                 </i>
               </p>
             </Alert>

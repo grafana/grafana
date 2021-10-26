@@ -23,6 +23,7 @@ jest.mock('app/core/core', () => ({
     directive: () => {},
   },
   appEvents: {
+    subscribe: () => {},
     on: () => {},
   },
 }));

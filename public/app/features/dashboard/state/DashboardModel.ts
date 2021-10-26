@@ -48,7 +48,7 @@ import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 import { isOnTheSameGridRow } from './utils';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { Unsubscribable } from 'rxjs';
-import appEvents from '../../../core/app_events';
+import { appEvents } from '../../../core/core';
 import { VariableChanged } from '../../variables/types';
 
 export interface CloneOptions {
@@ -103,6 +103,7 @@ export class DashboardModel {
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
+  private panelsAffectedByVariableChange: number[] | null;
 
   // ------------------
   // not persisted
@@ -127,6 +128,7 @@ export class DashboardModel {
     getVariablesFromState: true,
     formatDate: true,
     appEventsSubscription: true,
+    panelsAffectedByVariableChange: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -170,7 +172,13 @@ export class DashboardModel {
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
+    this.panelsAffectedByVariableChange = null;
     this.appEventsSubscription = appEvents.subscribe(VariableChanged, (event) => {
+      if (this.panelInEdit || this.panelInView) {
+        this.panelsAffectedByVariableChange = event.payload.panelIds.filter((id) =>
+          this.panelInEdit ? id !== this.panelInEdit.id : this.panelInView ? id !== this.panelInView.id : true
+        );
+      }
       this.processRepeats();
       this.startRefresh(event.payload.panelIds);
     });
@@ -359,8 +367,10 @@ export class DashboardModel {
     this.events.publish(new RefreshEvent());
 
     if (this.panelInEdit) {
-      this.panelInEdit.refresh();
-      return;
+      if (!affectedPanelIds || affectedPanelIds.includes(this.panelInEdit.id)) {
+        this.panelInEdit.refresh();
+        return;
+      }
     }
 
     for (const panel of this.panels) {
@@ -410,12 +420,23 @@ export class DashboardModel {
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
+    this.refreshIfPanelsAffectedByVariableChange();
   }
 
   exitPanelEditor() {
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
     getTimeSrv().resumeAutoRefresh();
+    this.refreshIfPanelsAffectedByVariableChange();
+  }
+
+  private refreshIfPanelsAffectedByVariableChange() {
+    if (!this.panelsAffectedByVariableChange) {
+      return;
+    }
+
+    this.startRefresh(this.panelsAffectedByVariableChange);
+    this.panelsAffectedByVariableChange = null;
   }
 
   /*
