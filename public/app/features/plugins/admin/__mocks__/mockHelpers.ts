@@ -10,7 +10,7 @@ import {
   RequestStatus,
   PluginListDisplayMode,
 } from '../types';
-import type * as permissionsType from '../permissions';
+import * as permissions from '../permissions';
 import remotePluginMock from './remotePlugin.mock';
 import localPluginMock from './localPlugin.mock';
 import catalogPluginMock from './catalogPlugin.mock';
@@ -107,7 +107,9 @@ type UserAccessTestContext = {
   isDataSourceEditor: boolean;
 };
 
-export function mockUserPermissions(permissions: typeof permissionsType, options: UserAccessTestContext): void {
+jest.mock('../permissions');
+
+export function mockUserPermissions(options: UserAccessTestContext): void {
   const mock = mocked(permissions);
   mock.isDataSourceEditor.mockReturnValue(options.isDataSourceEditor);
   mock.isOrgAdmin.mockReturnValue(options.isOrgAdmin);

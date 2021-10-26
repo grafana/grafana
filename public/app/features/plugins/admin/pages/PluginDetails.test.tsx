@@ -4,18 +4,16 @@ import { MemoryRouter } from 'react-router-dom';
 import { render, RenderResult, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { config } from '@grafana/runtime';
+import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
 import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { CatalogPlugin, PluginTabIds, RequestStatus, ReducerState } from '../types';
 import * as api from '../api';
-import * as permissions from '../permissions';
 import { fetchRemotePlugins } from '../state/actions';
-import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-jest.mock('../permissions');
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
   const mockedRuntime = { ...original };
@@ -78,7 +76,7 @@ describe('Plugin details page', () => {
 
   describe('viewed as user with grafana admin permissions', () => {
     beforeAll(() => {
-      mockUserPermissions(permissions, {
+      mockUserPermissions({
         isAdmin: true,
         isDataSourceEditor: true,
         isOrgAdmin: true,
@@ -439,7 +437,7 @@ describe('Plugin details page', () => {
 
   describe('viewed as user without grafana admin permissions', () => {
     beforeAll(() => {
-      mockUserPermissions(permissions, {
+      mockUserPermissions({
         isAdmin: false,
         isDataSourceEditor: false,
         isOrgAdmin: false,
@@ -483,7 +481,7 @@ describe('Plugin details page', () => {
 
   describe('viewed as user without data source edit permissions', () => {
     beforeAll(() => {
-      mockUserPermissions(permissions, {
+      mockUserPermissions({
         isAdmin: true,
         isDataSourceEditor: false,
         isOrgAdmin: true,
