@@ -214,49 +214,57 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   render() {
     const { dashboard } = this.props;
-
-    const autoSizerStyle: CSSProperties = {
-      width: '100%',
-      height: '100%',
-    };
-
     return (
-      <AutoSizer style={autoSizerStyle} disableHeight>
-        {({ width }) => {
-          if (width === 0) {
-            return null;
-          }
+      /**
+       * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
+       * properly working. For more information go here:
+       * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
+       */
+      <div style={{ flex: '1 1 auto' }}>
+        <AutoSizer disableHeight>
+          {({ width }) => {
+            if (width === 0) {
+              return null;
+            }
 
-          const draggable = width <= 769 ? false : dashboard.meta.canEdit;
+            const draggable = width <= 769 ? false : dashboard.meta.canEdit;
 
-          /*
+            /*
             Disable draggable if mobile device, solving an issue with unintentionally
             moving panels. https://github.com/grafana/grafana/issues/18497
             theme.breakpoints.md = 769
           */
 
-          return (
-            <ReactGridLayout
-              width={width}
-              isDraggable={draggable}
-              isResizable={dashboard.meta.canEdit}
-              containerPadding={[0, 0]}
-              useCSSTransforms={false}
-              margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
-              cols={GRID_COLUMN_COUNT}
-              rowHeight={GRID_CELL_HEIGHT}
-              draggableHandle=".grid-drag-handle"
-              layout={this.buildLayout()}
-              onDragStop={this.onDragStop}
-              onResize={this.onResize}
-              onResizeStop={this.onResizeStop}
-              onLayoutChange={this.onLayoutChange}
-            >
-              {this.renderPanels(width)}
-            </ReactGridLayout>
-          );
-        }}
-      </AutoSizer>
+            return (
+              /**
+               * The children is using a width of 100% so we need to guarantee that it is wrapped
+               * in an element that has the calculated size given by the AutoSizer. The AutoSizer
+               * has a width of 0 and will let its content overflow its div.
+               */
+              <div style={{ width: `${width}px`, height: '100%' }}>
+                <ReactGridLayout
+                  width={width}
+                  isDraggable={draggable}
+                  isResizable={dashboard.meta.canEdit}
+                  containerPadding={[0, 0]}
+                  useCSSTransforms={false}
+                  margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+                  cols={GRID_COLUMN_COUNT}
+                  rowHeight={GRID_CELL_HEIGHT}
+                  draggableHandle=".grid-drag-handle"
+                  layout={this.buildLayout()}
+                  onDragStop={this.onDragStop}
+                  onResize={this.onResize}
+                  onResizeStop={this.onResizeStop}
+                  onLayoutChange={this.onLayoutChange}
+                >
+                  {this.renderPanels(width)}
+                </ReactGridLayout>
+              </div>
+            );
+          }}
+        </AutoSizer>
+      </div>
     );
   }
 }

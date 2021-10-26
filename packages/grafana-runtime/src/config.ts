@@ -69,6 +69,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     prometheusMonaco: false,
     newNavigation: false,
     fullRangeLogsVolume: false,
+    autoLoadFullRangeLogsVolume: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

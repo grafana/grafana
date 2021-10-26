@@ -4,7 +4,10 @@
   ],
   "enabledManagers": ["npm"],
   "ignoreDeps": [
+    "@types/systemjs",
+    "@types/d3-force",
     "d3",
+    "d3-force", // we should bump this once we move to esm modules
     "husky",
     "slate",
     "slate-plain-serializer",
@@ -17,6 +20,15 @@
   "minor": {
     "enabled": false
   },
+  "packageRules": [
+    {
+      "matchPaths": ["grafana-toolkit/package.json"],
+      "ignoreDeps": [
+        "copy-webpack-plugin", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
+        "css-loader", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
+      ]
+    }
+  ],
   "patch": {
     "enabled": false
   },

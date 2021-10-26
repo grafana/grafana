@@ -161,6 +161,11 @@ func (ss *SQLStore) Reset() error {
 	return ss.ensureMainOrgAndAdminUser()
 }
 
+// Quote quotes the value in the used SQL dialect
+func (ss *SQLStore) Quote(value string) string {
+	return ss.engine.Quote(value)
+}
+
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 	ctx := context.Background()
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {

@@ -1,8 +1,8 @@
 import { Component } from 'react';
-import { CoreApp, PanelProps } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { Subscription } from 'rxjs';
-import { PanelEditExitedEvent } from 'app/types/events';
+import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { CanvasGroupOptions } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
@@ -37,9 +37,17 @@ export class CanvasPanel extends Component<Props, State> {
 
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
-    this.scene = new Scene(this.props.options.root, this.onUpdateScene);
+    this.scene = new Scene(this.props.options.root, this.props.options.inlineEditing, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
+
+    this.subs.add(
+      this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {
+        // Remove current selection when entering edit mode for any panel in dashboard
+        let event: MouseEvent = new MouseEvent('click');
+        this.scene?.selecto?.clickTarget(event, this.scene?.div);
+      })
+    );
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
@@ -52,7 +60,7 @@ export class CanvasPanel extends Component<Props, State> {
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
-    if (this.panelContext.onInstanceStateChange && this.panelContext.app === CoreApp.PanelEditor) {
+    if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         scene: this.scene,
         layer: this.scene.root,
@@ -101,13 +109,20 @@ export class CanvasPanel extends Component<Props, State> {
       changed = true;
     }
 
-    // After editing, the options are valid, but the scene was in a different panel
-    if (this.needsReload && this.props.options !== nextProps.options) {
+    // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
+    const shouldUpdateSceneAndPanel =
+      (this.needsReload && this.props.options !== nextProps.options) ||
+      this.props.options.inlineEditing !== nextProps.options.inlineEditing;
+    if (shouldUpdateSceneAndPanel) {
       this.needsReload = false;
-      this.scene.load(nextProps.options.root);
+      this.scene.load(nextProps.options.root, nextProps.options.inlineEditing);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
+
+      if (this.props.options.inlineEditing) {
+        this.scene.selecto?.destroy();
+      }
     }
 
     return changed;
