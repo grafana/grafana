@@ -96,7 +96,7 @@ const sanitizedIntervalsLabels = (item: string) => {
     h: 'hour',
     d: 'day',
   };
-  const isInterval = /^([0-9]).*(s|m|h|d)$/gim.test(item as string);
+  const isInterval = /^([0-9]).*(s|m|h|d)$/gim.test(item);
   const newItem = item.split('');
   const unit = newItem.pop();
 
