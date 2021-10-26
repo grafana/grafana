@@ -12,7 +12,7 @@ import { changeVariableOrder, duplicateVariable, removeVariable } from '../state
 import { VariableEditorList } from './VariableEditorList';
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
-import { setStrictPanelRefresh } from '../settings/reducer';
+import { updateStrictPanelRefresh } from '../settings/actions';
 
 const mapStateToProps = (state: StoreState) => ({
   variables: getEditorVariables(state),
@@ -33,7 +33,7 @@ const mapDispatchToProps = {
   switchToNewMode,
   switchToEditMode,
   switchToListMode,
-  setStrictPanelRefresh,
+  updateStrictPanelRefresh,
 };
 
 interface OwnProps {}
@@ -127,7 +127,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
               <Checkbox
                 id="variables-settings-strict-mode"
                 value={this.props.strictPanelRefreshMode}
-                onChange={(e) => this.props.setStrictPanelRefresh(e.currentTarget.checked)}
+                onChange={(e) => this.props.updateStrictPanelRefresh(e.currentTarget.checked)}
               />
             </Field>
             <VariableEditorList

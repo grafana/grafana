@@ -8,15 +8,15 @@ import {
   OrgVariableModel,
   QueryVariableModel,
   UserVariableModel,
-  VariablesChanged,
   VariableHide,
   VariableModel,
   VariableOption,
   VariableRefresh,
+  VariablesChanged,
+  VariablesChangedInUrl,
   VariablesTimeRangeChanged,
   VariableWithMultiSupport,
   VariableWithOptions,
-  VariablesChangedInUrl,
 } from '../types';
 import { AppNotification, StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
@@ -69,6 +69,7 @@ import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { locationService } from '@grafana/runtime';
 import { appEvents } from '../../../core/core';
 import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
+import { setStrictPanelRefresh } from '../settings/reducer';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -688,6 +689,8 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
     dispatch(initDashboardTemplating(dashboard.templating.list));
     // Process all variable updates
     await dispatch(processVariables());
+    // Set strict panel refresh mode
+    dispatch(setStrictPanelRefresh(dashboard.templating.strictPanelRefreshMode ?? false));
     // Mark update as complete
     dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
   } catch (err) {

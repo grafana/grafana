@@ -89,7 +89,7 @@ export class DashboardModel {
   liveNow: boolean;
   private originalTime: any;
   timepicker: any;
-  templating: { list: any[] };
+  templating: { list: any[]; strictPanelRefreshMode?: boolean };
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
   refresh: any;
@@ -361,6 +361,7 @@ export class DashboardModel {
     const currentVariables = this.getVariablesFromState();
 
     copy.templating = {
+      strictPanelRefreshMode: this.templating.strictPanelRefreshMode,
       list: currentVariables.map((variable) =>
         variableAdapters.get(variable.type).getSaveModel(variable, defaults.saveVariables)
       ),
@@ -467,7 +468,7 @@ export class DashboardModel {
 
   private ensureListExist(data: any) {
     if (!data) {
-      data = {};
+      data = { strictPanelRefreshMode: false };
     }
     if (!data.list) {
       data.list = [];
@@ -1193,6 +1194,11 @@ export class DashboardModel {
     if (shouldUpdateGridPositionLayout) {
       this.events.publish(new DashboardPanelsChangedEvent());
     }
+  }
+
+  updateStrictRefreshPanel(value: boolean) {
+    this.revision++;
+    this.templating.strictPanelRefreshMode = value;
   }
 
   private getPanelRepeatVariable(panel: PanelModel) {
