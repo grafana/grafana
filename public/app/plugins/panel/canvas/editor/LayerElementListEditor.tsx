@@ -10,6 +10,8 @@ import { InstanceState } from '../CanvasPanel';
 import { LayerActionID } from '../types';
 import { canvasElementRegistry } from 'app/features/canvas';
 import appEvents from 'app/core/app_events';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
 
 type Props = StandardEditorProps<any, InstanceState, PanelOptions>;
 
@@ -17,20 +19,20 @@ export class LayerElementListEditor extends PureComponent<Props> {
   style = getStyles(config.theme);
 
   onAddItem = (sel: SelectableValue<string>) => {
-    // const reg = drawItemsRegistry.getIfExists(sel.value);
-    // if (!reg) {
-    //   console.error('NOT FOUND', sel);
-    //   return;
-    // }
-    // const layer = this.props.value;
-    // const item = newItem(reg, layer.items.length);
-    // const isList = this.props.context.options?.mode === LayoutMode.List;
-    // const items = isList ? [item, ...layer.items] : [...layer.items, item];
-    // this.props.onChange({
-    //   ...layer,
-    //   items,
-    // });
-    // this.onSelect(item);
+    const { settings } = this.props.item;
+    if (!settings?.layer) {
+      return;
+    }
+    const { layer } = settings;
+
+    const item = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
+    const newElement = new ElementState(item, item.defaultConfig, layer);
+    newElement.updateSize(newElement.width, newElement.height);
+    newElement.updateData(layer.scene.context);
+    layer.elements.push(newElement);
+    layer.scene.buildSceneRegistry();
+
+    layer.reinitializeMoveable();
   };
 
   onSelect = (item: any) => {

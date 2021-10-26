@@ -31,11 +31,17 @@ interface TextBoxData {
 }
 
 interface TextBoxConfig {
+  type: string;
+  background: { color: { fixed: string } };
+  config: {
+    align: Align;
+    valign: VAlign;
+  };
   text?: TextDimensionConfig;
   color?: ColorDimensionConfig;
   size?: number; // 0 or missing will "auto size"
-  align: Align;
-  valign: VAlign;
+  align?: Align;
+  valign?: VAlign;
 }
 
 class TextBoxDisplay extends PureComponent<CanvasElementProps<TextBoxConfig, TextBoxData>> {
@@ -72,8 +78,14 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   display: TextBoxDisplay,
 
   defaultConfig: {
-    align: Align.Left,
-    valign: VAlign.Middle,
+    type: 'text-box',
+    background: {
+      color: { fixed: 'grey' },
+    },
+    config: {
+      align: Align.Left,
+      valign: VAlign.Middle,
+    },
   },
 
   defaultSize: {
@@ -84,14 +96,16 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: TextBoxConfig) => {
     const data: TextBoxData = {
-      text: cfg.text ? ctx.getText(cfg.text).value() : '',
-      align: cfg.align ?? Align.Center,
-      valign: cfg.valign ?? VAlign.Middle,
-      size: cfg.size,
+      text: cfg?.text ? ctx.getText(cfg.text).value() : '',
+      align: cfg?.align ?? Align.Center,
+      valign: cfg?.valign ?? VAlign.Middle,
+      size: cfg?.size,
     };
-    if (cfg.color) {
+
+    if (cfg?.color) {
       data.color = ctx.getColor(cfg.color).value();
     }
+
     return data;
   },
 

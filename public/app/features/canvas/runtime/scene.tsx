@@ -61,10 +61,7 @@ export class Scene {
     );
 
     // Build the scene registry
-    this.lookup.clear();
-    this.root.visit((v) => {
-      this.lookup.set(v.UID, v);
-    });
+    this.buildSceneRegistry();
 
     setTimeout(() => {
       if (this.div && enableEditing) {
@@ -72,6 +69,13 @@ export class Scene {
       }
     }, 100);
     return this.root;
+  }
+
+  buildSceneRegistry() {
+    this.lookup.clear();
+    this.root.visit((v) => {
+      this.lookup.set(v.UID, v);
+    });
   }
 
   context: DimensionContext = {
