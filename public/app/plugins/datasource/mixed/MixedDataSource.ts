@@ -86,7 +86,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       )
     );
 
-    return forkJoin(runningQueries).pipe(flattenRespones(), map(this.finalizeResponses), mergeAll());
+    return forkJoin(runningQueries).pipe(flattenResponses(), map(this.finalizeResponses), mergeAll());
   }
 
   testDatasource() {
@@ -115,7 +115,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   }
 }
 
-function flattenRespones(): OperatorFunction<DataQueryResponse[][], DataQueryResponse[]> {
+function flattenResponses(): OperatorFunction<DataQueryResponse[][], DataQueryResponse[]> {
   return reduce((all: DataQueryResponse[], current) => {
     return current.reduce((innerAll, innerCurrent) => {
       innerAll.push.apply(innerAll, innerCurrent);
