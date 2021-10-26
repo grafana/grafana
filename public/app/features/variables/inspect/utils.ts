@@ -4,6 +4,7 @@ import { isAdHoc } from '../guard';
 import { safeStringifyValue } from '../../../core/utils/explore';
 import { VariableModel } from '../types';
 import { containsVariable, variableRegex, variableRegexExec } from '../utils';
+import { DataLinkBuiltInVars } from '@grafana/data';
 
 export interface GraphNode {
   id: string;
@@ -231,6 +232,8 @@ export function getAllAffectedPanelIdsForVariableChange(
   panels: PanelModel[]
 ): number[] {
   let affectedPanelIds: number[] = getAffectedPanelIdsForVariable(variableId, panels);
+  const affectedPanelIdsForAllVariables = getAffectedPanelIdsForVariable(DataLinkBuiltInVars.includeVars, panels);
+  affectedPanelIds = [...new Set([...affectedPanelIdsForAllVariables, ...affectedPanelIds])];
 
   const dependencies = getDependenciesForVariable(variableId, variables, new Set());
   for (const dependency of dependencies) {

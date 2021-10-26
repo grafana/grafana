@@ -290,6 +290,24 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
       expect(result).toEqual([2]);
     });
   });
+
+  describe('when called with a real world example with $__all_variables in links', () => {
+    it('then it should return correct panelIds', () => {
+      const {
+        panels: panelsAsJson,
+        templating: { list: variables },
+      } = dashWithAllVariables;
+      const panels = panelsAsJson.map(
+        (panel: PanelModel) =>
+          (({
+            id: panel.id,
+            getSaveModel: () => panel,
+          } as unknown) as PanelModel)
+      );
+      const result = getAllAffectedPanelIdsForVariableChange('unknown', variables, panels);
+      expect(result).toEqual([2, 3]);
+    });
+  });
 });
 
 const dashWithRepeatsAndRows: any = {
@@ -1647,4 +1665,311 @@ const dashWithTemplateDependenciesAndPanels: any = {
   title: 'Variables dependencies update POC',
   uid: 'n60iRMNnk',
   version: 6,
+};
+
+const dashWithAllVariables: any = {
+  annotations: {
+    list: [
+      {
+        builtIn: 1,
+        datasource: '-- Grafana --',
+        enable: true,
+        hide: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotations & Alerts',
+        target: {
+          limit: 100,
+          matchAny: false,
+          tags: [],
+          type: 'dashboard',
+        },
+        type: 'dashboard',
+      },
+    ],
+    strictPanelRefreshMode: false,
+  },
+  editable: true,
+  fiscalYearStartMonth: 0,
+  gnetId: null,
+  graphTooltip: 0,
+  id: 603,
+  iteration: 1635254953926,
+  links: [],
+  liveNow: false,
+  panels: [
+    {
+      datasource: null,
+      description: '',
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'thresholds',
+          },
+          links: [
+            {
+              targetBlank: true,
+              title: 'Depends on Data Link',
+              url: 'http://www.grafana.com?${__all_variables}',
+            },
+          ],
+          mappings: [],
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      gridPos: {
+        h: 9,
+        w: 12,
+        x: 0,
+        y: 0,
+      },
+      id: 2,
+      links: [],
+      options: {
+        colorMode: 'value',
+        graphMode: 'area',
+        justifyMode: 'auto',
+        orientation: 'auto',
+        reduceOptions: {
+          calcs: ['lastNotNull'],
+          fields: '',
+          values: false,
+        },
+        textMode: 'auto',
+      },
+      pluginVersion: '8.3.0-pre',
+      title: 'Depends on Data Link',
+      type: 'stat',
+    },
+    {
+      datasource: null,
+      description: '',
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'thresholds',
+          },
+          links: [],
+          mappings: [],
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      gridPos: {
+        h: 9,
+        w: 12,
+        x: 12,
+        y: 0,
+      },
+      id: 3,
+      links: [
+        {
+          targetBlank: true,
+          title: 'Panel Link',
+          url: 'http://www.grafana.com?${__all_variables}',
+        },
+      ],
+      options: {
+        colorMode: 'value',
+        graphMode: 'area',
+        justifyMode: 'auto',
+        orientation: 'auto',
+        reduceOptions: {
+          calcs: ['lastNotNull'],
+          fields: '',
+          values: false,
+        },
+        textMode: 'auto',
+      },
+      pluginVersion: '8.3.0-pre',
+      title: 'Depends on Panel Link',
+      type: 'stat',
+    },
+    {
+      datasource: null,
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'thresholds',
+          },
+          mappings: [],
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      gridPos: {
+        h: 8,
+        w: 12,
+        x: 0,
+        y: 9,
+      },
+      id: 5,
+      options: {
+        colorMode: 'value',
+        graphMode: 'area',
+        justifyMode: 'auto',
+        orientation: 'auto',
+        reduceOptions: {
+          calcs: ['lastNotNull'],
+          fields: '',
+          values: false,
+        },
+        textMode: 'auto',
+      },
+      pluginVersion: '8.3.0-pre',
+      title: 'Depends on none',
+      type: 'stat',
+    },
+    {
+      datasource: null,
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'thresholds',
+          },
+          mappings: [],
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      gridPos: {
+        h: 8,
+        w: 12,
+        x: 12,
+        y: 9,
+      },
+      id: 6,
+      options: {
+        colorMode: 'value',
+        graphMode: 'area',
+        justifyMode: 'auto',
+        orientation: 'auto',
+        reduceOptions: {
+          calcs: ['lastNotNull'],
+          fields: '',
+          values: false,
+        },
+        textMode: 'auto',
+      },
+      pluginVersion: '8.3.0-pre',
+      targets: [
+        {
+          alias: '',
+          datasource: 'gdev-testdata',
+          refId: 'A',
+          scenarioId: 'random_walk',
+        },
+      ],
+      title: 'Depends on var $custom',
+      type: 'stat',
+    },
+  ],
+  revision: null,
+  schemaVersion: 31,
+  style: 'dark',
+  tags: [],
+  templating: {
+    list: [
+      {
+        allValue: null,
+        current: {
+          selected: true,
+          text: ['1'],
+          value: ['1'],
+        },
+        description: null,
+        error: null,
+        hide: 0,
+        includeAll: true,
+        label: null,
+        multi: true,
+        name: 'custom',
+        options: [
+          {
+            selected: false,
+            text: 'All',
+            value: '$__all',
+          },
+          {
+            selected: true,
+            text: '1',
+            value: '1',
+          },
+          {
+            selected: false,
+            text: '2',
+            value: '2',
+          },
+          {
+            selected: false,
+            text: '3',
+            value: '3',
+          },
+        ],
+        query: '1,2,3',
+        queryValue: '',
+        skipUrlSync: false,
+        type: 'custom',
+      },
+    ],
+    strictPanelRefreshMode: true,
+  },
+  time: {
+    from: 'now-6h',
+    to: 'now',
+  },
+  timepicker: {},
+  timezone: '',
+  title: 'Depends on Links',
+  uid: 'XkBHMzF7z',
+  version: 6,
+  weekStart: '',
 };
