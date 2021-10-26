@@ -19,7 +19,7 @@ import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { PromQuery, PromOptions } from '../types';
 import { roundMsToMin } from '../language_utils';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { QueryEditorProps, QueryHint, isDataFrame, toLegacyResponseData, TimeRange } from '@grafana/data';
+import { QueryEditorProps, QueryHint, isDataFrame, toLegacyResponseData, TimeRange, CoreApp } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
@@ -299,6 +299,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
                   {isMonacoEditorEnabled ? (
                     <MonacoQueryFieldWrapper
+                      isExplore={this.props.app === CoreApp.Explore}
                       languageProvider={languageProvider}
                       history={history}
                       onChange={this.onChangeQuery}
