@@ -19,7 +19,6 @@ import { renameByRegexTransformer } from './transformers/renameByRegex';
 import { filterByValueTransformer } from './transformers/filterByValue';
 import { histogramTransformer } from './transformers/histogram';
 import { convertFieldTypeTransformer } from './transformers/convertFieldType';
-import { lookupGazetteerTransformer } from './transformers/lookupGazetteer';
 
 export const standardTransformers = {
   noopTransformer,
@@ -44,5 +43,4 @@ export const standardTransformers = {
   renameByRegexTransformer,
   histogramTransformer,
   convertFieldTypeTransformer,
-  lookupGazetteerTransformer,
 };

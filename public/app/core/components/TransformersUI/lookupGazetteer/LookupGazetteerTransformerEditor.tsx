@@ -3,16 +3,15 @@ import {
   DataTransformerID,
   FieldNamePickerConfigSettings,
   StandardEditorsRegistryItem,
-  standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 
-import { LookupGazetteerOptions } from '@grafana/data/src/transformations/transformers/lookupGazetteer';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { GazetteerPathEditor } from 'app/plugins/panel/geomap/editor/GazetteerPathEditor';
 import { GazetteerPathEditorConfigSettings } from 'app/plugins/panel/geomap/types';
+import { LookupGazetteerOptions, lookupGazetteerTransformer } from './lookupGazetteer';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: { width: 24 },
@@ -27,16 +26,7 @@ export const LookupGazetteerTransformerEditor: React.FC<TransformerUIProps<Looku
   options,
   onChange,
 }) => {
-  const onPickMappingField = useCallback(
-    (value: string | undefined) => {
-      onChange({
-        ...options,
-        mappingField: value,
-      });
-    },
-    [onChange, options]
-  );
-  const onPickTargetField = useCallback(
+  const onPickLookupField = useCallback(
     (value: string | undefined) => {
       onChange({
         ...options,
@@ -57,14 +47,6 @@ export const LookupGazetteerTransformerEditor: React.FC<TransformerUIProps<Looku
   );
   return (
     <InlineFieldRow>
-      <InlineField label={'Current field'}>
-        <FieldNamePicker
-          context={{ data: input }}
-          value={options?.lookupField ?? ''}
-          onChange={onPickMappingField}
-          item={fieldNamePickerSettings}
-        />
-      </InlineField>
       <InlineField label={'Gazetteer'}>
         <GazetteerPathEditor
           value={options?.gazetteer ?? ''}
@@ -77,7 +59,7 @@ export const LookupGazetteerTransformerEditor: React.FC<TransformerUIProps<Looku
         <FieldNamePicker
           context={{ data: input }}
           value={options?.lookupField ?? ''}
-          onChange={onPickTargetField}
+          onChange={onPickLookupField}
           item={fieldNamePickerSettings}
         />
       </InlineField>
@@ -88,7 +70,7 @@ export const LookupGazetteerTransformerEditor: React.FC<TransformerUIProps<Looku
 export const lookupGazetteerTransformRegistryItem: TransformerRegistryItem<LookupGazetteerOptions> = {
   id: DataTransformerID.lookupGazetteer,
   editor: LookupGazetteerTransformerEditor,
-  transformation: standardTransformers.lookupGazetteerTransformer,
+  transformation: lookupGazetteerTransformer,
   name: 'Lookup gazetteer',
   description: `Looks up matching data from gazetteer based on selected field`,
 };
