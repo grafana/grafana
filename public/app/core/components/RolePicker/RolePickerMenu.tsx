@@ -21,7 +21,6 @@ interface RolePickerMenuProps {
 
 export const RolePickerMenu = ({
   builtInRole,
-  builtInRoles,
   options,
   appliedRoles,
   onUpdate,
@@ -100,7 +99,13 @@ export const RolePickerMenu = ({
             <div className={customStyles.groupHeader}>Fixed roles</div>
             <div className={styles.optionBody}>
               {fixedRoles.map((option, i) => (
-                <RoleMenuOption data={option} key={i} onSelect={onSelect} hideDescription />
+                <RoleMenuOption
+                  data={option}
+                  key={i}
+                  isSelected={!!(option.uid && selectedOptions[option.uid])}
+                  onSelect={onSelect}
+                  hideDescription
+                />
               ))}
             </div>
           </>
