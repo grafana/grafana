@@ -7,7 +7,7 @@ e2e.scenario({
   itName: 'Should be shown and clickable',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: true,
+  skipScenario: false,
   scenario: () => {
     e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
@@ -15,7 +15,7 @@ e2e.scenario({
     // Try visualization suggestions
     e2e.components.PanelEditor.toggleVizPicker().click();
     e2e().contains('Suggestions').click();
-    cy.wait(1000);
+    cy.wait(5000);
 
     // Verify we see suggestions
     e2e.components.VisualizationPreview.card('Line chart').should('be.visible');
