@@ -53,10 +53,14 @@ export function useZoom({ stepUp, stepDown, min, max } = defaultOptions) {
       if (wheelEvent.ctrlKey || wheelEvent.metaKey) {
         event.preventDefault();
 
+        setScale(Math.min(Math.max(min ?? -Infinity, scale + Math.min(wheelEvent.deltaY, 2) * -0.01), max ?? Infinity));
+
         if (wheelEvent.deltaY < 0) {
-          onStepUp();
+          const newScale = scale + Math.max(wheelEvent.deltaY, -4) * -0.015;
+          setScale(Math.max(min ?? -Infinity, newScale));
         } else if (wheelEvent.deltaY > 0) {
-          onStepDown();
+          const newScale = scale + Math.min(wheelEvent.deltaY, 4) * -0.015;
+          setScale(Math.min(max ?? Infinity, newScale));
         }
       }
     },

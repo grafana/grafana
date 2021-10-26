@@ -84,8 +84,9 @@ const dummyProps: Props = {
   showNodeGraph: true,
   splitOpen: (() => {}) as any,
   logsVolumeData: undefined,
-  logsVolumeDataProvider: undefined,
   loadLogsVolumeData: () => {},
+  changeGraphStyle: () => {},
+  graphStyle: 'lines',
 };
 
 describe('Explore', () => {

@@ -1078,6 +1078,19 @@
    "type": "array",
    "x-go-package": "github.com/prometheus/common/model"
   },
+  "LabelSet": {
+   "additionalProperties": {
+    "$ref": "#/definitions/LabelValue"
+   },
+   "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/common/model"
+  },
+  "LabelValue": {
+   "title": "A LabelValue is an associated value for a LabelName.",
+   "type": "string",
+   "x-go-package": "github.com/prometheus/common/model"
+  },
   "Labels": {
    "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
    "items": {
@@ -2429,12 +2442,27 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "TestReceiversConfigAlertParams": {
+   "properties": {
+    "annotations": {
+     "$ref": "#/definitions/LabelSet"
+    },
+    "labels": {
+     "$ref": "#/definitions/LabelSet"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "TestReceiversResult": {
    "properties": {
+    "alert": {
+     "$ref": "#/definitions/TestReceiversConfigAlertParams"
+    },
     "notified_at": {
      "format": "date-time",
      "type": "string",
-     "x-go-name": "NotifedAt"
+     "x-go-name": "NotifiedAt"
     },
     "receivers": {
      "items": {
@@ -2676,6 +2704,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -2697,9 +2726,7 @@
     "labels",
     "receiver"
    ],
-   "type": "object",
-   "x-go-name": "AlertGroup",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertGroups": {
    "description": "AlertGroups alert groups",
@@ -3130,7 +3157,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3141,7 +3167,9 @@
    "required": [
     "name"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "Receiver",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "silence": {
    "description": "Silence silence",
@@ -3728,6 +3756,14 @@
    "post": {
     "operationId": "RoutePostTestReceivers",
     "parameters": [
+     {
+      "in": "body",
+      "name": "alert",
+      "schema": {
+       "$ref": "#/definitions/TestReceiversConfigAlertParams"
+      },
+      "x-go-name": "Alert"
+     },
      {
       "in": "body",
       "name": "receivers",

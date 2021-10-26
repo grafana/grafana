@@ -1,7 +1,3 @@
-import { cloneDeep, groupBy } from 'lodash';
-import { forkJoin, from, Observable, of } from 'rxjs';
-import { catchError, map, mergeAll, mergeMap } from 'rxjs/operators';
-
 import {
   DataQuery,
   DataQueryRequest,
@@ -11,6 +7,9 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { cloneDeep, groupBy } from 'lodash';
+import { forkJoin, from, Observable, of, OperatorFunction } from 'rxjs';
+import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
@@ -68,24 +67,26 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
                 key: `mixed-${i}-${response.key || ''}`,
               } as DataQueryResponse;
             }),
+            toArray(),
             catchError((err) => {
               err = toDataQueryError(err);
-
               err.message = `${api.name}: ${err.message}`;
 
-              return of({
-                data: [],
-                state: LoadingState.Error,
-                error: err,
-                key: `mixed-${i}-${dsRequest.requestId || ''}`,
-              });
+              return of<DataQueryResponse[]>([
+                {
+                  data: [],
+                  state: LoadingState.Error,
+                  error: err,
+                  key: `mixed-${i}-${dsRequest.requestId || ''}`,
+                },
+              ]);
             })
           );
         })
       )
     );
 
-    return forkJoin(runningQueries).pipe(map(this.finalizeResponses), mergeAll());
+    return forkJoin(runningQueries).pipe(flattenResponses(), map(this.finalizeResponses), mergeAll());
   }
 
   testDatasource() {
@@ -112,4 +113,13 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     return responses;
   }
+}
+
+function flattenResponses(): OperatorFunction<DataQueryResponse[][], DataQueryResponse[]> {
+  return reduce((all: DataQueryResponse[], current) => {
+    return current.reduce((innerAll, innerCurrent) => {
+      innerAll.push.apply(innerAll, innerCurrent);
+      return innerAll;
+    }, all);
+  }, []);
 }

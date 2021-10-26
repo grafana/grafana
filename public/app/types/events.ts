@@ -1,11 +1,4 @@
-import {
-  AnnotationQuery,
-  BusEventBase,
-  BusEventWithPayload,
-  eventFactory,
-  GrafanaTheme2,
-  TimeRange,
-} from '@grafana/data';
+import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 
 /**
@@ -132,20 +125,12 @@ export class DashboardPanelsChangedEvent extends BusEventBase {
   static type = 'dashboard-panels-changed';
 }
 
-export class RefreshEvent extends BusEventBase {
-  static type = 'refresh';
-}
-
 export class PanelDirectiveReadyEvent extends BusEventBase {
   static type = 'panel-directive-ready';
 }
 
 export class RenderEvent extends BusEventBase {
   static type = 'render';
-}
-
-export class ThemeChangedEvent extends BusEventWithPayload<GrafanaTheme2> {
-  static type = 'theme-changed';
 }
 
 export class ZoomOutEvent extends BusEventWithPayload<number> {
@@ -196,10 +181,6 @@ export class AnnotationQueryStarted extends BusEventWithPayload<AnnotationQuery>
 
 export class AnnotationQueryFinished extends BusEventWithPayload<AnnotationQuery> {
   static type = 'annotation-query-finished';
-}
-
-export class TimeRangeUpdatedEvent extends BusEventWithPayload<TimeRange> {
-  static type = 'time-range-updated';
 }
 
 export class PanelEditEnteredEvent extends BusEventWithPayload<number> {

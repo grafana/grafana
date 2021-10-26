@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -71,6 +72,21 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
 }
 
+// GetUserRoles returns user permissions based on built-in roles
+func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
+	return nil, errors.New("unsupported function") //OSS users will continue to use builtin roles via GetUserPermissions
+}
+
+// CloneUserToServiceAccount creates a service account with permissions based on a user
+func (ac *OSSAccessControlService) CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error) {
+	return nil, errors.New("clone user not implemented yet in service accounts") //Please switch on Enterprise to test this
+}
+
+// Link creates a service account with permissions based on a user
+func (ac *OSSAccessControlService) LinkAPIKeyToServiceAccount(context.Context, *models.ApiKey, *models.User) error {
+	return errors.New("link SA not implemented yet in service accounts") //Please switch on Enterprise to test this
+}
+
 // GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
@@ -118,7 +134,7 @@ func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
 		// needs to be increased. Hence, we don't overwrite a role with a
 		// greater version.
 		if storedRole.Version >= role.Version {
-			log.Debugf("role %v has already been stored in a greater version, skipping registration", role.Name)
+			log.Debug("the has already been stored in a greater version, skipping registration", "role", role.Name)
 			return
 		}
 	}
@@ -134,7 +150,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 		if ok {
 			for _, assignedRole := range assignments {
 				if assignedRole == role.Name {
-					log.Debugf("role %v has already been assigned to %v", role.Name, builtInRole)
+					log.Debug("the role has already been assigned", "rolename", role.Name, "build_in_role", builtInRole)
 					alreadyAssigned = true
 				}
 			}
