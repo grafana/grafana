@@ -1,9 +1,8 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useMemo, useState, useEffect } from 'react';
 import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Select, stylesFactory, useTheme2 } from '@grafana/ui';
-import { COUNTRIES_GAZETTEER_PATH, getGazetteer } from '../gazetteer/gazetteer';
+import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 import { css } from '@emotion/css';
-import { useAsync } from 'react-use';
 
 const paths: Array<SelectableValue<string>> = [
   {
@@ -25,20 +24,28 @@ const paths: Array<SelectableValue<string>> = [
 
 export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({ value, onChange, context }) => {
   const styles = getStyles(useTheme2());
-  const gaz = useAsync(() => getGazetteer(value), [value]);
+  const [gaz, setGaz] = useState<Gazetteer>();
+
+  useEffect(() => {
+    async function fetchData() {
+      const p = await getGazetteer(value);
+      setGaz(p);
+    }
+    fetchData();
+  }, [value, setGaz]);
 
   const { current, options } = useMemo(() => {
     let options = [...paths];
-    let current = options.find((f) => f.value === value);
-    if (!current && value) {
+    let current = options.find((f) => f.value === gaz?.path);
+    if (!current && gaz) {
       current = {
-        label: value,
-        value: value,
+        label: gaz.path,
+        value: gaz.path,
       };
       options.push(current);
     }
     return { options, current };
-  }, [value]);
+  }, [gaz]);
 
   return (
     <>
@@ -49,18 +56,17 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({
         onChange={(v) => onChange(v.value)}
         allowCustomValue={true}
         formatCreateLabel={(txt) => `Load from URL: ${txt}`}
-        isLoading={gaz.loading}
       />
-      {gaz?.value && (
+      {gaz && (
         <>
-          {gaz?.value.error && <Alert title={gaz?.value.error} severity={'warning'} />}
-          {gaz?.value.count && (
+          {gaz.error && <Alert title={gaz.error} severity={'warning'} />}
+          {gaz.count && (
             <div className={styles.keys}>
-              <b>({gaz?.value.count})</b>
-              {gaz?.value.examples(10).map((k) => (
+              <b>({gaz.count})</b>
+              {gaz.examples(10).map((k) => (
                 <span key={k}>{k},</span>
               ))}
-              {gaz?.value.count > 10 && ' ...'}
+              {gaz.count > 10 && ' ...'}
             </div>
           )}
         </>
