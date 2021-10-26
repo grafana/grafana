@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { getAllPanelPluginMeta } from '../../../features/panel/components/VizTypePicker/VizTypePicker';
+import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 import { Icon, resetSelectStyles, MultiSelect, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
