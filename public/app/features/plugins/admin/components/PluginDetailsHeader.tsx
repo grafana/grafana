@@ -120,7 +120,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
       margin-top: ${theme.spacing()};
       margin-bottom: ${theme.spacing()};
-
+      flex-flow: wrap;
       & > * {
         &::after {
           content: '|';
