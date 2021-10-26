@@ -13,8 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/services/searchusers"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -37,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -51,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -58,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -105,6 +106,7 @@ type HTTPServer struct {
 	SocialService          social.Service
 	OAuthTokenService      oauthtoken.OAuthTokenService
 	Listener               net.Listener
+	EncryptionService      encryption.Service
 	SecretsService         secrets.Service
 	DataSourcesService     *datasources.Service
 	cleanUpService         *cleanup.CleanUpService
@@ -135,7 +137,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	secretsService secrets.Service, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service) (*HTTPServer, error) {
+	dataSourcesService *datasources.Service, encryptionService encryption.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -181,6 +183,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		Listener:               opts.Listener,
 		SocialService:          socialService,
 		OAuthTokenService:      oauthTokenService,
+		EncryptionService:      encryptionService,
 		SecretsService:         secretsService,
 		DataSourcesService:     dataSourcesService,
 		searchUsersService:     searchUsersService,

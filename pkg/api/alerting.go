@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
@@ -357,7 +359,7 @@ func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *model
 		return err
 	}
 
-	secureSettings, err := hs.SecretsService.DecryptJsonData(ctx, query.Result.SecureSettings)
+	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
 	if err != nil {
 		return err
 	}
@@ -385,7 +387,7 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 		return err
 	}
 
-	secureSettings, err := hs.SecretsService.DecryptJsonData(ctx, query.Result.SecureSettings)
+	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
 	if err != nil {
 		return err
 	}
