@@ -352,7 +352,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 
 func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	t.Run("exemplars response should be sampled and parsed normally", func(t *testing.T) {
-		value := make(map[PrometheusQueryType]interface{})
+		value := make(map[TimeSeriesQueryType]interface{})
 		exemplars := []apiv1.ExemplarQueryResult{
 			{
 				SeriesLabels: p.LabelSet{
@@ -413,7 +413,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			{Value: 4, Timestamp: 4000},
 			{Value: 5, Timestamp: 5000},
 		}
-		value := make(map[PrometheusQueryType]interface{})
+		value := make(map[TimeSeriesQueryType]interface{})
 		value[RangeQueryType] = p.Matrix{
 			&p.SampleStream{
 				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
@@ -442,7 +442,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	})
 
 	t.Run("matrix response with NaN value should be changed to null", func(t *testing.T) {
-		value := make(map[PrometheusQueryType]interface{})
+		value := make(map[TimeSeriesQueryType]interface{})
 		value[RangeQueryType] = p.Matrix{
 			&p.SampleStream{
 				Metric: p.Metric{"app": "Application"},
@@ -463,7 +463,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	})
 
 	t.Run("vector response should be parsed normally", func(t *testing.T) {
-		value := make(map[PrometheusQueryType]interface{})
+		value := make(map[TimeSeriesQueryType]interface{})
 		value[RangeQueryType] = p.Vector{
 			&p.Sample{
 				Metric:    p.Metric{"app": "Application", "tag2": "tag2"},
@@ -494,7 +494,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	})
 
 	t.Run("scalar response should be parsed normally", func(t *testing.T) {
-		value := make(map[PrometheusQueryType]interface{})
+		value := make(map[TimeSeriesQueryType]interface{})
 		value[RangeQueryType] = &p.Scalar{
 			Value:     1,
 			Timestamp: 1000,
