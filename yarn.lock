@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 4
+  version: 5
   cacheKey: 8
 
 "@babel/code-frame@npm:7.10.4":
@@ -109,7 +109,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/core@npm:7.15.8, @babel/core@npm:>=7.9.0, @babel/core@npm:^7.1.0, @babel/core@npm:^7.12.10, @babel/core@npm:^7.12.3, @babel/core@npm:^7.7.5":
+"@babel/core@npm:>=7.9.0, @babel/core@npm:^7.1.0, @babel/core@npm:^7.12.10, @babel/core@npm:^7.12.3, @babel/core@npm:^7.7.5":
   version: 7.15.8
   resolution: "@babel/core@npm:7.15.8"
   dependencies:
@@ -8238,19 +8238,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-redux@npm:7.1.18":
-  version: 7.1.18
-  resolution: "@types/react-redux@npm:7.1.18"
-  dependencies:
-    "@types/hoist-non-react-statics": ^3.3.0
-    "@types/react": "*"
-    hoist-non-react-statics: ^3.3.0
-    redux: ^4.0.0
-  checksum: 8aa24c15df711e2a20f903843f42491316094c3a49a90dcae86dcafa8fdb2318fdfaa983e23d67840986f11131b9b8856a5d6971288d68fa8aa592adc348a942
-  languageName: node
-  linkType: hard
-
-"@types/react-redux@npm:^7.1.16, @types/react-redux@npm:^7.1.20":
+"@types/react-redux@npm:7.1.20, @types/react-redux@npm:^7.1.16, @types/react-redux@npm:^7.1.20":
   version: 7.1.20
   resolution: "@types/react-redux@npm:7.1.20"
   dependencies:
@@ -17239,6 +17227,7 @@ fsevents@^1.2.7:
     bindings: ^1.5.0
     nan: ^2.12.1
   checksum: ae855aa737aaa2f9167e9f70417cf6e45a5cd11918e1fee9923709a0149be52416d765433b4aeff56c789b1152e718cd1b13ddec6043b78cdda68260d86383c1
+  conditions: os=darwin
   languageName: node
   linkType: hard
 
@@ -17248,6 +17237,7 @@ fsevents@^1.2.7:
   dependencies:
     node-gyp: latest
   checksum: 97ade64e75091afee5265e6956cb72ba34db7819b4c3e94c431d4be2b19b8bb7a2d4116da417950c3425f17c8fe693d25e20212cac583ac1521ad066b77ae31f
+  conditions: os=darwin
   languageName: node
   linkType: hard
 
@@ -17257,7 +17247,7 @@ fsevents@^1.2.7:
   dependencies:
     bindings: ^1.5.0
     nan: ^2.12.1
-  checksum: 2587e64097c1251ae549440b6347954ef3c5ce390061f9e0f0810e83d5d604bb7222c382e7e3c39fc2ba4da53f115b118ea5359ca3bb0bcb96576596bc685d5a
+  conditions: os=darwin
   languageName: node
   linkType: hard
 
@@ -17266,7 +17256,7 @@ fsevents@^1.2.7:
   resolution: "fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=18f3a7"
   dependencies:
     node-gyp: latest
-  checksum: edbd0fd80be379c14409605f77e52fdc78a119e17f875e8b90a220c3e5b29e54a1477c21d91fd30b957ea4866406dc3ff87b61432d2840ff8866b309e5866140
+  conditions: os=darwin
   languageName: node
   linkType: hard
 
@@ -17275,7 +17265,7 @@ fsevents@^1.2.7:
   resolution: "fsevents@patch:fsevents@npm%3A2.1.3#~builtin<compat/fsevents>::version=2.1.3&hash=18f3a7"
   dependencies:
     node-gyp: latest
-  checksum: 2dab38962e7d89a8f46438cf0762b7ee9781a00c9e3af30daae6fe9b4cf680d02a15e421dfaaaf819a423e91a82a3a4cceda711ccacac76539894ccd3fc59854
+  conditions: os=darwin
   languageName: node
   linkType: hard
 
@@ -17285,6 +17275,7 @@ fsevents@^1.2.7:
   dependencies:
     node-gyp: latest
   checksum: b5ec0516b44d75b60af5c01ff80a80cd995d175e4640d2a92fbabd02991dd664d76b241b65feef0775c23d531c3c74742c0fbacd6205af812a9c3cef59f04292
+  conditions: os=darwin
   languageName: node
   linkType: hard
 
@@ -18075,7 +18066,7 @@ fsevents@^1.2.7:
     "@types/react-grid-layout": 1.1.1
     "@types/react-highlight-words": ^0.16.2
     "@types/react-loadable": 5.5.2
-    "@types/react-redux": 7.1.18
+    "@types/react-redux": 7.1.20
     "@types/react-router-dom": ^5.1.7
     "@types/react-select": 4.0.13
     "@types/react-test-renderer": 17.0.1
@@ -21064,7 +21055,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"jest-resolve@npm:26.6.2, jest-resolve@npm:^26.6.2":
+"jest-resolve@npm:^26.6.2":
   version: 26.6.2
   resolution: "jest-resolve@npm:26.6.2"
   dependencies:
@@ -22092,7 +22083,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"listr@npm:0.14.3, listr@npm:^0.14.3":
+"listr@npm:^0.14.3":
   version: 0.14.3
   resolution: "listr@npm:0.14.3"
   dependencies:
@@ -29671,30 +29662,30 @@ fsevents@^1.2.7:
 
 "resolve@patch:resolve@1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@~1.17.0#~builtin<compat/resolve>":
   version: 1.17.0
-  resolution: "resolve@patch:resolve@npm%3A1.17.0#~builtin<compat/resolve>::version=1.17.0&hash=b382c1"
+  resolution: "resolve@patch:resolve@npm%3A1.17.0#~builtin<compat/resolve>::version=1.17.0&hash=07638b"
   dependencies:
     path-parse: ^1.0.6
-  checksum: de40b21c9930ecdd902652e9ac476eaed3194ca879b3ecf5646568554432bef7005e7d0dbb9119800f67ab6b0a47dcd7abc7bf0dd1c8dd8b49548732954ab45c
+  checksum: 6fd799f282ddf078c4bc20ce863e3af01fa8cb218f0658d9162c57161a2dbafe092b13015b9a4c58d0e1e801cf7aa7a4f13115fea9db98c3f9a0c43e429bad6f
   languageName: node
   linkType: hard
 
 "resolve@patch:resolve@^1.10.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.18.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.3.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.9.0#~builtin<compat/resolve>":
   version: 1.20.0
-  resolution: "resolve@patch:resolve@npm%3A1.20.0#~builtin<compat/resolve>::version=1.20.0&hash=b382c1"
+  resolution: "resolve@patch:resolve@npm%3A1.20.0#~builtin<compat/resolve>::version=1.20.0&hash=07638b"
   dependencies:
     is-core-module: ^2.2.0
     path-parse: ^1.0.6
-  checksum: d060c878a7286fcfca5277b90fb12d01e7e075831e0710eef93a8ab7e25311303ab3783cd86d636127d2c7d61daee04aa8a1bc51afd8028110e082a6a2d49ee3
+  checksum: a0dd7d16a8e47af23afa9386df2dff10e3e0debb2c7299a42e581d9d9b04d7ad5d2c53f24f1e043f7b3c250cbdc71150063e53d0b6559683d37f790b7c8c3cd5
   languageName: node
   linkType: hard
 
 "resolve@patch:resolve@~1.19.0#~builtin<compat/resolve>":
   version: 1.19.0
-  resolution: "resolve@patch:resolve@npm%3A1.19.0#~builtin<compat/resolve>::version=1.19.0&hash=b382c1"
+  resolution: "resolve@patch:resolve@npm%3A1.19.0#~builtin<compat/resolve>::version=1.19.0&hash=07638b"
   dependencies:
     is-core-module: ^2.1.0
     path-parse: ^1.0.6
-  checksum: 5df9fa413f47986a422227ba2b1d1a7b2f8bfd35e4c29c2f9885fe87ad34d54235c12bea7ae7cff6ff3969d0c83d7431ce5d9930c3e3a0e718a5b72e2e4785cd
+  checksum: 2443b94d347e6946c87c85faf13071f605e609e0b54784829b0ed2b917d050bfc1cbaf4ecc6453f224cfa7d0c5dcd97cbb273454cd210bee68e4af15c1a5abc9
   languageName: node
   linkType: hard
 
