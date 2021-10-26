@@ -68,6 +68,7 @@ import (
 // swagger:parameters createSnapshot
 type CreateSnapshotParam struct {
 	// in:body
+	// required:true
 	Body CreateDashboardSnapshotCommand `json:"body"`
 }
 

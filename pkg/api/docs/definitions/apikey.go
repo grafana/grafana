@@ -48,7 +48,6 @@ import (
 type GetAPIkeysParams struct {
 	// Show expired keys
 	// in:query
-	// required:false
 	// default:false
 	IncludeExpired bool `json:"includeExpired"`
 }
@@ -56,6 +55,7 @@ type GetAPIkeysParams struct {
 // swagger:parameters addAPIkey
 type AddAPIkeyParams struct {
 	// in:body
+	// required:true
 	Body models.AddApiKeyCommand
 }
 

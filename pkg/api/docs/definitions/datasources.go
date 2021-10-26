@@ -238,30 +238,35 @@ type DatasourceName struct {
 // swagger:parameters datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
 type DatasourceProxyRouteParam struct {
 	// in:path
+	// required:true
 	DatasourceProxyRoute string `json:"datasource_proxy_route"`
 }
 
 // swagger:parameters datasourceProxyPOSTcalls
 type DatasourceProxyParam struct {
 	// in:body
+	// required:true
 	DatasourceProxyParam interface{}
 }
 
 // swagger:parameters addDatasource
 type AddDatasourceParam struct {
 	// in:body
+	// required:true
 	Body models.AddDataSourceCommand
 }
 
 // swagger:parameters updateDatasource
 type UpdateDatasource struct {
 	// in:body
+	// required:true
 	Body models.UpdateDataSourceCommand
 }
 
 // swagger:parameters queryDatasource
 type QueryDatasource struct {
 	// in:body
+	// required:true
 	Body MetricRequest
 }
 

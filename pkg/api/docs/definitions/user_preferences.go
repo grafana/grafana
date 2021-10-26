@@ -26,6 +26,7 @@ import "github.com/grafana/grafana/pkg/api/dtos"
 // swagger:parameters updateUserPreferences
 type UpdateUserPreferencesParam struct {
 	// in:body
+	// required:true
 	Body UpdatePrefsCmd `json:"body"`
 }
 
