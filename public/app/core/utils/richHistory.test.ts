@@ -281,29 +281,57 @@ describe('richHistory', () => {
       deleteAllFromRichHistory();
       expect(store.exists(key)).toBeFalsy();
     });
-    it('should load from localStorage data in old format', () => {
-      const oldHistoryItem = { ...mock.storedHistory[0], queries: ['test query 1', 'test query 2', 'test query 3'] };
-      store.setObject(key, [oldHistoryItem]);
-      const expectedHistoryItem = {
-        ...mock.storedHistory[0],
-        queries: [
-          {
-            expr: 'test query 1',
-            refId: 'A',
-          },
-          {
-            expr: 'test query 2',
-            refId: 'B',
-          },
-          {
-            expr: 'test query 3',
-            refId: 'C',
-          },
-        ],
-      };
+    describe('should load from localStorage data in old formats', () => {
+      it('should load when queries are strings', () => {
+        const oldHistoryItem = { ...mock.storedHistory[0], queries: ['test query 1', 'test query 2', 'test query 3'] };
+        store.setObject(key, [oldHistoryItem]);
+        const expectedHistoryItem = {
+          ...mock.storedHistory[0],
+          queries: [
+            {
+              expr: 'test query 1',
+              refId: 'A',
+            },
+            {
+              expr: 'test query 2',
+              refId: 'B',
+            },
+            {
+              expr: 'test query 3',
+              refId: 'C',
+            },
+          ],
+        };
 
-      const result = getRichHistory();
-      expect(result).toStrictEqual([expectedHistoryItem]);
+        const result = getRichHistory();
+        expect(result).toStrictEqual([expectedHistoryItem]);
+      });
+
+      it('should load when queries are json-encoded strings', () => {
+        const oldHistoryItem = {
+          ...mock.storedHistory[0],
+          queries: ['{"refId":"A","key":"key1","metrics":[]}', '{"refId":"B","key":"key2","metrics":[]}'],
+        };
+        store.setObject(key, [oldHistoryItem]);
+        const expectedHistoryItem = {
+          ...mock.storedHistory[0],
+          queries: [
+            {
+              refId: 'A',
+              key: 'key1',
+              metrics: [],
+            },
+            {
+              refId: 'B',
+              key: 'key2',
+              metrics: [],
+            },
+          ],
+        };
+
+        const result = getRichHistory();
+        expect(result).toStrictEqual([expectedHistoryItem]);
+      });
     });
   });
 });

@@ -24,7 +24,7 @@ export enum FieldType {
  *
  * Plugins may extend this with additional properties. Something like series overrides
  */
-export interface FieldConfig<TOptions extends object = any> {
+export interface FieldConfig<TOptions = any> {
   /**
    * The display value for this field.  This supports template variables blank is auto
    */
