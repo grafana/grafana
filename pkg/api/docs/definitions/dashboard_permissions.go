@@ -45,6 +45,7 @@ type GetDashboardPermissionsResponse struct {
 // UpdateDashboardAclCommand is same as dtos.UpdateDashboardAclCommand but with swagger annotations
 // swagger:model
 type UpdateDashboardAclCommand struct {
+	// The permission items to add/update. Items that are omitted from the list will be removed.
 	Items []DashboardAclUpdateItem `json:"items"`
 }
 
