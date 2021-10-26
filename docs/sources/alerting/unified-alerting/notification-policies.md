@@ -69,7 +69,7 @@ A policy will match an alert if the alert's labels match all the "Matching Label
 
 An example of an alert configuration.
 
-- Create a "default" contact point for slack notification, and set it on root policy.
+- Create a "default" contact point for slack notifications, and set it on root policy.
 - Edit the root policy grouping to group alerts by `cluster`, `namespace` and `severity` so that you get a notification per alert rule and specific kubernetes cluster and namespace.
 - Create specific route for alerts coming from the development cluster with an appropriate contact point.
 - Create a specific route for alerts with "critical" severity with a more invasive contact point type, like pager duty notification.
