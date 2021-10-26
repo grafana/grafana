@@ -1,6 +1,6 @@
 import React, { FormEvent, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Button, Checkbox, CustomScrollbar, HorizontalGroup, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Checkbox, CustomScrollbar, HorizontalGroup, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
@@ -160,18 +160,20 @@ export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithCh
     };
 
     return (
-      <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onChange}>
-        <Checkbox
-          value={isSelected}
-          className={customStyles.menuOptionCheckbox}
-          onChange={onChange}
-          disabled={disabled}
-        />
-        <div className={styles.optionBody}>
-          <span>{data.displayName || data.name}</span>
-          {!hideDescription && data.description && <div className={styles.optionDescription}>{data.description}</div>}
+      <Tooltip content={data.description} placement={'right'}>
+        <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onChange}>
+          <Checkbox
+            value={isSelected}
+            className={customStyles.menuOptionCheckbox}
+            onChange={onChange}
+            disabled={disabled}
+          />
+          <div className={styles.optionBody}>
+            <span>{data.displayName || data.name}</span>
+            {!hideDescription && data.description && <div className={styles.optionDescription}>{data.description}</div>}
+          </div>
         </div>
-      </div>
+      </Tooltip>
     );
   }
 );
