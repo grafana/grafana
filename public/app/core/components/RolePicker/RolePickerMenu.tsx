@@ -7,10 +7,11 @@ import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { Role } from 'app/types';
 
 type RoleMap = { [key: string]: Role };
+type BuiltInRoles = { [key: string]: Role[] };
 
 interface RolePickerMenuProps {
   builtInRole: string;
-  builtInRoles: { [key: string]: Role[] };
+  builtInRoles: BuiltInRoles;
   options: Role[];
   appliedRoles: { [key: string]: boolean };
   onUpdate: (newBuiltInRole: string, newRoles: string[]) => void;
@@ -127,7 +128,7 @@ const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:');
 
 const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
 
-const builtinRoleContainsFixed = (builtInRoles: { [key: string]: Role[] }, selectedBuiltInRole: string, role: Role) => {
+const builtinRoleContainsFixed = (builtInRoles: BuiltInRoles, selectedBuiltInRole: string, role: Role) => {
   const fixedRoles = builtInRoles[selectedBuiltInRole];
   if (!fixedRoles) {
     return false;
