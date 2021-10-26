@@ -8,9 +8,10 @@ import { Geometry } from 'ol/geom';
 import { getGeoMapStyle } from '../../utils/getGeoMapStyle';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { ComparisonOperation, FeatureStyleConfig } from '../../types';
-import { Stroke, Style } from 'ol/style';
+import { Fill, Stroke, Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
+import CircleStyle from 'ol/style/Circle';
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -54,15 +55,42 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     });
 
     const defaultStyle = new Style({
+      image: new CircleStyle({
+        radius: 5,
+        stroke: new Stroke({
+          color: DEFAULT_STYLE_RULE.fillColor,
+          width: DEFAULT_STYLE_RULE.strokeWidth,
+        }),
+        fill: new Fill({color: 'red'}),
+      }),
       stroke: new Stroke({
         color: DEFAULT_STYLE_RULE.fillColor,
         width: DEFAULT_STYLE_RULE.strokeWidth,
       }),
     });
 
+    const styles = config?.styles ?? [];
+    if(!styles.length) {
+      styles.push
+    }
     const vectorLayer = new VectorLayer({
       source,
       style: (feature: FeatureLike) => {
+        const geom = feature?.getGeometry();
+        if(!geom) {
+          return defaultStyle;
+        }
+
+        // if(geom.getType() === 'Point') {
+        //   return new Style({
+        //     image: new CircleStyle({
+        //       radius: 5,
+        //       stroke: new Stroke({color: 'red', width: 1}),
+        //       fill: new Fill({color: 'red'}),
+        //     }),
+        //   });
+        // }
+
         if (feature && config?.styles?.length) {
           for (const style of config.styles) {
             //check if there is no style rule or if the rule matches feature property
@@ -71,6 +99,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             }
           }
         }
+
         return defaultStyle;
       },
     });
@@ -78,12 +107,12 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
-        console.log('todo... find values matching the ID and update');
+        // console.log('todo... find values matching the ID and update');
 
-        // Update each feature
-        source.getFeatures().forEach((f) => {
-          console.log('Find: ', f.getId(), f.getProperties());
-        });
+        // // Update each feature
+        // source.getFeatures().forEach((f) => {
+        //   console.log('Find: ', f.getId(), f.getProperties());
+        // });
       },
     };
   },
@@ -98,6 +127,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           options: [
             { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
             { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
+            { label: 'public/gazetteer/airports.geojson', value: 'public/gazetteer/airports.geojson' },
           ],
           allowCustomValue: true,
         },
