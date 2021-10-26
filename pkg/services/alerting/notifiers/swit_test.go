@@ -43,5 +43,4 @@ func TestSwitNotifier(t *testing.T) {
 		switNotifier := not.(*SwitNotifier)
 		assert.Equal(t, "https://hook.swit.dev/chat/1234/1234", switNotifier.WebhookURL)
 	})
-
 }

@@ -90,13 +90,13 @@ able to access the image.
 
 ### Swit
 
-To set up Swit, you must configure an swit incomming webhook URL.
+To set up Swit, you must configure an swit incoming webhook URL.
 For instructions on how to create the Swit App,
 [Swit Developer](https://developers.swit.io).
 
-| Setting | Description                |
-| ------- | -------------------------- |
-| URL     | Swit incomming webhook URL |
+| Setting | Description               |
+| ------- | ------------------------- |
+| URL     | Swit incoming webhook URL |
 
 ### Slack
 

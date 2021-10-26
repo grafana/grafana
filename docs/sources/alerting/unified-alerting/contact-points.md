@@ -54,6 +54,7 @@ Grafana alerting UI allows you to configure contact points for the Grafana manag
 | Sensu                                         | `sensu`                   |
 | [Sensu Go](#sensu-go)                         | `sensugo`                 |
 | [Slack](#slack)                               | `slack`                   |
+| Swit                                          | `swit`                    |
 | Telegram                                      | `telegram`                |
 | Threema                                       | `threema`                 |
 | VictorOps                                     | `victorops`               |

@@ -640,8 +640,8 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 		{
 			Type:        "swit",
 			Name:        "Swit",
-			Description: "Sends notifications to Swit Incomming Webhook",
-			Heading:     "Swit Incomming Webhook Settings",
+			Description: "Sends notifications to Swit Incoming Webhook",
+			Heading:     "Swit Incoming Webhook Settings",
 			Options: []alerting.NotifierOption{
 				{
 					Label:        "url",
