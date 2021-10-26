@@ -1,6 +1,6 @@
 import { DashboardModel } from './DashboardModel';
 import { appEvents } from '../../../core/core';
-import { VariableChanged } from '../../variables/types';
+import { VariablesChanged } from '../../variables/types';
 import { PanelModel } from './PanelModel';
 
 function getTestContext({
@@ -24,7 +24,7 @@ function getTestContext({
     panelIds.push(panelInView.id);
   }
 
-  appEvents.publish(new VariableChanged({ panelIds }));
+  appEvents.publish(new VariablesChanged({ panelIds }));
 
   return { dashboard, startRefreshMock, panelInEdit, panelInView };
 }

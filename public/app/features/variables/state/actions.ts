@@ -8,13 +8,15 @@ import {
   OrgVariableModel,
   QueryVariableModel,
   UserVariableModel,
-  VariableChanged,
+  VariablesChanged,
   VariableHide,
   VariableModel,
   VariableOption,
   VariableRefresh,
+  VariablesTimeRangeChanged,
   VariableWithMultiSupport,
   VariableWithOptions,
+  VariablesChangedInUrl,
 } from '../types';
 import { AppNotification, StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
@@ -535,7 +537,7 @@ export const variableUpdated = (
 
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
-        events.publish(new VariableChanged({ panelIds: affectedPanelIds }));
+        events.publish(new VariablesChanged({ panelIds: affectedPanelIds }));
         locationService.partial(getQueryWithVariables(getState));
       }
     });
@@ -544,11 +546,12 @@ export const variableUpdated = (
 
 export interface OnTimeRangeUpdatedDependencies {
   templateSrv: TemplateSrv;
+  events: typeof appEvents;
 }
 
 export const onTimeRangeUpdated = (
   timeRange: TimeRange,
-  dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: getTemplateSrv() }
+  dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: getTemplateSrv(), events: appEvents }
 ): ThunkResult<Promise<void>> => async (dispatch, getState) => {
   dependencies.templateSrv.updateTimeRange(timeRange);
   const variablesThatNeedRefresh = getVariables(getState()).filter((variable) => {
@@ -566,9 +569,11 @@ export const onTimeRangeUpdated = (
 
   try {
     await Promise.all(promises);
-    const dashboard = getState().dashboard.getModel();
-    dashboard?.setChangeAffectsAllPanels();
-    dashboard?.startRefresh();
+    const state = getState();
+    const dashboard = state.dashboard?.getModel();
+    const panels = dashboard?.panels ?? [];
+    const panelIds = panels.map((p) => p.id);
+    dependencies.events.publish(new VariablesTimeRangeChanged({ panelIds }));
   } catch (error) {
     console.error(error);
     dispatch(notifyApp(createVariableErrorNotification('Template variable service failed', error)));
@@ -590,10 +595,10 @@ const timeRangeUpdated = (identifier: VariableIdentifier): ThunkResult<Promise<v
   }
 };
 
-export const templateVarsChangedInUrl = (vars: ExtendedUrlQueryMap): ThunkResult<void> => async (
-  dispatch,
-  getState
-) => {
+export const templateVarsChangedInUrl = (
+  vars: ExtendedUrlQueryMap,
+  events: typeof appEvents = appEvents
+): ThunkResult<void> => async (dispatch, getState) => {
   const update: Array<Promise<any>> = [];
   const dashboard = getState().dashboard.getModel();
   for (const variable of getVariables(getState())) {
@@ -624,8 +629,11 @@ export const templateVarsChangedInUrl = (vars: ExtendedUrlQueryMap): ThunkResult
 
   if (update.length) {
     await Promise.all(update);
-    dashboard?.templateVariableValueUpdated();
-    dashboard?.startRefresh();
+    const state = getState();
+    const dashboard = state.dashboard?.getModel();
+    const panels = dashboard?.panels ?? [];
+    const panelIds = panels.map((p) => p.id);
+    events.publish(new VariablesChangedInUrl({ panelIds }));
   }
 };
 

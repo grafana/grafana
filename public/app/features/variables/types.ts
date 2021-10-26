@@ -152,10 +152,18 @@ export type VariableQueryEditorType<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > = ComponentType<VariableQueryProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
 
-export interface VariableChangedEvent {
+export interface VariablesChangedEvent {
   panelIds: number[];
 }
 
-export class VariableChanged extends BusEventWithPayload<VariableChangedEvent> {
-  static type = 'dashboard-change-affects-all-panels';
+export class VariablesChanged extends BusEventWithPayload<VariablesChangedEvent> {
+  static type = 'variables-changed';
+}
+
+export class VariablesTimeRangeChanged extends BusEventWithPayload<VariablesChangedEvent> {
+  static type = 'variables-time-range-changed';
+}
+
+export class VariablesChangedInUrl extends BusEventWithPayload<VariablesChangedEvent> {
+  static type = 'variables-changed-in-url';
 }

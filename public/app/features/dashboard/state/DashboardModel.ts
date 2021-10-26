@@ -47,9 +47,9 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 import { isOnTheSameGridRow } from './utils';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { Unsubscribable } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
-import { VariableChanged } from '../../variables/types';
+import { VariablesChanged, VariablesChangedInUrl, VariablesTimeRangeChanged } from '../../variables/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -113,7 +113,7 @@ export class DashboardModel {
   iteration?: number;
   declare meta: DashboardMeta;
   events: EventBusExtended;
-  private appEventsSubscription: Unsubscribable;
+  private appEventsSubscription: Subscription;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -173,17 +173,40 @@ export class DashboardModel {
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
     this.panelsAffectedByVariableChange = null;
-    this.appEventsSubscription = appEvents.subscribe(VariableChanged, this.variableChangedHandler.bind(this));
+    this.appEventsSubscription = new Subscription();
+    this.appEventsSubscription.add(appEvents.subscribe(VariablesChanged, this.variablesChangedHandler.bind(this)));
+    this.appEventsSubscription.add(
+      appEvents.subscribe(VariablesTimeRangeChanged, this.variablesTimeRangeChangedHandler.bind(this))
+    );
+    this.appEventsSubscription.add(
+      appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
+    );
   }
 
-  private variableChangedHandler(event: VariableChanged) {
+  private variablesChangedHandler(event: VariablesChanged) {
+    this.variablesChangedBaseHandler(event, true);
+  }
+
+  private variablesTimeRangeChangedHandler(event: VariablesTimeRangeChanged) {
+    this.variablesChangedBaseHandler(event);
+  }
+
+  private variablesChangedBaseHandler(event: VariablesChanged | VariablesTimeRangeChanged, processRepeats = false) {
     if (this.panelInEdit || this.panelInView) {
       this.panelsAffectedByVariableChange = event.payload.panelIds.filter((id) =>
         this.panelInEdit ? id !== this.panelInEdit.id : this.panelInView ? id !== this.panelInView.id : true
       );
     }
 
-    this.processRepeats();
+    if (processRepeats) {
+      this.processRepeats();
+    }
+
+    this.startRefresh(event.payload.panelIds);
+  }
+
+  private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
+    this.templateVariableValueUpdated();
     this.startRefresh(event.payload.panelIds);
   }
 
@@ -441,11 +464,6 @@ export class DashboardModel {
     this.startRefresh(this.panelsAffectedByVariableChange);
     this.panelsAffectedByVariableChange = null;
   }
-
-  /*
-   * @deprecated used to be used internally by variables
-   * */
-  setChangeAffectsAllPanels() {}
 
   private ensureListExist(data: any) {
     if (!data) {
