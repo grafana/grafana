@@ -67,6 +67,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 | Sensu                                         | `sensu`                   | yes, external only | no                       |
 | [Sensu Go](#sensu-go)                         | `sensugo`                 | yes, external only | no                       |
 | [Slack](#slack)                               | `slack`                   | yes                | no                       |
+| [Swit](#swit)                                 | `swit`                    | yes, external only | no                       |
 | Telegram                                      | `telegram`                | yes                | no                       |
 | Threema                                       | `threema`                 | yes, external only | no                       |
 | VictorOps                                     | `victorops`               | yes, external only | yes                      |
@@ -86,6 +87,16 @@ able to access the image.
 | ------------ | -------------------------------------------------------------------------------------------- |
 | Single email | Send a single email to all recipients. Disabled per default.                                 |
 | Addresses    | Email addresses to recipients. You can enter multiple email addresses using a ";" separator. |
+
+### Swit
+
+To set up Swit, you must configure an swit incoming webhook URL.
+For instructions on how to create the Swit App,
+[Swit Developer](https://developers.swit.io).
+
+| Setting | Description               |
+| ------- | ------------------------- |
+| URL     | Swit incoming webhook URL |
 
 ### Slack
 

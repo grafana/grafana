@@ -638,6 +638,22 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			},
 		},
 		{
+			Type:        "swit",
+			Name:        "Swit",
+			Description: "Sends notifications to Swit Incoming Webhook",
+			Heading:     "Swit Incoming Webhook Settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "url",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "https://hook.swit.io/channel/125125/135136",
+					PropertyName: "url",
+					Required:     true,
+				},
+			},
+		},
+		{
 			Type:        "prometheus-alertmanager",
 			Name:        "Alertmanager",
 			Description: "Sends notifications to Alertmanager",

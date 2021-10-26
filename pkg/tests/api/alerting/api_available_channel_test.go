@@ -39,6 +39,7 @@ func TestAvailableChannels(t *testing.T) {
 		require.NoError(t, err)
 	})
 	b, err := ioutil.ReadAll(resp.Body)
+
 	require.NoError(t, err)
 	require.Equal(t, 200, resp.StatusCode)
 	require.JSONEq(t, expAvailableChannelJsonOutput, string(b))
@@ -1293,6 +1294,31 @@ var expAvailableChannelJsonOutput = `
         "secure": false
       }
     ]
+  },
+  {
+	"type": "swit",
+	"name": "Swit",
+	"heading": "Swit Incoming Webhook Settings",
+	"description": "Sends notifications to Swit Incoming Webhook",
+	"info": "",
+	"options": [
+	  {
+		"element": "input",
+		"inputType": "text",
+		"label": "url",
+		"description": "",
+		"placeholder": "https://hook.swit.io/channel/125125/135136",
+		"propertyName": "url",
+		"selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+		"required": true,
+		"validationRule": "",
+		"secure": false
+	  }
+	]
   },
   {
     "type": "prometheus-alertmanager",
