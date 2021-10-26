@@ -158,6 +158,7 @@ export class GeomapPanel extends Component<Props, State> {
         return; // ignore empty request
       }
       this.initLayer(
+        this.map!,
         {
           type: item.id,
           config: cloneDeep(item.defaultOptions),
@@ -224,7 +225,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
     const { options } = this.props;
 
-    this.map = new Map({
+    const map = (this.map = new Map({
       view: this.initMapView(options.view),
       pixelRatio: 1, // or zoom?
       layers: [], // loaded explicitly below
@@ -233,11 +234,11 @@ export class GeomapPanel extends Component<Props, State> {
       interactions: interactionDefaults({
         mouseWheelZoom: false, // managed by initControls
       }),
-    });
+    }));
 
     const layers: MapLayerState[] = [];
     try {
-      layers.push(await this.initLayer(options.basemap ?? DEFAULT_BASEMAP_CONFIG, true));
+      layers.push(await this.initLayer(map, options.basemap ?? DEFAULT_BASEMAP_CONFIG, true));
 
       // Default layer values
       let layerOptions = options.layers;
@@ -246,7 +247,7 @@ export class GeomapPanel extends Component<Props, State> {
       }
 
       for (const lyr of layerOptions) {
-        layers.push(await this.initLayer(lyr, false));
+        layers.push(await this.initLayer(map, lyr, false));
       }
     } catch (ex) {
       console.error('error loading layers', ex);
@@ -332,14 +333,14 @@ export class GeomapPanel extends Component<Props, State> {
       return false;
     }
     const selected = this.layers.findIndex((v) => v.UID === uid);
-    if (!selected) {
+    if (selected < 0) {
       return false;
     }
     const layers = this.layers.slice(0);
     try {
       let found = false;
       const current = this.layers[selected];
-      const info = await this.initLayer(newOptions, current.isBasemap);
+      const info = await this.initLayer(this.map, newOptions, current.isBasemap);
       const group = this.map?.getLayers()!;
       for (let i = 0; i < group?.getLength(); i++) {
         if (group.item(i) === current.layer) {
@@ -371,10 +372,7 @@ export class GeomapPanel extends Component<Props, State> {
     return true;
   };
 
-  async initLayer(options: MapLayerOptions, isBasemap?: boolean): Promise<MapLayerState> {
-    if (!this.map) {
-      return Promise.reject('map not initalized');
-    }
+  async initLayer(map: Map, options: MapLayerOptions, isBasemap?: boolean): Promise<MapLayerState> {
     if (isBasemap && (!options?.type || config.geomapDisableCustomBaseLayer)) {
       options = DEFAULT_BASEMAP_CONFIG;
     }
@@ -392,7 +390,7 @@ export class GeomapPanel extends Component<Props, State> {
       return Promise.reject('unknown layer: ' + options.type);
     }
 
-    const handler = await item.create(this.map, options, config.theme2);
+    const handler = await item.create(map, options, config.theme2);
     const layer = handler.init();
 
     // const key = layer.on('change', () => {
@@ -404,7 +402,6 @@ export class GeomapPanel extends Component<Props, State> {
       handler.update(this.props.data);
     }
 
-    (layer as any).___handler = handler; // save reference on the ol layer
     const UID = `lyr-${this.counter++}`;
     return {
       UID,
