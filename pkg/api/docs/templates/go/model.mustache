@@ -1,0 +1,28 @@
+{{>partial_header}}
+package {{packageName}}
+{{#models}}{{#imports}}
+import ({{/imports}}{{#imports}}
+	"{{import}}"{{/imports}}{{#imports}}
+)
+{{/imports}}{{#model}}{{#isEnum}}{{#description}}// {{{classname}}} : {{{description}}}{{/description}}
+type {{{classname}}} {{^format}}{{dataType}}{{/format}}{{#format}}{{{format}}}{{/format}}
+
+// List of {{{name}}}
+const (
+	{{#allowableValues}}
+	{{#enumVars}}
+	{{name}} {{{classname}}} = {{{value}}}
+	{{/enumVars}}
+	{{/allowableValues}}
+){{/isEnum}}{{^isEnum}}{{#description}}
+// {{{description}}}{{/description}}
+type {{classname}} struct {
+{{#vars}}
+{{^-first}}
+{{/-first}}
+{{#description}}
+	// {{{description}}}
+{{/description}}
+	{{name}} {{^isEnum}}{{^isPrimitiveType}}{{^isContainer}}{{^isDateTime}}*{{/isDateTime}}{{/isContainer}}{{/isPrimitiveType}}{{/isEnum}}{{{datatype}}} `json:"{{baseName}}{{^required}},omitempty{{/required}}"{{#withXml}} xml:"{{baseName}}"{{/withXml}}`
+{{/vars}}
+}{{/isEnum}}{{/model}}{{/models}}
