@@ -2592,7 +2592,7 @@ __metadata:
     css-loader: 3.4.2
     eslint: 7.21.0
     execa: ^5.1.1
-    file-loader: 5.0.2
+    file-loader: 6.2.0
     fork-ts-checker-webpack-plugin: 1.0.0
     fs-extra: ^10.0.0
     globby: ^10.0.1
@@ -15393,6 +15393,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-config-prettier@npm:8.3.0":
+  version: 8.3.0
+  resolution: "eslint-config-prettier@npm:8.3.0"
+  peerDependencies:
+    eslint: ">=7.0.0"
+  bin:
+    eslint-config-prettier: bin/cli.js
+  checksum: df4cea3032671995bb5ab07e016169072f7fa59f44a53251664d9ca60951b66cdc872683b5c6a3729c91497c11490ca44a79654b395dd6756beb0c3903a37196
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-jsdoc@npm:31.6.1":
   version: 31.6.1
   resolution: "eslint-plugin-jsdoc@npm:31.6.1"
@@ -16293,18 +16304,6 @@ __metadata:
   dependencies:
     flat-cache: ^3.0.4
   checksum: f49701feaa6314c8127c3c2f6173cfefff17612f5ed2daaafc6da13b5c91fd43e3b2a58fd0d63f9f94478a501b167615931e7200e31485e320f74a33885a9c74
-  languageName: node
-  linkType: hard
-
-"file-loader@npm:5.0.2":
-  version: 5.0.2
-  resolution: "file-loader@npm:5.0.2"
-  dependencies:
-    loader-utils: ^1.2.3
-    schema-utils: ^2.5.0
-  peerDependencies:
-    webpack: ^4.0.0 || ^5.0.0
-  checksum: ddb7054b6381382a2473b4210a4ebf7d0baa34f32fb915a87275a424f19684f2f7ca4a689febe9efe632c477dd2f32248c404d7ac7abee7839fc8e038645ef81
   languageName: node
   linkType: hard
 
@@ -17702,7 +17701,7 @@ fsevents@~2.1.2:
     es6-promise: 4.2.8
     es6-shim: 0.35.5
     eslint: 7.21.0
-    eslint-config-prettier: 7.2.0
+    eslint-config-prettier: 8.3.0
     eslint-plugin-jsdoc: 37.0.0
     eslint-plugin-lodash: ^7.2.0
     eslint-plugin-no-only-tests: 2.4.0
