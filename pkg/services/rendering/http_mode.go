@@ -28,6 +28,11 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
+var (
+	remoteVersionFetchInterval time.Duration = time.Second * 15
+	remoteVersionFetchRetries  uint          = 4
+)
+
 func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	filePath, err := rs.getNewFilePath(RenderPNG)
 	if err != nil {
@@ -194,10 +199,10 @@ func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Res
 	return nil
 }
 
-func (rs *RenderingService) getRemotePluginVersionWithRetry(retryInterval time.Duration, numRetries uint, callback func(string, error)) {
+func (rs *RenderingService) getRemotePluginVersionWithRetry(callback func(string, error)) {
 	go func() {
 		var err error
-		for try := uint(0); try <= numRetries; try++ {
+		for try := uint(0); try < remoteVersionFetchRetries; try++ {
 			version, err := rs.getRemotePluginVersion()
 			if err == nil {
 				callback(version, err)
@@ -205,7 +210,7 @@ func (rs *RenderingService) getRemotePluginVersionWithRetry(retryInterval time.D
 			}
 			rs.log.Info("Couldn't get remote renderer version, retrying", "err", err, "try", try)
 
-			time.Sleep(retryInterval)
+			time.Sleep(remoteVersionFetchInterval)
 		}
 
 		callback("", err)

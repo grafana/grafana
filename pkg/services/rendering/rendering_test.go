@@ -186,7 +186,7 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			tries++
 
-			if tries < rs.remoteVersionFetchRetries {
+			if tries < remoteVersionFetchRetries {
 				w.WriteHeader(http.StatusInternalServerError)
 			} else {
 				w.Header().Set("Content-Type", "application/json")
@@ -199,8 +199,8 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 		defer server.Close()
 
 		rs.Cfg.RendererUrl = server.URL + "/render"
-		rs.remoteVersionFetchInterval = time.Millisecond
-		rs.remoteVersionFetchRetries = 5
+		remoteVersionFetchInterval = time.Millisecond
+		remoteVersionFetchRetries = 5
 		go func() {
 			require.NoError(t, rs.Run(ctx))
 		}()

@@ -37,16 +37,14 @@ type RenderUser struct {
 }
 
 type RenderingService struct {
-	log                        log.Logger
-	pluginInfo                 *plugins.Plugin
-	renderAction               renderFunc
-	renderCSVAction            renderCSVFunc
-	domain                     string
-	inProgressCount            int32
-	version                    string
-	versionMutex               sync.RWMutex
-	remoteVersionFetchInterval time.Duration
-	remoteVersionFetchRetries  uint
+	log             log.Logger
+	pluginInfo      *plugins.Plugin
+	renderAction    renderFunc
+	renderCSVAction renderCSVFunc
+	domain          string
+	inProgressCount int32
+	version         string
+	versionMutex    sync.RWMutex
 
 	Cfg                   *setting.Cfg
 	RemoteCacheService    *remotecache.RemoteCache
@@ -84,13 +82,11 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 	}
 
 	s := &RenderingService{
-		Cfg:                        cfg,
-		RemoteCacheService:         remoteCache,
-		RendererPluginManager:      rm,
-		log:                        log.New("rendering"),
-		domain:                     domain,
-		remoteVersionFetchInterval: time.Second * 15,
-		remoteVersionFetchRetries:  4,
+		Cfg:                   cfg,
+		RemoteCacheService:    remoteCache,
+		RendererPluginManager: rm,
+		log:                   log.New("rendering"),
+		domain:                domain,
 	}
 	return s, nil
 }
@@ -99,7 +95,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
 
-		rs.getRemotePluginVersionWithRetry(rs.remoteVersionFetchInterval, rs.remoteVersionFetchRetries, func(version string, err error) {
+		rs.getRemotePluginVersionWithRetry(func(version string, err error) {
 			if err != nil {
 				rs.log.Info("Couldn't get remote renderer version", "err", err)
 			}
