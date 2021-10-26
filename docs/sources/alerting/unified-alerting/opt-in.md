@@ -19,7 +19,7 @@ To enable Grafana 8 alerts:
 1. Next, for [legacy dashboard alerting]({{< relref "../../administration/configuration.md#alerting" >}}), set the `enabled` flag to `true`.
 1. Restart Grafana for the configuration changes to take effect.
 
-> **Note:** The `ngalert` feature toggle previously used to enable or disable Grafana 8 alerting is no longer available.
+> **Note:** The `ngalert` toggle previously used to enable or disable Grafana 8 alerting is no longer available.
 
 Before v8.2, notification logs and silences were stored on a disk. If you did not use persistent disks, you would have lost any configured silences and logs on a restart, resulting in unwanted or duplicate notifications. We no longer require the use of a persistent disk. Instead, the notification logs and silences are stored regularly (every 15 minutes). If you used the file-based approach, Grafana reads the existing file and persists it eventually.
 
