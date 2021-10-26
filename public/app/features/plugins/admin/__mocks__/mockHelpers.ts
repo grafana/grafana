@@ -1,3 +1,4 @@
+import { mocked } from 'ts-jest/utils';
 import { setBackendSrv } from '@grafana/runtime';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
 import {
@@ -9,6 +10,7 @@ import {
   RequestStatus,
   PluginListDisplayMode,
 } from '../types';
+import * as permissions from '../permissions';
 import remotePluginMock from './remotePlugin.mock';
 import localPluginMock from './localPlugin.mock';
 import catalogPluginMock from './catalogPlugin.mock';
@@ -98,3 +100,18 @@ export const mockPluginApis = ({
     },
   });
 };
+
+type UserAccessTestContext = {
+  isAdmin: boolean;
+  isOrgAdmin: boolean;
+  isDataSourceEditor: boolean;
+};
+
+jest.mock('../permissions');
+
+export function mockUserPermissions(options: UserAccessTestContext): void {
+  const mock = mocked(permissions);
+  mock.isDataSourceEditor.mockReturnValue(options.isDataSourceEditor);
+  mock.isOrgAdmin.mockReturnValue(options.isOrgAdmin);
+  mock.isGrafanaAdmin.mockReturnValue(options.isAdmin);
+}

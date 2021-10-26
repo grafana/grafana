@@ -85,6 +85,8 @@ const dummyProps: Props = {
   splitOpen: (() => {}) as any,
   logsVolumeData: undefined,
   loadLogsVolumeData: () => {},
+  changeGraphStyle: () => {},
+  graphStyle: 'lines',
 };
 
 describe('Explore', () => {
