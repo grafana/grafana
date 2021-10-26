@@ -69,7 +69,7 @@ func (s *Service) Run(ctx context.Context) error {
 func (s *Service) checkForUpdates() {
 	resp, err := httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
 	if err != nil {
-		log.Warnf("Failed to get latest.json repo from github.com: %v", err.Error())
+		logger.Debug("Failed to get latest.json repo from github.com", "error", err)
 		return
 	}
 	defer func() {
@@ -79,14 +79,14 @@ func (s *Service) checkForUpdates() {
 	}()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Warnf("Update check failed, reading response from github.com: %v", err.Error())
+		logger.Debug("Update check failed, reading response from github.com", "error", err)
 		return
 	}
 
 	var latest latestJSON
 	err = json.Unmarshal(body, &latest)
 	if err != nil {
-		log.Warnf("Failed to unmarshal latest.json: %v", err.Error())
+		logger.Debug("Failed to unmarshal latest.json", "error", err)
 		return
 	}
 

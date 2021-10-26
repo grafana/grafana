@@ -30,7 +30,7 @@ func (m *PluginManager) checkForUpdates() {
 	pluginSlugs := m.externalPluginIDsAsCSV()
 	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + m.cfg.BuildVersion)
 	if err != nil {
-		log.Tracef("Failed to get plugins repo from grafana.com, %v", err.Error())
+		log.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
 		return
 	}
 	defer func() {
@@ -41,14 +41,14 @@ func (m *PluginManager) checkForUpdates() {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Tracef("Update check failed, reading response from grafana.com, %v", err.Error())
+		log.Debug("Update check failed, reading response from grafana.com", "error", err.Error())
 		return
 	}
 
 	var gcomPlugins []gcomPlugin
 	err = json.Unmarshal(body, &gcomPlugins)
 	if err != nil {
-		log.Tracef("Failed to unmarshal plugin repo, reading response from grafana.com, %v", err.Error())
+		log.Debug("Failed to unmarshal plugin repo, reading response from grafana.com", "error", err.Error())
 		return
 	}
 
