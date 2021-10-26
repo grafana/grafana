@@ -4,7 +4,7 @@ title: Grafana managed alerts
 
 ## Clustering
 
-The current alerting system doesn't support high availability. Alert notifications are not deduplicated and load balancing is not supported between instances e.g. silences from one instance will not appear in the other.
+The current alerting system doesn't support high availability. Alert notifications are not deduplicated and load balancing is not supported between instances; for example, silences from one instance will not appear in the other.
 
 ## Alert evaluation
 
