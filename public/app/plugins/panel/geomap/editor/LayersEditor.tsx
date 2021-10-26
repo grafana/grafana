@@ -9,6 +9,7 @@ import { GeomapPanelOptions } from '../types';
 import { GeomapInstanceState } from '../GeomapPanel';
 import { geomapLayerRegistry } from '../layers/registry';
 import { getLayerDragStyles } from '../../canvas/editor/LayerElementListEditor';
+import { dataLayerFilter } from './layerEditor';
 
 type Props = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
 
@@ -52,7 +53,7 @@ export class LayersEditor extends PureComponent<Props> {
             icon="plus"
             label="Add layer"
             variant="secondary"
-            options={geomapLayerRegistry.selectOptions().options}
+            options={geomapLayerRegistry.selectOptions(undefined, dataLayerFilter).options}
             onChange={(v) => actions.addlayer(v.value!)}
             isFullWidth={true}
           />

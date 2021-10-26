@@ -164,7 +164,7 @@ function baseMapFilter(layer: MapLayerRegistryItem): boolean {
   return true;
 }
 
-function dataLayerFilter(layer: MapLayerRegistryItem): boolean {
+export function dataLayerFilter(layer: MapLayerRegistryItem): boolean {
   if (layer.isBaseMap) {
     return false;
   }
