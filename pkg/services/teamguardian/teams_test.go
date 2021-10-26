@@ -36,7 +36,7 @@ func TestUpdateTeam(t *testing.T) {
 				})
 
 				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
-				require.Equal(t, err, models.ErrNotAllowedToUpdateTeam)
+				require.Equal(t, models.ErrNotAllowedToUpdateTeam, err)
 			})
 		})
 
@@ -75,7 +75,7 @@ func TestUpdateTeam(t *testing.T) {
 				})
 
 				err := CanAdmin(bus.GetBus(), testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor)
-				require.Equal(t, err, models.ErrNotAllowedToUpdateTeamInDifferentOrg)
+				require.Equal(t, models.ErrNotAllowedToUpdateTeamInDifferentOrg, err)
 			})
 		})
 
