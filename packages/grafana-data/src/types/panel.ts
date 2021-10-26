@@ -2,7 +2,7 @@ import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource
 import { PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
-import { DataFrame } from './dataFrame';
+import { DataFrame, FieldType } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 import { EventBus } from '../events';
 import { FieldConfigSource } from './fieldOverrides';
@@ -12,6 +12,8 @@ import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
 import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
+import { DataTransformerConfig } from './transformations';
+import { defaultsDeep } from 'lodash';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -58,7 +60,7 @@ export interface PanelData {
   timeRange: TimeRange;
 }
 
-export interface PanelProps<T = any, S = any> {
+export interface PanelProps<T = any> {
   /** ID of the panel within the current dashboard */
   id: number;
 
@@ -181,4 +183,138 @@ export enum VizOrientation {
 export interface PanelPluginDataSupport {
   annotations: boolean;
   alertStates: boolean;
+}
+
+/**
+ * @alpha
+ */
+export interface VisualizationSuggestion<TOptions = any, TFieldConfig = any> {
+  /** Name of suggestion */
+  name: string;
+  /** Description */
+  description?: string;
+  /** Panel plugin id */
+  pluginId: string;
+  /** Panel plugin options */
+  options?: Partial<TOptions>;
+  /** Panel plugin field options */
+  fieldConfig?: FieldConfigSource<Partial<TFieldConfig>>;
+  /** Data transformations */
+  transformations?: DataTransformerConfig[];
+  /** Tweak for small preview */
+  previewModifier?: (suggestion: VisualizationSuggestion) => void;
+}
+
+/**
+ * @alpha
+ */
+export interface PanelDataSummary {
+  hasData?: boolean;
+  rowCountTotal: number;
+  rowCountMax: number;
+  frameCount: number;
+  numberFieldCount: number;
+  timeFieldCount: number;
+  stringFieldCount: number;
+  hasNumberField?: boolean;
+  hasTimeField?: boolean;
+  hasStringField?: boolean;
+}
+
+/**
+ * @alpha
+ */
+export class VisualizationSuggestionsBuilder {
+  /** Current data */
+  data?: PanelData;
+  /** Current panel & options */
+  panel?: PanelModel;
+  /** Summary stats for current data */
+  dataSummary: PanelDataSummary;
+
+  private list: VisualizationSuggestion[] = [];
+
+  constructor(data?: PanelData, panel?: PanelModel) {
+    this.data = data;
+    this.panel = panel;
+    this.dataSummary = this.computeDataSummary();
+  }
+
+  getListAppender<TOptions, TFieldConfig>(defaults: VisualizationSuggestion<TOptions, TFieldConfig>) {
+    return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
+  }
+
+  private computeDataSummary() {
+    const frames = this.data?.series || [];
+
+    let numberFieldCount = 0;
+    let timeFieldCount = 0;
+    let stringFieldCount = 0;
+    let rowCountTotal = 0;
+    let rowCountMax = 0;
+
+    for (const frame of frames) {
+      rowCountTotal += frame.length;
+
+      for (const field of frame.fields) {
+        switch (field.type) {
+          case FieldType.number:
+            numberFieldCount += 1;
+            break;
+          case FieldType.time:
+            timeFieldCount += 1;
+            break;
+          case FieldType.string:
+            stringFieldCount += 1;
+            break;
+        }
+      }
+
+      if (frame.length > rowCountMax) {
+        rowCountMax = frame.length;
+      }
+    }
+
+    return {
+      numberFieldCount,
+      timeFieldCount,
+      stringFieldCount,
+      rowCountTotal,
+      rowCountMax,
+      frameCount: frames.length,
+      hasData: rowCountTotal > 0,
+      hasTimeField: timeFieldCount > 0,
+      hasNumberField: numberFieldCount > 0,
+      hasStringField: stringFieldCount > 0,
+    };
+  }
+
+  getList() {
+    return this.list;
+  }
+}
+
+/**
+ * @alpha
+ */
+export type VisualizationSuggestionsSupplier = {
+  /**
+   * Adds good suitable suggestions for the current data
+   */
+  getSuggestionsForData: (builder: VisualizationSuggestionsBuilder) => void;
+};
+
+/**
+ * Helps with typings and defaults
+ * @alpha
+ */
+export class VisualizationSuggestionsListAppender<TOptions, TFieldConfig> {
+  constructor(
+    private list: VisualizationSuggestion[],
+    private defaults: VisualizationSuggestion<TOptions, TFieldConfig>
+  ) {}
+
+  append(overrides: Partial<VisualizationSuggestion<TOptions, TFieldConfig>>) {
+    this.list.push(defaultsDeep(overrides, this.defaults));
+  }
 }
