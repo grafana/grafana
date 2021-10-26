@@ -42,7 +42,9 @@ type SlackNotifier struct {
 	Token          string
 }
 
-var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*)|(#[^ .A-Z]{1,79})|([a-zA-Z0-9]+))$")
+const SlackRecipientValidationString = "^#?[a-zA-Z0-9_-]{1,80}$"
+
+var reRecipient *regexp.Regexp = regexp.MustCompile(SlackRecipientValidationString)
 
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
@@ -223,12 +225,14 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 		return fmt.Errorf("request to Slack API failed with status code %d", resp.StatusCode)
 	}
 
-	// Slack responds to some requests with a JSON document, that might contain an error
+	// Slack responds to some requests with a JSON document, that might contain an error.
 	rslt := struct {
 		Ok  bool   `json:"ok"`
 		Err string `json:"error"`
 	}{}
-	if err := json.Unmarshal(body, &rslt); err != nil {
+
+	// Marshaling can fail if Slack's response body is plain text (e.g. "ok").
+	if err := json.Unmarshal(body, &rslt); err != nil && json.Valid(body) {
 		logger.Warn("Failed to unmarshal Slack API response", "url", request.URL.String(), "statusCode", resp.Status,
 			"body", string(body))
 		return fmt.Errorf("failed to unmarshal Slack API response: %s", err)

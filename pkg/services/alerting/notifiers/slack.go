@@ -33,11 +33,12 @@ func init() {
 		Factory:     NewSlackNotifier,
 		Options: []alerting.NotifierOption{
 			{
-				Label:        "Recipient",
-				Element:      alerting.ElementTypeInput,
-				InputType:    alerting.InputTypeText,
-				Description:  "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID - required unless you provide a webhook",
-				PropertyName: "recipient",
+				Label:          "Recipient",
+				Element:        alerting.ElementTypeInput,
+				InputType:      alerting.InputTypeText,
+				Description:    "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
+				PropertyName:   "recipient",
+				ValidationRule: recipientValidationString,
 			},
 			// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
 			// However, since the UI doesn't allow to say that a field is required or not depending on another field,
@@ -119,7 +120,10 @@ func init() {
 	})
 }
 
-var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*)|(#[^ .A-Z]{1,79})|([a-zA-Z0-9]+))$")
+var (
+	recipientValidationString                = "^#?[a-zA-Z0-9_-]{1,80}$"
+	reRecipient               *regexp.Regexp = regexp.MustCompile(recipientValidationString)
+)
 
 const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
@@ -383,12 +387,14 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 	}
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		// Slack responds to some requests with a JSON document, that might contain an error
+		// Slack responds to some requests with a JSON document, that might contain an error.
 		rslt := struct {
 			Ok  bool   `json:"ok"`
 			Err string `json:"error"`
 		}{}
-		if err := json.Unmarshal(body, &rslt); err != nil {
+
+		// Marshaling can fail if Slack's response body is plain text (e.g. "ok").
+		if err := json.Unmarshal(body, &rslt); err != nil && json.Valid(body) {
 			sn.log.Warn("Failed to unmarshal Slack API response", "url", sn.url.String(), "statusCode", resp.Status,
 				"err", err)
 			return fmt.Errorf("failed to unmarshal Slack API response with status code %d: %s", resp.StatusCode, err)
