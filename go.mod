@@ -101,10 +101,9 @@ require (
 	github.com/yudai/gojsondiff v1.0.0
 	go.opentelemetry.io/collector v0.31.0
 	go.opentelemetry.io/collector/model v0.31.0
-	go.opentelemetry.io/otel v1.0.0
-	go.opentelemetry.io/otel/exporters/jaeger v1.0.0
-	go.opentelemetry.io/otel/sdk v1.0.0
-	go.opentelemetry.io/otel/trace v1.0.0
+	go.opentelemetry.io/otel v1.0.1
+	go.opentelemetry.io/otel/exporters/jaeger v1.0.1
+	go.opentelemetry.io/otel/sdk v1.0.1
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
 	golang.org/x/net v0.0.0-20210903162142-ad29c8ab022f
@@ -247,6 +246,7 @@ require (
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.mongodb.org/mongo-driver v1.5.2 // indirect
 	go.opencensus.io v0.23.0 // indirect
+	go.opentelemetry.io/otel/trace v1.0.1
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/goleak v1.1.10 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect

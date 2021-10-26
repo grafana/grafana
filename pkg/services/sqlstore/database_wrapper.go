@@ -11,13 +11,15 @@ import (
 	"github.com/gchaincl/sqlhooks"
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
-	"github.com/opentracing/opentracing-go"
-	ol "github.com/opentracing/opentracing-go/log"
 	"github.com/prometheus/client_golang/prometheus"
-	cw "github.com/weaveworks/common/tracing"
+	cw "github.com/weaveworks/common/middleware"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"xorm.io/core"
 )
 
@@ -94,15 +96,14 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 		histogram.Observe(elapsed.Seconds())
 	}
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "database query")
-	defer span.Finish()
+	_, span := tracing.Tracer.Start(ctx, "database query")
+	defer span.End()
 
-	span.LogFields(
-		ol.String("query", query),
-		ol.String("status", status))
+	span.AddEvent("query", trace.WithAttributes(attribute.String("query", query)))
+	span.AddEvent("status", trace.WithAttributes(attribute.String("status", status)))
 
 	if err != nil {
-		span.LogFields(ol.String("error", err.Error()))
+		span.AddEvent("error", trace.WithAttributes(attribute.String("error", err.Error())))
 	}
 
 	h.log.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)

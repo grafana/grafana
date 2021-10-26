@@ -3,22 +3,29 @@ package tracing
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 
-	opentracing "github.com/opentracing/opentracing-go"
-	jaegercfg "github.com/uber/jaeger-client-go/config"
-	"github.com/uber/jaeger-client-go/zipkin"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	trace "go.opentelemetry.io/otel/trace"
 )
 
 const (
 	envJaegerAgentHost = "JAEGER_AGENT_HOST"
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
+
+var Tracer trace.Tracer
 
 func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 	ts := &TracingService{
@@ -29,28 +36,26 @@ func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 		return nil, err
 	}
 
-	if ts.enabled {
-		return ts, ts.initGlobalTracer()
-	}
-
-	return ts, nil
+	return ts, ts.initGlobalTracer()
 }
 
 type TracingService struct {
-	enabled                  bool
-	address                  string
-	customTags               map[string]string
-	samplerType              string
-	samplerParam             float64
-	samplingServerURL        string
-	log                      log.Logger
-	closer                   io.Closer
+	enabled           bool
+	address           string
+	customTags        map[string]string
+	samplerType       string
+	samplerParam      float64
+	samplingServerURL string
+	log               log.Logger
+	// closer                   io.Closer
 	zipkinPropagation        bool
 	disableSharedZipkinSpans bool
+	tracerProvider           *tracesdk.TracerProvider
 
 	Cfg *setting.Cfg
 }
 
+// TODO: change settings according to opentelemetry configuration
 func (ts *TracingService) parseSettings() error {
 	var section, err = ts.Cfg.Raw.GetSection("tracing.jaeger")
 	if err != nil {
@@ -65,10 +70,11 @@ func (ts *TracingService) parseSettings() error {
 			ts.address = fmt.Sprintf("%s:%s", host, port)
 		}
 	}
-	if ts.address != "" {
-		ts.enabled = true
+	if ts.address == "" {
+		ts.address = "localhost:6831"
 	}
 
+	ts.enabled = true
 	ts.customTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
 	ts.samplerType = section.Key("sampler_type").MustString("")
 	ts.samplerParam = section.Key("sampler_param").MustFloat64(1)
@@ -78,63 +84,38 @@ func (ts *TracingService) parseSettings() error {
 	return nil
 }
 
-func (ts *TracingService) initJaegerCfg() (jaegercfg.Configuration, error) {
-	cfg := jaegercfg.Configuration{
-		ServiceName: "grafana",
-		Disabled:    !ts.enabled,
-		Sampler: &jaegercfg.SamplerConfig{
-			Type:              ts.samplerType,
-			Param:             ts.samplerParam,
-			SamplingServerURL: ts.samplingServerURL,
-		},
-		Reporter: &jaegercfg.ReporterConfig{
-			LogSpans:           false,
-			LocalAgentHostPort: ts.address,
-		},
-	}
-
-	_, err := cfg.FromEnv()
+func (ts *TracingService) initJaegerCfg() (*tracesdk.TracerProvider, error) {
+	// Create the Jaeger exporter
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ts.address)))
 	if err != nil {
-		return cfg, err
+		return nil, err
 	}
-	return cfg, nil
+	tp := tracesdk.NewTracerProvider(
+		// Always be sure to batch in production.
+		tracesdk.WithBatcher(exp),
+		// Record information about this application in an Resource.
+		// TODO: Add resource from opentelemetry configuration
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String("grafana"),
+			attribute.String("environment", "production"),
+			// attribute.Int64("ID", 11),
+		)),
+	)
+	return tp, nil
 }
 
 func (ts *TracingService) initGlobalTracer() error {
-	cfg, err := ts.initJaegerCfg()
+	tp, err := ts.initJaegerCfg()
 	if err != nil {
 		return err
 	}
+	// Register our TracerProvider as the global so any imported
+	// instrumentation in the future will default to using it.
+	otel.SetTracerProvider(tp)
 
-	jLogger := &jaegerLogWrapper{logger: log.New("jaeger")}
-
-	options := []jaegercfg.Option{}
-	options = append(options, jaegercfg.Logger(jLogger))
-
-	for tag, value := range ts.customTags {
-		options = append(options, jaegercfg.Tag(tag, value))
-	}
-
-	if ts.zipkinPropagation {
-		zipkinPropagator := zipkin.NewZipkinB3HTTPHeaderPropagator()
-		options = append(options,
-			jaegercfg.Injector(opentracing.HTTPHeaders, zipkinPropagator),
-			jaegercfg.Extractor(opentracing.HTTPHeaders, zipkinPropagator),
-		)
-
-		if !ts.disableSharedZipkinSpans {
-			options = append(options, jaegercfg.ZipkinSharedRPCSpan(true))
-		}
-	}
-
-	tracer, closer, err := cfg.NewTracer(options...)
-	if err != nil {
-		return err
-	}
-
-	opentracing.SetGlobalTracer(tracer)
-
-	ts.closer = closer
+	Tracer = tp.Tracer("component-main")
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 
 	return nil
 }
@@ -142,9 +123,11 @@ func (ts *TracingService) initGlobalTracer() error {
 func (ts *TracingService) Run(ctx context.Context) error {
 	<-ctx.Done()
 
-	if ts.closer != nil {
-		ts.log.Info("Closing tracing")
-		return ts.closer.Close()
+	ts.log.Info("Closing tracing")
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	if err := ts.tracerProvider.Shutdown(ctxShutdown); err != nil {
+		return err
 	}
 
 	return nil

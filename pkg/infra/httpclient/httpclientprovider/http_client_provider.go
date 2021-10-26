@@ -1,6 +1,7 @@
 package httpclientprovider
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -20,7 +21,7 @@ func New(cfg *setting.Cfg) *sdkhttpclient.Provider {
 	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
 
 	middlewares := []sdkhttpclient.Middleware{
-		TracingMiddleware(logger),
+		TracingMiddleware(context.TODO(), logger),
 		DataSourceMetricsMiddleware(),
 		SetUserAgentMiddleware(userAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),

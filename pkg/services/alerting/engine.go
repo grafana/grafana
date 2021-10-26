@@ -9,15 +9,16 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	tlog "github.com/opentracing/opentracing-go/log"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"golang.org/x/sync/errgroup"
 )
 
@@ -176,8 +177,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
-	span := opentracing.StartSpan("alert execution")
-	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
+	alertCtx, span := tracing.Tracer.Start(alertCtx, "alert execution")
 
 	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator)
 	evalContext.Ctx = alertCtx
@@ -186,32 +186,34 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		defer func() {
 			if err := recover(); err != nil {
 				e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
-				ext.Error.Set(span, true)
-				span.LogFields(
-					tlog.Error(fmt.Errorf("%v", err)),
-					tlog.String("message", "failed to execute alert rule. panic was recovered."),
-				)
-				span.Finish()
+				span.RecordError(fmt.Errorf("%v", err))
+				span.AddEvent("message", trace.WithAttributes(
+					attribute.Key("message").String("failed to execute alert rule panic was recovered."),
+					attribute.Key("error").String(fmt.Sprintf("%v", err)),
+				))
+
+				span.End()
 				close(attemptChan)
 			}
 		}()
 
 		e.evalHandler.Eval(evalContext)
 
-		span.SetTag("alertId", evalContext.Rule.ID)
-		span.SetTag("dashboardId", evalContext.Rule.DashboardID)
-		span.SetTag("firing", evalContext.Firing)
-		span.SetTag("nodatapoints", evalContext.NoDataFound)
-		span.SetTag("attemptID", attemptID)
+		span.SetAttributes(attribute.Key("alertId").Int64(evalContext.Rule.ID))
+		span.SetAttributes(attribute.Key("dashboardId").Int64(evalContext.Rule.DashboardID))
+		span.SetAttributes(attribute.Key("firing").Bool(evalContext.Firing))
+		span.SetAttributes(attribute.Key("nodatapoints").Bool(evalContext.NoDataFound))
+		span.SetAttributes(attribute.Key("attemptID").Int(attemptID))
 
 		if evalContext.Error != nil {
-			ext.Error.Set(span, true)
-			span.LogFields(
-				tlog.Error(evalContext.Error),
-				tlog.String("message", "alerting execution attempt failed"),
-			)
+			span.RecordError(evalContext.Error)
+			span.AddEvent("message", trace.WithAttributes(
+				attribute.Key("message").String("alerting execution attempt failed"),
+				attribute.Key("error").String(fmt.Sprintf("%v", evalContext.Error)),
+			))
+
 			if attemptID < setting.AlertingMaxAttempts {
-				span.Finish()
+				span.End()
 				e.log.Debug("Job Execution attempt triggered retry", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 				attemptChan <- (attemptID + 1)
 				return
@@ -239,7 +241,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 			}
 		}
 
-		span.Finish()
+		span.End()
 		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 		close(attemptChan)
 	}()

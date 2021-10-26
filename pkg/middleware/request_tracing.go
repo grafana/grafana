@@ -4,10 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
+	trace "go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -46,30 +51,28 @@ func RequestTracing() web.Handler {
 
 		rw := res.(web.ResponseWriter)
 
-		tracer := opentracing.GlobalTracer()
-		wireContext, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-		span := tracer.StartSpan(fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), ext.RPCServerOption(wireContext))
+		wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
+		ctx, span := tracing.Tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
 
-		ctx := opentracing.ContextWithSpan(req.Context(), span)
 		c.Req = req.WithContext(ctx)
 		c.Map(c.Req)
 
 		c.Next()
 
-		// Only call span.Finish when a route operation name have been set,
+		// Only call span.End when a route operation name have been set,
 		// meaning that not set the span would not be reported.
 		if routeOperation, exists := RouteOperationNameFromContext(c.Req.Context()); exists {
-			defer span.Finish()
-			span.SetOperationName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
+			defer span.End()
+			span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
 		}
 
 		status := rw.Status()
 
-		ext.HTTPStatusCode.Set(span, uint16(status))
-		ext.HTTPUrl.Set(span, req.RequestURI)
-		ext.HTTPMethod.Set(span, req.Method)
+		span.SetAttributes(attribute.Int("HTTP response status code", status))
+		span.SetAttributes(attribute.String("HTTP request URI", req.RequestURI))
+		span.SetAttributes(attribute.String("HTTP request method", req.Method))
 		if status >= 400 {
-			ext.Error.Set(span, true)
+			span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(status)))
 		}
 	}
 }

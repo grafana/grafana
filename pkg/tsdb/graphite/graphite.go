@@ -14,6 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -23,11 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/opentracing/opentracing-go"
 )
 
 type Service struct {
@@ -157,21 +160,15 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &result, err
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
-	span.SetTag("target", target)
-	span.SetTag("from", from)
-	span.SetTag("until", until)
-	span.SetTag("datasource_id", dsInfo.Id)
-	span.SetTag("org_id", req.PluginContext.OrgID)
+	ctx, span := tracing.Tracer.Start(ctx, "graphite query")
+	span.SetAttributes(attribute.Key("target").String(target))
+	span.SetAttributes(attribute.Key("from").String(from))
+	span.SetAttributes(attribute.Key("until").String(until))
+	span.SetAttributes(attribute.Key("datasource_id").Int64(dsInfo.Id))
+	span.SetAttributes(attribute.Key("org_id").Int64(req.PluginContext.OrgID))
 
-	defer span.Finish()
-
-	if err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(graphiteReq.Header)); err != nil {
-		return &result, err
-	}
+	defer span.End()
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(graphiteReq.Header))
 
 	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, graphiteReq)
 	if err != nil {

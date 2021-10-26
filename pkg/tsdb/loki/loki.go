@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -23,9 +24,9 @@ import (
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type Service struct {
@@ -138,11 +139,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	for _, query := range queries {
 		s.plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
-		span, _ := opentracing.StartSpanFromContext(ctx, "alerting.loki")
-		span.SetTag("expr", query.Expr)
-		span.SetTag("start_unixnano", query.Start.UnixNano())
-		span.SetTag("stop_unixnano", query.End.UnixNano())
-		defer span.Finish()
+		_, span := tracing.Tracer.Start(ctx, "alerting.loki")
+		span.SetAttributes(attribute.Key("expr").String(query.Expr))
+		span.SetAttributes(attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
+		span.SetAttributes(attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+		defer span.End()
 
 		//Currently hard coded as not used - applies to log queries
 		limit := 1000
