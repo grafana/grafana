@@ -1,11 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface SettingsState {
-  strictPanelRefreshMode: boolean;
+  strictPanelRefresh: boolean;
 }
 
 export const initialSettingsState: SettingsState = {
-  strictPanelRefreshMode: false,
+  strictPanelRefresh: false,
 };
 
 const settingsReducerSlice = createSlice({
@@ -13,7 +13,7 @@ const settingsReducerSlice = createSlice({
   initialState: initialSettingsState,
   reducers: {
     setStrictPanelRefresh: (state, action: PayloadAction<boolean>) => {
-      state.strictPanelRefreshMode = action.payload;
+      state.strictPanelRefresh = action.payload;
     },
   },
 });

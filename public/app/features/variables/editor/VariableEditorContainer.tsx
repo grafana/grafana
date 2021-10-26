@@ -1,5 +1,5 @@
 import React, { MouseEvent, PureComponent } from 'react';
-import { Alert, Checkbox, Field, Icon, LinkButton } from '@grafana/ui';
+import { Icon, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
@@ -13,6 +13,7 @@ import { VariableEditorList } from './VariableEditorList';
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { updateStrictPanelRefresh } from '../settings/actions';
+import { VariableStrictPanelRefreshBox } from './VariableStrictPanelRefreshBox';
 
 const mapStateToProps = (state: StoreState) => ({
   variables: getEditorVariables(state),
@@ -23,7 +24,7 @@ const mapStateToProps = (state: StoreState) => ({
   usagesNetwork: state.templating.inspect.usagesNetwork,
   unknown: state.templating.inspect.unknown,
   usages: state.templating.inspect.usages,
-  strictPanelRefreshMode: state.templating.settings.strictPanelRefreshMode,
+  strictPanelRefresh: state.templating.settings.strictPanelRefresh,
 });
 
 const mapDispatchToProps = {
@@ -111,25 +112,12 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 
         {!variableToEdit && (
           <>
-            <Alert title="Strict panel refresh" severity="info">
-              <p>
-                Using strict panel refresh means only panels that are affected by a variable change will be refreshed.
-                The default setting is to refresh all panels when a variable changes.
-              </p>
-              <p>
-                <i>
-                  If strict panel refresh setting is used then the data in panels not affected by a variable change
-                  might look stale until next refresh.
-                </i>
-              </p>
-            </Alert>
-            <Field label="Strict panel refresh">
-              <Checkbox
-                id="variables-settings-strict-mode"
-                value={this.props.strictPanelRefreshMode}
-                onChange={(e) => this.props.updateStrictPanelRefresh(e.currentTarget.checked)}
+            {this.props.variables.length > 0 ? (
+              <VariableStrictPanelRefreshBox
+                value={this.props.strictPanelRefresh}
+                onChange={this.props.updateStrictPanelRefresh}
               />
-            </Field>
+            ) : null}
             <VariableEditorList
               dashboard={this.props.dashboard}
               variables={this.props.variables}

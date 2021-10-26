@@ -6,7 +6,7 @@ describe('settingsReducer', () => {
     reducerTester<SettingsState>()
       .givenReducer(settingsReducer, { ...initialSettingsState })
       .whenActionIsDispatched({ type: '' })
-      .thenStateShouldEqual({ strictPanelRefreshMode: false });
+      .thenStateShouldEqual({ strictPanelRefresh: false });
   });
 
   describe('when setStrictPanelRefresh is dispatched', () => {
@@ -14,7 +14,7 @@ describe('settingsReducer', () => {
       reducerTester<SettingsState>()
         .givenReducer(settingsReducer, { ...initialSettingsState })
         .whenActionIsDispatched(setStrictPanelRefresh(true))
-        .thenStateShouldEqual({ strictPanelRefreshMode: true });
+        .thenStateShouldEqual({ strictPanelRefresh: true });
     });
   });
 });

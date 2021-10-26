@@ -518,7 +518,7 @@ export const variableUpdated = (
     const variables = getVariables(state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
-    const strictPanelRefreshMode = state.templating.settings.strictPanelRefreshMode;
+    const strictPanelRefreshMode = state.templating.settings.strictPanelRefresh;
     const affectedPanelIds = strictPanelRefreshMode
       ? getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels)
       : panels.map((p) => p.id);

@@ -62,9 +62,10 @@ import { expect } from '../../../../test/lib/common';
 import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
-import { setDataSourceSrv, setLocationService } from '@grafana/runtime';
+import * as runtime from '@grafana/runtime';
 import { LoadingState } from '@grafana/data';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
+import { setStrictPanelRefresh } from '../settings/reducer';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -86,7 +87,7 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-setDataSourceSrv({
+runtime.setDataSourceSrv({
   get: getDatasource,
   getList: getMetricSources,
 } as any);
@@ -151,7 +152,7 @@ describe('shared actions', () => {
         templating: ({} as unknown) as TemplatingState,
       };
       const locationService: any = { getSearchObject: () => ({}) };
-      setLocationService(locationService);
+      runtime.setLocationService(locationService);
       const variableQueryRunner: any = {
         cancelRequest: jest.fn(),
         queueRequest: jest.fn(),
@@ -219,7 +220,7 @@ describe('shared actions', () => {
       const list = [stats, substats];
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
       const locationService: any = { getSearchObject: () => query };
-      setLocationService(locationService);
+      runtime.setLocationService(locationService);
       const preloadedState = {
         templating: ({} as unknown) as TemplatingState,
       };
@@ -578,13 +579,19 @@ describe('shared actions', () => {
   });
 
   describe('initVariablesTransaction', () => {
-    const constant = constantBuilder().withId('constant').withName('constant').build();
-    const templating: any = { list: [constant] };
-    const uid = 'uid';
-    const dashboard: any = { title: 'Some dash', uid, templating };
+    function getTestContext() {
+      const reportSpy = jest.spyOn(runtime, 'reportInteraction').mockReturnValue(undefined);
+      const constant = constantBuilder().withId('constant').withName('constant').build();
+      const templating: any = { list: [constant] };
+      const uid = 'uid';
+      const dashboard: any = { title: 'Some dash', uid, templating };
+
+      return { reportSpy, constant, templating, uid, dashboard };
+    }
 
     describe('when called and the previous dashboard has completed', () => {
       it('then correct actions are dispatched', async () => {
+        const { constant, uid, dashboard } = getTestContext();
         const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
@@ -603,14 +610,16 @@ describe('shared actions', () => {
           expect(dispatchedActions[5]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
           expect(dispatchedActions[6]).toEqual(variableStateCompleted(toVariablePayload(constant)));
 
-          expect(dispatchedActions[7]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 8;
+          expect(dispatchedActions[7]).toEqual(setStrictPanelRefresh(false));
+          expect(dispatchedActions[8]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 9;
         });
       });
     });
 
     describe('when called and the previous dashboard is still processing variables', () => {
       it('then correct actions are dispatched', async () => {
+        const { constant, uid, dashboard } = getTestContext();
         const transactionState = { uid: 'previous-uid', status: TransactionStatus.Fetching };
 
         const tester = await reduxTester<RootReducerType>({
@@ -643,8 +652,9 @@ describe('shared actions', () => {
           );
           expect(dispatchedActions[9]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
           expect(dispatchedActions[10]).toEqual(variableStateCompleted(toVariablePayload(constant)));
-          expect(dispatchedActions[11]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 12;
+          expect(dispatchedActions[11]).toEqual(setStrictPanelRefresh(false));
+          expect(dispatchedActions[12]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 13;
         });
       });
     });
