@@ -4,6 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -13,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
-func TestSecrets_EnvelopeEncryption(t *testing.T) {
+func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
 	svc := setupTestService(t, store)
 	ctx := context.Background()
@@ -140,5 +145,44 @@ func TestSecretsService_DataKeys(t *testing.T) {
 		res, err := store.GetDataKey(ctx, dataKey.Name)
 		assert.Equal(t, secrets.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
+	})
+}
+
+func TestSecretsService_GetCurrentProvider(t *testing.T) {
+	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
+		cfg := `[security]
+			secret_key = sdDkslslld`
+
+		raw, err := ini.Load([]byte(cfg))
+		require.NoError(t, err)
+		settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+		svc := ProvideSecretsService(
+			database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
+			bus.New(),
+			ossencryption.ProvideService(),
+			settings,
+		)
+
+		assert.Equal(t, "secretKey", svc.currentProvider)
+	})
+
+	t.Run("When encryption_provider value is set, should use it as a current provider", func(t *testing.T) {
+		cfg := `[security]
+			secret_key = sdDkslslld
+			encryption_provider = awskms.second_key`
+
+		raw, err := ini.Load([]byte(cfg))
+		require.NoError(t, err)
+		settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+		svc := ProvideSecretsService(
+			database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
+			bus.New(),
+			ossencryption.ProvideService(),
+			settings,
+		)
+
+		assert.Equal(t, "awskms.second_key", svc.currentProvider)
 	})
 }
