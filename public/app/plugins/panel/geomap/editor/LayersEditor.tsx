@@ -47,6 +47,18 @@ export class LayersEditor extends PureComponent<Props> {
     const styles = this.style;
     return (
       <>
+        <Container>
+          <ValuePicker
+            icon="plus"
+            label="Add layer"
+            variant="secondary"
+            options={geomapLayerRegistry.selectOptions().options}
+            onChange={(v) => actions.addlayer(v.value!)}
+            isFullWidth={true}
+          />
+        </Container>
+        <br />
+
         <DragDropContext onDragEnd={this.onDragEnd}>
           <Droppable droppableId="droppable">
             {(provided, snapshot) => (
@@ -67,9 +79,7 @@ export class LayersEditor extends PureComponent<Props> {
                             onMouseDown={() => actions!.selectLayer(element.UID)}
                           >
                             <span className={styles.typeWrapper}>{element.options.type}</span>
-                            <div className={styles.textWrapper}>
-                              &nbsp; {element.UID} ({element.layer.getSourceState()})
-                            </div>
+                            <div className={styles.textWrapper}>&nbsp; ({element.layer.getSourceState() ?? '?'})</div>
 
                             <IconButton
                               name="trash-alt"
@@ -100,19 +110,7 @@ export class LayersEditor extends PureComponent<Props> {
           </Droppable>
         </DragDropContext>
 
-        <Container>
-          <ValuePicker
-            icon="plus"
-            label="Add layer"
-            variant="secondary"
-            options={geomapLayerRegistry.selectOptions().options}
-            onChange={(v) => actions.addlayer(v.value!)}
-            isFullWidth={true}
-          />
-        </Container>
-
-        <br />
-        {baselayer && (
+        {false && baselayer && (
           <>
             <label>Base layer</label>
             <div className={this.getRowStyle(false)}>

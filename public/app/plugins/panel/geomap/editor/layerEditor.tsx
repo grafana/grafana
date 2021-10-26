@@ -67,7 +67,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
 
       builder.addSelect({
         path: 'type',
-        name: undefined as any, // required, but hide space
+        name: 'Layer type', // required, but hide space
         settings: {
           options: layerTypes.options,
         },

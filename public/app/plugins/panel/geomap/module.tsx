@@ -38,7 +38,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       // TODO? show spinner?
     } else {
       builder.addCustomEditor({
-        category: ['Map Layers'],
+        category: ['Data layer'],
         id: 'layers',
         path: '',
         name: '',
@@ -50,21 +50,10 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         builder.addNestedOptions(
           getLayerEditor({
             state: selected,
-            category: ['Selected layer'],
+            category: ['Data layer'],
             basemaps: false,
           })
         );
-      } else {
-        // For now show each layer
-        for (let i = state.layers.length - 1; i > 0; i--) {
-          builder.addNestedOptions(
-            getLayerEditor({
-              state: state.layers[i],
-              category: [`Layer: ${i}`],
-              basemaps: false,
-            })
-          );
-        }
       }
 
       const baselayer = state.layers[0];
