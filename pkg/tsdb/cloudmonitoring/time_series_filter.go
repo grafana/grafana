@@ -12,13 +12,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, req *backend.QueryDataRequest,
@@ -63,13 +60,13 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 
 	ctx, span := tracing.Tracer.Start(ctx, "cloudMonitoring query")
 	span.SetAttributes(attribute.Key("target").String(timeSeriesFilter.Target))
-	span.SetAttributes(attribute.Key("from").String(tsdbQuery.TimeRange.From))
-	span.SetAttributes(attribute.Key("until").String(tsdbQuery.TimeRange.To))
-	span.SetAttributes(attribute.Key("datasource_id").Int64(e.dsInfo.Id))
-	span.SetAttributes(attribute.Key("org_id").Int64(e.dsInfo.OrgId))
+	span.SetAttributes(attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+	span.SetAttributes(attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
+	span.SetAttributes(attribute.Key("datasource_id").Int64(dsInfo.id))
+	span.SetAttributes(attribute.Key("org_id").Int64(req.PluginContext.OrgID))
 
 	defer span.End()
-	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(r.Header))
 
 	r = r.WithContext(ctx)
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)

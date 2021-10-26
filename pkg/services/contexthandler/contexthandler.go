@@ -22,11 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	cw "github.com/weaveworks/common/middleware"
+	"github.com/grafana/grafana/pkg/web"
+	cw "github.com/weaveworks/common/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	trace "go.opentelemetry.io/otel/trace"
-
-	"gopkg.in/macaron.v1"
 )
 
 const (
