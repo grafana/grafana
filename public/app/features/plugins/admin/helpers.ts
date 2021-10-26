@@ -1,18 +1,9 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
 import { PluginSignatureStatus, dateTimeParse, PluginError } from '@grafana/data';
-import { contextSrv } from 'app/core/services/context_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Settings } from 'app/core/config';
 import { CatalogPlugin, LocalPlugin, RemotePlugin } from './types';
-
-export function isGrafanaAdmin(): boolean {
-  return config.bootData.user.isGrafanaAdmin;
-}
-
-export function isOrgAdmin() {
-  return contextSrv.hasRole('Admin');
-}
 
 export function mergeLocalsAndRemotes(
   local: LocalPlugin[] = [],
