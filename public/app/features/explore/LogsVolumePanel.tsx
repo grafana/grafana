@@ -37,6 +37,7 @@ export function LogsVolumePanel(props: Props) {
     if (logsVolumeData.data.length > 0) {
       LogsVolumePanelContent = (
         <ExploreGraph
+          graphStyle="lines"
           loadingState={LoadingState.Done}
           data={logsVolumeData.data}
           height={height}
