@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -63,6 +62,8 @@ var (
 )
 
 const (
+	dsName = "stackdriver"
+
 	gceAuthentication         string = "gce"
 	jwtAuthentication         string = "jwt"
 	metricQueryType           string = "metrics"
@@ -87,7 +88,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pl
 		QueryDataHandler: s,
 	})
 
-	if err := s.backendPluginManager.Register("stackdriver", factory); err != nil {
+	if err := s.backendPluginManager.Register(dsName, factory); err != nil {
 		slog.Error("Failed to register plugin", "error", err)
 	}
 	return s
@@ -112,9 +113,10 @@ type datasourceInfo struct {
 	url                string
 	authenticationType string
 	defaultProject     string
+	clientEmail        string
+	tokenUri           string
 	client             *http.Client
 
-	jsonData                map[string]interface{}
 	decryptedSecureJSONData map[string]string
 }
 
@@ -124,16 +126,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-
-		opts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, err
-		}
-
-		client, err := httpClientProvider.New(opts)
-		if err != nil {
-			return nil, err
 		}
 
 		authType := jwtAuthentication
@@ -146,16 +138,38 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			defaultProject = jsonData["defaultProject"].(string)
 		}
 
-		return &datasourceInfo{
+		var clientEmail string
+		if jsonData["clientEmail"] != nil {
+			clientEmail = jsonData["clientEmail"].(string)
+		}
+
+		var tokenUri string
+		if jsonData["tokenUri"] != nil {
+			tokenUri = jsonData["tokenUri"].(string)
+		}
+
+		dsInfo := &datasourceInfo{
 			id:                      settings.ID,
 			updated:                 settings.Updated,
 			url:                     settings.URL,
 			authenticationType:      authType,
 			defaultProject:          defaultProject,
-			client:                  client,
-			jsonData:                jsonData,
+			clientEmail:             clientEmail,
+			tokenUri:                tokenUri,
 			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
-		}, nil
+		}
+
+		opts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, err
+		}
+
+		dsInfo.client, err = newHTTPClient(dsInfo, opts, httpClientProvider)
+		if err != nil {
+			return nil, err
+		}
+
+		return dsInfo, nil
 	}
 }
 
@@ -340,14 +354,6 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 	return cloudMonitoringQueryExecutors, nil
 }
 
-func reverse(s string) string {
-	chars := []rune(s)
-	for i, j := 0, len(chars)-1; i < j; i, j = i+1, j-1 {
-		chars[i], chars[j] = chars[j], chars[i]
-	}
-	return string(chars)
-}
-
 func interpolateFilterWildcards(value string) string {
 	matches := strings.Count(value, "*")
 	switch {
@@ -478,19 +484,6 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 	return alignmentPeriod
 }
 
-func toSnakeCase(str string) string {
-	return strings.ToLower(matchAllCap.ReplaceAllString(str, "${1}_${2}"))
-}
-
-func containsLabel(labels []string, newLabel string) bool {
-	for _, val := range labels {
-		if val == newLabel {
-			return true
-		}
-	}
-	return false
-}
-
 func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string,
 	additionalLabels map[string]string, query *cloudMonitoringTimeSeriesFilter) string {
 	if query.AliasBy == "" {
@@ -589,34 +582,14 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 	if body != nil {
 		method = http.MethodPost
 	}
-	req, err := http.NewRequest(method, "https://monitoring.googleapis.com/", body)
+	req, err := http.NewRequest(method, cloudMonitoringRoute.url, body)
 	if err != nil {
 		slog.Error("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-
-	// find plugin
-	plugin := s.pluginManager.GetDataSource(pluginCtx.PluginID)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
-	}
-
-	var cloudMonitoringRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == "cloudmonitoring" {
-			cloudMonitoringRoute = route
-			break
-		}
-	}
-
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, pluginproxy.DSInfo{
-		ID:                      dsInfo.id,
-		Updated:                 dsInfo.updated,
-		JSONData:                dsInfo.jsonData,
-		DecryptedSecureJSONData: dsInfo.decryptedSecureJSONData,
-	}, s.cfg)
+	req.URL.Path = proxyPass
 
 	return req, nil
 }
