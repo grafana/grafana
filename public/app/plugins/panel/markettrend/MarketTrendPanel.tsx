@@ -1,3 +1,194 @@
-import { TimeSeriesPanel } from '../timeseries/TimeSeriesPanel';
+// this file is pretty much a copy-paste of TimeSeriesPanel.tsx :(
+// with some extra renderers passed to the <TimeSeries> component
 
-export const MarketTrendPanel = TimeSeriesPanel;
+import React, { useMemo } from 'react';
+import { Field, PanelProps } from '@grafana/data';
+import { TooltipDisplayMode } from '@grafana/schema';
+import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, UPlotConfigBuilder } from '@grafana/ui';
+import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
+import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
+import { TimeSeriesOptions } from '../timeseries/types';
+import { prepareGraphableFields } from '../timeseries/utils';
+import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
+import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
+import { config } from 'app/core/config';
+import { MarketTrendMode, PriceDrawStyle } from './types';
+import { drawMarkers } from './utils';
+
+interface FieldIndices {
+  [fieldKey: string]: number;
+}
+
+interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
+
+export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
+  data,
+  timeRange,
+  timeZone,
+  width,
+  height,
+  options,
+  fieldConfig,
+  onChangeTimeRange,
+  replaceVariables,
+}) => {
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
+
+  const getFieldLinks = (field: Field, rowIndex: number) => {
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
+  };
+
+  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
+
+  const renderers = useMemo(() => {
+    let { mode, drawStyle, fieldMap, fillMode, strokeMode, downColor, upColor, flatColor } = options;
+    let { open, high, low, close, volume } = fieldMap;
+
+    if (open == null || close == null) {
+      return [];
+    }
+
+    if (mode === MarketTrendMode.Price) {
+      if (high != null && low != null) {
+        return [
+          {
+            fields: { open, high, low, close },
+            init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
+              console.log('addHook');
+              builder.addHook(
+                'drawAxes',
+                drawMarkers({
+                  fields: fieldIndices,
+                  upColor,
+                  downColor,
+                  flatColor,
+                  fillMode,
+                  strokeMode,
+                  candles: drawStyle === PriceDrawStyle.Candles,
+                })
+              );
+            },
+          },
+        ];
+      }
+    } else {
+      if (volume != null) {
+        return [
+          {
+            fields: { volume, open, close },
+            init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
+              builder.addHook(
+                'drawAxes',
+                drawMarkers({
+                  fields: fieldIndices,
+                  upColor,
+                  downColor,
+                  flatColor,
+                  fillMode,
+                  strokeMode,
+                  candles: false,
+                })
+              );
+            },
+          },
+        ];
+      }
+    }
+  }, [options]);
+
+  if (!frames || warn) {
+    return (
+      <div className="panel-empty">
+        <p>{warn ?? 'No data found in response'}</p>
+      </div>
+    );
+  }
+
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+
+  return (
+    <TimeSeries
+      frames={frames}
+      structureRev={data.structureRev}
+      timeRange={timeRange}
+      timeZone={timeZone}
+      width={width}
+      height={height}
+      legend={options.legend}
+      renderers={renderers}
+    >
+      {(config, alignedDataFrame) => {
+        return (
+          <>
+            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
+            {options.tooltip.mode === TooltipDisplayMode.None || (
+              <TooltipPlugin
+                data={alignedDataFrame}
+                config={config}
+                mode={options.tooltip.mode}
+                sync={sync}
+                timeZone={timeZone}
+              />
+            )}
+            {/* Renders annotation markers*/}
+            {data.annotations && (
+              <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
+            )}
+            {/* Enables annotations creation*/}
+            <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
+              {({ startAnnotating }) => {
+                return (
+                  <ContextMenuPlugin
+                    data={alignedDataFrame}
+                    config={config}
+                    timeZone={timeZone}
+                    replaceVariables={replaceVariables}
+                    defaultItems={
+                      enableAnnotationCreation
+                        ? [
+                            {
+                              items: [
+                                {
+                                  label: 'Add annotation',
+                                  ariaLabel: 'Add annotation',
+                                  icon: 'comment-alt',
+                                  onClick: (e, p) => {
+                                    if (!p) {
+                                      return;
+                                    }
+                                    startAnnotating({ coords: p.coords });
+                                  },
+                                },
+                              ],
+                            },
+                          ]
+                        : []
+                    }
+                  />
+                );
+              }}
+            </AnnotationEditorPlugin>
+            {data.annotations && (
+              <ExemplarsPlugin
+                config={config}
+                exemplars={data.annotations}
+                timeZone={timeZone}
+                getFieldLinks={getFieldLinks}
+              />
+            )}
+
+            {canEditThresholds && onThresholdsChange && (
+              <ThresholdControlsPlugin
+                config={config}
+                fieldConfig={fieldConfig}
+                onThresholdsChange={onThresholdsChange}
+              />
+            )}
+          </>
+        );
+      }}
+    </TimeSeries>
+  );
+};

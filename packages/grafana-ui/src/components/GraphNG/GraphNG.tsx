@@ -41,6 +41,7 @@ export interface GraphNGProps extends Themeable2 {
   timeZone: TimeZone;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
+  renderers?: Array<{ fields: string[]; init: (builder: UPlotConfigBuilder) => void }>;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;

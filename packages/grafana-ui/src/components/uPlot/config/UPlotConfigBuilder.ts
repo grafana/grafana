@@ -280,6 +280,7 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
   allFrames: DataFrame[];
+  renderers: Array<{ fields: string[]; init: (config: UPlotConfigBuilder) => void }>;
 } & T;
 
 /** @alpha */

@@ -44,6 +44,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   eventBus,
   sync,
   allFrames,
+  renderers,
   legend,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
@@ -102,6 +103,37 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       grid: { show: xField.config.custom?.axisGridShow },
     });
   }
+
+  let customRenderedFields: string[] = [];
+
+  // determine which supplied renderers have all mapped fields available
+  renderers = renderers?.filter((r) => {
+    let foundCount = 0;
+
+    for (let [key, name] of Object.entries(r.fields)) {
+      for (let i = 1; i < frame.fields.length; i++) {
+        const field = frame.fields[i];
+
+        if (field.state?.origin) {
+          const originFrame = allFrames[field.state.origin.frameIndex];
+          const originField = originFrame.fields[field.state.origin.fieldIndex];
+
+          let dispName = getFieldDisplayName(originField, originFrame, allFrames);
+
+          if (name === dispName) {
+            foundCount++;
+          }
+        }
+      }
+    }
+
+    if (foundCount === Object.entries(r.fields).length) {
+      customRenderedFields.push(...Object.values(r.fields));
+      return true;
+    }
+
+    return false;
+  });
 
   const stackingGroups: Map<string, number[]> = new Map();
 
@@ -197,7 +229,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     let { fillOpacity } = customConfig;
 
-    if (customConfig.fillBelowTo && field.state?.origin) {
+    let pathBuilder: uPlot.Series.PathBuilder = null;
+    let pointsBuilder: uPlot.Series.PathBuilder = null;
+
+    if (field.state?.origin) {
       if (!indexByName) {
         indexByName = getNamesToFieldIndex(frame, allFrames);
       }
@@ -205,20 +240,31 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       const originFrame = allFrames[field.state.origin.frameIndex];
       const originField = originFrame.fields[field.state.origin.fieldIndex];
 
-      const t = indexByName.get(getFieldDisplayName(originField, originFrame, allFrames));
-      const b = indexByName.get(customConfig.fillBelowTo);
-      if (isNumber(b) && isNumber(t)) {
-        builder.addBand({
-          series: [t, b],
-          fill: null as any, // using null will have the band use fill options from `t`
-        });
+      const dispName = getFieldDisplayName(originField, originFrame, allFrames);
+
+      // disable default renderers
+      if (customRenderedFields.indexOf(dispName) >= 0) {
+        pathBuilder = pointsBuilder = () => null;
       }
-      if (!fillOpacity) {
-        fillOpacity = 35; // default from flot
+
+      if (customConfig.fillBelowTo) {
+        const t = indexByName.get(dispName);
+        const b = indexByName.get(customConfig.fillBelowTo);
+        if (isNumber(b) && isNumber(t)) {
+          builder.addBand({
+            series: [t, b],
+            fill: null as any, // using null will have the band use fill options from `t`
+          });
+        }
+        if (!fillOpacity) {
+          fillOpacity = 35; // default from flot
+        }
       }
     }
 
     builder.addSeries({
+      pathBuilder,
+      pointsBuilder,
       scaleKey,
       showPoints,
       pointsFilter,
@@ -276,6 +322,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       }
     }
   }
+
+  // hook up custom/composite renderers
+  renderers?.forEach((r) => {
+    let fieldMap = {};
+
+    for (let key in r.fields) {
+      let dispName = r.fields[key];
+      fieldMap[key] = indexByName.get(dispName);
+    }
+
+    r.init(builder, fieldMap);
+  });
 
   builder.scaleKeys = [xScaleKey, yScaleKey];
 
