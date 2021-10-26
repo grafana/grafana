@@ -6,6 +6,7 @@ import { ElementState } from './element';
 import { CanvasElementItem } from '../element';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 import { cloneDeep } from 'lodash';
+import { Scene } from './scene';
 
 export const groupItemDummy: CanvasElementItem = {
   id: 'group',
@@ -22,9 +23,12 @@ export const groupItemDummy: CanvasElementItem = {
 
 export class GroupState extends ElementState {
   elements: ElementState[] = [];
+  scene: Scene;
 
-  constructor(public options: CanvasGroupOptions, public parent?: GroupState) {
+  constructor(public options: CanvasGroupOptions, scene: Scene, public parent?: GroupState) {
     super(groupItemDummy, options, parent);
+
+    this.scene = scene;
 
     // mutate options object
     let { elements } = this.options;
@@ -34,7 +38,7 @@ export class GroupState extends ElementState {
 
     for (const c of elements) {
       if (c.type === 'group') {
-        this.elements.push(new GroupState(c as CanvasGroupOptions, this));
+        this.elements.push(new GroupState(c as CanvasGroupOptions, scene, this));
       } else {
         const item = canvasElementRegistry.getIfExists(c.type) ?? notFoundItem;
         this.elements.push(new ElementState(item, c, this));
@@ -81,6 +85,10 @@ export class GroupState extends ElementState {
     result.splice(endIndex, 0, removed);
     this.elements = result;
     this.onChange(this.getSaveModel());
+
+    // Need to first clear current selection and then re-init moveable with slight delay
+    this.scene.clearCurrentSelection();
+    setTimeout(() => this.scene.initMoveable(true), 100);
   }
 
   // ??? or should this be on the element directly?

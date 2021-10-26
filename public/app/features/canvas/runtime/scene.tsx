@@ -56,6 +56,7 @@ export class Scene {
         type: 'group',
         elements: [DEFAULT_CANVAS_ELEMENT_CONFIG],
       },
+      this,
       this.save // callback when changes are made
     );
 
@@ -92,9 +93,13 @@ export class Scene {
     this.root.updateSize(width, height);
 
     if (this.selecto?.getSelectedTargets().length) {
-      let event: MouseEvent = new MouseEvent('click');
-      this.selecto.clickTarget(event, this.div);
+      this.clearCurrentSelection();
     }
+  }
+
+  clearCurrentSelection() {
+    let event: MouseEvent = new MouseEvent('click');
+    this.selecto?.clickTarget(event, this.div);
   }
 
   onChange(uid: number, cfg: CanvasElementOptions) {
@@ -157,11 +162,15 @@ export class Scene {
     this.div = sceneContainer;
   };
 
-  initMoveable = () => {
+  initMoveable = (destroySelecto = false) => {
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);
     });
+
+    if (destroySelecto) {
+      this.selecto?.destroy();
+    }
 
     this.selecto = new Selecto({
       container: this.div,
