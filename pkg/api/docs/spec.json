@@ -1477,6 +1477,294 @@
           }
         }
       }
+    },
+    "/users": {
+      "get": {
+        "description": "Returns all users that the authenticated user has permission to view, admin permission required.",
+        "tags": [
+          "users"
+        ],
+        "summary": "Get users.",
+        "operationId": "searchUsers",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1000,
+            "x-go-name": "Limit",
+            "description": "Limit the maximum number of users to return per page",
+            "name": "perpage",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "x-go-name": "Page",
+            "description": "Page index for starting fetching users",
+            "name": "page",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchUsersResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/users/lookup": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get user by login or email.",
+        "operationId": "getUserByLoginOrEmail",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "LoginOrEmail",
+            "description": "loginOrEmail of the user",
+            "name": "loginOrEmail",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/userResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/users/search": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get users with paging.",
+        "operationId": "searchUsersWithPaging",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1000,
+            "x-go-name": "Limit",
+            "description": "Limit the maximum number of users to return per page",
+            "name": "perpage",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "x-go-name": "Page",
+            "description": "Page index for starting fetching users",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Query",
+            "description": "Query allows return results where the query value is contained in one of the name, login or email fields. Query values with spaces need to be URL encoded e.g. query=Jane%20Doe",
+            "name": "query",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchUsersResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/users/{user_id}": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get user by id.",
+        "operationId": "getUserByID",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "FolderID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/userResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Update the user identified by id.",
+        "tags": [
+          "users"
+        ],
+        "summary": "Update user.",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "FolderID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "x-go-name": "Body",
+            "description": "To change the email, name, login, theme, provide another one.",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateUserCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/userResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/users/{user_id}/orgs": {
+      "get": {
+        "description": "Get organizations for user identified by id.",
+        "tags": [
+          "users"
+        ],
+        "summary": "Get organizations for user.",
+        "operationId": "getUserOrgList",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "FolderID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getUserOrgListResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/users/{user_id}/teams": {
+      "get": {
+        "description": "Get teams for user identified by id.",
+        "tags": [
+          "users"
+        ],
+        "summary": "Get teams for user.",
+        "operationId": "getUserTeams",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "FolderID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getUserTeamsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -2686,6 +2974,34 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "SearchUserQueryResult": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Page"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PerPage"
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TotalCount"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UserSearchHitDTO"
+          },
+          "x-go-name": "Users"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "SuccessResponseBody": {
       "type": "object",
       "properties": {
@@ -2695,6 +3011,42 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+    },
+    "TeamDTO": {
+      "type": "object",
+      "properties": {
+        "avatarUrl": {
+          "type": "string",
+          "x-go-name": "AvatarUrl"
+        },
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "memberCount": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "MemberCount"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgId"
+        },
+        "permission": {
+          "$ref": "#/definitions/PermissionType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "TrimDashboardCommand": {
       "type": "object",
@@ -2835,6 +3187,162 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "UpdateUserCommand": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "login": {
+          "type": "string",
+          "x-go-name": "Login"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "theme": {
+          "type": "string",
+          "x-go-name": "Theme"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "UserOrgDTO": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgId"
+        },
+        "role": {
+          "$ref": "#/definitions/RoleType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "UserProfileDTO": {
+      "type": "object",
+      "properties": {
+        "authLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "AuthLabels"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "x-go-name": "AvatarUrl"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "CreatedAt"
+        },
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "isDisabled": {
+          "type": "boolean",
+          "x-go-name": "IsDisabled"
+        },
+        "isExternal": {
+          "type": "boolean",
+          "x-go-name": "IsExternal"
+        },
+        "isGrafanaAdmin": {
+          "type": "boolean",
+          "x-go-name": "IsGrafanaAdmin"
+        },
+        "login": {
+          "type": "string",
+          "x-go-name": "Login"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgId"
+        },
+        "theme": {
+          "type": "string",
+          "x-go-name": "Theme"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "UpdatedAt"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "UserSearchHitDTO": {
+      "type": "object",
+      "properties": {
+        "authLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "AuthLabels"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "x-go-name": "AvatarUrl"
+        },
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "x-go-name": "IsAdmin"
+        },
+        "isDisabled": {
+          "type": "boolean",
+          "x-go-name": "IsDisabled"
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastSeenAt"
+        },
+        "lastSeenAtAge": {
+          "type": "string",
+          "x-go-name": "LastSeenAtAge"
+        },
+        "login": {
+          "type": "string",
+          "x-go-name": "Login"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -3105,6 +3613,24 @@
         "$ref": "#/definitions/GetHomeDashboardResponse"
       }
     },
+    "getUserOrgListResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/UserOrgDTO"
+        }
+      }
+    },
+    "getUserTeamsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/TeamDTO"
+        }
+      }
+    },
     "importDashboardResponse": {
       "description": "",
       "schema": {
@@ -3206,6 +3732,12 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "searchUsersResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SearchUserQueryResult"
+      }
+    },
     "trimDashboardResponse": {
       "description": "Trimmed dashboard response.",
       "schema": {
@@ -3222,6 +3754,12 @@
       "description": "UnprocessableEntityError",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "userResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/UserProfileDTO"
       }
     }
   },
