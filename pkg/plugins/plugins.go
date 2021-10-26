@@ -253,6 +253,10 @@ type PluginClient interface {
 }
 
 func (p *Plugin) StaticRoute() *StaticRoute {
+	if p.IsCorePlugin() {
+		return nil
+	}
+
 	return &StaticRoute{Directory: p.PluginDir, PluginID: p.ID}
 }
 

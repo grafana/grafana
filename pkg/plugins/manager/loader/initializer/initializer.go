@@ -131,22 +131,22 @@ func (i *Initializer) InitializeWithFactory(p *plugins.Plugin, factory backendpl
 }
 
 func (i *Initializer) handleModuleDefaults(p *plugins.Plugin) {
-	if p.IsExternalPlugin() {
-		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
+	if p.IsCorePlugin() {
+		// Previously there was an assumption that the Core plugins directory
+		// should be public/app/plugins/<plugin type>/<plugin id>
+		// However this can be an issue if the Core plugins directory is renamed
+		baseDir := filepath.Base(p.PluginDir)
 
-		p.Module = path.Join("plugins", p.ID, "module")
-		p.BaseURL = path.Join("public/plugins", p.ID)
+		// use path package for the following statements because these are not file paths
+		p.Module = path.Join("app/plugins", string(p.Type), baseDir, "module")
+		p.BaseURL = path.Join("public/app/plugins", string(p.Type), baseDir)
 		return
 	}
 
-	// Previously there was an assumption that the Core plugins directory
-	// should be public/app/plugins/<plugin type>/<plugin id>
-	// However this can be an issue if the Core plugins directory is renamed
-	baseDir := filepath.Base(p.PluginDir)
+	metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 
-	// use path package for the following statements because these are not file paths
-	p.Module = path.Join("app/plugins", string(p.Type), baseDir, "module")
-	p.BaseURL = path.Join("public/app/plugins", string(p.Type), baseDir)
+	p.Module = path.Join("plugins", p.ID, "module")
+	p.BaseURL = path.Join("public/plugins", p.ID)
 }
 
 func (i *Initializer) setPathsBasedOnApp(parent *plugins.Plugin, child *plugins.Plugin) {
@@ -154,10 +154,10 @@ func (i *Initializer) setPathsBasedOnApp(parent *plugins.Plugin, child *plugins.
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
 
-	if parent.IsExternalPlugin() {
-		child.Module = util.JoinURLFragments("plugins/"+parent.ID, appSubPath) + "/module"
-	} else {
+	if parent.IsCorePlugin() {
 		child.Module = util.JoinURLFragments("app/plugins/app/"+parent.ID, appSubPath) + "/module"
+	} else {
+		child.Module = util.JoinURLFragments("plugins/"+parent.ID, appSubPath) + "/module"
 	}
 }
 

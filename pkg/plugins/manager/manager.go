@@ -609,7 +609,9 @@ func (m *PluginManager) Routes() []*plugins.StaticRoute {
 	staticRoutes := []*plugins.StaticRoute{}
 
 	for _, p := range m.Plugins() {
-		staticRoutes = append(staticRoutes, p.StaticRoute())
+		if p.StaticRoute() != nil {
+			staticRoutes = append(staticRoutes, p.StaticRoute())
+		}
 	}
 	return staticRoutes
 }

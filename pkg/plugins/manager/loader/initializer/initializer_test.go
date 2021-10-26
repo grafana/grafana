@@ -249,11 +249,9 @@ func TestInitializer_envVars(t *testing.T) {
 }
 
 func TestInitializer_setPathsBasedOnApp(t *testing.T) {
-	t.Run("When setting paths based on App on Windows", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.StaticRootPath = "c:\\grafana\\public"
+	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
 		i := &Initializer{
-			cfg: cfg,
+			cfg: setting.NewCfg(),
 		}
 
 		child := &plugins.Plugin{
@@ -263,6 +261,7 @@ func TestInitializer_setPathsBasedOnApp(t *testing.T) {
 			JSONData: plugins.JSONData{
 				ID: "testdata",
 			},
+			Class:     plugins.Core,
 			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata",
 			BaseURL:   "public/app/plugins/app/testdata",
 		}
