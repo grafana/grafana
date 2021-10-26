@@ -91,24 +91,28 @@ export class RefreshPicker extends PureComponent<Props> {
 
 const sanitizeLabel = (item: string) => {
   const timeUnits: { [key: string]: string } = {
-    s: 'Second',
-    m: 'Minute',
-    h: 'Hour',
-    d: 'Day',
+    s: 'second',
+    m: 'minute',
+    h: 'hour',
+    d: 'day',
   };
   const isInterval = /^([0-9]).*(s|m|h|d)$/gim.test(item as string);
+  const newItem = item.split('');
+  const unit = newItem.pop();
 
   if (isInterval === false) {
     return item;
   }
-  const newItem = item.split('');
-  const unit: string = newItem[newItem.length - 1];
 
-  if (Number(newItem.join('')) !== 1) {
-    return `${newItem.join('') + timeUnits[unit]}s`;
+  if (unit !== undefined) {
+    if (Number(newItem.join('')) !== 1) {
+      return `${newItem.join('') + ' ' + timeUnits[unit]}s`;
+    }
+
+    return newItem.join('') + ' ' + timeUnits[unit];
+  } else {
+    return '';
   }
-
-  return newItem.join('') + timeUnits[unit];
 };
 
 export function intervalsToOptions({ intervals = defaultIntervals }: { intervals?: string[] } = {}): Array<
