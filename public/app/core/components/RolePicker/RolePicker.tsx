@@ -25,7 +25,7 @@ export const RolePicker = ({
 }: Props): JSX.Element => {
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [appliedRoles, setAppliedRoles] = useState<{ [key: string]: boolean }>({});
+  const [appliedRoles, setAppliedRoles] = useState<string[]>([]);
   const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [query, setQuery] = useState('');
 
@@ -33,17 +33,10 @@ export const RolePicker = ({
   useEffect(() => {
     async function fetchOptions() {
       let options = await getRoleOptions();
-      options = options.filter((option) => {
-        return !option.name?.startsWith('managed:');
-      });
-      setRoleOptions(options);
+      setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
 
       const roles = await getRoles();
-      const rolesMap = {} as any;
-      for (const role of roles) {
-        rolesMap[role] = true;
-      }
-      setAppliedRoles(rolesMap);
+      setAppliedRoles(roles);
 
       const builtinRoles = await getBuiltinRoles();
       setBuiltinRoles(builtinRoles);
@@ -81,7 +74,7 @@ export const RolePicker = ({
   };
 
   const appliedRolesCount = roleOptions.filter((option) => {
-    return option.uid && appliedRoles[option.uid] && !option.name?.startsWith('fixed:');
+    return option.uid && appliedRoles.includes(option.uid) && !option.name?.startsWith('fixed:');
   }).length;
 
   return (

@@ -13,7 +13,7 @@ interface RolePickerMenuProps {
   builtInRole: string;
   builtInRoles: BuiltInRoles;
   options: Role[];
-  appliedRoles: { [key: string]: boolean };
+  appliedRoles: string[];
   onUpdate: (newBuiltInRole: string, newRoles: string[]) => void;
   onClose: () => void;
   onClear?: () => void;
@@ -31,7 +31,7 @@ export const RolePickerMenu = (props: RolePickerMenuProps): JSX.Element => {
   useEffect(() => {
     const initialSelectedOptions: RoleMap = {};
     for (const option of options) {
-      if (appliedRoles[option.uid]) {
+      if (appliedRoles.includes(option.uid)) {
         initialSelectedOptions[option.uid] = option;
       }
     }
