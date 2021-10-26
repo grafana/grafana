@@ -175,7 +175,7 @@ describe('PanelAlertTabContent', () => {
     dsService.datasources[dataSources.prometheus.uid] = new PrometheusDatasource(
       dataSources.prometheus
     ) as DataSourceApi<any, any>;
-    dsService.datasources[dataSources.default.name] = new PrometheusDatasource(dataSources.default) as DataSourceApi<
+    dsService.datasources[dataSources.default.uid] = new PrometheusDatasource(dataSources.default) as DataSourceApi<
       any,
       any
     >;
@@ -215,15 +215,20 @@ describe('PanelAlertTabContent', () => {
       maxDataPoints: 100,
       interval: '10s',
     } as any) as PanelModel);
+
     const button = await ui.createButton.find();
     const href = button.href;
     const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
     expect(match).toHaveLength(2);
+
     const defaults = JSON.parse(decodeURIComponent(match![1]));
     expect(defaults.queries[0].model).toEqual({
       expr: 'sum(some_metric [5m])) by (app)',
       refId: 'A',
-      datasource: 'Default',
+      datasource: {
+        type: 'prometheus',
+        uid: 'mock-ds-3',
+      },
       interval: '',
       intervalMs: 300000,
       maxDataPoints: 100,
