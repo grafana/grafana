@@ -50,9 +50,9 @@ export const getUserRoles = async (userId: number, orgId?: number): Promise<Role
   return roles;
 };
 
-export const updateUserRoles = (rolesUIDs: string[], userId: number, orgId?: number) => {
+export const updateUserRoles = (roleUids: string[], userId: number, orgId?: number) => {
   return getBackendSrv().put(`/api/access-control/users/${userId}/roles`, {
-    orgId: orgId,
-    rolesUids: rolesUIDs,
+    orgId,
+    roleUids,
   });
 };
