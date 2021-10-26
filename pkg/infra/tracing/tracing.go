@@ -71,7 +71,7 @@ func (ts *TracingService) parseSettings() error {
 		}
 	}
 	if ts.address == "" {
-		ts.address = "localhost:6831"
+		ts.address = "http://localhost:14268/api/traces"
 	}
 
 	ts.enabled = true
