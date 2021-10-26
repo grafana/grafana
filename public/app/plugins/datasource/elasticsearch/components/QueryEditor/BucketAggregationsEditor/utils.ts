@@ -34,7 +34,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
       interval: 'auto',
       min_doc_count: '0',
       trimEdges: '0',
-      time_zone: InternalTimeZones.utc,
+      timeZone: InternalTimeZones.utc,
     },
   },
   histogram: {

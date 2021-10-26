@@ -264,7 +264,7 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 			a.Missing = &missing
 		}
 
-		if timezone, err := bucketAgg.Settings.Get("time_zone").String(); err == nil {
+		if timezone, err := bucketAgg.Settings.Get("timeZone").String(); err == nil {
 			if timezone != "utc" {
 				a.TimeZone = timezone
 			}

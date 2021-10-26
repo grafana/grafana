@@ -102,10 +102,10 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
 
       <InlineField label="Timezone" {...inlineFieldProps}>
         <TimeZonePicker
-          value={bucketAgg.settings?.time_zone || bucketAggregationConfig.date_histogram.defaultSettings?.time_zone}
+          value={bucketAgg.settings?.timeZone || bucketAggregationConfig.date_histogram.defaultSettings?.timeZone}
           includeInternal={[InternalTimeZones.utc]}
           onChange={(timeZone) => {
-            dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'time_zone', newValue: timeZone }));
+            dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'timeZone', newValue: timeZone }));
           }}
         />
       </InlineField>
