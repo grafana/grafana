@@ -100,16 +100,7 @@ export const RolePickerMenu = ({
             <div className={customStyles.groupHeader}>Fixed roles</div>
             <div className={styles.optionBody}>
               {fixedRoles.map((option, i) => (
-                <RoleMenuOption
-                  data={option}
-                  key={i}
-                  isSelected={
-                    !!selectedOptions[option.uid] || builtinRoleContainsFixed(builtInRoles, selectedBuiltInRole, option)
-                  }
-                  disabled={builtinRoleContainsFixed(builtInRoles, selectedBuiltInRole, option)}
-                  onSelect={onSelect}
-                  hideDescription
-                />
+                <RoleMenuOption data={option} key={i} onSelect={onSelect} hideDescription />
               ))}
             </div>
           </>
@@ -133,19 +124,10 @@ const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:');
 
 const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
 
-const builtinRoleContainsFixed = (builtInRoles: BuiltInRoles, selectedBuiltInRole: string, role: Role) => {
-  const fixedRoles = builtInRoles[selectedBuiltInRole];
-  if (!fixedRoles) {
-    return false;
-  }
-
-  return !!fixedRoles.find((fixedRole) => fixedRole.uid === role.uid);
-};
-
 interface RoleMenuOptionProps<T> {
   data: Role;
   onSelect: (value: Role) => void;
-  isSelected: boolean;
+  isSelected?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
   hideDescription?: boolean;
