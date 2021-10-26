@@ -32,7 +32,8 @@ import { GeomapHoverFeature, GeomapHoverPayload } from './event';
 import { DataHoverView } from './components/DataHoverView';
 import { Subscription } from 'rxjs';
 import { PanelEditExitedEvent } from 'app/types/events';
-import { MARKERS_LAYER_ID } from './layers/data/markersLayer';
+import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
+import { cloneDeep } from 'lodash';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
@@ -107,6 +108,26 @@ export class GeomapPanel extends Component<Props, State> {
     return true; // always?
   }
 
+  private doOptionsUpdate(selected: number) {
+    const { options, onOptionsChange } = this.props;
+    const layers = this.layers;
+    onOptionsChange({
+      ...options,
+      basemap: layers[0].options,
+      layers: layers.slice(1).map((v) => v.options),
+    });
+
+    // Notify the the panel editor
+    if (this.panelContext.onInstanceStateChange) {
+      this.panelContext.onInstanceStateChange({
+        map: this.map,
+        layers: layers,
+        selected,
+        actions: this.actions,
+      });
+    }
+  }
+
   actions: GeomapLayerActions = {
     selectLayer: (uid: string) => {
       const selected = this.layers.findIndex((v) => v.UID === uid);
@@ -120,13 +141,43 @@ export class GeomapPanel extends Component<Props, State> {
       }
     },
     deleteLayer: (uid: string) => {
-      console.log('deleteLayer!!!');
+      const layers: MapLayerState[] = [];
+      for (const lyr of this.layers) {
+        if (lyr.UID === uid) {
+          this.map?.removeLayer(lyr.layer);
+        } else {
+          layers.push(lyr);
+        }
+      }
+      this.layers = layers;
+      this.doOptionsUpdate(0);
     },
     addlayer: (type: string) => {
-      console.log('addlayer!!!');
+      const item = geomapLayerRegistry.getIfExists(type);
+      if (!item) {
+        return; // ignore empty request
+      }
+      this.initLayer(
+        {
+          type: item.id,
+          config: cloneDeep(item.defaultOptions),
+        },
+        false
+      ).then((lyr) => {
+        this.layers = this.layers.slice(0);
+        this.layers.push(lyr);
+        this.map?.addLayer(lyr.layer);
+
+        this.doOptionsUpdate(this.layers.length - 1);
+      });
     },
-    reorder: (src: number, dst: number) => {
-      console.log('TODO, reorder', src, dst);
+    reorder: (startIndex: number, endIndex: number) => {
+      const result = Array.from(this.layers);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      this.layers = result;
+
+      this.doOptionsUpdate(endIndex);
     },
   };
 
@@ -176,7 +227,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.map = new Map({
       view: this.initMapView(options.view),
       pixelRatio: 1, // or zoom?
-      layers: [],
+      layers: [], // loaded explicitly below
       controls: [],
       target: div,
       interactions: interactionDefaults({
@@ -186,15 +237,21 @@ export class GeomapPanel extends Component<Props, State> {
 
     const layers: MapLayerState[] = [];
     try {
-      layers.push(await this.initLayer(options.basemap, true));
-      if (options.layers) {
-        for (const lyr of options.layers) {
-          layers.push(await this.initLayer(lyr, false));
-        }
+      layers.push(await this.initLayer(options.basemap ?? DEFAULT_BASEMAP_CONFIG, true));
+
+      // Default layer values
+      let layerOptions = options.layers;
+      if (!layerOptions) {
+        layerOptions = [defaultMarkersConfig];
+      }
+
+      for (const lyr of layerOptions) {
+        layers.push(await this.initLayer(lyr, false));
       }
     } catch (ex) {
       console.error('error loading layers', ex);
     }
+
     this.layers = layers;
     for (const lyr of layers) {
       this.map.addLayer(lyr.layer);
@@ -296,6 +353,11 @@ export class GeomapPanel extends Component<Props, State> {
         return false;
       }
       layers[selected] = info;
+
+      // initalize with new data
+      if (info.handler.update) {
+        info.handler.update(this.props.data);
+      }
     } catch (err) {
       console.warn('ERROR', err);
       return false;
@@ -304,23 +366,8 @@ export class GeomapPanel extends Component<Props, State> {
     // validate names, basemap etc
 
     this.layers = layers;
+    this.doOptionsUpdate(selected);
 
-    const { options, onOptionsChange } = this.props;
-    onOptionsChange({
-      ...options,
-      basemap: layers[0].options,
-      layers: layers.slice(1).map((v) => v.options),
-    });
-
-    // Notify the the panel editor
-    if (this.panelContext.onInstanceStateChange) {
-      this.panelContext.onInstanceStateChange({
-        map: this.map,
-        layers: layers,
-        selected,
-        actions: this.actions,
-      });
-    }
     return true;
   };
 
@@ -352,6 +399,10 @@ export class GeomapPanel extends Component<Props, State> {
     //   const state = layer.getLayerState();
     //   console.log('LAYER', key, state);
     // });
+
+    if (handler.update) {
+      handler.update(this.props.data);
+    }
 
     (layer as any).___handler = handler; // save reference on the ol layer
     const UID = `lyr-${this.counter++}`;
