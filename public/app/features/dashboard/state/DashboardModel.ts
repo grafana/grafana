@@ -173,15 +173,18 @@ export class DashboardModel {
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
     this.panelsAffectedByVariableChange = null;
-    this.appEventsSubscription = appEvents.subscribe(VariableChanged, (event) => {
-      if (this.panelInEdit || this.panelInView) {
-        this.panelsAffectedByVariableChange = event.payload.panelIds.filter((id) =>
-          this.panelInEdit ? id !== this.panelInEdit.id : this.panelInView ? id !== this.panelInView.id : true
-        );
-      }
-      this.processRepeats();
-      this.startRefresh(event.payload.panelIds);
-    });
+    this.appEventsSubscription = appEvents.subscribe(VariableChanged, this.variableChangedHandler.bind(this));
+  }
+
+  private variableChangedHandler(event: VariableChanged) {
+    if (this.panelInEdit || this.panelInView) {
+      this.panelsAffectedByVariableChange = event.payload.panelIds.filter((id) =>
+        this.panelInEdit ? id !== this.panelInEdit.id : this.panelInView ? id !== this.panelInView.id : true
+      );
+    }
+
+    this.processRepeats();
+    this.startRefresh(event.payload.panelIds);
   }
 
   addBuiltInAnnotationQuery() {
