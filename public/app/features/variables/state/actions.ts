@@ -69,7 +69,7 @@ import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { locationService } from '@grafana/runtime';
 import { appEvents } from '../../../core/core';
 import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
-import { setStrictPanelRefresh } from '../settings/reducer';
+import { initStrictPanelRefresh } from '../settings/actions';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -690,7 +690,7 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
     // Process all variable updates
     await dispatch(processVariables());
     // Set strict panel refresh mode
-    dispatch(setStrictPanelRefresh(dashboard.templating.strictPanelRefreshMode ?? false));
+    dispatch(initStrictPanelRefresh(dashboard.templating.strictPanelRefreshMode));
     // Mark update as complete
     dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
   } catch (err) {
