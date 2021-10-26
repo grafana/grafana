@@ -50,10 +50,10 @@ func TestEvaluators(t *testing.T) {
 
 		t.Run("should be true when the series have no value", func(t *testing.T) {
 			jsonModel, err := simplejson.NewJson([]byte(`{"type": "no_value", "params": [] }`))
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			evaluator, err := NewAlertEvaluator(jsonModel)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			require.True(t, evaluator.Eval(null.FloatFromPtr(nil)))
 		})
