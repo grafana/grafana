@@ -67,7 +67,7 @@ func updatePreferencesFor(orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsC
 		HomeDashboardId: dtoCmd.HomeDashboardID,
 	}
 
-	if err := bus.Dispatch(&saveCmd); err != nil {
+	if err := sqlstore.SavePreferences(&saveCmd); err != nil {
 		return response.Error(500, "Failed to save preferences", err)
 	}
 

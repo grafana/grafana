@@ -29,18 +29,18 @@ func (hs *HTTPServer) getOrgQuotasHelper(c *models.ReqContext, orgID int64) resp
 	return response.JSON(200, query.Result)
 }
 
-func UpdateOrgQuota(c *models.ReqContext, cmd models.UpdateOrgQuotaCmd) response.Response {
-	if !setting.Quota.Enabled {
+func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext, cmd models.UpdateOrgQuotaCmd) response.Response {
+	if !hs.Cfg.Quota.Enabled {
 		return response.Error(404, "Quotas not enabled", nil)
 	}
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.Target = web.Params(c.Req)[":target"]
 
-	if _, ok := setting.Quota.Org.ToMap()[cmd.Target]; !ok {
+	if _, ok := hs.Cfg.Quota.Org.ToMap()[cmd.Target]; !ok {
 		return response.Error(404, "Invalid quota target", nil)
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.UpdateOrgQuota(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update org quotas", err)
 	}
 	return response.Success("Organization quota updated")
