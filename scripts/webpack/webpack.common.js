@@ -134,7 +134,7 @@ module.exports = {
         options: { name: 'static/img/[name].[hash:8].[ext]' },
       },
       {
-        test: /\.worker\.js$/,
+        test: /\.worker\.[jt]s$/,
         use: {
           loader: 'worker-loader',
           options: {

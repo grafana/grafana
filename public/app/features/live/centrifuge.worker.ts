@@ -13,7 +13,7 @@ let centrifuge: Centrifuge;
 const subscriptions: Record<string, Centrifuge.Subscription> = {};
 
 const initialize = ({ appUrl, sessionId }: { appUrl: string; sessionId: string }) => {
-  const liveUrl = `${appUrl}live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
+  const liveUrl = `${appUrl}/api/live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
 
   centrifuge = new Centrifuge(liveUrl, {
     debug: true,

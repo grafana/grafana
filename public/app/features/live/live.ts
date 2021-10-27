@@ -1,4 +1,3 @@
-import Centrifuge from 'centrifuge/dist/centrifuge';
 import {
   GrafanaLiveSrv,
   setGrafanaLiveSrv,
@@ -38,6 +37,7 @@ import {
 import { registerLiveFeatures } from './features';
 import { contextSrv } from '../../core/services/context_srv';
 import { liveTimer } from '../dashboard/dashgrid/liveTimer';
+import CentrifugeWorkerProxy from './CentrifugeWorkerProxy';
 
 export const sessionId =
   (window as any)?.grafanaBootData?.user?.id +
@@ -48,22 +48,19 @@ export const sessionId =
 
 export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
-  readonly centrifuge: Centrifuge;
+  readonly centrifuge: CentrifugeWorkerProxy;
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
   readonly scopes: Record<LiveChannelScope, GrafanaLiveScope>;
   private readonly orgId: number;
 
   constructor() {
-    const baseURL = window.location.origin.replace('http', 'ws');
-    const liveUrl = `${baseURL}${config.appSubUrl}/api/live/ws`;
-
     this.orgId = contextSrv.user.orgId;
-    this.centrifuge = new Centrifuge(liveUrl, {});
-    this.centrifuge.setConnectData({
-      sessionId,
-      orgId: this.orgId,
-    });
+
+    const baseURL = window.location.origin;
+    const appUrl = `${baseURL}${config.appSubUrl}`;
+    this.centrifuge = new CentrifugeWorkerProxy(appUrl, sessionId, this.orgId);
+
     // orgRole is set when logged in *or* anonomus users can use grafana
     if (config.liveEnabled && contextSrv.user.orgRole !== '') {
       this.centrifuge.connect(); // do connection

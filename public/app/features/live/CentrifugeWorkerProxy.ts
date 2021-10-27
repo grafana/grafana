@@ -37,10 +37,11 @@ export default class CentrifugeWorkerProxy extends EventEmitter {
   droppedCount = 0;
   lastDropReport = 0;
 
-  constructor(appUrl: string, sessionId: string) {
+  constructor(appUrl: string, sessionId: string, orgId: number) {
     super();
+
     this.worker = new CentrifugeWorker();
-    this.worker.postMessage({ id: WorkerCommand.Initialize, data: { appUrl, sessionId } });
+    this.worker.postMessage({ id: WorkerCommand.Initialize, data: { appUrl, sessionId, orgId } });
     this.worker.onmessage = this.onWorkerMessage.bind(this);
   }
 
