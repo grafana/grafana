@@ -55,12 +55,12 @@ type NGalertConfig struct {
 }
 
 // swagger:enum AlertmanagersChoice
-type AlertmanagersChoice int
+type AlertmanagersChoice string
 
 const (
-	AllAlertmanagers      AlertmanagersChoice = 0
-	InternalAlertmanager  AlertmanagersChoice = 1
-	ExternalAlertmanagers AlertmanagersChoice = 2
+	AllAlertmanagers      AlertmanagersChoice = "all"
+	InternalAlertmanager  AlertmanagersChoice = "internal"
+	ExternalAlertmanagers AlertmanagersChoice = "external"
 )
 
 // swagger:model

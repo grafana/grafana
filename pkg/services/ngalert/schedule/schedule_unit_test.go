@@ -36,7 +36,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	alertRule := CreateTestAlertRule(t, fakeRuleStore, 1, 1)
 
 	// First, let's create an admin configuration that holds an alertmanager.
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}, AlertmanagersChoice: models.AllAlertmanagers}
+	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}, SendAlertsTo: models.AllAlertmanagers}
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
@@ -243,7 +243,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 
 	// First, let's create an admin configuration that holds an alertmanager
 	// and sends alerts to both internal and external alertmanagers.
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}, AlertmanagersChoice: models.AllAlertmanagers}
+	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}, SendAlertsTo: models.AllAlertmanagers}
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
@@ -261,7 +261,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return len(sched.AlertmanagersFor(1)) == 1 &&
 			len(sched.DroppedAlertmanagersFor(1)) == 0 &&
-			sched.alertmanagersChoice[1] == adminConfig.AlertmanagersChoice
+			sched.sendAlertsTo[1] == adminConfig.SendAlertsTo
 	}, 10*time.Second, 200*time.Millisecond)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -283,7 +283,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	}, 10*time.Second, 200*time.Millisecond)
 
 	// Now, let's change the Alertmanagers choice to send only to the external Alertmanager.
-	adminConfig.AlertmanagersChoice = models.ExternalAlertmanagers
+	adminConfig.SendAlertsTo = models.ExternalAlertmanagers
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
@@ -298,11 +298,11 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return len(sched.AlertmanagersFor(1)) == 1 &&
 			len(sched.DroppedAlertmanagersFor(1)) == 0 &&
-			sched.alertmanagersChoice[1] == adminConfig.AlertmanagersChoice
+			sched.sendAlertsTo[1] == adminConfig.SendAlertsTo
 	}, 10*time.Second, 200*time.Millisecond)
 
 	// Finally, let's change the Alertmanagers choice to send only to the internal Alertmanager.
-	adminConfig.AlertmanagersChoice = models.InternalAlertmanager
+	adminConfig.SendAlertsTo = models.InternalAlertmanager
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
@@ -317,7 +317,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return len(sched.AlertmanagersFor(1)) == 0 &&
 			len(sched.DroppedAlertmanagersFor(1)) == 0 &&
-			sched.alertmanagersChoice[1] == adminConfig.AlertmanagersChoice
+			sched.sendAlertsTo[1] == adminConfig.SendAlertsTo
 	}, 10*time.Second, 200*time.Millisecond)
 }
 

@@ -92,7 +92,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\",\"%s\"], \"alertmanagersChoice\": %d}\n", fakeAM1.URL(), fakeAM2.URL(), ngmodels.ExternalAlertmanagers))
+		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\",\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM1.URL(), fakeAM2.URL(), ngmodels.ExternalAlertmanagers))
 	}
 
 	// With the configuration set, we should eventually discover those Alertmanagers.
@@ -191,7 +191,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\"], \"alertmanagersChoice\": %d}\n", fakeAM3.URL(), ngmodels.AllAlertmanagers))
+		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM3.URL(), ngmodels.AllAlertmanagers))
 	}
 
 	// With the configuration set, we should eventually not discover Alertmanagers.

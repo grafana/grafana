@@ -81,7 +81,7 @@ type schedule struct {
 
 	// Senders help us send alerts to external Alertmanagers.
 	adminConfigMtx          sync.RWMutex
-	alertmanagersChoice     map[int64]models.AlertmanagersChoice
+	sendAlertsTo            map[int64]models.AlertmanagersChoice
 	sendersCfgHash          map[int64]string
 	senders                 map[int64]*sender.Sender
 	adminConfigPollInterval time.Duration
@@ -132,7 +132,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, 
 		metrics:                 cfg.Metrics,
 		appURL:                  appURL,
 		stateManager:            stateManager,
-		alertmanagersChoice:     map[int64]models.AlertmanagersChoice{},
+		sendAlertsTo:            map[int64]models.AlertmanagersChoice{},
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
@@ -203,7 +203,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 		}
 
 		// Update the Alertmanagers choice for the organization.
-		sch.alertmanagersChoice[cfg.OrgID] = cfg.AlertmanagersChoice
+		sch.sendAlertsTo[cfg.OrgID] = cfg.SendAlertsTo
 
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which senders we need to keep.
 
@@ -215,7 +215,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 		//  We have no running sender and alerts are handled internally, no-op.
-		if !ok && cfg.AlertmanagersChoice == models.InternalAlertmanager {
+		if !ok && cfg.SendAlertsTo == models.InternalAlertmanager {
 			sch.log.Debug("alerts are handled internally", "org", cfg.OrgID)
 			continue
 		}
@@ -227,7 +227,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 		// We have a running sender and alerts are handled internally, shut it down.
-		if ok && cfg.AlertmanagersChoice == models.InternalAlertmanager {
+		if ok && cfg.SendAlertsTo == models.InternalAlertmanager {
 			sch.log.Debug("alerts are handled internally, sender will be stopped", "org", cfg.OrgID)
 			delete(orgsFound, cfg.OrgID)
 			continue
@@ -500,7 +500,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				}
 
 				// Send alerts to notifier if they need to be handled internally.
-				if sch.alertmanagersChoice[alertRule.OrgID] == models.ExternalAlertmanagers {
+				if sch.sendAlertsTo[alertRule.OrgID] == models.ExternalAlertmanagers {
 					sch.log.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
 				} else {
 					sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)

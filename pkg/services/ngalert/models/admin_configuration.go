@@ -5,12 +5,12 @@ import (
 	"fmt"
 )
 
-type AlertmanagersChoice int
+type AlertmanagersChoice string
 
 const (
-	AllAlertmanagers AlertmanagersChoice = iota
-	InternalAlertmanager
-	ExternalAlertmanagers
+	AllAlertmanagers      AlertmanagersChoice = "all"
+	InternalAlertmanager  AlertmanagersChoice = "internal"
+	ExternalAlertmanagers AlertmanagersChoice = "external"
 )
 
 // AdminConfiguration represents the ngalert administration configuration settings.
@@ -21,8 +21,8 @@ type AdminConfiguration struct {
 	// List of Alertmanager(s) URL to push alerts to.
 	Alertmanagers []string
 
-	// AlertmanagersChoice indicates which set of alertmanagers will handle the alert.
-	AlertmanagersChoice AlertmanagersChoice `xorm:"alertmanagers_choice"`
+	// SendAlertsTo indicates which set of alertmanagers will handle the alert.
+	SendAlertsTo AlertmanagersChoice `xorm:"send_alerts_to"`
 
 	CreatedAt int64 `xorm:"created"`
 	UpdatedAt int64 `xorm:"updated"`
@@ -32,4 +32,8 @@ func (ac *AdminConfiguration) AsSHA256() string {
 	h := sha256.New()
 	_, _ = h.Write([]byte(fmt.Sprintf("%v", ac.Alertmanagers)))
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func (amc AlertmanagersChoice) IsValid() bool {
+	return amc == AllAlertmanagers || amc == InternalAlertmanager || amc == ExternalAlertmanagers
 }

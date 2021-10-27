@@ -56,7 +56,7 @@ func (srv AdminSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respons
 
 	resp := apimodels.GettableNGalertConfig{
 		Alertmanagers:       cfg.Alertmanagers,
-		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.AlertmanagersChoice),
+		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.SendAlertsTo),
 	}
 	return response.JSON(http.StatusOK, resp)
 }
@@ -66,10 +66,15 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 		return accessForbiddenResp()
 	}
 
+	sendAlertsTo := ngmodels.AlertmanagersChoice(body.AlertmanagersChoice)
+	if !sendAlertsTo.IsValid() {
+		return response.Error(400, "Invalid alertmanager choice specified", nil)
+	}
+
 	cfg := &ngmodels.AdminConfiguration{
-		Alertmanagers:       body.Alertmanagers,
-		AlertmanagersChoice: ngmodels.AlertmanagersChoice(body.AlertmanagersChoice),
-		OrgID:               c.OrgId,
+		Alertmanagers: body.Alertmanagers,
+		SendAlertsTo:  sendAlertsTo,
+		OrgID:         c.OrgId,
 	}
 
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: cfg}
