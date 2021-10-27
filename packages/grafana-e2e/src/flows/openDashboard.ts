@@ -8,6 +8,7 @@ interface OpenDashboardDefault {
 
 interface OpenDashboardOptional {
   timeRange?: TimeRangeConfig;
+  editPanel?: number;
 }
 
 export type PartialOpenDashboardConfig = Partial<OpenDashboardDefault> & OpenDashboardOptional;
@@ -21,9 +22,9 @@ export const openDashboard = (config?: PartialOpenDashboardConfig) =>
       ...config,
     };
 
-    const { timeRange, uid } = fullConfig;
+    const { timeRange, uid, editPanel } = fullConfig;
 
-    e2e.pages.Dashboard.visit(uid);
+    e2e.pages.Dashboard.visit(uid, { editPanel });
 
     if (timeRange) {
       setDashboardTimeRange(timeRange);
