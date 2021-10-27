@@ -2,5 +2,9 @@
   "compilerOptions": {
     "module": "commonjs"
   },
-  "extends": "../../tsconfig.json"
+  "extends": "../../tsconfig.json",
+  "ts-node": {
+    "transpileOnly": true,
+    "transpiler": "ts-node/transpilers/swc-experimental"
+  }
 }
