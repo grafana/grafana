@@ -6,16 +6,17 @@ import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/run
 import {
   DataFrame,
   DataLink,
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
+  DataSourceWithQueryImportSupport,
   DateTime,
   dateTime,
   Field,
   getDefaultTimeRange,
+  LabelBasedQuery,
   LogRowModel,
   MetricFindValue,
   ScopedVars,
@@ -59,7 +60,7 @@ const ELASTIC_META_FIELDS = [
 
 export class ElasticDatasource
   extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions>
-  implements DataSourceWithLogsContextSupport {
+  implements DataSourceWithLogsContextSupport, DataSourceWithQueryImportSupport<ElasticsearchQuery> {
   basicAuth?: string;
   withCredentials?: boolean;
   url: string;
@@ -159,8 +160,30 @@ export class ElasticDatasource
       );
   }
 
-  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<ElasticsearchQuery[]> {
-    return this.languageProvider.importQueries(queries, originDataSource.meta.id);
+  /**
+   * Queries are transformed to an ES Logs query since it's the behaviour most users expect.
+   **/
+  fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): ElasticsearchQuery {
+    return {
+      metrics: [
+        {
+          id: '1',
+          type: 'logs',
+        },
+      ],
+      query: this.languageProvider.getElasticsearchQuery(labelBasedQuery.selectors),
+      refId: labelBasedQuery.refId,
+    };
+  }
+
+  /**
+   * Exporting queries to common format is not supported yet.
+   */
+  toLabelBasedQuery(query: ElasticsearchQuery): LabelBasedQuery {
+    return {
+      refId: query.refId,
+      selectors: [],
+    };
   }
 
   /**

@@ -7,6 +7,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   hasLogsVolumeSupport,
+  hasQueryImportSupport,
   LoadingState,
   PanelData,
   PanelEvents,
@@ -271,6 +272,11 @@ export const importQueries = (
     if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
       // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
       importedQueries = queries.map(({ datasource, ...query }) => query);
+    } else if (hasQueryImportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
+      importedQueries = queries.map((query) => {
+        const labelBasedQuery = sourceDataSource.toLabelBasedQuery(query);
+        return targetDataSource.fromLabelBasedQuery(labelBasedQuery);
+      });
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
       importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);

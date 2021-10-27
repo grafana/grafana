@@ -10,7 +10,6 @@ import {
   AnnotationQueryRequest,
   DataFrame,
   DataFrameView,
-  DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -18,9 +17,11 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithLogsVolumeSupport,
+  DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
   FieldCache,
+  LabelBasedQuery,
   LoadingState,
   LogRowModel,
   QueryResultMeta,
@@ -55,6 +56,7 @@ import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContext
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { createLokiLogsVolumeProvider } from './dataProviders/logsVolumeProvider';
+import { fromPromLikeQuery, toPromLikeQuery } from './utils';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -72,7 +74,10 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
 
 export class LokiDatasource
   extends DataSourceApi<LokiQuery, LokiOptions>
-  implements DataSourceWithLogsContextSupport, DataSourceWithLogsVolumeSupport<LokiQuery> {
+  implements
+    DataSourceWithLogsContextSupport,
+    DataSourceWithLogsVolumeSupport<LokiQuery>,
+    DataSourceWithQueryImportSupport<LokiQuery> {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
@@ -328,8 +333,12 @@ export class LokiDatasource
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
-  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
-    return this.languageProvider.importQueries(queries, originDataSource);
+  fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): LokiQuery {
+    return toPromLikeQuery(labelBasedQuery);
+  }
+
+  toLabelBasedQuery(query: LokiQuery): LabelBasedQuery {
+    return fromPromLikeQuery(query);
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {

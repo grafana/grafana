@@ -1,7 +1,7 @@
-import { fromString } from '../../graphite/configuration/parseLokiLabelMappings';
+import { fromString } from '../configuration/parseLokiLabelMappings';
 import fromGraphiteQueries from './fromGraphite';
-import { GraphiteQuery } from '../../graphite/types';
-import { GraphiteDatasource } from '../../graphite/datasource';
+import { GraphiteQuery } from '../types';
+import { GraphiteDatasource } from '../datasource';
 
 describe('importing from Graphite queries', () => {
   let graphiteDatasourceMock: GraphiteDatasource;

@@ -9,8 +9,10 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
+  LabelBasedQuery,
   LoadingState,
   rangeUtil,
   ScopedVars,
@@ -42,11 +44,15 @@ import {
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
+import { LokiQuery } from '../loki/types';
+import { fromPromLikeQuery, toPromLikeQuery } from '../loki/utils';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
-export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromOptions> {
+export class PrometheusDatasource
+  extends DataSourceWithBackend<PromQuery, PromOptions>
+  implements DataSourceWithQueryImportSupport<PromQuery> {
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
@@ -157,6 +163,14 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     }
 
     return getBackendSrv().fetch<T>(options);
+  }
+
+  fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): LokiQuery {
+    return toPromLikeQuery(labelBasedQuery);
+  }
+
+  toLabelBasedQuery(query: LokiQuery): LabelBasedQuery {
+    return fromPromLikeQuery(query);
   }
 
   // Use this for tab completion features, wont publish response to other components
@@ -290,7 +304,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   };
 
   shouldRunExemplarQuery(target: PromQuery): boolean {
-    /* We want to run exemplar query only for histogram metrics: 
+    /* We want to run exemplar query only for histogram metrics:
     1. If we haven't processd histogram metrics yet, we need to check if expr includes "_bucket" which means that it is probably histogram metric (can rarely lead to false positive).
     2. If we have processed histogram metrics, check if it is part of query expr.
     */

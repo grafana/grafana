@@ -7,7 +7,11 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
+  DataSourceWithQueryImportSupport,
   dateMath,
+  LabelBasedQuery,
+  LabelComparator,
+  LabelSelector,
   MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
@@ -21,6 +25,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 // Types
 import {
   GraphiteLokiMapping,
+  GraphiteMetricLokiMatcher,
   GraphiteOptions,
   GraphiteQuery,
   GraphiteQueryImportConfiguration,
@@ -31,12 +36,29 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/data
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 import { reduceError } from './utils';
+import { default as GraphiteQueryModel } from './graphite_query';
 
-export class GraphiteDatasource extends DataSourceApi<
-  GraphiteQuery,
-  GraphiteOptions,
-  GraphiteQueryImportConfiguration
-> {
+const GRAPHITE_TO_COMPARATORS = {
+  '=': LabelComparator.Equal,
+  '!=': LabelComparator.NotEqual,
+  '=~': LabelComparator.EqualRegEx,
+  '!=~': LabelComparator.NotEqualRegEx,
+};
+
+/**
+ * Converts Graphite glob-like pattern to a regular expression
+ */
+function convertGlobToRegEx(text: string): string {
+  if (text.includes('*') || text.includes('{')) {
+    return '^' + text.replace(/\*/g, '.*').replace(/\{/g, '(').replace(/}/g, ')').replace(/,/g, '|');
+  } else {
+    return text;
+  }
+}
+
+export class GraphiteDatasource
+  extends DataSourceApi<GraphiteQuery, GraphiteOptions, GraphiteQueryImportConfiguration>
+  implements DataSourceWithQueryImportSupport<GraphiteQuery> {
   basicAuth: string;
   url: string;
   name: string;
@@ -88,6 +110,73 @@ export class GraphiteDatasource extends DataSourceApi<
       loki: {
         mappings: this.metricMappings,
       },
+    };
+  }
+
+  /**
+   * Not supported importing from other data sources.
+   */
+  fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): GraphiteQuery {
+    return {
+      refId: labelBasedQuery.refId,
+      target: '',
+    };
+  }
+
+  toLabelBasedQuery(query: GraphiteQuery): LabelBasedQuery {
+    const graphiteQuery: GraphiteQueryModel = new GraphiteQueryModel(
+      this,
+      {
+        ...query,
+        target: query.target || '',
+        textEditor: false,
+      },
+      getTemplateSrv()
+    );
+    graphiteQuery.parseTarget();
+
+    let labels: LabelSelector[] = [];
+    const config = this.getImportQueryConfiguration().loki;
+
+    if (graphiteQuery.seriesByTagUsed) {
+      graphiteQuery.tags.forEach((tag) => {
+        labels.push({
+          labelName: tag.key,
+          labelComparator: GRAPHITE_TO_COMPARATORS[tag.operator],
+          labelValue: tag.value,
+        });
+      });
+    } else {
+      const targetNodes = graphiteQuery.segments.map((segment) => segment.value);
+      let mappings = config.mappings.filter((mapping) => mapping.matchers.length <= targetNodes.length);
+
+      for (let mapping of mappings) {
+        const matchers = mapping.matchers.concat();
+
+        matchers.every((matcher: GraphiteMetricLokiMatcher, index: number) => {
+          if (matcher.labelName) {
+            let value = (targetNodes[index] as string)!;
+
+            if (value === '*') {
+              return true;
+            }
+
+            const converted = convertGlobToRegEx(value);
+            labels.push({
+              labelName: matcher.labelName,
+              labelComparator: converted !== value ? LabelComparator.EqualRegEx : LabelComparator.Equal,
+              labelValue: converted,
+            });
+            return true;
+          }
+          return targetNodes[index] === matcher.value || matcher.value === '*';
+        });
+      }
+    }
+
+    return {
+      refId: query.refId,
+      selectors: labels,
     };
   }
 

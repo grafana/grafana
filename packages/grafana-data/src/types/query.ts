@@ -48,3 +48,37 @@ export interface DataQuery {
    */
   datasource?: DatasourceRef;
 }
+
+export enum LabelComparator {
+  Equal = 'Equal',
+  NotEqual = 'NotEqual',
+  EqualRegEx = 'EqualRegEx',
+  NotEqualRegEx = 'NotEqualRegEx',
+}
+
+export type LabelSelector = {
+  labelName: string;
+  labelValue: string;
+  labelComparator: LabelComparator;
+};
+
+export interface LabelBasedQuery extends DataQuery {
+  selectors: LabelSelector[];
+}
+
+export interface DataSourceWithQueryImportSupport<TQuery extends DataQuery> {
+  toLabelBasedQuery(query: TQuery): LabelBasedQuery;
+  fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): TQuery;
+}
+
+/**
+ * @internal
+ */
+export const hasQueryImportSupport = <TQuery extends DataQuery>(
+  datasource: any
+): datasource is DataSourceWithQueryImportSupport<TQuery> => {
+  return (
+    (datasource as DataSourceWithQueryImportSupport<TQuery>).toLabelBasedQuery !== undefined &&
+    (datasource as DataSourceWithQueryImportSupport<TQuery>).fromLabelBasedQuery !== undefined
+  );
+};
