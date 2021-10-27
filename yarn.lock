@@ -2597,7 +2597,6 @@ __metadata:
     "@rushstack/eslint-patch": 1.0.6
     "@types/command-exists": ^1.2.0
     "@types/eslint": 7.28.0
-    "@types/expect-puppeteer": 4.4.7
     "@types/fs-extra": ^9.0.13
     "@types/inquirer": ^6.0.3
     "@types/jest": 27.0.2
@@ -7517,16 +7516,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/expect-puppeteer@npm:4.4.7":
-  version: 4.4.7
-  resolution: "@types/expect-puppeteer@npm:4.4.7"
-  dependencies:
-    "@types/jest": "*"
-    "@types/puppeteer": "*"
-  checksum: e99d655e0eaf8075f7c132faeac79b5ca5781f473c533d45a78a6427dd3518a747ff0233ce1bbc25a15c257c2700a8854dd73cb9ab14a0ba1a2989b977ab3335
-  languageName: node
-  linkType: hard
-
 "@types/express-serve-static-core@npm:*, @types/express-serve-static-core@npm:^4.17.18":
   version: 4.17.24
   resolution: "@types/express-serve-static-core@npm:4.17.24"
@@ -8057,15 +8046,6 @@ __metadata:
   version: 15.7.4
   resolution: "@types/prop-types@npm:15.7.4"
   checksum: ef6e1899e59b876c273811b1bd845022fc66d5a3d11cb38a25b6c566b30514ae38fe20a40f67622f362a4f4f7f9224e22d8da101cff3d6e97e11d7b4c307cfc1
-  languageName: node
-  linkType: hard
-
-"@types/puppeteer@npm:*":
-  version: 5.4.4
-  resolution: "@types/puppeteer@npm:5.4.4"
-  dependencies:
-    "@types/node": "*"
-  checksum: 99aa9e8fe0234b5624e93b36e38b407c48e2b9663c46dfc651ee37819e7ce1d19dfcd61d5b3f23b3d0b0f606615e0f298a86b3116a1b3cd09aa139204731e3b1
   languageName: node
   linkType: hard
 
