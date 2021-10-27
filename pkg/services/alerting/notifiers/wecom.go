@@ -124,7 +124,9 @@ func (w *WeComNotifier) uploadImage(evalContext *alerting.EvalContext) error {
 	if err != nil {
 		return err
 	}
-	defer imgFile.Close()
+	defer func() {
+		_ = imgFile.Close()
+	}()
 
 	f, err := ioutil.ReadAll(imgFile)
 	if err != nil {
