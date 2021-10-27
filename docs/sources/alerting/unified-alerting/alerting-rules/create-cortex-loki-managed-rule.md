@@ -35,7 +35,7 @@ For Cortex and Loki data sources to work with Grafana 8.0 alerting, enable the r
      {{< figure src="/static/img/docs/alerting/unified/rule-edit-cortex-query-8-0.png" max-width="550px" caption="Alert details" >}}
 1. In Step 3, add conditions.
    - In the **For** text box, specify the duration for which the condition must be true before an alert fires. If you specify `5m`, the condition must be true for 5 minutes before the alert fires.
-     > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the Firing state, else it reverts to the Normal state.
+     > **Note:** Once a condition is met, the alert goes into the `Pending` state. If the condition remains active for the duration specified, the alert transitions to the `Firing` state, else it reverts to the `Normal` state.
 1. In Step 4, add additional metadata associated with the rule.
    - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "./alert-annotation-label.md" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
