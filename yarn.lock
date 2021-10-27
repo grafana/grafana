@@ -2363,7 +2363,7 @@ __metadata:
     "@rollup/plugin-commonjs": 16.0.0
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 10.0.0
-    "@testing-library/dom": 7.29.4
+    "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.9
     "@testing-library/react": 11.1.2
     "@testing-library/react-hooks": ^3.2.1
@@ -2421,7 +2421,6 @@ __metadata:
     "@types/node": 14.17.27
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
-    commander: 5.0.0
     execa: 5.1.1
     rimraf: 3.0.1
     rollup: 2.33.3
@@ -2454,7 +2453,7 @@ __metadata:
     "@types/uuid": 8.3.0
     babel-loader: 8.2.2
     blink-diff: 1.0.13
-    commander: 5.0.0
+    commander: 8.3.0
     cypress: 8.4.1
     cypress-file-upload: 5.0.8
     date-fns: 2.21.3
@@ -2616,9 +2615,9 @@ __metadata:
     babel-jest: 26.6.3
     babel-loader: 8.2.2
     babel-plugin-angularjs-annotate: 0.10.0
-    chalk: ^2.4.2
+    chalk: ^4.0.0
     command-exists: ^1.2.8
-    commander: ^5.0.0
+    commander: ^8.0.0
     concurrently: 6.3.0
     copy-webpack-plugin: 5.1.2
     css-loader: 3.4.2
@@ -2714,7 +2713,7 @@ __metadata:
     "@storybook/manager-webpack5": 6.3.7
     "@storybook/react": 6.3.7
     "@storybook/theming": 6.3.7
-    "@testing-library/dom": 7.29.4
+    "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.9
     "@testing-library/react": 11.1.2
     "@testing-library/react-hooks": ^3.2.1
@@ -6724,23 +6723,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:7.29.4":
-  version: 7.29.4
-  resolution: "@testing-library/dom@npm:7.29.4"
-  dependencies:
-    "@babel/code-frame": ^7.10.4
-    "@babel/runtime": ^7.12.5
-    "@types/aria-query": ^4.2.0
-    aria-query: ^4.2.2
-    chalk: ^4.1.0
-    dom-accessibility-api: ^0.5.4
-    lz-string: ^1.4.4
-    pretty-format: ^26.6.2
-  checksum: 205d125e1e8d5f711f2592f2f3d25994f481641f6bad17724f8e077431042c3204ae585a8c7df483d84ea8562e75229bf915cb6090a4657c5897fbd3f742a3b9
-  languageName: node
-  linkType: hard
-
-"@testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
+"@testing-library/dom@npm:8.10.1, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
   version: 8.10.1
   resolution: "@testing-library/dom@npm:8.10.1"
   dependencies:
@@ -12503,10 +12486,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:5.0.0":
-  version: 5.0.0
-  resolution: "commander@npm:5.0.0"
-  checksum: 55cb7e3fa1ada53f9109f1475e981daeb6886c1bb67c6c2f0e492d37fd52e2c2359131d0d869114e20c66907c19faeac606ee1d00ff7b822b1a37219e07d6282
+"commander@npm:8.3.0, commander@npm:^8.0.0, commander@npm:^8.1.0":
+  version: 8.3.0
+  resolution: "commander@npm:8.3.0"
+  checksum: 0f82321821fc27b83bd409510bb9deeebcfa799ff0bf5d102128b500b7af22872c0c92cb6a0ebc5a4cf19c6b550fba9cedfa7329d18c6442a625f851377bacf0
   languageName: node
   linkType: hard
 
@@ -12517,7 +12500,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^5.0.0, commander@npm:^5.1.0":
+"commander@npm:^5.1.0":
   version: 5.1.0
   resolution: "commander@npm:5.1.0"
   checksum: 0b7fec1712fbcc6230fcb161d8d73b4730fa91a21dc089515489402ad78810547683f058e2a9835929c212fead1d6a6ade70db28bbb03edbc2829a9ab7d69447
@@ -12535,13 +12518,6 @@ __metadata:
   version: 7.2.0
   resolution: "commander@npm:7.2.0"
   checksum: 53501cbeee61d5157546c0bef0fedb6cdfc763a882136284bed9a07225f09a14b82d2a84e7637edfd1a679fb35ed9502fd58ef1d091e6287f60d790147f68ddc
-  languageName: node
-  linkType: hard
-
-"commander@npm:^8.1.0":
-  version: 8.3.0
-  resolution: "commander@npm:8.3.0"
-  checksum: 0f82321821fc27b83bd409510bb9deeebcfa799ff0bf5d102128b500b7af22872c0c92cb6a0ebc5a4cf19c6b550fba9cedfa7329d18c6442a625f851377bacf0
   languageName: node
   linkType: hard
 
@@ -14861,7 +14837,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dom-accessibility-api@npm:^0.5.4, dom-accessibility-api@npm:^0.5.6, dom-accessibility-api@npm:^0.5.9":
+"dom-accessibility-api@npm:^0.5.6, dom-accessibility-api@npm:^0.5.9":
   version: 0.5.9
   resolution: "dom-accessibility-api@npm:0.5.9"
   checksum: 3988bd1c58e115e972179b9ef881e65ab5da9c2e9d08f4e9646870301971fb0c72d0e0866559e0c06b91b9da6f1fed2f31f0fcbf0b6cffd959b01c0601da2c56
@@ -18027,7 +18003,7 @@ __metadata:
     "@sentry/browser": 5.25.0
     "@sentry/types": 5.24.2
     "@sentry/utils": 6.13.2
-    "@testing-library/dom": 7.29.4
+    "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.5
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2

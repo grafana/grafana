@@ -42,7 +42,7 @@
     "@rollup/plugin-commonjs": "16.0.0",
     "@rollup/plugin-json": "4.1.0",
     "@rollup/plugin-node-resolve": "10.0.0",
-    "@testing-library/dom": "7.29.4",
+    "@testing-library/dom": "8.10.1",
     "@testing-library/jest-dom": "5.11.9",
     "@testing-library/react": "11.1.2",
     "@testing-library/react-hooks": "^3.2.1",
