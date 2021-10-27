@@ -10,6 +10,7 @@ import {
   AlignmentTypes,
   CustomMetaData,
   ValueTypes,
+  SLOQuery,
 } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import CloudMonitoringDatasource from '../datasource';
@@ -71,7 +72,7 @@ function Editor({
   }, [datasource, groupBys, metricType, projectName, refId]);
 
   const onChange = useCallback(
-    (metricQuery: MetricQuery) => {
+    (metricQuery: MetricQuery | SLOQuery) => {
       onQueryChange({ ...query, ...metricQuery });
       onRunQuery();
     },

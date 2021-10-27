@@ -130,7 +130,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         )}
       </div>
       {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) &&
-        dataSourceName && <GroupAndNamespaceFields dataSourceName={dataSourceName} />}
+        dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
 
       {ruleFormType === RuleFormType.grafana && (
         <Field

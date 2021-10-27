@@ -1,6 +1,6 @@
 import { Column, Row } from 'react-table';
 import memoizeOne from 'memoize-one';
-import { ContentPosition } from 'csstype';
+import { Property } from 'csstype';
 import {
   DataFrame,
   Field,
@@ -17,7 +17,7 @@ import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
 import { getFooterValue } from './FooterRow';
 
-export function getTextAlign(field?: Field): ContentPosition {
+export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
     return 'flex-start';
   }

@@ -50,27 +50,27 @@ These examples show how often and when reminders are sent for a triggered alert.
 
 ## List of supported notifiers
 
-| Name                                          | Type                      | Supports images    | Support alert rule tags |
-| --------------------------------------------- | ------------------------- | ------------------ | ----------------------- | --- |
-| [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                      |
-| [Discord](#discord)                           | `discord`                 | yes                | no                      |
-| [Email](#email)                               | `email`                   | yes                | no                      |
-| [Google Hangouts Chat](#google-hangouts-chat) | `googlechat`              | yes, external only | no                      |
-| Hipchat                                       | `hipchat`                 | yes, external only | no                      |
-| [Kafka](#kafka)                               | `kafka`                   | yes, external only | no                      |
-| Line                                          | `line`                    | yes, external only | no                      |
-| Microsoft Teams                               | `teams`                   | yes, external only | no                      |
-| [Opsgenie](#opsgenie)                         | `opsgenie`                | yes, external only | yes                     |
-| [Pagerduty](#pagerduty)                       | `pagerduty`               | yes, external only | yes                     |
-| Prometheus Alertmanager                       | `prometheus-alertmanager` | yes, external only | yes                     |
-| [Pushover](#pushover)                         | `pushover`                | yes                | no                      |
-| Sensu                                         | `sensu`                   | yes, external only | no                      |
-| [Sensu Go](#sensu-go)                         | `sensugo`                 | yes, external only | no                      |
-| [Slack](#slack)                               | `slack`                   | yes                | no                      |
-| Telegram                                      | `telegram`                | yes                | no                      |
-| Threema                                       | `threema`                 | yes, external only | no                      |
-| VictorOps                                     | `victorops`               | yes, external only | yes                     |
-| [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                     |     |
+| Name                                          | Type                      | Supports images    | Supports alert rule tags |
+| --------------------------------------------- | ------------------------- | ------------------ | ------------------------ |
+| [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                       |
+| [Discord](#discord)                           | `discord`                 | yes                | no                       |
+| [Email](#email)                               | `email`                   | yes                | no                       |
+| [Google Hangouts Chat](#google-hangouts-chat) | `googlechat`              | yes, external only | no                       |
+| Hipchat                                       | `hipchat`                 | yes, external only | no                       |
+| [Kafka](#kafka)                               | `kafka`                   | yes, external only | no                       |
+| Line                                          | `line`                    | yes, external only | no                       |
+| Microsoft Teams                               | `teams`                   | yes, external only | no                       |
+| [Opsgenie](#opsgenie)                         | `opsgenie`                | yes, external only | yes                      |
+| [Pagerduty](#pagerduty)                       | `pagerduty`               | yes, external only | yes                      |
+| Prometheus Alertmanager                       | `prometheus-alertmanager` | yes, external only | yes                      |
+| [Pushover](#pushover)                         | `pushover`                | yes                | no                       |
+| Sensu                                         | `sensu`                   | yes, external only | no                       |
+| [Sensu Go](#sensu-go)                         | `sensugo`                 | yes, external only | no                       |
+| [Slack](#slack)                               | `slack`                   | yes                | no                       |
+| Telegram                                      | `telegram`                | yes                | no                       |
+| Threema                                       | `threema`                 | yes, external only | no                       |
+| VictorOps                                     | `victorops`               | yes, external only | yes                      |
+| [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                      |
 
 ### Email
 
@@ -227,11 +227,12 @@ In DingTalk PC Client:
 To set up Discord, you must create a Discord channel webhook. For instructions on how to create the channel, refer to
 [Intro to Webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
-| Setting         | Description                                                                       |
-| --------------- | --------------------------------------------------------------------------------- |
-| Webhook URL     | Discord webhook URL.                                                              |
-| Message Content | Mention a group using @ or a user using <@ID> when notifying in a channel.        |
-| Avatar URL      | Optionally, provide a URL to an image to use as the avatar for the bot's message. |
+| Setting                        | Description                                                                                           |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Webhook URL                    | Discord webhook URL.                                                                                  |
+| Message Content                | Mention a group using @ or a user using <@ID> when notifying in a channel.                            |
+| Avatar URL                     | Optionally, provide a URL to an image to use as the avatar for the bot's message.                     |
+| Use Discord's Webhook Username | Use the username configured in Discord's webhook settings. Otherwise, the username will be 'Grafana.' |
 
 Alternately, use the [Slack](#slack) notifier by appending `/slack` to a Discord webhook URL.
 
@@ -263,7 +264,7 @@ Grafana alert notifications can be sent to [Sensu](<(https://sensu.io)>) Go as e
 ## Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
-[image rendering]({{< relref "../../administration/image_rendering/" >}}).
+[image rendering]({{< relref "../../image-rendering/" >}}).
 
 You must configure an [external image storage provider]({{< relref "../../administration/configuration/#external-image-storage" >}}) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
 

@@ -422,7 +422,7 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   for (let i = 1; i <= steps.length; i++) {
     const step = steps[i - 1];
     items.push({
-      label: i === 1 ? `< ${fmt(steps[i].value)}` : `${fmt(step.value)}+`,
+      label: i === 1 ? `< ${fmt(step.value)}` : `${fmt(step.value)}+`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });
@@ -465,7 +465,9 @@ export function prepareTimelineLegendItems(
   fields.forEach((field) => {
     field.values.toArray().forEach((v) => {
       let state = field.display!(v);
-      stateColors.set(state.text, state.color!);
+      if (state.color) {
+        stateColors.set(state.text, state.color!);
+      }
     });
   });
 

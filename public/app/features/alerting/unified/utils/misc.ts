@@ -1,6 +1,6 @@
 import { urlUtil, UrlQueryMap } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { CombinedRule, FilterState, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
 import * as ruleId from './rule-id';
@@ -37,8 +37,16 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
   const alertState = queryParams['alertState'] === undefined ? undefined : String(queryParams['alertState']);
   const dataSource = queryParams['dataSource'] === undefined ? undefined : String(queryParams['dataSource']);
+  const ruleType = queryParams['ruleType'] === undefined ? undefined : String(queryParams['ruleType']);
   const groupBy = queryParams['groupBy'] === undefined ? undefined : String(queryParams['groupBy']).split(',');
-  return { queryString, alertState, dataSource, groupBy };
+  return { queryString, alertState, dataSource, groupBy, ruleType };
+};
+
+export const getSilenceFiltersFromUrlParams = (queryParams: UrlQueryMap): SilenceFilterState => {
+  const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
+  const silenceState = queryParams['silenceState'] === undefined ? undefined : String(queryParams['silenceState']);
+
+  return { queryString, silenceState };
 };
 
 export function recordToArray(record: Record<string, string>): Array<{ key: string; value: string }> {
@@ -47,6 +55,15 @@ export function recordToArray(record: Record<string, string>): Array<{ key: stri
 
 export function makeAMLink(path: string, alertManagerName?: string): string {
   return `${path}${alertManagerName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${encodeURIComponent(alertManagerName)}` : ''}`;
+}
+
+export function makeSilenceLink(alertmanagerSourceName: string, rule: CombinedRule) {
+  return (
+    `${config.appSubUrl}/alerting/silence/new?alertmanager=${alertmanagerSourceName}` +
+    `&matchers=alertname=${rule.name},${Object.entries(rule.labels)
+      .map(([key, value]) => encodeURIComponent(`${key}=${value}`))
+      .join(',')}`
+  );
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet

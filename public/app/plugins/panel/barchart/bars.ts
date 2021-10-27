@@ -5,10 +5,11 @@ import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { calculateFontSize, PlotTooltipInterpolator } from '@grafana/ui';
 import {
   StackingMode,
-  BarValueVisibility,
+  VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
   VizTextDisplayOptions,
+  VizLegendOptions,
 } from '@grafana/schema';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
@@ -39,13 +40,14 @@ export interface BarsOptions {
   xDir: ScaleDirection;
   groupWidth: number;
   barWidth: number;
-  showValue: BarValueVisibility;
+  showValue: VisibilityMode;
   stacking: StackingMode;
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
   formatValue: (seriesIdx: number, value: any) => string;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
+  legend?: VizLegendOptions;
 }
 
 /**
@@ -199,7 +201,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   // uPlot hook to draw the labels on the bar chart.
   const draw = (u: uPlot) => {
-    if (showValue === BarValueVisibility.Never) {
+    if (showValue === VisibilityMode.Never) {
       return;
     }
     // pre-cache formatted labels
@@ -228,11 +230,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           )
         );
 
-        if (fontSize < VALUE_MIN_FONT_SIZE && showValue !== BarValueVisibility.Always) {
+        if (fontSize < VALUE_MIN_FONT_SIZE && showValue !== VisibilityMode.Always) {
           return;
         }
       }
     }
+
+    u.ctx.save();
 
     u.ctx.fillStyle = theme.colors.text.primary;
     u.ctx.font = `${fontSize}px ${theme.typography.fontFamily}`;
@@ -265,6 +269,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         );
       }
     });
+
+    u.ctx.restore();
   };
 
   // handle hover interaction with quadtree probing
@@ -310,12 +316,16 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   let alignedTotals: AlignedData | null = null;
 
-  function prepData(alignedFrame: DataFrame) {
+  function prepData(frames: DataFrame[]) {
     alignedTotals = null;
 
-    return preparePlotData(alignedFrame, ({ totals }) => {
-      alignedTotals = totals;
-    });
+    return preparePlotData(
+      frames,
+      ({ totals }) => {
+        alignedTotals = totals;
+      },
+      opts.legend
+    );
   }
 
   return {

@@ -15,8 +15,9 @@ import (
 
 func TestAvailableChannels(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -1404,7 +1405,23 @@ var expAvailableChannelJsonOutput = `
 		"required": false,
 		"validationRule": "",
 		"secure": false
-	  }
+	  },
+    {
+      "element": "checkbox",
+      "inputType": "",
+      "label": "Use Discord's Webhook Username",
+      "description": "Use the username configured in Discord's webhook settings. Otherwise, the username will be 'Grafana'",
+      "placeholder": "",
+      "propertyName": "use_discord_username",
+      "selectOptions": null,
+      "showWhen": {
+        "field": "",
+        "is": ""
+      },
+      "required": false,
+      "validationRule": "",
+      "secure": false
+    }
 	]
   },
   {

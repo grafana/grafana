@@ -10,6 +10,8 @@ export interface PromQuery extends DataQuery {
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
+  // Timezone offset to align start & end time on backend
+  utcOffsetSec?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
   requestId?: string;
@@ -18,13 +20,17 @@ export interface PromQuery extends DataQuery {
 }
 
 export interface PromOptions extends DataSourceJsonData {
-  timeInterval: string;
-  queryTimeout: string;
-  httpMethod: string;
-  directUrl: string;
+  timeInterval?: string;
+  queryTimeout?: string;
+  httpMethod?: string;
+  directUrl?: string;
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
+}
+
+export enum PromQueryType {
+  timeSeriesQuery = 'timeSeriesQuery',
 }
 
 export type ExemplarTraceIdDestination = {
@@ -48,7 +54,7 @@ export interface PromMetricsMetadataItem {
 }
 
 export interface PromMetricsMetadata {
-  [metric: string]: PromMetricsMetadataItem[];
+  [metric: string]: PromMetricsMetadataItem;
 }
 
 export interface PromDataSuccessResponse<T = PromData> {

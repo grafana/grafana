@@ -62,7 +62,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         metricType: this.templateSrv.replace(annotation.target.metricType, options.scopedVars || {}),
         title: this.templateSrv.replace(annotation.target.title, options.scopedVars || {}),
         text: this.templateSrv.replace(annotation.target.text, options.scopedVars || {}),
-        tags: this.templateSrv.replace(annotation.target.tags, options.scopedVars || {}),
+        tags: (annotation.target.tags || []).map((t: string) => this.templateSrv.replace(t, options.scopedVars || {})),
         projectName: this.templateSrv.replace(
           annotation.target.projectName ? annotation.target.projectName : this.getDefaultProject(),
           options.scopedVars || {}
@@ -163,11 +163,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           });
         }),
         map(({ data }) => {
-          return data;
-        }),
-        map((response) => {
-          const result = response.results[refId];
-          return result && result.meta ? result.meta.labels : {};
+          const dataQueryResponse = toDataQueryResponse({
+            data: data,
+          });
+          return dataQueryResponse?.data[0]?.meta?.custom?.labels ?? {};
         })
       )
     );
@@ -219,9 +218,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         })
         .pipe(
           map(({ data }) => {
-            return data && data.results && data.results.getGCEDefaultProject && data.results.getGCEDefaultProject.meta
-              ? data.results.getGCEDefaultProject.meta.defaultProject
-              : '';
+            const dataQueryResponse = toDataQueryResponse({
+              data: data,
+            });
+            return dataQueryResponse?.data[0]?.meta?.custom?.defaultProject ?? '';
           }),
           catchError((err) => {
             return throwError(err.data.error);
@@ -357,7 +357,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         value,
         ...(condition && { condition }),
       }))
-      .reduce((res, filter) => (filter.value ? [...res, filter] : res), []);
+      .filter((item) => item.value);
 
     const filterArray = flatten(
       completeFilter.map(({ key, operator, value, condition }: Filter) => [

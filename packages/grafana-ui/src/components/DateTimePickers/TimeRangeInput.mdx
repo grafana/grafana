@@ -20,7 +20,6 @@ A variant of `TimeRangePicker` for use in forms.
 
 `dateMath.isValid()` from `@grafana/data` can be used to check for a valid time range value.
 
-
 ### Usage
 
 ```jsx
@@ -28,10 +27,11 @@ import { TimeRangeInput } from '@grafana/ui';
 
 <TimeRangeInput
   value={timeRange}
-  onChange={range => console.log('range', range)}
-  onChangeTimeZone={tz => console.log('timezone', tz)}
-/>
+  onChange={(range) => console.log('range', range)}
+  onChangeTimeZone={(tz) => console.log('timezone', tz)}
+/>;
 ```
 
 ### Props
+
 <Props of={TimeRangeInput} />

@@ -1,54 +1,105 @@
-import React, { useRef } from 'react';
-import { CodeEditor, CodeEditorMonacoOptions } from '@grafana/ui';
+import React, { useRef, useEffect } from 'react';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
 import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
 import { getCompletionProvider } from './monaco-completion-provider';
 import { Props } from './MonacoQueryFieldProps';
 
-const options: CodeEditorMonacoOptions = {
-  lineNumbers: 'off',
-  minimap: { enabled: false },
-  lineDecorationsWidth: 0,
-  wordWrap: 'off',
-  overviewRulerLanes: 0,
-  overviewRulerBorder: false,
-  folding: false,
-  scrollBeyondLastLine: false,
-  renderLineHighlight: 'none',
-  fontSize: 14,
-  suggestFontSize: 12,
+const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
+  codeLens: false,
+  contextmenu: false,
   // we need `fixedOverflowWidgets` because otherwise in grafana-dashboards
   // the popup is clipped by the panel-visualizations.
   fixedOverflowWidgets: true,
+  folding: false,
+  fontSize: 14,
+  lineDecorationsWidth: 8,
+  lineNumbers: 'off',
+  minimap: { enabled: false },
+  overviewRulerBorder: false,
+  overviewRulerLanes: 0,
+  padding: {
+    top: 4,
+    bottom: 4,
+  },
+  renderLineHighlight: 'none',
+  scrollbar: {
+    vertical: 'hidden',
+  },
+  scrollBeyondLastLine: false,
+  suggestFontSize: 12,
+  wordWrap: 'off',
+};
+
+const PROMQL_LANG_ID = promLanguageDefinition.id;
+
+// we must only run the promql-setup code once
+let PROMQL_SETUP_STARTED = false;
+
+function ensurePromQL(monaco: Monaco) {
+  if (PROMQL_SETUP_STARTED === false) {
+    PROMQL_SETUP_STARTED = true;
+    const { aliases, extensions, mimetypes, loader } = promLanguageDefinition;
+    monaco.languages.register({ id: PROMQL_LANG_ID, aliases, extensions, mimetypes });
+
+    loader().then((mod) => {
+      monaco.languages.setMonarchTokensProvider(PROMQL_LANG_ID, mod.language);
+      monaco.languages.setLanguageConfiguration(PROMQL_LANG_ID, mod.languageConfiguration);
+    });
+  }
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    container: css`
+      border-radius: ${theme.shape.borderRadius()};
+      border: 1px solid ${theme.components.input.borderColor};
+    `,
+  };
 };
 
 const MonacoQueryField = (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onChange, initialValue } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
+  const onRunQueryRef = useLatest(onRunQuery);
+  const onBlurRef = useLatest(onBlur);
+
+  const autocompleteDisposeFun = useRef<(() => void) | null>(null);
+
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+
+  useEffect(() => {
+    // when we unmount, we unregister the autocomplete-function, if it was registered
+    return () => {
+      autocompleteDisposeFun.current?.();
+    };
+  }, []);
 
   return (
     <div
+      className={styles.container}
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}
-      style={{
-        // FIXME:
-        // this is how the non-monaco query-editor is styled,
-        // through the "gf-form" class
-        // so to have the same effect, we do the same.
-        // this should be applied somehow differently probably,
-        // like a min-height on the whole row.
-        marginBottom: '4px',
-      }}
     >
-      <CodeEditor
-        onBlur={onChange}
-        monacoOptions={options}
+      <ReactMonacoEditor
+        options={options}
         language="promql"
         value={initialValue}
-        onBeforeEditorMount={(monaco) => {
+        beforeMount={(monaco) => {
+          ensurePromQL(monaco);
+        }}
+        onMount={(editor, monaco) => {
+          // we setup on-blur
+          editor.onDidBlurEditorWidget(() => {
+            onBlurRef.current(editor.getValue());
+          });
+
           // we construct a DataProvider object
           const getSeries = (selector: string) => lpRef.current.getSeries(selector);
 
@@ -56,32 +107,48 @@ const MonacoQueryField = (props: Props) => {
             Promise.resolve(historyRef.current.map((h) => h.query.expr).filter((expr) => expr !== undefined));
 
           const getAllMetricNames = () => {
-            const { metricsMetadata } = lpRef.current;
-            const result =
-              metricsMetadata == null
-                ? []
-                : Object.entries(metricsMetadata).map(([k, v]) => ({
-                    name: k,
-                    help: v[0].help,
-                    type: v[0].type,
-                  }));
+            const { metrics, metricsMetadata } = lpRef.current;
+            const result = metrics.map((m) => {
+              const metaItem = metricsMetadata?.[m];
+              return {
+                name: m,
+                help: metaItem?.help ?? '',
+                type: metaItem?.type ?? '',
+              };
+            });
+
             return Promise.resolve(result);
           };
 
           const dataProvider = { getSeries, getHistory, getAllMetricNames };
+          const completionProvider = getCompletionProvider(monaco, dataProvider);
 
-          const langId = promLanguageDefinition.id;
-          monaco.languages.register(promLanguageDefinition);
-          promLanguageDefinition.loader().then((mod) => {
-            monaco.languages.setMonarchTokensProvider(langId, mod.language);
-            monaco.languages.setLanguageConfiguration(langId, mod.languageConfiguration);
-            const completionProvider = getCompletionProvider(monaco, dataProvider);
-            monaco.languages.registerCompletionItemProvider(langId, completionProvider);
-          });
+          // completion-providers in monaco are not registered directly to editor-instances,
+          // they are registerd to languages. this makes it hard for us to have
+          // separate completion-providers for every query-field-instance
+          // (but we need that, because they might connect to different datasources).
+          // the trick we do is, we wrap the callback in a "proxy",
+          // and in the proxy, the first thing is, we check if we are called from
+          // "our editor instance", and if not, we just return nothing. if yes,
+          // we call the completion-provider.
+          const filteringCompletionProvider: monacoTypes.languages.CompletionItemProvider = {
+            ...completionProvider,
+            provideCompletionItems: (model, position, context, token) => {
+              // if the model-id does not match, then this call is from a different editor-instance,
+              // not "our instance", so return nothing
+              if (editor.getModel()?.id !== model.id) {
+                return { suggestions: [] };
+              }
+              return completionProvider.provideCompletionItems(model, position, context, token);
+            },
+          };
 
-          // FIXME: should we unregister this at end end?
-        }}
-        onEditorDidMount={(editor, monaco) => {
+          const { dispose } = monaco.languages.registerCompletionItemProvider(
+            PROMQL_LANG_ID,
+            filteringCompletionProvider
+          );
+
+          autocompleteDisposeFun.current = dispose;
           // this code makes the editor resize itself so that the content fits
           // (it will grow taller when necessary)
           // FIXME: maybe move this functionality into CodeEditor, like:
@@ -103,9 +170,7 @@ const MonacoQueryField = (props: Props) => {
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-            const text = editor.getValue();
-            props.onChange(text);
-            props.onRunQuery();
+            onRunQueryRef.current(editor.getValue());
           });
         }}
       />

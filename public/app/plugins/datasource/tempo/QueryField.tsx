@@ -96,14 +96,14 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     ];
 
     if (config.featureToggles.tempoServiceGraph) {
-      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Map' });
+      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Graph' });
     }
 
-    if (config.featureToggles.tempoSearch) {
-      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
+    if (config.featureToggles.tempoSearch && !datasource?.search?.hide) {
+      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search - Beta' });
     }
 
-    if (logsDatasourceUid) {
+    if (logsDatasourceUid && tracesToLogsOptions?.lokiSearch !== false) {
       if (!config.featureToggles.tempoSearch) {
         // Place at beginning as Search if no native search
         queryTypeOptions.unshift({ value: 'search', label: 'Search' });
@@ -179,13 +179,13 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             </InlineField>
           </InlineFieldRow>
         )}
-        {query.queryType === 'serviceMap' && <ServiceMapSection graphDatasourceUid={graphDatasourceUid} />}
+        {query.queryType === 'serviceMap' && <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} />}
       </>
     );
   }
 }
 
-function ServiceMapSection({ graphDatasourceUid }: { graphDatasourceUid?: string }) {
+function ServiceGraphSection({ graphDatasourceUid }: { graphDatasourceUid?: string }) {
   const dsState = useAsync(() => getDS(graphDatasourceUid), [graphDatasourceUid]);
   if (dsState.loading) {
     return null;

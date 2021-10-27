@@ -84,6 +84,14 @@ func Warnf(format string, v ...interface{}) {
 	Root.Warn(message)
 }
 
+func Debug(msg string, args ...interface{}) {
+	Root.Debug(msg, args...)
+}
+
+func Info(msg string, args ...interface{}) {
+	Root.Info(msg, args...)
+}
+
 func Error(msg string, args ...interface{}) {
 	Root.Error(msg, args...)
 }

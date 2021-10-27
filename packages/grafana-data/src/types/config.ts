@@ -45,13 +45,15 @@ export enum GrafanaEdition {
 export interface FeatureToggles {
   [name: string]: boolean;
 
-  ngalert: boolean;
   trimDefaults: boolean;
   accesscontrol: boolean;
   tempoServiceGraph: boolean;
   tempoSearch: boolean;
+  recordedQueries: boolean;
   prometheusMonaco: boolean;
   newNavigation: boolean;
+  fullRangeLogsVolume: boolean;
+  autoLoadFullRangeLogsVolume: boolean;
 }
 
 /**
@@ -132,4 +134,5 @@ export interface GrafanaConfig {
   customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
+  unifiedAlertingEnabled: boolean;
 }

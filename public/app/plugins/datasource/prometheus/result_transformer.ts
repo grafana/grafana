@@ -13,8 +13,13 @@ import {
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
+  DataQueryResponse,
+  DataQueryRequest,
+  PreferredVisualisationType,
+  CoreApp,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { partition, groupBy } from 'lodash';
 import { descending, deviation } from 'd3';
 import {
   ExemplarTraceIdDestination,
@@ -35,6 +40,139 @@ const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
 interface TimeAndValue {
   [TIME_SERIES_TIME_FIELD_NAME]: number;
   [TIME_SERIES_VALUE_FIELD_NAME]: number;
+}
+
+const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
+  // We want to process instant results in Explore as table
+  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.resultType) === 'vector') {
+    return true;
+  }
+
+  // We want to process all dataFrames with target.format === 'table' as table
+  const target = options.targets.find((target) => target.refId === dataFrame.refId);
+  return target?.format === 'table';
+};
+
+const isHeatmapResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
+  const target = options.targets.find((target) => target.refId === dataFrame.refId);
+  return target?.format === 'heatmap';
+};
+
+// V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
+export function transformV2(
+  response: DataQueryResponse,
+  request: DataQueryRequest<PromQuery>,
+  options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
+) {
+  const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
+  const processedTableFrames = transformDFToTable(tableFrames);
+
+  const [heatmapResults, framesWithoutTableAndHeatmaps] = partition<DataFrame>(framesWithoutTable, (df) =>
+    isHeatmapResult(df, request)
+  );
+  const processedHeatmapFrames = transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel));
+
+  const [exemplarFrames, framesWithoutTableHeatmapsAndExemplars] = partition<DataFrame>(
+    framesWithoutTableAndHeatmaps,
+    (df) => df.meta?.custom?.resultType === 'exemplar'
+  );
+
+  // EXEMPLAR FRAMES: We enrich exemplar frames with data links and add dataTopic meta info
+  const { exemplarTraceIdDestinations: destinations } = options;
+  const processedExemplarFrames = exemplarFrames.map((dataFrame) => {
+    if (destinations?.length) {
+      for (const exemplarTraceIdDestination of destinations) {
+        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
+        if (traceIDField) {
+          const links = getDataLinks(exemplarTraceIdDestination);
+          traceIDField.config.links = traceIDField.config.links?.length
+            ? [...traceIDField.config.links, ...links]
+            : links;
+        }
+      }
+    }
+
+    return { ...dataFrame, meta: { ...dataFrame.meta, dataTopic: DataTopic.Annotations } };
+  });
+
+  // Everything else is processed as time_series result and graph preferredVisualisationType
+  const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {
+    const df = {
+      ...dataFrame,
+      meta: {
+        ...dataFrame.meta,
+        preferredVisualisationType: 'graph',
+      },
+    } as DataFrame;
+    return df;
+  });
+
+  return {
+    ...response,
+    data: [...otherFrames, ...processedTableFrames, ...processedHeatmapFrames, ...processedExemplarFrames],
+  };
+}
+
+export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
+  // If no dataFrames or if 1 dataFrames with no values, return original dataFrame
+  if (dfs.length === 0 || (dfs.length === 1 && dfs[0].length === 0)) {
+    return dfs;
+  }
+
+  // Group results by refId and process dataFrames with the same refId as 1 dataFrame
+  const dataFramesByRefId = groupBy(dfs, 'refId');
+
+  const frames = Object.keys(dataFramesByRefId).map((refId) => {
+    // Create timeField, valueField and labelFields
+    const valueText = getValueText(dfs.length, refId);
+    const valueField = getValueField({ data: [], valueName: valueText });
+    const timeField = getTimeField([]);
+    const labelFields: MutableField[] = [];
+
+    // Fill labelsFields with labels from dataFrames
+    dataFramesByRefId[refId].forEach((df) => {
+      const frameValueField = df.fields[1];
+      const promLabels = frameValueField.labels ?? {};
+
+      Object.keys(promLabels)
+        .sort()
+        .forEach((label) => {
+          // If we don't have label in labelFields, add it
+          if (!labelFields.some((l) => l.name === label)) {
+            const numberField = label === 'le';
+            labelFields.push({
+              name: label,
+              config: { filterable: true },
+              type: numberField ? FieldType.number : FieldType.string,
+              values: new ArrayVector(),
+            });
+          }
+        });
+    });
+
+    // Fill valueField, timeField and labelFields with values
+    dataFramesByRefId[refId].forEach((df) => {
+      df.fields[0].values.toArray().forEach((value) => timeField.values.add(value));
+      df.fields[1].values.toArray().forEach((value) => {
+        valueField.values.add(parseSampleValue(value));
+        const labelsForField = df.fields[1].labels ?? {};
+        labelFields.forEach((field) => field.values.add(getLabelValue(labelsForField, field.name)));
+      });
+    });
+
+    const fields = [timeField, ...labelFields, valueField];
+    return {
+      refId,
+      fields,
+      meta: { ...dfs[0].meta, preferredVisualisationType: 'table' as PreferredVisualisationType },
+      length: timeField.values.length,
+    };
+  });
+  return frames;
+}
+
+function getValueText(responseLength: number, refId = '') {
+  return responseLength > 1 ? `Value #${refId}` : 'Value';
 }
 
 export function transform(
@@ -89,7 +227,7 @@ export function transform(
     // Add data links if configured
     if (transformOptions.exemplarTraceIdDestinations?.length) {
       for (const exemplarTraceIdDestination of transformOptions.exemplarTraceIdDestinations) {
-        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination!.name);
+        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
         if (traceIDField) {
           const links = getDataLinks(exemplarTraceIdDestination);
           traceIDField.config.links = traceIDField.config.links?.length

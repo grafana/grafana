@@ -3,11 +3,16 @@ import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { AlertList } from './AlertList';
 import { UnifiedAlertList } from './UnifiedAlertList';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { AlertListOptions, UnifiedAlertListOptions, ShowOption, SortOrder } from './types';
+import { AlertListOptions, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { config } from '@grafana/runtime';
 import { RuleFolderPicker } from 'app/features/alerting/unified/components/rule-editor/RuleFolderPicker';
+import {
+  ALL_FOLDER,
+  GENERAL_FOLDER,
+  ReadonlyFolderPicker,
+} from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
+import { AlertListSuggestionsSupplier } from './suggestions';
 
 function showIfCurrentState(options: AlertListOptions) {
   return options.showOptions === ShowOption.Current;
@@ -74,13 +79,12 @@ const alertList = new PanelPlugin<AlertListOptions>(AlertList)
         name: 'Folder',
         id: 'folderId',
         defaultValue: null,
-        editor: function RenderFolderPicker(props) {
+        editor: function RenderFolderPicker({ value, onChange }) {
           return (
-            <FolderPicker
-              initialFolderId={props.value}
-              initialTitle="All"
-              enableReset={true}
-              onChange={({ id }) => props.onChange(id)}
+            <ReadonlyFolderPicker
+              initialFolderId={value}
+              onChange={(folder) => onChange(folder?.id)}
+              extraFolders={[ALL_FOLDER, GENERAL_FOLDER]}
             />
           );
         },
@@ -142,7 +146,8 @@ const alertList = new PanelPlugin<AlertListOptions>(AlertList)
         showIf: showIfCurrentState,
       });
   })
-  .setMigrationHandler(alertListPanelMigrationHandler);
+  .setMigrationHandler(alertListPanelMigrationHandler)
+  .setSuggestionsSupplier(new AlertListSuggestionsSupplier());
 
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertList).setPanelOptions((builder) => {
   builder
@@ -223,4 +228,4 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     });
 });
 
-export const plugin = config.featureToggles.ngalert ? unifiedAlertList : alertList;
+export const plugin = config.unifiedAlertingEnabled ? unifiedAlertList : alertList;

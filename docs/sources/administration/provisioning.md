@@ -154,7 +154,7 @@ Since not all datasources have the same configuration settings we only have the 
 | maxSeries               | number  | Influxdb                                                         | Max number of series/tables that Grafana processes                                                                                                |
 | httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to POST                                                                                                      |
 | customQueryParameters   | string  | Prometheus                                                       | Query parameters to add, as a URL-encoded string.                                                                                                 |
-| manageAlerts            | boolean | Prometheus and Loki                                               | Manage alerts via Alerting UI                                                                                                      |
+| manageAlerts            | boolean | Prometheus and Loki                                              | Manage alerts via Alerting UI                                                                                                                     |
 | esVersion               | string  | Elasticsearch                                                    | Elasticsearch version (E.g. `7.0.0`, `7.6.1`)                                                                                                     |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                                                                      |
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly'                                                       |
@@ -185,6 +185,7 @@ Since not all datasources have the same configuration settings we only have the 
 | maxOpenConns            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of open connections to the database (Grafana v5.4+)                                                                                |
 | maxIdleConns            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of connections in the idle connection pool (Grafana v5.4+)                                                                         |
 | connMaxLifetime         | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+)                                                                      |
+| keepCookies             | array   | _All_                                                            | Cookies that needs to be passed along while communicating with datasources                                                                        |
 
 #### Secure Json Data
 
@@ -445,11 +446,12 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `discord`
 
-| Name       | Secure setting |
-| ---------- | -------------- |
-| url        | yes            |
-| avatar_url |                |
-| content    |                |
+| Name                 | Secure setting |
+| -------------------- | -------------- |
+| url                  | yes            |
+| avatar_url           |                |
+| content              |                |
+| use_discord_username |                |
 
 #### Alert notification `slack`
 

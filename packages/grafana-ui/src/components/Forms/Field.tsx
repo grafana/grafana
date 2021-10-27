@@ -29,6 +29,12 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   validationMessageHorizontalOverflow?: boolean;
 
   className?: string;
+  /**
+   *  A unique id that associates the label of the Field component with the control with the unique id.
+   *  If the `htmlFor` property is missing the `htmlFor` will be inferred from the `id` or `inputId` property of the first child.
+   *  https://developer.mozilla.org/en-US/docs/Web/HTML/Element/label#attr-for
+   */
+  htmlFor?: string;
 }
 
 export const getFieldStyles = stylesFactory((theme: GrafanaTheme2) => {
@@ -72,11 +78,12 @@ export const Field: React.FC<FieldProps> = ({
   children,
   className,
   validationMessageHorizontalOverflow,
+  htmlFor,
   ...otherProps
 }) => {
   const theme = useTheme2();
   const styles = getFieldStyles(theme);
-  const inputId = getChildId(children);
+  const inputId = htmlFor ?? getChildId(children);
 
   const labelElement =
     typeof label === 'string' ? (
