@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, CSSProperties } from 'react';
+import React, { CSSProperties, PureComponent } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import classNames from 'classnames';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -128,22 +128,24 @@ export class DashboardGrid extends PureComponent<Props, State> {
       return true;
     }
 
-    const scrollTop = this.props.scrollTop;
-    const panelTop = panel.gridPos.y * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
-    const panelBottom = panelTop + panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
-
-    // Show things that are almost in the view
-    const buffer = 100;
-
-    // The panel is above the viewport
-    if (scrollTop > panelBottom + buffer) {
+    const panelElement = document.querySelector(`div[data-panelid="${panel.id}"]`);
+    if (!panelElement) {
       return false;
     }
 
-    const scrollViewBottom = scrollTop + this.windowHeight;
+    // Show things that are almost in the view
+    const buffer = 100;
+    const boundingRect = panelElement.getBoundingClientRect();
+
+    // The panel is above the viewport
+    if (boundingRect.bottom + buffer < 0) {
+      return false;
+    }
+
+    const scrollViewBottom = (window.innerHeight || document.documentElement.clientHeight) + buffer;
 
     // Panel is below view
-    if (panelTop > scrollViewBottom + buffer) {
+    if (boundingRect.top > scrollViewBottom) {
       return false;
     }
 
