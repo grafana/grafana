@@ -171,7 +171,8 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	// Now, lets re-set external Alertmanagers for the other organisation.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			Alertmanagers: []string{fakeAM3.URL()},
+			Alertmanagers:       []string{fakeAM3.URL()},
+			AlertmanagersChoice: apimodels.AllAlertmanagers,
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
