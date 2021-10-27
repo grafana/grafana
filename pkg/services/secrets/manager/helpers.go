@@ -3,7 +3,6 @@ package manager
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -36,7 +35,6 @@ func setupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 
 	return ProvideSecretsService(
 		store,
-		bus.New(),
 		ossencryption.ProvideService(),
 		settings,
 	)

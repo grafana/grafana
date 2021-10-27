@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	grafana "github.com/grafana/grafana/pkg/services/secrets/defaultprovider"
@@ -20,7 +19,6 @@ const defaultProvider = "secretKey"
 
 type SecretsService struct {
 	store    secrets.Store
-	bus      bus.Bus
 	enc      encryption.Service
 	settings setting.Provider
 
@@ -29,14 +27,13 @@ type SecretsService struct {
 	dataKeyCache    map[string]dataKeyCacheItem
 }
 
-func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Service, settings setting.Provider) *SecretsService {
+func ProvideSecretsService(store secrets.Store, enc encryption.Service, settings setting.Provider) *SecretsService {
 	providers := map[string]secrets.Provider{
 		defaultProvider: grafana.New(settings, enc),
 	}
 
 	s := &SecretsService{
 		store:           store,
-		bus:             bus,
 		enc:             enc,
 		settings:        settings,
 		defaultProvider: defaultProvider,
