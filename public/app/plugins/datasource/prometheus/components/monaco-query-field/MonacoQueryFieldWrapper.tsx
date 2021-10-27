@@ -5,12 +5,12 @@ import { Props as MonacoProps } from './MonacoQueryFieldProps';
 type Props = Omit<MonacoProps, 'onRunQuery' | 'onBlur'> & {
   onChange: (query: string) => void;
   onRunQuery: () => void;
-  isExplore: boolean;
+  runQueryOnBlur: boolean;
 };
 
 export const MonacoQueryFieldWrapper = (props: Props) => {
   const lastRunValueRef = useRef<string | null>(null);
-  const { isExplore, onRunQuery, onChange, ...rest } = props;
+  const { runQueryOnBlur, onRunQuery, onChange, ...rest } = props;
 
   const handleRunQuery = (value: string) => {
     lastRunValueRef.current = value;
@@ -19,13 +19,13 @@ export const MonacoQueryFieldWrapper = (props: Props) => {
   };
 
   const handleBlur = (value: string) => {
-    if (isExplore) {
-      onChange(value);
-    } else {
+    if (runQueryOnBlur) {
       // run handleRunQuery only if the current value is different from the last-time-executed value
       if (value !== lastRunValueRef.current) {
         handleRunQuery(value);
       }
+    } else {
+      onChange(value);
     }
   };
 

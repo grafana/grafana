@@ -299,7 +299,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
                   {isMonacoEditorEnabled ? (
                     <MonacoQueryFieldWrapper
-                      isExplore={this.props.app === CoreApp.Explore}
+                      runQueryOnBlur={this.props.app !== CoreApp.Explore}
                       languageProvider={languageProvider}
                       history={history}
                       onChange={this.onChangeQuery}
