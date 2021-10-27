@@ -36,11 +36,7 @@ module.exports = function getBabelConfig(options = {}) {
           allowDeclareFields: true,
         },
       ],
-      ['@babel/plugin-proposal-object-rest-spread', { loose: true }],
       '@babel/plugin-transform-react-constant-elements',
-      '@babel/plugin-proposal-nullish-coalescing-operator',
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
       'angularjs-annotate',
     ],
   };
