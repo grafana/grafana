@@ -24,6 +24,7 @@ Use [Homebrew](http://brew.sh/) to install the most recent released version of G
    ```
 
    The brew page downloads and untars the files into:
+
    - `/usr/local/Cellar/grafana/[version]` (if using Homebrew v2)
    - `/opt/homebrew/Cellar/grafana/[version]` (Homebrew v3)
 
