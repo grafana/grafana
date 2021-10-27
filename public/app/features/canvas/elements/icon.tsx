@@ -82,7 +82,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: IconConfig) => {
     let path: string | undefined = undefined;
-    if (cfg?.path) {
+    if (cfg.path) {
       path = ctx.getResource(cfg.path).value();
     }
     if (!path || !isString(path)) {
@@ -91,10 +91,10 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
     const data: IconData = {
       path,
-      fill: cfg?.fill ? ctx.getColor(cfg.fill).value() : '#CCC',
+      fill: cfg.fill ? ctx.getColor(cfg.fill).value() : '#CCC',
     };
 
-    if (cfg?.stroke?.width && cfg?.stroke.color) {
+    if (cfg.stroke?.width && cfg.stroke.color) {
       if (cfg.stroke.width > 0) {
         data.stroke = cfg.stroke?.width;
         data.strokeColor = ctx.getColor(cfg.stroke.color).value();

@@ -87,7 +87,6 @@ export class CanvasPanel extends Component<Props, State> {
   // NOTE, all changes to the scene flow through this function
   // even the editor gets current state from the same scene instance!
   onUpdateScene = (root: CanvasGroupOptions) => {
-    console.log('onUpdateScene being called at Cpanel level');
     const { onOptionsChange, options } = this.props;
     onOptionsChange({
       ...options,

@@ -72,7 +72,6 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
           type: layer.id,
         };
       }
-      // const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultConfig, ...options?.config } };
       const ctx = { ...context, options: currentOptions };
 
       if (layer.registerOptionsUI) {
