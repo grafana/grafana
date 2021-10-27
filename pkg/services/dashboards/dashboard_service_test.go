@@ -264,7 +264,6 @@ func TestDashboardService(t *testing.T) {
 				require.True(t, result.deleteWasCalled)
 			})
 		})
-
 	})
 }
 
