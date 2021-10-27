@@ -34,29 +34,31 @@ export function VisualizationPreview({ data, suggestion, onChange, width, showTi
   }
 
   return (
-    <button
-      aria-label={suggestion.name}
-      className={styles.vizBox}
-      data-testid={selectors.components.VisualizationPreview.card(suggestion.name)}
-      style={outerStyles}
-      onClick={onClick}
-    >
+    <div>
       {showTitle && <div className={styles.name}>{suggestion.name}</div>}
-      <Tooltip content={suggestion.name}>
-        <div style={innerStyles} className={styles.renderContainer}>
-          <PanelRenderer
-            title=""
-            data={data}
-            pluginId={suggestion.pluginId}
-            width={renderWidth}
-            height={renderHeight}
-            options={preview.options}
-            fieldConfig={preview.fieldConfig}
-          />
-          <div className={styles.hoverPane} />
-        </div>
-      </Tooltip>
-    </button>
+      <button
+        aria-label={suggestion.name}
+        className={styles.vizBox}
+        data-testid={selectors.components.VisualizationPreview.card(suggestion.name)}
+        style={outerStyles}
+        onClick={onClick}
+      >
+        <Tooltip content={suggestion.name}>
+          <div style={innerStyles} className={styles.renderContainer}>
+            <PanelRenderer
+              title=""
+              data={data}
+              pluginId={suggestion.pluginId}
+              width={renderWidth}
+              height={renderHeight}
+              options={preview.options}
+              fieldConfig={preview.fieldConfig}
+            />
+            <div className={styles.hoverPane} />
+          </div>
+        </Tooltip>
+      </button>
+    </div>
   );
 }
 
