@@ -6,7 +6,7 @@ weight = 116
 
 # Evaluating Grafana managed alerts
 
-This topic describes Grafana managed alerts are evaluated by the backend engine. It also discusses how Grafana handles alerting on numeric instead of time series data.
+This topic describes how Grafana managed alerts are evaluated by the backend engine as well as how Grafana handles alerting on numeric rather than time series data.
 
 - [Alert evaluation](#alert-evaluation)
 - [Alerting on numeric data](#alerting-on-numeric-data)
