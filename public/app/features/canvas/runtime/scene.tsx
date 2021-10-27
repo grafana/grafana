@@ -201,6 +201,14 @@ export class Scene {
         });
         this.moved.next(Date.now()); // TODO only on end
       })
+      .on('dragEnd', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement && targetedElement.parent) {
+          const parent = targetedElement.parent;
+          targetedElement.updateSize(parent.width, parent.height);
+        }
+      })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyResize(event);
