@@ -1,13 +1,15 @@
 import React, { FormEvent, HTMLProps, MutableRefObject } from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2, getInputStyles, sharedInputStyle, DropdownIndicator, focusCss } from '@grafana/ui';
+import { useStyles2, getInputStyles, sharedInputStyle, DropdownIndicator, focusCss, Tooltip } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { ValueContainer } from './ValueContainer';
+import { Role } from '../../../types';
 
 interface InputProps extends HTMLProps<HTMLInputElement> {
-  role?: string;
+  appliedRoles: Role[];
+  builtInRole: string;
+  builtInRoles: Role[];
   query: string;
-  numberOfRoles?: number;
   isFocused?: boolean;
   disabled?: boolean;
   onQueryChange: (query?: string) => void;
@@ -16,7 +18,10 @@ interface InputProps extends HTMLProps<HTMLInputElement> {
 }
 
 export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ role, disabled, isFocused, query, numberOfRoles, onOpen, onClose, onQueryChange, ...rest }, ref) => {
+  (
+    { appliedRoles, builtInRole, builtInRoles, disabled, isFocused, query, onOpen, onClose, onQueryChange, ...rest },
+    ref
+  ) => {
     const styles = useStyles2((theme) => getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false));
 
     const onInputClick = (event: FormEvent<HTMLElement>) => {
@@ -36,9 +41,28 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>(
       onQueryChange(query);
     };
 
+    const numberOfRoles = appliedRoles.length;
+
     return (
       <div className={styles.wrapper} onMouseDown={onInputClick}>
-        <ValueContainer iconName={'user'}>{role}</ValueContainer>
+        <Tooltip
+          content={
+            <>
+              {builtInRoles.map((role) => (
+                <p key={role.uid}>{role.displayName}</p>
+              ))}
+            </>
+          }
+        >
+          <div>
+            <ValueContainer iconName={'user'}>{builtInRole}</ValueContainer>
+          </div>
+        </Tooltip>
+        {appliedRoles.map((role) => (
+          <ValueContainer key={role.uid} iconName={'user'}>
+            {role.displayName}
+          </ValueContainer>
+        ))}
         {!!numberOfRoles && <ValueContainer>{`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}</ValueContainer>}
         {!disabled && (
           <input

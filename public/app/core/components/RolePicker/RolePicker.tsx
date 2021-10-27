@@ -5,8 +5,8 @@ import { RolePickerInput } from './RolePickerInput';
 import { Role } from 'app/types';
 
 export interface Props {
-  builtinRole: string;
-  getRoles: () => Promise<string[]>;
+  builtInRole: string;
+  getRoles: () => Promise<Role[]>;
   getRoleOptions: () => Promise<Role[]>;
   getBuiltinRoles: () => Promise<{ [key: string]: Role[] }>;
   onRolesChange: (newRoles: string[]) => void;
@@ -15,35 +15,43 @@ export interface Props {
 }
 
 export const RolePicker = ({
-  builtinRole,
+  builtInRole,
   getRoles,
   getRoleOptions,
   getBuiltinRoles,
   onRolesChange,
   onBuiltinRoleChange,
   disabled,
-}: Props): JSX.Element => {
+}: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [appliedRoles, setAppliedRoles] = useState<string[]>([]);
-  const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
+  const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
+  const [builtInRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [query, setQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     async function fetchOptions() {
-      let options = await getRoleOptions();
-      setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
+      try {
+        let options = await getRoleOptions();
+        setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
 
-      const roles = await getRoles();
-      setAppliedRoles(roles);
+        const roles = await getRoles();
+        setAppliedRoles(roles);
 
-      const builtinRoles = await getBuiltinRoles();
-      setBuiltinRoles(builtinRoles);
+        const builtInRoles = await getBuiltinRoles();
+        setBuiltinRoles(builtInRoles);
+      } catch (e) {
+        // TODO handle error
+        console.error('Error loading options');
+      } finally {
+        setIsLoading(false);
+      }
     }
 
     fetchOptions();
-  }, [getRoles, getRoleOptions, getBuiltinRoles, builtinRole]);
+  }, [getRoles, getRoleOptions, getBuiltinRoles, builtInRole]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -73,10 +81,6 @@ export const RolePicker = ({
     onRolesChange(newRoles);
   };
 
-  const appliedRolesCount = roleOptions.filter((option) => {
-    return option.uid && appliedRoles.includes(option.uid) && !option.name?.startsWith('fixed:');
-  }).length;
-
   const getOptions = () => {
     if (query) {
       return roleOptions.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()));
@@ -84,25 +88,36 @@ export const RolePicker = ({
     return roleOptions;
   };
 
+  // Remove from applied roles the roles inherited from built in role
+  const getAppliedRoles = () => {
+    const builtInUids = builtInRoles[builtInRole].map((r) => r.uid);
+    return appliedRoles.filter((role) => !builtInUids.includes(role.uid));
+  };
+
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <div data-testid="role-picker" style={{ position: 'relative' }}>
       <ClickOutsideWrapper onClick={onClose}>
         <RolePickerInput
-          role={builtinRole}
+          builtInRole={builtInRole}
+          builtInRoles={builtInRoles[builtInRole]}
+          appliedRoles={getAppliedRoles()}
           query={query}
           onQueryChange={onInputChange}
           onOpen={onOpen}
           onClose={onClose}
           isFocused={isOpen}
-          numberOfRoles={appliedRolesCount}
           ref={inputRef}
           disabled={disabled}
         />
         {isOpen && (
           <RolePickerMenu
             options={getOptions()}
-            builtInRole={builtinRole}
-            builtInRoles={builtinRoles}
+            builtInRole={builtInRole}
+            builtInRoles={builtInRoles}
             appliedRoles={appliedRoles}
             onUpdate={onUpdate}
             onClose={onClose}

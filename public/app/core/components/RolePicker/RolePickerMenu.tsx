@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { FormEvent, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { Button, Checkbox, CustomScrollbar, HorizontalGroup, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -6,14 +6,13 @@ import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyl
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { Role } from 'app/types';
 
-type RoleMap = { [key: string]: Role };
 type BuiltInRoles = { [key: string]: Role[] };
 
 interface RolePickerMenuProps {
   builtInRole: string;
   builtInRoles: BuiltInRoles;
   options: Role[];
-  appliedRoles: string[];
+  appliedRoles: Role[];
   onUpdate: (newBuiltInRole: string, newRoles: string[]) => void;
   onClose: () => void;
   onClear?: () => void;
@@ -29,25 +28,14 @@ export const RolePickerMenu = ({
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
-  const [selectedOptions, setSelectedOptions] = useState<RoleMap>({});
+  const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState(builtInRole);
 
-  useEffect(() => {
-    const initialSelectedOptions: RoleMap = {};
-    for (const option of options) {
-      if (appliedRoles.includes(option.uid)) {
-        initialSelectedOptions[option.uid] = option;
-      }
-    }
-    setSelectedOptions(initialSelectedOptions);
-  }, [appliedRoles, options]);
-
   const onSelect = (option: Role) => {
-    if (selectedOptions[option.uid]) {
-      const { [option.uid]: deselected, ...restOptions } = selectedOptions;
-      setSelectedOptions(restOptions);
+    if (selectedOptions.find((role) => role.uid === option.uid)) {
+      setSelectedOptions(selectedOptions.filter((role) => role.uid !== option.uid));
     } else {
-      setSelectedOptions({ ...selectedOptions, [option.uid]: option });
+      setSelectedOptions([...selectedOptions, option]);
     }
   };
 
@@ -59,7 +47,7 @@ export const RolePickerMenu = ({
     if (onClear) {
       onClear();
     }
-    setSelectedOptions({});
+    setSelectedOptions([]);
   };
 
   const onUpdateInternal = () => {
@@ -87,7 +75,7 @@ export const RolePickerMenu = ({
                 <RoleMenuOption
                   data={option}
                   key={i}
-                  isSelected={!!(option.uid && selectedOptions[option.uid])}
+                  isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                   onSelect={onSelect}
                 />
               ))}
@@ -102,7 +90,7 @@ export const RolePickerMenu = ({
                 <RoleMenuOption
                   data={option}
                   key={i}
-                  isSelected={!!(option.uid && selectedOptions[option.uid])}
+                  isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                   onSelect={onSelect}
                   hideDescription
                 />
