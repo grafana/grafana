@@ -103,6 +103,7 @@ export class GroupState extends ElementState {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
+        this.scene.save();
         this.reinitializeMoveable();
         break;
       case LayerActionID.Duplicate:
@@ -128,6 +129,7 @@ export class GroupState extends ElementState {
         copy.updateSize(element.width, element.height);
         copy.updateData(this.scene.context);
         this.elements.push(copy);
+        this.scene.save();
         this.reinitializeMoveable();
         break;
       default:
