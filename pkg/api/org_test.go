@@ -58,6 +58,7 @@ func TestAPIEndpoint_CreateOrgs_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
+	sc.initCtx.SignedInUser.IsGrafanaAdmin = false
 	setting.AllowUserOrgCreate = true
 	input = strings.NewReader(fmt.Sprintf(testCreateOrgCmd, 4))
 	t.Run("User viewer can create Orgs when AllowUserOrgCreate setting is true", func(t *testing.T) {
