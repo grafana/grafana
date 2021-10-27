@@ -275,8 +275,8 @@ export const importQueries = (
       importedQueries = queries.map(({ datasource, ...query }) => query);
     } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
       importedQueries = queries.map((query) => {
-        const labelBasedQuery = sourceDataSource.toLabelBasedQuery(query);
-        return targetDataSource.fromLabelBasedQuery(labelBasedQuery);
+        const labelBasedQuery = sourceDataSource.exportToAbstractQuery(query);
+        return targetDataSource.importAbstractQuery(labelBasedQuery);
       });
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers

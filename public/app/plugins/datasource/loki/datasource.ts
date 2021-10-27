@@ -22,7 +22,7 @@ import {
   dateMath,
   DateTime,
   FieldCache,
-  LabelBasedQuery,
+  AbstractQuery,
   LoadingState,
   LogRowModel,
   QueryResultMeta,
@@ -335,11 +335,11 @@ export class LokiDatasource
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
-  fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): LokiQuery {
+  importAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
     return toPromLikeQuery(labelBasedQuery);
   }
 
-  toLabelBasedQuery(query: LokiQuery): LabelBasedQuery {
+  exportToAbstractQuery(query: LokiQuery): AbstractQuery {
     return fromPromLikeQuery(query);
   }
 

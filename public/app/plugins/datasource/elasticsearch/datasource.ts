@@ -16,7 +16,7 @@ import {
   dateTime,
   Field,
   getDefaultTimeRange,
-  LabelBasedQuery,
+  AbstractQuery,
   LogRowModel,
   MetricFindValue,
   ScopedVars,
@@ -163,7 +163,7 @@ export class ElasticDatasource
   /**
    * Queries are transformed to an ES Logs query since it's the behaviour most users expect.
    **/
-  fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): ElasticsearchQuery {
+  importAbstractQuery(labelBasedQuery: AbstractQuery): ElasticsearchQuery {
     return {
       metrics: [
         {
@@ -171,7 +171,7 @@ export class ElasticDatasource
           type: 'logs',
         },
       ],
-      query: this.languageProvider.getElasticsearchQuery(labelBasedQuery.selectors),
+      query: this.languageProvider.getElasticsearchQuery(labelBasedQuery.labelMatchers),
       refId: labelBasedQuery.refId,
     };
   }

@@ -9,9 +9,9 @@ import {
   DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
-  LabelBasedQuery,
-  LabelComparator,
-  LabelSelector,
+  AbstractQuery,
+  AbstractLabelOperator,
+  AbstractLabelMatcher,
   MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
@@ -39,10 +39,10 @@ import { reduceError } from './utils';
 import { default as GraphiteQueryModel } from './graphite_query';
 
 const GRAPHITE_TO_COMPARATORS = {
-  '=': LabelComparator.Equal,
-  '!=': LabelComparator.NotEqual,
-  '=~': LabelComparator.EqualRegEx,
-  '!=~': LabelComparator.NotEqualRegEx,
+  '=': AbstractLabelOperator.Equal,
+  '!=': AbstractLabelOperator.NotEqual,
+  '=~': AbstractLabelOperator.EqualRegEx,
+  '!=~': AbstractLabelOperator.NotEqualRegEx,
 };
 
 /**
@@ -113,7 +113,7 @@ export class GraphiteDatasource
     };
   }
 
-  toLabelBasedQuery(query: GraphiteQuery): LabelBasedQuery {
+  exportToAbstractQuery(query: GraphiteQuery): AbstractQuery {
     const graphiteQuery: GraphiteQueryModel = new GraphiteQueryModel(
       this,
       {
@@ -125,15 +125,15 @@ export class GraphiteDatasource
     );
     graphiteQuery.parseTarget();
 
-    let labels: LabelSelector[] = [];
+    let labels: AbstractLabelMatcher[] = [];
     const config = this.getImportQueryConfiguration().loki;
 
     if (graphiteQuery.seriesByTagUsed) {
       graphiteQuery.tags.forEach((tag) => {
         labels.push({
-          labelName: tag.key,
-          labelComparator: GRAPHITE_TO_COMPARATORS[tag.operator],
-          labelValue: tag.value,
+          name: tag.key,
+          operator: GRAPHITE_TO_COMPARATORS[tag.operator],
+          value: tag.value,
         });
       });
     } else {
@@ -153,9 +153,9 @@ export class GraphiteDatasource
 
             const converted = convertGlobToRegEx(value);
             labels.push({
-              labelName: matcher.labelName,
-              labelComparator: converted !== value ? LabelComparator.EqualRegEx : LabelComparator.Equal,
-              labelValue: converted,
+              name: matcher.labelName,
+              operator: converted !== value ? AbstractLabelOperator.EqualRegEx : AbstractLabelOperator.Equal,
+              value: converted,
             });
             return true;
           }
@@ -166,7 +166,7 @@ export class GraphiteDatasource
 
     return {
       refId: query.refId,
-      selectors: labels,
+      labelMatchers: labels,
     };
   }
 

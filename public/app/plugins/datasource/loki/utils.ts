@@ -1,13 +1,13 @@
-import { DataQuery, LabelBasedQuery, LabelComparator, LabelSelector } from '@grafana/data';
+import { DataQuery, AbstractQuery, AbstractLabelOperator, AbstractLabelMatcher } from '@grafana/data';
 import Prism, { Token } from 'prismjs';
 import grammar from '../prometheus/promql';
 
-export function toPromLikeQuery(labelBasedQuery: LabelBasedQuery): PromLikeQuery {
-  const expr = labelBasedQuery.selectors
-    .map((selector: LabelSelector) => {
-      const operator = ToPromLikeMap[selector.labelComparator];
+export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
+  const expr = labelBasedQuery.labelMatchers
+    .map((selector: AbstractLabelMatcher) => {
+      const operator = ToPromLikeMap[selector.operator];
       if (operator) {
-        return `${selector.labelName}${operator}"${selector.labelValue}"`;
+        return `${selector.name}${operator}"${selector.value}"`;
       } else {
         return '';
       }
@@ -25,19 +25,19 @@ export interface PromLikeQuery extends DataQuery {
   expr: string;
 }
 
-export function fromPromLikeQuery(query: PromLikeQuery): LabelBasedQuery {
-  const labels: LabelSelector[] = [];
+export function fromPromLikeQuery(query: PromLikeQuery): AbstractQuery {
+  const labels: AbstractLabelMatcher[] = [];
   const promQuery = query.expr;
   if (!promQuery || promQuery.length === 0) {
-    return { refId: query.refId, selectors: labels };
+    return { refId: query.refId, labelMatchers: labels };
   }
   const tokens = Prism.tokenize(promQuery, grammar);
   const nameLabelValue = getNameLabelValue(promQuery, tokens);
   if (nameLabelValue && nameLabelValue.length > 0) {
     labels.push({
-      labelName: '__name__',
-      labelComparator: LabelComparator.Equal,
-      labelValue: nameLabelValue,
+      name: '__name__',
+      operator: AbstractLabelOperator.Equal,
+      value: nameLabelValue,
     });
   }
 
@@ -66,7 +66,7 @@ export function fromPromLikeQuery(query: PromLikeQuery): LabelBasedQuery {
                 labelValue = labelValue.substring(1, labelValue.length - 1);
                 const labelComparator = FromPromLikeMap[labelOperator];
                 if (labelComparator) {
-                  labels.push({ labelName: labelKey, labelComparator, labelValue });
+                  labels.push({ name: labelKey, operator: labelComparator, value: labelValue });
                 }
                 break;
             }
@@ -78,21 +78,21 @@ export function fromPromLikeQuery(query: PromLikeQuery): LabelBasedQuery {
 
   return {
     refId: query.refId,
-    selectors: labels,
+    labelMatchers: labels,
   };
 }
 
-const FromPromLikeMap: Record<string, LabelComparator> = {
-  '=': LabelComparator.Equal,
-  '!=': LabelComparator.NotEqual,
-  '=~': LabelComparator.EqualRegEx,
-  '!~': LabelComparator.NotEqualRegEx,
+const FromPromLikeMap: Record<string, AbstractLabelOperator> = {
+  '=': AbstractLabelOperator.Equal,
+  '!=': AbstractLabelOperator.NotEqual,
+  '=~': AbstractLabelOperator.EqualRegEx,
+  '!~': AbstractLabelOperator.NotEqualRegEx,
 };
-const ToPromLikeMap: Record<LabelComparator, string> = {
-  [LabelComparator.Equal]: '=',
-  [LabelComparator.NotEqual]: '!=',
-  [LabelComparator.EqualRegEx]: '=~',
-  [LabelComparator.NotEqualRegEx]: '!~',
+const ToPromLikeMap: Record<AbstractLabelOperator, string> = {
+  [AbstractLabelOperator.Equal]: '=',
+  [AbstractLabelOperator.NotEqual]: '!=',
+  [AbstractLabelOperator.EqualRegEx]: '=~',
+  [AbstractLabelOperator.NotEqualRegEx]: '!~',
 };
 
 function getNameLabelValue(promQuery: string, tokens: any): string {

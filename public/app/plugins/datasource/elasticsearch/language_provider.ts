@@ -1,4 +1,4 @@
-import { LabelComparator, LabelSelector, LanguageProvider } from '@grafana/data';
+import { AbstractLabelOperator, AbstractLabelMatcher, LanguageProvider } from '@grafana/data';
 
 import { ElasticDatasource } from './datasource';
 
@@ -14,21 +14,21 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  getElasticsearchQuery(labels: LabelSelector[]): string {
+  getElasticsearchQuery(labels: AbstractLabelMatcher[]): string {
     return labels
       .map((label) => {
-        switch (label.labelComparator) {
-          case LabelComparator.Equal: {
-            return label.labelName + ':"' + label.labelValue + '"';
+        switch (label.operator) {
+          case AbstractLabelOperator.Equal: {
+            return label.name + ':"' + label.value + '"';
           }
-          case LabelComparator.NotEqual: {
-            return 'NOT ' + label.labelName + ':"' + label.labelValue + '"';
+          case AbstractLabelOperator.NotEqual: {
+            return 'NOT ' + label.name + ':"' + label.value + '"';
           }
-          case LabelComparator.EqualRegEx: {
-            return label.labelName + ':/' + label.labelValue + '/';
+          case AbstractLabelOperator.EqualRegEx: {
+            return label.name + ':/' + label.value + '/';
           }
-          case LabelComparator.NotEqualRegEx: {
-            return 'NOT ' + label.labelName + ':/' + label.labelValue + '/';
+          case AbstractLabelOperator.NotEqualRegEx: {
+            return 'NOT ' + label.name + ':/' + label.value + '/';
           }
         }
       })

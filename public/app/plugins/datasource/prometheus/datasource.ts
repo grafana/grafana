@@ -13,7 +13,7 @@ import {
   DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
-  LabelBasedQuery,
+  AbstractQuery,
   LoadingState,
   rangeUtil,
   ScopedVars,
@@ -166,11 +166,11 @@ export class PrometheusDatasource
     return getBackendSrv().fetch<T>(options);
   }
 
-  fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): LokiQuery {
+  importAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
     return toPromLikeQuery(labelBasedQuery);
   }
 
-  toLabelBasedQuery(query: LokiQuery): LabelBasedQuery {
+  exportToAbstractQuery(query: LokiQuery): AbstractQuery {
     return fromPromLikeQuery(query);
   }
 
