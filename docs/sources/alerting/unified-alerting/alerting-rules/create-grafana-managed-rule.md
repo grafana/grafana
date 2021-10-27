@@ -15,8 +15,8 @@ Grafana allows you to create alerting rules that query one or more data sources,
 1. Click **New alert rule**.
 1. In Step 1, add the rule name, type, and storage location.
    - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
-   - From the **Rule type** drop down, select **Grafana managed alert**.
-   - From the **Folder** drop-down, select the folder where you want to store the rule. If you do not select a folder, the rule is stored in the General folder. To create a new folder, click the drop down and enter the new folder name.
+   - From the **Rule type** drop-down, select **Grafana managed alert**.
+   - From the **Folder** drop-down, select the folder where you want to store the rule. If you do not select a folder, the rule is stored in the General folder. To create a new folder, click the drop-down and enter the new folder name.
 1. In Step 2, add queries and expressions to evaluate.
    - Keep the default name or hover over and click the edit icon to change the name.
    - For queries, select a data source from the drop-down.
@@ -24,7 +24,7 @@ Grafana allows you to create alerting rules that query one or more data sources,
    - For each expression, select either **Classic condition** to create a single alert rule, or choose from **Math**, **Reduce**, **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
 1. In Step 3, add conditions.
-   - From the **Condition** drop down, select the query or expression to trigger the alert rule.
+   - From the **Condition** drop-down, select the query or expression to trigger the alert rule.
    - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
    - For **Evaluate for**, specify the duration for which the condition must be true before an alert fires.
      > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the Firing state, else it reverts back to the Normal state.

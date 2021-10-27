@@ -13,8 +13,8 @@ Alert groups show grouped alerts from an Alertmanager instance. By default, the 
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **Alert grouping** to open the page listing existing groups.
-1. From the **Alertmanager** drop down, select an external Alertmanager as your data source. By default, the `Grafana` Alertmanager is selected.
-1. From **custom group by** drop down, select a combination of labels to view a grouping other than the default. This is useful for debugging and verifying your grouping of notification policies.
+1. From the **Alertmanager** drop-down, select an external Alertmanager as your data source. By default, the `Grafana` Alertmanager is selected.
+1. From **custom group by** drop-down, select a combination of labels to view a grouping other than the default. This is useful for debugging and verifying your grouping of notification policies.
 
 If an alert does not contain labels specified either in the grouping of the root policy or the custom grouping, then the alert is added to a catch all group with a header of `No grouping`.
 

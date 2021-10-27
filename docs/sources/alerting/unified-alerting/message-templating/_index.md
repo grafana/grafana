@@ -28,7 +28,7 @@ The following example shows the use of a custom template within one of the conta
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
-1. From [Alertmanager]({{< relref "../contact-points.md/#alertmanager" >}}) drop down, select an external Alertmanager to create and manage templates for the external data source. Otherwise, keep the default option of Grafana.
+1. From [Alertmanager]({{< relref "../contact-points.md/#alertmanager" >}}) drop-down, select an external Alertmanager to create and manage templates for the external data source. Otherwise, keep the default option of Grafana.
    {{< figure max-width="250px" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select Alertmanager" >}}
 1. Click **Add template**.
 1. In **Name**, add a descriptive name.

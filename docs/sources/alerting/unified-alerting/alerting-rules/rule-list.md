@@ -41,7 +41,7 @@ State view shows alert rules grouped by state. Use this view to get an overview 
 
 To filter alerting rules:
 
-- From the **Select data sources** drop down, select a data source. You can see alerting rules that query the selected data source.
+- From the **Select data sources** drop-down, select a data source. You can see alerting rules that query the selected data source.
 - From the **Search by label**, enter search criteria using label selectors. For example, `environment=production,region=~US|EU,severity!=warning`.
 - From the **Filter alerts by state**, select an alerting state you want to see. You can see alerting rules that match the state. Rules matching other states are hidden.
 
