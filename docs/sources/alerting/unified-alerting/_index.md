@@ -13,12 +13,12 @@ When Grafana 8 alerting is enabled, you can:
 - [Create a Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
 - [Create a Cortex or Loki managed alerting rules]({{< relref "alerting-rules/create-cortex-loki-managed-rule.md" >}})
 - [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list.md" >}})
-- [View the state and health of alerting rules]({{< relref "./basics/state-and-health.md" >}})
+- [View the state and health of alerting rules]({{< relref "./fundamentals/state-and-health.md" >}})
 - [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})
 - [Add or edit notification policies]({{< relref "./notification-policies.md" >}})
 - [Add or edit silences]({{< relref "./silences.md" >}})
 
-Before you begin using Grafana 8 alerting, we recommend that you familiarize yourself with some [basic concepts]({{< relref "./basics/_index.md" >}}) of Grafana 8 alerting.
+Before you begin using Grafana 8 alerting, we recommend that you familiarize yourself with some [basic concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana 8 alerting.
 
 ## Limitations
 
