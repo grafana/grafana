@@ -129,7 +129,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
 }
 
 export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
-  const version = remote?.version || local?.info.version || '';
+  const version = local?.info.version || remote?.version || '';
   const hasUpdate =
     local?.hasUpdate || Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
   const id = remote?.slug || local?.id || '';
