@@ -40,7 +40,7 @@ func (f FakeSecretsService) GetDecryptedValue(_ context.Context, sjd map[string]
 	return fallback
 }
 
-func (f FakeSecretsService) CurrentProvider() string {
+func (f FakeSecretsService) CurrentProviderID() string {
 	return "fakeProvider"
 }
 

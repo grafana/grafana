@@ -7,7 +7,7 @@ import (
 )
 
 type Service interface {
-	CurrentProvider() string
+	CurrentProviderID() string
 	GetProviders() map[string]Provider
 	Encrypt(ctx context.Context, payload []byte, opt EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)

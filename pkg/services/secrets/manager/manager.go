@@ -248,7 +248,7 @@ func (s *SecretsService) RegisterProvider(providerID string, provider secrets.Pr
 	s.providers[providerID] = provider
 }
 
-func (s *SecretsService) CurrentProvider() string {
+func (s *SecretsService) CurrentProviderID() string {
 	return s.currentProvider
 }
 
