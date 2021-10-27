@@ -3,12 +3,13 @@
 const { merge } = require('webpack-merge');
 const common = require('./webpack.common.js');
 const path = require('path');
-const { DefinePlugin } = require('webpack');
+const { DefinePlugin, DllReferencePlugin } = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const getBabelConfig = require('./babel.config');
+const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = (env = {}) =>
@@ -47,6 +48,7 @@ module.exports = (env = {}) =>
 
     // https://webpack.js.org/guides/build-performance/#output-without-path-info
     output: {
+      clean: false,
       pathinfo: false,
       filename: '[name].js',
     },
@@ -82,13 +84,16 @@ module.exports = (env = {}) =>
               },
             },
           }),
-      // next major version of ForkTsChecker is dropping support for ESLint
       new ESLintPlugin({
         lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
         extensions: ['.ts', '.tsx'],
       }),
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[fullhash].css',
+      }),
+      new DllReferencePlugin({
+        manifest: path.join(__dirname, '../../public/build', 'vendor.json'),
+        name: 'vendor_dll',
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/error.html'),
@@ -104,6 +109,10 @@ module.exports = (env = {}) =>
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
+      }),
+      new AddAssetHtmlPlugin({
+        filepath: path.resolve(__dirname, '../../public/build/*.dll.js'),
+        hash: true,
       }),
       new DefinePlugin({
         'process.env': {
