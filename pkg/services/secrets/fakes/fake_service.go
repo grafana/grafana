@@ -45,7 +45,7 @@ func (f FakeSecretsService) CurrentProvider() string {
 }
 
 func (f FakeSecretsService) GetProviders() map[string]secrets.Provider {
-	return make(map[string]secrets.Provider, 0)
+	return make(map[string]secrets.Provider)
 }
 
 func (f FakeSecretsService) RegisterProvider(_ string, _ secrets.Provider) {}
