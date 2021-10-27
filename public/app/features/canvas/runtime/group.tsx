@@ -14,7 +14,9 @@ export const groupItemDummy: CanvasElementItem = {
   name: 'Group',
   description: 'Group',
 
-  defaultConfig: {},
+  getNewOptions: () => ({
+    config: {},
+  }),
 
   // eslint-disable-next-line react/display-name
   display: () => {

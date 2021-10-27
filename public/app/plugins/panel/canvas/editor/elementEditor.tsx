@@ -1,4 +1,4 @@
-import { cloneDeep, get as lodashGet } from 'lodash';
+import { get as lodashGet } from 'lodash';
 import { optionBuilder } from './options';
 import { CanvasElementOptions, canvasElementRegistry, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
@@ -32,9 +32,9 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
             return;
           }
           options = {
-            ...options, // keep current options
+            ...options,
+            ...layer.getNewOptions(options),
             type: layer.id,
-            config: cloneDeep(layer.defaultConfig ?? {}),
           };
         } else {
           options = setOptionImmutably(options, path, value);
@@ -65,7 +65,14 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
 
       // force clean layer configuration
       const layer = canvasElementRegistry.getIfExists(options?.type ?? DEFAULT_CANVAS_ELEMENT_CONFIG.type)!;
-      const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultConfig, ...options?.config } };
+      let currentOptions = options;
+      if (!currentOptions) {
+        currentOptions = {
+          ...layer.getNewOptions(options),
+          type: layer.id,
+        };
+      }
+      // const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultConfig, ...options?.config } };
       const ctx = { ...context, options: currentOptions };
 
       if (layer.registerOptionsUI) {

@@ -31,12 +31,6 @@ interface TextBoxData {
 }
 
 interface TextBoxConfig {
-  type: string;
-  background: { color: { fixed: string } };
-  config: {
-    align: Align;
-    valign: VAlign;
-  };
   text?: TextDimensionConfig;
   color?: ColorDimensionConfig;
   size?: number; // 0 or missing will "auto size"
@@ -77,21 +71,23 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
 
   display: TextBoxDisplay,
 
-  defaultConfig: {
-    type: 'text-box',
-    background: {
-      color: { fixed: 'grey' },
-    },
-    config: {
-      align: Align.Left,
-      valign: VAlign.Middle,
-    },
-  },
-
   defaultSize: {
     width: 240,
     height: 160,
   },
+
+  getNewOptions: (options) => ({
+    background: {
+      color: {
+        fixed: 'grey',
+      },
+    },
+    ...options,
+    config: {
+      align: Align.Left,
+      valign: VAlign.Middle,
+    },
+  }),
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: TextBoxConfig) => {

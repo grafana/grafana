@@ -8,7 +8,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { PanelOptions } from '../models.gen';
 import { InstanceState } from '../CanvasPanel';
 import { LayerActionID } from '../types';
-import { canvasElementRegistry } from 'app/features/canvas';
+import { CanvasElementOptions, canvasElementRegistry } from 'app/features/canvas';
 import appEvents from 'app/core/app_events';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
@@ -26,7 +26,9 @@ export class LayerElementListEditor extends PureComponent<Props> {
     const { layer } = settings;
 
     const item = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
-    const newElement = new ElementState(item, item.defaultConfig, layer);
+    const newElementOptions = item.getNewOptions() as CanvasElementOptions;
+    newElementOptions.type = item.id;
+    const newElement = new ElementState(item, newElementOptions, layer);
     newElement.updateSize(newElement.width, newElement.height);
     newElement.updateData(layer.scene.context);
     layer.elements.push(newElement);
