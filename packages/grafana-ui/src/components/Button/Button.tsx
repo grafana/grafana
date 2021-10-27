@@ -152,7 +152,9 @@ export const getButtonStyles = (props: StyleProps) => {
     `,
     icon: iconOnly
       ? css({
-          margin: theme.spacing(0, -padding / 2),
+          // Important not to set margin bottom here as it would override internal icon bottom margin
+          marginRight: theme.spacing(-padding / 2),
+          marginLeft: theme.spacing(-padding / 2),
         })
       : css({
           marginRight: theme.spacing(padding / 2),
