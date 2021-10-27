@@ -119,44 +119,44 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
         const vectorSource = new source.Vector({ features });
         vectorLayer.setSource(vectorSource);
       },
+      registerOptionsUI: (builder) => {
+        builder
+          .addCustomEditor({
+            id: 'config.labelText',
+            name: 'Text label',
+            path: 'config.labelText',
+            editor: TextDimensionEditor,
+          })
+          .addCustomEditor({
+            id: 'config.color',
+            path: 'config.color',
+            name: 'Text color',
+            editor: ColorDimensionEditor,
+            settings: {},
+          })
+          .addSliderInput({
+            path: 'config.fillOpacity',
+            name: 'Text opacity',
+            defaultValue: defaultOptions.fillOpacity,
+            settings: {
+              min: 0,
+              max: 1,
+              step: 0.1,
+            },
+          })
+          .addCustomEditor({
+            id: 'config.fontSize',
+            path: 'config.fontSize',
+            name: 'Text size',
+            editor: ScaleDimensionEditor,
+            settings: {
+              fixed: defaultOptions.fontSize.fixed,
+              min: defaultOptions.fontSize.min,
+              max: defaultOptions.fontSize.max,
+            },
+          });
+      },
     };
-  },
-  registerOptionsUI: (builder) => {
-    builder
-      .addCustomEditor({
-        id: 'config.labelText',
-        name: 'Text label',
-        path: 'config.labelText',
-        editor: TextDimensionEditor,
-      })
-      .addCustomEditor({
-        id: 'config.color',
-        path: 'config.color',
-        name: 'Text color',
-        editor: ColorDimensionEditor,
-        settings: {},
-      })
-      .addSliderInput({
-        path: 'config.fillOpacity',
-        name: 'Text opacity',
-        defaultValue: defaultOptions.fillOpacity,
-        settings: {
-          min: 0,
-          max: 1,
-          step: 0.1,
-        },
-      })
-      .addCustomEditor({
-        id: 'config.fontSize',
-        path: 'config.fontSize',
-        name: 'Text size',
-        editor: ScaleDimensionEditor,
-        settings: {
-          fixed: defaultOptions.fontSize.fixed,
-          min: defaultOptions.fontSize.min,
-          max: defaultOptions.fontSize.max,
-        },
-      });
   },
   defaultOptions,
 };

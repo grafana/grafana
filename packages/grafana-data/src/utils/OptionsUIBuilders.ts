@@ -16,6 +16,7 @@ import {
   UnitFieldConfigSettings,
   unitOverrideProcessor,
   FieldNamePickerConfigSettings,
+  StandardEditorContext,
 } from '../field';
 import { PanelOptionsSupplier } from '../panel/PanelPlugin';
 
@@ -133,6 +134,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
 export interface NestedValueAccess {
   getValue: (path: string) => any;
   onChange: (path: string, value: any) => void;
+  getContext?: (parent: StandardEditorContext<any, any>) => StandardEditorContext<any, any>;
 }
 export interface NestedPanelOptions<TSub = any> {
   path: string;
