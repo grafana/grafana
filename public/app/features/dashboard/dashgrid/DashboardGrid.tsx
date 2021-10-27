@@ -34,6 +34,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private windowHeight = 1200;
   private windowWidth = 1920;
   private gridWidth = 0;
+  /** Used to keep track of mobile panel layout position */
+  private lastPanelBottom = 0;
 
   constructor(props: Props) {
     super(props);
@@ -123,35 +125,52 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.updateGridPos(newItem, layout);
   };
 
-  isInView(panel: PanelModel) {
+  isInView(panel: PanelModel, gridWidth: number) {
     if (panel.isViewing || panel.isEditing) {
       return true;
     }
 
     const scrollTop = this.props.scrollTop;
-    const panelTop = panel.gridPos.y * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
-    const panelBottom = panelTop + panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+    const screenPos = this.getPanelScreenPos(panel, gridWidth);
 
     // Show things that are almost in the view
     const buffer = 100;
 
     // The panel is above the viewport
-    if (scrollTop > panelBottom + buffer) {
+    if (scrollTop > screenPos.bottom + buffer) {
       return false;
     }
 
     const scrollViewBottom = scrollTop + this.windowHeight;
 
     // Panel is below view
-    if (panelTop > scrollViewBottom + buffer) {
+    if (screenPos.top > scrollViewBottom + buffer) {
       return false;
     }
 
     return !this.props.dashboard.otherPanelInFullscreen(panel);
   }
 
+  getPanelScreenPos(panel: PanelModel, gridWidth: number): { top: number; bottom: number } {
+    let top = 0;
+
+    // mobile layout
+    if (gridWidth < 769) {
+      top = this.lastPanelBottom + GRID_CELL_VMARGIN;
+    } else {
+      top = panel.gridPos.y * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
+    }
+
+    this.lastPanelBottom = top + panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+
+    return { top, bottom: this.lastPanelBottom };
+  }
+
   renderPanels(gridWidth: number) {
     const panelElements = [];
+
+    // Reset last panel bottom
+    this.lastPanelBottom = 0;
 
     // This is to avoid layout re-flows, accessing window.innerHeight can trigger re-flow
     // We assume here that if width change height might have changed as well
@@ -165,7 +184,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
 
       // Update is in view state
-      panel.isInView = this.isInView(panel);
+      panel.isInView = this.isInView(panel, gridWidth);
 
       panelElements.push(
         <GrafanaGridItem
