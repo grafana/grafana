@@ -2,10 +2,6 @@ import React, { useRef } from 'react';
 import { MonacoQueryFieldLazy } from './MonacoQueryFieldLazy';
 import { Props as MonacoProps } from './MonacoQueryFieldProps';
 
-// NOTE: in not-explore modes we want to run the query on onBlur.
-
-// the props are mostly what is the inner monaco widget,
-// except the `on*` callbacks
 type Props = Omit<MonacoProps, 'onRunQuery' | 'onBlur'> & {
   onChange: (query: string) => void;
   onRunQuery: () => void;
