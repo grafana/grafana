@@ -12,13 +12,13 @@ func NewFakeSecretsService() FakeSecretsService {
 	return FakeSecretsService{}
 }
 
-func (f *FakeSecretsService) Encrypt(_ context.Context, payload []byte, _ secrets.EncryptionOptions) ([]byte, error) {
+func (f FakeSecretsService) Encrypt(_ context.Context, payload []byte, _ secrets.EncryptionOptions) ([]byte, error) {
 	return payload, nil
 }
-func (f *FakeSecretsService) Decrypt(_ context.Context, payload []byte) ([]byte, error) {
+func (f FakeSecretsService) Decrypt(_ context.Context, payload []byte) ([]byte, error) {
 	return payload, nil
 }
-func (f *FakeSecretsService) EncryptJsonData(_ context.Context, kv map[string]string, _ secrets.EncryptionOptions) (map[string][]byte, error) {
+func (f FakeSecretsService) EncryptJsonData(_ context.Context, kv map[string]string, _ secrets.EncryptionOptions) (map[string][]byte, error) {
 	result := make(map[string][]byte, len(kv))
 	for key, value := range kv {
 		result[key] = []byte(value)
@@ -26,26 +26,26 @@ func (f *FakeSecretsService) EncryptJsonData(_ context.Context, kv map[string]st
 	return result, nil
 }
 
-func (f *FakeSecretsService) DecryptJsonData(_ context.Context, sjd map[string][]byte) (map[string]string, error) {
+func (f FakeSecretsService) DecryptJsonData(_ context.Context, sjd map[string][]byte) (map[string]string, error) {
 	result := make(map[string]string, len(sjd))
 	for key, value := range sjd {
 		result[key] = string(value)
 	}
 	return result, nil
 }
-func (f *FakeSecretsService) GetDecryptedValue(_ context.Context, sjd map[string][]byte, key, fallback string) string {
+func (f FakeSecretsService) GetDecryptedValue(_ context.Context, sjd map[string][]byte, key, fallback string) string {
 	if value, ok := sjd[key]; ok {
 		return string(value)
 	}
 	return fallback
 }
 
-func (f *FakeSecretsService) CurrentProvider() string {
+func (f FakeSecretsService) CurrentProvider() string {
 	return "fakeProvider"
 }
 
-func (f *FakeSecretsService) GetProviders() map[string]secrets.Provider {
+func (f FakeSecretsService) GetProviders() map[string]secrets.Provider {
 	return make(map[string]secrets.Provider, 0)
 }
 
-func (f *FakeSecretsService) RegisterProvider(_ string, _ secrets.Provider) {}
+func (f FakeSecretsService) RegisterProvider(_ string, _ secrets.Provider) {}
