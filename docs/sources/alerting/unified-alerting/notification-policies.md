@@ -11,7 +11,10 @@ Notification policies determine how alerts are routed to contact points. Policie
 
 You can configure Grafana managed notification policies as well as notification policies for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./basics/alertmanager.md" >}}).
 
+
 ## Edit root notification policy
+
+> **Note:** Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organisations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organisation. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **Notification policies**.

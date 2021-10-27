@@ -24,6 +24,8 @@ The following example shows the use of a custom template within one of the conta
 
 ### Create a message template
 
+> **Note:** Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organisations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 alerts only if they have one organisation. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
+
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
 1. From [Alertmanager]({{< relref "../contact-points.md/#alertmanager" >}}) drop down, select an external Alertmanager to create and manage templates for the external data source. Otherwise, keep the default option of Grafana.
