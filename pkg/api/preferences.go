@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 const (
@@ -33,7 +34,7 @@ func GetUserPreferences(c *models.ReqContext) response.Response {
 func getPreferencesFor(orgID, userID, teamID int64) response.Response {
 	prefsQuery := models.GetPreferencesQuery{UserId: userID, OrgId: orgID, TeamId: teamID}
 
-	if err := bus.Dispatch(&prefsQuery); err != nil {
+	if err := sqlstore.GetPreferences(&prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
@@ -66,7 +67,7 @@ func updatePreferencesFor(orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsC
 		HomeDashboardId: dtoCmd.HomeDashboardID,
 	}
 
-	if err := bus.Dispatch(&saveCmd); err != nil {
+	if err := sqlstore.SavePreferences(&saveCmd); err != nil {
 		return response.Error(500, "Failed to save preferences", err)
 	}
 
