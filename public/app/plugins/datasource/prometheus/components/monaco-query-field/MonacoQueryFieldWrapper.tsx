@@ -5,8 +5,8 @@ import { Props as MonacoProps } from './MonacoQueryFieldProps';
 type Props = Omit<MonacoProps, 'onRunQuery' | 'onBlur'> & {
   onChange: (query: string) => void;
   onRunQuery: () => void;
-  onBlur?: () => void;
   isExplore: boolean;
+  onBlur?: () => void;
 };
 
 export const MonacoQueryFieldWrapper = (props: Props) => {
