@@ -128,7 +128,7 @@ func TestAPIEndpoint_DeleteOrgs_AccessControl(t *testing.T) {
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(deleteOrgsURL, 2), nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
-	t.Run("AccessControl prevents deleting Orgs with exact permissions", func(t *testing.T) {
+	t.Run("AccessControl allows deleting Orgs with exact permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsDelete, Scope: accesscontrol.Scope("orgs", "id", "3")}})
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(deleteOrgsURL, 3), nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
