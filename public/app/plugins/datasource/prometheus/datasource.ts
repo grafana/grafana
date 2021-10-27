@@ -36,6 +36,7 @@ import {
   PromOptions,
   PromQuery,
   PromQueryRequest,
+  PromQueryType,
   PromScalarData,
   PromVectorData,
 } from './types';
@@ -56,7 +57,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   withCredentials: any;
   metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
-  queryTimeout: string;
+  queryTimeout: string | undefined;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
@@ -80,7 +81,9 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'POST';
-    this.directUrl = instanceSettings.jsonData.directUrl;
+    // `directUrl` is never undefined, we set it at https://github.com/grafana/grafana/blob/main/pkg/api/frontendsettings.go#L108
+    // here we "fall back" to this.url to make typescript happy, but it should never happen
+    this.directUrl = instanceSettings.jsonData.directUrl ?? this.url;
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
@@ -307,6 +310,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
     const processedTarget = {
       ...target,
+      queryType: PromQueryType.timeSeriesQuery,
       exemplar: this.shouldRunExemplarQuery(target),
       requestId: request.panelId + target.refId,
       // We need to pass utcOffsetSec to backend to calculate aligned range
@@ -316,10 +320,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   }
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
-    // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
-    const shouldRunBackendQuery = this.access === 'proxy' && request.app === CoreApp.Explore;
-
-    if (shouldRunBackendQuery) {
+    if (this.access === 'proxy') {
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
       return super
         .query({ ...request, targets })
@@ -814,7 +815,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   async areExemplarsAvailable() {
     try {
       const res = await this.metadataRequest('/api/v1/query_exemplars', { query: 'test' });
-      if (res.statusText === 'OK') {
+      if (res.data.status === 'success') {
         return true;
       }
       return false;
@@ -895,6 +896,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
     return {
       ...target,
+      legendFormat: this.templateSrv.replace(target.legendFormat, variables),
       expr: this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
     };
   }

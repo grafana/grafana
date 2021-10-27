@@ -203,6 +203,7 @@ export const Components = {
   },
   FolderPicker: {
     container: 'Folder picker select container',
+    input: 'Select a folder',
   },
   ReadonlyFolderPicker: {
     container: 'data-testid Readonly folder picker select container',
@@ -217,6 +218,9 @@ export const Components = {
   },
   TimeZonePicker: {
     container: 'Time zone picker select container',
+  },
+  WeekStartPicker: {
+    container: 'Choose starting day of the week',
   },
   TraceViewer: {
     spanBar: () => '[data-test-id="SpanBar--wrapper"]',
@@ -257,5 +261,8 @@ export const Components = {
   },
   PanelAlertTabContent: {
     content: 'Unified alert editor tab content',
+  },
+  VisualizationPreview: {
+    card: (name: string) => `data-testid suggestion-${name}`,
   },
 };

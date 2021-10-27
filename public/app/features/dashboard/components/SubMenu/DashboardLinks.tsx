@@ -2,14 +2,14 @@ import React, { FC } from 'react';
 import { Icon, IconName, Tooltip, useForceUpdate } from '@grafana/ui';
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { DashboardLinksDashboard } from './DashboardLinksDashboard';
-import { getLinkSrv } from '../../../panel/panellinks/link_srv';
+import { getLinkSrv } from '../../../../angular/panel/panellinks/link_srv';
 
 import { DashboardModel } from '../../state';
 import { DashboardLink } from '../../state/DashboardModel';
 import { linkIconMap } from '../LinksSettings/LinkSettingsEdit';
 import { useEffectOnce } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
-import { TimeRangeUpdatedEvent } from 'app/types/events';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 
 export interface Props {
   dashboard: DashboardModel;

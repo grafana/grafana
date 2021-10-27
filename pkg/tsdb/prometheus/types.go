@@ -9,7 +9,6 @@ import (
 type DatasourceInfo struct {
 	ID           int64
 	URL          string
-	HTTPMethod   string
 	TimeInterval string
 
 	promClient apiv1.API
@@ -46,11 +45,3 @@ type QueryModel struct {
 	IntervalFactor int64  `json:"intervalFactor"`
 	UtcOffsetSec   int64  `json:"utcOffsetSec"`
 }
-
-type PrometheusQueryType string
-
-const (
-	Range    PrometheusQueryType = "range"
-	Instant  PrometheusQueryType = "instant"
-	Exemplar PrometheusQueryType = "exemplar"
-)

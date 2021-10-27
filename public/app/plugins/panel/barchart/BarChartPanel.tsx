@@ -14,11 +14,7 @@ interface Props extends PanelProps<BarChartOptions> {}
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
   const theme = useTheme2();
 
-  const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series, theme, options.stacking), [
-    data,
-    theme,
-    options.stacking,
-  ]);
+  const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series, theme, options), [data, theme, options]);
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;

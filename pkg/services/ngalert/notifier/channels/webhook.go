@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -18,7 +17,7 @@ import (
 // WebhookNotifier is responsible for sending
 // alert notifications as webhooks.
 type WebhookNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	URL        string
 	User       string
 	Password   string
@@ -40,7 +39,7 @@ func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, 
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
 	}
 	return &WebhookNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,

@@ -161,7 +161,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         <VerticalGroup spacing="lg">
           <VerticalGroup spacing="none">
             <InlineFieldRow>
-              <InlineField label="Data source" labelWidth={20}>
+              <InlineField label="Data source" labelWidth={20} htmlFor="data-source-picker">
                 <DataSourcePicker
                   current={this.props.variable.datasource}
                   onChange={this.onDataSourceChange}

@@ -22,7 +22,6 @@ export interface RichHistorySettingsProps {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
-      padding-left: ${theme.spacing.sm};
       font-size: ${theme.typography.size.sm};
       .space-between {
         margin-bottom: ${theme.spacing.lg};

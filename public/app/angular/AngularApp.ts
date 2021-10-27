@@ -13,7 +13,8 @@ import { monkeyPatchInjectorWithPreAssignedBindings } from 'app/core/injectorMon
 import { extend } from 'lodash';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv } from '@grafana/runtime';
-
+import './panel/all';
+import './partials';
 export class AngularApp {
   ngModuleDependencies: any[];
   preBootModules: any[];

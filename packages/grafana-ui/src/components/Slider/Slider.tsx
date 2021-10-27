@@ -1,4 +1,4 @@
-import React, { useState, useCallback, ChangeEvent, FunctionComponent } from 'react';
+import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent } from 'react';
 import SliderComponent from 'rc-slider';
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
@@ -46,9 +46,6 @@ export const Slider: FunctionComponent<SliderProps> = ({
         v = 0;
       }
 
-      v > max && (v = max);
-      v < min && (v = min);
-
       setSliderValue(v);
 
       if (onChange) {
@@ -59,7 +56,22 @@ export const Slider: FunctionComponent<SliderProps> = ({
         onAfterChange(v);
       }
     },
-    [max, min, onChange, onAfterChange]
+    [onChange, onAfterChange]
+  );
+
+  // Check for min/max on input blur so user is able to enter
+  // custom values that might seem above/below min/max on first keystroke
+  const onSliderInputBlur = useCallback(
+    (e: FocusEvent<HTMLInputElement>) => {
+      const v = +e.target.value;
+
+      if (v > max) {
+        setSliderValue(max);
+      } else if (v < min) {
+        setSliderValue(min);
+      }
+    },
+    [max, min]
   );
 
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
@@ -88,6 +100,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
           value={`${sliderValue}`} // to fix the react leading zero issue
           onChange={onSliderInputChange}
+          onBlur={onSliderInputBlur}
           min={min}
           max={max}
         />

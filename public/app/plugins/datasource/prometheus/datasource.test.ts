@@ -570,6 +570,45 @@ describe('PrometheusDatasource', () => {
     });
   });
 
+  describe('applyTemplateVariables', () => {
+    it('should call replace function for legendFormat', () => {
+      const query = {
+        expr: 'test{job="bar"}',
+        legendFormat: '$legend',
+        refId: 'A',
+      };
+      const legend = 'baz';
+      templateSrvStub.replace.mockReturnValue(legend);
+
+      const interpolatedQuery = ds.applyTemplateVariables(query, { legend: { text: legend, value: legend } });
+      expect(interpolatedQuery.legendFormat).toBe(legend);
+    });
+
+    it('should call replace function for expr', () => {
+      const query = {
+        expr: 'test{job="$job"}',
+        refId: 'A',
+      };
+      const job = 'bar';
+      templateSrvStub.replace.mockReturnValue(job);
+
+      const interpolatedQuery = ds.applyTemplateVariables(query, { job: { text: job, value: job } });
+      expect(interpolatedQuery.expr).toBe(job);
+    });
+
+    it('should not call replace function for interval', () => {
+      const query = {
+        expr: 'test{job="bar"}',
+        interval: '$interval',
+        refId: 'A',
+      };
+      const interval = '10s';
+      templateSrvStub.replace.mockReturnValue(interval);
+
+      const interpolatedQuery = ds.applyTemplateVariables(query, { interval: { text: interval, value: interval } });
+      expect(interpolatedQuery.interval).not.toBe(interval);
+    });
+  });
   describe('metricFindQuery', () => {
     beforeEach(() => {
       const query = 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))';

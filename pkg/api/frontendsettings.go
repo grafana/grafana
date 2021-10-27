@@ -63,7 +63,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 		meta, exists := enabledPlugins.DataSources[ds.Type]
 		if !exists {
-			log.Errorf(3, "Could not find plugin definition for data source: %v", ds.Type)
+			log.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
 		dsMap["meta"] = meta

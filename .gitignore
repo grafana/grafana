@@ -23,6 +23,9 @@ vendor/
 !.yarn/plugins
 !.yarn/sdks
 !.yarn/versions
+# we temporarily commit this file because yarn downloading it
+# somehow produces different checksum values
+!.yarn/cache/pa11y-ci-https-1e9675e9e1-668c9119bd.zip
 .pnp.*
 
 # Enterprise emails
@@ -60,6 +63,7 @@ public/css/*.min.css
 !.vscode/launch.json
 .vs/
 .eslintcache
+.stylelintcache
 
 /data/*
 /bin/*
@@ -90,6 +94,7 @@ debug.test
 /packaging/**/*.rpm
 /packaging/**/*.deb
 /packaging/**/*.tar.gz
+/packaging/**/*.tar.gz.sha256
 
 # Ignore OSX indexing
 .DS_Store
