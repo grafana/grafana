@@ -29,7 +29,7 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
   const { resource } = query.azureLogAnalytics ?? {};
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
 
-  const handleOpenPicker = useCallback((event) => {
+  const handleOpenPicker = useCallback(() => {
     setPickerIsOpen(true);
   }, []);
 

@@ -47,7 +47,6 @@ const GrafanaTemplateVariableFnInput = ({
 type Props = {
   query: AzureMonitorQuery | string;
   onChange: (query: AzureMonitorQuery | string) => void;
-  onRunQuery: () => void;
   datasource: DataSource;
 };
 
@@ -84,6 +83,7 @@ const VariableEditor = (props: Props) => {
     <>
       <InlineField label="Select query type">
         <Select
+          aria-label="select query type"
           onChange={onQueryTypeChange}
           options={AZURE_QUERY_VARIABLE_TYPE_OPTIONS}
           width={25}
