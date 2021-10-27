@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import {
   DataTransformerID,
   FieldNamePickerConfigSettings,
+  PluginState,
   StandardEditorsRegistryItem,
   TransformerRegistryItem,
   TransformerUIProps,
@@ -73,4 +74,5 @@ export const fieldLookupTransformRegistryItem: TransformerRegistryItem<FieldLook
   transformation: fieldLookupTransformer,
   name: 'Field lookup',
   description: `Looks up matching data from resource based on selected field`,
+  state: PluginState.beta,
 };

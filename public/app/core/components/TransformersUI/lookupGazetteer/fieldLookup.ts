@@ -26,12 +26,12 @@ export const fieldLookupTransformer: DataTransformerInfo<FieldLookupOptions> = {
   operator: (options) => (source) => source.pipe(mergeMap((data) => from(doGazetteerXform(data, options)))),
 };
 
-function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions): Promise<DataFrame[]> {
+async function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions): Promise<DataFrame[]> {
   const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get(options?.lookupField);
 
-  return getGazetteer(options?.gazetteer ?? COUNTRIES_GAZETTEER_PATH).then((gaz) => {
-    return addFieldsFromGazetteer(frames, gaz, fieldMatches);
-  });
+  const gaz = await getGazetteer(options?.gazetteer ?? COUNTRIES_GAZETTEER_PATH);
+
+  return addFieldsFromGazetteer(frames, gaz, fieldMatches);
 }
 
 export function addFieldsFromGazetteer(frames: DataFrame[], gaz: Gazetteer, matcher: FieldMatcher): DataFrame[] {
