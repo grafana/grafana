@@ -19,6 +19,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   width,
   height,
   onChangeTimeRange,
+  id,
 }) => {
   const theme = useTheme2();
 
@@ -60,6 +61,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
       width={width}
       height={height}
       legendItems={legendItems}
+      panelId={id}
       {...options}
       // hardcoded
       mode={TimelineMode.Samples}

@@ -23,6 +23,7 @@ export interface TimelineProps
   mode: TimelineMode;
   rowHeight: number;
   showValue: VisibilityMode;
+  panelId: number;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
   legendItems?: VizLegendItem[];
@@ -36,12 +37,13 @@ export class TimelineChart extends React.Component<TimelineProps> {
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     this.panelContext = this.context as PanelContext;
-    const { eventBus } = this.panelContext;
+    const { eventBus, sync } = this.panelContext;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
       eventBus,
+      sync,
       allFrames: this.props.frames,
       ...this.props,
 

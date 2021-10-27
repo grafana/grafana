@@ -3,6 +3,10 @@ import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   ArrayVector,
   DataFrame,
+  DashboardCursorSync,
+  DataHoverPayload,
+  DataHoverEvent,
+  DataHoverClearEvent,
   FALLBACK_COLOR,
   Field,
   FieldColorModeId,
@@ -17,6 +21,8 @@ import {
   getFieldConfigWithMinMax,
   outerJoinDataFrames,
   ThresholdsMode,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
 } from '@grafana/data';
 import {
   FIXED_UNIT,
@@ -52,18 +58,24 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
   });
 }
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions & { panelId: number }> = ({
   frame,
   theme,
   timeZone,
   getTimeRange,
   mode,
+  eventBus,
+  sync,
   rowHeight,
   colWidth,
   showValue,
   alignValue,
+  panelId,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
+
+  const xScaleUnit = 'time';
+  const xScaleKey = 'x';
 
   const isDiscrete = (field: Field) => {
     const mode = field.config?.color?.mode;
@@ -103,11 +115,25 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
       hoveredSeriesIdx = seriesIndex;
       hoveredDataIdx = valueIndex;
       shouldChangeHover = true;
+      const yValue = frame.fields[seriesIndex].values.get(valueIndex);
+      payload.point[FIXED_UNIT] = yValue;
+      eventBus.publish(new DataHoverEvent(payload));
+      eventBus.publish(
+        new LegacyGraphHoverEvent({
+          panel: { id: panelId },
+          point: payload.point,
+          pos: { x: payload.point[xScaleUnit], y: yValue, panelRelY: 1 },
+          data: frame,
+          down: undefined,
+        })
+      );
     },
     onLeave: () => {
       hoveredSeriesIdx = null;
       hoveredDataIdx = null;
       shouldChangeHover = true;
+      eventBus.publish(new DataHoverClearEvent());
+      eventBus.publish(new LegacyGraphHoverClearEvent());
     },
   };
 
@@ -116,6 +142,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   let hoveredDataIdx: number | null = null;
 
   const coreConfig = getConfig(opts);
+  const payload: DataHoverPayload = {
+    point: {
+      [xScaleUnit]: null,
+      [FIXED_UNIT]: null,
+    },
+    data: frame,
+  };
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
@@ -148,7 +181,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   builder.setCursor(coreConfig.cursor);
 
   builder.addScale({
-    scaleKey: 'x',
+    scaleKey: xScaleKey,
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
@@ -164,7 +197,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   });
 
   builder.addAxis({
-    scaleKey: 'x',
+    scaleKey: xScaleKey,
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
@@ -217,6 +250,32 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
     });
+  }
+
+  builder.scaleKeys = [xScaleKey, FIXED_UNIT];
+
+  if (sync !== DashboardCursorSync.Off) {
+    let cursor: Partial<uPlot.Cursor> = {};
+
+    cursor.sync = {
+      key: '__global_',
+      filters: {
+        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          payload.rowIndex = dataIdx;
+          if (x < 0 && y < 0) {
+            payload.point[xScaleUnit] = null;
+            payload.point[FIXED_UNIT] = null;
+          } else {
+            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
+            payload.down = undefined;
+          }
+          return true;
+        },
+      },
+      scales: builder.scaleKeys,
+    };
+    builder.setSync();
+    builder.setCursor(cursor);
   }
 
   return builder;
