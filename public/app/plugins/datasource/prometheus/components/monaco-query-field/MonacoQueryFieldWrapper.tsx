@@ -27,7 +27,7 @@ export const MonacoQueryFieldWrapper = (props: Props) => {
     onBlur?.();
 
     if (!isExplore) {
-      // is the current value different from the last-time-executed value?
+      // run handleRunQuery only if the current value is different from the last-time-executed value
       if (value !== lastRunValueRef.current) {
         handleRunQuery(value);
       }
