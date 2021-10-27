@@ -11,7 +11,7 @@ Annotations and labels help customize alert messages so that you can quickly ide
 
 ## Annotations
 
-Annotations are key and value pairs that provide additional meta-information about an alert. For example, description, summary, runbook URL. These are displayed in rule and alert details in the UI and can be used in contact type message templates. Annotations can also be templated, for example `Instance {{ $labels.instance }} down` will have the evaluated `instance` label value added for every alert this rule produces.
+Annotations are key-value pairs that provide additional meta-information about an alert. For example: a description, a summary, and runbook URL. These are displayed in rule and alert details in the UI and can be used in contact type message templates. Annotations can also be templated, for example `Instance {{ $labels.instance }} down` will have the evaluated `instance` label value added for every alert this rule produces.
 
 ## Labels
 
