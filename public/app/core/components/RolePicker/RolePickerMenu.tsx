@@ -67,36 +67,31 @@ export const RolePickerMenu = ({
       <CustomScrollbar autoHide={false} autoHeightMax="250px" hideHorizontalTrack>
         <div className={customStyles.groupHeader}>Built-in roles</div>
         <BuiltinRoleSelector value={builtInRole} onChange={onSelectedBuiltinRoleChange} />
-        {!!customRoles?.length && (
-          <>
-            <div className={customStyles.groupHeader}>Custom roles</div>
-            <div className={styles.optionBody}>
-              {customRoles.map((option, i) => (
-                <RoleMenuOption
-                  data={option}
-                  key={i}
-                  isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
-                  onSelect={onSelect}
-                />
-              ))}
-            </div>
-          </>
-        )}
-        {!!fixedRoles?.length && (
-          <>
-            <div className={customStyles.groupHeader}>Fixed roles</div>
-            <div className={styles.optionBody}>
-              {fixedRoles.map((option, i) => (
-                <RoleMenuOption
-                  data={option}
-                  key={i}
-                  isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
-                  onSelect={onSelect}
-                  hideDescription
-                />
-              ))}
-            </div>
-          </>
+        {[
+          { header: 'Custom roles', roles: customRoles },
+          {
+            header: 'Fixed roles',
+            roles: fixedRoles,
+            hideDescription: true,
+          },
+        ].map(
+          (item) =>
+            !!item.roles.length && (
+              <div key={item.header}>
+                <div className={customStyles.groupHeader}>{item.header}</div>
+                <div className={styles.optionBody}>
+                  {item.roles.map((option, i) => (
+                    <RoleMenuOption
+                      data={option}
+                      key={i}
+                      isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                      onSelect={onSelect}
+                      hideDescription={item.hideDescription}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
         )}
       </CustomScrollbar>
       <div className={customStyles.menuButtonRow}>
