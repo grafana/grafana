@@ -176,6 +176,7 @@ export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
 
 // Next-gen forms
 export { Form } from './Forms/Form';
+export { sharedInputStyle } from './Forms/commonStyles';
 export { InputControl } from './InputControl';
 export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow } from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
@@ -197,12 +198,13 @@ export { FieldArray } from './Forms/FieldArray';
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export { selectOptionInTest } from './Select/test-utils';
 export * from './Select/Select';
+export { DropdownIndicator } from './Select/DropdownIndicator';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
-export { Input } from './Input/Input';
+export { Input, getInputStyles } from './Input/Input';
 export { FilterInput } from './FilterInput/FilterInput';
 export { FormInputSize } from './Forms/types';
 
@@ -217,7 +219,7 @@ export { RelativeTimeRangePicker } from './DateTimePickers/RelativeTimeRangePick
 export { Card, Props as CardProps, getCardStyles } from './Card/Card';
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
-
+export { focusCss } from '../themes/mixins';
 export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 

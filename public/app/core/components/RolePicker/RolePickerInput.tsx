@@ -1,11 +1,15 @@
 import React, { FormEvent, HTMLProps, MutableRefObject } from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, stylesFactory, useTheme2 } from '@grafana/ui';
+import {
+  Icon,
+  stylesFactory,
+  useTheme2,
+  getInputStyles,
+  sharedInputStyle,
+  DropdownIndicator,
+  focusCss,
+} from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { getInputStyles } from '@grafana/ui/src/components/Input/Input';
-import { sharedInputStyle } from '@grafana/ui/src/components/Forms/commonStyles';
-import { focusCss } from '@grafana/ui/src/themes/mixins';
-import { DropdownIndicator } from '@grafana/ui/src/components/Select/DropdownIndicator';
 
 interface InputProps extends HTMLProps<HTMLInputElement> {
   role?: string;
