@@ -446,11 +446,12 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `discord`
 
-| Name       | Secure setting |
-| ---------- | -------------- |
-| url        | yes            |
-| avatar_url |                |
-| content    |                |
+| Name                 | Secure setting |
+| -------------------- | -------------- |
+| url                  | yes            |
+| avatar_url           |                |
+| content              |                |
+| use_discord_username |                |
 
 #### Alert notification `slack`
 
