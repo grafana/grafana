@@ -1316,7 +1316,23 @@ var expAvailableChannelJsonOutput = `
 		"required": true,
 		"validationRule": "",
 		"secure": false
-	  }
+	  },
+      {
+        "description": "Custom wecom message. You can use template variables",
+        "element": "textarea",
+        "inputType": "",
+        "label": "Message",
+        "placeholder": "",
+        "propertyName": "message",
+        "required": false,
+        "secure": false,
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "validationRule": ""
+      }
 	]
   },
   {
