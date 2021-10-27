@@ -304,7 +304,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                       history={history}
                       onChange={this.onChangeQuery}
                       onRunQuery={this.props.onRunQuery}
-                      onBlur={this.props.onBlur}
                       initialValue={query.expr ?? ''}
                     />
                   ) : (
