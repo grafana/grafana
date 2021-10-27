@@ -326,7 +326,6 @@ export const runQueries = (
     const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
-      queries,
       containerWidth,
       isLive: live,
       range,
@@ -340,6 +339,11 @@ export const runQueries = (
       logsVolumeDataProvider,
     } = exploreItemState;
     let newQuerySub;
+
+    const queries = exploreItemState.queries.map((query) => ({
+      ...query,
+      datasource: query.datasource || datasourceInstance?.name,
+    }));
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);
 
@@ -485,6 +489,9 @@ export const runQueries = (
         const { logsVolumeData, absoluteRange } = getState().explore[exploreId]!;
         if (!canReuseLogsVolumeData(logsVolumeData, queries, absoluteRange)) {
           dispatch(cleanLogsVolumeAction({ exploreId }));
+          if (config.featureToggles.autoLoadFullRangeLogsVolume) {
+            dispatch(loadLogsVolumeData(exploreId));
+          }
         }
       } else {
         dispatch(

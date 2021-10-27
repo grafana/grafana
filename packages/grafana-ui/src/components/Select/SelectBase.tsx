@@ -88,6 +88,7 @@ const CustomControl = (props: any) => {
 
 export function SelectBase<T>({
   allowCustomValue = false,
+  allowCreateWhileLoading = false,
   'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
@@ -227,6 +228,7 @@ export function SelectBase<T>({
 
   if (allowCustomValue) {
     ReactSelectComponent = Creatable as any;
+    creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.isValidNewOption = isValidNewOption;

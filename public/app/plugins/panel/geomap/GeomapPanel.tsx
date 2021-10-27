@@ -239,7 +239,7 @@ export class GeomapPanel extends Component<Props, State> {
       this.basemap.dispose();
     }
     this.basemap = layer;
-    this.map.getLayers().insertAt(0, this.basemap);
+    this.map.getLayers().insertAt(0, this.basemap!);
   }
 
   async initLayers(layers: MapLayerOptions[]) {

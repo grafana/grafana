@@ -1,33 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Button, CodeEditor, Table, useStyles, Select, Field } from '@grafana/ui';
+import React, { useState } from 'react';
+import { Button, CodeEditor, Table, useStyles, Field } from '@grafana/ui';
 import { ChannelFrame, Rule } from './types';
-import Page from 'app/core/components/Page/Page';
-import { useNavModel } from 'app/core/hooks/useNavModel';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { css } from '@emotion/css';
 import { getDisplayProcessor, GrafanaTheme, StreamingDataFrame } from '@grafana/data';
-import { transformLabel } from './utils';
 
-export default function RuleTest() {
-  const navModel = useNavModel('live-test');
+interface Props {
+  rule: Rule;
+}
+
+export const RuleTest: React.FC<Props> = (props) => {
   const [response, setResponse] = useState<ChannelFrame[]>();
   const [data, setData] = useState<string>();
-  const [rules, setRules] = useState<Rule[]>([]);
-  const [channelRules, setChannelRules] = useState<Rule[]>();
-  const [channelSelected, setChannelSelected] = useState<string>();
   const styles = useStyles(getStyles);
-  useEffect(() => {
-    getBackendSrv()
-      .get(`api/live/channel-rules`)
-      .then((data) => {
-        setRules(data.rules);
-      })
-      .catch((e) => {
-        if (e.data) {
-          console.log(e);
-        }
-      });
-  }, []);
 
   const onBlur = (text: string) => {
     setData(text);
@@ -36,8 +21,8 @@ export default function RuleTest() {
   const onClick = () => {
     getBackendSrv()
       .post(`api/live/pipeline-convert-test`, {
-        channelRules: channelRules,
-        channel: channelSelected,
+        channelRules: [props.rule],
+        channel: props.rule.pattern,
         data: data,
       })
       .then((data: any) => {
@@ -60,45 +45,31 @@ export default function RuleTest() {
   };
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
-        <Field label="Channel">
-          <Select
-            menuShouldPortal
-            options={transformLabel(rules, 'pattern')}
-            value=""
-            onChange={(v) => {
-              setChannelSelected(v.value);
-              setChannelRules(rules.filter((r) => r.pattern === v.value));
-            }}
-            placeholder="Select Channel"
-          />
-        </Field>
-        <Field label="Data">
-          <CodeEditor
-            height={200}
-            value=""
-            showLineNumbers={true}
-            readOnly={false}
-            language="json"
-            showMiniMap={false}
-            onBlur={onBlur}
-          />
-        </Field>
-        <Button onClick={onClick} className={styles.margin}>
-          Test
-        </Button>
+    <div>
+      <CodeEditor
+        height={100}
+        value=""
+        showLineNumbers={true}
+        readOnly={false}
+        language="json"
+        showMiniMap={false}
+        onBlur={onBlur}
+      />
 
-        {response?.length &&
-          response.map((r) => (
-            <Field key={r.channel} label={r.channel}>
-              <Table data={r.frame} width={650} height={10 * r.frame.length + 10} showTypeIcons></Table>
-            </Field>
-          ))}
-      </Page.Contents>
-    </Page>
+      <Button onClick={onClick} className={styles.margin}>
+        Test
+      </Button>
+
+      {response?.length &&
+        response.map((r) => (
+          <Field key={r.channel} label={r.channel}>
+            <Table data={r.frame} width={700} height={Math.min(10 * r.frame.length + 10, 150)} showTypeIcons></Table>
+          </Field>
+        ))}
+    </div>
   );
-}
+};
+
 const getStyles = (theme: GrafanaTheme) => {
   return {
     margin: css`
