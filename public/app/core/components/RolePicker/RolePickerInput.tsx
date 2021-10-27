@@ -1,15 +1,8 @@
 import React, { FormEvent, HTMLProps, MutableRefObject } from 'react';
 import { css, cx } from '@emotion/css';
-import {
-  Icon,
-  stylesFactory,
-  useTheme2,
-  getInputStyles,
-  sharedInputStyle,
-  DropdownIndicator,
-  focusCss,
-} from '@grafana/ui';
+import { useStyles2, getInputStyles, sharedInputStyle, DropdownIndicator, focusCss } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
+import { ValueContainer } from './ValueContainer';
 
 interface InputProps extends HTMLProps<HTMLInputElement> {
   role?: string;
@@ -24,8 +17,7 @@ interface InputProps extends HTMLProps<HTMLInputElement> {
 
 export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ role, disabled, isFocused, query, numberOfRoles, onOpen, onClose, onQueryChange, ...rest }, ref) => {
-    const theme = useTheme2();
-    const styles = getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false);
+    const styles = useStyles2((theme) => getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false));
 
     const onInputClick = (event: FormEvent<HTMLElement>) => {
       if (isFocused) {
@@ -46,16 +38,8 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div className={styles.wrapper} onMouseDown={onInputClick}>
-        <div className={styles.builtInRoleValueContainer}>
-          <Icon name="user" size="xs" />
-          {role}
-        </div>
-        {!!numberOfRoles && (
-          <div className={styles.builtInRoleValueContainer}>
-            <Icon name="user" size="xs" />
-            {`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}
-          </div>
-        )}
+        <ValueContainer iconName={'user'}>{role}</ValueContainer>
+        {!!numberOfRoles && <ValueContainer>{`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}</ValueContainer>}
         {!disabled && (
           <input
             {...rest}
@@ -78,72 +62,51 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>(
 
 RolePickerInput.displayName = 'RolePickerInput';
 
-const getRolePickerInputStyles = stylesFactory(
-  (theme: GrafanaTheme2, invalid: boolean, focused: boolean, disabled: boolean, withPrefix: boolean) => {
-    const styles = getInputStyles({ theme, invalid });
+const getRolePickerInputStyles = (
+  theme: GrafanaTheme2,
+  invalid: boolean,
+  focused: boolean,
+  disabled: boolean,
+  withPrefix: boolean
+) => {
+  const styles = getInputStyles({ theme, invalid });
 
-    return {
-      wrapper: cx(
-        styles.wrapper,
-        sharedInputStyle(theme, invalid),
-        focused &&
-          css`
-            ${focusCss(theme.v1)}
-          `,
-        disabled && styles.inputDisabled,
+  return {
+    wrapper: cx(
+      styles.wrapper,
+      sharedInputStyle(theme, invalid),
+      focused &&
         css`
-          min-height: 32px;
-          height: auto;
-          flex-direction: row;
-          padding-right: 0;
-          max-width: 100%;
-          align-items: center;
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: flex-start;
-          position: relative;
-          box-sizing: border-box;
-          cursor: ${disabled ? 'not-allowed' : 'pointer'};
+          ${focusCss(theme.v1)}
         `,
-        withPrefix &&
-          css`
-            padding-left: 0;
-          `
-      ),
-      input: cx(
-        sharedInputStyle(theme, invalid),
+      disabled && styles.inputDisabled,
+      css`
+        min-height: 32px;
+        height: auto;
+        flex-direction: row;
+        padding-right: 0;
+        max-width: 100%;
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        position: relative;
+        box-sizing: border-box;
+        cursor: ${disabled ? 'not-allowed' : 'pointer'};
+      `,
+      withPrefix &&
         css`
-          max-width: 120px;
-          border: none;
-          cursor: ${focused ? 'default' : 'pointer'};
+          padding-left: 0;
         `
-      ),
-      builtInRoleValueContainer: cx(
-        styles.prefix,
-        css`
-          position: relative;
-          display: flex;
-          align-items: center;
-          line-height: 1;
-          background: ${disabled
-            ? theme.colors.emphasize(theme.colors.background.secondary)
-            : theme.colors.background.secondary};
-          border-radius: ${theme.shape.borderRadius()};
-          margin: ${theme.spacing(0.25, 1, 0.25, 0)};
-          padding: ${theme.spacing(0.25, 1, 0.25, 0.25)};
-          color: ${theme.colors.text.primary};
-          font-size: ${theme.typography.bodySmall.fontSize};
-
-          &:hover {
-            background: ${theme.colors.emphasize(theme.colors.background.secondary)};
-          }
-
-          svg {
-            margin: ${theme.spacing(0, 0.25, 0, 0)};
-          }
-        `
-      ),
-      suffix: cx(styles.suffix),
-    };
-  }
-);
+    ),
+    input: cx(
+      sharedInputStyle(theme, invalid),
+      css`
+        max-width: 120px;
+        border: none;
+        cursor: ${focused ? 'default' : 'pointer'};
+      `
+    ),
+    suffix: cx(styles.suffix),
+  };
+};

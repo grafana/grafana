@@ -1,8 +1,7 @@
 import React, { ReactNode } from 'react';
-import { getInputStyles, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { css, cx } from '@emotion/css';
+import { getInputStyles, Icon, IconName, useStyles2, getSelectStyles } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
-import { cx } from '@emotion/css';
 
 export interface Props {
   children: ReactNode;
@@ -22,6 +21,17 @@ const getStyles = (theme: GrafanaTheme2) => {
   const { prefix } = getInputStyles({ theme });
   const { multiValueContainer } = getSelectStyles(theme);
   return {
-    container: cx(prefix, multiValueContainer),
+    container: cx(
+      prefix,
+      multiValueContainer,
+      css`
+        position: relative;
+        padding: ${theme.spacing(0.5, 1, 0.5, 1)};
+
+        svg {
+          margin-right: ${theme.spacing(0.5)};
+        }
+      `
+    ),
   };
 };
