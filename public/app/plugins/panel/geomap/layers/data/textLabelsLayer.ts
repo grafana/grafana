@@ -62,7 +62,7 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
       ...options?.config,
     };
 
-    const fontFamily    = theme.typography.fontFamily;
+    const fontFamily = theme.typography.fontFamily;
 
     const getTextStyle = (text: string, fillColor: string, fontSize: number) => {
       return new style.Text({
@@ -121,40 +121,40 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
       },
       registerOptionsUI: (builder) => {
         builder
-      .addCustomEditor({
-        id: 'config.labelText',
-        name: 'Text label',
-        path: 'config.labelText',
-        editor: TextDimensionEditor,
-      })
-      .addCustomEditor({
-        id: 'config.color',
-        path: 'config.color',
-        name: 'Text color',
-        editor: ColorDimensionEditor,
-        settings: {},
-      })
-      .addSliderInput({
-        path: 'config.fillOpacity',
-        name: 'Text opacity',
-        defaultValue: defaultOptions.fillOpacity,
-        settings: {
-          min: 0,
-          max: 1,
-          step: 0.1,
-        },
-      })
-      .addCustomEditor({
-        id: 'config.fontSize',
-        path: 'config.fontSize',
-        name: 'Text size',
-        editor: ScaleDimensionEditor,
-        settings: {
-          fixed: defaultOptions.fontSize.fixed,
-          min: defaultOptions.fontSize.min,
-          max: defaultOptions.fontSize.max,
-        },
-      });
+          .addCustomEditor({
+            id: 'config.labelText',
+            name: 'Text label',
+            path: 'config.labelText',
+            editor: TextDimensionEditor,
+          })
+          .addCustomEditor({
+            id: 'config.color',
+            path: 'config.color',
+            name: 'Text color',
+            editor: ColorDimensionEditor,
+            settings: {},
+          })
+          .addSliderInput({
+            path: 'config.fillOpacity',
+            name: 'Text opacity',
+            defaultValue: defaultOptions.fillOpacity,
+            settings: {
+              min: 0,
+              max: 1,
+              step: 0.1,
+            },
+          })
+          .addCustomEditor({
+            id: 'config.fontSize',
+            path: 'config.fontSize',
+            name: 'Text size',
+            editor: ScaleDimensionEditor,
+            settings: {
+              fixed: defaultOptions.fontSize.fixed,
+              min: defaultOptions.fontSize.min,
+              max: defaultOptions.fontSize.max,
+            },
+          });
       },
     };
   },
