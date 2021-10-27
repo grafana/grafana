@@ -7,7 +7,7 @@ weight = 405
 
 # Cortex or Loki rule groups and namespaces
 
-A namespace contains one or more groups. The rules within a group are run sequentially at a regular interval, the default interval is one (1) minute. You can rename Cortex or Loki rule namespaces and groups, and edit group evaluation intervals.
+A namespace contains one or more groups. The rules within a group are run sequentially at a regular interval; the default interval is one (1) minute. You can rename Cortex or Loki rule namespaces and groups, and edit group evaluation intervals.
 
 ![Group list](/static/img/docs/alerting/unified/rule-list-edit-cortex-loki-icon-8-2.png 'Rule group list screenshot')
 
