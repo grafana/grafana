@@ -36,7 +36,7 @@ The following example shows the use of a custom template within one of the conta
 1. Click **Save template** button at the bottom of the page.
    <img  src="/static/img/docs/alerting/unified/templates-create-8-0.png" width="600px">
 
-The `define` tag in the Content section assigns the template name. This tag is optional, and when omitted, the template name is derived from the **Name** field. When both are specified, we recommend that the template name in the **Name** field and in the `define` tag be the same.
+The `define` tag in the Content section assigns the template name. This tag is optional, and when omitted, the template name is derived from the **Name** field. When both are specified, it is a best practice to ensure that they are the same.
 
 ### Edit a message template
 

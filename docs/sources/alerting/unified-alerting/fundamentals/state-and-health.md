@@ -7,13 +7,13 @@ aliases = ["/docs/grafana/llatest/alerting/unified-alerting/alerting-rules/state
 
 # State and health of alerting rules
 
-The state and health of alerting rules help you understand several key status indicators about your alerts. There are three key components - alert state, alerting rule state, and alerting rule health. Although related, each component conveys subtly different information.
+The state and health of alerting rules help you understand several key status indicators about your alerts. There are three key components: alert state, alerting rule state, and alerting rule health. Although related, each component conveys subtly different information.
 
 ## Alerting rule state
 
-- **Normal**: None of the time series returned by the evaluation engine is in a pending or firing state.
-- **Pending**: At least one time series returned by the evaluation engine is pending.
-- **Firing**: At least one time series returned by the evaluation engine is firing.
+- **Normal**: None of the time series returned by the evaluation engine is in a Pending or Firing state.
+- **Pending**: At least one time series returned by the evaluation engine is Pending.
+- **Firing**: At least one time series returned by the evaluation engine is Firing.
 
 ## Alert state
 

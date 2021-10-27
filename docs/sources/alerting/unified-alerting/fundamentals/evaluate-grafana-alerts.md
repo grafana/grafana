@@ -1,10 +1,10 @@
 +++
-title = "Evaluate Grafana managed alerts"
+title = "Alerting on numeric data"
 aliases = ["/docs/grafana/latest/alerting/metrics/"]
 weight = 116
 +++
 
-# Evaluating Grafana managed alerts
+# Alerting on numeric data
 
 This topic describes how Grafana managed alerts are evaluated by the backend engine as well as how Grafana handles alerting on numeric rather than time series data.
 
@@ -13,7 +13,7 @@ This topic describes how Grafana managed alerts are evaluated by the backend eng
 
 ## Alert evaluation
 
-Grafana managed alerts query backend data sources which has alerting enabled:
+Grafana managed alerts query the following backend data sources that have alerting enabled:
 
 - built-in data sources or those developed and maintained by Grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
   `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Monitor`
