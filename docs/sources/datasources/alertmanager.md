@@ -26,6 +26,8 @@ datasources:
     type: alertmanager
     url: http://localhost:9090
     access: proxy
+    jsonData:
+      implementation: 'prometheus'
     # optionally
     basicAuth: true
     basicAuthUser: my_user

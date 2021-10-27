@@ -694,6 +694,12 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					InputType:    alerting.InputTypeText,
 					PropertyName: "avatar_url",
 				},
+				{
+					Label:        "Use Discord's Webhook Username",
+					Description:  "Use the username configured in Discord's webhook settings. Otherwise, the username will be 'Grafana'",
+					Element:      alerting.ElementTypeCheckbox,
+					PropertyName: "use_discord_username",
+				},
 			},
 		},
 		{
