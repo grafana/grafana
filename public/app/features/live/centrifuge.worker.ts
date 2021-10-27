@@ -52,8 +52,42 @@ const onPublish = (data: any) => {
   ctx.postMessage({ id: WorkerResponse.Publish, data });
 };
 
+type PublicationContextData = {
+  data?: {
+    values?: [number[]?, ...any[]];
+  };
+};
+
+let proxyDelay = 1;
+
+let droppedCount = 0;
+let lastDropReport = 0;
+
 const subscribeEventHandlers = (channelId: string): SubscriptionEvents => ({
   publish: (context: PublicationContext) => {
+    const data: PublicationContextData = context.data;
+
+    const values = data?.data?.values;
+    if (values && values[0]) {
+      const times = values[0] as number[];
+      if (times?.length) {
+        const now = Date.now();
+        const last = times[times.length - 1];
+        const elapsed = now - last;
+        console.log(`elapsed: ${JSON.stringify(elapsed)}`);
+        if (elapsed >= proxyDelay) {
+          droppedCount++;
+          if (now - lastDropReport > 5000) {
+            console.error("Discarding stale frame, can't keep up (last 5s)", droppedCount);
+            droppedCount = 0;
+            lastDropReport = now;
+          }
+          return;
+        }
+      }
+    }
+
+    console.log(`context: ${JSON.stringify(context)}`);
     ctx.postMessage({
       id: WorkerResponse.SubscriptionPublish,
       data: { channelId, context },

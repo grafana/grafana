@@ -10,32 +10,10 @@ import Centrifuge, {
 import { WorkerCommand, WorkerResponse, WorkerResponseBody } from './workerTypes';
 import { EventEmitter } from 'eventemitter3';
 
-declare global {
-  interface Window {
-    proxy: {
-      _delay: number;
-      delay: number;
-    };
-  }
-}
-window.proxy = {
-  _delay: Number(localStorage.getItem('proxyDelay')) || 500,
-  get delay() {
-    return this._delay;
-  },
-  set delay(x: number) {
-    localStorage.setItem('proxyDelay', x.toString());
-    this._delay = x;
-  },
-};
-
 export default class CentrifugeWorkerProxy extends EventEmitter {
   worker: Worker;
   subscriptions: Record<string, SubscriptionEvents> = {};
   pendingRequests: Record<string, Record<string, (context: any) => void>> = {};
-
-  droppedCount = 0;
-  lastDropReport = 0;
 
   constructor(appUrl: string, sessionId: string, orgId: number) {
     super();
@@ -54,25 +32,6 @@ export default class CentrifugeWorkerProxy extends EventEmitter {
         this.emit('connect');
         break;
       case WorkerResponse.SubscriptionPublish:
-        // HACK!, don't publish stale messages
-        const values = response.data?.context?.data?.data?.values;
-        if (values && values[0]) {
-          const times = values[0] as number[];
-          if (times?.length) {
-            const now = Date.now();
-            const last = times[times.length - 1];
-            const elapsed = now - last;
-            if (elapsed > window.proxy.delay) {
-              this.droppedCount++;
-              if (now - this.lastDropReport > 5000) {
-                console.error("Discarding stale frame, can't keep up (last 5s)", this.droppedCount);
-                this.droppedCount = 0;
-                this.lastDropReport = now;
-              }
-              break;
-            }
-          }
-        }
         this.subscriptions[channelId]!.publish!(response.data.context);
         break;
       case WorkerResponse.SubscriptionJoin:
