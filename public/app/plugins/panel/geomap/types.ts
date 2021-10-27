@@ -1,4 +1,5 @@
-import { MapLayerOptions, SelectableValue } from '@grafana/data';
+import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
+import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
 import { Style } from 'ol/style';
 import { MapCenterID } from './view';
@@ -65,6 +66,17 @@ export enum ComparisonOperation {
 
 export interface GazetteerPathEditorConfigSettings {
   options?: Array<SelectableValue<string>>;
+}
+//-------------------
+// Runtime model
+//-------------------
+export interface MapLayerState<TConfig = any> {
+  UID: string; // value changes with each initalization
+  options: MapLayerOptions<TConfig>;
+  handler: MapLayerHandler;
+  layer: BaseLayer; // the openlayers instance
+  onChange: (cfg: MapLayerOptions<TConfig>) => void;
+  isBasemap?: boolean;
 }
 export interface StyleMakerConfig {
   color: string;
