@@ -708,7 +708,7 @@ export class DashboardMigrator {
   migrateCloudWatchQueries() {
     for (const p of this.dashboard.panels) {
       // if the panel is a row, it may have nested panels
-      const panels = p.type === 'row' && !p.targets.length && p.panels.length ? p.panels : [p];
+      const panels = p.type === 'row' && p.panels.length ? p.panels : [p];
       for (const panel of panels) {
         for (const target of panel.targets) {
           if (isLegacyCloudWatchQuery(target)) {

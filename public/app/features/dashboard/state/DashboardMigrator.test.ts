@@ -1455,7 +1455,7 @@ describe('DashboardModel', () => {
 
   describe('migrating legacy CloudWatch queries', () => {
     let model: any;
-    let targets: any;
+    let panelTargets: any;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -1540,33 +1540,34 @@ describe('DashboardModel', () => {
           },
         ],
       });
-      targets = model.panels[0].targets;
+      panelTargets = model.panels[0].targets;
     });
 
     it('multiple stats query should have been split into three', () => {
-      expect(targets.length).toBe(4);
+      expect(panelTargets.length).toBe(4);
     });
 
     it('new stats query should get the right statistic', () => {
-      expect(targets[0].statistic).toBe('Average');
-      expect(targets[1].statistic).toBe('Sum');
-      expect(targets[2].statistic).toBe('Minimum');
-      expect(targets[3].statistic).toBe('p12.21');
+      expect(panelTargets[0].statistic).toBe('Average');
+      expect(panelTargets[1].statistic).toBe('Sum');
+      expect(panelTargets[2].statistic).toBe('Minimum');
+      expect(panelTargets[3].statistic).toBe('p12.21');
     });
 
     it('new stats queries should be put in the end of the array', () => {
-      expect(targets[0].refId).toBe('A');
-      expect(targets[1].refId).toBe('B');
-      expect(targets[2].refId).toBe('C');
-      expect(targets[3].refId).toBe('D');
+      expect(panelTargets[0].refId).toBe('A');
+      expect(panelTargets[1].refId).toBe('B');
+      expect(panelTargets[2].refId).toBe('C');
+      expect(panelTargets[3].refId).toBe('D');
     });
 
     describe('with nested panels', () => {
       let panel1Targets: any;
       let panel2Targets: any;
+      let nestedModel: DashboardModel;
 
       beforeEach(() => {
-        model = new DashboardModel({
+        nestedModel = new DashboardModel({
           annotations: {
             list: [
               {
@@ -1716,8 +1717,8 @@ describe('DashboardModel', () => {
             },
           ],
         });
-        panel1Targets = model.panels[0].panels[0].targets;
-        panel2Targets = model.panels[0].panels[1].targets;
+        panel1Targets = nestedModel.panels[0].panels[0].targets;
+        panel2Targets = nestedModel.panels[0].panels[1].targets;
       });
 
       it('multiple stats query should have been split into one query per stat', () => {
