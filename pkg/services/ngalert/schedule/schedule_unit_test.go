@@ -310,15 +310,16 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
 	// Again, make sure we sync and verify the senders.
+	// Senders should be running even though alerts are being handled externally.
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
 	sched.adminConfigMtx.Lock()
-	require.Equal(t, 0, len(sched.senders))
-	require.Equal(t, 0, len(sched.sendersCfgHash))
+	require.Equal(t, 1, len(sched.senders))
+	require.Equal(t, 1, len(sched.sendersCfgHash))
 	sched.adminConfigMtx.Unlock()
 
-	// Then, ensure we've dropped the Alertmanager and the Alertmanagers choice has changed.
+	// Then, ensure the Alertmanager is still listed and the Alertmanagers choice has changed.
 	require.Eventually(t, func() bool {
-		return len(sched.AlertmanagersFor(1)) == 0 &&
+		return len(sched.AlertmanagersFor(1)) == 1 &&
 			len(sched.DroppedAlertmanagersFor(1)) == 0 &&
 			sched.sendAlertsTo[1] == adminConfig.SendAlertsTo
 	}, 10*time.Second, 200*time.Millisecond)

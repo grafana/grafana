@@ -226,12 +226,6 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			delete(orgsFound, cfg.OrgID)
 			continue
 		}
-		// We have a running sender and alerts are handled internally, shut it down.
-		if ok && cfg.SendAlertsTo == models.InternalAlertmanager {
-			sch.log.Debug("alerts are handled internally, sender will be stopped", "org", cfg.OrgID)
-			delete(orgsFound, cfg.OrgID)
-			continue
-		}
 
 		// We have a running sender, check if we need to apply a new config.
 		if ok {
@@ -514,11 +508,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					}
 				}
 
-				// Send alerts to external Alertmanager(s) if we have a sender for this organization.
+				// Send alerts to external Alertmanager(s) if we have a sender for this organization
+				// and alerts are not being handled just internally.
 				sch.adminConfigMtx.RLock()
 				defer sch.adminConfigMtx.RUnlock()
 				s, ok := sch.senders[alertRule.OrgID]
-				if ok {
+				if ok && sch.sendAlertsTo[alertRule.OrgID] != models.InternalAlertmanager {
 					s.SendAlerts(alerts)
 				}
 
