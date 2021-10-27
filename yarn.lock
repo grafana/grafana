@@ -2421,7 +2421,6 @@ __metadata:
     "@types/node": 14.17.27
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
-    commander: 5.0.0
     execa: 5.1.1
     rimraf: 3.0.1
     rollup: 2.33.3
@@ -2454,7 +2453,7 @@ __metadata:
     "@types/uuid": 8.3.0
     babel-loader: 8.2.2
     blink-diff: 1.0.13
-    commander: 5.0.0
+    commander: 8.3.0
     cypress: 8.4.1
     cypress-file-upload: 5.0.8
     date-fns: 2.21.3
@@ -2618,7 +2617,7 @@ __metadata:
     babel-plugin-angularjs-annotate: 0.10.0
     chalk: ^2.4.2
     command-exists: ^1.2.8
-    commander: ^5.0.0
+    commander: ^8.0.0
     concurrently: 6.3.0
     copy-webpack-plugin: 5.1.2
     css-loader: 3.4.2
@@ -12503,10 +12502,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:5.0.0":
-  version: 5.0.0
-  resolution: "commander@npm:5.0.0"
-  checksum: 55cb7e3fa1ada53f9109f1475e981daeb6886c1bb67c6c2f0e492d37fd52e2c2359131d0d869114e20c66907c19faeac606ee1d00ff7b822b1a37219e07d6282
+"commander@npm:8.3.0, commander@npm:^8.0.0":
+  version: 8.3.0
+  resolution: "commander@npm:8.3.0"
+  checksum: 0f82321821fc27b83bd409510bb9deeebcfa799ff0bf5d102128b500b7af22872c0c92cb6a0ebc5a4cf19c6b550fba9cedfa7329d18c6442a625f851377bacf0
   languageName: node
   linkType: hard
 
@@ -12517,7 +12516,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^5.0.0, commander@npm:^5.1.0":
+"commander@npm:^5.1.0":
   version: 5.1.0
   resolution: "commander@npm:5.1.0"
   checksum: 0b7fec1712fbcc6230fcb161d8d73b4730fa91a21dc089515489402ad78810547683f058e2a9835929c212fead1d6a6ade70db28bbb03edbc2829a9ab7d69447
