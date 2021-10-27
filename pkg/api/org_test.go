@@ -273,6 +273,12 @@ func TestAPIEndpoint_PutCurrentOrg_AccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
+	t.Run("AccessControl prevents updating current org with too narrow permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite, Scope: accesscontrol.Scope("orgs", "id", "2")}})
+		response := callAPI(sc.server, http.MethodPut, putCurrentOrgURL, input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+
 	t.Run("AccessControl prevents updating current org with incorrect permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}})
 		response := callAPI(sc.server, http.MethodPut, putCurrentOrgURL, input, t)
@@ -317,6 +323,13 @@ func TestAPIEndpoint_PutOrg_AccessControl(t *testing.T) {
 	input := strings.NewReader(testUpdateOrgNameForm)
 	t.Run("AccessControl allows updating another org with correct permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite, Scope: ScopeOrgsAll}})
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsURL, 2), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	input = strings.NewReader(testUpdateOrgNameForm)
+	t.Run("AccessControl allows updating another org with exact permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite, Scope: accesscontrol.Scope("orgs", "id", "2")}})
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsURL, 2), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
