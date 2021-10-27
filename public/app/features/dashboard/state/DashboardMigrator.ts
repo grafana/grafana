@@ -706,12 +706,16 @@ export class DashboardMigrator {
   // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
   // New queries, that were created during migration, are put at the end of the array.
   migrateCloudWatchQueries() {
-    for (const panel of this.dashboard.panels) {
-      for (const target of panel.targets) {
-        if (isLegacyCloudWatchQuery(target)) {
-          const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
-          for (const newQuery of newQueries) {
-            panel.targets.push(newQuery);
+    for (const p of this.dashboard.panels) {
+      // if the panel is a row, it may have nested panels
+      const panels = p.type === 'row' && !p.targets.length && p.panels.length ? p.panels : [p];
+      for (const panel of panels) {
+        for (const target of panel.targets) {
+          if (isLegacyCloudWatchQuery(target)) {
+            const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
+            for (const newQuery of newQueries) {
+              panel.targets.push(newQuery);
+            }
           }
         }
       }
