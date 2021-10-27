@@ -554,6 +554,7 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 	var reply models.SubscribeReply
 	var status backend.SubscribeStreamStatus
 	var ruleFound bool
+	var ruleHasSubscribers bool
 
 	if g.Pipeline != nil {
 		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
@@ -575,7 +576,8 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 					return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 				}
 			}
-			if len(rule.Subscribers) > 0 {
+			ruleHasSubscribers = len(rule.Subscribers) > 0
+			if ruleHasSubscribers {
 				var err error
 				for _, sub := range rule.Subscribers {
 					reply, status, err = sub.Subscribe(client.Context(), pipeline.Vars{
@@ -593,7 +595,7 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 			}
 		}
 	}
-	if !ruleFound {
+	if !ruleFound || !ruleHasSubscribers {
 		handler, addr, err := g.GetChannelHandler(user, channel)
 		if err != nil {
 			if errors.Is(err, live.ErrInvalidChannelID) {
