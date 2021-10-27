@@ -62,11 +62,12 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 const MonacoQueryField = (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onChange, initialValue } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
-  const onChangeRef = useLatest(onChange);
+  const onRunQueryRef = useLatest(onRunQuery);
+  const onBlurRef = useLatest(onBlur);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
 
@@ -96,7 +97,7 @@ const MonacoQueryField = (props: Props) => {
         onMount={(editor, monaco) => {
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
-            onChangeRef.current(editor.getValue());
+            onBlurRef.current(editor.getValue());
           });
 
           // we construct a DataProvider object
@@ -169,9 +170,7 @@ const MonacoQueryField = (props: Props) => {
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-            const text = editor.getValue();
-            props.onChange(text);
-            props.onRunQuery();
+            onRunQueryRef.current(editor.getValue());
           });
         }}
       />
