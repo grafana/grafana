@@ -49,29 +49,45 @@ export interface DataQuery {
   datasource?: DatasourceRef;
 }
 
-export enum LabelComparator {
+/**
+ * Abstract representation of any label-based query language
+ * @internal
+ */
+export interface AbstractQuery extends DataQuery {
+  labelMatchers: AbstractLabelMatcher[];
+}
+
+/**
+ * @internal
+ */
+export enum AbstractLabelOperator {
   Equal = 'Equal',
   NotEqual = 'NotEqual',
   EqualRegEx = 'EqualRegEx',
   NotEqualRegEx = 'NotEqualRegEx',
 }
 
-export type LabelSelector = {
-  labelName: string;
-  labelValue: string;
-  labelComparator: LabelComparator;
+/**
+ * @internal
+ */
+export type AbstractLabelMatcher = {
+  name: string;
+  value: string;
+  operator: AbstractLabelOperator;
 };
 
-export interface LabelBasedQuery extends DataQuery {
-  selectors: LabelSelector[];
-}
-
+/**
+ * @internal
+ */
 export interface DataSourceWithQueryImportSupport<TQuery extends DataQuery> {
-  fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): TQuery;
+  importAbstractQuery(labelBasedQuery: AbstractQuery): TQuery;
 }
 
+/**
+ * @internal
+ */
 export interface DataSourceWithQueryExportSupport<TQuery extends DataQuery> {
-  toLabelBasedQuery(query: TQuery): LabelBasedQuery;
+  exportToAbstractQuery(query: TQuery): AbstractQuery;
 }
 
 /**
@@ -80,7 +96,7 @@ export interface DataSourceWithQueryExportSupport<TQuery extends DataQuery> {
 export const hasQueryImportSupport = <TQuery extends DataQuery>(
   datasource: any
 ): datasource is DataSourceWithQueryImportSupport<TQuery> => {
-  return (datasource as DataSourceWithQueryImportSupport<TQuery>).fromLabelBasedQuery !== undefined;
+  return (datasource as DataSourceWithQueryImportSupport<TQuery>).importAbstractQuery !== undefined;
 };
 
 /**
@@ -89,5 +105,5 @@ export const hasQueryImportSupport = <TQuery extends DataQuery>(
 export const hasQueryExportSupport = <TQuery extends DataQuery>(
   datasource: any
 ): datasource is DataSourceWithQueryExportSupport<TQuery> => {
-  return (datasource as DataSourceWithQueryExportSupport<TQuery>).toLabelBasedQuery !== undefined;
+  return (datasource as DataSourceWithQueryExportSupport<TQuery>).exportToAbstractQuery !== undefined;
 };
