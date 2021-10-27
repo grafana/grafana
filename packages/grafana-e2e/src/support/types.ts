@@ -51,7 +51,11 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
         }
 
         e2e().logToConsole('Visiting', parsedUrl);
-        return e2e().visit({ url: parsedUrl, qs: queryParams });
+        if (queryParams) {
+          return e2e().visit({ url: parsedUrl, qs: queryParams });
+        } else {
+          return e2e().visit(parsedUrl);
+        }
       };
 
       continue;

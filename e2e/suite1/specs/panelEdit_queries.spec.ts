@@ -10,7 +10,7 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard({ uid: '5SdHCadmz', editPanel: 3 });
+    e2e.flows.openDashboard({ uid: '5SdHCadmz', queryParams: { editPanel: 3 } });
 
     // New panel editor opens when navigating from Panel menu
     e2e.components.PanelEditor.General.content().should('be.visible');

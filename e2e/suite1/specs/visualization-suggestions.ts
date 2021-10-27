@@ -7,7 +7,7 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard({ uid: 'aBXrJ0R7z', editPanel: 9 });
+    e2e.flows.openDashboard({ uid: 'aBXrJ0R7z', queryParams: { editPanel: 9 } });
 
     // Try visualization suggestions
     e2e.components.PanelEditor.toggleVizPicker().click();
