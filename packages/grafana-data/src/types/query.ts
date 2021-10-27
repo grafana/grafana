@@ -67,8 +67,11 @@ export interface LabelBasedQuery extends DataQuery {
 }
 
 export interface DataSourceWithQueryImportSupport<TQuery extends DataQuery> {
-  toLabelBasedQuery(query: TQuery): LabelBasedQuery;
   fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): TQuery;
+}
+
+export interface DataSourceWithQueryExportSupport<TQuery extends DataQuery> {
+  toLabelBasedQuery(query: TQuery): LabelBasedQuery;
 }
 
 /**
@@ -77,8 +80,14 @@ export interface DataSourceWithQueryImportSupport<TQuery extends DataQuery> {
 export const hasQueryImportSupport = <TQuery extends DataQuery>(
   datasource: any
 ): datasource is DataSourceWithQueryImportSupport<TQuery> => {
-  return (
-    (datasource as DataSourceWithQueryImportSupport<TQuery>).toLabelBasedQuery !== undefined &&
-    (datasource as DataSourceWithQueryImportSupport<TQuery>).fromLabelBasedQuery !== undefined
-  );
+  return (datasource as DataSourceWithQueryImportSupport<TQuery>).fromLabelBasedQuery !== undefined;
+};
+
+/**
+ * @internal
+ */
+export const hasQueryExportSupport = <TQuery extends DataQuery>(
+  datasource: any
+): datasource is DataSourceWithQueryExportSupport<TQuery> => {
+  return (datasource as DataSourceWithQueryExportSupport<TQuery>).toLabelBasedQuery !== undefined;
 };

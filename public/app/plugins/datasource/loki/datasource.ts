@@ -17,6 +17,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithLogsVolumeSupport,
+  DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
@@ -77,7 +78,8 @@ export class LokiDatasource
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithLogsVolumeSupport<LokiQuery>,
-    DataSourceWithQueryImportSupport<LokiQuery> {
+    DataSourceWithQueryImportSupport<LokiQuery>,
+    DataSourceWithQueryExportSupport<LokiQuery> {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;

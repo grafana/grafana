@@ -7,7 +7,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
-  DataSourceWithQueryImportSupport,
+  DataSourceWithQueryExportSupport,
   dateMath,
   LabelBasedQuery,
   LabelComparator,
@@ -58,7 +58,7 @@ function convertGlobToRegEx(text: string): string {
 
 export class GraphiteDatasource
   extends DataSourceApi<GraphiteQuery, GraphiteOptions, GraphiteQueryImportConfiguration>
-  implements DataSourceWithQueryImportSupport<GraphiteQuery> {
+  implements DataSourceWithQueryExportSupport<GraphiteQuery> {
   basicAuth: string;
   url: string;
   name: string;
@@ -110,16 +110,6 @@ export class GraphiteDatasource
       loki: {
         mappings: this.metricMappings,
       },
-    };
-  }
-
-  /**
-   * Not supported importing from other data sources.
-   */
-  fromLabelBasedQuery(labelBasedQuery: LabelBasedQuery): GraphiteQuery {
-    return {
-      refId: labelBasedQuery.refId,
-      target: '',
     };
   }
 

@@ -177,16 +177,6 @@ export class ElasticDatasource
   }
 
   /**
-   * Exporting queries to common format is not supported yet.
-   */
-  toLabelBasedQuery(query: ElasticsearchQuery): LabelBasedQuery {
-    return {
-      refId: query.refId,
-      selectors: [],
-    };
-  }
-
-  /**
    * Sends a GET request to the specified url on the newest matching and available index.
    *
    * When multiple indices span the provided time range, the request is sent starting from the newest index,
