@@ -33,7 +33,7 @@ You can configure Grafana managed contact points as well as contact points for a
 ## Delete a contact point
 
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
-1. Find the contact point you want to delete, then click **Delete** (trash icon).
+1. Find the contact point to delete, then click **Delete** (trash icon).
 1. In the confirmation dialog, click **Yes, delete**. This deletes the content point.
 
 > **Note:** You cannot delete contact points that are in use by a notification policy. You will have to either delete the [notification policy]({{< relref "./notification-policies.md" >}}) or update it to use another contact point.
