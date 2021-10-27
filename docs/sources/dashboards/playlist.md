@@ -59,7 +59,7 @@ You can create a playlist to present dashboards in a sequence, with a set order 
 
 1. In the playlist page, click **New playlist**. The New playlist page opens.
 1. In the **Name** text box, enter a descriptive name.
-1. In the **Interval** text bos, enter a time interval. Grafana displays a particular dashboard for the interval of time specified here before moving on to the next dashboard.
+1. In the **Interval** text box, enter a time interval. Grafana displays a particular dashboard for the interval of time specified here before moving on to the next dashboard.
 1. In Dashboards, add existing dashboards to the playlist using **Add by title** and **Add by tag** drop-down options. The dashboards you add are listed in a sequential order.
 1. If needed:
    - Search for a dashboard by its name, a regular expression, or a tag.
