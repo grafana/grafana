@@ -105,7 +105,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
     `,
     footer: css`
       height: 60px;
-      margin-top: ${theme.spacing.lg};
+      margin: ${theme.spacing.lg} auto;
       display: flex;
       justify-content: center;
       font-weight: ${theme.typography.weight.light};
