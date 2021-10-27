@@ -58,6 +58,7 @@ Grafana alerting UI allows you to configure contact points for the Grafana manag
 | Threema                                       | `threema`                 |
 | VictorOps                                     | `victorops`               |
 | [Webhook](#webhook)                           | `webhook`                 |
+| WeCom                                         | `wecom`                   |
 | [Zenduty](#zenduty)                           | `webhook`                 |
 
 ## Webhook

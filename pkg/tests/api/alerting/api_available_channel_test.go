@@ -1295,6 +1295,31 @@ var expAvailableChannelJsonOutput = `
     ]
   },
   {
+	"type": "wecom",
+	"name": "WeCom",
+	"heading": "WeCom settings",
+	"description": "Sends HTTP POST request to WeCom",
+	"info": "",
+	"options": [
+	  {
+		"element": "input",
+		"inputType": "text",
+		"label": "Url",
+		"description": "",
+		"placeholder": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx",
+		"propertyName": "url",
+		"selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+		"required": true,
+		"validationRule": "",
+		"secure": false
+	  }
+	]
+  },
+  {
     "type": "prometheus-alertmanager",
     "name": "Alertmanager",
     "heading": "Alertmanager Settings",
