@@ -9,7 +9,7 @@ weight = 402
 
 The Alerting page lists existing Grafana 8 alerting rules. By default, rules are grouped by types of data sources. The Grafana section lists all Grafana managed rules. Alerting rules for Prometheus compatible data sources are also listed here. You can view alerting rules for Prometheus compatible data sources but you cannot edit them.
 
-Cortex/Loki rules section lists all rules for external Prometheus or Loki data sources. Cloud alerting rules are also listed in this section.
+The Cortex/Loki rules section lists all rules for external Prometheus or Loki data sources. Cloud alerting rules are also listed in this section.
 
 - [View alerting rules](#view-alerting-rule)
 - [Filter alerting rules](#filter-alerting-rules)
