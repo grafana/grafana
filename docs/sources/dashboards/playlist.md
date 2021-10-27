@@ -51,7 +51,7 @@ You can control a playlist in **Normal** or **TV** mode after it's started, usin
 | Stop (square)                  | Ends the playlist, and exits to the current dashboard.                                                                                          |
 | Cycle view mode (monitor icon) | Rotates the display of the dashboards in different view modes.                                                                                  |
 | Time range                     | Displays data within a time range. It can be set to display the last 5 minutes up to 5 years ago, or a custom time range, using the down arrow. |
-| Refresh (circle arrow)         | Reloads the dashboard, to display the current data. It can be set to reload automatically every 5 seconds to 1 day, using the drop down arrow.  |
+| Refresh (circle arrow)         | Reloads the dashboard, to display the current data. It can be set to reload automatically every 5 seconds to 1 day, using the drop-down arrow.  |
 
 ## Create a playlist
 
@@ -59,7 +59,7 @@ You can create a playlist to present dashboards in a sequence, with a set order 
 
 1. In the playlist page, click **New playlist**. The New playlist page opens.
 1. In the **Name** text box, enter a descriptive name.
-1. In the **Interval** text bos, enter a time interval. Grafana displays a particular dashboard for the interval of time specified here before moving on to the next dashboard.
+1. In the **Interval** text box, enter a time interval. Grafana displays a particular dashboard for the interval of time specified here before moving on to the next dashboard.
 1. In Dashboards, add existing dashboards to the playlist using **Add by title** and **Add by tag** drop-down options. The dashboards you add are listed in a sequential order.
 1. If needed:
    - Search for a dashboard by its name, a regular expression, or a tag.
