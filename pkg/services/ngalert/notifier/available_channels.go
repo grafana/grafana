@@ -638,6 +638,28 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			},
 		},
 		{
+			Type:        "wecom",
+			Name:        "WeCom",
+			Description: "Sends HTTP POST request to WeCom",
+			Heading:     "WeCom settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Url",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx",
+					PropertyName: "url",
+					Required:     true,
+				},
+				{ // New in 8.0.
+					Label:        "Message",
+					Description:  "Custom wecom message. You can use template variables",
+					Element:      alerting.ElementTypeTextArea,
+					PropertyName: "message",
+				},
+			},
+		},
+		{
 			Type:        "prometheus-alertmanager",
 			Name:        "Alertmanager",
 			Description: "Sends notifications to Alertmanager",

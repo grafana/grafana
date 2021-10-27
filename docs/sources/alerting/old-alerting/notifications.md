@@ -71,6 +71,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 | Threema                                       | `threema`                 | yes, external only | no                       |
 | VictorOps                                     | `victorops`               | yes, external only | yes                      |
 | [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                      |
+| [WeCom](#wecom)                               | `wecom`                   | yes                | no                       |
 
 ### Email
 
@@ -260,6 +261,20 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 ### Sensu Go
 
 Grafana alert notifications can be sent to [Sensu](<(https://sensu.io)>) Go as events via the API. This operation requires an API key. For information on creating this key, refer to [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication).
+
+### WeCom
+
+To set up WeCom, you must create a WeCom robot webhook. In WeCom PC Client:
+
+1. Right Click the group chat that you wanted to add the robot
+2. Click "Add Group Robot", select "New Robot" and give your robot a name. Click "Add Robot"
+3. There should be a Webhook URL in the panel. Click "Copy URL" and paste it in Grafana WeCom setting page and click "finish"
+
+| Setting                      | Description                                                               |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| Url                          | WeCom webhook URL.                                                        |
+| Message type                 | Optionally, `markdown` and `news`. Default is `markdown`.                 |
+| Send image as single message | Optionally, Send included image as individual message. Default is `False` |
 
 ## Enable images in notifications {#external-image-store}
 

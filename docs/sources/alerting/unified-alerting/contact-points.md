@@ -84,6 +84,7 @@ To edit global configuration options for an external Alertmanager, like SMTP ser
 | Threema                                       | `threema`                 | Supported            | N/A                                                                                                      |
 | VictorOps                                     | `victorops`               | Supported            | Supported                                                                                                |
 | [Webhook](#webhook)                           | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
+| WeCom                                         | `wecom`                   | Supported            | N/A                                                                                                      |
 | [Zenduty](#zenduty)                           | `webhook`                 | Supported            | N/A                                                                                                      |
 
 ### Webhook

@@ -495,6 +495,8 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				_, err = channels.NewKafkaNotifier(cfg, nil)
 			case "webhook":
 				_, err = channels.NewWebHookNotifier(cfg, nil, decryptFunc)
+			case "wecom":
+				_, err = channels.NewWeComNotifier(cfg, nil, decryptFunc)
 			case "sensugo":
 				_, err = channels.NewSensuGoNotifier(cfg, nil, decryptFunc)
 			case "discord":
