@@ -25,7 +25,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
 
 interface StyleDeps {
   theme: GrafanaTheme2;
-  invalid: boolean;
+  invalid?: boolean;
   width?: number;
 }
 
