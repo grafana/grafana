@@ -7,9 +7,10 @@ import { Version } from '../types';
 
 interface Props {
   versions?: Version[];
+  installedVersion?: string;
 }
 
-export const VersionList = ({ versions = [] }: Props) => {
+export const VersionList = ({ versions = [], installedVersion }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (versions.length === 0) {
@@ -26,10 +27,17 @@ export const VersionList = ({ versions = [] }: Props) => {
       </thead>
       <tbody>
         {versions.map((version) => {
+          const isInstalledVersion = installedVersion === version.version;
           return (
             <tr key={version.version}>
-              <td>{version.version}</td>
-              <td>{dateTimeFormatTimeAgo(version.createdAt)}</td>
+              {isInstalledVersion ? (
+                <td className={styles.currentVersion}>{version.version} (installed version)</td>
+              ) : (
+                <td>{version.version}</td>
+              )}
+              <td className={isInstalledVersion ? styles.currentVersion : ''}>
+                {dateTimeFormatTimeAgo(version.createdAt)}
+              </td>
             </tr>
           );
         })}
@@ -51,5 +59,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     th {
       font-size: ${theme.typography.h5.fontSize};
     }
+  `,
+  currentVersion: css`
+    font-weight: ${theme.typography.fontWeightBold};
   `,
 });
