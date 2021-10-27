@@ -50,7 +50,7 @@ The `define` tag in the Content section assigns the template name. This tag is o
 1. In the Template table, find the template you want to delete, then click the **Delete** (trash icon).
 1. In the confirmation dialog, click **Yes, delete** to delete the template.
 
-Use caution when deleting a template since Grafana does not prevent you from deleting templates that are in use. 
+Use caution when deleting a template since Grafana does not prevent you from deleting templates that are in use.
 
 ### Custom template examples
 
