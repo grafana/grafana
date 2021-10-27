@@ -86,15 +86,13 @@ func (sn *SwitNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	fmt.Println(st)
-
 	cmd := &models.SendWebhookSync{
 		Url:        sn.WebhookURL,
 		Body:       string(st),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
 			"User-Agent":   "Grafana",
-			"Content-Type": "application/application",
+			"Content-Type": "application/json",
 		},
 	}
 
