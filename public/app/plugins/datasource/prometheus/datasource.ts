@@ -18,6 +18,8 @@ import {
   rangeUtil,
   ScopedVars,
   TimeRange,
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, FetchResponse, getBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
 
@@ -46,7 +48,9 @@ import {
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { LokiQuery } from '../loki/types';
-import { fromPromLikeQuery, toPromLikeQuery } from '../loki/utils';
+import Prism from 'prismjs';
+import grammar from './promql';
+import { extractLabelMatchers, toPromLikeQuery } from 'app/features/explore/utils/query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
@@ -171,7 +175,25 @@ export class PrometheusDatasource
   }
 
   exportToAbstractQuery(query: LokiQuery): AbstractQuery {
-    return fromPromLikeQuery(query);
+    const promQuery = query.expr;
+    if (!promQuery || promQuery.length === 0) {
+      return { refId: query.refId, labelMatchers: [] };
+    }
+    const tokens = Prism.tokenize(promQuery, grammar);
+    const labelMatchers: AbstractLabelMatcher[] = extractLabelMatchers(tokens);
+    const nameLabelValue = getNameLabelValue(promQuery, tokens);
+    if (nameLabelValue && nameLabelValue.length > 0) {
+      labelMatchers.push({
+        name: '__name__',
+        operator: AbstractLabelOperator.Equal,
+        value: nameLabelValue,
+      });
+    }
+
+    return {
+      refId: query.refId,
+      labelMatchers,
+    };
   }
 
   // Use this for tab completion features, wont publish response to other components
@@ -964,4 +986,15 @@ export function prometheusRegularEscape(value: any) {
 
 export function prometheusSpecialRegexEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+}
+
+function getNameLabelValue(promQuery: string, tokens: any): string {
+  let nameLabelValue = '';
+  for (let prop in tokens) {
+    if (typeof tokens[prop] === 'string') {
+      nameLabelValue = tokens[prop] as string;
+      break;
+    }
+  }
+  return nameLabelValue;
 }
