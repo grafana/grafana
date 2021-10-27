@@ -3,7 +3,6 @@ import {
   addResultsToCache,
   cancelQueries,
   cancelQueriesAction,
-  changeAutoLogsVolume,
   clearCache,
   importQueries,
   loadLogsVolumeData,
@@ -34,6 +33,7 @@ import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 import Mock = jest.Mock;
+import { config } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -41,6 +41,7 @@ jest.mock('@grafana/runtime', () => ({
     ...((jest.requireActual('@grafana/runtime') as unknown) as any).config,
     featureToggles: {
       fullRangeLogsVolume: true,
+      autoLoadFullRangeLogsVolume: false,
     },
   },
 }));
@@ -323,6 +324,7 @@ describe('reducer', () => {
   describe('logs volume', () => {
     let dispatch: ThunkDispatch,
       getState: () => StoreState,
+      unsubscribes: Function[],
       mockLogsVolumeDataProvider: () => Observable<DataQueryResponse>;
 
     beforeEach(() => {
@@ -338,7 +340,6 @@ describe('reducer', () => {
         explore: {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
-            autoLoadLogsVolume: false,
             datasourceInstance: {
               query: jest.fn(),
               meta: {
@@ -354,68 +355,9 @@ describe('reducer', () => {
 
       dispatch = store.dispatch;
       getState = store.getState;
-    });
 
-    it('should not load logs volume automatically after running the query if auto-loading is disabled', async () => {
       setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = false;
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-    });
-
-    it('should load logs volume automatically after running the query if auto-loading is enabled', async () => {
-      setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = true;
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('when auto-load is enabled after running the query it should load logs volume data after changing auto-load option', async () => {
-      setupQueryResponse(getState());
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-
-      await dispatch(changeAutoLogsVolume(ExploreId.left, true));
-
-      expect(getState().explore.autoLoadLogsVolume).toEqual(true);
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('should allow loading logs volume on demand if auto-load is disabled', async () => {
-      setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = false;
-
-      await dispatch(runQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-
-      await dispatch(loadLogsVolumeData(ExploreId.left));
-
-      expect(getState().explore.autoLoadLogsVolume).toEqual(false);
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('should cancel any unfinished logs volume queries', async () => {
-      setupQueryResponse(getState());
-      let unsubscribes: Function[] = [];
+      unsubscribes = [];
 
       mockLogsVolumeDataProvider = () => {
         return ({
@@ -428,7 +370,9 @@ describe('reducer', () => {
           },
         } as unknown) as Observable<DataQueryResponse>;
       };
+    });
 
+    it('should cancel any unfinished logs volume queries', async () => {
       await dispatch(runQueries(ExploreId.left));
       // no subscriptions created yet
       expect(unsubscribes).toHaveLength(0);
@@ -449,6 +393,12 @@ describe('reducer', () => {
       expect(unsubscribes).toHaveLength(2);
       expect(unsubscribes[0]).toBeCalled();
       expect(unsubscribes[1]).not.toBeCalled();
+    });
+
+    it('should load logs volume after running the query', async () => {
+      config.featureToggles.autoLoadFullRangeLogsVolume = true;
+      await dispatch(runQueries(ExploreId.left));
+      expect(unsubscribes).toHaveLength(1);
     });
   });
 });

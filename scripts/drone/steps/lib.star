@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.5.2'
+grabpl_version = '2.5.5'
 build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -48,9 +48,17 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     ]
 
     if ver_mode == 'release':
+        args = '${DRONE_TAG}'
         common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
     elif ver_mode == 'test-release':
+        args = test_release_ver
         common_cmds.append('./bin/grabpl verify-version {}'.format(test_release_ver))
+    else:
+        if not is_downstream:
+            build_no = '${DRONE_BUILD_NUMBER}'
+        else:
+            build_no = '$${SOURCE_BUILD_NUMBER}'
+        args = '--build-id {}'.format(build_no)
 
     identify_runner_step = {
         'name': 'identify-runner',
@@ -62,6 +70,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if install_deps:
         common_cmds.extend([
+            './bin/grabpl gen-version {}'.format(args),
             'yarn install --immutable',
         ])
     if edition in ('enterprise', 'enterprise2'):
@@ -184,7 +193,7 @@ def build_storybook_step(edition, ver_mode):
         'image': build_image,
         'depends_on': [
             # Best to ensure that this step doesn't mess with what's getting built and packaged
-            'package',
+            'build-frontend',
         ],
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=4096',
@@ -388,7 +397,7 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'lint-frontend',
+            'initialize',
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
@@ -500,13 +509,11 @@ def shellcheck_step():
         ],
     }
 
-def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
+def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is_downstream=False):
     deps = [
         'build-plugins',
         'build-backend',
         'build-frontend',
-        'codespell',
-        'shellcheck',
     ]
     if include_enterprise2:
         sfx = '-enterprise2'
@@ -515,28 +522,6 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
             'test-backend' + sfx,
         ])
 
-    if ver_mode == 'release':
-        args = '${DRONE_TAG}'
-    elif ver_mode == 'test-release':
-        args = test_release_ver
-    else:
-        if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
-        else:
-            build_no = '$${SOURCE_BUILD_NUMBER}'
-        args = '--build-id {}'.format(build_no)
-
-    return {
-        'name': 'gen-version',
-        'image': build_image,
-        'depends_on': deps,
-        'commands': [
-            './bin/grabpl gen-version {}'.format(args),
-        ],
-    }
-
-
-def package_step(edition, ver_mode, variants=None, is_downstream=False):
     variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
@@ -584,11 +569,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
     return {
         'name': 'package' + enterprise2_suffix(edition),
         'image': build_image,
-        'depends_on': [
-            # This step should have all the dependencies required for packaging, and should generate
-            # dist/grafana.version
-            'gen-version',
-        ],
+        'depends_on': deps,
         'environment': env,
         'commands': cmds,
     }
@@ -661,7 +642,7 @@ def copy_packages_for_docker_step():
         'name': 'copy-packages-for-docker',
         'image': build_image,
         'depends_on': [
-            'end-to-end-tests-server',
+            'package',
         ],
         'commands': [
             'ls dist/*.tar.gz*',
@@ -700,8 +681,7 @@ def postgres_integration_tests_step():
         'name': 'postgres-integration-tests',
         'image': build_image,
         'depends_on': [
-            'test-backend',
-            'test-frontend',
+            'initialize',
         ],
         'environment': {
             'PGPASSWORD': 'grafanatest',
@@ -725,8 +705,7 @@ def mysql_integration_tests_step():
         'name': 'mysql-integration-tests',
         'image': build_image,
         'depends_on': [
-            'test-backend',
-            'test-frontend',
+            'initialize',
         ],
         'environment': {
             'GRAFANA_TEST_DB': 'mysql',
@@ -814,8 +793,6 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
     dependencies = [
         'end-to-end-tests' + enterprise2_suffix(edition),
-        'mysql-integration-tests',
-        'postgres-integration-tests',
     ]
 
     if edition in ('enterprise', 'enterprise2'):
@@ -1010,6 +987,9 @@ def ensure_cuetsified_step():
             'validate-scuemata',
         ],
         'commands': [
+            '# Make sure the git tree is clean.',
+            '# Stashing changes, since packages that were produced in build-backend step are needed.',
+            'git stash',
             './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
             '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
             '# It is required that the generated Typescript be in sync with the input CUE files.',
@@ -1017,5 +997,7 @@ def ensure_cuetsified_step():
             './node_modules/.bin/eslint . --ext .gen.ts --fix',
             '# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result.',
             './scripts/clean-git-or-error.sh',
+            '# Un-stash changes.',
+            'git stash pop',
         ],
     }

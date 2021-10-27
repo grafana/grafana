@@ -5,11 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateTeam(t *testing.T) {
-	Convey("Updating a team", t, func() {
+	t.Run("Updating a team", func(t *testing.T) {
 		bus.ClearBusHandlers()
 
 		admin := models.SignedInUser{
@@ -27,20 +28,20 @@ func TestUpdateTeam(t *testing.T) {
 			OrgId: 1,
 		}
 
-		Convey("Given an editor and a team he isn't a member of", func() {
-			Convey("Should not be able to update the team", func() {
+		t.Run("Given an editor and a team he isn't a member of", func(t *testing.T) {
+			t.Run("Should not be able to update the team", func(t *testing.T) {
 				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
 					cmd.Result = []*models.TeamMemberDTO{}
 					return nil
 				})
 
 				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
-				So(err, ShouldEqual, models.ErrNotAllowedToUpdateTeam)
+				require.Equal(t, models.ErrNotAllowedToUpdateTeam, err)
 			})
 		})
 
-		Convey("Given an editor and a team he is an admin in", func() {
-			Convey("Should be able to update the team", func() {
+		t.Run("Given an editor and a team he is an admin in", func(t *testing.T) {
+			t.Run("Should be able to update the team", func(t *testing.T) {
 				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
 					cmd.Result = []*models.TeamMemberDTO{{
 						OrgId:      testTeam.OrgId,
@@ -52,17 +53,17 @@ func TestUpdateTeam(t *testing.T) {
 				})
 
 				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 		})
 
-		Convey("Given an editor and a team in another org", func() {
+		t.Run("Given an editor and a team in another org", func(t *testing.T) {
 			testTeamOtherOrg := models.Team{
 				Id:    1,
 				OrgId: 2,
 			}
 
-			Convey("Shouldn't be able to update the team", func() {
+			t.Run("Shouldn't be able to update the team", func(t *testing.T) {
 				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
 					cmd.Result = []*models.TeamMemberDTO{{
 						OrgId:      testTeamOtherOrg.OrgId,
@@ -74,14 +75,14 @@ func TestUpdateTeam(t *testing.T) {
 				})
 
 				err := CanAdmin(bus.GetBus(), testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor)
-				So(err, ShouldEqual, models.ErrNotAllowedToUpdateTeamInDifferentOrg)
+				require.Equal(t, models.ErrNotAllowedToUpdateTeamInDifferentOrg, err)
 			})
 		})
 
-		Convey("Given an org admin and a team", func() {
-			Convey("Should be able to update the team", func() {
+		t.Run("Given an org admin and a team", func(t *testing.T) {
+			t.Run("Should be able to update the team", func(t *testing.T) {
 				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &admin)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 		})
 	})
