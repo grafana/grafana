@@ -3,11 +3,11 @@ import { GroupState } from './group';
 import { Scene } from './scene';
 
 export class RootElement extends GroupState {
-  constructor(public options: CanvasGroupOptions, scene: Scene, private changeCallback: () => void) {
+  constructor(public options: CanvasGroupOptions, public scene: Scene, private changeCallback: () => void) {
     super(options, scene);
   }
 
-  isRoot() {
+  isRoot(): this is RootElement {
     return true;
   }
 

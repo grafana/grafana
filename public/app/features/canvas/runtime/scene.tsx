@@ -7,13 +7,7 @@ import Selecto from 'selecto';
 import { config } from 'app/core/config';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
-import {
-  Anchor,
-  CanvasElementOptions,
-  CanvasGroupOptions,
-  DEFAULT_CANVAS_ELEMENT_CONFIG,
-  Placement,
-} from 'app/features/canvas';
+import { Anchor, CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG, Placement } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
   ResourceDimensionConfig,
@@ -31,7 +25,6 @@ import { ElementState } from './element';
 import { RootElement } from './root';
 
 export class Scene {
-  private lookup = new Map<number, ElementState>();
   styles = getStyles(config.theme2);
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
@@ -60,22 +53,12 @@ export class Scene {
       this.save // callback when changes are made
     );
 
-    // Build the scene registry
-    this.buildSceneRegistry();
-
     setTimeout(() => {
       if (this.div && enableEditing) {
         this.initMoveable();
       }
     }, 100);
     return this.root;
-  }
-
-  buildSceneRegistry() {
-    this.lookup.clear();
-    this.root.visit((v) => {
-      this.lookup.set(v.UID, v);
-    });
   }
 
   context: DimensionContext = {
@@ -104,17 +87,6 @@ export class Scene {
   clearCurrentSelection() {
     let event: MouseEvent = new MouseEvent('click');
     this.selecto?.clickTarget(event, this.div);
-  }
-
-  onChange(uid: number, cfg: CanvasElementOptions) {
-    const elem = this.lookup.get(uid);
-    if (!elem) {
-      throw new Error('element not found: ' + uid + ' // ' + [...this.lookup.keys()]);
-    }
-    this.revId++;
-    elem.onChange(cfg);
-    elem.updateData(this.context); // Refresh any data that may have changed
-    this.save();
   }
 
   toggleAnchor(element: ElementState, k: keyof Anchor) {

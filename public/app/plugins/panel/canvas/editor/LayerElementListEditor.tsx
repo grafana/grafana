@@ -30,7 +30,6 @@ export class LayerElementListEditor extends PureComponent<Props> {
     newElement.updateSize(newElement.width, newElement.height);
     newElement.updateData(layer.scene.context);
     layer.elements.push(newElement);
-    layer.scene.buildSceneRegistry();
 
     layer.reinitializeMoveable();
   };

@@ -39,7 +39,8 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         } else {
           options = setOptionImmutably(options, path, value);
         }
-        opts.scene.onChange(opts.element.UID, options);
+        opts.element.onChange(options);
+        opts.element.updateData(opts.scene.context);
       },
     }),
 

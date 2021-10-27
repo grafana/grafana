@@ -7,6 +7,7 @@ import { CanvasElementItem } from '../element';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 import { cloneDeep } from 'lodash';
 import { Scene } from './scene';
+import { RootElement } from './root';
 
 export const groupItemDummy: CanvasElementItem = {
   id: 'group',
@@ -46,7 +47,7 @@ export class GroupState extends ElementState {
     }
   }
 
-  isRoot() {
+  isRoot(): this is RootElement {
     return false;
   }
 
