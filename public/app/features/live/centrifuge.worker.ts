@@ -12,7 +12,7 @@ const ctx: Worker = self as any;
 let centrifuge: Centrifuge;
 const subscriptions: Record<string, Centrifuge.Subscription> = {};
 
-const initialize = ({ appUrl, sessionId }: { appUrl: string; sessionId: string }) => {
+const initialize = ({ appUrl, sessionId, orgId }: { appUrl: string; sessionId: string; orgId: number }) => {
   const liveUrl = `${appUrl}/api/live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
 
   centrifuge = new Centrifuge(liveUrl, {
@@ -20,6 +20,7 @@ const initialize = ({ appUrl, sessionId }: { appUrl: string; sessionId: string }
   });
   centrifuge.setConnectData({
     sessionId,
+    orgId,
   });
   centrifuge.on('connect', onConnected);
   centrifuge.on('disconnect', onDisconnected);
