@@ -16,7 +16,7 @@ You can configure Grafana managed contact points as well as contact points for a
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **Contact points** to open the page listing existing contact points.
 1. Click **New contact point**.
-1. From the **Alertmanager** dropdown, select an Alertmanager. By default, the Grafana Alertmanager is selected.
+1. From the **Alertmanager** dropdown, select an Alertmanager. By default, Grafana Alertmanager is selected.
 1. In **Name**, enter a descriptive name for the contact point.
 1. From **Contact point type**, select a type and fill out mandatory fields. For example, if you choose email, enter the email addresses. Or if you choose Slack, enter the Slack channel(s) and users who should be contacted.
 1. Some contact point types, like email or webhook, have optional settings. In **Optional settings**, specify additional settings for the selected contact point type.
