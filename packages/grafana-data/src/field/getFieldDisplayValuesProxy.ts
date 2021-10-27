@@ -42,11 +42,9 @@ export function getFieldDisplayValuesProxy(options: {
       if (!field) {
         return undefined;
       }
-      let displayProcessor = field.display;
-      if (!displayProcessor) {
-        // TODO: we could supply the field here but we would also need theme which we do not have access to here
-        displayProcessor = getDisplayProcessor();
-      }
+      // TODO: we could supply the field here for the getDisplayProcessor fallback but we would also need theme which
+      //  we do not have access to here
+      const displayProcessor = field.display ?? getDisplayProcessor();
       const raw = field.values.get(options.rowIndex);
       const disp = displayProcessor(raw);
       disp.toString = () => formattedValueToString(disp);
