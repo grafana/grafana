@@ -1,5 +1,14 @@
 // We use `import type` to guarantee it'll be erased from the JS and it doesnt accidently bundle monaco
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import type { EditorProps } from '@monaco-editor/react';
+
+// we do not allow customizing the theme.
+// (theme is complicated in Monaco, right now there is
+// a limitation where all monaco editors must have
+// the same theme, see
+// https://github.com/microsoft/monaco-editor/issues/338#issuecomment-274837186
+// )
+export type ReactMonacoEditorProps = Omit<EditorProps, 'theme'>;
 
 export type CodeEditorChangeHandler = (value: string) => void;
 export type CodeEditorSuggestionProvider = () => CodeEditorSuggestionItem[];

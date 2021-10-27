@@ -50,7 +50,7 @@ func (e *MigrationError) Unwrap() error { return e.Err }
 func AddDashAlertMigration(mg *migrator.Migrator) {
 	logs, err := mg.GetMigrationLog()
 	if err != nil {
-		mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
 		os.Exit(1)
 	}
 
@@ -90,7 +90,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 func RerunDashAlertMigration(mg *migrator.Migrator) {
 	logs, err := mg.GetMigrationLog()
 	if err != nil {
-		mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
 		os.Exit(1)
 	}
 
@@ -111,7 +111,7 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 func AddDashboardUIDPanelIDMigration(mg *migrator.Migrator) {
 	logs, err := mg.GetMigrationLog()
 	if err != nil {
-		mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
 		os.Exit(1)
 	}
 
