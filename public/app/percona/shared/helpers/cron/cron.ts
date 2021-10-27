@@ -20,6 +20,8 @@ export const getCronStringFromValues = (
   return parsedArray.join(' ');
 };
 
+const dateSort = (a: number, b: number) => a - b;
+
 const fixSunday = (values: number[], unit: Unit) => {
   if (unit.type === 'week-days') {
     values = values.map((value) => {
@@ -119,7 +121,7 @@ const formatValue = (
 };
 
 const parsePartArray = (arr: number[], unit: Unit) => {
-  const values = [...new Set(fixSunday(arr, unit))].sort();
+  const values = [...new Set(fixSunday(arr, unit))].sort(dateSort);
 
   if (values.length === 0) {
     return values;
@@ -314,7 +316,7 @@ const parsePartString = (str: string, unit: Unit) => {
           unit
         )
       ),
-    ].sort();
+    ].sort(dateSort);
 
     const value = outOfRange(parsedValues, unit);
 
