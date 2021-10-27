@@ -2625,7 +2625,7 @@ __metadata:
     eslint: 7.21.0
     execa: ^5.1.1
     file-loader: 6.2.0
-    fork-ts-checker-webpack-plugin: 1.0.0
+    fork-ts-checker-webpack-plugin: 6.4.0
     fs-extra: ^10.0.0
     globby: ^10.0.1
     html-loader: 0.5.5
@@ -10616,17 +10616,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-code-frame@npm:^6.22.0":
-  version: 6.26.0
-  resolution: "babel-code-frame@npm:6.26.0"
-  dependencies:
-    chalk: ^1.1.3
-    esutils: ^2.0.2
-    js-tokens: ^3.0.2
-  checksum: 9410c3d5a921eb02fa409675d1a758e493323a49e7b9dddb7a2a24d47e61d39ab1129dd29f9175836eac9ce8b1d4c0a0718fcdc57ce0b865b529fd250dbab313
-  languageName: node
-  linkType: hard
-
 "babel-jest@npm:26.6.3, babel-jest@npm:^26.6.3":
   version: 26.6.3
   resolution: "babel-jest@npm:26.6.3"
@@ -11992,7 +11981,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chokidar@npm:^2.0.4, chokidar@npm:^2.1.8":
+"chokidar@npm:^2.1.8":
   version: 2.1.8
   resolution: "chokidar@npm:2.1.8"
   dependencies:
@@ -16936,21 +16925,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fork-ts-checker-webpack-plugin@npm:1.0.0":
-  version: 1.0.0
-  resolution: "fork-ts-checker-webpack-plugin@npm:1.0.0"
-  dependencies:
-    babel-code-frame: ^6.22.0
-    chalk: ^2.4.1
-    chokidar: ^2.0.4
-    micromatch: ^3.1.10
-    minimatch: ^3.0.4
-    semver: ^5.6.0
-    tapable: ^1.0.0
-  checksum: 06b01379a736c555c7797409a6c97780149107b902f4cee1cb86eb43ccf109ff85c3a48e81b23e9ab0356749947111df16dd0d27dbc790378be8a4f317875545
-  languageName: node
-  linkType: hard
-
 "fork-ts-checker-webpack-plugin@npm:4.1.6, fork-ts-checker-webpack-plugin@npm:^4.1.6":
   version: 4.1.6
   resolution: "fork-ts-checker-webpack-plugin@npm:4.1.6"
@@ -16997,7 +16971,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fork-ts-checker-webpack-plugin@npm:^6.0.4":
+"fork-ts-checker-webpack-plugin@npm:6.4.0, fork-ts-checker-webpack-plugin@npm:^6.0.4":
   version: 6.4.0
   resolution: "fork-ts-checker-webpack-plugin@npm:6.4.0"
   dependencies:
@@ -21354,13 +21328,6 @@ __metadata:
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
   checksum: 8a95213a5a77deb6cbe94d86340e8d9ace2b93bc367790b260101d2f36a2eaf4e4e22d9fa9cf459b38af3a32fb4190e638024cf82ec95ef708680e405ea7cc78
-  languageName: node
-  linkType: hard
-
-"js-tokens@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "js-tokens@npm:3.0.2"
-  checksum: ff24cf90e6e4ac446eba56e604781c1aaf3bdaf9b13a00596a0ebd972fa3b25dc83c0f0f67289c33252abb4111e0d14e952a5d9ffb61f5c22532d555ebd8d8a9
   languageName: node
   linkType: hard
 
