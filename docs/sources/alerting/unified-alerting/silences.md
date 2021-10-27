@@ -13,7 +13,7 @@ Silences do not prevent alert rules from being evaluated. They also do not stop 
 
 Grafana alerting UI allows you to configure silences for the Grafana managed alerts (handled by the embedded Alertmanager) as well as silences for an [external Alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}), using the Alertmanager dropdown.
 
-> **Note:** Currently the configuration of the embedded Alertmanager is shared across organisations. Therefore users are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise silences for the Grafana managed alerts will be visible by all organizations.
+> **Note:** Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organisations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organisation. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
 
 ## Add a silence
 
