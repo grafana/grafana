@@ -270,9 +270,8 @@ func TestSendSlackRequest(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "No response body",
-			statusCode:  http.StatusOK,
-			expectError: true,
+			name:       "No response body",
+			statusCode: http.StatusOK,
 		},
 		{
 			name:          "Success case, unexpected response body",
