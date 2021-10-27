@@ -1,5 +1,5 @@
 +++
-title = "State and Health of alerting rules"
+title = "State and health of alerting rules"
 description = "State and Health of alerting rules"
 keywords = ["grafana", "alerting", "guide", "state"]
 aliases = ["/docs/grafana/llatest/alerting/unified-alerting/alerting-rules/state-and-health/"]
