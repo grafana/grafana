@@ -84,7 +84,6 @@ export class GroupState extends ElementState {
     const [removed] = result.splice(startIndex, 1);
     result.splice(endIndex, 0, removed);
     this.elements = result;
-    this.onChange(this.getSaveModel());
 
     this.reinitializeMoveable();
   }
@@ -132,8 +131,6 @@ export class GroupState extends ElementState {
         console.log('DO action', action, element);
         return;
     }
-
-    this.onChange(this.getSaveModel());
   };
 
   render() {
