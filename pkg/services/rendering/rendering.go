@@ -158,9 +158,13 @@ func (rs *RenderingService) Version() string {
 
 func (rs *RenderingService) RenderErrorImage(_ error) (*RenderResult, error) {
 	imgUrl := "public/img/rendering_error.png"
+	imgPath := filepath.Join(setting.HomePath, imgUrl)
+	if _, err := os.Stat(imgPath); errors.Is(err, os.ErrNotExist) {
+		return nil, err
+	}
 
 	return &RenderResult{
-		FilePath: filepath.Join(setting.HomePath, imgUrl),
+		FilePath: imgPath,
 	}, nil
 }
 
