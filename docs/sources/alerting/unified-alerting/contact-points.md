@@ -27,7 +27,7 @@ You can configure Grafana managed contact points as well as contact points for a
 ## Edit a contact point
 
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
-1. Find the contact point you want to edit, then click **Edit** (pen icon).
+1. Find the contact point to edit, then click **Edit** (pen icon).
 1. Make any changes and click **Save contact point**.
 
 ## Delete a contact point
