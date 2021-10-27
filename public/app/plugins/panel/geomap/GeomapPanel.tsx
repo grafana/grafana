@@ -31,7 +31,7 @@ import { Global } from '@emotion/react';
 import { GeomapHoverFeature, GeomapHoverPayload } from './event';
 import { DataHoverView } from './components/DataHoverView';
 import { Subscription } from 'rxjs';
-import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
+import { PanelEditExitedEvent } from 'app/types/events';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { cloneDeep } from 'lodash';
 
@@ -82,12 +82,6 @@ export class GeomapPanel extends Component<Props, State> {
         if (this.mapDiv && this.props.id === evt.payload) {
           this.initMapRef(this.mapDiv);
         }
-        this.setState({ ttip: undefined });
-      })
-    );
-    this.subs.add(
-      this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {
-        this.setState({ ttip: undefined });
       })
     );
   }
@@ -283,6 +277,12 @@ export class GeomapPanel extends Component<Props, State> {
         selected: layers.length - 1, // the top layer
         actions: this.actions,
       });
+    }
+  };
+
+  clearTooltip = () => {
+    if (this.state.ttip) {
+      this.setState({ ttip: undefined });
     }
   };
 
@@ -508,7 +508,7 @@ export class GeomapPanel extends Component<Props, State> {
     return (
       <>
         <Global styles={this.globalCSS} />
-        <div className={this.style.wrap}>
+        <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
           <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
         </div>
