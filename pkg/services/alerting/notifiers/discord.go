@@ -47,6 +47,12 @@ func init() {
 				PropertyName: "url",
 				Required:     true,
 			},
+			{
+				Label:        "Use Discord's Webhook Username",
+				Description:  "Use the username configured in Discord's webhook settings. Otherwise, the username will be 'Grafana'",
+				Element:      alerting.ElementTypeCheckbox,
+				PropertyName: "use_discord_username",
+			},
 		},
 	})
 }
@@ -58,13 +64,15 @@ func newDiscordNotifier(model *models.AlertNotification, _ alerting.GetDecrypted
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find webhook url property in settings"}
 	}
+	useDiscordUsername := model.Settings.Get("use_discord_username").MustBool(false)
 
 	return &DiscordNotifier{
-		NotifierBase: NewNotifierBase(model),
-		Content:      content,
-		AvatarURL:    avatar,
-		WebhookURL:   url,
-		log:          log.New("alerting.notifier.discord"),
+		NotifierBase:       NewNotifierBase(model),
+		Content:            content,
+		AvatarURL:          avatar,
+		WebhookURL:         url,
+		log:                log.New("alerting.notifier.discord"),
+		UseDiscordUsername: useDiscordUsername,
 	}, nil
 }
 
@@ -72,10 +80,11 @@ func newDiscordNotifier(model *models.AlertNotification, _ alerting.GetDecrypted
 // notifications to discord.
 type DiscordNotifier struct {
 	NotifierBase
-	Content    string
-	AvatarURL  string
-	WebhookURL string
-	log        log.Logger
+	Content            string
+	AvatarURL          string
+	WebhookURL         string
+	log                log.Logger
+	UseDiscordUsername bool
 }
 
 // Notify send an alert notification to Discord.
@@ -89,7 +98,9 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("username", "Grafana")
+	if !dn.UseDiscordUsername {
+		bodyJSON.Set("username", "Grafana")
+	}
 
 	if dn.Content != "" {
 		bodyJSON.Set("content", dn.Content)

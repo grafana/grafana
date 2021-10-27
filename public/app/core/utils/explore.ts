@@ -201,6 +201,25 @@ export const safeStringifyValue = (value: any, space?: number) => {
   return '';
 };
 
+export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
+
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
+
+const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
+// we use this function to take any kind of data we loaded
+// from an external source (URL, localStorage, whatever),
+// and extract the graph-style from it, or return the default
+// graph-style if we are not able to do that.
+// it is important that this function is able to take any form of data,
+// (be it objects, or arrays, or booleans or whatever),
+// and produce a best-effort graphStyle.
+// note that typescript makes sure we make no mistake in this function.
+// we do not rely on ` as ` or ` any `.
+export const toGraphStyle = (data: unknown): ExploreGraphStyle => {
+  const found = EXPLORE_GRAPH_STYLES.find((v) => v === data);
+  return found ?? DEFAULT_GRAPH_STYLE;
+};
+
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsed = safeParseJson(initial);
   const errorResult: any = {
@@ -277,9 +296,12 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
 }
 
 /**
- * A target is non-empty when it has keys (with non-empty values) other than refId, key and context.
+ * A target is non-empty when it has keys (with non-empty values) other than refId, key, context and datasource.
+ * FIXME: While this is reasonable for practical use cases, a query without any propery might still be "non-empty"
+ * in its own scope, for instance when there's no user input needed. This might be the case for an hypothetic datasource in
+ * which query options are only set in its config and the query object itself, as generated from its query editor it's always "empty"
  */
-const validKeys = ['refId', 'key', 'context'];
+const validKeys = ['refId', 'key', 'context', 'datasource'];
 export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): boolean {
   return (
     queries &&
