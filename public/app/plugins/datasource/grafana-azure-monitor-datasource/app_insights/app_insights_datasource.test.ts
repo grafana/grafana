@@ -394,24 +394,6 @@ describe('AppInsightsDatasource', () => {
     });
   });
 
-  describe('When performing metricFindQuery', () => {
-    describe('with a metric names query', () => {
-      const response = {
-        metrics: {
-          'exceptions/server': {},
-          'requests/count': {},
-        },
-      };
-
-      beforeEach(() => {
-        ctx.ds.getResource = jest.fn().mockImplementation((path) => {
-          expect(path).toContain('/metrics/metadata');
-          return Promise.resolve(response);
-        });
-      });
-    });
-  });
-
   describe('When getting Metric Names', () => {
     const response = {
       metrics: {
