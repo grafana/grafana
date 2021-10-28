@@ -198,11 +198,11 @@ export class DashboardModel {
   private variablesChangedBaseHandler(event: VariablesChanged | VariablesTimeRangeChanged, processRepeats = false) {
     const timeRange = getTimeSrv().timeRange();
 
-    if (isMathString(timeRange.raw.from) && isMathString(timeRange.raw.to)) {
+    if (isMathString(timeRange.raw.from)) {
       const totalRange = timeRange.to.diff(timeRange.from);
       const msSinceLastRefresh = Date.now() - this.lastRefresh;
       const threshold = totalRange * 0.05;
-      if (msSinceLastRefresh > threshold) {
+      if (msSinceLastRefresh >= threshold) {
         if (processRepeats) {
           this.processRepeats();
         }

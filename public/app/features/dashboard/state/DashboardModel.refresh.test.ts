@@ -2,13 +2,16 @@ import { DashboardModel } from './DashboardModel';
 import { appEvents } from '../../../core/core';
 import { VariablesChanged } from '../../variables/types';
 import { PanelModel } from './PanelModel';
+import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
+import { dateMath } from '@grafana/data';
 
 function getTestContext({
   usePanelInEdit,
   usePanelInView,
-}: { usePanelInEdit?: boolean; usePanelInView?: boolean } = {}) {
+  lastRefresh,
+}: { usePanelInEdit?: boolean; usePanelInView?: boolean; lastRefresh?: number } = {}) {
   jest.clearAllMocks();
-
+  const originalTimeSrv = getTimeSrv();
   const dashboard = new DashboardModel({});
   const startRefreshMock = jest.fn();
   dashboard.startRefresh = startRefreshMock;
@@ -23,10 +26,23 @@ function getTestContext({
     dashboard.panelInView = panelInView;
     panelIds.push(panelInView.id);
   }
+  if (lastRefresh) {
+    setTimeSrv({
+      timeRange: () => ({
+        raw: {
+          to: 'now',
+          from: 'now-1m',
+        },
+        to: dateMath.parse('now', false),
+        from: dateMath.parse('now-1m', false),
+      }),
+    } as any);
+    dashboard['lastRefresh'] = Date.now() - lastRefresh;
+  }
 
   appEvents.publish(new VariablesChanged({ panelIds }));
 
-  return { dashboard, startRefreshMock, panelInEdit, panelInView };
+  return { dashboard, startRefreshMock, panelInEdit, panelInView, originalTimeSrv };
 }
 
 describe('Strict panel refresh', () => {
@@ -36,6 +52,26 @@ describe('Strict panel refresh', () => {
 
       expect(startRefreshMock).toHaveBeenCalledTimes(1);
       expect(startRefreshMock).toHaveBeenLastCalledWith([1, 2, 3]);
+    });
+  });
+
+  describe('when the dashboard has not been refreshed within the threshold', () => {
+    it(' then all panels should be refreshed', () => {
+      const { startRefreshMock, originalTimeSrv } = getTestContext({ lastRefresh: 4000 });
+
+      expect(startRefreshMock).toHaveBeenCalledTimes(1);
+      expect(startRefreshMock).toHaveBeenLastCalledWith(undefined);
+      setTimeSrv(originalTimeSrv);
+    });
+  });
+
+  describe('when the dashboard has been refreshed within the threshold then all panels should be refreshed', () => {
+    it('then all affected panels should be refreshed', () => {
+      const { startRefreshMock, originalTimeSrv } = getTestContext({ lastRefresh: 2000 });
+
+      expect(startRefreshMock).toHaveBeenCalledTimes(1);
+      expect(startRefreshMock).toHaveBeenLastCalledWith([1, 2, 3]);
+      setTimeSrv(originalTimeSrv);
     });
   });
 

@@ -65,7 +65,6 @@ import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQu
 import * as runtime from '@grafana/runtime';
 import { LoadingState } from '@grafana/data';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
-import { setStrictPanelRefresh } from '../settings/reducer';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -610,9 +609,8 @@ describe('shared actions', () => {
           expect(dispatchedActions[5]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
           expect(dispatchedActions[6]).toEqual(variableStateCompleted(toVariablePayload(constant)));
 
-          expect(dispatchedActions[7]).toEqual(setStrictPanelRefresh(false));
-          expect(dispatchedActions[8]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 9;
+          expect(dispatchedActions[7]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 8;
         });
       });
     });
@@ -652,9 +650,8 @@ describe('shared actions', () => {
           );
           expect(dispatchedActions[9]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
           expect(dispatchedActions[10]).toEqual(variableStateCompleted(toVariablePayload(constant)));
-          expect(dispatchedActions[11]).toEqual(setStrictPanelRefresh(false));
-          expect(dispatchedActions[12]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 13;
+          expect(dispatchedActions[11]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 12;
         });
       });
     });
