@@ -283,10 +283,14 @@ func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotific
 		if errors.Is(err, models.ErrAlertNotificationWithSameNameExists) || errors.Is(err, models.ErrAlertNotificationWithSameUIDExists) {
 			return response.Error(409, "Failed to create alert notification", err)
 		}
+		var alertingErr alerting.ValidationError
+		if errors.As(err, &alertingErr) {
+			return response.Error(400, err.Error(), err)
+		}
 		return response.Error(500, "Failed to create alert notification", err)
 	}
 
-	return response.JSON(200, dtos.NewAlertNotification(cmd.Result))
+	return response.JSON(201, dtos.NewAlertNotification(cmd.Result))
 }
 
 func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotificationCommand) response.Response {
@@ -300,6 +304,10 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext, cmd models.U
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), err)
+		}
+		var alertingErr alerting.ValidationError
+		if errors.As(err, &alertingErr) {
+			return response.Error(400, err.Error(), err)
 		}
 		return response.Error(500, "Failed to update alert notification", err)
 	}
