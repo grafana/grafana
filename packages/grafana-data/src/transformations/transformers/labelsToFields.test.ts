@@ -288,14 +288,14 @@ describe('Labels as Columns', () => {
           Object {
             "fields": Array [
               Object {
-                "Label": Array [
+                "label": Array [
                   "foo",
                   "bar",
                   "zaz",
                 ],
               },
               Object {
-                "Value": Array [
+                "value": Array [
                   "thing",
                   "a",
                   "xyz",
@@ -307,13 +307,13 @@ describe('Labels as Columns', () => {
           Object {
             "fields": Array [
               Object {
-                "Label": Array [
+                "label": Array [
                   "foo",
                   "bar",
                 ],
               },
               Object {
-                "Value": Array [
+                "value": Array [
                   "thing",
                   "b",
                 ],
@@ -352,13 +352,13 @@ describe('Labels as Columns', () => {
           Object {
             "fields": Array [
               Object {
-                "Label": Array [
+                "label": Array [
                   "zaz",
                   "bar",
                 ],
               },
               Object {
-                "Value": Array [
+                "value": Array [
                   "xyz",
                   "a",
                 ],
@@ -369,13 +369,13 @@ describe('Labels as Columns', () => {
           Object {
             "fields": Array [
               Object {
-                "Label": Array [
+                "label": Array [
                   "zaz",
                   "bar",
                 ],
               },
               Object {
-                "Value": Array [
+                "value": Array [
                   undefined,
                   "b",
                 ],
