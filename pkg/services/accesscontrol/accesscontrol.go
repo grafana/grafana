@@ -48,7 +48,14 @@ func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*model
 			return fallback(c)
 		}
 
-		hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+		// TODO open another PR for this change
+		injected, err := evaluator.Inject(BuildScopeParams(c))
+		if err != nil {
+			c.Logger.Error("Error from access control system", "error", err)
+			return false
+		}
+
+		hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, injected)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
 			return false

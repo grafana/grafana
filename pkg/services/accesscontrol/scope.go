@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // Scope builds scope from parts
@@ -30,6 +31,13 @@ func Parameter(key string) string {
 // e.g. Scope("orgs", Parameter("OrgID")) or "orgs:" + Parameter("OrgID")
 func Field(key string) string {
 	return fmt.Sprintf(`{{ .%s }}`, key)
+}
+
+func BuildScopeParams(c *models.ReqContext) ScopeParams {
+	return ScopeParams{
+		OrgID:     c.OrgId,
+		URLParams: web.Params(c.Req),
+	}
 }
 
 type KeywordScopeResolveFunc func(*models.SignedInUser) (string, error)

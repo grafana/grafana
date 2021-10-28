@@ -1,6 +1,7 @@
 import React, { FC, useState } from 'react';
-import { Organization } from 'app/types';
+import { AccessControlAction, Organization } from 'app/types';
 import { Button, ConfirmModal } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 
 interface Props {
   orgs: Organization[];
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
+  const canDeleteOrg = contextSrv.hasPermission(AccessControlAction.OrgsDelete);
+
   const [deleteOrg, setDeleteOrg] = useState<Organization>();
   return (
     <table className="filter-table form-inline filter-table--hover">
@@ -34,6 +37,7 @@ export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
                 icon="times"
                 onClick={() => setDeleteOrg(org)}
                 aria-label="Delete org"
+                disabled={!canDeleteOrg}
               />
             </td>
           </tr>
