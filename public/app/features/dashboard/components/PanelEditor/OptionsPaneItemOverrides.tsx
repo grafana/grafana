@@ -25,7 +25,7 @@ export function OptionsPaneItemOverrides({ overrides }: Props) {
 export interface OptionPaneItemOverrideInfo {
   type: 'data' | 'rule';
   onClick?: () => void;
-  tooltip: () => React.ReactElement;
+  tooltip: string;
   description: string;
 }
 
@@ -52,13 +52,7 @@ export function searchForOptionOverrides(
         infoDots.push({
           type: 'data',
           description: dataOverrideTooltipDescription,
-          tooltip: function TooltipContent() {
-            return (
-              <div>
-                <div>{dataOverrideTooltipDescription}</div>
-              </div>
-            );
-          },
+          tooltip: dataOverrideTooltipDescription,
         });
 
         break;
@@ -75,9 +69,7 @@ export function searchForOptionOverrides(
         infoDots.push({
           type: 'rule',
           description: overrideRuleTooltipDescription,
-          tooltip: function TooltipContent() {
-            return <div>{overrideRuleTooltipDescription}</div>;
-          },
+          tooltip: overrideRuleTooltipDescription,
         });
 
         overrideRuleFound = true;

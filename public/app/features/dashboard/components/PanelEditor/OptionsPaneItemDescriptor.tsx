@@ -36,7 +36,7 @@ export class OptionsPaneItemDescriptor {
       return (
         <Label description={description}>
           {title}
-          {Boolean(overrides?.length) && <OptionsPaneItemOverrides overrides={overrides} />}
+          {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
         </Label>
       );
     }
