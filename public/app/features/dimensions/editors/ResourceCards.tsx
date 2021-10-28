@@ -52,11 +52,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       border: 1px solid transparent;
       border-radius: 8px;
       padding-top: 6px;
-
       :hover {
         border-color: ${theme.colors.action.hover};
         box-shadow: ${theme.shadows.z2};
       }
+      :focus {
+        border-color: ${theme.colors.action.focus};
+      }
+    `,
+    click: css`
+      border: 1px solid ${theme.colors.action.focus};
     `,
     img: css`
       width: 40px;
