@@ -35,7 +35,7 @@ COPY scripts scripts
 COPY cue.mod cue.mod
 COPY .bingo .bingo
 
-RUN make gen-go
+RUN go mod verify
 RUN make build-go
 
 # Final stage
