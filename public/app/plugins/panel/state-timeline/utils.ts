@@ -115,25 +115,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions & { pan
       hoveredSeriesIdx = seriesIndex;
       hoveredDataIdx = valueIndex;
       shouldChangeHover = true;
-      const yValue = frame.fields[seriesIndex].values.get(valueIndex);
-      payload.point[FIXED_UNIT] = yValue;
-      eventBus.publish(new DataHoverEvent(payload));
-      eventBus.publish(
-        new LegacyGraphHoverEvent({
-          panel: { id: panelId },
-          point: payload.point,
-          pos: { x: payload.point[xScaleUnit], y: yValue, panelRelY: 1 },
-          data: frame,
-          down: undefined,
-        })
-      );
     },
     onLeave: () => {
       hoveredSeriesIdx = null;
       hoveredDataIdx = null;
       shouldChangeHover = true;
-      eventBus.publish(new DataHoverClearEvent());
-      eventBus.publish(new LegacyGraphHoverClearEvent());
     },
   };
 
@@ -265,9 +251,21 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions & { pan
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;
             payload.point[FIXED_UNIT] = null;
+            eventBus.publish(new DataHoverClearEvent());
+            eventBus.publish(new LegacyGraphHoverClearEvent());
           } else {
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
             payload.down = undefined;
+            eventBus.publish(new DataHoverEvent(payload));
+            eventBus.publish(
+              new LegacyGraphHoverEvent({
+                panel: { id: panelId },
+                point: payload.point,
+                pos: { x: payload.point[xScaleUnit], panelRelY: y / h },
+                data: frame,
+                down: undefined,
+              })
+            );
           }
           return true;
         },
