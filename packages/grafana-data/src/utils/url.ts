@@ -197,7 +197,13 @@ export const urlUtil = {
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
   if (compact) {
-    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries]);
+    const items: unknown[] = [urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries];
+    const { graphStyle } = urlState;
+    if (graphStyle) {
+      // only store `style` if a value is really provided
+      items.push({ style: { graph: graphStyle } });
+    }
+    return JSON.stringify(items);
   }
   return JSON.stringify(urlState);
 }

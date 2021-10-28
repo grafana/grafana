@@ -23,6 +23,8 @@ import {
   rangeUtil,
   DateTime,
   isDateTime,
+  ExploreGraphStyle,
+  EXPLORE_GRAPH_STYLES,
 } from '@grafana/data';
 import store from 'app/core/store';
 import { v4 as uuidv4 } from 'uuid';
@@ -201,10 +203,6 @@ export const safeStringifyValue = (value: any, space?: number) => {
   return '';
 };
 
-export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-
-export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
-
 const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
 // we use this function to take any kind of data we loaded
 // from an external source (URL, localStorage, whatever),
@@ -249,10 +247,12 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode'));
+  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode', 'style'));
 
   const originPanelId = parsedSegments.filter((segment) => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, originPanelId };
+  const maybeGraphStyle = parsedSegments.filter((segment) => isSegment(segment, 'style'))[0]?.style?.graph;
+  const graphStyle = maybeGraphStyle === undefined ? undefined : toGraphStyle(maybeGraphStyle);
+  return { datasource, queries, range, originPanelId, graphStyle };
 }
 
 export function generateKey(index = 0): string {

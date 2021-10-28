@@ -2,6 +2,7 @@ import {
   AbsoluteTimeRange,
   DataSourceApi,
   EventBusExtended,
+  ExploreGraphStyle,
   ExploreUrlState,
   getDefaultTimeRange,
   HistoryItem,
@@ -12,12 +13,7 @@ import {
 import { ExploreItemState } from 'app/types/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import store from '../../../core/store';
-import {
-  clearQueryKeys,
-  ExploreGraphStyle,
-  lastUsedDatasourceKeyForOrgId,
-  toGraphStyle,
-} from '../../../core/utils/explore';
+import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
 import { toRawTimeRange } from '../utils/time';
 
 export const DEFAULT_RANGE = {
@@ -113,6 +109,7 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
     datasource: pane.datasourceInstance?.name || '',
     queries: pane.queries.map(clearQueryKeys),
     range: toRawTimeRange(pane.range),
+    graphStyle: pane.graphStyle,
   };
 }
 

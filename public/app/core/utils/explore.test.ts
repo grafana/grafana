@@ -23,6 +23,7 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   queries: [],
   range: DEFAULT_RANGE,
   originPanelId: undefined,
+  graphStyle: undefined,
 };
 
 describe('state functions', () => {
@@ -47,7 +48,7 @@ describe('state functions', () => {
       });
     });
 
-    it('returns a valid Explore state from a compact URL parameter', () => {
+    it('returns a valid Explore state from a compact URL parameter without grapStyle', () => {
       const paramValue = '["now-1h","now","Local",{"expr":"metric"},{"ui":[true,true,true,"none"]}]';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
@@ -56,6 +57,19 @@ describe('state functions', () => {
           from: 'now-1h',
           to: 'now',
         },
+      });
+    });
+
+    it('returns a valid Explore state from a compact URL parameter with graphStyle', () => {
+      const paramValue = '["now-1h","now","Local",{"expr":"metric"},{"style":{"graph":"bars"}}]';
+      expect(parseUrlState(paramValue)).toMatchObject({
+        datasource: 'Local',
+        queries: [{ expr: 'metric' }],
+        range: {
+          from: 'now-1h',
+          to: 'now',
+        },
+        graphStyle: 'bars',
       });
     });
 

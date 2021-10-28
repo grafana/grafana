@@ -7,6 +7,7 @@ import {
   createFieldConfigRegistry,
   DataFrame,
   dateTime,
+  ExploreGraphStyle,
   FieldColorModeId,
   FieldConfigSource,
   getFrameDisplayName,
@@ -26,7 +27,6 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { ExploreGraphStyle } from 'app/core/utils/explore';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
 import { identity } from 'lodash';

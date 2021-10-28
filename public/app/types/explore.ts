@@ -13,8 +13,8 @@ import {
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
+  ExploreGraphStyle,
 } from '@grafana/data';
-import { ExploreGraphStyle } from 'app/core/utils/explore';
 
 export enum ExploreId {
   left = 'left',
