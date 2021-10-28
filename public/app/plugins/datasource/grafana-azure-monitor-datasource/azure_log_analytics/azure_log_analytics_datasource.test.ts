@@ -1,7 +1,8 @@
 import AzureMonitorDatasource from '../datasource';
+import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
 import FakeSchemaData from './__mocks__/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { AzureLogsVariable, DatasourceValidationResult } from '../types';
+import { AzureLogsVariable, AzureMonitorQuery, DatasourceValidationResult } from '../types';
 import { toUtc } from '@grafana/data';
 
 const templateSrv = new TemplateSrv();
@@ -374,6 +375,75 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should return the first workspace', async () => {
       const workspace = await ctx.ds.azureLogAnalyticsDatasource.getFirstWorkspace();
       expect(workspace).toEqual('foo');
+    });
+  });
+
+  describe('When performing filterQuery', () => {
+    const ctx: any = {};
+    let laDatasource: AzureLogAnalyticsDatasource;
+
+    beforeEach(() => {
+      ctx.instanceSettings = {
+        jsonData: { subscriptionId: 'xxx' },
+        url: 'http://azureloganalyticsapi',
+      };
+
+      laDatasource = new AzureLogAnalyticsDatasource(ctx.instanceSettings);
+    });
+
+    it('should run complete queries', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          resource: '/sub/124/rg/cloud/vm/server',
+          query: 'perf | take 100',
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeTruthy();
+    });
+
+    it('should not run empty queries', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
+
+    it('should not run hidden queries', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        hide: true,
+        azureLogAnalytics: {
+          resource: '/sub/124/rg/cloud/vm/server',
+          query: 'perf | take 100',
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
+
+    it('should not run queries missing a kusto query', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          resource: '/sub/124/rg/cloud/vm/server',
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
+
+    it('should not run queries missing a resource', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          query: 'perf | take 100',
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeFalsy();
     });
   });
 });

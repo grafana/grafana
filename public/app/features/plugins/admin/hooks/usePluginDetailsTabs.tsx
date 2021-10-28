@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PluginIncludeType, PluginType } from '@grafana/data';
 import { CatalogPlugin, PluginDetailsTab, PluginTabIds } from '../types';
-import { isOrgAdmin } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
+import { isOrgAdmin } from '../permissions';
 
 type ReturnType = {
   error: Error | undefined;

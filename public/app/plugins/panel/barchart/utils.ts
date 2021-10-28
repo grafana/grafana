@@ -13,9 +13,17 @@ import {
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
-import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
+import {
+  AxisPlacement,
+  ScaleDirection,
+  ScaleDistribution,
+  ScaleOrientation,
+  StackingMode,
+  VizLegendOptions,
+} from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
-import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { collectStackingGroups, orderIdsByCalcs } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { orderBy } from 'lodash';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -47,6 +55,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   text,
   rawValue,
   allFrames,
+  legend,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) =>
@@ -73,6 +82,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     formatValue,
     text,
     showValue,
+    legend,
   };
 
   const config = getConfig(opts, theme);
@@ -108,14 +118,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   });
 
   let seriesIndex = 0;
-
+  const legendOrdered = isLegendOrdered(legend);
   const stackingGroups: Map<string, number[]> = new Map();
 
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    field.state!.seriesIndex = seriesIndex++;
+    seriesIndex++;
 
     const customConfig: BarChartFieldConfig = { ...defaultBarChartFieldConfig, ...field.config.custom };
 
@@ -144,9 +154,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
       dataFrameFieldIndex: {
-        fieldIndex: allFrames[0].fields.findIndex(
-          (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
-        ),
+        fieldIndex: legendOrdered
+          ? i
+          : allFrames[0].fields.findIndex(
+              (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
+            ),
         frameIndex: 0,
       },
     });
@@ -192,7 +204,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   if (stackingGroups.size !== 0) {
     builder.setStacking(true);
-    for (const [_, seriesIdxs] of stackingGroups.entries()) {
+    for (const [_, seriesIds] of stackingGroups.entries()) {
+      const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
       for (let j = seriesIdxs.length - 1; j > 0; j--) {
         builder.addBand({
           series: [seriesIdxs[j], seriesIdxs[j - 1]],
@@ -229,7 +242,7 @@ export function preparePlotFrame(data: DataFrame[]) {
 export function prepareGraphableFrames(
   series: DataFrame[],
   theme: GrafanaTheme2,
-  stacking: StackingMode
+  options: BarChartOptions
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
     return { warn: 'No data in response' };
@@ -250,6 +263,7 @@ export function prepareGraphableFrames(
     };
   }
 
+  const legendOrdered = isLegendOrdered(options.legend);
   let seriesIndex = 0;
 
   for (let frame of series) {
@@ -268,7 +282,7 @@ export function prepareGraphableFrames(
               ...field.config.custom,
               stacking: {
                 group: '_',
-                mode: stacking,
+                mode: options.stacking,
               },
             },
           },
@@ -282,7 +296,7 @@ export function prepareGraphableFrames(
           ),
         };
 
-        if (stacking === StackingMode.Percent) {
+        if (options.stacking === StackingMode.Percent) {
           copy.config.unit = 'percentunit';
           copy.display = getDisplayProcessor({ field: copy, theme });
         }
@@ -293,11 +307,29 @@ export function prepareGraphableFrames(
       }
     }
 
+    let orderedFields: Field[] | undefined;
+
+    if (legendOrdered) {
+      orderedFields = orderBy(
+        fields,
+        ({ state }) => {
+          return state?.calcs?.[options.legend.sortBy!.toLowerCase()];
+        },
+        options.legend.sortDesc ? 'desc' : 'asc'
+      );
+      // The string field needs to be the first one
+      if (orderedFields[orderedFields.length - 1].type === FieldType.string) {
+        orderedFields.unshift(orderedFields.pop()!);
+      }
+    }
+
     frames.push({
       ...frame,
-      fields,
+      fields: orderedFields || fields,
     });
   }
 
   return { frames };
 }
+
+export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);

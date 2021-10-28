@@ -5,8 +5,8 @@ import { PanelChromeAngular } from './PanelChromeAngular';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
+import { cleanUpPanelState, setPanelInstanceState } from '../../panel/state/reducers';
 import { initPanelState } from '../../panel/state/actions';
-import { cleanUpPanelState } from '../../panel/state/reducers';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -39,6 +39,7 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 const mapDispatchToProps = {
   initPanelState,
   cleanUpPanelState,
+  setPanelInstanceState,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -75,6 +76,10 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     }
   }
 
+  onInstanceStateChange = (value: any) => {
+    this.props.setPanelInstanceState({ key: this.props.stateKey, value });
+  };
+
   renderPanel(plugin: PanelPlugin) {
     const { dashboard, panel, isViewing, isInView, isEditing, width, height } = this.props;
 
@@ -103,6 +108,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
         isInView={isInView}
         width={width}
         height={height}
+        onInstanceStateChange={this.onInstanceStateChange}
       />
     );
   }
