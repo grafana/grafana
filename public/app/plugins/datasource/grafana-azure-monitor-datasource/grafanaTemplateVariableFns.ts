@@ -46,7 +46,6 @@ export const migrateStringQueriesToObjectQueries = (
 
   if (isGrafanaTemplateVariableFnQuery(rawQuery)) {
     return {
-      refId: 'A',
       queryType: AzureQueryType.GrafanaTemplateVariableFn,
       grafanaTemplateVariableFn: {
         query: rawQuery,
@@ -65,7 +64,6 @@ export const migrateStringQueriesToObjectQueries = (
     };
 
     return {
-      refId: 'A',
       queryType: AzureQueryType.LogAnalytics,
       azureLogAnalytics: {
         query: rawQuery,
