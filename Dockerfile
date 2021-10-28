@@ -3,10 +3,12 @@ FROM node:16-alpine3.14 as js-builder
 WORKDIR /usr/src/app/
 
 COPY package.json yarn.lock ./
+COPY .yarnrc.yml ./
+COPY .yarn .yarn
 COPY packages packages
+COPY plugins-bundled plugins-bundled
 
-RUN apk --no-cache add git
-RUN yarn install --pure-lockfile --no-progress
+RUN yarn install
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
@@ -19,7 +21,7 @@ RUN yarn build
 
 FROM golang:1.17.0-alpine3.14 as go-builder
 
-RUN apk add --no-cache gcc g++
+RUN apk add --no-cache gcc g++ make
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
 
@@ -29,10 +31,11 @@ COPY cue.mod cue.mod
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
 COPY pkg pkg
-COPY build.go package.json ./
+COPY .bingo .bingo
+COPY Makefile build.go package.json ./
 
 RUN go mod verify
-RUN go run build.go build
+RUN make build-go
 
 # Final stage
 FROM alpine:3.14.2

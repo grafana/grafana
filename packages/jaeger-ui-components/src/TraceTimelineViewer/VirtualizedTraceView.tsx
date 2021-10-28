@@ -31,13 +31,12 @@ import {
 } from './utils';
 import { Accessors } from '../ScrollManager';
 import { getColorByKey } from '../utils/color-generator';
-import { TNil } from '../types';
+import { SpanLinkFunc, TNil } from '../types';
 import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { PEER_SERVICE } from '../constants/tag-keys';
 
 import { createStyle, Theme, withTheme } from '../Theme';
-import { CreateSpanLink } from './types';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
@@ -84,7 +83,7 @@ type TVirtualizedTraceViewOwnProps = {
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
   theme: Theme;
-  createSpanLink?: CreateSpanLink;
+  createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
 };
 

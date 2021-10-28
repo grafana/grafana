@@ -67,12 +67,14 @@ describe('intent', () => {
       otherLabels: [],
     });
 
-    assertIntent('something{one="val1",two="val2",^}', {
+    assertIntent('something{one="val1",two!="val2",three=~"val3",four!~"val4",^}', {
       type: 'LABEL_NAMES_FOR_SELECTOR',
       metricName: 'something',
       otherLabels: [
-        { name: 'one', value: 'val1' },
-        { name: 'two', value: 'val2' },
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'three', value: 'val3', op: '=~' },
+        { name: 'four', value: 'val4', op: '!~' },
       ],
     });
 
@@ -83,7 +85,7 @@ describe('intent', () => {
 
     assertIntent('{one="val1",^}', {
       type: 'LABEL_NAMES_FOR_SELECTOR',
-      otherLabels: [{ name: 'one', value: 'val1' }],
+      otherLabels: [{ name: 'one', value: 'val1', op: '=' }],
     });
   });
 
@@ -95,28 +97,49 @@ describe('intent', () => {
       otherLabels: [],
     });
 
+    assertIntent('something{job!=^}', {
+      type: 'LABEL_VALUES',
+      metricName: 'something',
+      labelName: 'job',
+      otherLabels: [],
+    });
+
+    assertIntent('something{job=~^}', {
+      type: 'LABEL_VALUES',
+      metricName: 'something',
+      labelName: 'job',
+      otherLabels: [],
+    });
+
+    assertIntent('something{job!~^}', {
+      type: 'LABEL_VALUES',
+      metricName: 'something',
+      labelName: 'job',
+      otherLabels: [],
+    });
+
     assertIntent('something{job=^,host="h1"}', {
       type: 'LABEL_VALUES',
       metricName: 'something',
       labelName: 'job',
-      otherLabels: [{ name: 'host', value: 'h1' }],
+      otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
     });
 
     assertIntent('{job=^,host="h1"}', {
       type: 'LABEL_VALUES',
       labelName: 'job',
-      otherLabels: [{ name: 'host', value: 'h1' }],
+      otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
     });
 
-    assertIntent('something{one="val1",two="val2",three=^,four="val4",five="val5"}', {
+    assertIntent('something{one="val1",two!="val2",three=^,four=~"val4",five!~"val5"}', {
       type: 'LABEL_VALUES',
       metricName: 'something',
       labelName: 'three',
       otherLabels: [
-        { name: 'one', value: 'val1' },
-        { name: 'two', value: 'val2' },
-        { name: 'four', value: 'val4' },
-        { name: 'five', value: 'val5' },
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'four', value: 'val4', op: '=~' },
+        { name: 'five', value: 'val5', op: '!~' },
       ],
     });
   });

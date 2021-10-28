@@ -74,7 +74,7 @@ export function getCompletionProvider(
   };
 
   return {
-    triggerCharacters: ['{', ',', '[', '(', '='],
+    triggerCharacters: ['{', ',', '[', '(', '=', '~'],
     provideCompletionItems,
   };
 }

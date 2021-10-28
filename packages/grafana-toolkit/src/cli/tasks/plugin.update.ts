@@ -12,7 +12,7 @@ const updateCiConfig = () =>
       fs.mkdirSync(ciConfigPath);
     }
 
-    const sourceFile = path.join('node_modules/@grafana/toolkit/config/circleci', 'config.yml');
+    const sourceFile = require.resolve('@grafana/toolkit/config/circleci/config.yml');
     const destFile = path.join(ciConfigPath, 'config.yml');
     fs.copyFileSync(sourceFile, destFile);
   });

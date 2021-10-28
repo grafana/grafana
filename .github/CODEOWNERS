@@ -63,6 +63,7 @@ go.sum @grafana/backend-platform
 /pkg/plugins @grafana/plugins-platform-backend
 /pkg/services/datasourceproxy @grafana/plugins-platform-backend
 /pkg/services/datasources @grafana/plugins-platform-backend
+/public/app/features/plugins @grafana/plugins-platform-frontend
 
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
