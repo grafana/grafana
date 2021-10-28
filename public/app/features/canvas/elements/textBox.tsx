@@ -71,15 +71,23 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
 
   display: TextBoxDisplay,
 
-  defaultConfig: {
-    align: Align.Left,
-    valign: VAlign.Middle,
-  },
-
   defaultSize: {
     width: 240,
     height: 160,
   },
+
+  getNewOptions: (options) => ({
+    background: {
+      color: {
+        fixed: 'grey',
+      },
+    },
+    ...options,
+    config: {
+      align: Align.Left,
+      valign: VAlign.Middle,
+    },
+  }),
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: TextBoxConfig) => {
@@ -89,9 +97,11 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
       valign: cfg.valign ?? VAlign.Middle,
       size: cfg.size,
     };
+
     if (cfg.color) {
       data.color = ctx.getColor(cfg.color).value();
     }
+
     return data;
   },
 

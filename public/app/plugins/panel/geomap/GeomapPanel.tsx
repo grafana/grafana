@@ -1,16 +1,14 @@
 import React, { Component, ReactNode } from 'react';
-import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry, defaultBaseLayer } from './layers/registry';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
 import { Map, MapBrowserEvent, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
-import BaseLayer from 'ol/layer/Base';
 import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 
 import {
   PanelData,
-  MapLayerHandler,
   MapLayerOptions,
   PanelProps,
   GrafanaTheme,
@@ -20,7 +18,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from './types';
+import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig } from './types';
 import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
@@ -32,12 +30,10 @@ import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
 import { GeomapHoverFeature, GeomapHoverPayload } from './event';
 import { DataHoverView } from './components/DataHoverView';
-
-interface MapLayerState {
-  config: MapLayerOptions;
-  handler: MapLayerHandler;
-  layer: BaseLayer; // used to add|remove
-}
+import { Subscription } from 'rxjs';
+import { PanelEditExitedEvent } from 'app/types/events';
+import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
+import { cloneDeep } from 'lodash';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
@@ -47,31 +43,51 @@ interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
 }
 
+export interface GeomapLayerActions {
+  selectLayer: (uid: string) => void;
+  deleteLayer: (uid: string) => void;
+  addlayer: (type: string) => void;
+  reorder: (src: number, dst: number) => void;
+}
+
+export interface GeomapInstanceState {
+  map?: Map;
+  layers: MapLayerState[];
+  selected: number;
+  actions: GeomapLayerActions;
+}
+
 export class GeomapPanel extends Component<Props, State> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
+  private subs = new Subscription();
 
   globalCSS = getGlobalStyles(config.theme2);
 
   counter = 0;
-  map?: Map;
-  basemap?: BaseLayer;
-  layers: MapLayerState[] = [];
   mouseWheelZoom?: MouseWheelZoom;
   style = getStyles(config.theme);
   hoverPayload: GeomapHoverPayload = { point: {}, pageX: -1, pageY: -1 };
   readonly hoverEvent = new DataHoverEvent(this.hoverPayload);
 
+  map?: Map;
+  mapDiv?: HTMLDivElement;
+  layers: MapLayerState[] = [];
+
   constructor(props: Props) {
     super(props);
     this.state = {};
+    this.subs.add(
+      this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
+        if (this.mapDiv && this.props.id === evt.payload) {
+          this.initMapRef(this.mapDiv);
+        }
+      })
+    );
   }
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
-    if (this.panelContext.onInstanceStateChange) {
-      this.panelContext.onInstanceStateChange(this);
-    }
   }
 
   shouldComponentUpdate(nextProps: Props) {
@@ -84,25 +100,94 @@ export class GeomapPanel extends Component<Props, State> {
       this.map.updateSize();
     }
 
-    // External configuration changed
-    let layersChanged = false;
-    if (this.props.options !== nextProps.options) {
-      layersChanged = this.optionsChanged(nextProps.options);
-    }
-
     // External data changed
-    if (layersChanged || this.props.data !== nextProps.data) {
+    if (this.props.data !== nextProps.data) {
       this.dataChanged(nextProps.data);
     }
 
     return true; // always?
   }
 
+  private doOptionsUpdate(selected: number) {
+    const { options, onOptionsChange } = this.props;
+    const layers = this.layers;
+    onOptionsChange({
+      ...options,
+      basemap: layers[0].options,
+      layers: layers.slice(1).map((v) => v.options),
+    });
+
+    // Notify the the panel editor
+    if (this.panelContext.onInstanceStateChange) {
+      this.panelContext.onInstanceStateChange({
+        map: this.map,
+        layers: layers,
+        selected,
+        actions: this.actions,
+      });
+    }
+  }
+
+  actions: GeomapLayerActions = {
+    selectLayer: (uid: string) => {
+      const selected = this.layers.findIndex((v) => v.UID === uid);
+      if (this.panelContext.onInstanceStateChange) {
+        this.panelContext.onInstanceStateChange({
+          map: this.map,
+          layers: this.layers,
+          selected,
+          actions: this.actions,
+        });
+      }
+    },
+    deleteLayer: (uid: string) => {
+      const layers: MapLayerState[] = [];
+      for (const lyr of this.layers) {
+        if (lyr.UID === uid) {
+          this.map?.removeLayer(lyr.layer);
+        } else {
+          layers.push(lyr);
+        }
+      }
+      this.layers = layers;
+      this.doOptionsUpdate(0);
+    },
+    addlayer: (type: string) => {
+      const item = geomapLayerRegistry.getIfExists(type);
+      if (!item) {
+        return; // ignore empty request
+      }
+      this.initLayer(
+        this.map!,
+        {
+          type: item.id,
+          config: cloneDeep(item.defaultOptions),
+        },
+        false
+      ).then((lyr) => {
+        this.layers = this.layers.slice(0);
+        this.layers.push(lyr);
+        this.map?.addLayer(lyr.layer);
+
+        this.doOptionsUpdate(this.layers.length - 1);
+      });
+    },
+    reorder: (startIndex: number, endIndex: number) => {
+      const result = Array.from(this.layers);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      this.layers = result;
+
+      this.doOptionsUpdate(endIndex);
+    },
+  };
+
   /**
    * Called when the panel options change
+   *
+   * NOTE: changes to basemap and layers are handled independently
    */
-  optionsChanged(options: GeomapPanelOptions): boolean {
-    let layersChanged = false;
+  optionsChanged(options: GeomapPanelOptions) {
     const oldOptions = this.props.options;
     console.log('options changed!', options);
 
@@ -115,19 +200,6 @@ export class GeomapPanel extends Component<Props, State> {
       console.log('Controls changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
     }
-
-    if (options.basemap !== oldOptions.basemap) {
-      console.log('Basemap changed');
-      this.initBasemap(options.basemap);
-      layersChanged = true;
-    }
-
-    if (options.layers !== oldOptions.layers) {
-      console.log('layers changed');
-      this.initLayers(options.layers ?? []); // async
-      layersChanged = true;
-    }
-    return layersChanged;
   }
 
   /**
@@ -142,6 +214,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   initMapRef = async (div: HTMLDivElement) => {
+    this.mapDiv = div;
     if (this.map) {
       this.map.dispose();
     }
@@ -151,7 +224,8 @@ export class GeomapPanel extends Component<Props, State> {
       return;
     }
     const { options } = this.props;
-    this.map = new Map({
+
+    const map = (this.map = new Map({
       view: this.initMapView(options.view),
       pixelRatio: 1, // or zoom?
       layers: [], // loaded explicitly below
@@ -160,12 +234,33 @@ export class GeomapPanel extends Component<Props, State> {
       interactions: interactionDefaults({
         mouseWheelZoom: false, // managed by initControls
       }),
-    });
+    }));
+
+    const layers: MapLayerState[] = [];
+    try {
+      layers.push(await this.initLayer(map, options.basemap ?? DEFAULT_BASEMAP_CONFIG, true));
+
+      // Default layer values
+      let layerOptions = options.layers;
+      if (!layerOptions) {
+        layerOptions = [defaultMarkersConfig];
+      }
+
+      for (const lyr of layerOptions) {
+        layers.push(await this.initLayer(map, lyr, false));
+      }
+    } catch (ex) {
+      console.error('error loading layers', ex);
+    }
+
+    this.layers = layers;
+    for (const lyr of layers) {
+      this.map.addLayer(lyr.layer);
+    }
+
     this.mouseWheelZoom = new MouseWheelZoom();
     this.map.addInteraction(this.mouseWheelZoom);
     this.initControls(options.controls);
-    this.initBasemap(options.basemap);
-    await this.initLayers(options.layers);
     this.forceUpdate(); // first render
 
     // Tooltip listener
@@ -173,6 +268,22 @@ export class GeomapPanel extends Component<Props, State> {
     this.map.getViewport().addEventListener('mouseout', (evt) => {
       this.props.eventBus.publish(new DataHoverClearEvent());
     });
+
+    // Notify the the panel editor
+    if (this.panelContext.onInstanceStateChange) {
+      this.panelContext.onInstanceStateChange({
+        map: this.map,
+        layers: layers,
+        selected: layers.length - 1, // the top layer
+        actions: this.actions,
+      });
+    }
+  };
+
+  clearTooltip = () => {
+    if (this.state.ttip) {
+      this.setState({ ttip: undefined });
+    }
   };
 
   pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
@@ -223,63 +334,93 @@ export class GeomapPanel extends Component<Props, State> {
     }
   };
 
-  async initBasemap(cfg: MapLayerOptions) {
+  private updateLayer = async (uid: string, newOptions: MapLayerOptions): Promise<boolean> => {
     if (!this.map) {
-      return;
+      return false;
+    }
+    const selected = this.layers.findIndex((v) => v.UID === uid);
+    if (selected < 0) {
+      return false;
+    }
+    const layers = this.layers.slice(0);
+    try {
+      let found = false;
+      const current = this.layers[selected];
+      const info = await this.initLayer(this.map, newOptions, current.isBasemap);
+      const group = this.map?.getLayers()!;
+      for (let i = 0; i < group?.getLength(); i++) {
+        if (group.item(i) === current.layer) {
+          found = true;
+          group.setAt(i, info.layer);
+          break;
+        }
+      }
+      if (!found) {
+        console.warn('ERROR not found', uid);
+        return false;
+      }
+      layers[selected] = info;
+
+      // initalize with new data
+      if (info.handler.update) {
+        info.handler.update(this.props.data);
+      }
+    } catch (err) {
+      console.warn('ERROR', err);
+      return false;
+    }
+    // TODO
+    // validate names, basemap etc
+
+    this.layers = layers;
+    this.doOptionsUpdate(selected);
+
+    return true;
+  };
+
+  async initLayer(map: Map, options: MapLayerOptions, isBasemap?: boolean): Promise<MapLayerState> {
+    if (isBasemap && (!options?.type || config.geomapDisableCustomBaseLayer)) {
+      options = DEFAULT_BASEMAP_CONFIG;
     }
 
-    if (!cfg?.type || config.geomapDisableCustomBaseLayer) {
-      cfg = DEFAULT_BASEMAP_CONFIG;
+    // Use default makers layer
+    if (!options?.type) {
+      options = {
+        type: MARKERS_LAYER_ID,
+        config: {},
+      };
     }
-    const item = geomapLayerRegistry.getIfExists(cfg.type) ?? defaultBaseLayer;
-    const handler = await item.create(this.map, cfg, config.theme2);
+
+    const item = geomapLayerRegistry.getIfExists(options.type);
+    if (!item) {
+      return Promise.reject('unknown layer: ' + options.type);
+    }
+
+    const handler = await item.create(map, options, config.theme2);
     const layer = handler.init();
-    if (this.basemap) {
-      this.map.removeLayer(this.basemap);
-      this.basemap.dispose();
-    }
-    this.basemap = layer;
-    this.map.getLayers().insertAt(0, this.basemap);
-  }
 
-  async initLayers(layers: MapLayerOptions[]) {
-    // 1st remove existing layers
-    for (const state of this.layers) {
-      this.map!.removeLayer(state.layer);
-      state.layer.dispose();
+    // const key = layer.on('change', () => {
+    //   const state = layer.getLayerState();
+    //   console.log('LAYER', key, state);
+    // });
+
+    if (handler.update) {
+      handler.update(this.props.data);
     }
 
-    if (!layers) {
-      layers = [];
-    }
+    const UID = `lyr-${this.counter++}`;
+    return {
+      UID,
+      isBasemap,
+      options,
+      layer,
+      handler,
 
-    const legends: React.ReactNode[] = [];
-    this.layers = [];
-    for (const overlay of layers) {
-      const item = geomapLayerRegistry.getIfExists(overlay.type);
-      if (!item) {
-        console.warn('unknown layer type: ', overlay);
-        continue; // TODO -- panel warning?
-      }
-
-      const handler = await item.create(this.map!, overlay, config.theme2);
-      const layer = handler.init();
-      (layer as any).___handler = handler;
-      this.map!.addLayer(layer);
-      this.layers.push({
-        config: overlay,
-        layer,
-        handler,
-      });
-
-      if (handler.legend) {
-        legends.push(<div key={`${this.counter++}`}>{handler.legend}</div>);
-      }
-    }
-    this.setState({ bottomLeft: legends });
-
-    // Update data after init layers
-    this.dataChanged(this.props.data);
+      // Used by the editors
+      onChange: (cfg) => {
+        this.updateLayer(UID, cfg);
+      },
+    };
   }
 
   initMapView(config: MapViewConfig): View {
@@ -367,7 +508,7 @@ export class GeomapPanel extends Component<Props, State> {
     return (
       <>
         <Global styles={this.globalCSS} />
-        <div className={this.style.wrap}>
+        <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
           <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
         </div>
