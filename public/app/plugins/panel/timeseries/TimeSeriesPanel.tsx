@@ -11,7 +11,7 @@ import { prepareGraphableFields } from './utils';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
-import { CannotVisualizeData } from 'app/features/panel/components/CannotVisualizeData';
+import { PanelDataErrorView } from '@grafana/runtime';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -33,10 +33,10 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const { frames, message, suggestions } = useMemo(() => prepareGraphableFields(data, config.theme2), [data]);
+  const { frames, message } = useMemo(() => prepareGraphableFields(data, config.theme2), [data]);
 
   if (!frames) {
-    return <CannotVisualizeData panelId={id} data={data} message={message} suggestions={suggestions} />;
+    return <PanelDataErrorView panelId={id} data={data} message={message} needsTimeSeries={true} />;
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
