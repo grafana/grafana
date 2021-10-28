@@ -1,15 +1,14 @@
-import React, { useEffect, useState, ChangeEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  TabContent,
   Button,
   Select,
-  Input,
-  Spinner,
-  TabsBar,
-  Tab,
-  StringValueEditor,
+  FilterInput,
   useTheme2,
   stylesFactory,
+  Field,
+  Modal,
+  StringValueEditor,
+  Label,
 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { ResourceCards } from './ResourceCards';
@@ -25,6 +24,7 @@ interface Props {
   onChange: (value?: string) => void;
   mediaType: 'icon' | 'image';
   folderName: ResourceFolderName;
+  setOpen: (value: boolean) => void;
 }
 
 interface ResourceItem {
@@ -34,8 +34,13 @@ interface ResourceItem {
   imgUrl: string;
 }
 
+const sourceOptions = [
+  { label: 'Icon Set', value: 'iconSet' },
+  { label: 'URL', value: 'url' },
+  { label: 'Upload', value: 'upload' },
+];
 export function ResourcePicker(props: Props) {
-  const { value, onChange, mediaType, folderName } = props;
+  const { value, onChange, mediaType, folderName, setOpen } = props;
   const folders = getFolders(mediaType).map((v) => ({
     label: v,
     value: v,
@@ -43,12 +48,13 @@ export function ResourcePicker(props: Props) {
 
   const folderOfCurrentValue = value || folderName ? folderIfExists(folders, value ?? folderName) : folders[0];
   const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>(folderOfCurrentValue);
-  const [tabs, setTabs] = useState([
-    { label: 'Select', active: true },
-    // { label: 'Upload', active: false },
-  ]);
   const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
   const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
+  // select between existing icon folder, url, or upload
+  const [source, setSource] = useState<SelectableValue<string>>(sourceOptions[0]);
+  // pass on new value to confirm button
+  const [newValue, setNewValue] = useState<string>(value ?? '');
+  const [searchQuery, setSearchQuery] = useState<string>();
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -86,8 +92,7 @@ export function ResourcePicker(props: Props) {
     }
   }, [mediaType, currentFolder]);
 
-  const onChangeSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    let query = e.currentTarget.value;
+  const onChangeSearch = (query: string) => {
     if (query) {
       query = query.toLowerCase();
       setFilteredIndex(directoryIndex.filter((card) => card.search.includes(query)));
@@ -95,54 +100,77 @@ export function ResourcePicker(props: Props) {
       setFilteredIndex(directoryIndex);
     }
   };
-  const imgSrc = getPublicOrAbsoluteUrl(value!);
+  const imgSrc = getPublicOrAbsoluteUrl(newValue!);
 
   return (
     <div>
-      <div className={styles.currentItem}>
-        {value && (
-          <>
-            {mediaType === 'icon' && <SVG src={imgSrc} className={styles.img} />}
-            {mediaType === 'image' && <img src={imgSrc} className={styles.img} />}
-          </>
-        )}
-        <StringValueEditor value={value ?? ''} onChange={onChange} item={{} as any} context={{} as any} />
-        <Button variant="secondary" onClick={() => onChange(value)}>
-          Apply
-        </Button>
+      <div className={styles.upper}>
+        <div className={styles.child}>
+          <Field label="Source">
+            <Select menuShouldPortal={true} options={sourceOptions} onChange={setSource} value={source} />
+          </Field>
+          {source?.value === 'iconSet' && (
+            <>
+              <Field label="Set">
+                <Select menuShouldPortal={true} options={folders} onChange={setCurrentFolder} value={currentFolder} />
+              </Field>
+              <Field>
+                <FilterInput
+                  value={searchQuery}
+                  placeholder="Search"
+                  onChange={(v) => {
+                    onChangeSearch(v);
+                    setSearchQuery(v);
+                  }}
+                />
+              </Field>
+            </>
+          )}
+          {source?.value === 'url' && (
+            <Field label="URL">
+              <StringValueEditor
+                value={value ?? ''}
+                onChange={(v) => {
+                  if (v) {
+                    setNewValue(v);
+                    onChange(v);
+                  }
+                }}
+                item={{} as any}
+                context={{} as any}
+              />
+            </Field>
+          )}
+        </div>
+        <div className={styles.iconContainer}>
+          <Field label="Preview">
+            <div className={styles.iconPreview}>
+              {mediaType === 'icon' && <SVG src={imgSrc} className={styles.img} />}
+              {mediaType === 'image' && <img src={imgSrc} className={styles.img} />}
+            </div>
+          </Field>
+          <Label>{value?.substring(value.lastIndexOf('/') + 1, value.lastIndexOf('.'))}</Label>
+        </div>
       </div>
-      <TabsBar>
-        {tabs.map((tab, index) => (
-          <Tab
-            label={tab.label}
-            key={index}
-            active={tab.active}
-            onChangeTab={() => setTabs(tabs.map((tab, idx) => ({ ...tab, active: idx === index })))}
-          />
-        ))}
-      </TabsBar>
-      <TabContent>
-        {tabs[0].active && (
-          <div className={styles.tabContent}>
-            <Select menuShouldPortal={true} options={folders} onChange={setCurrentFolder} value={currentFolder} />
-            <Input placeholder="Search" onChange={onChangeSearch} />
-            {filteredIndex ? (
-              <div className={styles.cardsWrapper}>
-                <ResourceCards cards={filteredIndex} onChange={onChange} currentFolder={currentFolder} />
-              </div>
-            ) : (
-              <Spinner />
-            )}
-          </div>
-        )}
-        {/* TODO: add file upload
+      {source?.value === 'iconSet' && filteredIndex && (
+        <div className={styles.cardsWrapper}>
+          <ResourceCards cards={filteredIndex} onChange={(v) => setNewValue(v)} currentFolder={currentFolder} />
+        </div>
+      )}
+
+      <Modal.ButtonRow>
+        <Button variant="secondary" onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+        <Button onClick={() => onChange(newValue)}>Select</Button>
+      </Modal.ButtonRow>
+      {/* TODO: add file upload
           {tabs[1].active && (
           <FileUpload
             onFileUpload={({ currentTarget }) => console.log('file', currentTarget?.files && currentTarget.files[0])}
             className={styles.tabContent}
           />
         )} */}
-      </TabContent>
     </div>
   );
 }
@@ -150,7 +178,10 @@ export function ResourcePicker(props: Props) {
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     cardsWrapper: css`
-      height: calc(100vh - 480px);
+      height: calc(100vh - 500px);
+      max-height: 400px;
+      margin-top: 5px;
+      max-width: 680px;
     `,
     tabContent: css`
       margin-top: 20px;
@@ -158,18 +189,38 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
         margin-top: 10px;
       },
     `,
-    currentItem: css`
+    iconPreview: css`
+      width: 95px;
+      height: 79px;
+      border: 1px solid rgba(204, 204, 220, 0.15);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      column-gap: 2px;
-      margin: -18px 0px 18px 0px;
+      justify-content: center;
+    `,
+    iconContainer: css`
+      display: flex;
+      flex-direction: column;
+      min-width: 40%;
+      align-items: center;
     `,
     img: css`
-      width: 40px;
-      height: 40px;
+      width: 49px;
+      height: 49px;
       fill: ${theme.colors.text.primary};
     `,
+    child: css`
+      min-width: 60%;
+    `,
+    upper: css`
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    `,
+    suffix: css`
+      color: #6e9fff;
+    `,
+    previewText: css``,
   };
 });
 

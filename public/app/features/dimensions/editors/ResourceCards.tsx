@@ -39,11 +39,15 @@ function Cell(props: CellProps) {
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
+    container: css`
+      border: 1px solid rgba(204, 204, 220, 0.15);
+    `,
     card: css`
       display: inline-block;
-      width: 80px;
-      height: 80px;
+      width: 90px;
+      height: 90px;
       margin: 0.75rem;
+      margin-left: 15px;
       text-align: center;
       cursor: pointer;
       position: relative;
@@ -58,8 +62,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
     img: css`
-      width: 50px;
-      height: 50px;
+      width: 40px;
+      height: 40px;
       object-fit: cover;
       vertical-align: middle;
       fill: ${theme.colors.text.primary};
@@ -72,6 +76,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: block;
       overflow: hidden;
     `,
+    grid: css`
+      border: 1px solid rgba(204, 204, 220, 0.15);
+    `,
   };
 });
 
@@ -83,12 +90,14 @@ interface CardProps {
 
 export const ResourceCards = (props: CardProps) => {
   const { onChange, cards, currentFolder: folder } = props;
+  const theme = useTheme2();
+  const styles = getStyles(theme);
 
   return (
-    <AutoSizer defaultWidth={1920} defaultHeight={1080}>
+    <AutoSizer defaultWidth={680}>
       {({ width, height }) => {
-        const cardWidth = 80;
-        const cardHeight = 80;
+        const cardWidth = 90;
+        const cardHeight = 90;
         const columnCount = Math.floor(width / cardWidth);
         const rowCount = Math.ceil(cards.length / columnCount);
         return (
@@ -100,6 +109,7 @@ export const ResourceCards = (props: CardProps) => {
             rowCount={rowCount}
             rowHeight={cardHeight}
             itemData={{ cards, columnCount, onChange, folder }}
+            className={styles.grid}
           >
             {memo(Cell, areEqual)}
           </Grid>
