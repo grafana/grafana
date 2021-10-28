@@ -12,8 +12,8 @@ import {
 } from '@grafana/data';
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
-import { CoreGrafanaLiveFeature } from '../scopes';
-import { sessionId } from '../live';
+import { CoreGrafanaLiveFeature } from '../channel-config/types';
+import { sessionId } from 'app/features/live';
 import { ShowModalReactEvent } from '../../../types/events';
 import { Unsubscribable } from 'rxjs';
 
