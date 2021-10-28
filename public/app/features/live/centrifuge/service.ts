@@ -34,7 +34,8 @@ export class CentrifugeSrv {
   readonly connectionBlocker: Promise<void>;
 
   constructor(private deps: CentrifugeSrvDeps) {
-    this.centrifuge = new Centrifuge(deps.appUrl.replace('http', 'ws'), {});
+    const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
+    this.centrifuge = new Centrifuge(liveUrl, {});
     this.centrifuge.setConnectData({
       sessionId: deps.sessionId,
       orgId: deps.orgId,
