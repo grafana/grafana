@@ -68,7 +68,7 @@ func (s *SocialBase) httpGet(client *http.Client, url string) (response httpGetR
 		return
 	}
 
-	log.Tracef("HTTP GET %s: %s %s", url, r.Status, string(response.Body))
+	log.Debug("HTTP GET", "url", url, "status", r.Status, "response_body", string(response.Body))
 
 	err = nil
 	return

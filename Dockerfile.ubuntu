@@ -1,12 +1,14 @@
-FROM node:14.15.1-slim AS js-builder
+FROM node:16-alpine3.14 as js-builder
 
 WORKDIR /usr/src/app/
 
 COPY package.json yarn.lock ./
 COPY packages packages
+COPY .yarnrc.yml ./
+COPY .yarn .yarn
+COPY plugins-bundled plugins-bundled
 
-RUN apt-get update && apt-get install -yq git
-RUN yarn install --pure-lockfile
+RUN yarn install
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
@@ -22,7 +24,8 @@ FROM golang:1.17.0 AS go-builder
 WORKDIR /src/grafana
 
 COPY go.mod go.sum embed.go ./
-COPY build.go package.json ./
+COPY Makefile build.go package.json ./
+COPY .bingo .bingo
 COPY pkg pkg/
 COPY cue cue/
 COPY cue.mod cue.mod/
@@ -30,7 +33,7 @@ COPY packages/grafana-schema packages/grafana-schema/
 COPY public/app/plugins public/app/plugins/
 
 RUN go mod verify
-RUN go run build.go build
+RUN make build-go
 
 FROM ubuntu:20.04
 
