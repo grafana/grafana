@@ -122,10 +122,6 @@ export class CanvasPanel extends Component<Props, State> {
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
-
-      if (this.props.options.inlineEditing) {
-        this.scene.selecto?.destroy();
-      }
     }
 
     return changed;

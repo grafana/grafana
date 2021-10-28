@@ -55,7 +55,9 @@ export class Scene {
 
     setTimeout(() => {
       if (this.div) {
-        this.initMoveable(false, enableEditing);
+        // If editing is enabled, clear selecto instance
+        const destroySelecto = enableEditing;
+        this.initMoveable(destroySelecto, enableEditing);
       }
     }, 100);
     return this.root;
