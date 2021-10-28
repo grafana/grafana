@@ -120,8 +120,8 @@ function convertLabelsToRows(data: DataFrame[], keepLabels?: string[]): DataFram
             ...frame,
             name: getFieldDisplayName(field, frame, data),
             fields: [
-              { name: 'Label', type: FieldType.string, config: {}, values: new ArrayVector(keys) },
-              { name: 'Value', type: FieldType.string, config: {}, values: new ArrayVector(vals) },
+              { name: 'label', type: FieldType.string, config: {}, values: new ArrayVector(keys) },
+              { name: 'value', type: FieldType.string, config: {}, values: new ArrayVector(vals) },
             ],
             length: vals.length,
           });

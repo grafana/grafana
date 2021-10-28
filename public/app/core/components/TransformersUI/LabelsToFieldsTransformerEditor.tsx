@@ -6,15 +6,24 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill } from '@grafana/ui';
 
-import { LabelsToFieldsOptions } from '@grafana/data/src/transformations/transformers/labelsToFields';
+import {
+  LabelsToFieldsMode,
+  LabelsToFieldsOptions,
+} from '@grafana/data/src/transformations/transformers/labelsToFields';
+
+const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
+  { value: LabelsToFieldsMode.Columns, label: 'Columns' },
+  { value: LabelsToFieldsMode.Rows, label: 'Rows' },
+];
 
 export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<LabelsToFieldsOptions>> = ({
   input,
   options,
   onChange,
 }) => {
+  const labelWidth = 20;
   let labelNames: Array<SelectableValue<string>> = [];
   let uniqueLabels: Record<string, boolean> = {};
 
@@ -33,25 +42,74 @@ export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<Labels
     }
   }
 
+  const selected = new Set(options.keepLabels?.length ? options.keepLabels : Object.keys(uniqueLabels));
+
   const onValueLabelChange = (value: SelectableValue<string> | null) => {
-    onChange({ valueLabel: value?.value });
+    onChange({ ...options, valueLabel: value?.value });
+  };
+
+  const onToggleSelection = (v: string) => {
+    if (selected.has(v)) {
+      selected.delete(v);
+    } else {
+      selected.add(v);
+    }
+    if (selected.size === labelNames.length || !selected.size) {
+      const { keepLabels, ...rest } = options;
+      onChange(rest);
+    } else {
+      onChange({ ...options, keepLabels: [...selected] });
+    }
   };
 
   return (
-    <div className="gf-form-inline">
-      <div className="gf-form">
-        <div className="gf-form-label width-8">Value field name</div>
-        <Select
-          menuShouldPortal
-          isClearable={true}
-          allowCustomValue={false}
-          placeholder="(Optional) Select label"
-          options={labelNames}
-          className="min-width-18 gf-form-spacing"
-          value={options?.valueLabel}
-          onChange={onValueLabelChange}
-        />
-      </div>
+    <div>
+      <InlineFieldRow>
+        <InlineField label={'Mode'} labelWidth={labelWidth}>
+          <RadioButtonGroup
+            options={modes}
+            value={options.mode ?? LabelsToFieldsMode.Columns}
+            onChange={(v) => onChange({ ...options, mode: v })}
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label={'Labels'} labelWidth={labelWidth}>
+          <>
+            {labelNames.map((o, i) => {
+              const label = o.label!;
+              return (
+                <FilterPill
+                  key={`${label}/${i}`}
+                  onClick={() => onToggleSelection(label)}
+                  label={label}
+                  selected={selected.has(label)}
+                />
+              );
+            })}
+          </>
+        </InlineField>
+      </InlineFieldRow>
+      {options.mode !== LabelsToFieldsMode.Rows && (
+        <InlineFieldRow>
+          <InlineField
+            label={'Value field name'}
+            labelWidth={labelWidth}
+            tooltip="Replace the value field name with a label"
+          >
+            <Select
+              menuShouldPortal
+              isClearable={true}
+              allowCustomValue={false}
+              placeholder="(Optional) Select label"
+              options={labelNames}
+              value={options?.valueLabel}
+              onChange={onValueLabelChange}
+              className="min-width-16"
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
     </div>
   );
 };
