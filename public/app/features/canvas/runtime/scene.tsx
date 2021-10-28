@@ -212,7 +212,6 @@ export class Scene {
 
       const s = event.selected.map((t) => this.findElementByTarget(t)!);
       this.selection.next(s);
-      console.log('UPDATE selection', s);
 
       if (event.isDragStart) {
         event.inputEvent.preventDefault();
