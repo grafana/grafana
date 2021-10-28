@@ -61,6 +61,7 @@ export type TraceSpanData = {
   stackTraces?: string[];
   flags: number;
   errorIconColor?: string;
+  dataFrameRowIndex?: number;
 };
 
 export type TraceSpan = TraceSpanData & {

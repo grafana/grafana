@@ -14,7 +14,7 @@ import appEvents from 'app/core/app_events';
 type Props = StandardEditorProps<any, InstanceState, PanelOptions>;
 
 export class LayerElementListEditor extends PureComponent<Props> {
-  style = getStyles(config.theme);
+  style = getLayerDragStyles(config.theme);
 
   onAddItem = (sel: SelectableValue<string>) => {
     // const reg = drawItemsRegistry.getIfExists(sel.value);
@@ -162,7 +162,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+export const getLayerDragStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
     margin-bottom: ${theme.spacing.md};
   `,
