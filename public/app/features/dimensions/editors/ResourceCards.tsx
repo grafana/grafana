@@ -39,9 +39,6 @@ function Cell(props: CellProps) {
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    container: css`
-      border: 1px solid rgba(204, 204, 220, 0.15);
-    `,
     card: css`
       display: inline-block;
       width: 90px;
@@ -77,7 +74,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       overflow: hidden;
     `,
     grid: css`
-      border: 1px solid rgba(204, 204, 220, 0.15);
+      border: 1px solid ${theme.colors.border.medium};
     `,
   };
 });

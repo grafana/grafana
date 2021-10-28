@@ -172,7 +172,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     iconPreview: css`
       width: 95px;
       height: 79px;
-      border: 1px solid rgba(204, 204, 220, 0.15);
+      border: 1px solid ${theme.colors.border.medium};
       display: flex;
       align-items: center;
       justify-content: center;
@@ -196,9 +196,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-    `,
-    suffix: css`
-      color: #6e9fff;
     `,
   };
 });
