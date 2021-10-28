@@ -3,3 +3,4 @@
 
 integrations:
   - vscode
+  - vim

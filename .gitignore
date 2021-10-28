@@ -60,7 +60,9 @@ public/css/*.min.css
 *.tmp
 .DS_Store
 .vscode/
+!.vscode/settings.json
 !.vscode/launch.json
+!.vscode/extensions.json
 .vs/
 .eslintcache
 .stylelintcache
