@@ -76,7 +76,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	var serviceAccount *models.User = &models.User{Id: -1}
 	if hs.Cfg.FeatureToggles["service-accounts"] {
 		if cmd.CreateNewServiceAccount {
-			serviceAccount, err = hs.AccessControl.CloneUserToServiceAccount(c.Req.Context(), c.SignedInUser)
+			serviceAccount, err = hs.SQLStore.CloneUserToServiceAccount(c.Req.Context(), c.SignedInUser)
 			if err != nil {
 				return response.Error(500, "Unable to clone user to service account", err)
 			}
@@ -108,4 +108,16 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	}
 
 	return response.JSON(200, result)
+}
+
+// AddAPIKey adds an additional API key to a service account
+func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext, cmd models.AddApiKeyCommand) response.Response {
+	if !hs.Cfg.FeatureToggles["service-accounts"] {
+		return response.Error(500, "Requires services-accounts feature", errors.New("Feature missing"))
+	}
+	if cmd.CreateNewServiceAccount {
+		return response.Error(500, "Don't create service account while adding additional API key", nil)
+	}
+
+	return hs.AddAPIKey(c, cmd)
 }
