@@ -29,7 +29,6 @@ func init() {
 	bus.AddHandlerCtx("sql", GetDashboard)
 	bus.AddHandlerCtx("sql", GetDashboards)
 	bus.AddHandlerCtx("sql", DeleteDashboard)
-	bus.AddHandlerCtx("sql", SearchDashboards)
 	bus.AddHandlerCtx("sql", GetDashboardTags)
 	bus.AddHandlerCtx("sql", GetDashboardSlugById)
 	bus.AddHandlerCtx("sql", GetDashboardsByPluginId)
@@ -43,6 +42,7 @@ func init() {
 
 func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandlerCtx("sql", ss.GetDashboardUIDById)
+	bus.AddHandlerCtx("sql", ss.SearchDashboards)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -267,7 +267,7 @@ type DashboardSearchProjection struct {
 	SortMeta    int64
 }
 
-func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+func (ss *SQLStore) findDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
@@ -326,7 +326,11 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	}
 
 	sql, params := sb.ToSQL(limit, page)
-	err := x.SQL(sql, params...).Find(&res)
+
+	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		return dbSession.SQL(sql, params...).Find(&res)
+	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -334,8 +338,8 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	return res, nil
 }
 
-func SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
-	res, err := findDashboards(query)
+func (ss *SQLStore) SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
+	res, err := ss.findDashboards(ctx, query)
 	if err != nil {
 		return err
 	}
