@@ -361,8 +361,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
         return;
       }
       if (Object.keys(possibleLabels).length === 0) {
-        // Sometimes the backend does not return a valid set
-        console.error('No results for label combination, but should not occur.');
         this.setState({ error: `Empty results, no matching label for ${selector}` });
         return;
       }
