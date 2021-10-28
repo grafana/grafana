@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 import {
   addExternalAlertmanagersAction,
@@ -10,7 +11,6 @@ import {
   fetchExternalAlertmanagersConfigAction,
 } from '../../state/actions';
 import { useExternalAmSelector } from '../../hooks/useExternalAmSelector';
-import EmptyListCTA from '../../../../../core/components/EmptyListCTA/EmptyListCTA';
 
 export const ExternalAlertmanagers = () => {
   const styles = useStyles2(getStyles);
@@ -21,11 +21,11 @@ export const ExternalAlertmanagers = () => {
   useEffect(() => {
     dispatch(fetchExternalAlertmanagersAction());
     dispatch(fetchExternalAlertmanagersConfigAction());
-    // const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
+    const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
 
-    // return () => {
-    //   clearInterval(interval);
-    // };
+    return () => {
+      clearInterval(interval);
+    };
   }, [dispatch]);
 
   const onDelete = useCallback(
