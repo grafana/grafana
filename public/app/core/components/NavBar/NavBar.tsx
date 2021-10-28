@@ -83,12 +83,7 @@ export const NavBar: FC = React.memo(() => {
       )}
       {newNavigationEnabled && (
         <NavBarSection>
-          <NavBarItem
-            className={styles.grafanaLogo}
-            label="Full menu"
-            onClick={toggleNavBarSmallBreakpoint}
-            showMenu={false}
-          >
+          <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
             <Branding.MenuLogo />
           </NavBarItem>
           <NavBarItem
@@ -183,7 +178,6 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
   sidemenu: css`
     display: flex;
     flex-direction: column;
-    margin-left: ${newNavigationEnabled ? theme.spacing(1) : 0};
     position: fixed;
     z-index: ${theme.zIndex.sidemenu};
 
@@ -191,6 +185,7 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
       background: ${newNavigationEnabled ? 'none' : theme.colors.background.primary};
       border-right: ${newNavigationEnabled ? 'none' : `1px solid ${theme.components.panel.borderColor}`};
       gap: ${theme.spacing(newNavigationEnabled ? 1 : 0)};
+      margin-left: ${newNavigationEnabled ? theme.spacing(1) : 0};
       padding: ${theme.spacing(1)} 0;
       position: relative;
       width: ${theme.components.sidemenu.width}px;
@@ -208,13 +203,6 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
       margin-left: 0;
       position: absolute;
       width: 100%;
-
-      ${theme.breakpoints.up('md')} {
-        border: 1px solid ${theme.components.panel.borderColor};
-        height: 100%;
-        overflow: auto;
-        width: ${newNavigationEnabled ? '300px' : '100%'};
-      }
     }
   `,
   grafanaLogo: css`
@@ -244,10 +232,6 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
 
     ${theme.breakpoints.up('md')} {
       display: none;
-    }
-
-    .sidemenu-open--xs & {
-      display: flex;
     }
   `,
   spacer: css`
