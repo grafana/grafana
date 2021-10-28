@@ -668,6 +668,8 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     const queryModel = {
       expr,
       range: true,
+      instant: false,
+      exemplar: false,
       interval: step,
       queryType: PromQueryType.timeSeriesQuery,
       refId: 'X',
