@@ -1,15 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Button,
-  Select,
-  FilterInput,
-  useTheme2,
-  stylesFactory,
-  Field,
-  Modal,
-  StringValueEditor,
-  Label,
-} from '@grafana/ui';
+import { Button, Select, FilterInput, useTheme2, stylesFactory, Field, Modal, Label, Input } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { ResourceCards } from './ResourceCards';
 import SVG from 'react-inlinesvg';
@@ -52,7 +42,7 @@ export function ResourcePicker(props: Props) {
   const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
   // select between existing icon folder, url, or upload
   const [source, setSource] = useState<SelectableValue<string>>(sourceOptions[0]);
-  // pass on new value to confirm button
+  // pass on new value to confirm button and to show in preview
   const [newValue, setNewValue] = useState<string>(value ?? '');
   const [searchQuery, setSearchQuery] = useState<string>();
   const theme = useTheme2();
@@ -128,17 +118,7 @@ export function ResourcePicker(props: Props) {
           )}
           {source?.value === 'url' && (
             <Field label="URL">
-              <StringValueEditor
-                value={value ?? ''}
-                onChange={(v) => {
-                  if (v) {
-                    setNewValue(v);
-                    onChange(v);
-                  }
-                }}
-                item={{} as any}
-                context={{} as any}
-              />
+              <Input onChange={(e) => setNewValue(e.currentTarget.value)} value={newValue} />
             </Field>
           )}
         </div>
@@ -149,7 +129,7 @@ export function ResourcePicker(props: Props) {
               {mediaType === 'image' && <img src={imgSrc} className={styles.img} />}
             </div>
           </Field>
-          <Label>{value?.substring(value.lastIndexOf('/') + 1, value.lastIndexOf('.'))}</Label>
+          <Label>{newValue?.substring(newValue.lastIndexOf('/') + 1, newValue.lastIndexOf('.'))}</Label>
         </div>
       </div>
       {source?.value === 'iconSet' && filteredIndex && (
@@ -220,7 +200,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     suffix: css`
       color: #6e9fff;
     `,
-    previewText: css``,
   };
 });
 
