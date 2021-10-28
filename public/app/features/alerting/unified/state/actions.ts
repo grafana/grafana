@@ -749,12 +749,20 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
   }
 );
 
-export const addExternalAlertmanagers = createAsyncThunk(
+export const addExternalAlertmanagersAction = createAsyncThunk(
   'unifiedAlerting/addExternalAlertmanagers',
-  async (alertManagerUrls: string[]): Promise<void> => {
-    return withAppEvents(withSerializedError(addAlertManagers(alertManagerUrls)), {
-      errorMessage: 'Failed adding alertmanagers',
-      successMessage: 'Alertmanagers addded',
-    });
+  async (alertManagerUrls: string[], thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          await addAlertManagers(alertManagerUrls);
+          thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
+        })()
+      ),
+      {
+        errorMessage: 'Failed adding alertmanagers',
+        successMessage: 'Alertmanagers updated',
+      }
+    );
   }
 );

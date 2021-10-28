@@ -2,14 +2,15 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 import {
-  addExternalAlertmanagers,
+  addExternalAlertmanagersAction,
   fetchExternalAlertmanagersAction,
   fetchExternalAlertmanagersConfigAction,
 } from '../../state/actions';
 import { useExternalAmSelector } from '../../hooks/useExternalAmSelector';
+import EmptyListCTA from '../../../../../core/components/EmptyListCTA/EmptyListCTA';
 
 export const ExternalAlertmanagers = () => {
   const styles = useStyles2(getStyles);
@@ -20,11 +21,11 @@ export const ExternalAlertmanagers = () => {
   useEffect(() => {
     dispatch(fetchExternalAlertmanagersAction());
     dispatch(fetchExternalAlertmanagersConfigAction());
-    const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
+    // const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
 
-    return () => {
-      clearInterval(interval);
-    };
+    // return () => {
+    //   clearInterval(interval);
+    // };
   }, [dispatch]);
 
   const onDelete = useCallback(
@@ -35,7 +36,7 @@ export const ExternalAlertmanagers = () => {
         .map((am) => {
           return am.url;
         });
-      dispatch(addExternalAlertmanagers(newList));
+      dispatch(addExternalAlertmanagersAction(newList));
     },
     [externalAlertManagers, dispatch]
   );
@@ -49,7 +50,7 @@ export const ExternalAlertmanagers = () => {
     }));
   }, [setModalState, externalAlertManagers]);
 
-  const onAdd = useCallback(() => {
+  const onOpenModal = useCallback(() => {
     setModalState((state) => {
       const ams = externalAlertManagers ? [...externalAlertManagers, { url: '' }] : [{ url: '' }];
       return {
@@ -60,7 +61,7 @@ export const ExternalAlertmanagers = () => {
     });
   }, [externalAlertManagers]);
 
-  const onClose = useCallback(() => {
+  const onCloseModal = useCallback(() => {
     setModalState((state) => ({
       ...state,
       open: false,
@@ -79,7 +80,9 @@ export const ExternalAlertmanagers = () => {
         return 'red';
     }
   };
-  console.log(externalAlertManagers);
+
+  const noAlertmanagers = externalAlertManagers?.length === 0;
+
   return (
     <div>
       <h4>External Alertmanagers</h4>
@@ -88,11 +91,20 @@ export const ExternalAlertmanagers = () => {
         input below to discover alertmanagers.
       </div>
       <div className={styles.actions}>
-        <Button type="button" onClick={onAdd}>
-          Add Alertmanager
-        </Button>
+        {!noAlertmanagers && (
+          <Button type="button" onClick={onOpenModal}>
+            Add Alertmanager
+          </Button>
+        )}
       </div>
-      {externalAlertManagers && (
+      {noAlertmanagers ? (
+        <EmptyListCTA
+          title="You have not added any external alertmanagers"
+          onClick={onOpenModal}
+          buttonTitle="Add Alertmanager"
+          buttonIcon="bell-slash"
+        />
+      ) : (
         <table className="filter-table form-inline filter-table--hover">
           <thead>
             <tr>
@@ -102,7 +114,7 @@ export const ExternalAlertmanagers = () => {
             </tr>
           </thead>
           <tbody>
-            {externalAlertManagers.map((am, index) => {
+            {externalAlertManagers?.map((am, index) => {
               return (
                 <tr key={index}>
                   <td className="link-td">{am.url}</td>
@@ -125,7 +137,7 @@ export const ExternalAlertmanagers = () => {
           </tbody>
         </table>
       )}
-      {modalState.open && <AddAlertManagerModal onClose={onClose} alertmanagers={modalState.payload} />}
+      {modalState.open && <AddAlertManagerModal onClose={onCloseModal} alertmanagers={modalState.payload} />}
     </div>
   );
 };

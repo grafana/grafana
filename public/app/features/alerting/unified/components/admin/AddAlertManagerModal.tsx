@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { useDispatch } from 'react-redux';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, FieldArray, Form, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
-import { addExternalAlertmanagers } from '../../state/actions';
+import { addExternalAlertmanagersAction } from '../../state/actions';
 
 interface Props {
   onClose: () => void;
@@ -28,7 +28,7 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
   );
 
   const onSubmit = (values: Record<string, Array<{ url: string }>>) => {
-    dispatch(addExternalAlertmanagers(values.alertmanagers.map((am) => am.url.replace(/\/$/, ''))));
+    dispatch(addExternalAlertmanagersAction(values.alertmanagers.map((am) => cleanAlertmanagerUrl(am.url))));
     onClose();
   };
 
@@ -86,6 +86,10 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
     </Modal>
   );
 };
+
+function cleanAlertmanagerUrl(url: string): string {
+  return url.replace(/\/$/, '').replace(/\/api\/v[1|2]\/alerts/i, '');
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   const muted = css`
