@@ -96,7 +96,7 @@ export class CanvasPanel extends Component<Props, State> {
     // console.log('send changes', root);
   };
 
-  shouldComponentUpdate(nextProps: Props) {
+  shouldComponentUpdate(nextProps: Props, nextState: State) {
     const { width, height, data } = this.props;
     let changed = false;
 
@@ -106,6 +106,10 @@ export class CanvasPanel extends Component<Props, State> {
     }
     if (data !== nextProps.data) {
       this.scene.updateData(nextProps.data);
+      changed = true;
+    }
+
+    if (this.state.refresh !== nextState.refresh) {
       changed = true;
     }
 

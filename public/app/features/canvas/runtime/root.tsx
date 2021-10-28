@@ -1,12 +1,13 @@
 import { CanvasGroupOptions, CanvasElementOptions } from 'app/features/canvas';
 import { GroupState } from './group';
+import { Scene } from './scene';
 
 export class RootElement extends GroupState {
-  constructor(public options: CanvasGroupOptions, private changeCallback: () => void) {
-    super(options);
+  constructor(public options: CanvasGroupOptions, public scene: Scene, private changeCallback: () => void) {
+    super(options, scene);
   }
 
-  isRoot() {
+  isRoot(): this is RootElement {
     return true;
   }
 
