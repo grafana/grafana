@@ -11,6 +11,8 @@ import {
   getFieldColorModeForField,
   getFieldSeriesColor,
   getFieldDisplayName,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
@@ -36,16 +38,11 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursorSync; legend?: VizLegendOptions }> = ({
-  frame,
-  theme,
-  timeZone,
-  getTimeRange,
-  eventBus,
-  sync,
-  allFrames,
-  legend,
-}) => {
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
+  sync: DashboardCursorSync;
+  panelId: number;
+  legend?: VizLegendOptions;
+}> = ({ frame, theme, timeZone, getTimeRange, eventBus, sync, allFrames, legend, panelId }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
   builder.setPrepData((prepData) => preparePlotData(prepData, undefined, legend));
@@ -349,11 +346,20 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
             payload.point[xScaleUnit] = null;
             payload.point[yScaleKey] = null;
             eventBus.publish(new DataHoverClearEvent());
+            eventBus.publish(new LegacyGraphHoverClearEvent());
           } else {
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
             payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
             eventBus.publish(hoverEvent);
+            eventBus.publish(
+              new LegacyGraphHoverEvent({
+                panel: { id: panelId },
+                data: frame,
+                point: payload.point,
+                pos: { x: payload.point[xScaleUnit], panelRelY: y / h },
+              })
+            );
             hoverEvent.payload.down = undefined;
           }
           return true;

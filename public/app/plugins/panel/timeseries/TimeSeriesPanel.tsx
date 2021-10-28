@@ -24,6 +24,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   fieldConfig,
   onChangeTimeRange,
   replaceVariables,
+  id,
 }) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
 
@@ -52,6 +53,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
+      panelId={id}
     >
       {(config, alignedDataFrame) => {
         return (
