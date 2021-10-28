@@ -292,9 +292,6 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         data: mapPromMetricsToServiceMap(responses, request.range),
         state: LoadingState.Done,
       };
-    }),
-    catchError((error) => {
-      return of({ error: { message: error.message }, data: [] });
     })
   );
 }

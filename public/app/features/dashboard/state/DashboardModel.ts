@@ -42,10 +42,11 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
-import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 import { isOnTheSameGridRow } from './utils';
+import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -271,6 +272,9 @@ export class DashboardModel {
   private getPanelSaveModels() {
     return this.panels
       .filter((panel: PanelModel) => {
+        if (this.isSnapshotTruthy()) {
+          return true;
+        }
         if (panel.type === 'add-panel') {
           return false;
         }
@@ -294,6 +298,9 @@ export class DashboardModel {
         return panel.getSaveModel();
       })
       .map((model: any) => {
+        if (this.isSnapshotTruthy()) {
+          return model;
+        }
         // Clear any scopedVars from persisted mode. This cannot be part of getSaveModel as we need to be able to copy
         // panel models with preserved scopedVars, for example when going into edit mode.
         delete model.scopedVars;
@@ -1040,7 +1047,6 @@ export class DashboardModel {
   private updateSchema(old: any) {
     const migrator = new DashboardMigrator(this);
     migrator.updateSchema(old);
-    migrator.migrateCloudWatchQueries();
   }
 
   resetOriginalTime() {

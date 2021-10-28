@@ -262,4 +262,7 @@ export const Components = {
   PanelAlertTabContent: {
     content: 'Unified alert editor tab content',
   },
+  VisualizationPreview: {
+    card: (name: string) => `data-testid suggestion-${name}`,
+  },
 };
