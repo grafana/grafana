@@ -1,5 +1,5 @@
 import React, { ReactElement, useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Badge, Button, ButtonGroup, ClickOutsideWrapper, Menu, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { PropsWithChildren } from 'react-router/node_modules/@types/react';
@@ -40,7 +40,9 @@ export function InstallVersionButton(props: PropsWithChildren<Props>): ReactElem
               {versions.map((v, i) => (
                 <div
                   key={v.version}
-                  className={styles.menuItem}
+                  className={cx(styles.menuItem, {
+                    [styles.activeItem]: v.version === version.version,
+                  })}
                   onClick={() => {
                     onChange(v);
                     setIsOpen(false);
