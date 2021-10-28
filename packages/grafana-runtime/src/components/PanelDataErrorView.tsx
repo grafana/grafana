@@ -10,8 +10,8 @@ export interface PanelDataErrorViewProps {
   message?: string;
   panelId: number;
   data: PanelData;
-
-  needsTimeSeries?: boolean;
+  needsTimeField?: boolean;
+  needsNumberField?: boolean;
   // suggestions?: VisualizationSuggestion[]; <<< for sure optional
 }
 
