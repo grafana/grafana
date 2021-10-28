@@ -31,9 +31,9 @@ import {
   AlertManagerImplementation,
 } from 'app/plugins/datasource/alertmanager/types';
 
-jest.mock('./api/alertmanager');
-jest.mock('./api/grafana');
-jest.mock('./utils/config');
+jest.mock('../../api/alertmanager');
+jest.mock('../../api/grafana');
+jest.mock('../../utils/config');
 
 const mocks = {
   getAllDataSources: typeAsJestMock(getAllDataSources),
@@ -85,7 +85,7 @@ const ui = {
   readOnlyConfig: byTestId('readonly-config'),
 };
 
-describe('Alerting Admin', () => {
+describe('Admin config', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
