@@ -155,13 +155,16 @@ export class DashboardGrid extends PureComponent<Props, State> {
     let top = 0;
 
     // mobile layout
-    if (gridWidth < 769) {
+    if (gridWidth < config.theme2.breakpoints.values.md) {
+      // In mobile layout panels are stacked so we just add the panel vertical margin to the last panel bottom position
       top = this.lastPanelBottom + GRID_CELL_VMARGIN;
     } else {
-      top = panel.gridPos.y * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
+      // For top position we need to add back the vertical margin removed by translateGridHeightToScreenHeight
+      top = translateGridHeightToScreenHeight(panel.gridPos.y) + GRID_CELL_VMARGIN;
     }
 
-    this.lastPanelBottom = top + panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+    console.log('top', top);
+    this.lastPanelBottom = top + translateGridHeightToScreenHeight(panel.gridPos.h);
 
     return { top, bottom: this.lastPanelBottom };
   }
@@ -309,17 +312,19 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   const style: CSSProperties = props.style ?? {};
 
   if (isViewing) {
+    // In fullscreen view mode a single panel take up full width & 85% height
     width = gridWidth!;
     height = windowHeight * 0.85;
     style.height = height;
     style.width = '100%';
   } else if (windowWidth < theme.breakpoints.values.md) {
+    // Mobile layout is a bit different, every panel take up full width
     width = props.gridWidth!;
-    height = props.gridPos!.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+    height = translateGridHeightToScreenHeight(gridPos!.h);
     style.height = height;
     style.width = '100%';
   } else {
-    // RGL passes width and height directly to children as style props.
+    // Normal grid layout. The grid framework passes width and height directly to children as style props.
     width = parseFloat(props.style.width);
     height = parseFloat(props.style.height);
   }
@@ -332,5 +337,12 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     </div>
   );
 });
+
+/**
+ * This translates grid height dimensions to real pixels
+ */
+function translateGridHeightToScreenHeight(gridHeight: number): number {
+  return gridHeight * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+}
 
 GrafanaGridItem.displayName = 'GridItemWithDimensions';
