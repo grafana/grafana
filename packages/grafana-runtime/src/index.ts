@@ -23,6 +23,7 @@ export {
   BackendDataSourceResponse,
   DataResponse,
 } from './utils/queryResponse';
-export { PanelRenderer, PanelRendererProps, PanelRendererType, setPanelRenderer } from './components/PanelRenderer';
+export { PanelRenderer, PanelRendererProps } from './components/PanelRenderer';
+export { PanelDataErrorView, PanelDataErrorViewProps } from './components/PanelDataErrorView';
 export { setQueryRunnerFactory, createQueryRunner, QueryRunnerFactory } from './services/QueryRunner';
 export { DataSourcePicker, DataSourcePickerProps, DataSourcePickerState } from './components/DataSourcePicker';

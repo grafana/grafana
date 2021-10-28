@@ -7,15 +7,12 @@ import {
   GrafanaTheme2,
   isBooleanUnit,
   PanelData,
-  VisualizationSuggestion,
-  VisualizationSuggestionsBuilder,
 } from '@grafana/data';
 import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/schema';
 
 export interface GraphableFieldsResult {
   frames?: DataFrame[];
   message?: string;
-  suggestions?: VisualizationSuggestion[];
 }
 
 // This will return a set of frames with only graphable values included
@@ -113,39 +110,5 @@ export function prepareGraphableFields(data: PanelData, theme: GrafanaTheme2): G
   if (frames.length) {
     return { frames };
   }
-
-  return getSuggestions(data);
-}
-
-function getSuggestions(data: PanelData): GraphableFieldsResult {
-  let builder = new VisualizationSuggestionsBuilder(data);
-  let { dataSummary } = builder;
-  let message = 'No graphable fields';
-
-  if (!dataSummary.hasTimeField) {
-    message = 'Missing a time field';
-
-    const list = builder.getListAppender<any, any>({
-      name: 'Switch to table',
-      pluginId: 'table',
-      options: {},
-    });
-    list.append({});
-  }
-
-  if (dataSummary.hasStringField && dataSummary.hasNumberField) {
-    const list = builder.getListAppender<any, any>({
-      name: 'Switch to bar chart',
-      pluginId: 'barchart',
-      options: {},
-      fieldConfig: {
-        defaults: {},
-        overrides: [],
-      },
-    });
-
-    list.append({});
-  }
-
-  return { message, suggestions: builder.getList() };
+  return {};
 }

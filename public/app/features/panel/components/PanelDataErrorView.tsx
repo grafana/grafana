@@ -1,19 +1,25 @@
-import React from 'react';
-import { CoreApp, GrafanaTheme2, PanelData, VisualizationSuggestion } from '@grafana/data';
+import React, { useMemo } from 'react';
+import {
+  CoreApp,
+  GrafanaTheme2,
+  PanelData,
+  VisualizationSuggestion,
+  VisualizationSuggestionsBuilder,
+} from '@grafana/data';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { VisualizationPreview } from './VizTypePicker/VisualizationPreview';
+import { PanelDataErrorViewProps } from '@grafana/runtime';
 
-interface Props {
-  message?: string;
-  panelId: number;
-  data: PanelData;
-  suggestions?: VisualizationSuggestion[];
-}
-
-export function CannotVisualizeData({ data, message, suggestions }: Props) {
+export function PanelDataErrorView({ data, message }: PanelDataErrorViewProps) {
   const styles = useStyles2(getStyles);
   const context = usePanelContext();
+  const suggestions = useMemo(() => {
+    if (context.app !== CoreApp.PanelEditor) {
+      return undefined;
+    }
+    return getSuggestions(data);
+  }, [data, context.app]);
 
   return (
     <div className={styles.wrapper}>
@@ -34,6 +40,36 @@ export function CannotVisualizeData({ data, message, suggestions }: Props) {
       )}
     </div>
   );
+}
+
+function getSuggestions(data: PanelData): VisualizationSuggestion[] {
+  let builder = new VisualizationSuggestionsBuilder(data);
+  let { dataSummary } = builder;
+
+  if (!dataSummary.hasTimeField) {
+    const list = builder.getListAppender<any, any>({
+      name: 'Switch to table',
+      pluginId: 'table',
+      options: {},
+    });
+    list.append({});
+  }
+
+  if (dataSummary.hasStringField && dataSummary.hasNumberField) {
+    const list = builder.getListAppender<any, any>({
+      name: 'Switch to bar chart',
+      pluginId: 'barchart',
+      options: {},
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+    });
+
+    list.append({});
+  }
+
+  return builder.getList();
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

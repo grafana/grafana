@@ -26,7 +26,7 @@ import {
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { registerEchoBackend, setEchoSrv, setPanelRenderer, setQueryRunnerFactory } from '@grafana/runtime';
+import { registerEchoBackend, setEchoSrv, setQueryRunnerFactory } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -52,6 +52,9 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { getAllOptionEditors } from './core/components/editors/registry';
+import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
+import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -80,6 +83,7 @@ export class GrafanaApp {
     setLocale(config.bootData.user.locale);
     setWeekStart(config.bootData.user.weekStart);
     setPanelRenderer(PanelRenderer);
+    setPanelDataErrorView(PanelDataErrorView);
     setTimeZoneResolver(() => config.bootData.user.timezone);
     // Important that extensions are initialized before store
     initExtensions();
