@@ -1,4 +1,4 @@
-import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
+import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
 import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
 import { Style } from 'ol/style';
@@ -64,6 +64,9 @@ export enum ComparisonOperation {
   GTE = 'gte',
 }
 
+export interface GazetteerPathEditorConfigSettings {
+  options?: Array<SelectableValue<string>>;
+}
 //-------------------
 // Runtime model
 //-------------------
