@@ -34,10 +34,7 @@ export function PluginDetailsBody({ plugin, queryParams }: Props): JSX.Element {
   if (pageId === PluginTabIds.VERSIONS) {
     return (
       <div className={styles.container}>
-        <VersionList
-          versions={plugin.details?.versions}
-          installedVersion={plugin.isInstalled ? plugin.version : undefined}
-        />
+        <VersionList versions={plugin.details?.versions} installedVersion={plugin.installedVersion} />
       </div>
     );
   }

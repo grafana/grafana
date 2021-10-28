@@ -13,7 +13,7 @@ export function PluginUpdateAvailableBadge({ plugin }: Props): React.ReactElemen
 
   if (plugin.hasUpdate && !plugin.isCore && plugin.type !== PluginType.renderer) {
     return (
-      <Tooltip content={plugin.version}>
+      <Tooltip content={plugin.latestVersion || ''}>
         <p className={styles.hasUpdate}>Update available!</p>
       </Tooltip>
     );

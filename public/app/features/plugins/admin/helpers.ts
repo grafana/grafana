@@ -78,7 +78,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     publishedAt,
     signature: getPluginSignature({ remote: plugin, error }),
     updatedAt,
-    version,
+    latestVersion: version,
     hasUpdate: false,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
@@ -116,7 +116,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     signatureOrg,
     signatureType,
     updatedAt: updated,
-    version,
+    installedVersion: version,
     hasUpdate: false,
     isInstalled: true,
     isDisabled: !!error,
@@ -129,9 +129,8 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
 }
 
 export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
-  const version = local?.info.version || remote?.version || '';
-  const hasUpdate =
-    local?.hasUpdate || Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
+  const installedVersion = local?.info.version || '';
+  const latestVersion = remote?.version || '';
   const id = remote?.slug || local?.id || '';
   const isDisabled = !!error;
 
@@ -142,8 +141,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
 
   if (remote) {
     logos = {
-      small: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/small`,
-      large: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/large`,
+      small: `https://grafana.com/api/plugins/${id}/versions/${latestVersion}/logos/small`,
+      large: `https://grafana.com/api/plugins/${id}/versions/${latestVersion}/logos/large`,
     };
   } else if (local && local.info.logos) {
     logos = local.info.logos;
@@ -152,7 +151,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   return {
     description: remote?.description || local?.info.description || '',
     downloads: remote?.downloads || 0,
-    hasUpdate,
+    hasUpdate: local?.hasUpdate || false,
     id,
     info: {
       logos,
@@ -171,7 +170,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     signatureOrg: local?.signatureOrg || remote?.versionSignedByOrgName,
     signatureType: local?.signatureType || remote?.versionSignatureType || remote?.signatureType || undefined,
     updatedAt: remote?.updatedAt || local?.info.updated || '',
-    version,
+    installedVersion,
+    latestVersion,
     error: error?.errorCode,
   };
 }

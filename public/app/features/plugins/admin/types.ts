@@ -52,7 +52,8 @@ export interface CatalogPlugin {
   publishedAt: string;
   type?: PluginType;
   updatedAt: string;
-  version: string;
+  installedVersion?: string;
+  latestVersion?: string;
   details?: CatalogPluginDetails;
   error?: PluginErrorCode;
 }
