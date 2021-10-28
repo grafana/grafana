@@ -16,7 +16,7 @@ import { notFoundItem } from 'app/features/canvas/elements/notFound';
 type Props = StandardEditorProps<any, InstanceState, PanelOptions>;
 
 export class LayerElementListEditor extends PureComponent<Props> {
-  style = getStyles(config.theme);
+  style = getLayerDragStyles(config.theme);
 
   onAddItem = (sel: SelectableValue<string>) => {
     const { settings } = this.props.item;
@@ -178,7 +178,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+export const getLayerDragStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
     margin-bottom: ${theme.spacing.md};
   `,

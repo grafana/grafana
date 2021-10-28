@@ -26,7 +26,11 @@
     "@grafana/data": "8.3.0-pre",
     "@grafana/e2e-selectors": "8.3.0-pre",
     "@grafana/ui": "8.3.0-pre",
+    "@sentry/browser": "5.25.0",
     "history": "4.10.1",
+    "lodash": "4.17.21",
+    "react": "17.0.1",
+    "rxjs": "7.3.0",
     "systemjs": "0.20.19",
     "systemjs-plugin-css": "0.1.37",
     "tslib": "2.3.1"
@@ -35,17 +39,23 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "16.0.0",
     "@rollup/plugin-node-resolve": "10.0.0",
+    "@types/angular": "1.6.56",
     "@types/history": "^4.7.8",
-    "@types/jest": "26.0.15",
+    "@types/jest": "27.0.2",
+    "@types/lodash": "4.14.149",
+    "@types/react": "16.9.9",
     "@types/rollup-plugin-visualizer": "4.2.1",
     "@types/systemjs": "^0.20.6",
     "lodash": "4.17.21",
+    "pretty-format": "25.1.0",
+    "rimraf": "3.0.1",
     "rollup": "2.33.3",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
     "rollup-plugin-typescript2": "0.29.0",
     "rollup-plugin-visualizer": "4.2.0",
-    "typescript": "4.4.3"
+    "typescript": "4.4.3",
+    "webpack": "5.58.1"
   },
   "types": "src/index.ts"
 }

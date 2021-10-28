@@ -186,6 +186,7 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
+	github.com/grafana/grafana-google-sdk-go v0.0.0-20211019132340-3ff525a010d5
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.0 // indirect
@@ -264,4 +265,4 @@ replace gopkg.in/macaron.v1 => ./pkg/macaron
 
 replace github.com/go-macaron/binding => ./pkg/macaron/binding
 
-replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.9.8
+replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2

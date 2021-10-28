@@ -31,6 +31,9 @@ RUN apk add --no-cache ca-certificates bash tzdata && \
 
 RUN apk add --no-cache openssl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 
+# Update out of date ncurses dependency which can stack overflow. This should be removed when alpine has released the 3.14.3 docker image.
+RUN apk upgrade ncurses-libs ncurses-terminfo-base --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
+
 # Oracle Support for x86_64 only
 RUN if [ `arch` = "x86_64" ]; then \
       apk add --no-cache libaio libnsl && \

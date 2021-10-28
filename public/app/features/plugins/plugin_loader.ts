@@ -5,6 +5,7 @@ import kbn from 'app/core/utils/kbn';
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import angular from 'angular';
 import jquery from 'jquery';
+import * as tslib from 'tslib';
 
 // Experimental module exports
 import prismjs from 'prismjs';
@@ -85,6 +86,7 @@ function exposeToPlugin(name: string, component: any) {
   });
 }
 
+exposeToPlugin('tslib', tslib);
 exposeToPlugin('@grafana/data', grafanaData);
 exposeToPlugin('@grafana/ui', grafanaUI);
 exposeToPlugin('@grafana/runtime', grafanaRuntime);

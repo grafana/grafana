@@ -50,29 +50,29 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
         }),
       });
     },
-  }),
 
-  registerOptionsUI: (builder) => {
-    builder
-      .addRadio({
-        path: 'config.theme',
-        name: 'Theme',
-        settings: {
-          options: [
-            { value: LayerTheme.Auto, label: 'Auto', description: 'Match grafana theme' },
-            { value: LayerTheme.Light, label: 'Light' },
-            { value: LayerTheme.Dark, label: 'Dark' },
-          ],
-        },
-        defaultValue: defaultCartoConfig.theme!,
-      })
-      .addBooleanSwitch({
-        path: 'config.showLabels',
-        name: 'Show labels',
-        description: '',
-        defaultValue: defaultCartoConfig.showLabels,
-      });
-  },
+    registerOptionsUI: (builder) => {
+      builder
+        .addRadio({
+          path: 'config.theme',
+          name: 'Theme',
+          settings: {
+            options: [
+              { value: LayerTheme.Auto, label: 'Auto', description: 'Match grafana theme' },
+              { value: LayerTheme.Light, label: 'Light' },
+              { value: LayerTheme.Dark, label: 'Dark' },
+            ],
+          },
+          defaultValue: defaultCartoConfig.theme!,
+        })
+        .addBooleanSwitch({
+          path: 'config.showLabels',
+          name: 'Show labels',
+          description: '',
+          defaultValue: defaultCartoConfig.showLabels,
+        });
+    },
+  }),
 };
 
 export const cartoLayers = [carto];
