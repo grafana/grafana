@@ -65,7 +65,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 32;
+    this.dashboard.schemaVersion = 33;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -689,8 +689,17 @@ export class DashboardMigrator {
       });
     }
 
-    // Replace datasource name with reference, uid and type
     if (oldVersion < 32) {
+      panelUpgrades.push((panel: PanelModel) => {
+        this.migrateCloudWatchQueries(panel);
+        return panel;
+      });
+
+      this.migrateCloudWatchAnnotationQuery();
+    }
+
+    // Replace datasource name with reference, uid and type
+    if (oldVersion < 33) {
       for (const variable of this.dashboard.templating.list) {
         if (variable.type !== 'query') {
           continue;
@@ -747,18 +756,18 @@ export class DashboardMigrator {
   // Migrates metric queries and/or annotation queries that use more than one statistic.
   // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
   // New queries, that were created during migration, are put at the end of the array.
-  migrateCloudWatchQueries() {
-    for (const panel of this.dashboard.panels) {
-      for (const target of panel.targets) {
-        if (isLegacyCloudWatchQuery(target)) {
-          const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
-          for (const newQuery of newQueries) {
-            panel.targets.push(newQuery);
-          }
+  migrateCloudWatchQueries(panel: PanelModel) {
+    for (const target of panel.targets || []) {
+      if (isLegacyCloudWatchQuery(target)) {
+        const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
+        for (const newQuery of newQueries) {
+          panel.targets.push(newQuery);
         }
       }
     }
+  }
 
+  migrateCloudWatchAnnotationQuery() {
     for (const annotation of this.dashboard.annotations.list) {
       if (isLegacyCloudWatchAnnotationQuery(annotation)) {
         const newAnnotationQueries = migrateMultipleStatsAnnotationQuery(annotation);
