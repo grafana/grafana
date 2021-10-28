@@ -13,10 +13,19 @@ import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldName
 import { GazetteerPathEditor } from 'app/plugins/panel/geomap/editor/GazetteerPathEditor';
 import { GazetteerPathEditorConfigSettings } from 'app/plugins/panel/geomap/types';
 import { FieldLookupOptions, fieldLookupTransformer } from './fieldLookup';
+import { FieldType } from '../../../../../../packages/grafana-data/src';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: { width: 24 },
-} as any;
+  settings: {
+    width: 30,
+    filter: (f) => f.type === FieldType.string,
+    placeholderText: 'Select text field',
+    noFieldsMessage: 'No text fields found',
+  },
+  name: '',
+  id: '',
+  editor: () => null,
+};
 
 const fieldLookupSettings: StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings> = {
   settings: {},
@@ -47,24 +56,28 @@ export const FieldLookupTransformerEditor: React.FC<TransformerUIProps<FieldLook
     [onChange, options]
   );
   return (
-    <InlineFieldRow>
-      <InlineField label={'Gazetteer'}>
-        <GazetteerPathEditor
-          value={options?.gazetteer ?? ''}
-          context={{ data: input }}
-          item={fieldLookupSettings}
-          onChange={onPickGazetteer}
-        />
-      </InlineField>
-      <InlineField label={'lookup field'}>
-        <FieldNamePicker
-          context={{ data: input }}
-          value={options?.lookupField ?? ''}
-          onChange={onPickLookupField}
-          item={fieldNamePickerSettings}
-        />
-      </InlineField>
-    </InlineFieldRow>
+    <div>
+      <InlineFieldRow>
+        <InlineField label={'Field'} labelWidth={12}>
+          <FieldNamePicker
+            context={{ data: input }}
+            value={options?.lookupField ?? ''}
+            onChange={onPickLookupField}
+            item={fieldNamePickerSettings as any}
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label={'Lookup'} labelWidth={12}>
+          <GazetteerPathEditor
+            value={options?.gazetteer ?? ''}
+            context={{ data: input }}
+            item={fieldLookupSettings}
+            onChange={onPickGazetteer}
+          />
+        </InlineField>
+      </InlineFieldRow>
+    </div>
   );
 };
 
@@ -73,6 +86,6 @@ export const fieldLookupTransformRegistryItem: TransformerRegistryItem<FieldLook
   editor: FieldLookupTransformerEditor,
   transformation: fieldLookupTransformer,
   name: 'Field lookup',
-  description: `Looks up matching data from resource based on selected field`,
-  state: PluginState.beta,
+  description: `Use a field value to lookup additional fields from an external source.  This current supports spatial data, but will eventuall support more formats`,
+  state: PluginState.alpha,
 };
