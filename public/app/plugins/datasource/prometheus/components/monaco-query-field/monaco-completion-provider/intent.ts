@@ -389,7 +389,20 @@ function resolveDurations(node: SyntaxNode, text: string, pos: number): Intent {
   };
 }
 
+function subTreeHasError(node: SyntaxNode): boolean {
+  return getNodeInSubtree(node, ERROR_NODE_NAME) !== null;
+}
+
 function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Intent | null {
+  // for example `something{^}`
+
+  // there are some false positives that can end up in this situation, that we want
+  // to eliminate, for example: `something{a~^}`
+  // basically, if this subtree contains any error-node, we stop
+  if (subTreeHasError(node)) {
+    return null;
+  }
+
   const metricNameNode = walk(node, [
     ['parent', 'VectorSelector'],
     ['firstChild', 'MetricIdentifier'],
