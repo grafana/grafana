@@ -236,7 +236,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			SignedInUser: &models.SignedInUser{},
 		}
 
-		err = SearchDashboards(context.Background(), &query)
+		err = sqlStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 0)
@@ -305,7 +305,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 		}
 
-		err := SearchDashboards(context.Background(), &query)
+		err := sqlStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 1)
@@ -323,7 +323,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 		}
 
-		err := SearchDashboards(context.Background(), &query)
+		err := sqlStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 1)
@@ -339,7 +339,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 		}
 
-		err := SearchDashboards(context.Background(), &query)
+		err := sqlStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 1)
@@ -355,7 +355,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 		}
 
-		err := SearchDashboards(context.Background(), &query)
+		err := sqlStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 3)
@@ -370,7 +370,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 		}
 
-		err := SearchDashboards(context.Background(), &query)
+		err := sqlStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 2)
@@ -390,7 +390,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 		}
 
-		err := SearchDashboards(context.Background(), &query)
+		err := sqlStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 2)
@@ -421,7 +421,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			SignedInUser: &models.SignedInUser{UserId: 10, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 			IsStarred:    true,
 		}
-		err = SearchDashboards(context.Background(), &query)
+		err = sqlStore.SearchDashboards(context.Background(), &query)
 
 		require.NoError(t, err)
 		require.Equal(t, len(query.Result), 1)
@@ -463,7 +463,7 @@ func TestDashboard_SortingOptions(t *testing.T) {
 				searchstore.TitleSorter{Descending: true},
 			},
 		}
-		dashboards, err := findDashboards(q)
+		dashboards, err := sqlStore.findDashboards(context.Background(), q)
 		require.NoError(t, err)
 		require.Len(t, dashboards, 2)
 		assert.Equal(t, dashA.Id, dashboards[0].ID)

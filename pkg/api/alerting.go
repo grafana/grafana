@@ -89,7 +89,7 @@ func GetAlerts(c *models.ReqContext) response.Response {
 			Permission:   models.PERMISSION_VIEW,
 		}
 
-		err := bus.Dispatch(&searchQuery)
+		err := bus.DispatchCtx(c.Req.Context(), &searchQuery)
 		if err != nil {
 			return response.Error(500, "List alerts failed", err)
 		}
