@@ -293,6 +293,8 @@ export interface StartQueryRequest {
    * The maximum number of log events to return in the query. If the query string uses the fields command, only the specified fields and their values are returned. The default is 1000.
    */
   limit?: number;
+  refId: string;
+  region: string;
 }
 export interface StartQueryResponse {
   /**

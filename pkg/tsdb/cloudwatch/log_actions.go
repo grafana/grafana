@@ -13,12 +13,21 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/sync/errgroup"
 )
 
 var LimitExceededException = "LimitExceededException"
+
+type AWSError struct {
+	Code    string
+	Message string
+	Payload map[string]string
+}
+
+func (e *AWSError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Code, e.Message)
+}
 
 func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
@@ -36,6 +45,13 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 		eg.Go(func() error {
 			dataframe, err := e.executeLogAction(ectx, model, query, req.PluginContext)
 			if err != nil {
+				var AWSError *AWSError
+				if errors.As(err, &AWSError) {
+					resultChan <- backend.Responses{
+						query.RefID: backend.DataResponse{Frames: data.Frames{}, Error: AWSError},
+					}
+					return nil
+				}
 				return err
 			}
 
@@ -59,6 +75,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 		for refID, response := range result {
 			respD := resp.Responses[refID]
 			respD.Frames = response.Frames
+			respD.Error = response.Error
 			resp.Responses[refID] = respD
 		}
 	}
@@ -220,28 +237,29 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 
 func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	model *simplejson.Json, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
-	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
-	if err != nil {
-		var awsErr awserr.Error
-		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
-			plog.Debug("executeStartQuery limit exceeded", "err", awsErr)
-			return nil, &plugins.PluginRequestError{Code: LimitExceededException, Message: err.Error()}
-		}
-		return nil, err
-	}
-
-	dataFrame := data.NewFrame(refID, data.NewField("queryId", nil, []string{*startQueryResponse.QueryId}))
-	dataFrame.RefID = refID
-
-	clientRegion := model.Get("region").MustString("default")
-
-	dataFrame.Meta = &data.FrameMeta{
-		Custom: map[string]interface{}{
-			"Region": clientRegion,
-		},
-	}
-
-	return dataFrame, nil
+	return nil, &AWSError{Code: LimitExceededException, Message: "test messsage"}
+	//startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
+	//if err != nil {
+	//	var awsErr awserr.Error
+	//	if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
+	//		plog.Debug("executeStartQuery limit exceeded", "err", awsErr)
+	//		return nil, &AWSError{Code: LimitExceededException, Message: err.Error()}
+	//	}
+	//	return nil, err
+	//}
+	//
+	//dataFrame := data.NewFrame(refID, data.NewField("queryId", nil, []string{*startQueryResponse.QueryId}))
+	//dataFrame.RefID = refID
+	//
+	//clientRegion := model.Get("region").MustString("default")
+	//
+	//dataFrame.Meta = &data.FrameMeta{
+	//	Custom: map[string]interface{}{
+	//		"Region": clientRegion,
+	//	},
+	//}
+	//
+	//return dataFrame, nil
 }
 
 func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,

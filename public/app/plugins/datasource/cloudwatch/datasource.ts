@@ -1,7 +1,7 @@
 import React from 'react';
 import angular from 'angular';
 import { find, isEmpty, isString, set } from 'lodash';
-import { from, lastValueFrom, merge, Observable, of, throwError, timer, zip } from 'rxjs';
+import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
 import {
   catchError,
   concatMap,
@@ -15,7 +15,7 @@ import {
   takeWhile,
   tap,
 } from 'rxjs/operators';
-import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
@@ -64,6 +64,7 @@ import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
+import { logsRetryStrategy } from './utils/logsRetry';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -174,41 +175,6 @@ export class CloudWatchDatasource
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
-    const retryStrategy = ({
-      maxRetryAttempts = 3,
-      scalingDuration = 1000,
-    }: {
-      maxRetryAttempts?: number;
-      scalingDuration?: number;
-    } = {}) => (attempts: Observable<any>) => {
-      return attempts.pipe(
-        mergeMap((error, i) => {
-          const isLimitError = error.data?.code === 'LimitExceededException';
-          if (!isLimitError) {
-            return throwError(error);
-          }
-
-          const retryAttempt = i + 1;
-          if (retryAttempt > maxRetryAttempts) {
-            return throwError(error);
-          }
-          console.log(`Attempt ${retryAttempt}: retrying in ${retryAttempt * scalingDuration}ms`);
-          // retry after 1s, 2s, etc...
-          return timer(retryAttempt * scalingDuration);
-        }),
-        catchError((err) => {
-          if (err.data?.error) {
-            throw err.data.error;
-          } else if (err.data?.message) {
-            // In PROD we do not supply .error
-            throw err.data.message;
-          }
-          throw err;
-        }),
-        finalize(() => console.log('We are done!'))
-      );
-    };
-
     // This first starts the query which returns queryId which can be used to retrieve results.
     return this.makeLogActionRequest('StartQuery', queryParams, {
       makeReplacements: true,
@@ -216,8 +182,8 @@ export class CloudWatchDatasource
       skipCache: true,
     }).pipe(
       retryWhen(
-        retryStrategy({
-          maxRetryAttempts: 1,
+        logsRetryStrategy({
+          maxRetryAttempts: 3,
           scalingDuration: 1000,
         })
       ),
@@ -588,37 +554,47 @@ export class CloudWatchDatasource
     const requestParams = {
       from: range.from.valueOf().toString(),
       to: range.to.valueOf().toString(),
-      queries: queryParams.map((param: any) => ({
-        refId: 'A',
-        intervalMs: 1, // dummy
-        maxDataPoints: 1, // dummy
-        datasourceId: this.id,
-        type: 'logAction',
-        subtype: subtype,
-        ...param,
-      })),
+      queries: queryParams.map(
+        (param: GetLogEventsRequest | StartQueryRequest | DescribeLogGroupsRequest | GetLogGroupFieldsRequest) => ({
+          refId: (param as StartQueryRequest).refId || 'A',
+          intervalMs: 1, // dummy
+          maxDataPoints: 1, // dummy
+          datasourceId: this.id,
+          type: 'logAction',
+          subtype: subtype,
+          ...param,
+        })
+      ),
     };
 
     if (options.makeReplacements) {
-      requestParams.queries.forEach((query) => {
-        const fieldsToReplace: Array<
-          keyof (GetLogEventsRequest & StartQueryRequest & DescribeLogGroupsRequest & GetLogGroupFieldsRequest)
-        > = ['queryString', 'logGroupNames', 'logGroupName', 'logGroupNamePrefix'];
+      requestParams.queries.forEach(
+        (query: GetLogEventsRequest | StartQueryRequest | DescribeLogGroupsRequest | GetLogGroupFieldsRequest) => {
+          const fieldsToReplace: Array<
+            keyof (GetLogEventsRequest & StartQueryRequest & DescribeLogGroupsRequest & GetLogGroupFieldsRequest)
+          > = ['queryString', 'logGroupNames', 'logGroupName', 'logGroupNamePrefix'];
 
-        for (const fieldName of fieldsToReplace) {
-          if (query.hasOwnProperty(fieldName)) {
-            if (Array.isArray(query[fieldName])) {
-              query[fieldName] = query[fieldName].map((val: string) =>
-                this.replace(val, options.scopedVars, true, fieldName)
-              );
-            } else {
-              query[fieldName] = this.replace(query[fieldName], options.scopedVars, true, fieldName);
+          const anyQuery: any = query;
+          for (const fieldName of fieldsToReplace) {
+            if (query.hasOwnProperty(fieldName)) {
+              if (Array.isArray(anyQuery[fieldName])) {
+                anyQuery[fieldName] = anyQuery[fieldName].map((val: string) =>
+                  this.replace(val, options.scopedVars, true, fieldName)
+                );
+              } else {
+                anyQuery[fieldName] = this.replace(anyQuery[fieldName], options.scopedVars, true, fieldName);
+              }
             }
           }
+          // TODO: seems to be some sort of bug that we don't really send region with all queries. This means
+          //  if you select different than default region in editor you will get results for autocomplete from wrong
+          //  region.
+          if (anyQuery.region) {
+            anyQuery.region = this.replace(anyQuery.region, options.scopedVars, true, 'region');
+            anyQuery.region = this.getActualRegion(anyQuery.region);
+          }
         }
-        query.region = this.replace(query.region, options.scopedVars, true, 'region');
-        query.region = this.getActualRegion(query.region);
-      });
+      );
     }
 
     const resultsToDataFrames = (val: any): DataFrame[] => toDataQueryResponse(val).data || [];
@@ -631,12 +607,11 @@ export class CloudWatchDatasource
 
     return this.awsRequest(DS_QUERY_ENDPOINT, requestParams, headers).pipe(
       map((response) => resultsToDataFrames({ data: response })),
-      catchError((err) => {
+      catchError((err: FetchError) => {
         if (err.status === 400) {
           throw err;
         }
 
-        // TODO: check why we need to unwrap this here
         if (err.data?.error) {
           throw err.data.error;
         } else if (err.data?.message) {
