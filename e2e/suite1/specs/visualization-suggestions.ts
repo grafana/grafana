@@ -7,7 +7,7 @@ e2e.scenario({
   itName: 'Should be shown and clickable',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: false,
+  skipScenario: true,
   scenario: () => {
     e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
