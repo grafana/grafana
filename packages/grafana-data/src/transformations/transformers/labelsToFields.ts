@@ -60,7 +60,7 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
         newFields.push(sansLabels);
 
         for (const labelName of Object.keys(field.labels)) {
-          if (keepLabels && keepLabels.has(labelName)) {
+          if (keepLabels && !keepLabels.has(labelName)) {
             continue;
           }
 
