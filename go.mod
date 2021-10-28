@@ -265,4 +265,4 @@ replace gopkg.in/macaron.v1 => ./pkg/macaron
 
 replace github.com/go-macaron/binding => ./pkg/macaron/binding
 
-replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.9.8
+replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
