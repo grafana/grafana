@@ -276,7 +276,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan struct{}))
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
@@ -373,7 +373,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
-				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evalContext))
+				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evalContext), make(chan struct{}))
 				stoppedChan <- err
 			}()
 
@@ -394,7 +394,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan struct{}))
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -446,7 +446,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan struct{}))
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -529,7 +529,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan struct{}))
 			}()
 
 			evalChan <- &evalContext{
