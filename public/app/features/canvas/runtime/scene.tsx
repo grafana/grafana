@@ -54,8 +54,8 @@ export class Scene {
     );
 
     setTimeout(() => {
-      if (this.div && enableEditing) {
-        this.initMoveable();
+      if (this.div) {
+        this.initMoveable(false, enableEditing);
       }
     }, 100);
     return this.root;
@@ -138,7 +138,7 @@ export class Scene {
     this.div = sceneContainer;
   };
 
-  initMoveable = (destroySelecto = false) => {
+  initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);
@@ -155,8 +155,8 @@ export class Scene {
     });
 
     const moveable = new Moveable(this.div!, {
-      draggable: true,
-      resizable: true,
+      draggable: allowChanges,
+      resizable: allowChanges,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
