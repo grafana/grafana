@@ -163,7 +163,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
       top = translateGridHeightToScreenHeight(panel.gridPos.y) + GRID_CELL_VMARGIN;
     }
 
-    console.log('top', top);
     this.lastPanelBottom = top + translateGridHeightToScreenHeight(panel.gridPos.h);
 
     return { top, bottom: this.lastPanelBottom };
