@@ -56,8 +56,8 @@ type PluginManager struct {
 }
 
 func ProvideService(cfg *setting.Cfg, license models.Licensing, requestValidator models.PluginRequestValidator,
-	sqlStore *sqlstore.SQLStore) (*PluginManager, error) {
-	pm := newManager(cfg, license, requestValidator, sqlStore)
+	sqlStore *sqlstore.SQLStore, authorizer plugins.PluginLoaderAuthorizer) (*PluginManager, error) {
+	pm := newManager(cfg, license, requestValidator, sqlStore, authorizer)
 	if err := pm.init(); err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func ProvideService(cfg *setting.Cfg, license models.Licensing, requestValidator
 }
 
 func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidator models.PluginRequestValidator,
-	sqlStore *sqlstore.SQLStore) *PluginManager {
+	sqlStore *sqlstore.SQLStore, authorizer plugins.PluginLoaderAuthorizer) *PluginManager {
 	return &PluginManager{
 		cfg:              cfg,
 		requestValidator: pluginRequestValidator,
@@ -74,7 +74,7 @@ func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidat
 		errors:           map[string]*plugins.Error{},
 		log:              log.New("plugin.manager"),
 		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
-		pluginLoader:     loader.New(license, cfg),
+		pluginLoader:     loader.New(license, cfg, authorizer),
 	}
 }
 

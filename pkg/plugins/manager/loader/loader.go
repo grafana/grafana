@@ -35,12 +35,12 @@ type Loader struct {
 	errs map[string]error
 }
 
-func New(license models.Licensing, cfg *setting.Cfg) plugins.Loader {
+func New(license models.Licensing, cfg *setting.Cfg, authorizer plugins.PluginLoaderAuthorizer) plugins.Loader {
 	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(cfg),
 		pluginInitializer:  initializer.New(cfg, license),
-		signatureValidator: signature.NewValidator(cfg),
+		signatureValidator: signature.NewValidator(cfg, authorizer),
 		errs:               make(map[string]error),
 	}
 }

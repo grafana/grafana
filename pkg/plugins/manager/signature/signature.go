@@ -8,19 +8,15 @@ import (
 
 var logger = log.New("plugin.signature.validator")
 
-type unsignedPluginConditionFunc = func(plugin *plugins.Plugin) bool
-
-// UnsignedCond changes the policy for allowing unsigned plugins.
-// true = permissible, false = non-permissible
-var UnsignedCond unsignedPluginConditionFunc
-
 type Validator struct {
-	cfg *setting.Cfg
+	cfg        *setting.Cfg
+	authorizer plugins.PluginLoaderAuthorizer
 }
 
-func NewValidator(cfg *setting.Cfg) Validator {
+func NewValidator(cfg *setting.Cfg, authorizer plugins.PluginLoaderAuthorizer) Validator {
 	return Validator{
-		cfg: cfg,
+		cfg:        cfg,
+		authorizer: authorizer,
 	}
 }
 
@@ -54,7 +50,7 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 
 	switch plugin.Signature {
 	case plugins.SignatureUnsigned:
-		if allowed := s.allowUnsigned(plugin); !allowed {
+		if authorized := s.authorizer.CanLoadPlugin(plugin); !authorized {
 			logger.Debug("Plugin is unsigned", "pluginID", plugin.ID)
 			return &plugins.SignatureError{
 				PluginID:        plugin.ID,
@@ -82,22 +78,4 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 			PluginID: plugin.ID,
 		}
 	}
-}
-
-func (s *Validator) allowUnsigned(plugin *plugins.Plugin) bool {
-	if UnsignedCond != nil {
-		return UnsignedCond(plugin)
-	}
-
-	if s.cfg.Env == setting.Dev {
-		return true
-	}
-
-	for _, plug := range s.cfg.PluginsAllowUnsigned {
-		if plug == plugin.ID {
-			return true
-		}
-	}
-
-	return false
 }

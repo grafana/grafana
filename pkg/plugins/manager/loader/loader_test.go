@@ -987,7 +987,7 @@ func newLoader(cfg *setting.Cfg, license models.Licensing) *Loader {
 		cfg:                cfg,
 		pluginFinder:       finder.New(cfg),
 		pluginInitializer:  initializer.New(cfg, license),
-		signatureValidator: signature.NewValidator(cfg),
+		signatureValidator: signature.NewValidator(cfg, &signature.UnsignedPluginAuthorizer{Cfg: cfg}),
 		errs:               make(map[string]error),
 	}
 }

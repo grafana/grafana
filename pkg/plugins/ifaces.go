@@ -85,6 +85,11 @@ type ErrorResolver interface {
 	PluginErrors() []*Error
 }
 
+type PluginLoaderAuthorizer interface {
+	// CanLoadPlugin confirms if a plugin is authorized to load
+	CanLoadPlugin(plugin *Plugin) bool
+}
+
 type PluginDashboardManager interface {
 	// GetPluginDashboards gets dashboards for a certain org/plugin.
 	GetPluginDashboards(orgID int64, pluginID string) ([]*PluginDashboardInfoDTO, error)
