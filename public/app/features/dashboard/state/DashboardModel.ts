@@ -269,6 +269,9 @@ export class DashboardModel {
   private getPanelSaveModels() {
     return this.panels
       .filter((panel: PanelModel) => {
+        if (this.isSnapshotTruthy()) {
+          return true;
+        }
         if (panel.type === 'add-panel') {
           return false;
         }
@@ -295,6 +298,9 @@ export class DashboardModel {
         return panel.getSaveModel();
       })
       .map((model: any) => {
+        if (this.isSnapshotTruthy()) {
+          return model;
+        }
         // Clear any scopedVars from persisted mode. This cannot be part of getSaveModel as we need to be able to copy
         // panel models with preserved scopedVars, for example when going into edit mode.
         delete model.scopedVars;
