@@ -23,7 +23,7 @@ import {
 } from '../../../utils/receiver-form';
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
-import { TestNotificationChannelModal } from './TestNotificationChannelModal';
+import { TestContactPointModal } from './TestContactPointModal';
 
 interface Props {
   alertManagerSourceName: string;
@@ -119,7 +119,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
           takenReceiverNames={takenReceiverNames}
           commonSettingsComponent={GrafanaCommonChannelSettings}
         />
-        <TestNotificationChannelModal
+        <TestContactPointModal
           onDismiss={() => setTestChannelValues(undefined)}
           isOpen={!!testChannelValues}
           onTest={(alert) => testNotification(alert)}

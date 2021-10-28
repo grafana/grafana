@@ -6,6 +6,7 @@ import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
 import { css } from '@emotion/css';
 import AnnotationsField from '../../rule-editor/AnnotationsField';
 import LabelsField from '../../rule-editor/LabelsField';
+import { Annotations, Labels } from 'app/types/unified-alerting-dto';
 
 interface Props {
   isOpen: boolean;
@@ -35,9 +36,7 @@ const defaultValues: FormFields = {
   labels: [{ key: '', value: '' }],
 };
 
-const reservedAnnotations = ['summary'];
-
-export const TestNotificationChannelModal = ({ isOpen, onDismiss, onTest }: Props) => {
+export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
   const [notificationType, setNotificationType] = useState<NotificationType>(NotificationType.predefined);
   const styles = useStyles2(getStyles);
   const formMethods = useForm<FormFields>({ defaultValues, mode: 'onBlur' });
@@ -49,12 +48,12 @@ export const TestNotificationChannelModal = ({ isOpen, onDismiss, onTest }: Prop
           .filter(({ key, value }) => !!key && !!value)
           .reduce((acc, { key, value }) => {
             return { ...acc, [key]: value };
-          }, {}),
+          }, {} as Annotations),
         labels: data.labels
           .filter(({ key, value }) => !!key && !!value)
           .reduce((acc, { key, value }) => {
             return { ...acc, [key]: value };
-          }, {}),
+          }, {} as Labels),
       };
       onTest(alert);
     } else {
@@ -88,7 +87,7 @@ export const TestNotificationChannelModal = ({ isOpen, onDismiss, onTest }: Prop
                 use custom templates and messages.
               </div>
               <div className={styles.section}>
-                <AnnotationsField reservedKeys={reservedAnnotations} />
+                <AnnotationsField />
               </div>
               <div className={styles.section}>
                 <LabelsField />
@@ -112,25 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: flex-start;
     margin-bottom: ${theme.spacing(1)};
   `,
-  annotationButton: css`
-    margin-left: 150px;
-  `,
   section: css`
     margin-bottom: ${theme.spacing(2)};
-  `,
-  inputRow: css`
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: ${theme.spacing(1)};
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  equalSign: css`
-    align-self: flex-start;
-    width: 28px;
-    justify-content: center;
-  `,
-  annotationTextArea: css`
-    min-height: ${theme.spacing(10)};
   `,
 });
