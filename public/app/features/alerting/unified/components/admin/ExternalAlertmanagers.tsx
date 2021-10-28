@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, HorizontalGroup, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 import {
@@ -16,6 +16,7 @@ export const ExternalAlertmanagers = () => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({ open: false, payload: [{ url: '' }] });
+  const [deleteModalState, setDeleteModalState] = useState({ open: false, index: 0 });
   const externalAlertManagers = useExternalAmSelector();
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export const ExternalAlertmanagers = () => {
           return am.url;
         });
       dispatch(addExternalAlertmanagersAction(newList));
+      setDeleteModalState({ open: false, index: 0 });
     },
     [externalAlertManagers, dispatch]
   );
@@ -117,7 +119,12 @@ export const ExternalAlertmanagers = () => {
             {externalAlertManagers?.map((am, index) => {
               return (
                 <tr key={index}>
-                  <td className="link-td">{am.url}</td>
+                  <td>
+                    <span className={styles.url}>{am.url}</span>
+                    <Tooltip content={am.actualUrl} theme="info">
+                      <Icon name="info-circle" />
+                    </Tooltip>
+                  </td>
                   <td>
                     <Icon name="heart" style={{ color: getStatusColor(am.status) }} title={am.status} />
                   </td>
@@ -126,7 +133,11 @@ export const ExternalAlertmanagers = () => {
                       <Button variant="secondary" type="button" onClick={onEdit}>
                         <Icon name="pen" />
                       </Button>
-                      <Button variant="secondary" type="button" onClick={() => onDelete(index)}>
+                      <Button
+                        variant="destructive"
+                        type="button"
+                        onClick={() => setDeleteModalState({ open: true, index })}
+                      >
                         <Icon name="trash-alt" />
                       </Button>
                     </HorizontalGroup>
@@ -137,12 +148,23 @@ export const ExternalAlertmanagers = () => {
           </tbody>
         </table>
       )}
+      <ConfirmModal
+        isOpen={deleteModalState.open}
+        title="Remove Alertmanager"
+        body="Are you sure you want to remove this Alertmanager"
+        confirmText="Remove"
+        onConfirm={() => onDelete(deleteModalState.index)}
+        onDismiss={() => setDeleteModalState({ open: false, index: 0 })}
+      />
       {modalState.open && <AddAlertManagerModal onClose={onCloseModal} alertmanagers={modalState.payload} />}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  url: css`
+    margin-right: ${theme.spacing(1)};
+  `,
   muted: css`
     color: ${theme.colors.text.secondary};
   `,
