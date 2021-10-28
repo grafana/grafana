@@ -12,8 +12,6 @@ import { changeVariableOrder, duplicateVariable, removeVariable } from '../state
 import { VariableEditorList } from './VariableEditorList';
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
-import { updateStrictPanelRefresh } from '../settings/actions';
-import { VariableStrictPanelRefreshBox } from './VariableStrictPanelRefreshBox';
 
 const mapStateToProps = (state: StoreState) => ({
   variables: getEditorVariables(state),
@@ -24,7 +22,6 @@ const mapStateToProps = (state: StoreState) => ({
   usagesNetwork: state.templating.inspect.usagesNetwork,
   unknown: state.templating.inspect.unknown,
   usages: state.templating.inspect.usages,
-  strictPanelRefresh: state.templating.settings.strictPanelRefresh,
 });
 
 const mapDispatchToProps = {
@@ -34,7 +31,6 @@ const mapDispatchToProps = {
   switchToNewMode,
   switchToEditMode,
   switchToListMode,
-  updateStrictPanelRefresh,
 };
 
 interface OwnProps {}
@@ -112,12 +108,6 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 
         {!variableToEdit && (
           <>
-            {this.props.variables.length > 0 ? (
-              <VariableStrictPanelRefreshBox
-                value={this.props.strictPanelRefresh}
-                onChange={this.props.updateStrictPanelRefresh}
-              />
-            ) : null}
             <VariableEditorList
               dashboard={this.props.dashboard}
               variables={this.props.variables}

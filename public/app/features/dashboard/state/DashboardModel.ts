@@ -50,6 +50,7 @@ import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
 import { VariablesChanged, VariablesChangedInUrl, VariablesTimeRangeChanged } from '../../variables/types';
+import { isMathString } from '../../../../../packages/grafana-data/src/datetime/datemath';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -89,7 +90,7 @@ export class DashboardModel {
   liveNow: boolean;
   private originalTime: any;
   timepicker: any;
-  templating: { list: any[]; strictPanelRefreshMode?: boolean };
+  templating: { list: any[] };
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
   refresh: any;
@@ -104,6 +105,8 @@ export class DashboardModel {
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
   private panelsAffectedByVariableChange: number[] | null;
+  private appEventsSubscription: Subscription;
+  private lastRefresh: number;
 
   // ------------------
   // not persisted
@@ -113,7 +116,6 @@ export class DashboardModel {
   iteration?: number;
   declare meta: DashboardMeta;
   events: EventBusExtended;
-  private appEventsSubscription: Subscription;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -129,6 +131,7 @@ export class DashboardModel {
     formatDate: true,
     appEventsSubscription: true,
     panelsAffectedByVariableChange: true,
+    lastRefresh: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -174,6 +177,7 @@ export class DashboardModel {
     this.sortPanelsByGridPos();
     this.panelsAffectedByVariableChange = null;
     this.appEventsSubscription = new Subscription();
+    this.lastRefresh = Date.now();
     this.appEventsSubscription.add(appEvents.subscribe(VariablesChanged, this.variablesChangedHandler.bind(this)));
     this.appEventsSubscription.add(
       appEvents.subscribe(VariablesTimeRangeChanged, this.variablesTimeRangeChangedHandler.bind(this))
@@ -192,6 +196,22 @@ export class DashboardModel {
   }
 
   private variablesChangedBaseHandler(event: VariablesChanged | VariablesTimeRangeChanged, processRepeats = false) {
+    const timeRange = getTimeSrv().timeRange();
+
+    if (isMathString(timeRange.raw.from) && isMathString(timeRange.raw.to)) {
+      const totalRange = timeRange.to.diff(timeRange.from);
+      const msSinceLastRefresh = Date.now() - this.lastRefresh;
+      const threshold = totalRange * 0.05;
+      if (msSinceLastRefresh > threshold) {
+        if (processRepeats) {
+          this.processRepeats();
+        }
+
+        this.startRefresh(undefined);
+        return;
+      }
+    }
+
     if (this.panelInEdit || this.panelInView) {
       this.panelsAffectedByVariableChange = event.payload.panelIds.filter((id) =>
         this.panelInEdit ? id !== this.panelInEdit.id : this.panelInView ? id !== this.panelInView.id : true
@@ -361,7 +381,6 @@ export class DashboardModel {
     const currentVariables = this.getVariablesFromState();
 
     copy.templating = {
-      strictPanelRefreshMode: this.templating.strictPanelRefreshMode,
       list: currentVariables.map((variable) =>
         variableAdapters.get(variable.type).getSaveModel(variable, defaults.saveVariables)
       ),
@@ -412,6 +431,8 @@ export class DashboardModel {
         }
       }
     }
+
+    this.lastRefresh = Date.now();
   }
 
   render() {
@@ -468,7 +489,7 @@ export class DashboardModel {
 
   private ensureListExist(data: any) {
     if (!data) {
-      data = { strictPanelRefreshMode: false };
+      data = {};
     }
     if (!data.list) {
       data.list = [];
@@ -1194,11 +1215,6 @@ export class DashboardModel {
     if (shouldUpdateGridPositionLayout) {
       this.events.publish(new DashboardPanelsChangedEvent());
     }
-  }
-
-  updateStrictRefreshPanel(value: boolean) {
-    this.revision++;
-    this.templating.strictPanelRefreshMode = value;
   }
 
   private getPanelRepeatVariable(panel: PanelModel) {

@@ -69,7 +69,6 @@ import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { locationService } from '@grafana/runtime';
 import { appEvents } from '../../../core/core';
 import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
-import { initStrictPanelRefresh } from '../settings/actions';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -518,10 +517,7 @@ export const variableUpdated = (
     const variables = getVariables(state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
-    const strictPanelRefreshMode = state.templating.settings.strictPanelRefresh;
-    const affectedPanelIds = strictPanelRefreshMode
-      ? getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels)
-      : panels.map((p) => p.id);
+    const affectedPanelIds = getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels);
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
@@ -689,8 +685,6 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
     dispatch(initDashboardTemplating(dashboard.templating.list));
     // Process all variable updates
     await dispatch(processVariables());
-    // Set strict panel refresh mode
-    dispatch(initStrictPanelRefresh(dashboard.templating.strictPanelRefreshMode));
     // Mark update as complete
     dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
   } catch (err) {

@@ -1686,7 +1686,6 @@ const dashWithAllVariables: any = {
         type: 'dashboard',
       },
     ],
-    strictPanelRefreshMode: false,
   },
   editable: true,
   fiscalYearStartMonth: 0,
@@ -1960,7 +1959,6 @@ const dashWithAllVariables: any = {
         type: 'custom',
       },
     ],
-    strictPanelRefreshMode: true,
   },
   time: {
     from: 'now-6h',

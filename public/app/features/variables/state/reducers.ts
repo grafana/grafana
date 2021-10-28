@@ -4,7 +4,6 @@ import { variableEditorReducer } from '../editor/reducer';
 import { variablesReducer } from './variablesReducer';
 import { transactionReducer } from './transactionReducer';
 import { variableInspectReducer } from '../inspect/reducer';
-import { settingsReducer } from '../settings/reducer';
 
 export const templatingReducers = combineReducers({
   editor: variableEditorReducer,
@@ -12,7 +11,6 @@ export const templatingReducers = combineReducers({
   optionsPicker: optionsPickerReducer,
   transaction: transactionReducer,
   inspect: variableInspectReducer,
-  settings: settingsReducer,
 });
 
 export type TemplatingState = ReturnType<typeof templatingReducers>;
