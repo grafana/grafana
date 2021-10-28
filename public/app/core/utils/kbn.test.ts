@@ -73,3 +73,11 @@ describe('describe_interval', () => {
     expect(() => kbn.describeInterval('xyz')).toThrow();
   });
 });
+
+describe('addSlashes', () => {
+  it('properly escapes backslashes, single-quotes, double-quotes and the number zero', () => {
+    expect(kbn.addSlashes('this is a \'test\' with "quotes" backslashes (\\) and zero (0)')).toEqual(
+      'this is a \\\'test\\\' with \\"quotes\\" backslashes (\\\\) and zero (\\0)'
+    );
+  });
+});
