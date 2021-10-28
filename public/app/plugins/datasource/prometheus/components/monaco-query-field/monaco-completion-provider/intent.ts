@@ -2,7 +2,7 @@ import { parser } from 'lezer-promql';
 import type { Tree, SyntaxNode } from 'lezer-tree';
 import { NeverCaseError } from './util';
 
-type Direction = 'parent' | 'firstChild' | 'lastChild';
+type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeTypeName =
   | '⚠' // this is used as error-name
   | 'AggregateExpr'
@@ -18,7 +18,12 @@ type NodeTypeName =
   | 'PromQL'
   | 'StringLiteral'
   | 'VectorSelector'
-  | 'MatrixSelector';
+  | 'MatrixSelector'
+  | 'MatchOp'
+  | 'EqlSingle'
+  | 'Neq'
+  | 'EqlRegex'
+  | 'NeqRegex';
 
 type Path = Array<[Direction, NodeTypeName]>;
 
@@ -30,6 +35,8 @@ function move(node: SyntaxNode, direction: Direction): SyntaxNode | null {
       return node.firstChild;
     case 'lastChild':
       return node.lastChild;
+    case 'nextSibling':
+      return node.nextSibling;
     default:
       throw new NeverCaseError(direction);
   }
@@ -69,9 +76,12 @@ function parsePromQLStringLiteral(text: string): string {
   }
 }
 
+type LabelOperator = '=' | '!=' | '=~' | '!~';
+
 export type Label = {
   name: string;
   value: string;
+  op: LabelOperator;
 };
 
 export type Intent =
@@ -142,6 +152,22 @@ const RESOLVERS: Resolver[] = [
   },
 ];
 
+const LABEL_OP_MAP = new Map<string, LabelOperator>([
+  ['EqlSingle', '='],
+  ['EqlRegex', '=~'],
+  ['Neq', '!='],
+  ['NeqRegex', '!~'],
+]);
+
+function getLabelOp(opNode: SyntaxNode): LabelOperator | null {
+  const opChild = opNode.firstChild;
+  if (opChild === null) {
+    return null;
+  }
+
+  return LABEL_OP_MAP.get(opChild.name) ?? null;
+}
+
 function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
   if (labelMatcherNode.type.name !== 'LabelMatcher') {
     return null;
@@ -150,6 +176,16 @@ function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
   const nameNode = walk(labelMatcherNode, [['firstChild', 'LabelName']]);
 
   if (nameNode === null) {
+    return null;
+  }
+
+  const opNode = walk(nameNode, [['nextSibling', 'MatchOp']]);
+  if (opNode === null) {
+    return null;
+  }
+
+  const op = getLabelOp(opNode);
+  if (op === null) {
     return null;
   }
 
@@ -162,7 +198,7 @@ function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
   const name = getNodeText(nameNode, text);
   const value = parsePromQLStringLiteral(getNodeText(valueNode, text));
 
-  return { name, value };
+  return { name, value, op };
 }
 function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
   if (labelMatchersNode.type.name !== 'LabelMatchers') {

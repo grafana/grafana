@@ -572,6 +572,61 @@ describe('DashboardModel', () => {
       const savedModelWithCollapsedRows: any = model.getSaveModelClone();
       expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(1);
     });
+
+    it('getSaveModelClone should not remove repeated panels and scopedVars during snapshot', () => {
+      const dashboardJSON = {
+        panels: [
+          { id: 1, type: 'row', repeat: 'dc', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+          { id: 2, repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+        ],
+        templating: {
+          list: [
+            {
+              name: 'dc',
+              type: 'custom',
+              current: {
+                text: 'dc1 + dc2',
+                value: ['dc1', 'dc2'],
+              },
+              options: [
+                { text: 'dc1', value: 'dc1', selected: true },
+                { text: 'dc2', value: 'dc2', selected: true },
+              ],
+            },
+            {
+              name: 'app',
+              type: 'custom',
+              current: {
+                text: 'se1 + se2',
+                value: ['se1', 'se2'],
+              },
+              options: [
+                { text: 'se1', value: 'se1', selected: true },
+                { text: 'se2', value: 'se2', selected: true },
+              ],
+            },
+          ],
+        },
+      };
+
+      const model = getDashboardModel(dashboardJSON);
+      model.processRepeats();
+      expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      model.snapshot = { timestamp: new Date() };
+      const saveModel = model.getSaveModelClone();
+      expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      model.collapseRows();
+      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(2);
+    });
   });
 
   describe('Given model with template variable of type query', () => {
