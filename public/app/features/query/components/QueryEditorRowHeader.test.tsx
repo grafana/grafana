@@ -3,12 +3,20 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+
+const mockDS = mockDataSource({
+  name: 'CloudManager',
+  type: DataSourceType.Alertmanager,
+});
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   return {
     getDataSourceSrv: () => ({
-      getInstanceSettings: jest.fn(),
-      getList: jest.fn().mockReturnValue([]),
+      get: () => Promise.resolve(mockDS),
+      getList: () => [mockDS],
+      getInstanceSettings: () => mockDS,
     }),
   };
 });
