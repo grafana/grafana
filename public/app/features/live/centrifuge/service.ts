@@ -1,5 +1,6 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
-import { LiveDataStreamOptions, toDataQueryError } from '@grafana/runtime';
+import { LiveDataStreamOptions } from '@grafana/runtime';
+import { toDataQueryError } from './toDataQueryError';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
   DataFrame,
@@ -17,9 +18,8 @@ import {
   StreamingDataFrame,
 } from '@grafana/data';
 import { CentrifugeLiveChannel } from './channel';
-import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 
-type CentrifugeSrvDeps = {
+export type CentrifugeSrvDeps = {
   appUrl: string;
   orgId: number;
   orgRole: string;
@@ -27,7 +27,31 @@ type CentrifugeSrvDeps = {
   liveEnabled: boolean;
 };
 
-export class CentrifugeSrv {
+export interface CentrifugeSrv {
+  /**
+   * Listen for changes to the connection state
+   */
+  getConnectionState(): Observable<boolean>;
+
+  /**
+   * Watch for messages in a channel
+   */
+  getStream<T>(address: LiveChannelAddress, config: LiveChannelConfig): Observable<LiveChannelEvent<T>>;
+
+  /**
+   * Connect to a channel and return results as DataFrames
+   */
+  getDataStream(options: LiveDataStreamOptions, config: LiveChannelConfig): Observable<DataQueryResponse>;
+
+  /**
+   * For channels that support presence, this will request the current state from the server.
+   *
+   * Join and leave messages will be sent to the open stream
+   */
+  getPresence(address: LiveChannelAddress, config: LiveChannelConfig): Promise<LiveChannelPresenceStatus>;
+}
+
+export class CentrifugeService implements CentrifugeSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
   readonly centrifuge: Centrifuge;
   readonly connectionState: BehaviorSubject<boolean>;
@@ -66,15 +90,15 @@ export class CentrifugeSrv {
   // Internal functions
   //----------------------------------------------------------
 
-  onConnect = (context: any) => {
+  private onConnect = (context: any) => {
     this.connectionState.next(true);
   };
 
-  onDisconnect = (context: any) => {
+  private onDisconnect = (context: any) => {
     this.connectionState.next(false);
   };
 
-  onServerSideMessage = (context: any) => {
+  private onServerSideMessage = (context: any) => {
     console.log('Publication from server-side channel', context);
   };
 
@@ -82,7 +106,7 @@ export class CentrifugeSrv {
    * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
    * channel will be returned with an error state indicated in its status
    */
-  getChannel<TMessage>(addr: LiveChannelAddress, config: LiveChannelConfig): CentrifugeLiveChannel<TMessage> {
+  private getChannel<TMessage>(addr: LiveChannelAddress, config: LiveChannelConfig): CentrifugeLiveChannel<TMessage> {
     const id = `${this.deps.orgId}/${addr.scope}/${addr.namespace}/${addr.path}`;
     let channel = this.open.get(id);
     if (channel != null) {
@@ -145,7 +169,6 @@ export class CentrifugeSrv {
       let data: StreamingDataFrame | undefined = undefined;
       let filtered: DataFrame | undefined = undefined;
       let state = LoadingState.Streaming;
-      let last = liveTimer.lastUpdate;
       let lastWidth = -1;
 
       const process = (msg: DataFrameJSON) => {
@@ -172,12 +195,8 @@ export class CentrifugeSrv {
           }
         }
 
-        const elapsed = liveTimer.lastUpdate - last;
-        if (elapsed > 1000 || liveTimer.ok) {
-          filtered.length = data.length; // make sure they stay up-to-date
-          subscriber.next({ state, data: [filtered], key });
-          last = liveTimer.lastUpdate;
-        }
+        filtered.length = data.length;
+        subscriber.next({ state, data: [filtered], key });
       };
 
       if (options.frame) {
