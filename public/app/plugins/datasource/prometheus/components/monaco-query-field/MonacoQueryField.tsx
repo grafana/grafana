@@ -6,6 +6,7 @@ import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
 import { getCompletionProvider } from './monaco-completion-provider';
 import { Props } from './MonacoQueryFieldProps';
+import { getOverrideServices } from './getOverrideServices';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -61,6 +62,8 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 const MonacoQueryField = (props: Props) => {
+  // we need only one instance of `overrideServices` during the lifetime of the react component
+  const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
   const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
 
@@ -88,6 +91,7 @@ const MonacoQueryField = (props: Props) => {
       ref={containerRef}
     >
       <ReactMonacoEditor
+        overrideServices={overrideServicesRef.current}
         options={options}
         language="promql"
         value={initialValue}
