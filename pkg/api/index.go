@@ -202,34 +202,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.Enabled && !uaIsDisabledForOrg
 
 	if setting.AlertingEnabled || uaVisibleForOrg {
-		alertChildNavs := []*dtos.NavLink{
-			{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
-		}
-		if uaVisibleForOrg {
-			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.Cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
-			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
-		}
-		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
-			if uaVisibleForOrg {
-				alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-					Text: "Contact points", Id: "receivers", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
-					Icon: "comment-alt-share",
-				})
-				alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notification policies", Id: "am-routes", Url: hs.Cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
-			} else {
-				alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-					Text: "Notification channels", Id: "channels", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
-					Icon: "comment-alt-share",
-				})
-			}
-		}
-		if c.OrgRole == models.ROLE_ADMIN && uaVisibleForOrg {
-			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-				Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
-				Icon: "cog",
-			})
-		}
-
+		alertChildNavs := hs.buildAlertNavLinks(c, uaVisibleForOrg)
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Alerting",
 			SubTitle:   "Alert rules and notifications",
@@ -331,14 +304,13 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if len(configNodes) > 0 {
 		navTree = append(navTree, &dtos.NavLink{
-			Id:           dtos.NavIDCfg,
-			Text:         "Configuration",
-			SubTitle:     "Organization: " + c.OrgName,
-			Icon:         "cog",
-			Url:          configNodes[0].Url,
-			SortWeight:   dtos.WeightConfig,
-			Children:     configNodes,
-			HideFromMenu: hs.Cfg.IsNewNavigationEnabled(),
+			Id:         dtos.NavIDCfg,
+			Text:       "Configuration",
+			SubTitle:   "Organization: " + c.OrgName,
+			Icon:       "cog",
+			Url:        configNodes[0].Url,
+			SortWeight: dtos.WeightConfig,
+			Children:   configNodes,
 		})
 		configNode := &dtos.NavLink{
 			Id:         dtos.NavIDCfg,
@@ -440,6 +412,37 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 		})
 	}
 	return dashboardChildNavs
+}
+
+func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg bool) []*dtos.NavLink {
+	alertChildNavs := []*dtos.NavLink{
+		{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
+	}
+	if uaVisibleForOrg {
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.Cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+	}
+	if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
+		if uaVisibleForOrg {
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+				Text: "Contact points", Id: "receivers", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
+				Icon: "comment-alt-share",
+			})
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notification policies", Id: "am-routes", Url: hs.Cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+		} else {
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+				Text: "Notification channels", Id: "channels", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
+				Icon: "comment-alt-share",
+			})
+		}
+	}
+	if c.OrgRole == models.ROLE_ADMIN && uaVisibleForOrg {
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+			Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
+			Icon: "cog",
+		})
+	}
+	return alertChildNavs
 }
 
 func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink {

@@ -53,14 +53,14 @@ describe('enrichConfigItems', () => {
         hideFromMenu: true,
       },
     ];
-  })
+  });
 
   it('does not add a sign in item if a user signed in', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.isSignedIn = false;
     setContextSrv(contextSrv);
     const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
-    const signInNode = enrichedConfigItems.find(item => item.id === 'signin')
+    const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
     expect(signInNode).toBeDefined();
   });
 
@@ -69,7 +69,7 @@ describe('enrichConfigItems', () => {
     contextSrv.user.isSignedIn = true;
     setContextSrv(contextSrv);
     const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
-    const signInNode = enrichedConfigItems.find(item => item.id === 'signin')
+    const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
     expect(signInNode).toBeDefined();
   });
 
@@ -78,7 +78,7 @@ describe('enrichConfigItems', () => {
     contextSrv.user.orgCount = 1;
     setContextSrv(contextSrv);
     const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
-    const profileNode = enrichedConfigItems.find(item => item.id === 'profile');
+    const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
     expect(profileNode!.children).toBeUndefined();
   });
 
@@ -87,29 +87,39 @@ describe('enrichConfigItems', () => {
     contextSrv.user.orgCount = 2;
     setContextSrv(contextSrv);
     const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
-    const profileNode = enrichedConfigItems.find(item => item.id === 'profile');
-    expect(profileNode!.children).toContainEqual(expect.objectContaining({
-      text: 'Switch organization',
-    }));
+    const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
+    expect(profileNode!.children).toContainEqual(
+      expect.objectContaining({
+        text: 'Switch organization',
+      })
+    );
   });
 
   it('enhances the help node with extra child links', () => {
     const contextSrv = new ContextSrv();
     setContextSrv(contextSrv);
     const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
-    const helpNode = enrichedConfigItems.find(item => item.id === 'help');
-    expect(helpNode!.children).toContainEqual(expect.objectContaining({
-      text: 'Documentation',
-    }));
-    expect(helpNode!.children).toContainEqual(expect.objectContaining({
-      text: 'Support',
-    }));
-    expect(helpNode!.children).toContainEqual(expect.objectContaining({
-      text: 'Community',
-    }));
-    expect(helpNode!.children).toContainEqual(expect.objectContaining({
-      text: 'Keyboard shortcuts',
-    }));
+    const helpNode = enrichedConfigItems.find((item) => item.id === 'help');
+    expect(helpNode!.children).toContainEqual(
+      expect.objectContaining({
+        text: 'Documentation',
+      })
+    );
+    expect(helpNode!.children).toContainEqual(
+      expect.objectContaining({
+        text: 'Support',
+      })
+    );
+    expect(helpNode!.children).toContainEqual(
+      expect.objectContaining({
+        text: 'Community',
+      })
+    );
+    expect(helpNode!.children).toContainEqual(
+      expect.objectContaining({
+        text: 'Keyboard shortcuts',
+      })
+    );
   });
 });
 
