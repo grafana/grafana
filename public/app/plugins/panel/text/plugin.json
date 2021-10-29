@@ -3,7 +3,7 @@
   "name": "Text",
   "id": "text",
 
-  "skipDataQuery": true,
+  "skipDataQuery": false,
 
   "info": {
     "description": "Supports markdown and html content",

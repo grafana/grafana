@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
-import { PanelProps, renderMarkdown, textUtil } from '@grafana/data';
+import { PanelProps, renderMarkdown, textUtil, toDataFrameDTO } from '@grafana/data';
 // Utils
 import config from 'app/core/config';
 // Types
@@ -9,6 +9,7 @@ import { PanelOptions, TextMode } from './models.gen';
 import { CustomScrollbar, stylesFactory } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
+import mustache from 'mustache';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -43,8 +44,15 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   prepareMarkdown(content: string): string {
+    const templateData = {
+      data: this.props.data.series.map((x) => toDataFrameDTO(x)),
+    };
+
+    const delimitors: [string, string] = ['${', '}'];
+    const mustached = mustache.render(content, templateData, {}, delimitors);
+
     // Sanitize is disabled here as we handle that after variable interpolation
-    return renderMarkdown(this.interpolateAndSanitizeString(content), { noSanitize: config.disableSanitizeHtml });
+    return renderMarkdown(this.interpolateAndSanitizeString(mustached), { noSanitize: config.disableSanitizeHtml });
   }
 
   interpolateAndSanitizeString(content: string): string {
@@ -72,6 +80,7 @@ export class TextPanel extends PureComponent<Props, State> {
   render() {
     const { html } = this.state;
     const styles = getStyles();
+
     return (
       <CustomScrollbar autoHeightMin="100%">
         <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.content)} />

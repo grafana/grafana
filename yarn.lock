@@ -7920,6 +7920,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/mustache@npm:^4":
+  version: 4.1.2
+  resolution: "@types/mustache@npm:4.1.2"
+  checksum: 1f37849aae39b3188dbeac71734393586db80faa798795ea730db8e40d393c1d4d6a65ad8735a5ccf6dfc8b920d0792af1e6ef13e3ed2e02d204259678545240
+  languageName: node
+  linkType: hard
+
 "@types/node-fetch@npm:^2.5.7":
   version: 2.5.12
   resolution: "@types/node-fetch@npm:2.5.12"
@@ -18010,6 +18017,7 @@ __metadata:
     "@types/logfmt": ^1.2.1
     "@types/lru-cache": ^5.1.0
     "@types/mousetrap": 1.6.3
+    "@types/mustache": ^4
     "@types/node": 14.17.27
     "@types/ol": ^6.5.1
     "@types/papaparse": 5.2.0
@@ -18142,6 +18150,7 @@ __metadata:
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
     moveable: 0.26.0
+    mustache: ^4.2.0
     mutationobserver-shim: 0.3.3
     ngtemplate-loader: 2.1.0
     nodemon: 2.0.2
@@ -23611,6 +23620,15 @@ __metadata:
     arrify: ^2.0.1
     minimatch: ^3.0.4
   checksum: 82c8030a53af965cab48da22f1b0f894ef99e16ee680dabdfbd38d2dfacc3c8208c475203d747afd9e26db44118ed0221d5a0d65268c864f06d6efc7ac6df812
+  languageName: node
+  linkType: hard
+
+"mustache@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "mustache@npm:4.2.0"
+  bin:
+    mustache: bin/mustache
+  checksum: 928fcb63e3aa44a562bfe9b59ba202cccbe40a46da50be6f0dd831b495be1dd7e38ca4657f0ecab2c1a89dc7bccba0885eab7ee7c1b215830da765758c7e0506
   languageName: node
   linkType: hard
 
