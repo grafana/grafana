@@ -142,7 +142,7 @@ export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithCh
     };
 
     return (
-      <Tooltip content={data.description} placement={'right'}>
+      <Tooltip content={data.description}>
         <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onChange}>
           <Checkbox
             value={isSelected}
