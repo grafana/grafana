@@ -17,15 +17,15 @@ interface Props {
   setOpen: (value: boolean) => void;
 }
 
-interface ResourceItem {
+export interface ResourceItem {
   label: string;
-  value: string;
+  value: string; // includes folder
   search: string;
   imgUrl: string;
 }
 
-const sourceOptions = [
-  { label: 'Icon Set', value: 'iconSet' },
+const sourceOptions = (mediaType: string) => [
+  { label: `${mediaType} Set`, value: 'iconSet' },
   { label: 'URL', value: 'url' },
   { label: 'Upload', value: 'upload' },
 ];
@@ -41,7 +41,7 @@ export function ResourcePicker(props: Props) {
   const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
   const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
   // select between existing icon folder, url, or upload
-  const [source, setSource] = useState<SelectableValue<string>>(sourceOptions[0]);
+  const [source, setSource] = useState<SelectableValue<string>>(sourceOptions(mediaType)[0]);
   // pass on new value to confirm button and to show in preview
   const [newValue, setNewValue] = useState<string>(value ?? '');
   const [searchQuery, setSearchQuery] = useState<string>();
@@ -67,7 +67,7 @@ export function ResourcePicker(props: Props) {
                 if (filter(item)) {
                   const idx = item.name.lastIndexOf('.');
                   cards.push({
-                    value: item.name,
+                    value: `${folder}/${item.name}`,
                     label: item.name,
                     search: (idx ? item.name.substr(0, idx) : item.name).toLowerCase(),
                     imgUrl: `public/${folder}/${item.name}`,
@@ -91,13 +91,16 @@ export function ResourcePicker(props: Props) {
     }
   };
   const imgSrc = getPublicOrAbsoluteUrl(newValue!);
-
+  let shortName = newValue?.substring(newValue.lastIndexOf('/') + 1, newValue.lastIndexOf('.'));
+  if (shortName.length > 20) {
+    shortName = shortName.substring(0, 20) + '...';
+  }
   return (
     <div>
       <div className={styles.upper}>
         <div className={styles.child}>
           <Field label="Source">
-            <Select menuShouldPortal={true} options={sourceOptions} onChange={setSource} value={source} />
+            <Select menuShouldPortal={true} options={sourceOptions(mediaType)} onChange={setSource} value={source} />
           </Field>
           {source?.value === 'iconSet' && (
             <>
@@ -126,15 +129,15 @@ export function ResourcePicker(props: Props) {
           <Field label="Preview">
             <div className={styles.iconPreview}>
               {mediaType === 'icon' && <SVG src={imgSrc} className={styles.img} />}
-              {mediaType === 'image' && <img src={imgSrc} className={styles.img} />}
+              {mediaType === 'image' && newValue && <img src={imgSrc} className={styles.img} />}
             </div>
           </Field>
-          <Label>{newValue?.substring(newValue.lastIndexOf('/') + 1, newValue.lastIndexOf('.'))}</Label>
+          <Label>{shortName}</Label>
         </div>
       </div>
       {source?.value === 'iconSet' && filteredIndex && (
         <div className={styles.cardsWrapper}>
-          <ResourceCards cards={filteredIndex} onChange={(v) => setNewValue(v)} currentFolder={currentFolder} />
+          <ResourceCards cards={filteredIndex} onChange={(v) => setNewValue(v)} value={newValue} />
         </div>
       )}
 
@@ -142,7 +145,9 @@ export function ResourcePicker(props: Props) {
         <Button variant="secondary" onClick={() => setOpen(false)}>
           Cancel
         </Button>
-        <Button onClick={() => onChange(newValue)}>Select</Button>
+        <Button variant={newValue !== value ? 'primary' : 'secondary'} onClick={() => onChange(newValue)}>
+          Select
+        </Button>
       </Modal.ButtonRow>
       {/* TODO: add file upload
           {tabs[1].active && (
@@ -180,7 +185,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     iconContainer: css`
       display: flex;
       flex-direction: column;
-      min-width: 40%;
+      width: 40%;
       align-items: center;
     `,
     img: css`
@@ -189,7 +194,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       fill: ${theme.colors.text.primary};
     `,
     child: css`
-      min-width: 60%;
+      width: 60%;
     `,
     upper: css`
       display: flex;
