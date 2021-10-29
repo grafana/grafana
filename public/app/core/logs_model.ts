@@ -31,6 +31,7 @@ import {
   LogsModel,
   MutableDataFrame,
   rangeUtil,
+  ScopedVars,
   sortInAscendingOrder,
   textUtil,
   TimeRange,
@@ -52,6 +53,11 @@ export const LogLevelColor = {
   [LogLevel.trace]: colors[2],
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
+
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
 
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
 function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy?: LogsDedupStrategy): boolean {
@@ -629,6 +635,14 @@ export function queryLogsVolume<T extends DataQuery>(
   logsVolumeRequest: DataQueryRequest<T>,
   options: LogsVolumeQueryOptions<T>
 ): Observable<DataQueryResponse> {
+  const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars);
+  logsVolumeRequest.interval = intervalInfo.interval;
+  logsVolumeRequest.scopedVars.__interval.value = intervalInfo.interval;
+  if (intervalInfo.intervalMs !== undefined) {
+    logsVolumeRequest.intervalMs = intervalInfo.intervalMs;
+    logsVolumeRequest.scopedVars.__interval_ms.value = intervalInfo.intervalMs;
+  }
+
   return new Observable((observer) => {
     let rawLogsVolume: DataFrame[] = [];
     observer.next({
@@ -678,4 +692,28 @@ export function queryLogsVolume<T extends DataQuery>(
       subscription?.unsubscribe();
     };
   });
+}
+
+function getIntervalInfo(scopedVars: ScopedVars): { interval: string; intervalMs?: number } {
+  if (scopedVars.__interval) {
+    let intervalMs: number = scopedVars.__interval_ms.value;
+    let interval = '';
+    if (intervalMs > HOUR) {
+      intervalMs = DAY;
+      interval = '1d';
+    } else if (intervalMs > MINUTE) {
+      intervalMs = HOUR;
+      interval = '1h';
+    } else if (intervalMs > SECOND) {
+      intervalMs = MINUTE;
+      interval = '1m';
+    } else {
+      intervalMs = SECOND;
+      interval = '1s';
+    }
+
+    return { interval, intervalMs };
+  } else {
+    return { interval: '$__interval' };
+  }
 }
