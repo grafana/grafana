@@ -52,9 +52,9 @@ export const getTimeZones = memoize((includeInternal: boolean | InternalTimeZone
   const initial: TimeZone[] = [];
 
   if (includeInternal === true) {
-    initial.push.apply(initial, [InternalTimeZones.default, InternalTimeZones.localBrowserTime, InternalTimeZones.utc]);
+    initial.push(InternalTimeZones.default, InternalTimeZones.localBrowserTime, InternalTimeZones.utc);
   } else if (includeInternal) {
-    initial.push.apply(initial, includeInternal);
+    initial.push(...includeInternal);
   }
 
   return moment.tz.names().reduce((zones: TimeZone[], zone: string) => {
