@@ -5,21 +5,25 @@ import './transferHandlers';
 import * as comlink from 'comlink';
 import { Observable } from 'rxjs';
 import { LiveChannelAddress, LiveChannelConfig, LiveChannelEvent } from '@grafana/data';
+import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
+import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
 
 export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
-  private centrifugeWorker: comlink.Remote<CentrifugeSrv> & { initialize: (deps: CentrifugeSrvDeps) => Promise<void> };
+  private centrifugeWorker: comlink.Remote<CentrifugeSrv> & {
+    initialize: (deps: CentrifugeSrvDeps, liveTimerObservable: Observable<boolean>) => Promise<void>;
+  };
 
   constructor(deps: CentrifugeSrvDeps) {
     this.centrifugeWorker = comlink.wrap(new CentrifugeWorker());
-    this.centrifugeWorker.initialize(deps);
+    this.centrifugeWorker.initialize(deps, comlink.proxy(liveTimer.ok));
   }
 
   getConnectionState: CentrifugeSrv['getConnectionState'] = () => {
-    return this.proxyObservable(this.centrifugeWorker.getConnectionState());
+    return promiseWithRemoteObservableAsObservable(this.centrifugeWorker.getConnectionState());
   };
 
   getDataStream: CentrifugeSrv['getDataStream'] = (options, config) => {
-    return this.proxyObservable(this.centrifugeWorker.getDataStream(options, config));
+    return promiseWithRemoteObservableAsObservable(this.centrifugeWorker.getDataStream(options, config));
   };
 
   getPresence: CentrifugeSrv['getPresence'] = (address, config) => {
@@ -27,20 +31,8 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
   };
 
   getStream: CentrifugeSrv['getStream'] = <T>(address: LiveChannelAddress, config: LiveChannelConfig) => {
-    return this.proxyObservable(
+    return promiseWithRemoteObservableAsObservable(
       this.centrifugeWorker.getStream(address, config) as Promise<Observable<LiveChannelEvent<T>>>
     );
-  };
-
-  private proxyObservable = <T>(promiseWithProxyObservable: Promise<Observable<T>>): Observable<T> => {
-    return new Observable((subscriber) => {
-      promiseWithProxyObservable.then((obs) =>
-        obs.subscribe(
-          comlink.proxy((nextInFake: T) => {
-            subscriber.next(nextInFake);
-          })
-        )
-      );
-    });
   };
 }

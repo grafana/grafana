@@ -15,8 +15,7 @@ import {
   toLiveChannelId,
 } from '@grafana/data';
 import { GrafanaLiveChannelConfigSrv } from './channel-config/types';
-import { catchError, filter } from 'rxjs/operators';
-import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
+import { catchError } from 'rxjs/operators';
 
 type GrafanaLiveServiceDeps = {
   scopes: GrafanaLiveChannelConfigSrv;
@@ -39,19 +38,9 @@ export class GrafanaLiveService implements GrafanaLiveSrv {
    */
   getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse> {
     const channelConfig = this.getChannelInfo(options.addr);
-    let last = liveTimer.lastUpdate;
 
     return from(channelConfig).pipe(
       mergeMap((config) => this.deps.centrifugeSrv.getDataStream(options, config)),
-      filter(() => {
-        const elapsed = liveTimer.lastUpdate - last;
-        if (elapsed > 1000 || liveTimer.ok) {
-          last = liveTimer.lastUpdate;
-          return true;
-        }
-
-        return false;
-      }),
       catchError((error) => this.getInvalidDataStream(error, options))
     );
   }
