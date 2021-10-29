@@ -27,7 +27,7 @@ func (s *Service) resourceHandler(subDataSource string) func(rw http.ResponseWri
 }
 
 func (s *Service) setRequestVariables(req *http.Request, subDataSource string) (*http.Client, int, error) {
-	slog.Debug("Recieved resource call", "url", req.URL.String(), "method", req.Method)
+	slog.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	newPath, err := getTarget(req.URL.Path)
 	if err != nil {
@@ -36,12 +36,12 @@ func (s *Service) setRequestVariables(req *http.Request, subDataSource string) (
 
 	dsInfo, err := s.getDataSourceFromHTTPReq(req)
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	serviceURL, err := url.Parse(dsInfo.services[subDataSource].url)
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		return nil, http.StatusBadRequest, err
 	}
 	req.URL.Path = newPath
 	req.URL.Host = serviceURL.Host
@@ -53,7 +53,7 @@ func (s *Service) setRequestVariables(req *http.Request, subDataSource string) (
 func doRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter {
 	res, err := cli.Do(req)
 	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
+		rw.WriteHeader(http.StatusBadRequest)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
 			slog.Error("Unable to write HTTP response", "error", err)
