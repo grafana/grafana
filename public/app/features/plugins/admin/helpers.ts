@@ -189,7 +189,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   };
 }
 
-export const getExternalManageLink = (pluginId: string) => `https://grafana.com/grafana/plugins/${pluginId}`;
+export const getExternalManageLink = (pluginId: string) => `${config.pluginCatalogURL}${pluginId}`;
 
 export enum Sorters {
   nameAsc = 'nameAsc',
