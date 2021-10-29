@@ -528,8 +528,8 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
 /**
  * Returns field configuration used to render logs volume bars
  */
-function getLogVolumeFieldConfig(level: LogLevel, levels: number) {
-  const name = levels === 1 && level === LogLevel.unknown ? 'logs' : level;
+function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
+  const name = oneLevelDetected && level === LogLevel.unknown ? 'logs' : level;
   const color = LogLevelColor[level];
   return {
     displayNameFromDS: name,
@@ -562,20 +562,18 @@ export function aggregateRawLogsVolume(
   extractLevel: (dataFrame: DataFrame) => LogLevel
 ): DataFrame[] {
   const logsVolumeByLevelMap: { [level in LogLevel]?: DataFrame[] } = {};
-  let levels = 0;
   rawLogsVolume.forEach((dataFrame) => {
     const level = extractLevel(dataFrame);
     if (!logsVolumeByLevelMap[level]) {
       logsVolumeByLevelMap[level] = [];
-      levels++;
     }
     logsVolumeByLevelMap[level]!.push(dataFrame);
   });
 
-  return Object.keys(logsVolumeByLevelMap).map((level: string) => {
+  return Object.keys(logsVolumeByLevelMap).map((level: LogLevel) => {
     return aggregateFields(
-      logsVolumeByLevelMap[level as LogLevel]!,
-      getLogVolumeFieldConfig(level as LogLevel, levels)
+      logsVolumeByLevelMap[level]!,
+      getLogVolumeFieldConfig(level, Object.keys(logsVolumeByLevelMap).length === 1)
     );
   });
 }
