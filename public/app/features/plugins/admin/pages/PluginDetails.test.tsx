@@ -128,10 +128,10 @@ describe('Plugin details page', () => {
     });
 
     it('should display the version in the header', async () => {
-      const version = '1.3.443';
-      const { queryByText } = renderPluginDetails({ id, version });
+      const installedVersion = '1.3.443';
+      const { queryByText } = renderPluginDetails({ id, installedVersion });
 
-      await waitFor(() => expect(queryByText(version)).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(installedVersion)).toBeInTheDocument());
     });
 
     it('should display description in the header', async () => {
@@ -208,9 +208,10 @@ describe('Plugin details page', () => {
     });
 
     it("should display an install button for a plugin that isn't installed", async () => {
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: false });
+      const { queryByRole, debug } = renderPluginDetails({ id, isInstalled: false });
 
-      await waitFor(() => expect(queryByRole('button', { name: /install/i })).toBeInTheDocument());
+      await waitFor(() => expect(queryByRole('button', { name: /^install/i })).toBeInTheDocument());
+      // Does not display "uninstall" button
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
 
@@ -218,6 +219,8 @@ describe('Plugin details page', () => {
       const { queryByRole } = renderPluginDetails({ id, isInstalled: true });
 
       await waitFor(() => expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument());
+      // Does not display "install" button
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
     it('should display update and uninstall buttons for a plugin with update', async () => {
@@ -225,10 +228,10 @@ describe('Plugin details page', () => {
 
       // Displays an "update" button
       await waitFor(() => expect(queryByRole('button', { name: /update/i })).toBeInTheDocument());
-
-      // Does not display "install" and "uninstall" buttons
-      expect(queryByRole('button', { name: /install/i })).toBeInTheDocument();
       expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument();
+
+      // Does not display "install" button
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
     it('should display an install button for enterprise plugins if license is valid', async () => {

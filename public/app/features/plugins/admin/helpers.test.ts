@@ -103,7 +103,7 @@ describe('Plugins/Helpers', () => {
         signature: 'valid',
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
-        version: '4.1.5',
+        latestVersion: '4.1.5',
       });
     });
 
@@ -164,7 +164,7 @@ describe('Plugins/Helpers', () => {
         signatureType: 'community',
         type: 'app',
         updatedAt: '2021-08-25',
-        version: '4.2.2',
+        installedVersion: '4.2.2',
       });
     });
 
@@ -211,7 +211,8 @@ describe('Plugins/Helpers', () => {
         signatureType: 'community',
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
-        version: '4.1.5',
+        latestVersion: '4.1.5',
+        installedVersion: '4.2.2',
       });
     });
 
@@ -239,31 +240,9 @@ describe('Plugins/Helpers', () => {
     });
 
     test('`.hasUpdate` - prefers the local', () => {
-      // Local & Remote (only if the remote version is greater than the local one)
-      expect(
-        mapToCatalogPlugin(
-          { ...localPlugin, info: { ...localPlugin.info, version: '2.0.0' } },
-          { ...remotePlugin, version: '2.1.0' }
-        )
-      ).toMatchObject({ hasUpdate: true });
-      expect(
-        mapToCatalogPlugin(
-          { ...localPlugin, info: { ...localPlugin.info, version: '2.1.0' } },
-          { ...remotePlugin, version: '2.1.0' }
-        )
-      ).toMatchObject({ hasUpdate: false });
-
-      // Remote only
-      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, version: '2.1.0' })).toMatchObject({
-        hasUpdate: false,
-      });
-
       // Local only
       expect(mapToCatalogPlugin({ ...localPlugin })).toMatchObject({ hasUpdate: false });
       expect(mapToCatalogPlugin({ ...localPlugin, hasUpdate: true })).toMatchObject({ hasUpdate: true });
-      expect(mapToCatalogPlugin({ ...localPlugin, info: { ...localPlugin.info, version: '2.1.0' } })).toMatchObject({
-        hasUpdate: false,
-      });
 
       // No local or remote
       expect(mapToCatalogPlugin()).toMatchObject({ hasUpdate: false });
