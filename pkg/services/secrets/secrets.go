@@ -7,13 +7,16 @@ import (
 )
 
 type Service interface {
-	CurrentProviderID() string
-	GetProviders() map[string]Provider
 	Encrypt(ctx context.Context, payload []byte, opt EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
 	EncryptJsonData(ctx context.Context, kv map[string]string, opt EncryptionOptions) (map[string][]byte, error)
 	DecryptJsonData(ctx context.Context, sjd map[string][]byte) (map[string]string, error)
 	GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key, fallback string) string
+}
+
+type ProvidersRegistrar interface {
+	CurrentProviderID() string
+	GetProviders() map[string]Provider
 	RegisterProvider(providerID string, provider Provider)
 }
 
