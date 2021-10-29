@@ -9,6 +9,7 @@ export type OrgSelectItem = SelectableValue<Organization>;
 export interface Props {
   onSelected: (org: OrgSelectItem) => void;
   className?: string;
+  inputId?: string;
 }
 
 export interface State {
@@ -43,12 +44,13 @@ export class OrgPicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { className, onSelected } = this.props;
+    const { className, onSelected, inputId } = this.props;
     const { isLoading } = this.state;
 
     return (
       <AsyncSelect
         menuShouldPortal
+        inputId={inputId}
         className={className}
         isLoading={isLoading}
         defaultOptions={true}
