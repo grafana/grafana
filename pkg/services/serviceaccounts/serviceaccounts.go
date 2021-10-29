@@ -16,7 +16,7 @@ import (
 )
 
 type Service interface {
-	DeleteServiceAccount(context.Context, int64) error
+	DeleteServiceAccount(context.Context, int64) response.Response
 }
 
 type ServiceAccountsService struct {
@@ -44,6 +44,8 @@ func ProvideServiceAccountsService(
 	if !cfg.FeatureToggles["service-accounts"] {
 		return nil, ErrServiceAccountsFeatureToggleNotFound
 	}
+
+	// TODO: initiatite sql store
 
 	serviceaccountsAPI := api.NewServiceAccountsAPI(s.store, s.routerRegister)
 	serviceaccountsAPI.RegisterAPIEndpoints()
