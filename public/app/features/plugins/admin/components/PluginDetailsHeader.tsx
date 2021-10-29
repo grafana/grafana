@@ -70,7 +70,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
           )}
 
           {/* Version */}
-          {plugin.installedVersion ? <span>{plugin.installedVersion}</span> : <span>{plugin.latestVersion}</span>}
+          <span>{plugin.installedVersion ?? plugin.latestVersion}</span>
 
           {/* Signature information */}
           <PluginDetailsHeaderSignature plugin={plugin} />
