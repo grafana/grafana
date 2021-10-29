@@ -366,9 +366,7 @@ export class TimeSrv {
       const totalRange = timeRange.to.diff(timeRange.from);
       const msSinceLastRefresh = Date.now() - lastRefresh;
       const msThreshold = totalRange * threshold;
-      if (msSinceLastRefresh >= msThreshold) {
-        return true;
-      }
+      return msSinceLastRefresh >= msThreshold;
     }
 
     return false;
