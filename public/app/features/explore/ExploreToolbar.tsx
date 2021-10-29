@@ -29,7 +29,7 @@ interface OwnProps {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export class UnConnectedExploreToolbar extends PureComponent<Props> {
+class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
     this.props.changeDatasource(this.props.exploreId, dsSettings.uid, { importQueries: true });
   };

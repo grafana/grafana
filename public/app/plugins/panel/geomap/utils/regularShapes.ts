@@ -1,8 +1,6 @@
 import { Fill, RegularShape, Stroke, Style, Circle } from 'ol/style';
 import { Registry, RegistryItem } from '@grafana/data';
-
-export type StyleMaker = (color: string, fillColor: string, radius: number, markerPath?: string) => Style;
-
+import { StyleMaker, StyleMakerConfig } from '../types';
 export interface MarkerMaker extends RegistryItem {
   // path to icon that will be shown (but then replaced)
   aliasIds: string[];
@@ -33,12 +31,12 @@ export const circleMarker: MarkerMaker = {
   name: 'Circle',
   hasFill: true,
   aliasIds: [MarkerShapePath.circle],
-  make: (color: string, fillColor: string, radius: number) => {
+  make: (cfg: StyleMakerConfig) => {
     return new Style({
       image: new Circle({
-        stroke: new Stroke({ color: color }),
-        fill: new Fill({ color: fillColor }),
-        radius: radius,
+        stroke: new Stroke({ color: cfg.color }),
+        fill: new Fill({ color: cfg.fillColor }),
+        radius: cfg.size,
       }),
     });
   },
@@ -51,13 +49,13 @@ const makers: MarkerMaker[] = [
     name: 'Square',
     hasFill: true,
     aliasIds: [MarkerShapePath.square],
-    make: (color: string, fillColor: string, radius: number) => {
+    make: (cfg: StyleMakerConfig) => {
       return new Style({
         image: new RegularShape({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: color, width: 1 }),
+          fill: new Fill({ color: cfg.fillColor }),
+          stroke: new Stroke({ color: cfg.color, width: 1 }),
           points: 4,
-          radius: radius,
+          radius: cfg.size,
           angle: Math.PI / 4,
         }),
       });
@@ -68,13 +66,13 @@ const makers: MarkerMaker[] = [
     name: 'Triangle',
     hasFill: true,
     aliasIds: [MarkerShapePath.triangle],
-    make: (color: string, fillColor: string, radius: number) => {
+    make: (cfg: StyleMakerConfig) => {
       return new Style({
         image: new RegularShape({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: color, width: 1 }),
+          fill: new Fill({ color: cfg.fillColor }),
+          stroke: new Stroke({ color: cfg.color, width: 1 }),
           points: 3,
-          radius: radius,
+          radius: cfg.size,
           rotation: Math.PI / 4,
           angle: 0,
         }),
@@ -86,14 +84,14 @@ const makers: MarkerMaker[] = [
     name: 'Star',
     hasFill: true,
     aliasIds: [MarkerShapePath.star],
-    make: (color: string, fillColor: string, radius: number) => {
+    make: (cfg: StyleMakerConfig) => {
       return new Style({
         image: new RegularShape({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: color, width: 1 }),
+          fill: new Fill({ color: cfg.fillColor }),
+          stroke: new Stroke({ color: cfg.color, width: 1 }),
           points: 5,
-          radius: radius,
-          radius2: radius * 0.4,
+          radius: cfg.size,
+          radius2: cfg.size * 0.4,
           angle: 0,
         }),
       });
@@ -104,13 +102,13 @@ const makers: MarkerMaker[] = [
     name: 'Cross',
     hasFill: false,
     aliasIds: [MarkerShapePath.cross],
-    make: (color: string, fillColor: string, radius: number) => {
+    make: (cfg: StyleMakerConfig) => {
       return new Style({
         image: new RegularShape({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: color, width: 1 }),
+          fill: new Fill({ color: cfg.fillColor }),
+          stroke: new Stroke({ color: cfg.color, width: 1 }),
           points: 4,
-          radius: radius,
+          radius: cfg.size,
           radius2: 0,
           angle: 0,
         }),
@@ -122,13 +120,13 @@ const makers: MarkerMaker[] = [
     name: 'X',
     hasFill: false,
     aliasIds: [MarkerShapePath.x],
-    make: (color: string, fillColor: string, radius: number) => {
+    make: (cfg: StyleMakerConfig) => {
       return new Style({
         image: new RegularShape({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: color, width: 1 }),
+          fill: new Fill({ color: cfg.fillColor }),
+          stroke: new Stroke({ color: cfg.color, width: 1 }),
           points: 4,
-          radius: radius,
+          radius: cfg.size,
           radius2: 0,
           angle: Math.PI / 4,
         }),

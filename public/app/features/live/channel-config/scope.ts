@@ -1,8 +1,9 @@
 import { LiveChannelScope, LiveChannelSupport, SelectableValue } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { config } from 'app/core/config';
-import { loadPlugin } from '../plugins/PluginPage';
-import { LiveMeasurementsSupport } from './measurements/measurementsSupport';
+import { loadPlugin } from 'app/features/plugins/PluginPage';
+import { LiveMeasurementsSupport } from '../measurements/measurementsSupport';
+import { CoreGrafanaLiveFeature } from './types';
 
 export abstract class GrafanaLiveScope {
   constructor(protected scope: LiveChannelScope) {}
@@ -16,12 +17,6 @@ export abstract class GrafanaLiveScope {
    * List the possible values within this scope
    */
   abstract listNamespaces(): Promise<Array<SelectableValue<string>>>;
-}
-
-export interface CoreGrafanaLiveFeature {
-  name: string;
-  support: LiveChannelSupport;
-  description: string;
 }
 
 class GrafanaLiveCoreScope extends GrafanaLiveScope {
