@@ -49,10 +49,17 @@ const (
 	WeightHelp
 )
 
+const (
+	NavSectionCore   string = "core"
+	NavSectionPlugin string = "plugin"
+	NavSectionConfig string = "config"
+)
+
 type NavLink struct {
 	Id           string     `json:"id,omitempty"`
 	Text         string     `json:"text,omitempty"`
 	Description  string     `json:"description,omitempty"`
+	Section      string     `json:"section,omitempty"`
 	SubTitle     string     `json:"subTitle,omitempty"`
 	Icon         string     `json:"icon,omitempty"`
 	Img          string     `json:"img,omitempty"`

@@ -1,5 +1,5 @@
 import { Location } from 'history';
-import { NavModelItem } from '@grafana/data';
+import { NavModelItem, NavSection } from '@grafana/data';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ShowModalReactEvent } from '../../../types/events';
@@ -38,6 +38,7 @@ export const enrichConfigItems = (
     items.unshift({
       icon: 'signout',
       id: 'signin',
+      section: NavSection.Config,
       target: '_self',
       text: 'Sign in',
       url: forcedLoginUrl,

@@ -2,7 +2,7 @@ import React, { FC, useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 import appEvents from '../../app_events';
@@ -28,15 +28,10 @@ export const NavBar: FC = React.memo(() => {
     setShowSwitcherModal(!showSwitcherModal);
   };
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
-  const coreItems = navTree.filter((item) => {
-    if (newNavigationEnabled) {
-      return !item.hideFromMenu && !item.id?.startsWith('plugin-page-');
-    }
-    return !item.hideFromMenu;
-  });
-  const pluginItems = navTree.filter((item) => !item.hideFromMenu && item.id?.startsWith('plugin-page-'));
+  const coreItems = navTree.filter((item) => item.section === NavSection.Core);
+  const pluginItems = navTree.filter((item) => item.section === NavSection.Plugin);
   const configItems = enrichConfigItems(
-    navTree.filter((item) => item.hideFromMenu),
+    navTree.filter((item) => item.section === NavSection.Config),
     location,
     toggleSwitcherModal
   );
@@ -113,7 +108,7 @@ export const NavBar: FC = React.memo(() => {
         ))}
       </NavBarSection>
 
-      {newNavigationEnabled && pluginItems.length > 0 && (
+      {pluginItems.length > 0 && (
         <NavBarSection>
           {pluginItems.map((link, index) => (
             <NavBarItem
@@ -121,7 +116,7 @@ export const NavBar: FC = React.memo(() => {
               isActive={activeItemId === link.id}
               label={link.text}
               menuItems={link.children}
-              menuSubTitle={link.subTitle}
+              menuSubTitle={newNavigationEnabled ? link.subTitle : undefined}
               onClick={link.onClick}
               target={link.target}
               url={link.url}
@@ -208,8 +203,8 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
   grafanaLogo: css`
     display: none;
     img {
-      height: ${newNavigationEnabled ? 'auto' : theme.spacing(3.5)};
-      width: ${newNavigationEnabled ? 'auto' : theme.spacing(3.5)};
+      height: ${newNavigationEnabled ? theme.spacing(3) : theme.spacing(3.5)};
+      width: ${newNavigationEnabled ? theme.spacing(3) : theme.spacing(3.5)};
     }
 
     ${theme.breakpoints.up('md')} {
