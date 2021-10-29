@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -41,40 +40,37 @@ var _ plugins.PluginDashboardManager = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.CoreBackendRegistrar = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
-var _ plugins.ErrorResolver = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg              *setting.Cfg
 	requestValidator models.PluginRequestValidator
 	sqlStore         *sqlstore.SQLStore
 	plugins          map[string]*plugins.Plugin
-	errors           map[string]*plugins.Error
 	pluginInstaller  plugins.Installer
 	pluginLoader     plugins.Loader
 	pluginsMu        sync.RWMutex
 	log              log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, license models.Licensing, requestValidator models.PluginRequestValidator,
-	sqlStore *sqlstore.SQLStore, authorizer plugins.PluginLoaderAuthorizer) (*PluginManager, error) {
-	pm := newManager(cfg, license, requestValidator, sqlStore, authorizer)
+func ProvideService(cfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
+	sqlStore *sqlstore.SQLStore) (*PluginManager, error) {
+	pm := newManager(cfg, requestValidator, pluginLoader, sqlStore)
 	if err := pm.init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidator models.PluginRequestValidator,
-	sqlStore *sqlstore.SQLStore, authorizer plugins.PluginLoaderAuthorizer) *PluginManager {
+func newManager(cfg *setting.Cfg, pluginRequestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
+	sqlStore *sqlstore.SQLStore) *PluginManager {
 	return &PluginManager{
 		cfg:              cfg,
 		requestValidator: pluginRequestValidator,
 		sqlStore:         sqlStore,
+		pluginLoader:     pluginLoader,
 		plugins:          map[string]*plugins.Plugin{},
-		errors:           map[string]*plugins.Error{},
 		log:              log.New("plugin.manager"),
 		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
-		pluginLoader:     loader.New(license, cfg, authorizer),
 	}
 }
 
@@ -165,15 +161,6 @@ func (m *PluginManager) loadPlugins(paths ...string) error {
 	}
 
 	for _, p := range loadedPlugins {
-		if p.SignatureError != nil {
-			m.errors[p.ID] = &plugins.Error{
-				PluginID:  p.ID,
-				ErrorCode: p.SignatureError.AsErrorCode(),
-			}
-			m.log.Debug("Skipping registration for plugin due to signature error", "pluginId", p.ID)
-			continue
-		}
-
 		if err := m.registerAndStart(context.Background(), p); err != nil {
 			m.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
 		}
@@ -832,16 +819,4 @@ func (s *callResourceResponseStream) Close() error {
 	close(s.stream)
 	s.closed = true
 	return nil
-}
-
-func (m *PluginManager) PluginErrors() []*plugins.Error {
-	errs := make([]*plugins.Error, 0)
-	for _, err := range m.errors {
-		errs = append(errs, &plugins.Error{
-			PluginID:  err.PluginID,
-			ErrorCode: err.ErrorCode,
-		})
-	}
-
-	return errs
 }

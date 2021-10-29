@@ -26,22 +26,28 @@ var (
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
+var _ plugins.ErrorResolver = (*Loader)(nil)
+
 type Loader struct {
 	cfg                *setting.Cfg
 	pluginFinder       finder.Finder
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 
-	errs map[string]error
+	errs map[string]*plugins.SignatureError
 }
 
-func New(license models.Licensing, cfg *setting.Cfg, authorizer plugins.PluginLoaderAuthorizer) plugins.Loader {
+func ProvideService(license models.Licensing, cfg *setting.Cfg, authorizer plugins.PluginLoaderAuthorizer) (*Loader, error) {
+	return New(license, cfg, authorizer), nil
+}
+
+func New(license models.Licensing, cfg *setting.Cfg, authorizer plugins.PluginLoaderAuthorizer) *Loader {
 	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(cfg),
 		pluginInitializer:  initializer.New(cfg, license),
 		signatureValidator: signature.NewValidator(cfg, authorizer),
-		errs:               make(map[string]error),
+		errs:               make(map[string]*plugins.SignatureError),
 	}
 }
 
@@ -152,9 +158,8 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 		}
 	}
 
-	l.errs = make(map[string]error)
-
 	// validate signatures
+	verifiedPlugins := []*plugins.Plugin{}
 	for _, plugin := range loadedPlugins {
 		signingError := l.signatureValidator.Validate(plugin)
 		if signingError != nil {
@@ -162,8 +167,12 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 				"signature", plugin.Signature, "status", signingError)
 			plugin.SignatureError = signingError
 			l.errs[plugin.ID] = signingError
+			// skip plugin so it will not be loaded any further
 			continue
 		}
+
+		// clear plugin error if a pre-existing error has since been resolved
+		delete(l.errs, plugin.ID)
 
 		// verify module.js exists for SystemJS to load
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
@@ -177,6 +186,8 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 					"path", module)
 			}
 		}
+
+		verifiedPlugins = append(verifiedPlugins, plugin)
 	}
 
 	if len(l.errs) > 0 {
@@ -187,17 +198,14 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 		logger.Warn("Some plugin loading errors occurred", "errors", strings.Join(errStr, ", "))
 	}
 
-	res := make([]*plugins.Plugin, 0, len(loadedPlugins))
-	for _, p := range loadedPlugins {
+	for _, p := range verifiedPlugins {
 		err := l.pluginInitializer.Initialize(p)
 		if err != nil {
 			return nil, err
 		}
-
-		res = append(res, p)
 	}
 
-	return res, nil
+	return verifiedPlugins, nil
 }
 
 func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
@@ -235,8 +243,16 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	return plugin, nil
 }
 
-func (l *Loader) Errors() map[string]error {
-	return l.errs
+func (l *Loader) PluginErrors() []*plugins.Error {
+	errs := make([]*plugins.Error, 0)
+	for _, err := range l.errs {
+		errs = append(errs, &plugins.Error{
+			PluginID:  err.PluginID,
+			ErrorCode: err.AsErrorCode(),
+		})
+	}
+
+	return errs
 }
 
 func validatePluginJSON(data plugins.JSONData) error {

@@ -147,37 +147,6 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 	})
-
-	t.Run("Plugin with error", func(t *testing.T) {
-		p, pc := createPlugin(testPluginID, "", plugins.External, false, false)
-		p.SignatureError = &plugins.SignatureError{
-			PluginID:        p.ID,
-			SignatureStatus: plugins.SignatureInvalid,
-		}
-
-		loader := &fakeLoader{
-			mockedLoadedPlugins: []*plugins.Plugin{p},
-		}
-
-		pm := createManager(t, func(pm *PluginManager) {
-			pm.pluginLoader = loader
-		})
-		err := pm.loadPlugins("test/path")
-		require.NoError(t, err)
-
-		assert.Equal(t, 0, pc.startCount)
-		assert.Equal(t, 0, pc.stopCount)
-		assert.False(t, pc.exited)
-		assert.False(t, pc.decommissioned)
-		assert.Nil(t, pm.Plugin(testPluginID))
-		assert.Len(t, pm.Plugins(), 0)
-		assert.Equal(t, []*plugins.Error{{
-			PluginID:  p.ID,
-			ErrorCode: p.SignatureError.AsErrorCode(),
-		}}, pm.PluginErrors())
-
-		verifyNoPluginErrors(t, pm)
-	})
 }
 
 func TestPluginManager_Installer(t *testing.T) {
@@ -522,11 +491,9 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 		StaticRootPath: staticRootPath,
 	}
 
-	license := &fakeLicensingService{}
 	requestValidator := &testPluginRequestValidator{}
 	loader := &fakeLoader{}
-	pm := newManager(cfg, license, requestValidator, &sqlstore.SQLStore{})
-	pm.pluginLoader = loader
+	pm := newManager(cfg, requestValidator, loader, &sqlstore.SQLStore{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -583,10 +550,9 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	require.NoError(t, err)
 	cfg.StaticRootPath = staticRootPath
 
-	license := &fakeLicensingService{}
 	requestValidator := &testPluginRequestValidator{}
 	loader := &fakeLoader{}
-	manager := newManager(cfg, license, requestValidator, nil)
+	manager := newManager(cfg, requestValidator, loader, nil)
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
@@ -759,44 +725,6 @@ func (tp *fakePluginClient) PublishStream(ctx context.Context, request *backend.
 
 func (tp *fakePluginClient) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
-}
-
-type fakeLicensingService struct {
-	edition    string
-	hasLicense bool
-	tokenRaw   string
-}
-
-func (t *fakeLicensingService) HasLicense() bool {
-	return t.hasLicense
-}
-
-func (t *fakeLicensingService) Expiry() int64 {
-	return 0
-}
-
-func (t *fakeLicensingService) Edition() string {
-	return t.edition
-}
-
-func (t *fakeLicensingService) StateInfo() string {
-	return ""
-}
-
-func (t *fakeLicensingService) ContentDeliveryPrefix() string {
-	return ""
-}
-
-func (t *fakeLicensingService) LicenseURL(showAdminLicensingPage bool) string {
-	return ""
-}
-
-func (t *fakeLicensingService) HasValidLicense() bool {
-	return false
-}
-
-func (t *fakeLicensingService) Environment() map[string]string {
-	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
 }
 
 type testPluginRequestValidator struct{}

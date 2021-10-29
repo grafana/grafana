@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -101,7 +102,9 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.PluginDashboardManager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.ErrorResolver), new(*manager.PluginManager)),
+	loader.ProvideService,
+	wire.Bind(new(plugins.Loader), new(*loader.Loader)),
+	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	cloudwatch.ProvideService,
 	cloudwatch.ProvideLogsService,
 	cloudmonitoring.ProvideService,
