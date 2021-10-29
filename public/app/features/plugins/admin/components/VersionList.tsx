@@ -51,6 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2, 4, 3)};
   `,
   table: css`
+    table-layout: fixed;
     width: 100%;
     td,
     th {
