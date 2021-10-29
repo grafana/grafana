@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -54,6 +55,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(models.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
 	searchusers.ProvideUsersService,
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
+	serviceaccounts.ProvideServiceAccountsService,
+	wire.Bind(new(serviceaccounts.Service), new(*serviceaccounts.ServiceAccountsService)),
 )
 
 var wireExtsSet = wire.NewSet(

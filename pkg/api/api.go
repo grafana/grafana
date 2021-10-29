@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 )
@@ -263,6 +264,11 @@ func (hs *HTTPServer) registerRoutes() {
 			keysRoute.Delete("/:id", routing.Wrap(DeleteAPIKey))
 		}, reqOrgAdmin)
 
+		// ServiceAccounts
+		apiRoute.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
+			serviceAccountIDScope := accesscontrol.Scope("serviceaccounts", "id", accesscontrol.Parameter(":serviceAccountId"))
+			serviceAccountsRoute.Delete("/:serviceAccountId", serviceAccountIDScope, routing.Wrap(hs.SQLStore.DeleteServiceAccount))
+		})
 		// Preferences
 		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
 			prefRoute.Post("/set-home-dash", bind(models.SavePreferencesCommand{}), routing.Wrap(SetHomeDashboard))

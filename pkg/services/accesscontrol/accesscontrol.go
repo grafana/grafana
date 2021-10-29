@@ -23,9 +23,6 @@ type AccessControl interface {
 	// LinkAPIKeyToServiceAccount Connects an APIkey to a service account.  Multiple API keys may be linked to one account.
 	LinkAPIKeyToServiceAccount(ctx context.Context, ApiKey *models.ApiKey, serviceAccount *models.User) error
 
-	// DeleteServiceAccount deletes the specified serviceaccount user
-	DeleteServiceAccount(ctx context.Context, serviceAccountId int64) error
-
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 

@@ -23,7 +23,6 @@ type Calls struct {
 	GetUserBuiltInRoles        []interface{}
 	RegisterFixedRoles         []interface{}
 	LinkAPIKeyToServiceAccount []interface{}
-	DeleteServiceAccount       []interface{}
 }
 
 type Mock struct {
@@ -44,7 +43,6 @@ type Mock struct {
 	// Override functions
 	CloneUserToServiceAccountFunc  func(context.Context, *models.SignedInUser) (*models.User, error)
 	LinkAPIKeyToServiceAccountFunc func(context.Context, *models.ApiKey, *models.User) error
-	DeleteServiceAccountFunc       func(context.Context, int64) error
 	EvaluateFunc                   func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
 	GetUserPermissionsFunc         func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
 	GetUserRolesFunc               func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
@@ -136,16 +134,6 @@ func (m *Mock) LinkAPIKeyToServiceAccount(ctx context.Context, apikey *models.Ap
 	// Use override if provided
 	if m.LinkAPIKeyToServiceAccountFunc != nil {
 		return m.LinkAPIKeyToServiceAccountFunc(ctx, apikey, service_account)
-	}
-	// Otherwise return the default
-	return nil
-}
-
-func (m *Mock) DeleteServiceAccount(ctx context.Context, serviceAccountId int64) error {
-	m.Calls.DeleteServiceAccount = append(m.Calls.DeleteServiceAccount, []interface{}{ctx, serviceAccountId})
-	// Use override if provided
-	if m.DeleteServiceAccountFunc != nil {
-		return m.DeleteServiceAccountFunc(ctx, serviceAccountId)
 	}
 	// Otherwise return the default
 	return nil
