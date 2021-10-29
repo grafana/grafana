@@ -58,7 +58,7 @@ export const fetchDetails = createAsyncThunk(`${STATE_PREFIX}/fetchDetails`, asy
 // We are also using the install API endpoint to update the plugin
 export const install = createAsyncThunk(
   `${STATE_PREFIX}/install`,
-  async ({ id, version, isUpdating = false }: { id: string; version: string; isUpdating?: boolean }, thunkApi) => {
+  async ({ id, version, isUpdating = false }: { id: string; version?: string; isUpdating?: boolean }, thunkApi) => {
     const changes = isUpdating ? { isInstalled: true, hasUpdate: false } : { isInstalled: true };
     try {
       await installPlugin(id, version);

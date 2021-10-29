@@ -1,5 +1,4 @@
 import { config } from '@grafana/runtime';
-import { gt } from 'semver';
 import { PluginSignatureStatus, dateTimeParse, PluginError, PluginErrorCode } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Settings } from 'app/core/config';
@@ -129,8 +128,8 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
 }
 
 export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
-  const installedVersion = local?.info.version || '';
-  const latestVersion = remote?.version || '';
+  const installedVersion = local?.info.version;
+  const latestVersion = remote?.version;
   const id = remote?.slug || local?.id || '';
   const isDisabled = !!error;
 
