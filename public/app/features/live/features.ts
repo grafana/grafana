@@ -1,6 +1,6 @@
 import { LiveChannelType } from '@grafana/data';
 import { getDashboardChannelsFeature } from './dashboard/dashboardWatcher';
-import { grafanaLiveCoreFeatures } from './scopes';
+import { grafanaLiveCoreFeatures } from './channel-config/scope';
 
 export function registerLiveFeatures() {
   grafanaLiveCoreFeatures.register({
