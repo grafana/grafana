@@ -581,8 +581,9 @@ export class ElasticDatasource
             size: '0',
             order: 'desc',
             orderBy: '_count',
+            missing: 'unknown',
           },
-          field: this.logLevelField ?? '',
+          field: this.logLevelField,
         });
       }
       bucketAggs.push({
