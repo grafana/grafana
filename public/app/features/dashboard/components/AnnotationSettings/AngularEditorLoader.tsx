@@ -52,7 +52,13 @@ export class AngularEditorLoader extends React.PureComponent<Props> {
     }
 
     const loader = getAngularLoader();
-    const template = `<plugin-component ng-if="!ctrl.currentDatasource.annotations" type="annotations-query-ctrl"> </plugin-component>`;
+    // Why is template wrapped in a div?
+    // If it's not wrapped in a div, this gets compiled by AngularLoader into something like:
+    // <!-- ngIf: !ctrl.currentDatasource.annotations -->
+    // <plugin-component ng-if="!ctrl.currentDatasource.annotations" type="annotations-query-ctrl" class="ng-scope">
+    // <!-- end ngIf: !ctrl.currentDatasource.annotations -->
+    // When AngularLoader then tries to remove the element, it only removes the first line (comment) ???
+    const template = `<div><plugin-component ng-if="!ctrl.currentDatasource.annotations" type="annotations-query-ctrl"> </plugin-component></div>`;
     const scopeProps = {
       ctrl: {
         currentDatasource: this.props.datasource,
