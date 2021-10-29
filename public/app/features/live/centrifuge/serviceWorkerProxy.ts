@@ -32,9 +32,9 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
     );
   };
 
-  private proxyObservable = <T>(fakeObs: Promise<Observable<T>>): Observable<T> => {
+  private proxyObservable = <T>(promiseWithProxyObservable: Promise<Observable<T>>): Observable<T> => {
     return new Observable((subscriber) => {
-      fakeObs.then((obs) =>
+      promiseWithProxyObservable.then((obs) =>
         obs.subscribe(
           comlink.proxy((nextInFake: T) => {
             subscriber.next(nextInFake);
