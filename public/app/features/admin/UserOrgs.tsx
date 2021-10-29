@@ -164,7 +164,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     return (
       <tr>
         <td className={labelClass}>{org.name}</td>
-        <td className="width-20">
+        <td>
           <div className={styles.rolePickerWrapper}>
             <div className={styles.rolePicker}>
               <UserRolePicker

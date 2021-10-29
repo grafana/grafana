@@ -14,7 +14,6 @@ interface RolePickerMenuProps {
   options: Role[];
   appliedRoles: Role[];
   onUpdate: (newBuiltInRole: string, newRoles: string[]) => void;
-  onClose: () => void;
   onClear?: () => void;
 }
 

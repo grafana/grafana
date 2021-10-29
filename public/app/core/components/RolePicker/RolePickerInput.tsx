@@ -25,23 +25,14 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>(
     const styles = useStyles2((theme) => getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false));
 
     const onInputClick = (event: FormEvent<HTMLElement>) => {
-      if (isFocused) {
-        event.preventDefault();
-        event.stopPropagation();
-        (ref as MutableRefObject<HTMLInputElement>).current.blur();
-        onClose();
-      } else {
-        (ref as MutableRefObject<HTMLInputElement>).current.focus();
-        onOpen(event);
-      }
+      (ref as MutableRefObject<HTMLInputElement>).current.focus();
+      onOpen(event);
     };
 
     const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       const query = event.target?.value;
       onQueryChange(query);
     };
-
-    const numberOfRoles = appliedRoles.length;
 
     return (
       <div className={styles.wrapper} onMouseDown={onInputClick}>
@@ -63,7 +54,7 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>(
             {role.displayName}
           </ValueContainer>
         ))}
-        {!!numberOfRoles && <ValueContainer>{`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}</ValueContainer>}
+
         {!disabled && (
           <input
             {...rest}
