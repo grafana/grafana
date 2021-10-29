@@ -1,6 +1,12 @@
+import { Location } from 'history';
 import { NavModelItem } from '@grafana/data';
+import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { updateConfig } from '../../config';
-import { getForcedLoginUrl, isLinkActive, isSearchActive } from './utils';
+import { enrichConfigItems, getForcedLoginUrl, isLinkActive, isSearchActive } from './utils';
+
+jest.mock('../../app_events', () => ({
+  publish: jest.fn(),
+}));
 
 describe('getForcedLoginUrl', () => {
   it.each`
@@ -23,6 +29,88 @@ describe('getForcedLoginUrl', () => {
       expect(result).toBe(expected);
     }
   );
+});
+
+describe('enrichConfigItems', () => {
+  let mockItems: NavModelItem[];
+  const mockLocation: Location<unknown> = {
+    hash: '',
+    pathname: '/',
+    search: '',
+    state: '',
+  };
+
+  beforeEach(() => {
+    mockItems = [
+      {
+        id: 'profile',
+        text: 'Profile',
+        hideFromMenu: true,
+      },
+      {
+        id: 'help',
+        text: 'Help',
+        hideFromMenu: true,
+      },
+    ];
+  })
+
+  it('does not add a sign in item if a user signed in', () => {
+    const contextSrv = new ContextSrv();
+    contextSrv.user.isSignedIn = false;
+    setContextSrv(contextSrv);
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const signInNode = enrichedConfigItems.find(item => item.id === 'signin')
+    expect(signInNode).toBeDefined();
+  });
+
+  it('adds a sign in item if a user is not signed in', () => {
+    const contextSrv = new ContextSrv();
+    contextSrv.user.isSignedIn = true;
+    setContextSrv(contextSrv);
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const signInNode = enrichedConfigItems.find(item => item.id === 'signin')
+    expect(signInNode).toBeDefined();
+  });
+
+  it('does not add an org switcher to the profile node if there is 1 org', () => {
+    const contextSrv = new ContextSrv();
+    contextSrv.user.orgCount = 1;
+    setContextSrv(contextSrv);
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const profileNode = enrichedConfigItems.find(item => item.id === 'profile');
+    expect(profileNode!.children).toBeUndefined();
+  });
+
+  it('adds an org switcher to the profile node if there is more than 1 org', () => {
+    const contextSrv = new ContextSrv();
+    contextSrv.user.orgCount = 2;
+    setContextSrv(contextSrv);
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const profileNode = enrichedConfigItems.find(item => item.id === 'profile');
+    expect(profileNode!.children).toContainEqual(expect.objectContaining({
+      text: 'Switch organization',
+    }));
+  });
+
+  it('enhances the help node with extra child links', () => {
+    const contextSrv = new ContextSrv();
+    setContextSrv(contextSrv);
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const helpNode = enrichedConfigItems.find(item => item.id === 'help');
+    expect(helpNode!.children).toContainEqual(expect.objectContaining({
+      text: 'Documentation',
+    }));
+    expect(helpNode!.children).toContainEqual(expect.objectContaining({
+      text: 'Support',
+    }));
+    expect(helpNode!.children).toContainEqual(expect.objectContaining({
+      text: 'Community',
+    }));
+    expect(helpNode!.children).toContainEqual(expect.objectContaining({
+      text: 'Keyboard shortcuts',
+    }));
+  });
 });
 
 describe('isLinkActive', () => {

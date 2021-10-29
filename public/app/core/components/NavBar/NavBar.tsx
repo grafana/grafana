@@ -11,7 +11,7 @@ import config from 'app/core/config';
 import { CoreEvents, KioskMode } from 'app/types';
 import { enrichConfigItems, isLinkActive, isSearchActive } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
-import NavBarSection from './NavBarSection';
+import { NavBarSection } from './NavBarSection';
 import NavBarItem from './NavBarItem';
 
 const homeUrl = config.appSubUrl || '/';
@@ -186,7 +186,7 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
       border-right: ${newNavigationEnabled ? 'none' : `1px solid ${theme.components.panel.borderColor}`};
       gap: ${theme.spacing(newNavigationEnabled ? 1 : 0)};
       margin-left: ${newNavigationEnabled ? theme.spacing(1) : 0};
-      padding: ${theme.spacing(1)} 0;
+      padding: ${newNavigationEnabled ? theme.spacing(1) : 0} 0 ${theme.spacing(1)} 0;
       position: relative;
       width: ${theme.components.sidemenu.width}px;
     }
@@ -207,6 +207,10 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
   `,
   grafanaLogo: css`
     display: none;
+    img {
+      height: ${newNavigationEnabled ? 'auto' : theme.spacing(3.5)};
+      width: ${newNavigationEnabled ? 'auto' : theme.spacing(3.5)};
+    }
 
     ${theme.breakpoints.up('md')} {
       align-items: center;

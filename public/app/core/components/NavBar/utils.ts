@@ -37,8 +37,9 @@ export const enrichConfigItems = (
 
     items.unshift({
       icon: 'signout',
+      id: 'signin',
       target: '_self',
-      text: 'Sign In',
+      text: 'Sign in',
       url: forcedLoginUrl,
     });
   }
