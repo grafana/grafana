@@ -367,6 +367,7 @@ export class DashboardModel {
 
   startRefresh(affectedPanelIds?: number[]) {
     this.events.publish(new RefreshEvent());
+    this.lastRefresh = Date.now();
 
     if (this.panelInEdit) {
       if (!affectedPanelIds || affectedPanelIds.includes(this.panelInEdit.id)) {
@@ -382,8 +383,6 @@ export class DashboardModel {
         }
       }
     }
-
-    this.lastRefresh = Date.now();
   }
 
   render() {
