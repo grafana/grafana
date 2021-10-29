@@ -159,6 +159,7 @@ export class Scene {
     const moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
+      origin: false,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
