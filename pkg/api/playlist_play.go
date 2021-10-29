@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"sort"
 	"strconv"
 
@@ -35,7 +36,7 @@ func populateDashboardsByID(dashboardByIDs []int64, dashboardIDOrder map[int64]i
 	return result, nil
 }
 
-func populateDashboardsByTag(orgID int64, signedInUser *models.SignedInUser, dashboardByTag []string, dashboardTagOrder map[string]int) dtos.PlaylistDashboardsSlice {
+func populateDashboardsByTag(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, dashboardByTag []string, dashboardTagOrder map[string]int) dtos.PlaylistDashboardsSlice {
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 
 	for _, tag := range dashboardByTag {
@@ -48,7 +49,7 @@ func populateDashboardsByTag(orgID int64, signedInUser *models.SignedInUser, das
 			OrgId:        orgID,
 		}
 
-		if err := bus.Dispatch(&searchQuery); err == nil {
+		if err := bus.DispatchCtx(ctx, &searchQuery); err == nil {
 			for _, item := range searchQuery.Result {
 				result = append(result, dtos.PlaylistDashboard{
 					Id:    item.ID,
@@ -65,7 +66,7 @@ func populateDashboardsByTag(orgID int64, signedInUser *models.SignedInUser, das
 	return result
 }
 
-func LoadPlaylistDashboards(orgID int64, signedInUser *models.SignedInUser, playlistID int64) (dtos.PlaylistDashboardsSlice, error) {
+func LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, playlistID int64) (dtos.PlaylistDashboardsSlice, error) {
 	playlistItems, _ := LoadPlaylistItems(playlistID)
 
 	dashboardByIDs := make([]int64, 0)
@@ -90,7 +91,7 @@ func LoadPlaylistDashboards(orgID int64, signedInUser *models.SignedInUser, play
 
 	var k, _ = populateDashboardsByID(dashboardByIDs, dashboardIDOrder)
 	result = append(result, k...)
-	result = append(result, populateDashboardsByTag(orgID, signedInUser, dashboardByTag, dashboardTagOrder)...)
+	result = append(result, populateDashboardsByTag(ctx, orgID, signedInUser, dashboardByTag, dashboardTagOrder)...)
 
 	sort.Sort(result)
 	return result, nil
