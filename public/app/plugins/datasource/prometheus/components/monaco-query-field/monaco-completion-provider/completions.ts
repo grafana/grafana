@@ -80,10 +80,10 @@ function makeSelector(metricName: string | undefined, labels: Label[]): string {
 
   // we transform the metricName to a label, if it exists
   if (metricName !== undefined) {
-    allLabels.push({ name: '__name__', value: metricName });
+    allLabels.push({ name: '__name__', value: metricName, op: '=' });
   }
 
-  const allLabelTexts = allLabels.map((label) => `${label.name}="${label.value}"`);
+  const allLabelTexts = allLabels.map((label) => `${label.name}${label.op}"${label.value}"`);
 
   return `{${allLabelTexts.join(',')}}`;
 }

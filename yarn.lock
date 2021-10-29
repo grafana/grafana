@@ -2363,7 +2363,7 @@ __metadata:
     "@rollup/plugin-commonjs": 16.0.0
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 10.0.0
-    "@testing-library/dom": 7.29.4
+    "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.9
     "@testing-library/react": 11.1.2
     "@testing-library/react-hooks": ^3.2.1
@@ -2597,7 +2597,6 @@ __metadata:
     "@rushstack/eslint-patch": 1.0.6
     "@types/command-exists": ^1.2.0
     "@types/eslint": 7.28.0
-    "@types/expect-puppeteer": 3.3.1
     "@types/fs-extra": ^9.0.13
     "@types/inquirer": ^6.0.3
     "@types/jest": 27.0.2
@@ -2615,7 +2614,7 @@ __metadata:
     babel-jest: 26.6.3
     babel-loader: 8.2.2
     babel-plugin-angularjs-annotate: 0.10.0
-    chalk: ^2.4.2
+    chalk: ^4.0.0
     command-exists: ^1.2.8
     commander: ^8.0.0
     concurrently: 6.3.0
@@ -2713,7 +2712,7 @@ __metadata:
     "@storybook/manager-webpack5": 6.3.7
     "@storybook/react": 6.3.7
     "@storybook/theming": 6.3.7
-    "@testing-library/dom": 7.29.4
+    "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.9
     "@testing-library/react": 11.1.2
     "@testing-library/react-hooks": ^3.2.1
@@ -6723,23 +6722,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:7.29.4":
-  version: 7.29.4
-  resolution: "@testing-library/dom@npm:7.29.4"
-  dependencies:
-    "@babel/code-frame": ^7.10.4
-    "@babel/runtime": ^7.12.5
-    "@types/aria-query": ^4.2.0
-    aria-query: ^4.2.2
-    chalk: ^4.1.0
-    dom-accessibility-api: ^0.5.4
-    lz-string: ^1.4.4
-    pretty-format: ^26.6.2
-  checksum: 205d125e1e8d5f711f2592f2f3d25994f481641f6bad17724f8e077431042c3204ae585a8c7df483d84ea8562e75229bf915cb6090a4657c5897fbd3f742a3b9
-  languageName: node
-  linkType: hard
-
-"@testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
+"@testing-library/dom@npm:8.10.1, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
   version: 8.10.1
   resolution: "@testing-library/dom@npm:8.10.1"
   dependencies:
@@ -7533,16 +7516,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/expect-puppeteer@npm:3.3.1":
-  version: 3.3.1
-  resolution: "@types/expect-puppeteer@npm:3.3.1"
-  dependencies:
-    "@types/jest": "*"
-    "@types/puppeteer": "*"
-  checksum: 6e82bc98914183734f3f004d98e1446816228fcec82b4bfa5d86e9550d5182ae5459e4c396bd281499c00b884bfc97bd89b2d3e68281f9abfb650703e7e31282
-  languageName: node
-  linkType: hard
-
 "@types/express-serve-static-core@npm:*, @types/express-serve-static-core@npm:^4.17.18":
   version: 4.17.24
   resolution: "@types/express-serve-static-core@npm:4.17.24"
@@ -8073,15 +8046,6 @@ __metadata:
   version: 15.7.4
   resolution: "@types/prop-types@npm:15.7.4"
   checksum: ef6e1899e59b876c273811b1bd845022fc66d5a3d11cb38a25b6c566b30514ae38fe20a40f67622f362a4f4f7f9224e22d8da101cff3d6e97e11d7b4c307cfc1
-  languageName: node
-  linkType: hard
-
-"@types/puppeteer@npm:*":
-  version: 5.4.4
-  resolution: "@types/puppeteer@npm:5.4.4"
-  dependencies:
-    "@types/node": "*"
-  checksum: 99aa9e8fe0234b5624e93b36e38b407c48e2b9663c46dfc651ee37819e7ce1d19dfcd61d5b3f23b3d0b0f606615e0f298a86b3116a1b3cd09aa139204731e3b1
   languageName: node
   linkType: hard
 
@@ -14853,7 +14817,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dom-accessibility-api@npm:^0.5.4, dom-accessibility-api@npm:^0.5.6, dom-accessibility-api@npm:^0.5.9":
+"dom-accessibility-api@npm:^0.5.6, dom-accessibility-api@npm:^0.5.9":
   version: 0.5.9
   resolution: "dom-accessibility-api@npm:0.5.9"
   checksum: 3988bd1c58e115e972179b9ef881e65ab5da9c2e9d08f4e9646870301971fb0c72d0e0866559e0c06b91b9da6f1fed2f31f0fcbf0b6cffd959b01c0601da2c56
@@ -18019,7 +17983,7 @@ __metadata:
     "@sentry/browser": 5.25.0
     "@sentry/types": 5.24.2
     "@sentry/utils": 6.13.2
-    "@testing-library/dom": 7.29.4
+    "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.5
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
