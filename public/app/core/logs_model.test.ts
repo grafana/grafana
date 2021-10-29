@@ -987,6 +987,7 @@ describe('logs volume', () => {
     datasourceSetup();
     request = ({
       targets: [{ target: 'volume query 1' }, { target: 'volume query 2' }],
+      scopedVars: {},
     } as unknown) as DataQueryRequest<TestDataQuery>;
     volumeProvider = queryLogsVolume(datasource, request, {
       extractLevel: (dataFrame: DataFrame) => {

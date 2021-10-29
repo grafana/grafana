@@ -637,10 +637,10 @@ export function queryLogsVolume<T extends DataQuery>(
 ): Observable<DataQueryResponse> {
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars);
   logsVolumeRequest.interval = intervalInfo.interval;
-  logsVolumeRequest.scopedVars.__interval.value = intervalInfo.interval;
+  logsVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
   if (intervalInfo.intervalMs !== undefined) {
     logsVolumeRequest.intervalMs = intervalInfo.intervalMs;
-    logsVolumeRequest.scopedVars.__interval_ms.value = intervalInfo.intervalMs;
+    logsVolumeRequest.scopedVars.__interval_ms = { value: intervalInfo.intervalMs, text: intervalInfo.intervalMs };
   }
 
   return new Observable((observer) => {
