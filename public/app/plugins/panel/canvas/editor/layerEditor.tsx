@@ -6,7 +6,7 @@ import { InstanceState } from '../CanvasPanel';
 import { LayerElementListEditor } from './LayerElementListEditor';
 
 export function getLayerEditor(opts: InstanceState): NestedPanelOptions<InstanceState> {
-  const { layer, scene } = opts;
+  const { layer } = opts;
   const options = layer.options || { elements: [] };
 
   return {
@@ -24,7 +24,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<Instance
           return;
         }
         const c = setOptionImmutably(options, path, value);
-        scene.onChange(layer.UID, c);
+        layer.onChange(c);
       },
     }),
 

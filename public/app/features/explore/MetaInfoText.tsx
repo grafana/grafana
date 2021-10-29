@@ -38,7 +38,7 @@ export interface MetaItemProps {
   value: string | JSX.Element;
 }
 
-export const MetaInfoItem = memo(function MetaInfoItem(props: MetaItemProps) {
+const MetaInfoItem = memo(function MetaInfoItem(props: MetaItemProps) {
   const style = useStyles2(getStyles);
   const { label, value } = props;
 
@@ -50,7 +50,7 @@ export const MetaInfoItem = memo(function MetaInfoItem(props: MetaItemProps) {
   );
 });
 
-export interface MetaInfoTextProps {
+interface MetaInfoTextProps {
   metaItems: MetaItemProps[];
 }
 
@@ -66,5 +66,3 @@ export const MetaInfoText = memo(function MetaInfoText(props: MetaInfoTextProps)
     </div>
   );
 });
-
-export default MetaInfoText;

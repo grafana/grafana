@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -62,7 +63,7 @@ func (e *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAle
 	result := map[string]int{}
 	for k, v := range typeCount {
 		query := &models.GetDataSourceQuery{Id: k}
-		err := e.Bus.Dispatch(query)
+		err := e.Bus.DispatchCtx(context.TODO(), query)
 		if err != nil {
 			return map[string]int{}, nil
 		}

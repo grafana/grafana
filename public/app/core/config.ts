@@ -1,5 +1,5 @@
 import { config, GrafanaBootConfig } from '@grafana/runtime';
-import { PluginState } from '../../../packages/grafana-data/src';
+import { PluginState } from '@grafana/data';
 // Legacy binding paths
 export { config, GrafanaBootConfig as Settings };
 

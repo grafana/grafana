@@ -11,6 +11,7 @@ import {
   setLegacyAngularInjector,
   setLocationSrv,
   locationService,
+  setAppEvents,
 } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
@@ -28,7 +29,7 @@ import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/D
 import { IRootScopeService, IAngularEvent, auto } from 'angular';
 import { AppEvent } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { initGrafanaLive } from 'app/features/live/live';
+import { initGrafanaLive } from 'app/features/live';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -56,6 +57,7 @@ export class GrafanaCtrl {
     datasourceSrv.init(config.datasources, config.defaultDatasource);
 
     setLocationSrv(locationService);
+    setAppEvents(appEvents);
 
     initGrafanaLive();
 

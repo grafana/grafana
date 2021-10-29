@@ -36,7 +36,7 @@ export function annotationTooltipDirective(
       let tooltip = '<div class="graph-annotation">';
       let titleStateClass = '';
 
-      if (event.alertId !== undefined) {
+      if (event.alertId !== undefined && event.newState) {
         const stateModel = alertDef.getStateDisplayModel(event.newState);
         titleStateClass = stateModel.stateClass;
         title = `<i class="${stateModel.iconClass}"></i> ${stateModel.text}`;
@@ -50,7 +50,7 @@ export function annotationTooltipDirective(
       }
 
       let header = `<div class="graph-annotation__header">`;
-      if (event.login) {
+      if (event.login && event.avatarUrl) {
         header += `<div class="graph-annotation__user" bs-tooltip="'Created by ${event.login}'"><img src="${event.avatarUrl}" /></div>`;
       }
       header += `

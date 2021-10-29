@@ -1,4 +1,5 @@
 import { Event, Severity } from '@sentry/browser';
+import { Status } from '@sentry/types';
 import { CustomEndpointTransport } from './CustomEndpointTransport';
 
 describe('CustomEndpointTransport', () => {
@@ -53,12 +54,69 @@ describe('CustomEndpointTransport', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // second immediate call - shot circuited because retry-after time has not expired, backend not called
-    await expect(transport.sendEvent(event)).rejects.toBeTruthy();
+    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', Status.Skipped);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // wait out the retry-after and call again - great success
     await new Promise((resolve) => setTimeout(() => resolve(null), 1001));
     await expect(transport.sendEvent(event)).resolves.toBeTruthy();
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('will back off if backend returns Retry-After', async () => {
+    const rateLimiterResponse = {
+      status: 429,
+      ok: false,
+      headers: (new Headers({
+        'Retry-After': '1', // 1 second
+      }) as any) as Headers,
+    } as Response;
+    fetchSpy.mockResolvedValueOnce(rateLimiterResponse).mockResolvedValueOnce({ status: 200 } as Response);
+    const transport = new CustomEndpointTransport({ endpoint: '/log' });
+
+    // first call - backend is called, rejected because of 429
+    await expect(transport.sendEvent(event)).rejects.toHaveProperty('status', 429);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // second immediate call - shot circuited because retry-after time has not expired, backend not called
+    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', Status.Skipped);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // wait out the retry-after and call again - great success
+    await new Promise((resolve) => setTimeout(() => resolve(null), 1001));
+    await expect(transport.sendEvent(event)).resolves.toBeTruthy();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('will drop events if max concurrency is reached', async () => {
+    const calls: Array<(value: unknown) => void> = [];
+    fetchSpy.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          calls.push(resolve);
+        })
+    );
+
+    const transport = new CustomEndpointTransport({ endpoint: '/log', maxConcurrentRequests: 2 });
+
+    // first two requests are accepted
+    transport.sendEvent(event);
+    const event2 = transport.sendEvent(event);
+    expect(calls).toHaveLength(2);
+
+    // third is skipped because too many requests in flight
+    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', 'skipped');
+
+    expect(calls).toHaveLength(2);
+
+    // after resolving in flight requests, next request is accepted as well
+    calls.forEach((call) => {
+      call({ status: 200 });
+    });
+    await event2;
+    const event3 = transport.sendEvent(event);
+    expect(calls).toHaveLength(3);
+    calls[2]({ status: 200 });
+    await event3;
   });
 });

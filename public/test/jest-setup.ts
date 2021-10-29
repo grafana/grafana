@@ -33,8 +33,9 @@ angular.module('grafana.directives', []);
 angular.module('grafana.filters', []);
 angular.module('grafana.routes', ['ngRoute']);
 
-jest.mock('app/core/core', () => ({}));
-jest.mock('app/features/plugins/plugin_loader', () => ({}));
+jest.mock('../app/core/core', () => ({}));
+jest.mock('../app/angular/partials', () => ({}));
+jest.mock('../app/features/plugins/plugin_loader', () => ({}));
 
 configure({ adapter: new Adapter() });
 

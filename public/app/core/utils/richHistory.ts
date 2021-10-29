@@ -394,7 +394,6 @@ export function filterAndSortQueries(
   return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
-/* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */
 function migrateRichHistory(richHistory: RichHistoryQuery[]) {
   const transformedRichHistory = richHistory.map((query) => {
     const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
@@ -407,10 +406,13 @@ function migrateRichHistory(richHistory: RichHistoryQuery[]) {
 function createDataQuery(query: RichHistoryQuery, individualQuery: DataQuery | string, index: number) {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZ';
   if (typeof individualQuery === 'object') {
+    // the current format
     return individualQuery;
   } else if (isParsable(individualQuery)) {
+    // ElasticSearch (maybe other datasoures too) before grafana7
     return JSON.parse(individualQuery);
   }
+  // prometehus (maybe other datasources too) before grafana7
   return { expr: individualQuery, refId: letters[index] };
 }
 
