@@ -566,11 +566,7 @@ export const onTimeRangeUpdated = (
 
   try {
     await Promise.all(promises);
-    const state = getState();
-    const dashboard = state.dashboard?.getModel();
-    const panels = dashboard?.panels ?? [];
-    const panelIds = panels.map((p) => p.id);
-    dependencies.events.publish(new VariablesTimeRangeChanged({ panelIds }));
+    dependencies.events.publish(new VariablesTimeRangeChanged({ panelIds: undefined }));
   } catch (error) {
     console.error(error);
     dispatch(notifyApp(createVariableErrorNotification('Template variable service failed', error)));
@@ -626,11 +622,7 @@ export const templateVarsChangedInUrl = (
 
   if (update.length) {
     await Promise.all(update);
-    const state = getState();
-    const dashboard = state.dashboard?.getModel();
-    const panels = dashboard?.panels ?? [];
-    const panelIds = panels.map((p) => p.id);
-    events.publish(new VariablesChangedInUrl({ panelIds }));
+    events.publish(new VariablesChangedInUrl({ panelIds: undefined }));
   }
 };
 

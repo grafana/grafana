@@ -50,7 +50,6 @@ import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
 import { VariablesChanged, VariablesChangedInUrl, VariablesTimeRangeChanged } from '../../variables/types';
-import { isMathString } from '../../../../../packages/grafana-data/src/datetime/datemath';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -185,49 +184,6 @@ export class DashboardModel {
     this.appEventsSubscription.add(
       appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
     );
-  }
-
-  private variablesChangedHandler(event: VariablesChanged) {
-    this.variablesChangedBaseHandler(event, true);
-  }
-
-  private variablesTimeRangeChangedHandler(event: VariablesTimeRangeChanged) {
-    this.variablesChangedBaseHandler(event);
-  }
-
-  private variablesChangedBaseHandler(event: VariablesChanged | VariablesTimeRangeChanged, processRepeats = false) {
-    const timeRange = getTimeSrv().timeRange();
-
-    if (isMathString(timeRange.raw.from)) {
-      const totalRange = timeRange.to.diff(timeRange.from);
-      const msSinceLastRefresh = Date.now() - this.lastRefresh;
-      const threshold = totalRange * 0.05;
-      if (msSinceLastRefresh >= threshold) {
-        if (processRepeats) {
-          this.processRepeats();
-        }
-
-        this.startRefresh(undefined);
-        return;
-      }
-    }
-
-    if (this.panelInEdit || this.panelInView) {
-      this.panelsAffectedByVariableChange = event.payload.panelIds.filter((id) =>
-        this.panelInEdit ? id !== this.panelInEdit.id : this.panelInView ? id !== this.panelInView.id : true
-      );
-    }
-
-    if (processRepeats) {
-      this.processRepeats();
-    }
-
-    this.startRefresh(event.payload.panelIds);
-  }
-
-  private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
-    this.templateVariableValueUpdated();
-    this.startRefresh(event.payload.panelIds);
   }
 
   addBuiltInAnnotationQuery() {
@@ -421,12 +377,7 @@ export class DashboardModel {
 
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {
-        if (!affectedPanelIds) {
-          panel.refresh();
-          continue;
-        }
-
-        if (affectedPanelIds.includes(panel.id)) {
+        if (!affectedPanelIds || affectedPanelIds.includes(panel.id)) {
           panel.refresh();
         }
       }
@@ -1255,5 +1206,38 @@ export class DashboardModel {
         filters: cloneDeep(variable.filters),
       };
     });
+  }
+
+  private variablesChangedHandler(event: VariablesChanged) {
+    this.variablesChangedBaseHandler(event, true);
+  }
+
+  private variablesTimeRangeChangedHandler(event: VariablesTimeRangeChanged) {
+    this.variablesChangedBaseHandler(event);
+  }
+
+  private variablesChangedBaseHandler(event: VariablesChanged | VariablesTimeRangeChanged, processRepeats = false) {
+    if (processRepeats) {
+      this.processRepeats();
+    }
+
+    if (!event.payload.panelIds || getTimeSrv().isRefreshOutsideThreshold(this.lastRefresh)) {
+      // passing undefined in panelIds means we want to update all panels
+      this.startRefresh(undefined);
+      return;
+    }
+
+    if (this.panelInEdit || this.panelInView) {
+      this.panelsAffectedByVariableChange = event.payload.panelIds.filter(
+        (id) => id !== (this.panelInEdit?.id ?? this.panelInView?.id)
+      );
+    }
+
+    this.startRefresh(event.payload.panelIds);
+  }
+
+  private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
+    this.templateVariableValueUpdated();
+    this.startRefresh(event.payload.panelIds);
   }
 }

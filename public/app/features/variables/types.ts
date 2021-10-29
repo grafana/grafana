@@ -153,7 +153,7 @@ export type VariableQueryEditorType<
 > = ComponentType<VariableQueryProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
 
 export interface VariablesChangedEvent {
-  panelIds: number[];
+  panelIds?: number[];
 }
 
 export class VariablesChanged extends BusEventWithPayload<VariablesChangedEvent> {

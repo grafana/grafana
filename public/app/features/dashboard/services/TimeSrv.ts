@@ -17,6 +17,7 @@ import { locationService } from '@grafana/runtime';
 import { ShiftTimeEvent, ShiftTimeEventPayload, ZoomOutEvent } from '../../../types/events';
 import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
+import { isMathString } from '../../../../../packages/grafana-data/src/datetime/datemath';
 
 export class TimeSrv {
   time: any;
@@ -352,6 +353,25 @@ export class TimeSrv {
       from: toUtc(from),
       to: toUtc(to),
     });
+  }
+
+  // isRefreshOutsideThreshold function calculates the difference between last refresh and now
+  // if the difference is outside 5% of the current set time range then the function will return true
+  // if the difference is within 5% of the current set time range then the function will return false
+  // if the current time range is absolute (i.e. not using relative strings like now-5m) then the function will return false
+  isRefreshOutsideThreshold(lastRefresh: number, threshold = 0.05) {
+    const timeRange = this.timeRange();
+
+    if (isMathString(timeRange.raw.from)) {
+      const totalRange = timeRange.to.diff(timeRange.from);
+      const msSinceLastRefresh = Date.now() - lastRefresh;
+      const msThreshold = totalRange * threshold;
+      if (msSinceLastRefresh >= msThreshold) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
 
