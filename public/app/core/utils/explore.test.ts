@@ -198,7 +198,9 @@ describe('getExploreUrl', () => {
     },
     datasourceSrv: {
       get() {
-        return {};
+        return {
+          getRef: jest.fn(),
+        };
       },
       getDataSourceById: jest.fn(),
     },

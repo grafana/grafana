@@ -396,6 +396,7 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
       name: name,
       uid: name,
       query: jest.fn(),
+      getRef: jest.fn(),
       meta,
     } as any,
   };

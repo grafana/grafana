@@ -64,6 +64,7 @@ const defaultInitialState = {
     [ExploreId.left]: {
       datasourceInstance: {
         query: jest.fn(),
+        getRef: jest.fn(),
         meta: {
           id: 'something',
         },
@@ -342,6 +343,7 @@ describe('reducer', () => {
             ...defaultInitialState.explore[ExploreId.left],
             datasourceInstance: {
               query: jest.fn(),
+              getRef: jest.fn(),
               meta: {
                 id: 'something',
               },
