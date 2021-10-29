@@ -238,12 +238,12 @@ export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
 }
 
 function toNumber(value: any): number {
-  if (typeof value === 'number') {
-    return value;
-  }
-
   if (value === null || value === undefined || value === '' || isNaN(value)) {
     return Number.NEGATIVE_INFINITY;
+  }
+
+  if (typeof value === 'number') {
+    return value;
   }
 
   return Number(value);
