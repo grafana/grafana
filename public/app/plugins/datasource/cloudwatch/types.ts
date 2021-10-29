@@ -278,14 +278,6 @@ export interface StartQueryRequest {
    */
   logGroupNames?: string[];
   /**
-   * The beginning of the time range to query. The range is inclusive, so the specified start time is included in the query. Specified as epoch time, the number of seconds since January 1, 1970, 00:00:00 UTC.
-   */
-  startTime: number;
-  /**
-   * The end of the time range to query. The range is inclusive, so the specified end time is included in the query. Specified as epoch time, the number of seconds since January 1, 1970, 00:00:00 UTC.
-   */
-  endTime: number;
-  /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */
   queryString: string;

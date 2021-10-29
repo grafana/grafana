@@ -2,23 +2,12 @@ import React from 'react';
 import angular from 'angular';
 import { find, isEmpty, isString, set } from 'lodash';
 import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
-import {
-  catchError,
-  concatMap,
-  finalize,
-  map,
-  mergeMap,
-  repeat,
-  retryWhen,
-  scan,
-  share,
-  takeWhile,
-  tap,
-} from 'rxjs/operators';
+import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
 import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
+  DataQueryError,
   DataQueryErrorType,
   DataQueryRequest,
   DataQueryResponse,
@@ -64,7 +53,7 @@ import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
-import { logsRetryStrategy } from './utils/logsRetry';
+import { runWithRetry } from './utils/logsRetry';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -169,34 +158,54 @@ export class CloudWatchDatasource
     }
 
     const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
-      queryString: target.expression,
+      queryString: target.expression || '',
       refId: target.refId,
       logGroupNames: target.logGroupNames,
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
     // This first starts the query which returns queryId which can be used to retrieve results.
-    return this.makeLogActionRequest('StartQuery', queryParams, {
-      makeReplacements: true,
-      scopedVars: options.scopedVars,
-      skipCache: true,
-    }).pipe(
-      retryWhen(
-        logsRetryStrategy({
-          maxRetryAttempts: 3,
-          scalingDuration: 1000,
-        })
-      ),
-      mergeMap((dataFrames) =>
+    // this.makeLogActionRequest('StartQuery', queryParams, {
+    //   makeReplacements: true,
+    //   scopedVars: options.scopedVars,
+    //   skipCache: true,
+    // }).pipe(
+    //   retryWhen(
+    //     logsRetryStrategy({
+    //       maxRetryAttempts: 3,
+    //       scalingDuration: 1000,
+    //     })
+    //   )
+    // );
+
+    return runWithRetry(
+      (targets: StartQueryRequest[]) => {
+        return this.makeLogActionRequest('StartQuery', targets, {
+          makeReplacements: true,
+          scopedVars: options.scopedVars,
+          skipCache: true,
+        });
+      },
+      queryParams,
+      5000
+    ).pipe(
+      mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
         // This queries for the results
         this.logsQuery(
-          dataFrames.map((dataFrame) => ({
+          frames.map((dataFrame) => ({
             queryId: dataFrame.fields[0].values.get(0),
             region: dataFrame.meta?.custom?.['Region'] ?? 'default',
             refId: dataFrame.refId!,
             statsGroups: (logQueries.find((target) => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
               .statsGroups,
           }))
+        ).pipe(
+          map((response: DataQueryResponse) => {
+            if (!response.error && error) {
+              response.error = error;
+            }
+            return response;
+          })
         )
       ),
       mergeMap((dataQueryResponse) => {

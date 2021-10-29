@@ -237,29 +237,31 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 
 func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	model *simplejson.Json, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
-	return nil, &AWSError{Code: LimitExceededException, Message: "test messsage"}
-	//startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
-	//if err != nil {
-	//	var awsErr awserr.Error
-	//	if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
-	//		plog.Debug("executeStartQuery limit exceeded", "err", awsErr)
-	//		return nil, &AWSError{Code: LimitExceededException, Message: err.Error()}
-	//	}
-	//	return nil, err
-	//}
-	//
-	//dataFrame := data.NewFrame(refID, data.NewField("queryId", nil, []string{*startQueryResponse.QueryId}))
-	//dataFrame.RefID = refID
-	//
-	//clientRegion := model.Get("region").MustString("default")
-	//
-	//dataFrame.Meta = &data.FrameMeta{
-	//	Custom: map[string]interface{}{
-	//		"Region": clientRegion,
-	//	},
-	//}
-	//
-	//return dataFrame, nil
+	if model.Get("logGroupNames").MustStringArray()[0] == "/aws/sagemaker/TrainingJobs" {
+		return nil, &AWSError{Code: LimitExceededException, Message: "test message"}
+	}
+	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
+	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
+			plog.Debug("executeStartQuery limit exceeded", "err", awsErr)
+			return nil, &AWSError{Code: LimitExceededException, Message: err.Error()}
+		}
+		return nil, err
+	}
+
+	dataFrame := data.NewFrame(refID, data.NewField("queryId", nil, []string{*startQueryResponse.QueryId}))
+	dataFrame.RefID = refID
+
+	clientRegion := model.Get("region").MustString("default")
+
+	dataFrame.Meta = &data.FrameMeta{
+		Custom: map[string]interface{}{
+			"Region": clientRegion,
+		},
+	}
+
+	return dataFrame, nil
 }
 
 func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
