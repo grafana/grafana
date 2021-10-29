@@ -18,6 +18,7 @@ import {
   Field,
   getDefaultTimeRange,
   getLogLevelFromKey,
+  LogLevel,
   LogRowModel,
   MetricFindValue,
   ScopedVars,
@@ -581,7 +582,7 @@ export class ElasticDatasource
             size: '0',
             order: 'desc',
             orderBy: '_count',
-            missing: 'unknown',
+            missing: LogLevel.unknown,
           },
           field: this.logLevelField,
         });
