@@ -422,8 +422,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				require.NoError(t, err)
 				sr := c.multisearchRequests[0].Requests[0]
 
-				deteHistogram := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
-				require.Empty(t, deteHistogram.TimeZone)
+				dateHistogram := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+				require.Empty(t, dateHistogram.TimeZone)
 			})
 
 			t.Run("Should include time_zone when timeZone is not utc", func(t *testing.T) {
