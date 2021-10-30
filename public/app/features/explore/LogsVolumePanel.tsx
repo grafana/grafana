@@ -60,7 +60,7 @@ export function LogsVolumePanel(props: Props) {
   if (zoomRatio !== undefined && zoomRatio < 1) {
     zoomLevelInfo = (
       <>
-        <span className={styles.zoomInfo}>Reload to show higher resolution</span>
+        <span className={styles.zoomInfo}>Reload logs volume</span>
         <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} />
       </>
     );
