@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   DataTransformerID,
   SelectableValue,
@@ -24,25 +24,29 @@ export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<Labels
   onChange,
 }) => {
   const labelWidth = 20;
-  let labelNames: Array<SelectableValue<string>> = [];
-  let uniqueLabels: Record<string, boolean> = {};
 
-  for (const frame of input) {
-    for (const field of frame.fields) {
-      if (!field.labels) {
-        continue;
-      }
+  const { labelNames, selected } = useMemo(() => {
+    let labelNames: Array<SelectableValue<string>> = [];
+    let uniqueLabels: Record<string, boolean> = {};
 
-      for (const labelName of Object.keys(field.labels)) {
-        if (!uniqueLabels[labelName]) {
-          labelNames.push({ value: labelName, label: labelName });
-          uniqueLabels[labelName] = true;
+    for (const frame of input) {
+      for (const field of frame.fields) {
+        if (!field.labels) {
+          continue;
+        }
+
+        for (const labelName of Object.keys(field.labels)) {
+          if (!uniqueLabels[labelName]) {
+            labelNames.push({ value: labelName, label: labelName });
+            uniqueLabels[labelName] = true;
+          }
         }
       }
     }
-  }
 
-  const selected = new Set(options.keepLabels?.length ? options.keepLabels : Object.keys(uniqueLabels));
+    const selected = new Set(options.keepLabels?.length ? options.keepLabels : Object.keys(uniqueLabels));
+    return { labelNames, selected };
+  }, [options.keepLabels, input]);
 
   const onValueLabelChange = (value: SelectableValue<string> | null) => {
     onChange({ ...options, valueLabel: value?.value });
@@ -96,9 +100,11 @@ export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<Labels
             label={'Value field name'}
             labelWidth={labelWidth}
             tooltip="Replace the value field name with a label"
+            htmlFor="labels-to-fields-as-name"
           >
             <Select
               menuShouldPortal
+              inputId="labels-to-fields-as-name"
               isClearable={true}
               allowCustomValue={false}
               placeholder="(Optional) Select label"
