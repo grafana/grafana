@@ -46,6 +46,8 @@ describe('intent', () => {
     assertIntent('something{}[^]', {
       type: 'ALL_DURATIONS',
     });
+
+    assertIntent('something{label~^}', null);
   });
 
   it('handles label names', () => {
