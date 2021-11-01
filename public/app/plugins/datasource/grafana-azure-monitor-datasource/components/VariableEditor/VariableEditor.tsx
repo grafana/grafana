@@ -59,7 +59,7 @@ const GrafanaTemplateVariableFnInput = ({
 
 type Props = {
   query: AzureMonitorQuery | string;
-  onChange: (query: AzureMonitorQuery | string) => void;
+  onChange: (query: AzureMonitorQuery) => void;
   datasource: DataSource;
 };
 
