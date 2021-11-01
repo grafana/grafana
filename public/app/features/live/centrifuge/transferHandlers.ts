@@ -1,5 +1,6 @@
 import { ArrayVector, LoadingState, StreamingDataFrame } from '@grafana/data';
 import * as comlink from 'comlink';
+import { Subscriber } from 'rxjs';
 
 const streamingDataFrameHandler: any = {
   canHandle: (v: unknown) => {
@@ -23,9 +24,11 @@ const streamingDataFrameHandler: any = {
 
 comlink.transferHandlers.set('StreamingDataFrameHandler', streamingDataFrameHandler);
 
+// Observers, ie. functions passed to `observable.subscribe(...)`, are converted to a subclass of `Subscriber` before they are sent to the source Observable.
+// The conversion happens internally in the RxJS library - this transfer handler is catches them and wraps them with a proxy
 const subscriberTransferHandler: any = {
   canHandle(value: any): boolean {
-    return value?.constructor?.name === 'SafeSubscriber';
+    return value && value instanceof Subscriber;
   },
 
   serialize(value: Function): [MessagePort, Transferable[]] {
