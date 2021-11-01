@@ -142,6 +142,7 @@ export type AlertmanagerConfig = {
   route?: Route;
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
+  mute_timing_intervals?: MuteTimeInterval[];
 };
 
 export type Matcher = {
@@ -282,11 +283,11 @@ interface TimeRange {
   end_time: string;
 }
 export interface TimeInterval {
-  time_range: TimeRange[];
-  weekdays: string[];
-  days_of_month: string[];
-  months: string[];
-  years: string[];
+  time_range?: TimeRange[];
+  weekdays?: string[];
+  days_of_month?: string[];
+  months?: string[];
+  years?: string[];
 }
 
 export type MuteTimeInterval = {
