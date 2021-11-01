@@ -72,7 +72,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   );
 
   const onChangeOpacity = useCallback(
-    (o: number) => {
+    (o: number | undefined) => {
       onChange({ ...value, opacity: o ?? value.opacity ?? 0.8 });
     },
     [onChange, value]
