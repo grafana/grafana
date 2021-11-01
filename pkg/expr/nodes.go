@@ -38,7 +38,7 @@ func (rn *rawNode) IsExpressionQuery() bool {
 		return true
 	}
 	if v, ok := rn.Query["datasourceId"]; ok {
-		if v == DatasourceID {
+		if v == OldDatasourceUID {
 			return true
 		}
 	}
