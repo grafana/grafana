@@ -79,7 +79,7 @@ const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => 
     return false;
   }
 
-  const reference = format(new Date(), 'YYYY-MM-DD');
+  const reference = format(new Date(), 'yyyy-LL-dd');
 
   const utcDate = parse(`${reference} ${inUtc}`);
   const utcDateWithOffset = addHours(parse(`${reference} ${inUtc}`), offset);
