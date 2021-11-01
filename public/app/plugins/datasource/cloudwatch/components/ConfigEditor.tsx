@@ -77,7 +77,7 @@ function useDatasource(datasourceName: string) {
       .loadDatasource(datasourceName)
       .then((datasource) => {
         // It's really difficult to type .loadDatasource() because it's inherently untyped as it involves two JSON.parse()'s
-        // So a "as" type assertion here is a nessisary evil.
+        // So a "as" type assertion here is a necessary evil.
         setDatasource(datasource as CloudWatchDatasource);
       });
   }, [datasourceName]);
