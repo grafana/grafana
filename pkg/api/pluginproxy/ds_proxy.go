@@ -36,8 +36,8 @@ type DataSourceProxy struct {
 	ctx                *models.ReqContext
 	targetUrl          *url.URL
 	proxyPath          string
-	route              *plugins.AppPluginRoute
-	plugin             *plugins.DataSourcePlugin
+	matchedRoute       *plugins.Route
+	pluginRoutes       []*plugins.Route
 	cfg                *setting.Cfg
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
@@ -73,7 +73,7 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
+func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService *datasources.Service) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
@@ -83,7 +83,7 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 
 	return &DataSourceProxy{
 		ds:                 ds,
-		plugin:             plugin,
+		pluginRoutes:       pluginRoutes,
 		ctx:                ctx,
 		proxyPath:          proxyPath,
 		targetUrl:          targetURL,
@@ -257,8 +257,8 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		return
 	}
 
-	if proxy.route != nil {
-		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, DSInfo{
+	if proxy.matchedRoute != nil {
+		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
 			ID:                      proxy.ds.Id,
 			Updated:                 proxy.ds.Updated,
 			JSONData:                jsonData,
@@ -291,27 +291,25 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// found route if there are any
-	if len(proxy.plugin.Routes) > 0 {
-		for _, route := range proxy.plugin.Routes {
-			// method match
-			if route.Method != "" && route.Method != "*" && route.Method != proxy.ctx.Req.Method {
-				continue
-			}
-
-			// route match
-			if !strings.HasPrefix(proxy.proxyPath, route.Path) {
-				continue
-			}
-
-			if route.ReqRole.IsValid() {
-				if !proxy.ctx.HasUserRole(route.ReqRole) {
-					return errors.New("plugin proxy route access denied")
-				}
-			}
-
-			proxy.route = route
-			return nil
+	for _, route := range proxy.pluginRoutes {
+		// method match
+		if route.Method != "" && route.Method != "*" && route.Method != proxy.ctx.Req.Method {
+			continue
 		}
+
+		// route match
+		if !strings.HasPrefix(proxy.proxyPath, route.Path) {
+			continue
+		}
+
+		if route.ReqRole.IsValid() {
+			if !proxy.ctx.HasUserRole(route.ReqRole) {
+				return errors.New("plugin proxy route access denied")
+			}
+		}
+
+		proxy.matchedRoute = route
+		return nil
 	}
 
 	// Trailing validation below this point for routes that were not matched
