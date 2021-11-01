@@ -76,7 +76,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-frontend
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - lint-backend
@@ -348,7 +347,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-frontend
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - lint-backend
@@ -801,7 +799,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-frontend
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - lint-backend
@@ -1179,7 +1176,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-frontend
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - lint-backend
@@ -1292,7 +1288,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend-enterprise2
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - lint-backend
@@ -1735,7 +1730,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-frontend
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - lint-backend
@@ -2102,7 +2096,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-frontend
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - lint-backend
@@ -2215,7 +2208,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend-enterprise2
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - lint-backend
@@ -2655,7 +2647,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-frontend
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - lint-backend
@@ -2994,7 +2985,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-frontend
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - lint-backend
@@ -3105,7 +3095,6 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend-enterprise2
 - commands:
-  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - lint-backend
@@ -3449,6 +3438,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: c8c7de29c5b4390cab96212211d21c14defa84d3029560e6b19c47a1377a6137
+hmac: 7f5e6041ab60e051c2dd6858adff840fa77e57ac9a7befc73aaab28f588c2318
 
 ...

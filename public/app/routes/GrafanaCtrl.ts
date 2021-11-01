@@ -29,7 +29,7 @@ import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/D
 import { IRootScopeService, IAngularEvent, auto } from 'angular';
 import { AppEvent } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { initGrafanaLive } from 'app/features/live/live';
+import { initGrafanaLive } from 'app/features/live';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
