@@ -158,7 +158,7 @@
     "es-abstract": "1.18.0-next.1",
     "es6-promise": "4.2.8",
     "es6-shim": "0.35.5",
-    "eslint": "7.21.0",
+    "eslint": "7.28.0",
     "eslint-config-prettier": "8.3.0",
     "eslint-plugin-jsdoc": "37.0.3",
     "eslint-plugin-lodash": "^7.2.0",
