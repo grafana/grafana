@@ -69,24 +69,26 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 }
 
 func (ss *SQLStore) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error {
-	var prefs models.Preferences
-	exists, err := x.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		var prefs models.Preferences
+		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	if exists {
-		query.Result = &prefs
-	} else {
-		query.Result = new(models.Preferences)
-	}
+		if exists {
+			query.Result = &prefs
+		} else {
+			query.Result = new(models.Preferences)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
 		if err != nil {
