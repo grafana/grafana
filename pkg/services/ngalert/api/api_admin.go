@@ -71,6 +71,10 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 		return response.Error(400, "Invalid alertmanager choice specified", nil)
 	}
 
+	if sendAlertsTo == ngmodels.ExternalAlertmanagers && len(body.Alertmanagers) == 0 {
+		return response.Error(400, "At least one Alertmanager must be provided to choose this option", nil)
+	}
+
 	cfg := &ngmodels.AdminConfiguration{
 		Alertmanagers: body.Alertmanagers,
 		SendAlertsTo:  sendAlertsTo,

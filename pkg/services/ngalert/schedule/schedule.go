@@ -493,8 +493,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					return nil
 				}
 
-				// Send alerts to notifier if they need to be handled internally.
-				if sch.sendAlertsTo[alertRule.OrgID] == models.ExternalAlertmanagers {
+				// Send alerts to notifier if they need to be handled internally
+				// or if no external AMs have been discovered yet.
+				if sch.sendAlertsTo[alertRule.OrgID] == models.ExternalAlertmanagers && len(sch.AlertmanagersFor(alertRule.OrgID)) > 0 {
 					sch.log.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
 				} else {
 					sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
