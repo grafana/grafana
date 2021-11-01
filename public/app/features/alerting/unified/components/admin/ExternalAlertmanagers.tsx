@@ -130,11 +130,12 @@ export const ExternalAlertmanagers = () => {
                   </td>
                   <td>
                     <HorizontalGroup>
-                      <Button variant="secondary" type="button" onClick={onEdit}>
+                      <Button variant="secondary" type="button" onClick={onEdit} aria-label="Edit alertmanager">
                         <Icon name="pen" />
                       </Button>
                       <Button
                         variant="destructive"
+                        aria-label="Remove alertmanager"
                         type="button"
                         onClick={() => setDeleteModalState({ open: true, index })}
                       >

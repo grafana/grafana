@@ -59,6 +59,7 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
                           placeholder="admin:admin@some.url.dev"
                           addonAfter={
                             <Button
+                              aria-label="Remove alertmanager"
                               type="button"
                               onClick={() => remove(index)}
                               variant="destructive"
