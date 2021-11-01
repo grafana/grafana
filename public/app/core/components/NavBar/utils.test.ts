@@ -197,7 +197,7 @@ describe('isLinkActive', () => {
       ],
     };
     expect(isLinkActive(mockPathName, mockLink)).toBe(true);
-  })
+  });
 
   it('returns false if none of the link urls match the pathname', () => {
     const mockPathName = '/somethingWeird';
@@ -242,9 +242,9 @@ describe('isLinkActive', () => {
       updateConfig({
         featureToggles: {
           ...getConfig().featureToggles,
-          newNavigation: false
-        }
-      })
+          newNavigation: false,
+        },
+      });
     });
 
     it('returns true for the base route link if the pathname starts with /d/', () => {
@@ -264,7 +264,7 @@ describe('isLinkActive', () => {
         ],
       };
       expect(isLinkActive(mockPathName, mockLink)).toBe(true);
-    })
+    });
 
     it('returns false for the dashboards route if the pathname starts with /d/', () => {
       const mockPathName = '/d/foo';
@@ -291,9 +291,9 @@ describe('isLinkActive', () => {
       updateConfig({
         featureToggles: {
           ...getConfig().featureToggles,
-          newNavigation: true
-        }
-      })
+          newNavigation: true,
+        },
+      });
     });
 
     it('returns false for the base route if the pathname starts with /d/', () => {
