@@ -81,8 +81,13 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			Id:         "plugin-page-" + plugin.Id,
 			Url:        plugin.DefaultNavUrl,
 			Img:        plugin.Info.Logos.Small,
-			Section:    dtos.NavSectionPlugin,
 			SortWeight: dtos.WeightPlugin,
+		}
+
+		if hs.Cfg.IsNewNavigationEnabled() {
+			appLink.Section = dtos.NavSectionPlugin
+		} else {
+			appLink.Section = dtos.NavSectionCore
 		}
 
 		for _, include := range plugin.Includes {
@@ -324,7 +329,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		if hs.Cfg.IsNewNavigationEnabled() {
 			configNode.Section = dtos.NavSectionConfig
 		} else {
-			configNode.Section = dtos.NavSectionPlugin
+			configNode.Section = dtos.NavSectionCore
 		}
 		navTree = append(navTree, configNode)
 	}
@@ -336,7 +341,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		if hs.Cfg.IsNewNavigationEnabled() {
 			serverAdminNode.Section = dtos.NavSectionConfig
 		} else {
-			serverAdminNode.Section = dtos.NavSectionPlugin
+			serverAdminNode.Section = dtos.NavSectionCore
 		}
 		navTree = append(navTree, serverAdminNode)
 	}
