@@ -1,7 +1,7 @@
 import { Location } from 'history';
 import { NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
-import { updateConfig } from '../../config';
+import { getConfig, updateConfig } from '../../config';
 import { enrichConfigItems, getForcedLoginUrl, isLinkActive, isSearchActive } from './utils';
 
 jest.mock('../../app_events', () => ({
@@ -180,6 +180,25 @@ describe('isLinkActive', () => {
     expect(isLinkActive(mockPathName, mockLink)).toBe(true);
   });
 
+  it('returns true for the alerting link if the pathname is an alert notification', () => {
+    const mockPathName = '/alerting/notification/foo';
+    const mockLink: NavModelItem = {
+      text: 'Test',
+      url: '/alerting/list',
+      children: [
+        {
+          text: 'TestChild',
+          url: '/testChild',
+        },
+        {
+          text: 'TestChild2',
+          url: '/testChild2',
+        },
+      ],
+    };
+    expect(isLinkActive(mockPathName, mockLink)).toBe(true);
+  })
+
   it('returns false if none of the link urls match the pathname', () => {
     const mockPathName = '/somethingWeird';
     const mockLink: NavModelItem = {
@@ -216,6 +235,104 @@ describe('isLinkActive', () => {
       ],
     };
     expect(isLinkActive(mockPathName, mockLink)).toBe(false);
+  });
+
+  describe('when the newNavigation feature toggle is disabled', () => {
+    beforeEach(() => {
+      updateConfig({
+        featureToggles: {
+          ...getConfig().featureToggles,
+          newNavigation: false
+        }
+      })
+    });
+
+    it('returns true for the base route link if the pathname starts with /d/', () => {
+      const mockPathName = '/d/foo';
+      const mockLink: NavModelItem = {
+        text: 'Test',
+        url: '/',
+        children: [
+          {
+            text: 'TestChild',
+            url: '/testChild',
+          },
+          {
+            text: 'TestChild2',
+            url: '/testChild2',
+          },
+        ],
+      };
+      expect(isLinkActive(mockPathName, mockLink)).toBe(true);
+    })
+
+    it('returns false for the dashboards route if the pathname starts with /d/', () => {
+      const mockPathName = '/d/foo';
+      const mockLink: NavModelItem = {
+        text: 'Test',
+        url: '/dashboards',
+        children: [
+          {
+            text: 'TestChild',
+            url: '/testChild1',
+          },
+          {
+            text: 'TestChild2',
+            url: '/testChild2',
+          },
+        ],
+      };
+      expect(isLinkActive(mockPathName, mockLink)).toBe(false);
+    });
+  });
+
+  describe('when the newNavigation feature toggle is enabled', () => {
+    beforeEach(() => {
+      updateConfig({
+        featureToggles: {
+          ...getConfig().featureToggles,
+          newNavigation: true
+        }
+      })
+    });
+
+    it('returns false for the base route if the pathname starts with /d/', () => {
+      const mockPathName = '/d/foo';
+      const mockLink: NavModelItem = {
+        text: 'Test',
+        url: '/',
+        children: [
+          {
+            text: 'TestChild',
+            url: '/',
+          },
+          {
+            text: 'TestChild2',
+            url: '/testChild2',
+          },
+        ],
+      };
+      expect(isLinkActive(mockPathName, mockLink)).toBe(false);
+    });
+
+    it('returns true for the dashboards route if the pathname starts with /d/', () => {
+      const mockPathName = '/d/foo';
+      const mockLink: NavModelItem = {
+        text: 'Test',
+        url: '/dashboards',
+        children: [
+          {
+            text: 'TestChild',
+            url: '/testChild1',
+          },
+          {
+            text: 'TestChild2',
+            url: '/testChild2',
+          },
+        ],
+      };
+      expect(isLinkActive(mockPathName, mockLink)).toBe(true);
+    });
   });
 });
 
