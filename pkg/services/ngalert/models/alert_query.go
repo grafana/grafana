@@ -89,7 +89,7 @@ func (aq *AlertQuery) setModelProps() error {
 
 // IsExpression returns true if the alert query is an expression.
 func (aq *AlertQuery) IsExpression() (bool, error) {
-	return aq.DatasourceUID == expr.DatasourceUID, nil
+	return aq.DatasourceUID == expr.OldDatasourceUID, nil
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid

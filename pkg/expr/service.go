@@ -9,16 +9,27 @@ import (
 )
 
 // DatasourceName is the string constant used as the datasource name in requests
-// to identify it as an expression command.
+// to identify it as an expression command. Name is a legacy property that
+// pre-dates UID and and the datasource object reference
 const DatasourceName = "__expr__"
+
+// DatasourceType is the string constant used as the datasource when the property is in Datasource.Type.
+// Type in requests is used to identify what type of data source plugin the request belongs to.
+const DatasourceType = DatasourceName
+
+// DatasourceUID is the string constant used as the datasource name in requests
+// to identify it as an expression command when use in Datasource.UID.
+const DatasourceUID = DatasourceType
 
 // DatasourceID is the fake datasource id used in requests to identify it as an
 // expression command.
 const DatasourceID = -100
 
-// DatasourceUID is the fake datasource uid used in requests to identify it as an
-// expression command.
-const DatasourceUID = "-100"
+// OldDatasourceUID is the datasource uid used in requests to identify it as an
+// expression command. It goes with the query root level datasourceUID property. It was accidentally
+// set to the Id and is now kept for backwards compatability. The newer Datasource.UID property
+// should be used instead and should be set to "__expr__".
+const OldDatasourceUID = "-100"
 
 // Service is service representation for expression handling.
 type Service struct {

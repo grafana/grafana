@@ -143,17 +143,20 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 			RefID:         query.RefID,
 			TimeRange:     query.TimeRange,
 			QueryType:     query.QueryType,
-			DatasourceUID: query.DatasourceUID,
+			DatasourceUID: query.GetDatasourceUID(),
 		}
 
-		isExpr, err := rn.IsExpressionQuery()
-		if err != nil {
-			return nil, err
+		if rn.DatasourceUID == "" {
+			if rv, ok := rawQueryProp["datasourceId"]; ok { // legacy
+				if rv == "" {
+					return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
+				}
+			}
 		}
 
 		var node Node
 
-		if isExpr {
+		if rn.IsExpressionQuery() {
 			node, err = buildCMDNode(dp, rn)
 		} else {
 			node, err = s.buildDSNode(dp, rn, req)
