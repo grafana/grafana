@@ -117,7 +117,7 @@ func parse(s string, now time.Time, withRoundUp bool, location *time.Location, w
 			options = append(options, datemath.WithLocation(location))
 		}
 		if weekstart != -1 {
-			if weekstart >= now.Weekday() {
+			if weekstart > now.Weekday() {
 				weekstart = weekstart - 7
 			}
 			options = append(options, datemath.WithStartOfWeek(weekstart))
