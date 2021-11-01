@@ -97,6 +97,36 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-frontend
 - commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.3
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.3
+  name: mysql-integration-tests
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-x64,linux-x64-musl,osx64,win64,armv6 --no-pull-enterprise
   depends_on:
@@ -135,7 +165,7 @@ steps:
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
   - '# ...Modulo eslint auto-fixes...:'
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
@@ -225,38 +255,6 @@ steps:
     dry_run: true
     edition: oss
     ubuntu: false
-- commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.4.3
-  name: postgres-integration-tests
-- commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  image: grafana/build-container:1.4.3
-  name: mysql-integration-tests
 trigger:
   event:
   - pull_request
@@ -371,6 +369,36 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-frontend
 - commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.3
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.3
+  name: mysql-integration-tests
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
   depends_on:
@@ -411,7 +439,7 @@ steps:
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
   - '# ...Modulo eslint auto-fixes...:'
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
@@ -541,38 +569,6 @@ steps:
     username:
       from_secret: docker_user
 - commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.4.3
-  name: postgres-integration-tests
-- commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  image: grafana/build-container:1.4.3
-  name: mysql-integration-tests
-- commands:
   - ./scripts/circle-release-canary-packages.sh
   depends_on:
   - end-to-end-tests
@@ -585,8 +581,6 @@ steps:
   - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
   - end-to-end-tests
-  - mysql-integration-tests
-  - postgres-integration-tests
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -828,6 +822,36 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-frontend
 - commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.3
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.3
+  name: mysql-integration-tests
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise ${DRONE_TAG}
   depends_on:
@@ -870,7 +894,7 @@ steps:
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
   - '# ...Modulo eslint auto-fixes...:'
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
@@ -950,38 +974,6 @@ steps:
     username:
       from_secret: docker_user
 - commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.4.3
-  name: postgres-integration-tests
-- commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  image: grafana/build-container:1.4.3
-  name: mysql-integration-tests
-- commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
@@ -1003,8 +995,6 @@ steps:
   - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
   - end-to-end-tests
-  - mysql-integration-tests
-  - postgres-integration-tests
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -1210,6 +1200,36 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-frontend
 - commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.3
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.3
+  name: mysql-integration-tests
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise ${DRONE_TAG}
   depends_on:
@@ -1253,7 +1273,7 @@ steps:
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
   - '# ...Modulo eslint auto-fixes...:'
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
@@ -1368,38 +1388,6 @@ steps:
     username:
       from_secret: docker_user
 - commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.4.3
-  name: postgres-integration-tests
-- commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  image: grafana/build-container:1.4.3
-  name: mysql-integration-tests
-- commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
@@ -1432,8 +1420,6 @@ steps:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
   depends_on:
   - end-to-end-tests
-  - mysql-integration-tests
-  - postgres-integration-tests
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -1496,8 +1482,6 @@ steps:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2
   depends_on:
   - end-to-end-tests-enterprise2
-  - mysql-integration-tests
-  - postgres-integration-tests
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -1772,6 +1756,36 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-frontend
 - commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.3
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.3
+  name: mysql-integration-tests
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise v7.3.0-test
   depends_on:
@@ -1814,7 +1828,7 @@ steps:
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
   - '# ...Modulo eslint auto-fixes...:'
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
@@ -1886,38 +1900,6 @@ steps:
     edition: oss
     ubuntu: true
 - commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.4.3
-  name: postgres-integration-tests
-- commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  image: grafana/build-container:1.4.3
-  name: mysql-integration-tests
-- commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
@@ -1939,8 +1921,6 @@ steps:
   - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads-test
   depends_on:
   - end-to-end-tests
-  - mysql-integration-tests
-  - postgres-integration-tests
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2143,6 +2123,36 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-frontend
 - commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.3
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.3
+  name: mysql-integration-tests
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise v7.3.0-test
   depends_on:
@@ -2186,7 +2196,7 @@ steps:
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
   - '# ...Modulo eslint auto-fixes...:'
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
@@ -2293,38 +2303,6 @@ steps:
     edition: enterprise
     ubuntu: true
 - commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.4.3
-  name: postgres-integration-tests
-- commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  image: grafana/build-container:1.4.3
-  name: mysql-integration-tests
-- commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
@@ -2357,8 +2335,6 @@ steps:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads-test
   depends_on:
   - end-to-end-tests
-  - mysql-integration-tests
-  - postgres-integration-tests
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -2421,8 +2397,6 @@ steps:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-test
   depends_on:
   - end-to-end-tests-enterprise2
-  - mysql-integration-tests
-  - postgres-integration-tests
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -2702,6 +2676,36 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-frontend
 - commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.3
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.3
+  name: mysql-integration-tests
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
   depends_on:
@@ -2742,7 +2746,7 @@ steps:
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
   - '# ...Modulo eslint auto-fixes...:'
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
@@ -2814,38 +2818,6 @@ steps:
     edition: oss
     ubuntu: true
 - commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.4.3
-  name: postgres-integration-tests
-- commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  image: grafana/build-container:1.4.3
-  name: mysql-integration-tests
-- commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
@@ -2867,8 +2839,6 @@ steps:
   - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
   - end-to-end-tests
-  - mysql-integration-tests
-  - postgres-integration-tests
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -3045,6 +3015,36 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-frontend
 - commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.3
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - initialize
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.3
+  name: mysql-integration-tests
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
   depends_on:
@@ -3086,7 +3086,7 @@ steps:
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
   - '# ...Modulo eslint auto-fixes...:'
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - '# If any filenames are emitted by the below script, run the generator command
     `grafana-cli cue gen-ts` locally and commit the result.'
   - ./scripts/clean-git-or-error.sh
@@ -3191,38 +3191,6 @@ steps:
     edition: enterprise
     ubuntu: true
 - commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.4.3
-  name: postgres-integration-tests
-- commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  depends_on:
-  - test-backend
-  - test-frontend
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  image: grafana/build-container:1.4.3
-  name: mysql-integration-tests
-- commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
@@ -3264,8 +3232,6 @@ steps:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
   depends_on:
   - end-to-end-tests
-  - mysql-integration-tests
-  - postgres-integration-tests
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -3328,8 +3294,6 @@ steps:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2
   depends_on:
   - end-to-end-tests-enterprise2
-  - mysql-integration-tests
-  - postgres-integration-tests
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -3485,6 +3449,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 0d26eda19dc6e530d02c734704c8a9d01beb5082c7e14b2609577b8695ed06f5
+hmac: c8c7de29c5b4390cab96212211d21c14defa84d3029560e6b19c47a1377a6137
 
 ...

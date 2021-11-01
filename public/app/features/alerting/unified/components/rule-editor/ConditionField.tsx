@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { Field, InputControl, Select } from '@grafana/ui';
-import { ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import React, { FC, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormValues } from '../../types/rule-form';
@@ -28,7 +28,7 @@ export const ConditionField: FC = () => {
 
   // reset condition if option no longer exists or if it is unset, but there are options available
   useEffect(() => {
-    const expressions = queries.filter((query) => query.model.datasource === ExpressionDatasourceID);
+    const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
     if (condition && !options.find(({ value }) => value === condition)) {
       setValue('condition', expressions.length ? expressions[expressions.length - 1].refId : null);
     } else if (!condition && expressions.length) {

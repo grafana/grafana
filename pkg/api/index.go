@@ -317,9 +317,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
 			Text: "Cloud", Id: "live-cloud", Url: hs.Cfg.AppSubURL + "/live/cloud", Icon: "cloud-upload",
 		})
-		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
-			Text: "Test", Id: "live-test", Url: hs.Cfg.AppSubURL + "/live/test", Icon: "arrow",
-		})
 		navTree = append(navTree, &dtos.NavLink{
 			Id:           "live",
 			Text:         "Live",
@@ -328,6 +325,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Url:          hs.Cfg.AppSubURL + "/live",
 			Children:     liveNavLinks,
 			HideFromMenu: true,
+			HideFromTabs: true,
 		})
 	}
 

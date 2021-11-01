@@ -30,8 +30,24 @@ func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.Sig
 	}
 }
 
-func (e *DashAlertExtractor) lookupDatasourceID(dsName string) (*models.DataSource, error) {
-	if dsName == "" {
+func (e *DashAlertExtractor) lookupQueryDataSource(panel *simplejson.Json, panelQuery *simplejson.Json) (*models.DataSource, error) {
+	dsName := ""
+	dsUid := ""
+
+	datasource, ok := panelQuery.CheckGet("datasource")
+
+	if !ok {
+		fmt.Printf("no query level data soure \n")
+		datasource = panel.Get("datasource")
+	}
+
+	if name, err := datasource.String(); err == nil {
+		dsName = name
+	} else if uid, ok := datasource.CheckGet("uid"); ok {
+		dsUid = uid.MustString()
+	}
+
+	if dsName == "" && dsUid == "" {
 		query := &models.GetDefaultDataSourceQuery{OrgId: e.OrgID}
 		if err := bus.DispatchCtx(context.TODO(), query); err != nil {
 			return nil, err
@@ -39,7 +55,7 @@ func (e *DashAlertExtractor) lookupDatasourceID(dsName string) (*models.DataSour
 		return query.Result, nil
 	}
 
-	query := &models.GetDataSourceQuery{Name: dsName, OrgId: e.OrgID}
+	query := &models.GetDataSourceQuery{Name: dsName, Uid: dsUid, OrgId: e.OrgID}
 	if err := bus.DispatchCtx(context.TODO(), query); err != nil {
 		return nil, err
 	}
@@ -159,17 +175,9 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 				return nil, ValidationError{Reason: reason}
 			}
 
-			dsName := ""
-			if panelQuery.Get("datasource").MustString() != "" {
-				dsName = panelQuery.Get("datasource").MustString()
-			} else if panel.Get("datasource").MustString() != "" {
-				dsName = panel.Get("datasource").MustString()
-			}
-
-			datasource, err := e.lookupDatasourceID(dsName)
+			datasource, err := e.lookupQueryDataSource(panel, panelQuery)
 			if err != nil {
-				e.log.Debug("Error looking up datasource", "error", err)
-				return nil, ValidationError{Reason: fmt.Sprintf("Data source used by alert rule not found, alertName=%v, datasource=%s", alert.Name, dsName)}
+				return nil, err
 			}
 
 			dsFilterQuery := models.DatasourcesPermissionFilterQuery{

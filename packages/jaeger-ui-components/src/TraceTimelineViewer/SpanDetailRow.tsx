@@ -22,7 +22,7 @@ import TimelineRow from './TimelineRow';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
 import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink } from '../types/trace';
-import { CreateSpanLink } from './types';
+import { SpanLinkFunc } from '../types';
 
 const getStyles = createStyle((theme: Theme) => {
   return {
@@ -86,7 +86,7 @@ type SpanDetailRowProps = {
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
   theme: Theme;
-  createSpanLink?: CreateSpanLink;
+  createSpanLink?: SpanLinkFunc;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {

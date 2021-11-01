@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 
 import { LivePanelOptions } from './types';
-import { getGrafanaLiveCentrifugeSrv } from 'app/features/live/live';
+import { getGrafanaLiveScopes } from 'app/features/live';
 import { config } from 'app/core/config';
 
 type Props = StandardEditorProps<LiveChannelAddress, any, LivePanelOptions>;
@@ -44,12 +44,27 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
     }
   }
 
+  async getScopeDetails() {
+    const { scope, namespace } = this.props.value;
+    const srv = getGrafanaLiveScopes();
+
+    if (!srv.doesScopeExist(scope)) {
+      return {
+        namespaces: [],
+        support: undefined,
+      };
+    }
+
+    const namespaces = await srv.getNamespaces(scope);
+    const support = namespace ? await srv.getChannelSupport(scope, namespace) : undefined;
+    return {
+      namespaces,
+      support,
+    };
+  }
+
   async updateSelectOptions() {
-    const { value } = this.props;
-    const { scope, namespace } = value;
-    const srv = getGrafanaLiveCentrifugeSrv();
-    const namespaces = await srv.scopes[scope].listNamespaces();
-    const support = namespace ? await srv.scopes[scope].getChannelSupport(namespace) : undefined;
+    const { namespaces, support } = await this.getScopeDetails();
 
     this.setState({
       namespaces,

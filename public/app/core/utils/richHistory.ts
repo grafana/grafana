@@ -406,10 +406,13 @@ function migrateRichHistory(richHistory: RichHistoryQuery[]) {
 function createDataQuery(query: RichHistoryQuery, individualQuery: DataQuery | string, index: number) {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZ';
   if (typeof individualQuery === 'object') {
+    // the current format
     return individualQuery;
   } else if (isParsable(individualQuery)) {
+    // ElasticSearch (maybe other datasoures too) before grafana7
     return JSON.parse(individualQuery);
   }
+  // prometehus (maybe other datasources too) before grafana7
   return { expr: individualQuery, refId: letters[index] };
 }
 

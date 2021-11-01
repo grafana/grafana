@@ -45,11 +45,3 @@ type QueryModel struct {
 	IntervalFactor int64  `json:"intervalFactor"`
 	UtcOffsetSec   int64  `json:"utcOffsetSec"`
 }
-
-type PrometheusQueryType string
-
-const (
-	RangeQueryType    PrometheusQueryType = "range"
-	InstantQueryType  PrometheusQueryType = "instant"
-	ExemplarQueryType PrometheusQueryType = "exemplar"
-)

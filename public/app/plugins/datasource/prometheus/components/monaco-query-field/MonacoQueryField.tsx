@@ -51,23 +51,6 @@ function ensurePromQL(monaco: Monaco) {
   }
 }
 
-const THEME_NAME = 'grafana-prometheus-query-field';
-
-let MONACO_THEME_SETUP_STARTED = false;
-function ensureMonacoTheme(monaco: Monaco, theme: GrafanaTheme2) {
-  if (MONACO_THEME_SETUP_STARTED === false) {
-    MONACO_THEME_SETUP_STARTED = true;
-    monaco.editor.defineTheme(THEME_NAME, {
-      base: theme.isDark ? 'vs-dark' : 'vs',
-      inherit: true,
-      colors: {
-        'editor.background': theme.components.input.background,
-      },
-      rules: [],
-    });
-  }
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
@@ -79,11 +62,12 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 const MonacoQueryField = (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onChange, initialValue } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
-  const onChangeRef = useLatest(onChange);
+  const onRunQueryRef = useLatest(onRunQuery);
+  const onBlurRef = useLatest(onBlur);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
 
@@ -106,16 +90,14 @@ const MonacoQueryField = (props: Props) => {
       <ReactMonacoEditor
         options={options}
         language="promql"
-        theme={THEME_NAME}
         value={initialValue}
         beforeMount={(monaco) => {
           ensurePromQL(monaco);
-          ensureMonacoTheme(monaco, theme);
         }}
         onMount={(editor, monaco) => {
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
-            onChangeRef.current(editor.getValue());
+            onBlurRef.current(editor.getValue());
           });
 
           // we construct a DataProvider object
@@ -188,9 +170,7 @@ const MonacoQueryField = (props: Props) => {
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-            const text = editor.getValue();
-            props.onChange(text);
-            props.onRunQuery();
+            onRunQueryRef.current(editor.getValue());
           });
         }}
       />

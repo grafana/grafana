@@ -36,6 +36,7 @@ import {
   PromOptions,
   PromQuery,
   PromQueryRequest,
+  PromQueryType,
   PromScalarData,
   PromVectorData,
 } from './types';
@@ -309,6 +310,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
     const processedTarget = {
       ...target,
+      queryType: PromQueryType.timeSeriesQuery,
       exemplar: this.shouldRunExemplarQuery(target),
       requestId: request.panelId + target.refId,
       // We need to pass utcOffsetSec to backend to calculate aligned range
@@ -778,7 +780,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
-          datasource: this.name,
+          datasource: this.getRef(),
           expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
@@ -813,7 +815,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   async areExemplarsAvailable() {
     try {
       const res = await this.metadataRequest('/api/v1/query_exemplars', { query: 'test' });
-      if (res.statusText === 'OK') {
+      if (res.data.status === 'success') {
         return true;
       }
       return false;
@@ -894,6 +896,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
     return {
       ...target,
+      legendFormat: this.templateSrv.replace(target.legendFormat, variables),
       expr: this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
     };
   }

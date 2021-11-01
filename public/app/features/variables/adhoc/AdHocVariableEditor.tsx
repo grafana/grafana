@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { Alert, InlineFieldRow, VerticalGroup } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { DataSourceRef, SelectableValue } from '@grafana/data';
 
 import { AdHocVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
@@ -32,7 +32,7 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
     this.props.initAdHocVariableEditor();
   }
 
-  onDatasourceChanged = (option: SelectableValue<string>) => {
+  onDatasourceChanged = (option: SelectableValue<DataSourceRef>) => {
     this.props.changeVariableDatasource(option.value);
   };
 
@@ -40,7 +40,7 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
     const { variable, editor } = this.props;
     const dataSources = editor.extended?.dataSources ?? [];
     const infoText = editor.extended?.infoText ?? null;
-    const options = dataSources.map((ds) => ({ label: ds.text, value: ds.value }));
+    const options = dataSources.map((ds) => ({ label: ds.text, value: { uid: ds.value } }));
     const value = options.find((o) => o.value === variable.datasource) ?? options[0];
 
     return (

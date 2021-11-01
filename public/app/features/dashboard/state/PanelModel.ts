@@ -19,7 +19,7 @@ import {
   ScopedVars,
   urlUtil,
   PanelModel as IPanelModel,
-  DatasourceRef,
+  DataSourceRef,
 } from '@grafana/data';
 import config from 'app/core/config';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
@@ -144,7 +144,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   panels?: any;
   declare targets: DataQuery[];
   transformations?: DataTransformerConfig[];
-  datasource: DatasourceRef | null = null;
+  datasource: DataSourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
 
@@ -434,8 +434,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.plugin = newPlugin;
     this.configRev++;
 
-    // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
-    this.replaceVariables = this.replaceVariables.bind(this);
     this.applyPluginOptionDefaults(newPlugin, true);
 
     if (newPlugin.onPanelMigration) {
@@ -444,7 +442,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   updateQueries(options: QueryGroupOptions) {
-    this.datasource = options.dataSource.default ? null : options.dataSource.name!;
+    const { dataSource } = options;
+    this.datasource = dataSource.default
+      ? null
+      : {
+          uid: dataSource.uid,
+          type: dataSource.type,
+        };
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
     this.hideTimeOverride = options.timeRange?.hide;

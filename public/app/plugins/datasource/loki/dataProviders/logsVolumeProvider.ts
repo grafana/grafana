@@ -11,6 +11,7 @@ import {
   LoadingState,
   LogLevel,
   MutableDataFrame,
+  ScopedVars,
   toDataFrame,
 } from '@grafana/data';
 import { LokiQuery } from '../types';
@@ -20,26 +21,36 @@ import LokiDatasource, { isMetricsQuery } from '../datasource';
 import { LogLevelColor } from '../../../../core/logs_model';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
 /**
  * Logs volume query may be expensive as it requires counting all logs in the selected range. If such query
  * takes too much time it may need be made more specific to limit number of logs processed under the hood.
  */
-const TIMEOUT = 10000;
+const TIMEOUT = 10 * SECOND;
 
 export function createLokiLogsVolumeProvider(
   datasource: LokiDatasource,
   dataQueryRequest: DataQueryRequest<LokiQuery>
 ): Observable<DataQueryResponse> {
   const logsVolumeRequest = cloneDeep(dataQueryRequest);
+  const intervalInfo = getIntervalInfo(dataQueryRequest.scopedVars);
   logsVolumeRequest.targets = logsVolumeRequest.targets
     .filter((target) => target.expr && !isMetricsQuery(target.expr))
     .map((target) => {
       return {
         ...target,
         instant: false,
-        expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+        expr: `sum by (level) (count_over_time(${target.expr}[${intervalInfo.interval}]))`,
       };
     });
+  logsVolumeRequest.interval = intervalInfo.interval;
+  if (intervalInfo.intervalMs !== undefined) {
+    logsVolumeRequest.intervalMs = intervalInfo.intervalMs;
+  }
 
   return new Observable((observer) => {
     let rawLogsVolume: DataFrame[] = [];
@@ -54,7 +65,12 @@ export function createLokiLogsVolumeProvider(
       .pipe(
         timeout({
           each: TIMEOUT,
-          with: () => throwError(new Error('Request timed-out. Please make your query more specific and try again.')),
+          with: () =>
+            throwError(
+              new Error(
+                'Request timed-out. Please try making your query more specific or narrow selected time range and try again.'
+              )
+            ),
         })
       )
       .subscribe({
@@ -133,8 +149,6 @@ function getFieldConfig(level: LogLevel, levels: number) {
     custom: {
       drawStyle: GraphDrawStyle.Bars,
       barAlignment: BarAlignment.Center,
-      barWidthFactor: 0.9,
-      barMaxWidth: 5,
       lineColor: color,
       pointColor: color,
       fillColor: color,
@@ -195,4 +209,28 @@ function getLogLevelFromLabels(labels: Labels): LogLevel {
     }
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
+}
+
+function getIntervalInfo(scopedVars: ScopedVars): { interval: string; intervalMs?: number } {
+  if (scopedVars.__interval) {
+    let intervalMs: number = scopedVars.__interval_ms.value;
+    let interval = '';
+    if (intervalMs > HOUR) {
+      intervalMs = DAY;
+      interval = '1d';
+    } else if (intervalMs > MINUTE) {
+      intervalMs = HOUR;
+      interval = '1h';
+    } else if (intervalMs > SECOND) {
+      intervalMs = MINUTE;
+      interval = '1m';
+    } else {
+      intervalMs = SECOND;
+      interval = '1s';
+    }
+
+    return { interval, intervalMs };
+  } else {
+    return { interval: '$__interval' };
+  }
 }
