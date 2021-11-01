@@ -17,7 +17,6 @@ import { locationService } from '@grafana/runtime';
 import { ShiftTimeEvent, ShiftTimeEventPayload, ZoomOutEvent } from '../../../types/events';
 import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
-import { isMathString } from '../../../../../packages/grafana-data/src/datetime/datemath';
 
 export class TimeSrv {
   time: any;
@@ -362,7 +361,7 @@ export class TimeSrv {
   isRefreshOutsideThreshold(lastRefresh: number, threshold = 0.05) {
     const timeRange = this.timeRange();
 
-    if (isMathString(timeRange.raw.from)) {
+    if (dateMath.isMathString(timeRange.raw.from)) {
       const totalRange = timeRange.to.diff(timeRange.from);
       const msSinceLastRefresh = Date.now() - lastRefresh;
       const msThreshold = totalRange * threshold;
