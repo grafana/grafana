@@ -10,6 +10,7 @@ import { getStyles } from './RestoreBackupModal.styles';
 import { toFormProps } from './RestoreBackupModal.utils';
 import { RestoreBackupModalService } from './RestoreBackupModal.service';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
+import { BackupErrorSection } from '../../BackupErrorSection/BackupErrorSection';
 
 const { Form } = withTypes<RestoreBackupFormProps>();
 
@@ -28,6 +29,7 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
   backup,
   isVisible,
   noService = false,
+  restoreErrors = [],
   onClose,
   onRestore,
 }) => {
@@ -77,6 +79,7 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
                 <TextInputField disabled name="dataModel" label={Messages.dataModel} />
               </div>
             </div>
+            {!!restoreErrors.length && <BackupErrorSection backupErrors={restoreErrors} />}
             <HorizontalGroup justify="center" spacing="md">
               <LoaderButton
                 data-testid="restore-button"

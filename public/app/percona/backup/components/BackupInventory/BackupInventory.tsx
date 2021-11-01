@@ -3,9 +3,9 @@ import { Column, Row } from 'react-table';
 import { Button, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { apiErrorParser, isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
-import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
+import { ApiVerboseError, Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell/ExpandableCell';
 import { BackupInventoryDetails } from './BackupInventoryDetails';
 import { AddBackupModal } from '../AddBackupModal';
@@ -40,6 +40,8 @@ export const BackupInventory: FC = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [logsModalVisible, setLogsModalVisible] = useState(false);
   const [data, setData] = useState<Backup[]>([]);
+  const [backupErrors, setBackupErrors] = useState<ApiVerboseError[]>([]);
+  const [restoreErrors, setRestoreErrors] = useState<ApiVerboseError[]>([]);
   const [triggerTimeout] = useRecurringCall();
   const [generateToken] = useCancelToken();
   const columns = useMemo(
@@ -118,6 +120,8 @@ export const BackupInventory: FC = () => {
     setSelectedBackup(null);
     setRestoreModalVisible(false);
     setBackupModalVisible(false);
+    setBackupErrors([]);
+    setRestoreErrors([]);
   };
 
   const handleLogsClose = () => {
@@ -128,8 +132,10 @@ export const BackupInventory: FC = () => {
   const handleRestore = async (serviceId: string, artifactId: string) => {
     try {
       await BackupInventoryService.restore(serviceId, artifactId, generateToken(RESTORE_CANCEL_TOKEN));
+      setRestoreErrors([]);
       setRestoreModalVisible(false);
     } catch (e) {
+      setRestoreErrors(apiErrorParser(e));
       logger.error(e);
     }
   };
@@ -206,11 +212,14 @@ export const BackupInventory: FC = () => {
       );
       setBackupModalVisible(false);
       setSelectedBackup(null);
+      setBackupErrors([]);
       getData(true);
     } catch (e) {
       if (isApiCancelError(e)) {
         return;
       }
+
+      setBackupErrors(apiErrorParser(e));
       logger.error(e);
     }
   };
@@ -245,13 +254,20 @@ export const BackupInventory: FC = () => {
         <RestoreBackupModal
           backup={selectedBackup}
           isVisible
+          restoreErrors={restoreErrors}
           onClose={handleClose}
           onRestore={handleRestore}
           noService={!selectedBackup?.serviceId || !selectedBackup?.serviceName}
         />
       )}
       {backupModalVisible && (
-        <AddBackupModal backup={selectedBackup} isVisible onClose={handleClose} onBackup={handleBackup} />
+        <AddBackupModal
+          backup={selectedBackup}
+          isVisible
+          onClose={handleClose}
+          onBackup={handleBackup}
+          backupErrors={backupErrors}
+        />
       )}
       {deleteModalVisible && (
         <DeleteModal

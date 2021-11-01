@@ -1,6 +1,7 @@
-import axios, { CancelToken, AxiosInstance } from 'axios';
+import axios, { CancelToken, AxiosInstance, AxiosError } from 'axios';
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
+import { ApiError, ApiErrorCode, ApiVerboseError } from '../core';
 
 export class ApiRequest {
   axiosInstance: AxiosInstance;
@@ -61,3 +62,44 @@ export const apiManagement = new ApiRequest({ baseURL: '/v1/management' });
 export const apiInventory = new ApiRequest({ baseURL: '/v1/inventory' });
 export const apiSettings = new ApiRequest({ baseURL: '/v1/Settings' });
 export const isApiCancelError = (e: any) => axios.isCancel(e);
+
+export const translateApiError = (error: ApiErrorCode): ApiVerboseError | undefined => {
+  const map: Record<ApiErrorCode, ApiVerboseError> = {
+    [ApiErrorCode.ERROR_CODE_INVALID_XTRABACKUP]: {
+      message: 'Different versions of xtrabackup and xbcloud.',
+      link: '',
+    },
+    [ApiErrorCode.ERROR_CODE_XTRABACKUP_NOT_INSTALLED]: {
+      message: 'Xtrabackup is not installed.',
+      link: 'https://www.percona.com/doc/percona-xtrabackup/8.0/installation.html',
+    },
+    [ApiErrorCode.ERROR_CODE_INCOMPATIBLE_XTRABACKUP]: {
+      message: 'Xtrabackup version is not compatible.',
+      link: 'https://www.percona.com/doc/percona-xtrabackup/8.0/installation.html',
+    },
+    [ApiErrorCode.ERROR_CODE_INCOMPATIBLE_TARGET_MYSQL]: {
+      message: 'Target MySQL version is not compatible.',
+      link: 'https://www.percona.com/doc/percona-xtrabackup/8.0/installation.html',
+    },
+  };
+
+  const translatedError = map[error];
+
+  return translatedError;
+};
+
+export const apiErrorParser = (e: AxiosError): ApiVerboseError[] => {
+  const errorData: ApiError = e.response?.data;
+  let result: ApiVerboseError[] = [];
+
+  if (errorData) {
+    const { details = [] } = errorData;
+
+    result = details.reduce((acc, current) => {
+      const translatedError = translateApiError(current.code);
+      return translatedError ? [...acc, translatedError] : acc;
+    }, []);
+  }
+
+  return result;
+};

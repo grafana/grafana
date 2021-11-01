@@ -78,4 +78,7 @@ export const getStyles = ({ colors, typography, spacing, border }: GrafanaTheme)
       display: none;
     }
   `,
+  apiErrorSection: css`
+    margin-bottom: ${spacing.md};
+  `,
 });

@@ -41,11 +41,13 @@ import { getStyles } from './AddBackupModal.styles';
 import { SelectField } from 'app/percona/shared/components/Form/SelectField';
 import { MultiSelectField } from 'app/percona/shared/components/Form/MultiSelectField';
 import { BackupMode } from '../../Backup.types';
+import { BackupErrorSection } from '../BackupErrorSection/BackupErrorSection';
 
 export const AddBackupModal: FC<AddBackupModalProps> = ({
   backup,
   isVisible,
   scheduleMode = false,
+  backupErrors = [],
   onClose,
   onBackup,
 }) => {
@@ -256,6 +258,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                 </div>
               </div>
             )}
+            {!!backupErrors.length && <BackupErrorSection backupErrors={backupErrors} />}
             <HorizontalGroup justify="center" spacing="md">
               <LoaderButton
                 data-testid="backup-add-button"
