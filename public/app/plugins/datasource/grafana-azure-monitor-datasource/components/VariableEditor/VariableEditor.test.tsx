@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import VariableEditor from './VariableEditor';
 import userEvent from '@testing-library/user-event';
 import createMockDatasource from '../../__mocks__/datasource';
-import { AzureQueryType } from '../../types';
+import { AzureMonitorQuery, AzureQueryType } from '../../types';
 import { select } from 'react-select-event';
 import * as ui from '@grafana/ui';
 
@@ -106,10 +106,11 @@ describe('VariableEditor:', () => {
           refId: 'A',
           queryType: AzureQueryType.GrafanaTemplateVariableFn,
           grafanaTemplateVariableFn: {
-            query: 'test query',
+            rawQuery: 'test query',
+            kind: 'SubscriptionsQuery',
           },
           subscription: 'id',
-        },
+        } as AzureMonitorQuery,
         onChange: () => {},
         datasource: createMockDatasource(),
       };
@@ -125,25 +126,28 @@ describe('VariableEditor:', () => {
           refId: 'A',
           queryType: AzureQueryType.GrafanaTemplateVariableFn,
           grafanaTemplateVariableFn: {
-            query: 'test query',
+            rawQuery: 'S',
+            kind: 'UnknownQuery',
           },
-          subscription: 'id',
-        },
+          subscription: 'subscriptionId',
+        } as AzureMonitorQuery,
         onChange: jest.fn(),
         datasource: createMockDatasource(),
       };
       render(<VariableEditor {...props} />);
       await waitFor(() => screen.queryByText('Grafana template variable function'));
-      userEvent.type(screen.getByDisplayValue('test query'), '!');
-      expect(screen.getByDisplayValue('test query!')).toBeInTheDocument();
-      screen.getByDisplayValue('test query!').blur();
+      userEvent.type(screen.getByDisplayValue('S'), 'ubscriptions()');
+      expect(screen.getByDisplayValue('Subscriptions()')).toBeInTheDocument();
+      screen.getByDisplayValue('Subscriptions()').blur();
+      await waitFor(() => screen.queryByText('None'));
       expect(props.onChange).toHaveBeenCalledWith({
         refId: 'A',
         queryType: AzureQueryType.GrafanaTemplateVariableFn,
         grafanaTemplateVariableFn: {
-          query: 'test query!',
+          rawQuery: 'Subscriptions()',
+          kind: 'SubscriptionsQuery',
         },
-        subscription: 'id',
+        subscription: 'subscriptionId',
       });
     });
   });

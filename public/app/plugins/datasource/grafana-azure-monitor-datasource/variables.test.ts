@@ -26,9 +26,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'AppInsightsMetricNames()',
+              kind: 'AppInsightsMetricNameQuery',
+              rawQuery: 'AppInsightsMetricNames()',
             },
           } as AzureMonitorQuery,
         ],
@@ -52,9 +54,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'AppInsightsGroupBys(metricname)',
+              kind: 'AppInsightsGroupByQuery',
+              rawQuery: 'AppInsightsGroupBys(metricname)',
             },
           } as AzureMonitorQuery,
         ],
@@ -76,9 +80,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'Subscriptions()',
+              kind: 'SubscriptionsQuery',
+              rawQuery: 'Subscriptions()',
             },
           } as AzureMonitorQuery,
         ],
@@ -103,9 +109,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'ResourceGroups()',
+              kind: 'ResourceGroupsQuery',
+              rawQuery: 'ResourceGroups()',
             },
           } as AzureMonitorQuery,
         ],
@@ -127,9 +135,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'ResourceGroups(sub)',
+              kind: 'ResourceGroupsQuery',
+              rawQuery: 'ResourceGroups(sub)',
             },
           } as AzureMonitorQuery,
         ],
@@ -154,9 +164,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'Namespaces(resourceGroup)',
+              kind: 'MetricDefinitionsQuery',
+              rawQuery: 'Namespaces(resourceGroup)',
             },
           } as AzureMonitorQuery,
         ],
@@ -178,9 +190,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'Namespaces(resourceGroup, subscriptionId)',
+              kind: 'MetricDefinitionsQuery',
+              rawQuery: 'Namespaces(resourceGroup, subscriptionId)',
             },
           } as AzureMonitorQuery,
         ],
@@ -205,9 +219,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'ResourceNames(resourceGroup, metricDefinition)',
+              kind: 'ResourceNamesQuery',
+              rawQuery: 'ResourceNames(resourceGroup, metricDefinition)',
             },
           } as AzureMonitorQuery,
         ],
@@ -229,9 +245,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'ResourceNames(subscriptionId, resourceGroup, metricDefinition)',
+              kind: 'ResourceNamesQuery',
+              rawQuery: 'ResourceNames(subscriptionId, resourceGroup, metricDefinition)',
             },
           } as AzureMonitorQuery,
         ],
@@ -256,9 +274,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'metricNamespace(resourceGroup, metricDefinition, resourceName)',
+              kind: 'MetricNamespaceQuery',
+              rawQuery: 'metricNamespace(resourceGroup, metricDefinition, resourceName)',
             },
           } as AzureMonitorQuery,
         ],
@@ -280,9 +300,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'metricNamespace(subscriptionId, resourceGroup, metricDefinition, resourceName)',
+              kind: 'MetricNamespaceQuery',
+              rawQuery: 'metricNamespace(subscriptionId, resourceGroup, metricDefinition, resourceName)',
             },
           } as AzureMonitorQuery,
         ],
@@ -307,9 +329,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'metricNames(resourceGroup, metricDefinition, resourceName, metricNamespace)',
+              kind: 'MetricNamesQuery',
+              rawQuery: 'metricNames(resourceGroup, metricDefinition, resourceName, metricNamespace)',
             },
           } as AzureMonitorQuery,
         ],
@@ -331,9 +355,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'metricNames(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace)',
+              kind: 'MetricNamesQuery',
+              rawQuery: 'metricNames(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace)',
             },
           } as AzureMonitorQuery,
         ],
@@ -358,9 +384,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'workspaces()',
+              kind: 'WorkspacesQuery',
+              rawQuery: 'workspaces()',
             },
           } as AzureMonitorQuery,
         ],
@@ -383,9 +411,11 @@ describe('VariableSupport', () => {
       const mockRequest = {
         targets: [
           {
+            refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'workspaces(subscriptionId)',
+              kind: 'WorkspacesQuery',
+              rawQuery: 'workspaces(subscriptionId)',
             },
           } as AzureMonitorQuery,
         ],
@@ -404,7 +434,7 @@ describe('VariableSupport', () => {
           {
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              query: 'nonsense',
+              rawQuery: 'nonsense',
             },
           } as AzureMonitorQuery,
         ],

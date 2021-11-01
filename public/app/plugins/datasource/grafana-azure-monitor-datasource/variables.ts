@@ -1,4 +1,4 @@
-import { from, Observable } from 'rxjs';
+import { from, lastValueFrom, Observable } from 'rxjs';
 import {
   CustomVariableSupport,
   DataQueryRequest,
@@ -8,10 +8,10 @@ import {
 } from '@grafana/data';
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
-import { AzureMonitorQuery, AzureQueryType } from './types';
+import { AzureQueryType, AzureMonitorQuery } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
-import { grafanaTemplateVariableFnMatches, migrateStringQueriesToObjectQueries } from './grafanaTemplateVariableFns';
-
+import { migrateStringQueriesToObjectQueries } from './grafanaTemplateVariableFns';
+import { GrafanaTemplateVariableQuery } from './types/templateVariables';
 export class VariableSupport extends CustomVariableSupport<DataSource, AzureMonitorQuery> {
   constructor(private readonly datasource: DataSource) {
     super();
@@ -22,147 +22,81 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
   editor = VariableEditor;
 
   query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
-    request.targets = request.targets.map((target) => {
-      return migrateStringQueriesToObjectQueries(target, { datasource: this.datasource });
-    });
-
-    if (
-      request.targets[0].queryType === AzureQueryType.GrafanaTemplateVariableFn &&
-      request.targets[0].grafanaTemplateVariableFn?.query
-    ) {
-      return this.queryForGrafanaTemplateVariableFn(request.targets[0].grafanaTemplateVariableFn?.query);
-    }
-
-    return this.datasource.query(request);
-  }
-
-  queryForGrafanaTemplateVariableFn(query: string) {
     const promisedResults = async () => {
-      const templateVariablesResults = await this.callGrafanaTemplateVariableFn(query);
-      return {
-        data: templateVariablesResults ? [toDataFrame(templateVariablesResults)] : [],
-      };
+      const queryObj = await migrateStringQueriesToObjectQueries(request.targets[0], { datasource: this.datasource });
+
+      if (
+        queryObj.queryType === AzureQueryType.GrafanaTemplateVariableFn &&
+        queryObj.grafanaTemplateVariableFn?.rawQuery
+      ) {
+        const templateVariablesResults = await this.callGrafanaTemplateVariableFn(queryObj.grafanaTemplateVariableFn);
+        return {
+          data: templateVariablesResults ? [toDataFrame(templateVariablesResults)] : [],
+        };
+      }
+      request.targets[0] = queryObj;
+      return lastValueFrom(this.datasource.query(request));
     };
+
     return from(promisedResults());
   }
 
-  callGrafanaTemplateVariableFn(query: string): Promise<MetricFindValue[]> | null {
-    const matchesForQuery = grafanaTemplateVariableFnMatches(query);
-    const defaultSubscriptionId = this.datasource.azureLogAnalyticsDatasource.defaultSubscriptionId;
-
+  callGrafanaTemplateVariableFn(query: GrafanaTemplateVariableQuery): Promise<MetricFindValue[]> | null {
     // deprecated app insights template variables (will most likely remove in grafana 9)
     if (this.datasource.insightsAnalyticsDatasource) {
-      if (matchesForQuery.appInsightsMetricNameQuery) {
+      if (query.kind === 'AppInsightsMetricNameQuery') {
         return this.datasource.insightsAnalyticsDatasource.getMetricNames();
       }
 
-      if (matchesForQuery.appInsightsGroupByQuery) {
-        const metricName = matchesForQuery.appInsightsGroupByQuery[1];
-        return this.datasource.insightsAnalyticsDatasource.getGroupBys(getTemplateSrv().replace(metricName));
+      if (query.kind === 'AppInsightsGroupByQuery') {
+        return this.datasource.insightsAnalyticsDatasource.getGroupBys(getTemplateSrv().replace(query.metricName));
       }
     }
 
-    if (matchesForQuery.subscriptions) {
+    if (query.kind === 'SubscriptionsQuery') {
       return this.datasource.getSubscriptions();
     }
 
-    if (matchesForQuery.resourceGroups && defaultSubscriptionId) {
-      return this.datasource.getResourceGroups(defaultSubscriptionId);
+    if (query.kind === 'ResourceGroupsQuery') {
+      return this.datasource.getResourceGroups(this.toVariable(query.subscription));
     }
 
-    if (matchesForQuery.resourceGroupsWithSub) {
-      return this.datasource.getResourceGroups(this.toVariable(matchesForQuery.resourceGroupsWithSub[1]));
-    }
-
-    if (matchesForQuery.metricDefinitions && defaultSubscriptionId) {
-      if (!matchesForQuery.metricDefinitions[3]) {
-        return this.datasource.getMetricDefinitions(
-          defaultSubscriptionId,
-          this.toVariable(matchesForQuery.metricDefinitions[1])
-        );
-      }
-    }
-
-    if (matchesForQuery.metricDefinitionsWithSub) {
+    if (query.kind === 'MetricDefinitionsQuery') {
       return this.datasource.getMetricDefinitions(
-        this.toVariable(matchesForQuery.metricDefinitionsWithSub[1]),
-        this.toVariable(matchesForQuery.metricDefinitionsWithSub[2])
+        this.toVariable(query.subscription),
+        this.toVariable(query.resourceGroup)
       );
     }
 
-    if (matchesForQuery.resourceNames && defaultSubscriptionId) {
-      const resourceGroup = this.toVariable(matchesForQuery.resourceNames[1]);
-      const metricDefinition = this.toVariable(matchesForQuery.resourceNames[2]);
-      return this.datasource.getResourceNames(defaultSubscriptionId, resourceGroup, metricDefinition);
+    if (query.kind === 'ResourceNamesQuery') {
+      return this.datasource.getResourceNames(
+        this.toVariable(query.subscription),
+        this.toVariable(query.resourceGroup),
+        this.toVariable(query.metricDefinition)
+      );
     }
 
-    if (matchesForQuery.resourceNamesWithSub) {
-      const subscription = this.toVariable(matchesForQuery.resourceNamesWithSub[1]);
-      const resourceGroup = this.toVariable(matchesForQuery.resourceNamesWithSub[2]);
-      const metricDefinition = this.toVariable(matchesForQuery.resourceNamesWithSub[3]);
-      return this.datasource.getResourceNames(subscription, resourceGroup, metricDefinition);
+    if (query.kind === 'MetricNamespaceQuery') {
+      return this.datasource.getMetricNamespaces(
+        this.toVariable(query.subscription),
+        this.toVariable(query.resourceGroup),
+        this.toVariable(query.metricDefinition),
+        this.toVariable(query.resourceName)
+      );
     }
 
-    if (matchesForQuery.metricNamespace && defaultSubscriptionId) {
-      const resourceGroup = this.toVariable(matchesForQuery.metricNamespace[1]);
-      const metricDefinition = this.toVariable(matchesForQuery.metricNamespace[2]);
-      const resourceName = this.toVariable(matchesForQuery.metricNamespace[3]);
-      return this.datasource.getMetricNamespaces(defaultSubscriptionId, resourceGroup, metricDefinition, resourceName);
-    }
-
-    if (matchesForQuery.metricNamespaceWithSub) {
-      const subscription = this.toVariable(matchesForQuery.metricNamespaceWithSub[1]);
-      const resourceGroup = this.toVariable(matchesForQuery.metricNamespaceWithSub[2]);
-      const metricDefinition = this.toVariable(matchesForQuery.metricNamespaceWithSub[3]);
-      const resourceName = this.toVariable(matchesForQuery.metricNamespaceWithSub[4]);
-      return this.datasource.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
-    }
-
-    if (matchesForQuery.metricNames && defaultSubscriptionId) {
-      if (matchesForQuery.metricNames[3].indexOf(',') === -1) {
-        const resourceGroup = this.toVariable(matchesForQuery.metricNames[1]);
-        const metricDefinition = this.toVariable(matchesForQuery.metricNames[2]);
-        const resourceName = this.toVariable(matchesForQuery.metricNames[3]);
-        const metricNamespace = this.toVariable(matchesForQuery.metricNames[4]);
-        return this.datasource.getMetricNames(
-          defaultSubscriptionId,
-          resourceGroup,
-          metricDefinition,
-          resourceName,
-          metricNamespace
-        );
-      }
-    }
-
-    if (matchesForQuery.metricNamesWithSub) {
-      const subscription = this.toVariable(matchesForQuery.metricNamesWithSub[1]);
-      const resourceGroup = this.toVariable(matchesForQuery.metricNamesWithSub[2]);
-      const metricDefinition = this.toVariable(matchesForQuery.metricNamesWithSub[3]);
-      const resourceName = this.toVariable(matchesForQuery.metricNamesWithSub[4]);
-      const metricNamespace = this.toVariable(matchesForQuery.metricNamesWithSub[5]);
+    if (query.kind === 'MetricNamesQuery') {
       return this.datasource.getMetricNames(
-        subscription,
-        resourceGroup,
-        metricDefinition,
-        resourceName,
-        metricNamespace
+        this.toVariable(query.subscription),
+        this.toVariable(query.resourceGroup),
+        this.toVariable(query.metricDefinition),
+        this.toVariable(query.resourceName),
+        this.toVariable(query.metricNamespace)
       );
     }
 
-    if (matchesForQuery.workspacesQuery) {
-      if (defaultSubscriptionId) {
-        return this.datasource.azureLogAnalyticsDatasource.getWorkspaces(defaultSubscriptionId);
-      } else {
-        throw new Error(
-          'No subscription ID. Specify a default subscription ID in the data source config to use workspaces() without a subscription ID'
-        );
-      }
-    }
-
-    if (matchesForQuery.workspacesQueryWithSub) {
-      return this.datasource.azureLogAnalyticsDatasource.getWorkspaces(
-        (matchesForQuery.workspacesQueryWithSub[1] || '').trim()
-      );
+    if (query.kind === 'WorkspacesQuery') {
+      return this.datasource.azureLogAnalyticsDatasource.getWorkspaces(query.subscription);
     }
 
     return null;

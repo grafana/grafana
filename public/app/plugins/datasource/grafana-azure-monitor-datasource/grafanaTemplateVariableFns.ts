@@ -1,5 +1,18 @@
 import { AzureMonitorQuery, AzureQueryType } from './types';
 import DataSource from './datasource';
+import {
+  AppInsightsGroupByQuery,
+  AppInsightsMetricNameQuery,
+  GrafanaTemplateVariableQuery,
+  MetricDefinitionsQuery,
+  MetricNamespaceQuery,
+  MetricNamesQuery,
+  ResourceGroupsQuery,
+  ResourceNamesQuery,
+  SubscriptionsQuery,
+  WorkspacesQuery,
+} from './types/templateVariables';
+import { isGUIDish } from './components/ResourcePicker/utils';
 
 /* 
   Grafana Template Variable Functions
@@ -35,46 +48,216 @@ const isGrafanaTemplateVariableFnQuery = (query: string) => {
   return Object.keys(matches).some((key) => !!matches[key]);
 };
 
-export const migrateStringQueriesToObjectQueries = (
+const createGrafanaTemplateVariableQuery = (rawQuery: string, datasource: DataSource): AzureMonitorQuery => {
+  const matchesForQuery = grafanaTemplateVariableFnMatches(rawQuery);
+  const defaultSubscriptionId = datasource.azureMonitorDatasource.defaultSubscriptionId;
+  const createGrafanaTemplateVariableDetails = (): GrafanaTemplateVariableQuery => {
+    // deprecated app insights template variables (will most likely remove in grafana 9)
+    if (matchesForQuery.appInsightsMetricNameQuery) {
+      const queryDetails: AppInsightsMetricNameQuery = { rawQuery, kind: 'AppInsightsMetricNameQuery' };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.appInsightsGroupByQuery) {
+      const queryDetails: AppInsightsGroupByQuery = {
+        kind: 'AppInsightsGroupByQuery',
+        rawQuery,
+        metricName: matchesForQuery.appInsightsGroupByQuery[1],
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.subscriptions) {
+      const queryDetails: SubscriptionsQuery = {
+        kind: 'SubscriptionsQuery',
+        rawQuery,
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.resourceGroups && defaultSubscriptionId) {
+      const queryDetails: ResourceGroupsQuery = {
+        kind: 'ResourceGroupsQuery',
+        rawQuery,
+        subscription: defaultSubscriptionId,
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.resourceGroupsWithSub) {
+      const queryDetails: ResourceGroupsQuery = {
+        kind: 'ResourceGroupsQuery',
+        rawQuery,
+        subscription: matchesForQuery.resourceGroupsWithSub[1],
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.metricDefinitions && defaultSubscriptionId) {
+      const queryDetails: MetricDefinitionsQuery = {
+        kind: 'MetricDefinitionsQuery',
+        rawQuery,
+        subscription: defaultSubscriptionId,
+        resourceGroup: matchesForQuery.metricDefinitions[1],
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.metricDefinitionsWithSub) {
+      const queryDetails: MetricDefinitionsQuery = {
+        kind: 'MetricDefinitionsQuery',
+        rawQuery,
+        subscription: matchesForQuery.metricDefinitionsWithSub[1],
+        resourceGroup: matchesForQuery.metricDefinitionsWithSub[2],
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.resourceNames && defaultSubscriptionId) {
+      const queryDetails: ResourceNamesQuery = {
+        kind: 'ResourceNamesQuery',
+        rawQuery,
+        subscription: defaultSubscriptionId,
+        resourceGroup: matchesForQuery.resourceNames[1],
+        metricDefinition: matchesForQuery.resourceNames[2],
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.resourceNamesWithSub) {
+      const queryDetails: ResourceNamesQuery = {
+        kind: 'ResourceNamesQuery',
+        rawQuery,
+        subscription: matchesForQuery.resourceNamesWithSub[1],
+        resourceGroup: matchesForQuery.resourceNamesWithSub[2],
+        metricDefinition: matchesForQuery.resourceNamesWithSub[3],
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.metricNamespace && defaultSubscriptionId) {
+      const queryDetails: MetricNamespaceQuery = {
+        kind: 'MetricNamespaceQuery',
+        rawQuery,
+        subscription: defaultSubscriptionId,
+        resourceGroup: matchesForQuery.metricNamespace[1],
+        metricDefinition: matchesForQuery.metricNamespace[2],
+        resourceName: matchesForQuery.metricNamespace[3],
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.metricNamespaceWithSub) {
+      const queryDetails: MetricNamespaceQuery = {
+        kind: 'MetricNamespaceQuery',
+        rawQuery,
+        subscription: matchesForQuery.metricNamespaceWithSub[1],
+        resourceGroup: matchesForQuery.metricNamespaceWithSub[2],
+        metricDefinition: matchesForQuery.metricNamespaceWithSub[3],
+        resourceName: matchesForQuery.metricNamespaceWithSub[4],
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.metricNames && defaultSubscriptionId) {
+      if (matchesForQuery.metricNames[3].indexOf(',') === -1) {
+        const queryDetails: MetricNamesQuery = {
+          kind: 'MetricNamesQuery',
+          rawQuery,
+          subscription: defaultSubscriptionId,
+          resourceGroup: matchesForQuery.metricNames[1],
+          metricDefinition: matchesForQuery.metricNames[2],
+          resourceName: matchesForQuery.metricNames[3],
+          metricNamespace: matchesForQuery.metricNames[4],
+        };
+        return queryDetails;
+      }
+    }
+
+    if (matchesForQuery.metricNamesWithSub) {
+      const queryDetails: MetricNamesQuery = {
+        kind: 'MetricNamesQuery',
+        rawQuery,
+        subscription: matchesForQuery.metricNamesWithSub[1],
+        resourceGroup: matchesForQuery.metricNamesWithSub[2],
+        metricDefinition: matchesForQuery.metricNamesWithSub[3],
+        resourceName: matchesForQuery.metricNamesWithSub[4],
+        metricNamespace: matchesForQuery.metricNamesWithSub[5],
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.workspacesQuery && defaultSubscriptionId) {
+      const queryDetails: WorkspacesQuery = {
+        kind: 'WorkspacesQuery',
+        rawQuery,
+        subscription: defaultSubscriptionId,
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.workspacesQueryWithSub) {
+      const queryDetails: WorkspacesQuery = {
+        kind: 'WorkspacesQuery',
+        rawQuery,
+        subscription: (matchesForQuery.workspacesQueryWithSub[1] || '').trim(),
+      };
+      return queryDetails;
+    }
+
+    // fallback
+    const queryDetails: SubscriptionsQuery = { kind: 'SubscriptionsQuery', rawQuery };
+    return queryDetails;
+  };
+
+  const query: AzureMonitorQuery = {
+    refId: 'A',
+    queryType: AzureQueryType.GrafanaTemplateVariableFn,
+    grafanaTemplateVariableFn: createGrafanaTemplateVariableDetails(),
+    subscription: defaultSubscriptionId,
+  };
+  return query;
+};
+
+const createLogAnalyticsTemplateVariableQuery = async (
+  rawQuery: string,
+  datasource: DataSource
+): Promise<AzureMonitorQuery> => {
+  const defaultSubscriptionId = datasource.azureMonitorDatasource.defaultSubscriptionId;
+
+  // convert old workspace ids into new resources (same logic as in useMigrations but out of the react-hook land)
+  const defaultWorkspaceId = datasource.azureLogAnalyticsDatasource.getDeprecatedDefaultWorkSpace();
+  let resource = '';
+  if (defaultWorkspaceId) {
+    const isWorkspaceGUID = isGUIDish(defaultWorkspaceId);
+    if (isWorkspaceGUID) {
+      resource = await datasource.resourcePickerData.getResourceURIFromWorkspace(defaultWorkspaceId);
+    } else {
+      resource = defaultWorkspaceId;
+    }
+  }
+
+  return {
+    refId: 'A',
+    queryType: AzureQueryType.LogAnalytics,
+    azureLogAnalytics: {
+      query: rawQuery,
+      resource,
+    },
+    subscription: defaultSubscriptionId,
+  };
+};
+
+export const migrateStringQueriesToObjectQueries = async (
   rawQuery: string | AzureMonitorQuery,
   options: { datasource: DataSource }
-): AzureMonitorQuery => {
+): Promise<AzureMonitorQuery> => {
   // no need to migrate already migrated queries
   if (typeof rawQuery !== 'string') {
     return rawQuery;
   }
 
-  if (isGrafanaTemplateVariableFnQuery(rawQuery)) {
-    return {
-      refId: 'A',
-      queryType: AzureQueryType.GrafanaTemplateVariableFn,
-      grafanaTemplateVariableFn: {
-        query: rawQuery,
-      },
-      azureLogAnalytics: {
-        query: undefined,
-      },
-    };
-  } else {
-    const createDefaultResourceAndWorkspace = () => {
-      const defaultWorkspaceId = options.datasource.azureLogAnalyticsDatasource.getDeprecatedDefaultWorkSpace();
-      if (defaultWorkspaceId) {
-        return { resource: '', workspace: defaultWorkspaceId };
-      }
-      return { resource: '', workspace: '' };
-    };
-
-    return {
-      refId: 'A',
-      queryType: AzureQueryType.LogAnalytics,
-      azureLogAnalytics: {
-        query: rawQuery,
-        ...createDefaultResourceAndWorkspace(),
-      },
-      grafanaTemplateVariableFn: {
-        query: undefined,
-      },
-      subscription: options.datasource.azureMonitorDatasource.defaultSubscriptionId,
-    };
-  }
+  return isGrafanaTemplateVariableFnQuery(rawQuery)
+    ? createGrafanaTemplateVariableQuery(rawQuery, options.datasource)
+    : createLogAnalyticsTemplateVariableQuery(rawQuery, options.datasource);
 };

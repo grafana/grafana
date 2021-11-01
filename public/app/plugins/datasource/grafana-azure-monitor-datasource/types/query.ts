@@ -1,4 +1,5 @@
 import { DataQuery } from '@grafana/data';
+import { GrafanaTemplateVariableQuery } from './templateVariables';
 
 export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
@@ -73,10 +74,6 @@ export interface AzureLogsQuery {
   resource?: string;
 
   workspace?: string;
-}
-
-export interface GrafanaTemplateVariableQuery {
-  query?: string;
 }
 
 /**

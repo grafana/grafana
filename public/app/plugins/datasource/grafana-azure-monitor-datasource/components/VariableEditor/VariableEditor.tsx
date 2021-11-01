@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { Alert, InlineField, Input, Select } from '@grafana/ui';
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { AzureMonitorQuery, AzureQueryType } from '../../types';
 import LogsQueryEditor from '../LogsQueryEditor';
 import DataSource from '../../datasource';
@@ -16,20 +16,33 @@ const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
 const GrafanaTemplateVariableFnInput = ({
   query,
   updateQuery,
+  datasource,
 }: {
   query: AzureMonitorQuery;
   updateQuery: (val: AzureMonitorQuery) => void;
+  datasource: DataSource;
 }) => {
-  const [inputVal, setInputVal] = useState(query.grafanaTemplateVariableFn?.query || '');
+  const [inputVal, setInputVal] = useState('');
+  useEffect(() => {
+    setInputVal(query.grafanaTemplateVariableFn?.rawQuery || '');
+  }, [query.grafanaTemplateVariableFn?.rawQuery]);
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     setInputVal(event.target.value);
   };
-  const onBlur = () => {
-    updateQuery({
-      ...query,
-      grafanaTemplateVariableFn: {
-        query: inputVal,
-      },
+  const onBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    const stringVal = event.target.value;
+    migrateStringQueriesToObjectQueries(stringVal, { datasource }).then((updatedQuery) => {
+      if (updatedQuery.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
+        updateQuery(updatedQuery);
+      } else {
+        updateQuery({
+          ...query,
+          grafanaTemplateVariableFn: {
+            kind: 'UnknownQuery',
+            rawQuery: stringVal,
+          },
+        });
+      }
     });
   };
   return (
@@ -51,8 +64,18 @@ type Props = {
 };
 
 const VariableEditor = (props: Props) => {
-  const migratedQuery = migrateStringQueriesToObjectQueries(props.query, { datasource: props.datasource });
-  const [query, setQuery] = useState(migratedQuery);
+  const defaultQuery: AzureMonitorQuery = {
+    refId: 'A',
+    queryType: AzureQueryType.GrafanaTemplateVariableFn,
+  };
+  const [query, setQuery] = useState(defaultQuery);
+
+  useEffect(() => {
+    migrateStringQueriesToObjectQueries(props.query, { datasource: props.datasource }).then((migratedQuery) => {
+      setQuery(migratedQuery);
+    });
+  }, [props.query, props.datasource]);
+
   const onQueryTypeChange = (selectableValue: SelectableValue) => {
     if (selectableValue.value) {
       setQuery({
@@ -112,7 +135,7 @@ const VariableEditor = (props: Props) => {
         </>
       )}
       {query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
-        <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} />
+        <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={props.datasource} />
       )}
     </>
   );
