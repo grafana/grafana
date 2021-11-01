@@ -146,7 +146,7 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 
 	// save dashboards based on json files
 	for path, fileInfo := range filesFoundOnDisk {
-		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
+		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, fileInfo, dashboardRefs)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
 			continue
@@ -174,7 +174,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
 		}
 
-		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
+		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, fileInfo, dashboardRefs)
 		usageTracker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
@@ -218,7 +218,7 @@ func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 }
 
 // saveDashboard saves or updates the dashboard provisioning file at path.
-func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.FileInfo,
+func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID int64, fileInfo os.FileInfo,
 	provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
 	provisioningMetadata := provisioningMetadata{}
 	resolvedFileInfo, err := resolveSymlink(fileInfo, path)
@@ -265,7 +265,7 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 			Updated:    resolvedFileInfo.ModTime().Unix(),
 			CheckSum:   jsonFile.checkSum,
 		}
-		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp); err != nil {
+		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp); err != nil {
 			return provisioningMetadata, err
 		}
 	} else {
@@ -312,7 +312,7 @@ func getOrCreateFolderID(ctx context.Context, cfg *config, service dashboards.Da
 		dash.OrgId = cfg.OrgID
 		// set dashboard folderUid if given
 		dash.Dashboard.SetUid(cfg.FolderUID)
-		dbDash, err := service.SaveFolderForProvisionedDashboards(dash)
+		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {
 			return 0, err
 		}

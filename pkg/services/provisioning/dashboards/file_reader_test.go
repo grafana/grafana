@@ -565,7 +565,7 @@ func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name stri
 	return s.provisioned[name], nil
 }
 
-func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO,
+func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO,
 	provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	// Copy the structs as we need to change them but do not want to alter outside world.
 	var copyProvisioning = &models.DashboardProvisioning{}
@@ -603,7 +603,7 @@ func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboa
 	return dto.Dashboard, nil
 }
 
-func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
+func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
 	s.inserted = append(s.inserted, dto)
 	return dto.Dashboard, nil
 }

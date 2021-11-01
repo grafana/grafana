@@ -4,6 +4,7 @@
 package dashboards
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -24,7 +25,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 		t.Cleanup(func() {
 			UpdateAlerting = origUpdateAlerting
 		})
-		UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+		UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 			return nil
 		}
 
@@ -849,7 +850,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 	t.Helper()
 
 	dto := toSaveDashboardDto(cmd)
-	res, err := NewService(sqlStore).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore).SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -857,7 +858,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 
 func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
-	_, err := NewService(sqlStore).SaveDashboard(&dto, false)
+	_, err := NewService(sqlStore).SaveDashboard(context.Background(), &dto, false)
 	return err
 }
 
@@ -883,7 +884,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		},
 	}
 
-	res, err := NewService(sqlStore).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore).SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -910,7 +911,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 		},
 	}
 
-	res, err := NewService(sqlStore).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore).SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
