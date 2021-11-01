@@ -30,6 +30,7 @@ import { getMarkerFromPath } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
 import { StyleMaker, StyleMakerConfig } from '../../types';
+// import { getSVGUri } from '../../utils/prepareSVG';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -110,20 +111,20 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         const markerPath =
           getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
 
-        const marker = getMarkerFromPath(config.markerSymbol?.fixed);
+          const marker = getMarkerFromPath(config.markerSymbol?.fixed);
 
-        const makeIconStyle = (cfg: StyleMakerConfig) => {
-          return new style.Style({
-            image: new style.Icon({
-              src: markerPath,
-              color: cfg.color,
-              //  opacity,
-              scale: (DEFAULT_SIZE + cfg.size) / 100,
-            }),
-          });
-        };
-
-        const shape: StyleMaker = marker?.make ?? makeIconStyle;
+          const makeIconStyle = (cfg: StyleMakerConfig) => {
+            return new style.Style({
+              image: new style.Icon({
+                src: markerPath,
+                color: cfg.color,
+                opacity: cfg.opacity,
+                scale: (DEFAULT_SIZE + cfg.size) / 100,
+              }),
+            });
+          };
+  
+          const shape: StyleMaker = marker?.make ?? makeIconStyle;  
 
         const features: Feature<Point>[] = [];
 
