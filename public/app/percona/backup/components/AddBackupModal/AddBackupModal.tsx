@@ -20,6 +20,7 @@ import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { validators as customValidators } from 'app/percona/shared/helpers/validators';
 
 import { BackupMode } from '../../Backup.types';
+import { BackupErrorSection } from '../BackupErrorSection/BackupErrorSection';
 
 import {
   DATA_MODEL_OPTIONS,
@@ -37,11 +38,10 @@ import { AddBackupModalService } from './AddBackupModal.service';
 import { getStyles } from './AddBackupModal.styles';
 import { AddBackupFormProps, AddBackupModalProps, SelectableService } from './AddBackupModal.types';
 import {
-  toFormBackup,
-  isCronFieldDisabled,
-  PERIOD_OPTIONS,
   getBackupModeOptions,
   getDataModelFromVendor,
+  isCronFieldDisabled,
+  toFormBackup,
 } from './AddBackupModal.utils';
 import { RetryModeSelector } from './RetryModeSelector';
 
@@ -49,6 +49,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
   backup,
   isVisible,
   scheduleMode = false,
+  backupErrors = [],
   onClose,
   onBackup,
 }) => {
@@ -259,6 +260,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                 </div>
               </div>
             )}
+            {!!backupErrors.length && <BackupErrorSection backupErrors={backupErrors} />}
             <HorizontalGroup justify="center" spacing="md">
               <LoaderButton
                 data-testid="backup-add-button"
