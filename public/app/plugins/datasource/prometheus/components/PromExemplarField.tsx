@@ -26,7 +26,8 @@ export function PromExemplarField({ datasource, onChange, query }: Props) {
       onChange(false);
     } else {
       setError(null);
-      if (prevError !== error) {
+      // If error is cleared, we want to change exemplar to true
+      if (prevError && !error) {
         onChange(true);
       }
     }

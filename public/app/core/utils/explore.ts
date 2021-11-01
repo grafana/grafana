@@ -99,7 +99,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
         ...state,
         datasource: exploreDatasource.name,
         context: 'explore',
-        queries: exploreTargets.map((t) => ({ ...t, datasource: exploreDatasource.name })),
+        queries: exploreTargets.map((t) => ({ ...t, datasource: exploreDatasource.getRef() })),
       };
     }
 
@@ -199,6 +199,25 @@ export const safeStringifyValue = (value: any, space?: number) => {
   }
 
   return '';
+};
+
+export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
+
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
+
+const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
+// we use this function to take any kind of data we loaded
+// from an external source (URL, localStorage, whatever),
+// and extract the graph-style from it, or return the default
+// graph-style if we are not able to do that.
+// it is important that this function is able to take any form of data,
+// (be it objects, or arrays, or booleans or whatever),
+// and produce a best-effort graphStyle.
+// note that typescript makes sure we make no mistake in this function.
+// we do not rely on ` as ` or ` any `.
+export const toGraphStyle = (data: unknown): ExploreGraphStyle => {
+  const found = EXPLORE_GRAPH_STYLES.find((v) => v === data);
+  return found ?? DEFAULT_GRAPH_STYLE;
 };
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {

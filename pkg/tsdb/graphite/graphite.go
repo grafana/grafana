@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
@@ -35,7 +34,7 @@ type Service struct {
 	im     instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) (*Service, error) {
+func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
 	s := &Service{
 		logger: log.New("tsdb.graphite"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
@@ -45,7 +44,7 @@ func ProvideService(httpClientProvider httpclient.Provider, manager backendplugi
 		QueryDataHandler: s,
 	})
 
-	if err := manager.Register("graphite", factory); err != nil {
+	if err := registrar.LoadAndRegister("graphite", factory); err != nil {
 		s.logger.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

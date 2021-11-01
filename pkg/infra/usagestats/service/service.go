@@ -19,7 +19,7 @@ type UsageStats struct {
 	Cfg           *setting.Cfg
 	Bus           bus.Bus
 	SQLStore      *sqlstore.SQLStore
-	PluginManager plugins.Manager
+	pluginStore   plugins.Store
 	SocialService social.Service
 	kvStore       *kvstore.NamespacedKVStore
 
@@ -32,14 +32,14 @@ type UsageStats struct {
 	sendReportCallbacks      []usagestats.SendReportCallbackFunc
 }
 
-func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore, pluginManager plugins.Manager,
+func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore, pluginStore plugins.Store,
 	socialService social.Service, kvStore kvstore.KVStore) *UsageStats {
 	s := &UsageStats{
 		Cfg:            cfg,
 		Bus:            bus,
 		SQLStore:       sqlStore,
 		oauthProviders: socialService.GetOAuthProviders(),
-		PluginManager:  pluginManager,
+		pluginStore:    pluginStore,
 		kvStore:        kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
 		log:            log.New("infra.usagestats"),
 		startTime:      time.Now(),

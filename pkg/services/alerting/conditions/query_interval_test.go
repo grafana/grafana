@@ -12,12 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestQueryInterval(t *testing.T) {
-	Convey("When evaluating query condition, regarding the interval value", t, func() {
-		Convey("Can handle interval-calculation with no panel-min-interval and no datasource-min-interval", func() {
+	t.Run("When evaluating query condition, regarding the interval value", func(t *testing.T) {
+		t.Run("Can handle interval-calculation with no panel-min-interval and no datasource-min-interval", func(t *testing.T) {
 			// no panel-min-interval in the queryModel
 			queryModel := `{"target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}`
 
@@ -29,13 +30,13 @@ func TestQueryInterval(t *testing.T) {
 			verifier := func(query plugins.DataSubQuery) {
 				// 5minutes timerange = 300000milliseconds; default-resolution is 1500pixels,
 				// so we should have 300000/1500 = 200milliseconds here
-				So(query.IntervalMS, ShouldEqual, 200)
-				So(query.MaxDataPoints, ShouldEqual, interval.DefaultRes)
+				require.Equal(t, int64(200), query.IntervalMS)
+				require.Equal(t, interval.DefaultRes, query.MaxDataPoints)
 			}
 
-			applyScenario(timeRange, dataSourceJson, queryModel, verifier)
+			applyScenario(t, timeRange, dataSourceJson, queryModel, verifier)
 		})
-		Convey("Can handle interval-calculation with panel-min-interval and no datasource-min-interval", func() {
+		t.Run("Can handle interval-calculation with panel-min-interval and no datasource-min-interval", func(t *testing.T) {
 			// panel-min-interval in the queryModel
 			queryModel := `{"interval":"123s", "target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}`
 
@@ -45,13 +46,13 @@ func TestQueryInterval(t *testing.T) {
 			timeRange := "5m"
 
 			verifier := func(query plugins.DataSubQuery) {
-				So(query.IntervalMS, ShouldEqual, 123000)
-				So(query.MaxDataPoints, ShouldEqual, interval.DefaultRes)
+				require.Equal(t, int64(123000), query.IntervalMS)
+				require.Equal(t, interval.DefaultRes, query.MaxDataPoints)
 			}
 
-			applyScenario(timeRange, dataSourceJson, queryModel, verifier)
+			applyScenario(t, timeRange, dataSourceJson, queryModel, verifier)
 		})
-		Convey("Can handle interval-calculation with no panel-min-interval and datasource-min-interval", func() {
+		t.Run("Can handle interval-calculation with no panel-min-interval and datasource-min-interval", func(t *testing.T) {
 			// no panel-min-interval in the queryModel
 			queryModel := `{"target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}`
 
@@ -59,18 +60,18 @@ func TestQueryInterval(t *testing.T) {
 			dataSourceJson, err := simplejson.NewJson([]byte(`{
 			"timeInterval": "71s"
 		}`))
-			So(err, ShouldBeNil)
+			require.Nil(t, err)
 
 			timeRange := "5m"
 
 			verifier := func(query plugins.DataSubQuery) {
-				So(query.IntervalMS, ShouldEqual, 71000)
-				So(query.MaxDataPoints, ShouldEqual, interval.DefaultRes)
+				require.Equal(t, int64(71000), query.IntervalMS)
+				require.Equal(t, interval.DefaultRes, query.MaxDataPoints)
 			}
 
-			applyScenario(timeRange, dataSourceJson, queryModel, verifier)
+			applyScenario(t, timeRange, dataSourceJson, queryModel, verifier)
 		})
-		Convey("Can handle interval-calculation with both panel-min-interval and datasource-min-interval", func() {
+		t.Run("Can handle interval-calculation with both panel-min-interval and datasource-min-interval", func(t *testing.T) {
 			// panel-min-interval in the queryModel
 			queryModel := `{"interval":"19s", "target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}`
 
@@ -78,21 +79,21 @@ func TestQueryInterval(t *testing.T) {
 			dataSourceJson, err := simplejson.NewJson([]byte(`{
 			"timeInterval": "71s"
 		}`))
-			So(err, ShouldBeNil)
+			require.Nil(t, err)
 
 			timeRange := "5m"
 
 			verifier := func(query plugins.DataSubQuery) {
 				// when both panel-min-interval and datasource-min-interval exists,
 				// panel-min-interval is used
-				So(query.IntervalMS, ShouldEqual, 19000)
-				So(query.MaxDataPoints, ShouldEqual, interval.DefaultRes)
+				require.Equal(t, int64(19000), query.IntervalMS)
+				require.Equal(t, interval.DefaultRes, query.MaxDataPoints)
 			}
 
-			applyScenario(timeRange, dataSourceJson, queryModel, verifier)
+			applyScenario(t, timeRange, dataSourceJson, queryModel, verifier)
 		})
 
-		Convey("Can handle no min-interval, and very small time-ranges, where the default-min-interval=1ms applies", func() {
+		t.Run("Can handle no min-interval, and very small time-ranges, where the default-min-interval=1ms applies", func(t *testing.T) {
 			// no panel-min-interval in the queryModel
 			queryModel := `{"target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}`
 
@@ -104,11 +105,11 @@ func TestQueryInterval(t *testing.T) {
 			verifier := func(query plugins.DataSubQuery) {
 				// no min-interval exists, the default-min-interval will be used,
 				// and for such a short time-range this will cause the value to be 1millisecond.
-				So(query.IntervalMS, ShouldEqual, 1)
-				So(query.MaxDataPoints, ShouldEqual, interval.DefaultRes)
+				require.Equal(t, int64(1), query.IntervalMS)
+				require.Equal(t, interval.DefaultRes, query.MaxDataPoints)
 			}
 
-			applyScenario(timeRange, dataSourceJson, queryModel, verifier)
+			applyScenario(t, timeRange, dataSourceJson, queryModel, verifier)
 		})
 	})
 }
@@ -135,8 +136,8 @@ func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *
 }
 
 //nolint: staticcheck // plugins.DataResponse deprecated
-func applyScenario(timeRange string, dataSourceJsonData *simplejson.Json, queryModel string, verifier func(query plugins.DataSubQuery)) {
-	Convey("desc", func() {
+func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejson.Json, queryModel string, verifier func(query plugins.DataSubQuery)) {
+	t.Run("desc", func(t *testing.T) {
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
 			return nil
@@ -159,10 +160,10 @@ func applyScenario(timeRange string, dataSourceJsonData *simplejson.Json, queryM
             "reducer":{"type": "avg"},
 					"evaluator":{"type": "gt", "params": [100]}
           }`))
-		So(err, ShouldBeNil)
+		require.Nil(t, err)
 
 		condition, err := newQueryCondition(jsonModel, 0)
-		So(err, ShouldBeNil)
+		require.Nil(t, err)
 
 		ctx.condition = condition
 
@@ -179,6 +180,6 @@ func applyScenario(timeRange string, dataSourceJsonData *simplejson.Json, queryM
 
 		_, err = condition.Eval(ctx.result, reqHandler)
 
-		So(err, ShouldBeNil)
+		require.Nil(t, err)
 	})
 }

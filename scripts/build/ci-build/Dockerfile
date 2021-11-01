@@ -69,6 +69,11 @@ RUN cd /tmp/crosstool-ng-${CTNG}        && \
     echo 'CT_EXPERIMENTAL=y' >> .config && \
     echo 'CT_ALLOW_BUILD_AS_ROOT=y' >> .config && \
     echo 'CT_ALLOW_BUILD_AS_ROOT_SURE=y' >> .config && \
+    mkdir -p .build/tarballs && \
+    cd .build/tarballs && \
+    curl -fLO https://libisl.sourceforge.io/isl-0.20.tar.gz && \
+    curl -fLO https://github.com/libexpat/libexpat/releases/download/R_2_1_0/expat-2.1.0.tar.gz && \
+    cd - && \
     ./ct-ng build
 RUN cd /tmp && \
     rm /tmp/x86_64-centos6-linux-gnu/build.log.bz2 && \
