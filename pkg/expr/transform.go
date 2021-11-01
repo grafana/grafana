@@ -87,7 +87,7 @@ type DataSourceRef struct {
 
 func (q *Query) GetDatasourceUID() string {
 	if q.DatasourceUID != "" {
-		return q.DatasourceUID // backwards compatability gets precedence
+		return q.DatasourceUID // backwards compatibility gets precedence
 	}
 
 	if q.Datasource.UID != "" {

@@ -27,7 +27,7 @@ const DatasourceID = -100
 
 // OldDatasourceUID is the datasource uid used in requests to identify it as an
 // expression command. It goes with the query root level datasourceUID property. It was accidentally
-// set to the Id and is now kept for backwards compatability. The newer Datasource.UID property
+// set to the Id and is now kept for backwards compatibility. The newer Datasource.UID property
 // should be used instead and should be set to "__expr__".
 const OldDatasourceUID = "-100"
 

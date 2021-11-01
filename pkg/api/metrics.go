@@ -32,13 +32,21 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	}
 
 	// Loop to see if we have an expression.
+	for _, query := range reqDTO.Queries {
+		dsType := query.Get("datasource").MustString("")
+
+		// Expressions uses new DataSourceRef property
+		dsNewUID := query.Get("datasource").Get("uid").MustString("")
+		dsNewType := query.Get("datasource").Get("type").MustString("")
+		if dsType == expr.DatasourceName || (dsNewUID == expr.DatasourceUID && dsNewType == expr.DatasourceType) {
+			return hs.handleExpressions(c, reqDTO)
+		}
+	}
+
 	prevType := ""
 	var ds *models.DataSource
 	for _, query := range reqDTO.Queries {
 		dsType := query.Get("datasource").MustString("")
-		if dsType == expr.DatasourceName {
-			return hs.handleExpressions(c, reqDTO)
-		}
 		if prevType != "" && prevType != dsType {
 			// For mixed datasource case, each data source is sent in a single request.
 			// So only the datasource from the first query is needed. As all requests
@@ -121,18 +129,27 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 	for _, query := range reqDTO.Queries {
 		hs.log.Debug("Processing metrics query", "query", query)
 		name := query.Get("datasource").MustString("")
+		newDSType := query.Get("datasource").Get("type").MustString("")
+		newDSUID := query.Get("datasource").Get("uid").MustString("")
 
-		datasourceID, err := query.Get("datasourceId").Int64()
-		if err != nil {
-			hs.log.Debug("Can't process query since it's missing data source ID")
-			return response.Error(400, "Query missing data source ID", nil)
+		datasourceID, dsIDErr := query.Get("datasourceId").Int64()
+		if dsIDErr != nil && newDSUID == "" {
+			hs.log.Debug("Can't process query since it's missing data source ID or UID")
+			return response.Error(400, "Query missing data source ID or UID", nil)
 		}
 
-		if name != expr.DatasourceName {
+		if (datasourceID != expr.DatasourceID && name != expr.DatasourceName) || (newDSUID != expr.DatasourceUID && newDSType != expr.DatasourceType) {
 			// Expression requests have everything in one request, so need to check
 			// all data source queries for possible permission / not found issues.
-			if _, err = hs.DataSourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache); err != nil {
-				return hs.handleGetDataSourceError(err, datasourceID)
+			if dsIDErr == nil && newDSUID == "" {
+				if _, err := hs.DataSourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache); err != nil {
+					return hs.handleGetDataSourceError(err, datasourceID)
+				}
+			} else {
+				// use uid
+				if _, err := hs.DataSourceCache.GetDatasourceByUID(newDSUID, c.SignedInUser, c.SkipCache); err != nil {
+					return hs.handleGetDataSourceUIDError(err, newDSUID)
+				}
 			}
 		}
 
@@ -163,6 +180,17 @@ func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *r
 	}
 	if errors.Is(err, models.ErrDataSourceNotFound) {
 		return response.Error(400, "Invalid data source ID", err)
+	}
+	return response.Error(500, "Unable to load data source metadata", err)
+}
+
+func (hs *HTTPServer) handleGetDataSourceUIDError(err error, datasourceUID string) *response.NormalResponse {
+	hs.log.Debug("Encountered error getting data source", "err", err, "uid", datasourceUID)
+	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		return response.Error(403, "Access denied to data source", err)
+	}
+	if errors.Is(err, models.ErrDataSourceNotFound) {
+		return response.Error(400, "Invalid data source UID", err)
 	}
 	return response.Error(500, "Unable to load data source metadata", err)
 }
