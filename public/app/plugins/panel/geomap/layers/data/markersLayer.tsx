@@ -101,7 +101,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     }
 
     const markerPath =
-    getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
+      getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
 
     const uri = await getSVGUri(markerPath, config.size.fixed * 2);
 
@@ -113,9 +113,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           return; // ignore empty
         }
 
-        
         const makeIconStyle = (cfg: StyleMakerConfig) => {
-          
           return new style.Style({
             image: new style.Icon({
               src: uri,
@@ -127,8 +125,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         };
 
         const marker = getMarkerFromPath(config.markerSymbol?.fixed);
-  
-        const shape: StyleMaker = marker?.make ?? makeIconStyle;  
+
+        const shape: StyleMaker = marker?.make ?? makeIconStyle;
 
         const features: Feature<Point>[] = [];
 
