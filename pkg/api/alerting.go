@@ -290,7 +290,7 @@ func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotific
 		return response.Error(500, "Failed to create alert notification", err)
 	}
 
-	return response.JSON(201, dtos.NewAlertNotification(cmd.Result))
+	return response.JSON(200, dtos.NewAlertNotification(cmd.Result))
 }
 
 func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotificationCommand) response.Response {
