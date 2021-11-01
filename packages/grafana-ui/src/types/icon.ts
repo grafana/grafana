@@ -33,6 +33,7 @@ export const getAvailableIcons = () =>
     'calculator-alt',
     'calendar-alt',
     'camera',
+    'capture',
     'channel-add',
     'chart-line',
     'check',

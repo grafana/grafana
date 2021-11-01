@@ -3,8 +3,9 @@ import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/da
 import { Alert, Select, stylesFactory, useTheme2 } from '@grafana/ui';
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 import { css } from '@emotion/css';
+import { GazetteerPathEditorConfigSettings } from '../types';
 
-const paths: Array<SelectableValue<string>> = [
+const defaultPaths: Array<SelectableValue<string>> = [
   {
     label: 'Countries',
     description: 'Lookup countries by name, two letter code, or three letter code',
@@ -22,9 +23,15 @@ const paths: Array<SelectableValue<string>> = [
   },
 ];
 
-export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({ value, onChange, context }) => {
+export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, GazetteerPathEditorConfigSettings>> = ({
+  value,
+  onChange,
+  context,
+  item,
+}) => {
   const styles = getStyles(useTheme2());
   const [gaz, setGaz] = useState<Gazetteer>();
+  const settings = item.settings as any;
 
   useEffect(() => {
     async function fetchData() {
@@ -35,7 +42,7 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({
   }, [value, setGaz]);
 
   const { current, options } = useMemo(() => {
-    let options = [...paths];
+    let options = settings?.options ? [...settings.options] : [...defaultPaths];
     let current = options.find((f) => f.value === gaz?.path);
     if (!current && gaz) {
       current = {
@@ -45,7 +52,7 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({
       options.push(current);
     }
     return { options, current };
-  }, [gaz]);
+  }, [gaz, settings.options]);
 
   return (
     <>

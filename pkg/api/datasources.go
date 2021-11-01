@@ -48,7 +48,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		if plugin := hs.PluginManager.GetDataSource(ds.Type); plugin != nil {
+		if plugin := hs.pluginStore.Plugin(ds.Type); plugin != nil {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 			dsItem.TypeName = plugin.Name
 		} else {
@@ -378,8 +378,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		return
 	}
 
-	// find plugin
-	plugin := hs.PluginManager.GetDataSource(ds.Type)
+	plugin := hs.pluginStore.Plugin(ds.Type)
 	if plugin == nil {
 		c.JsonApiErr(500, "Unable to find datasource plugin", err)
 		return
@@ -393,10 +392,10 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	pCtx := backend.PluginContext{
 		User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
 		OrgID:                      c.OrgId,
-		PluginID:                   plugin.Id,
+		PluginID:                   plugin.ID,
 		DataSourceInstanceSettings: dsInstanceSettings,
 	}
-	hs.BackendPluginManager.CallResource(pCtx, c, web.Params(c.Req)["*"])
+	hs.pluginClient.CallResource(pCtx, c, web.Params(c.Req)["*"])
 }
 
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
@@ -444,7 +443,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		return response.Error(500, "Unable to load datasource metadata", err)
 	}
 
-	plugin := hs.PluginManager.GetDataSource(ds.Type)
+	plugin := hs.pluginStore.Plugin(ds.Type)
 	if plugin == nil {
 		return response.Error(500, "Unable to find datasource plugin", err)
 	}
@@ -453,14 +452,16 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 	if err != nil {
 		return response.Error(500, "Unable to get datasource model", err)
 	}
-	pCtx := backend.PluginContext{
-		User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
-		OrgID:                      c.OrgId,
-		PluginID:                   plugin.Id,
-		DataSourceInstanceSettings: dsInstanceSettings,
+	req := &backend.CheckHealthRequest{
+		PluginContext: backend.PluginContext{
+			User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
+			OrgID:                      c.OrgId,
+			PluginID:                   plugin.ID,
+			DataSourceInstanceSettings: dsInstanceSettings,
+		},
 	}
 
-	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
+	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), req)
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}

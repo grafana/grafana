@@ -70,7 +70,7 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 		return nil, err
 	}
 
-	clientLog.Info("Creating new client", "version", ds.ESVersion, "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
+	clientLog.Debug("Creating new client", "version", ds.ESVersion, "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
 
 	return &baseClientImpl{
 		ctx:                ctx,

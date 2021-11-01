@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugins) (map[string]interface{}, error) {
+func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]interface{}, error) {
 	orgDataSources := make([]*models.DataSource, 0)
 
 	if c.OrgId != 0 {
@@ -61,12 +61,19 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 			"access":    ds.Access,
 		}
 
-		meta, exists := enabledPlugins.DataSources[ds.Type]
+		meta, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
 		if !exists {
 			log.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
-		dsMap["meta"] = meta
+		dsMap["preload"] = meta.Preload
+		dsMap["module"] = meta.Module
+		dsMap["meta"] = &plugins.PluginMetaDTO{
+			JSONData:  meta.JSONData,
+			Signature: meta.Signature,
+			Module:    meta.Module,
+			BaseURL:   meta.BaseURL,
+		}
 
 		jsonData := ds.JsonData
 		if jsonData == nil {
@@ -113,12 +120,17 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
 	// the datasource table)
-	for _, ds := range hs.PluginManager.DataSources() {
+	for _, ds := range hs.pluginStore.Plugins(plugins.DataSource) {
 		if ds.BuiltIn {
 			info := map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
-				"meta": hs.PluginManager.GetDataSource(ds.Id),
+				"meta": &plugins.PluginMetaDTO{
+					JSONData:  ds.JSONData,
+					Signature: ds.Signature,
+					Module:    ds.Module,
+					BaseURL:   ds.BaseURL,
+				},
 			}
 			if ds.Name == grafanads.DatasourceName {
 				info["id"] = grafanads.DatasourceID
@@ -133,13 +145,13 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
-	enabledPlugins, err := hs.PluginManager.GetEnabledPlugins(c.OrgId)
+	enabledPlugins, err := hs.enabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
 	}
 
 	pluginsToPreload := []string{}
-	for _, app := range enabledPlugins.Apps {
+	for _, app := range enabledPlugins[plugins.App] {
 		if app.Preload {
 			pluginsToPreload = append(pluginsToPreload, app.Module)
 		}
@@ -157,15 +169,15 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			defaultDS = n
 		}
 
-		meta := dsM["meta"].(*plugins.DataSourcePlugin)
-		if meta.Preload {
-			pluginsToPreload = append(pluginsToPreload, meta.Module)
+		module, _ := dsM["module"].(string)
+		if preload, _ := dsM["preload"].(bool); preload && module != "" {
+			pluginsToPreload = append(pluginsToPreload, module)
 		}
 	}
 
 	panels := map[string]interface{}{}
-	for _, panel := range enabledPlugins.Panels {
-		if panel.State == plugins.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+	for _, panel := range enabledPlugins[plugins.Panel] {
+		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
@@ -173,14 +185,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			pluginsToPreload = append(pluginsToPreload, panel.Module)
 		}
 
-		panels[panel.Id] = map[string]interface{}{
+		panels[panel.ID] = map[string]interface{}{
+			"id":            panel.ID,
 			"module":        panel.Module,
-			"baseUrl":       panel.BaseUrl,
+			"baseUrl":       panel.BaseURL,
 			"name":          panel.Name,
-			"id":            panel.Id,
 			"info":          panel.Info,
 			"hideFromList":  panel.HideFromList,
-			"sort":          getPanelSort(panel.Id),
+			"sort":          getPanelSort(panel.ID),
 			"skipDataQuery": panel.SkipDataQuery,
 			"state":         panel.State,
 			"signature":     panel.Signature,
@@ -241,8 +253,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"commit":        commit,
 			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
-			"latestVersion": hs.PluginManager.GrafanaLatestVersion(),
-			"hasUpdate":     hs.PluginManager.GrafanaHasUpdate(),
+			"latestVersion": hs.updateChecker.LatestGrafanaVersion(),
+			"hasUpdate":     hs.updateChecker.GrafanaUpdateAvailable(),
 			"env":           setting.Env,
 			"isEnterprise":  hs.License.HasValidLicense(),
 		},
@@ -334,4 +346,97 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 	}
 
 	c.JSON(200, settings)
+}
+
+// EnabledPlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
+// For example ["panel"] -> ["piechart"] -> {pie chart plugin instance}
+type EnabledPlugins map[plugins.Type]map[string]*plugins.Plugin
+
+func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (*plugins.Plugin, bool) {
+	if _, exists := ep[pluginType][pluginID]; exists {
+		return ep[pluginType][pluginID], true
+	}
+
+	return nil, false
+}
+
+func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
+	ep := make(EnabledPlugins)
+
+	pluginSettingMap, err := hs.pluginSettings(orgID)
+	if err != nil {
+		return ep, err
+	}
+
+	apps := make(map[string]*plugins.Plugin)
+	for _, app := range hs.pluginStore.Plugins(plugins.App) {
+		if b, exists := pluginSettingMap[app.ID]; exists {
+			app.Pinned = b.Pinned
+			apps[app.ID] = app
+		}
+	}
+	ep[plugins.App] = apps
+
+	dataSources := make(map[string]*plugins.Plugin)
+	for _, ds := range hs.pluginStore.Plugins(plugins.DataSource) {
+		if _, exists := pluginSettingMap[ds.ID]; exists {
+			dataSources[ds.ID] = ds
+		}
+	}
+	ep[plugins.DataSource] = dataSources
+
+	panels := make(map[string]*plugins.Plugin)
+	for _, p := range hs.pluginStore.Plugins(plugins.Panel) {
+		if _, exists := pluginSettingMap[p.ID]; exists {
+			panels[p.ID] = p
+		}
+	}
+	ep[plugins.Panel] = panels
+
+	return ep, nil
+}
+
+func (hs *HTTPServer) pluginSettings(orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
+	pluginSettings, err := hs.SQLStore.GetPluginSettings(orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	pluginMap := make(map[string]*models.PluginSettingInfoDTO)
+	for _, plug := range pluginSettings {
+		pluginMap[plug.PluginId] = plug
+	}
+
+	for _, pluginDef := range hs.pluginStore.Plugins() {
+		// ignore entries that already exist
+		if _, ok := pluginMap[pluginDef.ID]; ok {
+			continue
+		}
+
+		// enabled by default
+		opt := &models.PluginSettingInfoDTO{
+			PluginId: pluginDef.ID,
+			OrgId:    orgID,
+			Enabled:  true,
+		}
+
+		// apps are disabled by default unless autoEnabled: true
+		if p := hs.pluginStore.Plugin(pluginDef.ID); p != nil && p.IsApp() {
+			opt.Enabled = p.AutoEnabled
+			opt.Pinned = p.AutoEnabled
+		}
+
+		// if it's included in app, check app settings
+		if pluginDef.IncludedInAppID != "" {
+			// app components are by default disabled
+			opt.Enabled = false
+
+			if appSettings, ok := pluginMap[pluginDef.IncludedInAppID]; ok {
+				opt.Enabled = appSettings.Enabled
+			}
+		}
+		pluginMap[pluginDef.ID] = opt
+	}
+
+	return pluginMap, nil
 }

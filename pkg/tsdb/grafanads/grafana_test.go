@@ -5,6 +5,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -42,9 +43,9 @@ func TestReadCSVFile(t *testing.T) {
 }
 
 type fakeBackendPM struct {
-	backendplugin.Manager
+	plugins.CoreBackendRegistrar
 }
 
-func (pm *fakeBackendPM) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+func (pm *fakeBackendPM) LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	return nil
 }

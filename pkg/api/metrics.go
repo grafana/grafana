@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
 )
 
 // QueryMetricsV2 returns query metrics.
@@ -82,19 +84,17 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	resp, err := hs.DataService.HandleRequest(c.Req.Context(), ds, request)
+	req, err := hs.createRequest(ds, request)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Request formation error", err)
+	}
+
+	resp, err := hs.pluginClient.QueryData(c.Req.Context(), req)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
 
-	// This is insanity... but ¯\_(ツ)_/¯, the current query path looks like:
-	//  encodeJson( decodeBase64( encodeBase64( decodeArrow( encodeArrow(frame)) ) )
-	// this will soon change to a more direct route
-	qdr, err := resp.ToBackendDataResponse()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error converting results", err)
-	}
-	return toMacronResponse(qdr)
+	return toMacronResponse(resp)
 }
 
 func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
@@ -221,4 +221,43 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 	}
 
 	return response.JSON(statusCode, &resp)
+}
+
+// nolint:staticcheck // plugins.DataQueryResponse deprecated
+func (hs *HTTPServer) createRequest(ds *models.DataSource, query plugins.DataQuery) (*backend.QueryDataRequest, error) {
+	instanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
+	if err != nil {
+		return nil, err
+	}
+
+	req := &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			OrgID:                      ds.OrgId,
+			PluginID:                   ds.Type,
+			User:                       adapters.BackendUserFromSignedInUser(query.User),
+			DataSourceInstanceSettings: instanceSettings,
+		},
+		Queries: []backend.DataQuery{},
+		Headers: query.Headers,
+	}
+
+	for _, q := range query.Queries {
+		modelJSON, err := q.Model.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		req.Queries = append(req.Queries, backend.DataQuery{
+			RefID:         q.RefID,
+			Interval:      time.Duration(q.IntervalMS) * time.Millisecond,
+			MaxDataPoints: q.MaxDataPoints,
+			TimeRange: backend.TimeRange{
+				From: query.TimeRange.GetFromAsTimeUTC(),
+				To:   query.TimeRange.GetToAsTimeUTC(),
+			},
+			QueryType: q.QueryType,
+			JSON:      modelJSON,
+		})
+	}
+
+	return req, nil
 }

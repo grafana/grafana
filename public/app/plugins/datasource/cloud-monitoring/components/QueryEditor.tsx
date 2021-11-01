@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { QueryEditorProps } from '@grafana/data';
+import { QueryEditorProps, toOption } from '@grafana/data';
 import { Button, Select } from '@grafana/ui';
 import { MetricQueryEditor, SLOQueryEditor, QueryEditorRow } from './';
 import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, EditorMode } from '../types';
 import { SELECT_WIDTH, QUERY_TYPES } from '../constants';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
-import { toOption } from '../functions';
 import CloudMonitoringDatasource from '../datasource';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery>;

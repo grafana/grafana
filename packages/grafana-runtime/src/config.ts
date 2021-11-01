@@ -34,7 +34,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   externalUserMngInfo = '';
   allowOrgCreate = false;
   disableLoginForm = false;
-  defaultDatasource = '';
+  defaultDatasource = ''; // UID
   alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';

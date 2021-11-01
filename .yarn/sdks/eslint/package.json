@@ -1,0 +1,6 @@
+{
+  "name": "eslint",
+  "version": "7.21.0-sdk",
+  "main": "./lib/api.js",
+  "type": "commonjs"
+}
