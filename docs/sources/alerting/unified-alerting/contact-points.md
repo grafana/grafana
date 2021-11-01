@@ -30,6 +30,16 @@ You can configure Grafana managed contact points as well as contact points for a
 1. Find the contact point to edit, then click **Edit** (pen icon).
 1. Make any changes and click **Save contact point**.
 
+## Test a contact point
+
+For Grafana managed contact points you can send a test notification which is helpful for verifying a contact point is configured correctly. To send a test notification:
+
+1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
+1. Find the contact point to test, then click **Edit** (pen icon). Or create a new contact point.
+1. Click **Test** (paper airplane icon) to open the contact point testing modal.
+1. Choose whether to send a predefined test notification, or choose custom to add your own custom annotations and labels to include in the notification.
+1. Click **Send test notification** to fire the alert.
+
 ## Delete a contact point
 
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
