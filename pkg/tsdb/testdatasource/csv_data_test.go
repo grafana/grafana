@@ -17,7 +17,7 @@ func TestCSVFileScenario(t *testing.T) {
 	cfg.DataPath = t.TempDir()
 	cfg.StaticRootPath = "../../../public"
 
-	p := &TestDataPlugin{
+	s := &Service{
 		cfg: cfg,
 	}
 
@@ -50,7 +50,7 @@ func TestCSVFileScenario(t *testing.T) {
 		}
 
 		t.Run("Should not allow non file name chars", func(t *testing.T) {
-			_, err := p.loadCsvFile("../population_by_state.csv")
+			_, err := s.loadCsvFile("../population_by_state.csv")
 			require.Error(t, err)
 		})
 	})

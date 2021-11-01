@@ -115,8 +115,8 @@ export const getButtonStyles = (props: StyleProps) => {
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme);
   const variantStyles = getPropertiesForVariant(theme, variant, fill);
   const disabledStyles = getPropertiesForDisabled(theme, variant, fill);
-
   const focusStyle = getFocusStyles(theme);
+  const paddingMinusBorder = theme.spacing.gridSize * padding - 1;
 
   return {
     button: css({
@@ -126,7 +126,7 @@ export const getButtonStyles = (props: StyleProps) => {
       fontSize: fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       fontFamily: theme.typography.fontFamily,
-      padding: theme.spacing(0, padding),
+      padding: `0 ${paddingMinusBorder}px`,
       height: theme.spacing(height),
       // Deduct border from line-height for perfect vertical centering on windows and linux
       lineHeight: `${theme.spacing.gridSize * height - 2}px`,
@@ -150,10 +150,15 @@ export const getButtonStyles = (props: StyleProps) => {
       height: 16px;
       margin: ${theme.spacing(0, 1, 0, 0.5)};
     `,
-    icon: css`
-      margin-right: ${theme.spacing((iconOnly ? -padding : padding) / 2)};
-      margin-left: ${theme.spacing(-padding / 2)};
-    `,
+    icon: iconOnly
+      ? css({
+          // Important not to set margin bottom here as it would override internal icon bottom margin
+          marginRight: theme.spacing(-padding / 2),
+          marginLeft: theme.spacing(-padding / 2),
+        })
+      : css({
+          marginRight: theme.spacing(padding / 2),
+        }),
     content: css`
       display: flex;
       flex-direction: row;

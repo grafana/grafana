@@ -4,6 +4,8 @@
   ],
   "enabledManagers": ["npm"],
   "ignoreDeps": [
+    "@types/systemjs",
+    "@types/d3-force",
     "d3",
     "d3-force", // we should bump this once we move to esm modules
     "husky",
