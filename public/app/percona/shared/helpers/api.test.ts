@@ -1,5 +1,6 @@
-import { AxiosInstance } from 'axios';
-import { ApiRequest, AxiosInstanceEx } from './api';
+import { AxiosError, AxiosInstance } from 'axios';
+import { ApiErrorCode } from '../core';
+import { apiErrorParser, ApiRequest, AxiosInstanceEx, translateApiError } from './api';
 
 declare module './api' {
   export interface AxiosInstanceEx extends AxiosInstance {
@@ -88,5 +89,54 @@ describe('DELETE::', () => {
     const result = await api.delete('/test/path');
 
     await expect(result).toEqual('some data');
+  });
+});
+
+describe('translateApiError', () => {
+  it('should return undefined for non-mapped errors', () => {
+    expect(translateApiError('foo' as ApiErrorCode)).toBeUndefined();
+  });
+
+  it('should return mapped mapped string for known errors', () => {
+    expect(translateApiError(ApiErrorCode.ERROR_CODE_INVALID_XTRABACKUP)).not.toBeUndefined();
+  });
+});
+
+describe('apiErrorParser', () => {
+  it('should return empty array if no response available', () => {
+    expect(apiErrorParser({} as AxiosError)).toHaveLength(0);
+  });
+
+  it('should return empty array if no response data available', () => {
+    expect(apiErrorParser({ response: {} } as AxiosError)).toHaveLength(0);
+  });
+
+  it('should return empty array if no error details available', () => {
+    expect(apiErrorParser({ response: { data: {} } } as AxiosError)).toHaveLength(0);
+  });
+
+  it('should return empty array if no error details available', () => {
+    expect(apiErrorParser({ response: { data: {} } } as AxiosError)).toHaveLength(0);
+  });
+
+  it('should return array with translated codes', () => {
+    expect(
+      apiErrorParser({
+        response: { data: { details: [{ code: ApiErrorCode.ERROR_CODE_INCOMPATIBLE_TARGET_MYSQL }] } },
+      } as AxiosError)
+    ).toHaveLength(1);
+
+    expect(
+      apiErrorParser({
+        response: {
+          data: {
+            details: [
+              { code: ApiErrorCode.ERROR_CODE_INCOMPATIBLE_TARGET_MYSQL },
+              { code: ApiErrorCode.ERROR_CODE_INVALID_XTRABACKUP },
+            ],
+          },
+        },
+      } as AxiosError)
+    ).toHaveLength(2);
   });
 });

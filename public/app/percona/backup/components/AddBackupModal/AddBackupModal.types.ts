@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { BackupMode, DataModel, RetryMode } from 'app/percona/backup/Backup.types';
-import { Databases } from 'app/percona/shared/core';
+import { ApiVerboseError, Databases } from 'app/percona/shared/core';
 import { PeriodType } from 'app/percona/shared/helpers/cron/types';
 import { Backup } from '../BackupInventory/BackupInventory.types';
 import { ScheduledBackup } from '../ScheduledBackups/ScheduledBackups.types';
@@ -9,6 +9,7 @@ export interface AddBackupModalProps {
   backup: Backup | ScheduledBackup | null;
   isVisible: boolean;
   scheduleMode?: boolean;
+  backupErrors?: ApiVerboseError[];
   onClose: () => void;
   onBackup: (values: AddBackupFormProps) => void;
 }
