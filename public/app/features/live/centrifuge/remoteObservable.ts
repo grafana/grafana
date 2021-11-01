@@ -1,7 +1,7 @@
 import * as comlink from 'comlink';
 import { from, Observable, switchMap } from 'rxjs';
 
-export const remoteObservableAsObservable = <T>(remoteObs: comlink.Remote<Observable<T>>): Observable<T> =>
+export const remoteObservableAsObservable = <T>(remoteObs: comlink.RemoteObject<Observable<T>>): Observable<T> =>
   new Observable((subscriber) => {
     const remoteSubPromise = remoteObs.subscribe(
       comlink.proxy((nextValueInRemoteObs: T) => {
@@ -16,5 +16,5 @@ export const remoteObservableAsObservable = <T>(remoteObs: comlink.Remote<Observ
   });
 
 export const promiseWithRemoteObservableAsObservable = <T>(
-  promiseWithProxyObservable: Promise<comlink.Remote<Observable<T>>>
+  promiseWithProxyObservable: Promise<comlink.RemoteObject<Observable<T>>>
 ): Observable<T> => from(promiseWithProxyObservable).pipe(switchMap((val) => remoteObservableAsObservable(val)));

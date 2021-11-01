@@ -10,9 +10,12 @@ let centrifuge: CentrifugeService;
 
 let okToSendData = true;
 
-const initialize = (deps: CentrifugeSrvDeps, observable: comlink.Remote<Observable<boolean>>) => {
+const initialize = (
+  deps: CentrifugeSrvDeps,
+  remoteObservable: comlink.RemoteObject<Observable<boolean> & comlink.ProxyMarked>
+) => {
   centrifuge = new CentrifugeService(deps);
-  remoteObservableAsObservable(observable).subscribe((next) => (okToSendData = next));
+  remoteObservableAsObservable(remoteObservable).subscribe((next) => (okToSendData = next));
 };
 
 const getConnectionState = () => {

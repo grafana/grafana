@@ -13,12 +13,7 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
 
   constructor(deps: CentrifugeSrvDeps) {
     this.centrifugeWorker = comlink.wrap<RemoteCentrifugeService>(new CentrifugeWorker());
-    this.centrifugeWorker.initialize(
-      deps,
-      // the cast is necessary because of comlink.Remote type bug:
-      // function parameter `T` marked as `Remote<T>` should be translated into `T & ProxyMarked` for the client
-      (comlink.proxy(liveTimer.ok) as unknown) as comlink.Remote<Observable<boolean>>
-    );
+    this.centrifugeWorker.initialize(deps, comlink.proxy(liveTimer.ok));
   }
 
   getConnectionState: CentrifugeSrv['getConnectionState'] = () => {
