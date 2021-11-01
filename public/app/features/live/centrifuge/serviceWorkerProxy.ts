@@ -1,5 +1,5 @@
 import { CentrifugeSrv, CentrifugeSrvDeps } from './service';
-import CentrifugeWorker from './service.worker';
+import CentrifugeWorker, { RemoteCentrifugeService } from './service.worker';
 import './transferHandlers';
 
 import * as comlink from 'comlink';
@@ -9,13 +9,16 @@ import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
 
 export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
-  private centrifugeWorker: comlink.Remote<CentrifugeSrv> & {
-    initialize: (deps: CentrifugeSrvDeps, liveTimerObservable: Observable<boolean>) => Promise<void>;
-  };
+  private centrifugeWorker;
 
   constructor(deps: CentrifugeSrvDeps) {
-    this.centrifugeWorker = comlink.wrap(new CentrifugeWorker());
-    this.centrifugeWorker.initialize(deps, comlink.proxy(liveTimer.ok));
+    this.centrifugeWorker = comlink.wrap<RemoteCentrifugeService>(new CentrifugeWorker());
+    this.centrifugeWorker.initialize(
+      deps,
+      // the cast is necessary because of comlink.Remote type bug:
+      // function parameter `T` marked as `Remote<T>` should be translated into `T & ProxyMarked` for the client
+      (comlink.proxy(liveTimer.ok) as unknown) as comlink.Remote<Observable<boolean>>
+    );
   }
 
   getConnectionState: CentrifugeSrv['getConnectionState'] = () => {
@@ -36,7 +39,7 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
 
   getStream: CentrifugeSrv['getStream'] = <T>(address: LiveChannelAddress, config: LiveChannelConfig) => {
     return promiseWithRemoteObservableAsObservable(
-      this.centrifugeWorker.getStream(address, config) as Promise<Observable<LiveChannelEvent<T>>>
+      this.centrifugeWorker.getStream(address, config) as Promise<comlink.Remote<Observable<LiveChannelEvent<T>>>>
     );
   };
 }

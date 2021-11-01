@@ -3,29 +3,31 @@ import * as comlink from 'comlink';
 import './transferHandlers';
 import { filter, Observable } from 'rxjs';
 import { remoteObservableAsObservable } from './remoteObservable';
+import { LiveChannelAddress, LiveChannelConfig } from '@grafana/data';
+import { LiveDataStreamOptions } from '@grafana/runtime';
 
 let centrifuge: CentrifugeService;
 
 let okToSendData = true;
 
-const initialize = (deps: CentrifugeSrvDeps, observable: Observable<boolean>) => {
+const initialize = (deps: CentrifugeSrvDeps, observable: comlink.Remote<Observable<boolean>>) => {
   centrifuge = new CentrifugeService(deps);
   remoteObservableAsObservable(observable).subscribe((next) => (okToSendData = next));
 };
 
-const getConnectionState: CentrifugeService['getConnectionState'] = () => {
+const getConnectionState = () => {
   return comlink.proxy(centrifuge.getConnectionState());
 };
 
-const getDataStream: CentrifugeService['getDataStream'] = (options, config) => {
+const getDataStream = (options: LiveDataStreamOptions, config: LiveChannelConfig) => {
   return comlink.proxy(centrifuge.getDataStream(options, config).pipe(filter(() => okToSendData)));
 };
 
-const getStream: CentrifugeService['getStream'] = (address, config) => {
+const getStream = (address: LiveChannelAddress, config: LiveChannelConfig) => {
   return comlink.proxy(centrifuge.getStream(address, config));
 };
 
-const getPresence: CentrifugeService['getPresence'] = async (address, config) => {
+const getPresence = async (address: LiveChannelAddress, config: LiveChannelConfig) => {
   return await centrifuge.getPresence(address, config);
 };
 
@@ -36,6 +38,8 @@ const workObj = {
   getStream,
   getPresence,
 };
+
+export type RemoteCentrifugeService = typeof workObj;
 
 comlink.expose(workObj);
 
