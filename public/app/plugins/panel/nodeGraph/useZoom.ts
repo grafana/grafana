@@ -64,7 +64,7 @@ export function useZoom({ stepUp, stepDown, min, max } = defaultOptions) {
         }
       }
     },
-    [onStepDown, onStepUp]
+    [min, max, scale]
   );
 
   useEffect(() => {

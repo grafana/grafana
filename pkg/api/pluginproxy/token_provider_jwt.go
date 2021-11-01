@@ -12,8 +12,8 @@ type jwtAccessTokenProvider struct {
 	ctx    context.Context
 }
 
-func newJwtAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.AppPluginRoute,
-	authParams *plugins.JwtTokenAuth) *jwtAccessTokenProvider {
+func newJwtAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.Route,
+	authParams *plugins.JWTTokenAuth) *jwtAccessTokenProvider {
 	jwtConf := &googletokenprovider.JwtTokenConfig{}
 	if val, ok := authParams.Params["client_email"]; ok {
 		jwtConf.Email = val
