@@ -94,7 +94,11 @@ export function MetricStatEditor({ query, datasource, onChange, onRunQuery }: Re
         </EditorField>
       </EditorRow>
       <EditorRow>
-        <EditorField label="Match Exact" optional={true}>
+        <EditorField
+          label="Match Exact"
+          optional={true}
+          tooltip="Only show metrics that exactly match all defined dimension names."
+        >
           <Switch
             checked={!!query.matchExact}
             onChange={(e) => {

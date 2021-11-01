@@ -151,7 +151,12 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
           </>
         )}
         <EditorRow>
-          <EditorField label="ID" width={26} optional>
+          <EditorField
+            label="ID"
+            width={26}
+            optional
+            tooltip="ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter."
+          >
             <LegacyInput
               onBlur={onRunQuery}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -162,7 +167,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
             />
           </EditorField>
 
-          <EditorField label="Period" width={26}>
+          <EditorField label="Period" width={26} tooltip="Minimum interval between points in seconds">
             <LegacyInput
               value={query.period || ''}
               placeholder="auto"
@@ -173,7 +178,12 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
             />
           </EditorField>
 
-          <EditorField label="Alias" width={26} optional>
+          <EditorField
+            label="Alias"
+            width={26}
+            optional
+            tooltip="Change time series legend name using this field. See documentation for replacement variable formats."
+          >
             <Alias
               value={metricsQuery.alias ?? ''}
               onChange={(value: string) => this.onChange({ ...metricsQuery, alias: value })}
