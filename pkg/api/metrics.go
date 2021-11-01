@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -31,60 +32,65 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		Queries:   make([]plugins.DataSubQuery, 0, len(reqDTO.Queries)),
 	}
 
-	// Loop to see if we have an expression.
+	// Parse all query types
+	hasExpression := false
+	allSameUID := true
+	prevUID := ""
+	queryInfo := make([]queryDSInfo, 0, len(reqDTO.Queries))
 	for _, query := range reqDTO.Queries {
-		dsType := query.Get("datasource").MustString("")
-
-		// Expressions uses new DataSourceRef property
-		dsNewUID := query.Get("datasource").Get("uid").MustString("")
-		dsNewType := query.Get("datasource").Get("type").MustString("")
-		if dsType == expr.DatasourceName || (dsNewUID == expr.DatasourceUID && dsNewType == expr.DatasourceType) {
-			return hs.handleExpressions(c, reqDTO)
+		q := hs.getDataSourceFromQuery(c, query)
+		if q.err != nil {
+			if q.uid != "" {
+				return hs.handleGetDataSourceUIDError(q.err, q.uid)
+			}
+			if q.id > 0 {
+				return hs.handleGetDataSourceError(q.err, q.id)
+			}
+			return response.Error(http.StatusBadRequest, "Query missing data source ID/UID", nil)
 		}
+		if q.isExpr {
+			hasExpression = true
+		} else if q.ds == nil {
+			return response.Error(http.StatusBadRequest, "Datasource not found for query", nil)
+		} else {
+			if prevUID != "" && prevUID != q.ds.Uid {
+				allSameUID = false
+			}
+			prevUID = q.ds.Uid
+		}
+		queryInfo = append(queryInfo, q)
 	}
 
-	prevType := ""
-	var ds *models.DataSource
-	for _, query := range reqDTO.Queries {
-		dsType := query.Get("datasource").MustString("")
-		if prevType != "" && prevType != dsType {
-			// For mixed datasource case, each data source is sent in a single request.
-			// So only the datasource from the first query is needed. As all requests
-			// should be the same data source.
-			hs.log.Debug("Can't process query since it's missing data source ID")
-			return response.Error(http.StatusBadRequest, "All queries must use the same datasource", nil)
-		}
-
-		if ds == nil {
-			// require ID for everything
-			dsID, err := query.Get("datasourceId").Int64()
-			if err != nil {
-				hs.log.Debug("Can't process query since it's missing data source ID")
-				return response.Error(http.StatusBadRequest, "Query missing data source ID", nil)
-			}
-			if dsID == grafanads.DatasourceID {
-				ds = grafanads.DataSourceModel(c.OrgId)
-			} else {
-				ds, err = hs.DataSourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
-				if err != nil {
-					return hs.handleGetDataSourceError(err, dsID)
-				}
-			}
-		}
-		prevType = dsType
+	ds := queryInfo[0].ds
+	if hasExpression {
+		ds = nil // Don't attach datsource model
+	} else if !allSameUID {
+		return response.Error(http.StatusBadRequest, "All queries must use the same datasource", nil)
 	}
 
-	for _, query := range reqDTO.Queries {
-		hs.log.Debug("Processing metrics query", "query", query)
+	for _, info := range queryInfo {
+		hs.log.Debug("Processing metrics query", "query", info.query)
 
 		request.Queries = append(request.Queries, plugins.DataSubQuery{
-			RefID:         query.Get("refId").MustString("A"),
-			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
-			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
-			QueryType:     query.Get("queryType").MustString(""),
-			Model:         query,
+			RefID:         info.query.Get("refId").MustString("A"),
+			MaxDataPoints: info.query.Get("maxDataPoints").MustInt64(100),
+			IntervalMS:    info.query.Get("intervalMs").MustInt64(1000),
+			QueryType:     info.query.Get("queryType").MustString(""),
+			Model:         info.query, // includes full datasource info for expressions
 			DataSource:    ds,
 		})
+	}
+
+	if hasExpression {
+		exprService := expr.Service{
+			Cfg:         hs.Cfg,
+			DataService: hs.DataService,
+		}
+		qdr, err := exprService.WrapTransformData(c.Req.Context(), request)
+		if err != nil {
+			return response.Error(500, "expression request error", err)
+		}
+		return toMacronResponse(qdr)
 	}
 
 	err := hs.PluginRequestValidator.Validate(ds.Url, nil)
@@ -105,6 +111,46 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	return toMacronResponse(resp)
 }
 
+type queryDSInfo struct {
+	isExpr bool
+	ds     *models.DataSource
+	err    error
+	uid    string
+	id     int64
+	query  *simplejson.Json
+}
+
+func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simplejson.Json) (info queryDSInfo) {
+	info.query = query
+	uid := query.Get("datasource").Get("uid").MustString()
+	if uid == grafanads.DatasourceUID {
+		info.ds = grafanads.DataSourceModel(c.OrgId)
+		return
+	}
+	if uid == expr.DatasourceUID {
+		info.isExpr = true
+		return
+	}
+
+	if uid != "" {
+		info.uid = uid
+		info.ds, info.err = hs.DataSourceCache.GetDatasourceByUID(uid, c.SignedInUser, c.SkipCache)
+		return
+	}
+
+	// Support legacy requets from before 8.3
+	if query.Get("datasource").MustString() == expr.DatasourceType {
+		info.isExpr = true
+	}
+
+	// Fallback to the datasourceId
+	info.id, info.err = query.Get("datasourceId").Int64()
+	if info.err == nil {
+		info.ds, info.err = hs.DataSourceCache.GetDatasource(info.id, c.SignedInUser, c.SkipCache)
+	}
+	return
+}
+
 func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {
@@ -114,63 +160,6 @@ func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
 	}
 
 	return response.JSONStreaming(statusCode, qdr)
-}
-
-// handleExpressions handles POST /api/ds/query when there is an expression.
-func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
-	timeRange := plugins.NewDataTimeRange(reqDTO.From, reqDTO.To)
-	request := plugins.DataQuery{
-		TimeRange: &timeRange,
-		Debug:     reqDTO.Debug,
-		User:      c.SignedInUser,
-		Queries:   make([]plugins.DataSubQuery, 0, len(reqDTO.Queries)),
-	}
-
-	for _, query := range reqDTO.Queries {
-		hs.log.Debug("Processing metrics query", "query", query)
-		name := query.Get("datasource").MustString("")
-		newDSType := query.Get("datasource").Get("type").MustString("")
-		newDSUID := query.Get("datasource").Get("uid").MustString("")
-
-		datasourceID, dsIDErr := query.Get("datasourceId").Int64()
-		if dsIDErr != nil && newDSUID == "" {
-			hs.log.Debug("Can't process query since it's missing data source ID or UID")
-			return response.Error(400, "Query missing data source ID or UID", nil)
-		}
-
-		if (datasourceID != expr.DatasourceID && name != expr.DatasourceName) || (newDSUID != expr.DatasourceUID && newDSType != expr.DatasourceType) {
-			// Expression requests have everything in one request, so need to check
-			// all data source queries for possible permission / not found issues.
-			if dsIDErr == nil && newDSUID == "" {
-				if _, err := hs.DataSourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache); err != nil {
-					return hs.handleGetDataSourceError(err, datasourceID)
-				}
-			} else {
-				// use uid
-				if _, err := hs.DataSourceCache.GetDatasourceByUID(newDSUID, c.SignedInUser, c.SkipCache); err != nil {
-					return hs.handleGetDataSourceUIDError(err, newDSUID)
-				}
-			}
-		}
-
-		request.Queries = append(request.Queries, plugins.DataSubQuery{
-			RefID:         query.Get("refId").MustString("A"),
-			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
-			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
-			QueryType:     query.Get("queryType").MustString(""),
-			Model:         query,
-		})
-	}
-
-	exprService := expr.Service{
-		Cfg:         hs.Cfg,
-		DataService: hs.DataService,
-	}
-	qdr, err := exprService.WrapTransformData(c.Req.Context(), request)
-	if err != nil {
-		return response.Error(500, "expression request error", err)
-	}
-	return toMacronResponse(qdr)
 }
 
 func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *response.NormalResponse {

@@ -11,6 +11,8 @@ import {
   parseLiveChannelAddress,
   StreamingFrameOptions,
   StreamingFrameAction,
+  getDataSourceRef,
+  DataSourceRef,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -18,6 +20,11 @@ import { getBackendSrv, getDataSourceSrv, getGrafanaLiveSrv } from '../services'
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 const ExpressionDatasourceID = '__expr__';
+
+export const ExpressionDatasourceRef: DataSourceRef = {
+  type: ExpressionDatasourceID,
+  uid: ExpressionDatasourceID,
+};
 
 class HealthCheckError extends Error {
   details: HealthCheckResultDetails;
@@ -89,12 +96,12 @@ class DataSourceWithBackend<
     }
 
     const queries = targets.map((q) => {
-      let datasourceId = this.id;
+      let datasource = this.getRef();
 
-      if (q.datasource === ExpressionDatasourceID) {
+      if (q.datasource?.type === ExpressionDatasourceID) {
         return {
           ...q,
-          datasourceId,
+          datasource: ExpressionDatasourceRef,
         };
       }
 
@@ -105,12 +112,12 @@ class DataSourceWithBackend<
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
-        datasourceId = ds.id;
+        datasource = getDataSourceRef(ds);
       }
 
       return {
         ...this.applyTemplateVariables(q, request.scopedVars),
-        datasourceId,
+        datasource,
         intervalMs,
         maxDataPoints,
       };
