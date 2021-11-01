@@ -12,7 +12,7 @@ type InfraLogWrapper struct {
 	debugMode bool
 }
 
-func NewInstallerLogger(name string, debugMode bool) (l *InfraLogWrapper) {
+func newInstallerLogger(name string, debugMode bool) (l *InfraLogWrapper) {
 	return &InfraLogWrapper{
 		debugMode: debugMode,
 		l:         log.New(name),

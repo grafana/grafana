@@ -46,8 +46,6 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
 
     // Dynamically fill the selected element
     build: (builder, context) => {
-      console.log('MAKE element editor', opts.element.UID);
-
       const { options } = opts.element;
       const layerTypes = canvasElementRegistry.selectOptions(
         options?.type // the selected value

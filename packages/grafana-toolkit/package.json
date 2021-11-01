@@ -62,7 +62,7 @@
     "eslint": "7.21.0",
     "execa": "^5.1.1",
     "file-loader": "6.2.0",
-    "fork-ts-checker-webpack-plugin": "1.0.0",
+    "fork-ts-checker-webpack-plugin": "6.4.0",
     "fs-extra": "^10.0.0",
     "globby": "^10.0.1",
     "html-loader": "0.5.5",

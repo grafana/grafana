@@ -2623,7 +2623,7 @@ __metadata:
     eslint: 7.21.0
     execa: ^5.1.1
     file-loader: 6.2.0
-    fork-ts-checker-webpack-plugin: 1.0.0
+    fork-ts-checker-webpack-plugin: 6.4.0
     fs-extra: ^10.0.0
     globby: ^10.0.1
     html-loader: 0.5.5
@@ -10579,17 +10579,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-code-frame@npm:^6.22.0":
-  version: 6.26.0
-  resolution: "babel-code-frame@npm:6.26.0"
-  dependencies:
-    chalk: ^1.1.3
-    esutils: ^2.0.2
-    js-tokens: ^3.0.2
-  checksum: 9410c3d5a921eb02fa409675d1a758e493323a49e7b9dddb7a2a24d47e61d39ab1129dd29f9175836eac9ce8b1d4c0a0718fcdc57ce0b865b529fd250dbab313
-  languageName: node
-  linkType: hard
-
 "babel-jest@npm:26.6.3, babel-jest@npm:^26.6.3":
   version: 26.6.3
   resolution: "babel-jest@npm:26.6.3"
@@ -11955,7 +11944,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chokidar@npm:^2.0.4, chokidar@npm:^2.1.8":
+"chokidar@npm:^2.1.8":
   version: 2.1.8
   resolution: "chokidar@npm:2.1.8"
   dependencies:
@@ -14287,13 +14276,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:1.30.1, date-fns@npm:^1.27.2":
-  version: 1.30.1
-  resolution: "date-fns@npm:1.30.1"
-  checksum: 86b1f3269cbb1f3ee5ac9959775ea6600436f4ee2b78430cd427b41a0c9fabf740b1a5d401c085f3003539a6f4755c7c56c19fbd70ce11f6f673f6bc8075b710
-  languageName: node
-  linkType: hard
-
 "date-fns@npm:2.21.3":
   version: 2.21.3
   resolution: "date-fns@npm:2.21.3"
@@ -14301,10 +14283,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:^2.16.1":
+"date-fns@npm:2.25.0, date-fns@npm:^2.16.1":
   version: 2.25.0
   resolution: "date-fns@npm:2.25.0"
   checksum: 8896dc1dde0ee5ef77616942423bfa11fa2017a5ac19457293b7aaedc8822ff94f0a14eaf93da573b09b601dc0149eb430988a046cc9f79a2eb15f8c66c9c50c
+  languageName: node
+  linkType: hard
+
+"date-fns@npm:^1.27.2":
+  version: 1.30.1
+  resolution: "date-fns@npm:1.30.1"
+  checksum: 86b1f3269cbb1f3ee5ac9959775ea6600436f4ee2b78430cd427b41a0c9fabf740b1a5d401c085f3003539a6f4755c7c56c19fbd70ce11f6f673f6bc8075b710
   languageName: node
   linkType: hard
 
@@ -16892,21 +16881,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fork-ts-checker-webpack-plugin@npm:1.0.0":
-  version: 1.0.0
-  resolution: "fork-ts-checker-webpack-plugin@npm:1.0.0"
-  dependencies:
-    babel-code-frame: ^6.22.0
-    chalk: ^2.4.1
-    chokidar: ^2.0.4
-    micromatch: ^3.1.10
-    minimatch: ^3.0.4
-    semver: ^5.6.0
-    tapable: ^1.0.0
-  checksum: 06b01379a736c555c7797409a6c97780149107b902f4cee1cb86eb43ccf109ff85c3a48e81b23e9ab0356749947111df16dd0d27dbc790378be8a4f317875545
-  languageName: node
-  linkType: hard
-
 "fork-ts-checker-webpack-plugin@npm:4.1.6, fork-ts-checker-webpack-plugin@npm:^4.1.6":
   version: 4.1.6
   resolution: "fork-ts-checker-webpack-plugin@npm:4.1.6"
@@ -16922,38 +16896,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fork-ts-checker-webpack-plugin@npm:6.3.4":
-  version: 6.3.4
-  resolution: "fork-ts-checker-webpack-plugin@npm:6.3.4"
-  dependencies:
-    "@babel/code-frame": ^7.8.3
-    "@types/json-schema": ^7.0.5
-    chalk: ^4.1.0
-    chokidar: ^3.4.2
-    cosmiconfig: ^6.0.0
-    deepmerge: ^4.2.2
-    fs-extra: ^9.0.0
-    glob: ^7.1.6
-    memfs: ^3.1.2
-    minimatch: ^3.0.4
-    schema-utils: 2.7.0
-    semver: ^7.3.2
-    tapable: ^1.0.0
-  peerDependencies:
-    eslint: ">= 6"
-    typescript: ">= 2.7"
-    vue-template-compiler: "*"
-    webpack: ">= 4"
-  peerDependenciesMeta:
-    eslint:
-      optional: true
-    vue-template-compiler:
-      optional: true
-  checksum: ad84ccbc990c086e86e988f556bd8a28f5a94e358f044889698d78b4d13d106f61da121081d2cdf58d84f972a2635826c035e5ef70138b92558cec7cf0c7f3a1
-  languageName: node
-  linkType: hard
-
-"fork-ts-checker-webpack-plugin@npm:^6.0.4":
+"fork-ts-checker-webpack-plugin@npm:6.4.0, fork-ts-checker-webpack-plugin@npm:^6.0.4":
   version: 6.4.0
   resolution: "fork-ts-checker-webpack-plugin@npm:6.4.0"
   dependencies:
@@ -18077,7 +18020,7 @@ __metadata:
     d3-force: ^2.1.1
     d3-scale-chromatic: 1.5.0
     dangerously-set-html-content: 1.0.9
-    date-fns: 1.30.1
+    date-fns: 2.25.0
     debounce-promise: 3.1.2
     emotion: 10.0.27
     enzyme: 3.11.0
@@ -18102,7 +18045,7 @@ __metadata:
     fast-text-encoding: ^1.0.0
     file-loader: 6.2.0
     file-saver: 2.0.2
-    fork-ts-checker-webpack-plugin: 6.3.4
+    fork-ts-checker-webpack-plugin: 6.4.0
     fs-extra: 10.0.0
     gaze: 1.1.3
     glob: 7.1.6
@@ -21310,13 +21253,6 @@ __metadata:
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
   checksum: 8a95213a5a77deb6cbe94d86340e8d9ace2b93bc367790b260101d2f36a2eaf4e4e22d9fa9cf459b38af3a32fb4190e638024cf82ec95ef708680e405ea7cc78
-  languageName: node
-  linkType: hard
-
-"js-tokens@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "js-tokens@npm:3.0.2"
-  checksum: ff24cf90e6e4ac446eba56e604781c1aaf3bdaf9b13a00596a0ebd972fa3b25dc83c0f0f67289c33252abb4111e0d14e952a5d9ffb61f5c22532d555ebd8d8a9
   languageName: node
   linkType: hard
 

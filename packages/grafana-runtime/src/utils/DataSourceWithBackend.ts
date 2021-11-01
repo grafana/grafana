@@ -102,7 +102,7 @@ class DataSourceWithBackend<
         const ds = getDataSourceSrv().getInstanceSettings(q.datasource);
 
         if (!ds) {
-          throw new Error('Unknown Datasource: ' + q.datasource);
+          throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
         datasourceId = ds.id;

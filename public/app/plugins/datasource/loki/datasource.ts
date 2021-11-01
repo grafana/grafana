@@ -311,7 +311,7 @@ export class LokiDatasource
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => ({
         ...query,
-        datasource: this.name,
+        datasource: this.getRef(),
         expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
       }));
     }

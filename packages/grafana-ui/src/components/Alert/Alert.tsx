@@ -60,7 +60,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
           <div className={styles.close}>
-            <IconButton name="times" onClick={onRemove} size="lg" type="button" />
+            <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
           </div>
         )}
         {onRemove && buttonContent && (
