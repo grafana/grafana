@@ -55,7 +55,7 @@ func getOrgHelper(ctx context.Context, orgID int64) response.Response {
 
 	if err := sqlstore.GetOrgById(ctx, &query); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
-			return response.Error(500, "Failed to get organization", err)
+			return response.Error(404, "Organization not found", err)
 		}
 		return response.Error(500, "Failed to get organization", err)
 	}
