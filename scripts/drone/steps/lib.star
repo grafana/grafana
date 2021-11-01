@@ -374,6 +374,8 @@ def test_backend_step(edition):
             'lint-backend',
         ],
         'commands': [
+            # First make sure that there are no tests with FocusConvey
+            '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
             './bin/grabpl test-backend --edition {}'.format(edition),
         ],
     }
