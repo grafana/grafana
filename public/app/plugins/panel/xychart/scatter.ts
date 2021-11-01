@@ -550,7 +550,7 @@ const prepConfig = (
     scaleKey: 'x',
     placement: AxisPlacement.Bottom,
     theme,
-    label: xField.config.custom.axisLabel,
+    label: xField.config.custom.xAxisLabel,
   });
 
   scatterSeries.forEach((s) => {

@@ -79,6 +79,18 @@ export function addAxisConfig(
           { value: false, label: 'Off' },
         ],
       },
+    })
+    .addTextInput({
+      path: 'xAxisLabel',
+      name: 'X-axis label',
+      category,
+      defaultValue: '',
+      settings: {
+        placeholder: 'Optional text',
+      },
+      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
+      // no matter what the field type is
+      shouldApply: () => true,
     });
 
   if (!hideScale) {

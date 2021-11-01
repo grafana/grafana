@@ -108,6 +108,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   builder.addAxis({
     scaleKey: 'x',
     isTime: false,
+    label: frame.fields[0].config.custom?.xAxisLabel,
     placement: vizOrientation.xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
     splits: config.xSplits,
     values: config.xValues,
