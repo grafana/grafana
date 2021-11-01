@@ -1,10 +1,11 @@
 import React, { ChangeEvent } from 'react';
-import { LegacyForms } from '@grafana/ui';
+import { LegacyForms, SegmentAsync, Input } from '@grafana/ui';
 const { Switch } = LegacyForms;
-import { PanelData } from '@grafana/data';
-import { CloudWatchAnnotationQuery, CloudWatchQuery } from '../types';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from '../types';
+import { PanelData, toOption } from '@grafana/data';
 import { CloudWatchDatasource } from '../datasource';
-import { QueryField, PanelQueryEditor } from './';
+import { QueryField, QueryInlineField } from './';
+import { MetricStatEditor } from './MetricStatEditor/';
 
 export type Props = {
   query: CloudWatchAnnotationQuery;
@@ -14,16 +15,44 @@ export type Props = {
 };
 
 export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
-  const { query, onChange } = props;
+  const { query, onChange, datasource } = props;
+
+  const variableOptionGroup = {
+    label: 'Template Variables',
+    options: datasource.getVariables().map(toOption),
+  };
 
   return (
     <>
-      <PanelQueryEditor
+      <QueryInlineField label="Region">
+        <SegmentAsync
+          value={query.region}
+          placeholder="Select region"
+          loadOptions={() =>
+            datasource.metricFindQuery('regions()').then((regions) => [...regions, variableOptionGroup])
+          }
+          allowCustomValue
+          onChange={({ value: region }) => {
+            if (region) {
+              onChange({ ...query, region });
+            }
+          }}
+        />
+      </QueryInlineField>
+      <MetricStatEditor
         {...props}
-        onChange={(editorQuery: CloudWatchQuery) => onChange({ ...query, ...editorQuery })}
+        onChange={(editorQuery: CloudWatchMetricsQuery) => onChange({ ...query, ...editorQuery })}
         onRunQuery={() => {}}
-        history={[]}
-      ></PanelQueryEditor>
+      ></MetricStatEditor>
+
+      <QueryInlineField label="Period" tooltip="Minimum interval between points in seconds">
+        <Input
+          className="width-6"
+          value={query.period || ''}
+          placeholder="auto"
+          onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, period: event.target.value })}
+        />
+      </QueryInlineField>
       <div className="gf-form-inline">
         <Switch
           label="Enable Prefix Matching"

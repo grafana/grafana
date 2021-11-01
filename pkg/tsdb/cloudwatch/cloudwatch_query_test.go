@@ -107,14 +107,12 @@ func TestCloudWatchQuery(t *testing.T) {
 			query.MatchExact = false
 			assert.True(t, query.isSearchExpression(), "Expected a search expression")
 			assert.False(t, query.isMathExpression(), "Expected not math expression")
-			assert.False(t, query.isMetricStat(), "Expected not metric stat")
 		})
 
 		t.Run("Match exact is true", func(t *testing.T) {
 			query.MatchExact = true
 			assert.False(t, query.isSearchExpression(), "Exxpected not search expression")
 			assert.False(t, query.isMathExpression(), "Expected not math expression")
-			assert.True(t, query.isMetricStat(), "Expected a metric stat")
 		})
 	})
 
@@ -134,10 +132,5 @@ func TestCloudWatchQuery(t *testing.T) {
 
 		assert.True(t, query.isSearchExpression(), "Expected search expression")
 		assert.False(t, query.isMathExpression(), "Expected not math expression")
-		assert.False(t, query.isMetricStat(), "Expected not metric stat")
 	})
-}
-
-func (q *cloudWatchQuery) isMetricStat() bool {
-	return !q.isSearchExpression() && !q.isMathExpression()
 }

@@ -1,13 +1,14 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
 import { CloudWatchDatasource } from '../datasource';
 import { CustomVariableModel, initialVariableModelState } from '../../../../features/variables/types';
-import { CloudWatchJsonData } from '../types';
+import { CloudWatchJsonData, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
+import { getSelectParent } from '@grafana/ui/src/components/Select/test-utils';
 
 const setup = () => {
   const instanceSettings = {
@@ -35,6 +36,10 @@ const setup = () => {
 
   const datasource = new CloudWatchDatasource(instanceSettings, templateSrv as any, {} as any);
   datasource.metricFindQuery = async () => [{ value: 'test', label: 'test', text: 'test' }];
+  datasource.getNamespaces = jest.fn().mockResolvedValue([]);
+  datasource.getMetrics = jest.fn().mockResolvedValue([]);
+  datasource.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.getDimensionKeys = jest.fn().mockResolvedValue([]);
 
   const props: Props = {
     query: {
@@ -50,6 +55,8 @@ const setup = () => {
       expression: '',
       alias: '',
       matchExact: true,
+      metricQueryType: MetricQueryType.Search,
+      metricEditorMode: MetricEditorMode.Builder,
     },
     datasource,
     history: [],
@@ -80,6 +87,8 @@ describe('QueryEditor', () => {
       refId: '',
       expression: '',
       matchExact: true,
+      metricQueryType: MetricQueryType.Search,
+      metricEditorMode: MetricEditorMode.Builder,
     } as any;
     await act(async () => {
       renderer.create(<MetricsQueryEditor {...props} />);
@@ -88,6 +97,7 @@ describe('QueryEditor', () => {
       namespace: '',
       metricName: '',
       expression: '',
+      sqlExpression: '',
       dimensions: {},
       region: 'default',
       id: '',
@@ -98,20 +108,22 @@ describe('QueryEditor', () => {
       apiMode: 'Metrics',
       refId: '',
       matchExact: true,
+      metricQueryType: MetricQueryType.Search,
+      metricEditorMode: MetricEditorMode.Builder,
     });
   });
 
   describe('should use correct default values', () => {
     it('when region is null is display default in the label', async () => {
-      // @ts-ignore strict null error TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
+      const props = setup();
+      props.query.region = undefined;
+
       await act(async () => {
-        const props = setup();
-        props.query.region = (null as unknown) as string;
-        const wrapper = mount(<MetricsQueryEditor {...props} />);
-        expect(
-          wrapper.find('.gf-form-inline').first().find('Segment').find('InlineLabel').find('label').text()
-        ).toEqual('default');
+        render(<MetricsQueryEditor {...props} />);
       });
+
+      const selectParent = getSelectParent(screen.getByLabelText('Region:'));
+      expect(selectParent).toHaveTextContent('default');
     });
 
     it('should normalize query with default values', () => {
@@ -119,6 +131,7 @@ describe('QueryEditor', () => {
         namespace: '',
         metricName: '',
         expression: '',
+        sqlExpression: '',
         dimensions: {},
         region: 'default',
         id: '',
@@ -126,7 +139,61 @@ describe('QueryEditor', () => {
         statistic: 'Average',
         matchExact: true,
         period: '',
+        queryMode: 'Metrics',
         refId: '42',
+        metricQueryType: MetricQueryType.Search,
+        metricEditorMode: MetricEditorMode.Builder,
+      });
+    });
+  });
+
+  describe('should handle editor modes correctly', () => {
+    it('when metric query type is metric search and editor mode is builder', async () => {
+      await act(async () => {
+        const props = setup();
+        render(<MetricsQueryEditor {...props} />);
+
+        expect(screen.getByText('Metric Search')).toBeInTheDocument();
+        const radio = screen.getByLabelText('Builder');
+        expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+      });
+    });
+
+    it('when metric query type is metric search and editor mode is raw', async () => {
+      await act(async () => {
+        const props = setup();
+        (props.query as CloudWatchMetricsQuery).metricEditorMode = MetricEditorMode.Code;
+        render(<MetricsQueryEditor {...props} />);
+
+        expect(screen.getByText('Metric Search')).toBeInTheDocument();
+        const radio = screen.getByLabelText('Code');
+        expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+      });
+    });
+
+    it('when metric query type is metric query and editor mode is builder', async () => {
+      await act(async () => {
+        const props = setup();
+        (props.query as CloudWatchMetricsQuery).metricQueryType = MetricQueryType.Query;
+        (props.query as CloudWatchMetricsQuery).metricEditorMode = MetricEditorMode.Builder;
+        render(<MetricsQueryEditor {...props} />);
+
+        expect(screen.getByText('Metric Query')).toBeInTheDocument();
+        const radio = screen.getByLabelText('Builder');
+        expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+      });
+    });
+
+    it('when metric query type is metric query and editor mode is raw', async () => {
+      await act(async () => {
+        const props = setup();
+        (props.query as CloudWatchMetricsQuery).metricQueryType = MetricQueryType.Query;
+        (props.query as CloudWatchMetricsQuery).metricEditorMode = MetricEditorMode.Code;
+        render(<MetricsQueryEditor {...props} />);
+
+        expect(screen.getByText('Metric Query')).toBeInTheDocument();
+        const radio = screen.getByLabelText('Code');
+        expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
       });
     });
   });
