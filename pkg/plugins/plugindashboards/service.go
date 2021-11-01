@@ -1,6 +1,8 @@
 package plugindashboards
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -32,7 +34,7 @@ type Service struct {
 func (s *Service) updateAppDashboards() {
 	s.logger.Debug("Looking for app dashboard updates")
 
-	pluginSettings, err := s.sqlStore.GetPluginSettings(0)
+	pluginSettings, err := s.sqlStore.GetPluginSettings(context.Background(), 0)
 	if err != nil {
 		s.logger.Error("Failed to get all plugin settings", "error", err)
 		return
