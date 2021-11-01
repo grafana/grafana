@@ -55,10 +55,6 @@ The plan is to move all settings to from package level vars in settings package 
 [Cfg struct](https://github.com/grafana/grafana/blob/df917663e6f358a076ed3daa9b199412e95c11f4/pkg/setting/setting.go#L210)
 [Injection example](https://github.com/grafana/grafana/blob/df917663e6f358a076ed3daa9b199412e95c11f4/pkg/services/cleanup/cleanup.go#L20)
 
-### Reduce the use of GoConvey
-
-We want to migrate away from using GoConvey. Instead, we want to use stdlib testing, because it's the most common approach in the Go community and we think it will be easier for new contributors. Read more about how we want to write tests in the [style guide](/contribute/style-guides/backend.md).
-
 ### Refactor SqlStore
 
 The `sqlstore` handlers all use a global xorm engine variable. Refactor them to use the `SqlStore` instance.
