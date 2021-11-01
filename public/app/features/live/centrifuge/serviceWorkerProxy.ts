@@ -3,7 +3,7 @@ import CentrifugeWorker from './service.worker';
 import './transferHandlers';
 
 import * as comlink from 'comlink';
-import { Observable } from 'rxjs';
+import { asyncScheduler, Observable, observeOn } from 'rxjs';
 import { LiveChannelAddress, LiveChannelConfig, LiveChannelEvent } from '@grafana/data';
 import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
@@ -23,7 +23,11 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
   };
 
   getDataStream: CentrifugeSrv['getDataStream'] = (options, config) => {
-    return promiseWithRemoteObservableAsObservable(this.centrifugeWorker.getDataStream(options, config));
+    return promiseWithRemoteObservableAsObservable(this.centrifugeWorker.getDataStream(options, config)).pipe(
+      // async scheduler splits the synchronous task of deserializing data from web worker and
+      // consuming the message (ie. updating react component) into two to avoid blocking the event loop
+      observeOn(asyncScheduler)
+    );
   };
 
   getPresence: CentrifugeSrv['getPresence'] = (address, config) => {
