@@ -279,7 +279,3 @@ func (auth *AuthModuleConversion) FromDB(data []byte) error {
 func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
 	return []byte{}, nil
 }
-
-type DeleteServiceAccountCommand struct {
-	ServiceAccountID int64
-}

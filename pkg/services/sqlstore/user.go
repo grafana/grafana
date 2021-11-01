@@ -31,7 +31,6 @@ func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandlerCtx("sql", DisableUser)
 	bus.AddHandlerCtx("sql", BatchDisableUsers)
 	bus.AddHandlerCtx("sql", DeleteUser)
-	bus.AddHandlerCtx("sql", DeleteServiceAccount)
 	bus.AddHandlerCtx("sql", SetUserHelpFlag)
 }
 
@@ -760,39 +759,12 @@ func userDeletions() []string {
 	return deletes
 }
 
-func DeleteServiceAccount(ctx context.Context, cmd *models.DeleteServiceAccountCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		return deleteServiceAccountInTransaction(sess, cmd)
-	})
-}
-
-func serviceAccountDeletions() []string {
+func ServiceAccountDeletions() []string {
 	deletes := []string{
 		"DELETE FROM api_key WHERE service_account_id = ?",
 	}
 	deletes = append(deletes, userDeletions()...)
 	return deletes
-}
-
-func deleteServiceAccountInTransaction(sess *DBSession, cmd *models.DeleteServiceAccountCommand) error {
-	user := models.User{Id: cmd.ServiceAccountID}
-	has, err := sess.Get(&user)
-	if err != nil {
-		return err
-	}
-	if !has {
-		return models.ErrUserNotFound
-	}
-	if !user.IsServiceAccount {
-		return models.ErrServiceAccountNotFound
-	}
-	for _, sql := range serviceAccountDeletions() {
-		_, err := sess.Exec(sql, cmd.ServiceAccountID)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
