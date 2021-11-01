@@ -2,7 +2,7 @@
 // with some extra renderers passed to the <TimeSeries> component
 
 import React, { useMemo } from 'react';
-import { Field, PanelProps } from '@grafana/data';
+import { Field, getDisplayProcessor, getFieldDisplayName, PanelProps } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, UPlotConfigBuilder } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -14,7 +14,6 @@ import { prepareGraphableFields } from '../timeseries/utils';
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
-import { MarketTrendMode, PriceDrawStyle } from './types';
 import { drawMarkers } from './utils';
 
 interface FieldIndices {
@@ -43,59 +42,33 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
   const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
 
   const renderers = useMemo(() => {
-    let { mode, drawStyle, fieldMap, fillMode, strokeMode, downColor, upColor, flatColor } = options;
+    let { mode, priceStyle, fieldMap, fillMode, strokeMode, downColor, upColor, flatColor } = options;
     let { open, high, low, close, volume } = fieldMap;
 
     if (open == null || close == null) {
       return [];
     }
 
-    if (mode === MarketTrendMode.Price) {
-      if (high != null && low != null) {
-        return [
-          {
-            fields: { open, high, low, close },
-            init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
-              console.log('addHook');
-              builder.addHook(
-                'drawAxes',
-                drawMarkers({
-                  fields: fieldIndices,
-                  upColor,
-                  downColor,
-                  flatColor,
-                  fillMode,
-                  strokeMode,
-                  candles: drawStyle === PriceDrawStyle.Candles,
-                })
-              );
-            },
-          },
-        ];
-      }
-    } else {
-      if (volume != null) {
-        return [
-          {
-            fields: { volume, open, close },
-            init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
-              builder.addHook(
-                'drawAxes',
-                drawMarkers({
-                  fields: fieldIndices,
-                  upColor,
-                  downColor,
-                  flatColor,
-                  fillMode,
-                  strokeMode,
-                  candles: false,
-                })
-              );
-            },
-          },
-        ];
-      }
-    }
+    return [
+      {
+        fields: { open, high, low, close, volume },
+        init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
+          builder.addHook(
+            'drawAxes',
+            drawMarkers({
+              mode,
+              fields: fieldIndices,
+              upColor: config.theme2.visualization.getColorByName(upColor),
+              downColor: config.theme2.visualization.getColorByName(downColor),
+              flatColor: config.theme2.visualization.getColorByName(flatColor),
+              fillMode,
+              strokeMode,
+              priceStyle,
+            })
+          );
+        },
+      },
+    ];
   }, [options]);
 
   if (!frames || warn) {
@@ -104,6 +77,25 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
         <p>{warn ?? 'No data found in response'}</p>
       </div>
     );
+  }
+
+  // find volume field and set overrides
+  if (frames && options.fieldMap?.volume != null) {
+    for (const frame of frames) {
+      for (const field of frame.fields) {
+        let dispName = getFieldDisplayName(field, frame, data?.series);
+
+        console.log(dispName);
+
+        if (dispName === options.fieldMap?.volume) {
+          field.config.unit = 'short';
+          field.display = getDisplayProcessor({
+            field: field,
+            theme: config.theme2,
+          });
+        }
+      }
+    }
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
@@ -118,6 +110,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       height={height}
       legend={options.legend}
       renderers={renderers}
+      options={options}
     >
       {(config, alignedDataFrame) => {
         return (

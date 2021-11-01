@@ -158,6 +158,30 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
 
+    let scaleRange = null;
+    let axisSpace = null;
+    let axisFilter = (u: uPlot, splits: number[]) => splits;
+
+    //if (customRenderedFields.indexOf('volume') > -1) {
+    if (field.name === 'volume') {
+      scaleRange = (u: uPlot, min: number, max: number) => [0, max * 7];
+      axisSpace = 15;
+      axisFilter = (u: uPlot, splits: number[]) => {
+        let _splits = [];
+        let max = u.series[5].max as number;
+
+        for (let i = 0; i < splits.length; i++) {
+          _splits.push(splits[i]);
+
+          if (splits[i] > max) {
+            break;
+          }
+        }
+
+        return _splits;
+      };
+    }
+
     // The builder will manage unique scaleKeys and combine where appropriate
     builder.addScale({
       scaleKey,
@@ -169,6 +193,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       max: field.config.max,
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
+      range: scaleRange,
     });
 
     if (!yScaleKey) {
@@ -184,6 +209,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         formatValue: (v) => formattedValueToString(fmt(v)),
         theme,
         grid: { show: customConfig.axisGridShow },
+        space: axisSpace,
+        filter: axisFilter,
+        ticks: {
+          filter: axisFilter,
+        },
       });
     }
 

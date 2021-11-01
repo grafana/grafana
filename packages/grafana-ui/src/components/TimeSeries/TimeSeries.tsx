@@ -7,18 +7,9 @@ import { LegendDisplayMode } from '@grafana/schema';
 import { preparePlotConfigBuilder } from './utils';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
+import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 
-const propsToDiff: string[] = [
-  'legend',
-  'mode',
-  'drawStyle',
-  'fieldMap',
-  'upColor',
-  'downColor',
-  'flatColor',
-  'fillMode',
-  'strokeMode',
-];
+const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
