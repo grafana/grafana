@@ -32,7 +32,7 @@ function Cell(props: CellProps) {
       {card && (
         <div
           key={card.value}
-          className={selected === card.value ? cx(styles.card, styles.click) : styles.card}
+          className={selected === card.value ? cx(styles.card, styles.selected) : styles.card}
           onClick={() => onChange(card.value)}
         >
           {card.imgUrl.endsWith('.svg') ? (
@@ -67,8 +67,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
         box-shadow: ${theme.shadows.z2};
       }
     `,
-    click: css`
+    selected: css`
       border: 2px solid ${theme.colors.primary.main};
+      :hover {
+        border-color: ${theme.colors.primary.main};
+      }
     `,
     img: css`
       width: 40px;

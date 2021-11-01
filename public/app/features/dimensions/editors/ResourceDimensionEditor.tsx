@@ -112,9 +112,9 @@ export const ResourceDimensionEditor: FC<
               readOnly={true}
               onClick={openModal}
               prefix={srcPath && <SVG src={srcPath} className={styles.icon} />}
+              suffix={<Button icon="ellipsis-h" variant="secondary" fill="text" size="sm" onClick={openModal} />}
             />
           </InlineField>
-          <Button icon="folder-open" variant="secondary" onClick={openModal} />
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Mapping && (

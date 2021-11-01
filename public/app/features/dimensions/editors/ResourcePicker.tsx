@@ -24,11 +24,12 @@ export interface ResourceItem {
   imgUrl: string;
 }
 
-const sourceOptions = (mediaType: string) => [
-  { label: `${mediaType} Set`, value: 'iconSet' },
+const sourceOptions = [
+  { label: `Folder`, value: 'folder' },
   { label: 'URL', value: 'url' },
   { label: 'Upload', value: 'upload' },
 ];
+
 export function ResourcePicker(props: Props) {
   const { value, onChange, mediaType, folderName, setOpen } = props;
   const folders = getFolders(mediaType).map((v) => ({
@@ -41,7 +42,7 @@ export function ResourcePicker(props: Props) {
   const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
   const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
   // select between existing icon folder, url, or upload
-  const [source, setSource] = useState<SelectableValue<string>>(sourceOptions(mediaType)[0]);
+  const [source, setSource] = useState<SelectableValue<string>>(sourceOptions[0]);
   // pass on new value to confirm button and to show in preview
   const [newValue, setNewValue] = useState<string>(value ?? '');
   const [searchQuery, setSearchQuery] = useState<string>();
@@ -100,16 +101,16 @@ export function ResourcePicker(props: Props) {
       <div className={styles.upper}>
         <div className={styles.child}>
           <Field label="Source">
-            <Select menuShouldPortal={true} options={sourceOptions(mediaType)} onChange={setSource} value={source} />
+            <Select menuShouldPortal={true} options={sourceOptions} onChange={setSource} value={source} />
           </Field>
-          {source?.value === 'iconSet' && (
+          {source?.value === 'folder' && (
             <>
-              <Field label="Set">
+              <Field label="Folder">
                 <Select menuShouldPortal={true} options={folders} onChange={setCurrentFolder} value={currentFolder} />
               </Field>
               <Field>
                 <FilterInput
-                  value={searchQuery}
+                  value={searchQuery ?? ''}
                   placeholder="Search"
                   onChange={(v) => {
                     onChangeSearch(v);
@@ -135,7 +136,7 @@ export function ResourcePicker(props: Props) {
           <Label>{shortName}</Label>
         </div>
       </div>
-      {source?.value === 'iconSet' && filteredIndex && (
+      {source?.value === 'folder' && filteredIndex && (
         <div className={styles.cardsWrapper}>
           <ResourceCards cards={filteredIndex} onChange={(v) => setNewValue(v)} value={newValue} />
         </div>
@@ -145,7 +146,7 @@ export function ResourcePicker(props: Props) {
         <Button variant="secondary" onClick={() => setOpen(false)}>
           Cancel
         </Button>
-        <Button variant={newValue !== value ? 'primary' : 'secondary'} onClick={() => onChange(newValue)}>
+        <Button variant={newValue && newValue !== value ? 'primary' : 'secondary'} onClick={() => onChange(newValue)}>
           Select
         </Button>
       </Modal.ButtonRow>
@@ -163,8 +164,8 @@ export function ResourcePicker(props: Props) {
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     cardsWrapper: css`
-      height: calc(100vh - 500px);
-      max-height: 400px;
+      height: calc(100vh - 550px);
+      min-height: 50px;
       margin-top: 5px;
       max-width: 680px;
     `,
