@@ -12,8 +12,8 @@ type gceAccessTokenProvider struct {
 	ctx    context.Context
 }
 
-func newGceAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.AppPluginRoute,
-	authParams *plugins.JwtTokenAuth) *gceAccessTokenProvider {
+func newGceAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.Route,
+	authParams *plugins.JWTTokenAuth) *gceAccessTokenProvider {
 	cfg := googletokenprovider.Config{
 		RoutePath:         pluginRoute.Path,
 		RouteMethod:       pluginRoute.Method,

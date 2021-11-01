@@ -260,13 +260,18 @@ export function SelectBase<T>({
                   css`
                     display: inline-block;
                     color: ${theme.colors.text.disabled};
-                    position: absolute;
-                    top: 50%;
-                    transform: translateY(-50%);
+
                     box-sizing: border-box;
                     line-height: 1;
                     white-space: nowrap;
-                  `
+                  `,
+                  // When width: auto, the placeholder must take up space in the Select otherwise the width collapses down
+                  width !== 'auto' &&
+                    css`
+                      position: absolute;
+                      top: 50%;
+                      transform: translateY(-50%);
+                    `
                 )}
               >
                 {props.children}
@@ -355,8 +360,8 @@ export function SelectBase<T>({
             zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
-            position: 'relative',
-            width: width ? `${8 * width}px` : '100%',
+            width: width ? theme.spacing(width) : '100%',
+            display: width === 'auto' ? 'inline-flex' : 'flex',
           }),
           option: (provided: any, state: any) => ({
             ...provided,

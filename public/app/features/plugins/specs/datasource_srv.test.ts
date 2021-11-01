@@ -221,6 +221,7 @@ describe('datasource_srv', () => {
             },
             "name": "-- Mixed --",
             "type": "test-db",
+            "uid": "-- Mixed --",
           },
           Object {
             "meta": Object {
@@ -230,6 +231,7 @@ describe('datasource_srv', () => {
             },
             "name": "-- Dashboard --",
             "type": "dashboard",
+            "uid": "-- Dashboard --",
           },
           Object {
             "meta": Object {
@@ -239,6 +241,7 @@ describe('datasource_srv', () => {
             },
             "name": "-- Grafana --",
             "type": "grafana",
+            "uid": "-- Grafana --",
           },
         ]
       `);

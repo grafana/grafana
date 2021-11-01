@@ -17,7 +17,7 @@ import (
 
 func TestUSAScenario(t *testing.T) {
 	cfg := setting.NewCfg()
-	p := &TestDataPlugin{
+	p := &Service{
 		cfg: cfg,
 	}
 

@@ -16,9 +16,10 @@ import {
 import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
+import { DataSourceRef } from '@grafana/data';
 
 export interface AdHocTableOptions {
-  datasource: string;
+  datasource: DataSourceRef;
   key: string;
   value: string;
   operator: string;
@@ -29,6 +30,7 @@ const filterTableName = 'Filters';
 export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<void> => {
   return async (dispatch, getState) => {
     let variable = getVariableByOptions(options, getState());
+    console.log('getVariableByOptions', options, getState().templating.variables);
 
     if (!variable) {
       dispatch(createAdHocVariable(options));
@@ -80,7 +82,7 @@ export const setFiltersFromUrl = (id: string, filters: AdHocVariableFilter[]): T
   };
 };
 
-export const changeVariableDatasource = (datasource?: string): ThunkResult<void> => {
+export const changeVariableDatasource = (datasource?: DataSourceRef): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { editor } = getState().templating;
     const variable = getVariable(editor.id, getState());
@@ -155,6 +157,6 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 
 const getVariableByOptions = (options: AdHocTableOptions, state: StoreState): AdHocVariableModel => {
   return Object.values(state.templating.variables).find(
-    (v) => isAdHoc(v) && v.datasource === options.datasource
+    (v) => isAdHoc(v) && v.datasource?.uid === options.datasource.uid
   ) as AdHocVariableModel;
 };
