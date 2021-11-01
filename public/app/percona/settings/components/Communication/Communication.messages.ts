@@ -18,7 +18,8 @@ export const Messages = {
     },
     smarthost: {
       label: 'Server Address',
-      tooltipText: 'The SMTP host server address through which emails are sent',
+      tooltipText:
+        'The default SMTP smarthost used for sending emails, including port number (e.g. smtp.example.org:587)',
       tooltipLinkText: 'Read more',
       tooltipLink: COMMUNICATION_LINK,
     },

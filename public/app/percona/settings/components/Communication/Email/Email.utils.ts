@@ -52,6 +52,7 @@ export const getInitialValues = (settings: EmailSettings): FormEmailSettings => 
   delete settingsCopy.identity;
   const resultSettings: FormEmailSettings = {
     ...settingsCopy,
+    hello: settings.hello || 'localhost',
     password: authType === EmailAuthType.CRAM ? settings.secret : settings.password,
     authType,
   };
