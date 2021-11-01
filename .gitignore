@@ -147,4 +147,4 @@ compilation-stats.json
 *_gen.go
 
 # api generated clients
-/pkg/api/docs/clients
+/pkg/api/clients

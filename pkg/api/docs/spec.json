@@ -1943,33 +1943,6 @@
         ],
         "summary": "Get users with paging.",
         "operationId": "searchUsersWithPaging",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "default": 1000,
-            "x-go-name": "Limit",
-            "description": "Limit the maximum number of users to return per page",
-            "name": "perpage",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "default": 1,
-            "x-go-name": "Page",
-            "description": "Page index for starting fetching users",
-            "name": "page",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Query",
-            "description": "Query allows return results where the query value is contained in one of the name, login or email fields. Query values with spaces need to be URL encoded e.g. query=Jane%20Doe",
-            "name": "query",
-            "in": "query"
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/responses/searchUsersResponse"

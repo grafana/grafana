@@ -48,6 +48,7 @@ import (
 type GetAPIkeysParams struct {
 	// Show expired keys
 	// in:query
+	// required:false
 	// default:false
 	IncludeExpired bool `json:"includeExpired"`
 }
