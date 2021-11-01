@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   addVariable,
   changeVariableOrder,
@@ -57,7 +57,7 @@ const transactionSlice = createSlice({
     }),
 });
 
-function actionAffectsDirtyState(action: PayloadAction): boolean {
+function actionAffectsDirtyState(action: AnyAction): boolean {
   return [
     removeVariable.type,
     addVariable.type,
