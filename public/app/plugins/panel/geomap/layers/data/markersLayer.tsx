@@ -30,7 +30,7 @@ import { getMarkerFromPath } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
 import { StyleMaker, StyleMakerConfig } from '../../types';
-// import { getSVGUri } from '../../utils/prepareSVG';
+import { getSVGUri } from '../../utils/prepareSVG';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -100,6 +100,11 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
+    const markerPath =
+    getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
+
+    const uri = await getSVGUri(markerPath, config.size.fixed * 2);
+
     return {
       init: () => vectorLayer,
       legend: legend,
@@ -108,23 +113,22 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           return; // ignore empty
         }
 
-        const markerPath =
-          getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
+        
+        const makeIconStyle = (cfg: StyleMakerConfig) => {
+          
+          return new style.Style({
+            image: new style.Icon({
+              src: uri,
+              color: cfg.color,
+              opacity: cfg.opacity,
+              scale: (DEFAULT_SIZE + cfg.size) / (DEFAULT_SIZE * 2 + cfg.size),
+            }),
+          });
+        };
 
-          const marker = getMarkerFromPath(config.markerSymbol?.fixed);
-
-          const makeIconStyle = (cfg: StyleMakerConfig) => {
-            return new style.Style({
-              image: new style.Icon({
-                src: markerPath,
-                color: cfg.color,
-                opacity: cfg.opacity,
-                scale: (DEFAULT_SIZE + cfg.size) / 100,
-              }),
-            });
-          };
+        const marker = getMarkerFromPath(config.markerSymbol?.fixed);
   
-          const shape: StyleMaker = marker?.make ?? makeIconStyle;  
+        const shape: StyleMaker = marker?.make ?? makeIconStyle;  
 
         const features: Feature<Point>[] = [];
 
