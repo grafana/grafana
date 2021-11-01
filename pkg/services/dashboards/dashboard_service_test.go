@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -317,6 +318,6 @@ func (s *fakeDashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*mo
 	return cmd.GetDashboardModel(), nil
 }
 
-func (s *fakeDashboardStore) SaveAlerts(dashID int64, alerts []*models.Alert) error {
+func (s *fakeDashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
 	return nil
 }

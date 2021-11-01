@@ -212,7 +212,7 @@ var UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models
 		return err
 	}
 
-	return store.SaveAlerts(dashboard.Id, alerts)
+	return store.SaveAlerts(context.TODO(), dashboard.Id, alerts)
 }
 
 func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO,

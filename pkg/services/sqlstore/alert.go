@@ -15,17 +15,17 @@ import (
 var timeNow = time.Now
 
 func init() {
-	bus.AddHandler("sql", SaveAlerts)
-	bus.AddHandler("sql", HandleAlertsQuery)
-	bus.AddHandler("sql", GetAlertById)
-	bus.AddHandler("sql", GetAllAlertQueryHandler)
-	bus.AddHandler("sql", SetAlertState)
-	bus.AddHandler("sql", GetAlertStatesForDashboard)
-	bus.AddHandler("sql", PauseAlert)
-	bus.AddHandler("sql", PauseAllAlerts)
+	bus.AddHandlerCtx("sql", SaveAlerts)
+	bus.AddHandlerCtx("sql", HandleAlertsQuery)
+	bus.AddHandlerCtx("sql", GetAlertById)
+	bus.AddHandlerCtx("sql", GetAllAlertQueryHandler)
+	bus.AddHandlerCtx("sql", SetAlertState)
+	bus.AddHandlerCtx("sql", GetAlertStatesForDashboard)
+	bus.AddHandlerCtx("sql", PauseAlert)
+	bus.AddHandlerCtx("sql", PauseAllAlerts)
 }
 
-func GetAlertById(query *models.GetAlertByIdQuery) error {
+func GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
 	alert := models.Alert{}
 	has, err := x.ID(query.Id).Get(&alert)
 	if !has {
@@ -39,7 +39,7 @@ func GetAlertById(query *models.GetAlertByIdQuery) error {
 	return nil
 }
 
-func GetAllAlertQueryHandler(query *models.GetAllAlertsQuery) error {
+func GetAllAlertQueryHandler(ctx context.Context, query *models.GetAllAlertsQuery) error {
 	var alerts []*models.Alert
 	err := x.SQL("select * from alert").Find(&alerts)
 	if err != nil {
@@ -72,7 +72,7 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 	return nil
 }
 
-func HandleAlertsQuery(query *models.GetAlertsQuery) error {
+func HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error {
 	builder := SQLBuilder{}
 
 	builder.Write(`SELECT
@@ -167,7 +167,7 @@ func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 	return nil
 }
 
-func (ss *SQLStore) SaveAlerts(dashID int64, alerts []*models.Alert) error {
+func (ss *SQLStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
 	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
 		if err != nil {
@@ -186,7 +186,7 @@ func (ss *SQLStore) SaveAlerts(dashID int64, alerts []*models.Alert) error {
 	})
 }
 
-func SaveAlerts(cmd *models.SaveAlertsCommand) error {
+func SaveAlerts(ctx context.Context, cmd *models.SaveAlertsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
 		if err != nil {
@@ -299,7 +299,7 @@ func GetAlertsByDashboardId2(dashboardId int64, sess *DBSession) ([]*models.Aler
 	return alerts, nil
 }
 
-func SetAlertState(cmd *models.SetAlertStateCommand) error {
+func SetAlertState(ctx context.Context, cmd *models.SetAlertStateCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		alert := models.Alert{}
 
@@ -338,7 +338,7 @@ func SetAlertState(cmd *models.SetAlertStateCommand) error {
 	})
 }
 
-func PauseAlert(cmd *models.PauseAlertCommand) error {
+func PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if len(cmd.AlertIds) == 0 {
 			return fmt.Errorf("command contains no alertids")
@@ -372,7 +372,7 @@ func PauseAlert(cmd *models.PauseAlertCommand) error {
 	})
 }
 
-func PauseAllAlerts(cmd *models.PauseAllAlertCommand) error {
+func PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAlertCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var newState string
 		if cmd.Paused {
@@ -390,7 +390,7 @@ func PauseAllAlerts(cmd *models.PauseAllAlertCommand) error {
 	})
 }
 
-func GetAlertStatesForDashboard(query *models.GetAlertStatesForDashboardQuery) error {
+func GetAlertStatesForDashboard(ctx context.Context, query *models.GetAlertStatesForDashboardQuery) error {
 	var rawSQL = `SELECT
 	                id,
 	                dashboard_id,

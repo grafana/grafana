@@ -28,7 +28,7 @@ type UsageStatsQuerier interface {
 // configured in Grafana.
 func (e *AlertEngine) QueryUsageStats() (*UsageStats, error) {
 	cmd := &models.GetAllAlertsQuery{}
-	err := e.Bus.Dispatch(cmd)
+	err := e.Bus.DispatchCtx(context.TODO(), cmd)
 	if err != nil {
 		return nil, err
 	}

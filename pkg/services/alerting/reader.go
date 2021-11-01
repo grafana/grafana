@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -29,7 +30,7 @@ func newRuleReader() *defaultRuleReader {
 func (arr *defaultRuleReader) fetch() []*Rule {
 	cmd := &models.GetAllAlertsQuery{}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), cmd); err != nil {
 		arr.log.Error("Could not load alerts", "error", err)
 		return []*Rule{}
 	}
