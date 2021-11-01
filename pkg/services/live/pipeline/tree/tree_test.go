@@ -29,16 +29,6 @@ type testRequests []struct {
 	ps         Params
 }
 
-func getParams() *Params {
-	ps := make(Params, 0, 20)
-	return &ps
-}
-
-func getSkippedNodes() *[]skippedNode {
-	ps := make([]skippedNode, 0, 20)
-	return &ps
-}
-
 func checkRequests(t *testing.T, tree *Node, requests testRequests, unescapes ...bool) {
 	unescape := false
 	if len(unescapes) >= 1 {
@@ -46,7 +36,7 @@ func checkRequests(t *testing.T, tree *Node, requests testRequests, unescapes ..
 	}
 
 	for _, request := range requests {
-		value := tree.getValue(request.path, getParams(), getSkippedNodes(), unescape)
+		value := tree.GetValue(request.path, unescape)
 
 		if value.Handler == nil {
 			if !request.nilHandler {
@@ -657,7 +647,7 @@ func TestTreeTrailingSlashRedirect(t *testing.T) {
 		"/foo/p/p",
 	}
 	for _, route := range noTsrRoutes {
-		value := tree.getValue(route, nil, getSkippedNodes(), false)
+		value := tree.GetValue(route, false)
 		if value.Handler != nil {
 			t.Fatalf("non-nil handler for No-TSR route '%s", route)
 		} else if value.Tsr {
@@ -676,7 +666,7 @@ func TestTreeRootTrailingSlashRedirect(t *testing.T) {
 		t.Fatalf("panic inserting test route: %v", recv)
 	}
 
-	value := tree.getValue("/", nil, getSkippedNodes(), false)
+	value := tree.GetValue("/", false)
 	if value.Handler != nil {
 		t.Fatalf("non-nil handler")
 	} else if value.Tsr {
@@ -856,7 +846,7 @@ func TestTreeInvalidNodeType(t *testing.T) {
 
 	// normal lookup
 	recv := catchPanic(func() {
-		tree.getValue("/test", nil, getSkippedNodes(), false)
+		tree.GetValue("/test", false)
 	})
 	if rs, ok := recv.(string); !ok || rs != panicMsg {
 		t.Fatalf("Expected panic '"+panicMsg+"', got '%v'", recv)
@@ -877,11 +867,8 @@ func TestTreeInvalidParamsType(t *testing.T) {
 	tree.children = append(tree.children, &Node{})
 	tree.children[0].nType = 2
 
-	// set invalid Params type
-	params := make(Params, 0)
-
 	// try to trigger slice bounds out of range with capacity 0
-	tree.getValue("/test", &params, getSkippedNodes(), false)
+	tree.GetValue("/test", false)
 }
 
 func TestTreeWildcardConflictEx(t *testing.T) {
