@@ -15,6 +15,7 @@ export {
   HealthCheckResultDetails,
   HealthStatus,
   StreamOptionsProvider,
+  ExpressionDatasourceRef,
 } from './utils/DataSourceWithBackend';
 export {
   toDataQueryError,

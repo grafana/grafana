@@ -20,11 +20,10 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { toDataQueryError } from '@grafana/runtime';
+import { ExpressionDatasourceRef, toDataQueryError } from '@grafana/runtime';
 import { emitDataRequestEvent } from './queryAnalytics';
 import {
   dataSource as expressionDatasource,
-  ExpressionDatasourceID,
   ExpressionDatasourceUID,
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
@@ -174,7 +173,8 @@ export function callQueryMethod(
 ) {
   // If any query has an expression, use the expression endpoint
   for (const target of request.targets) {
-    if (target.datasource === ExpressionDatasourceID || target.datasource === ExpressionDatasourceUID) {
+    const dsType = target.datasource?.type ?? target.datasource;
+    if (dsType === ExpressionDatasourceRef.type || dsType === ExpressionDatasourceUID) {
       return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
     }
   }

@@ -12,19 +12,16 @@ import {
   StreamingFrameOptions,
   StreamingFrameAction,
   getDataSourceRef,
-  DataSourceRef,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { getBackendSrv, getDataSourceSrv, getGrafanaLiveSrv } from '../services';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
-const ExpressionDatasourceID = '__expr__';
-
-export const ExpressionDatasourceRef: DataSourceRef = {
-  type: ExpressionDatasourceID,
-  uid: ExpressionDatasourceID,
-};
+export const ExpressionDatasourceRef = Object.freeze({
+  type: '__expr__',
+  uid: '__expr__',
+});
 
 class HealthCheckError extends Error {
   details: HealthCheckResultDetails;
@@ -98,7 +95,7 @@ class DataSourceWithBackend<
     const queries = targets.map((q) => {
       let datasource = this.getRef();
 
-      if (q.datasource?.type === ExpressionDatasourceID) {
+      if (q.datasource?.type === ExpressionDatasourceRef.type) {
         return {
           ...q,
           datasource: ExpressionDatasourceRef,
