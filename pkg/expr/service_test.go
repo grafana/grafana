@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -66,8 +65,6 @@ func TestService(t *testing.T) {
 			},
 		},
 	}
-
-	spew.Dump(expect)
 
 	// Service currently doesn't care about order of datas in the return.
 	trans := cmp.Transformer("Sort", func(in []*data.Frame) []*data.Frame {

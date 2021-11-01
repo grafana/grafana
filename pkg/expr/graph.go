@@ -146,12 +146,22 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 			DatasourceUID: query.GetDatasourceUID(),
 		}
 
+		numericDSID := float64(0) // legacy
 		if rn.DatasourceUID == "" {
-			if rv, ok := rawQueryProp["datasourceId"]; ok { // legacy
-				if rv == "" {
-					return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
+			if rv, ok := rn.Query["datasourceId"]; ok {
+				if sv, ok := rv.(float64); ok {
+					if sv == DatasourceID {
+						rn.DatasourceUID = DatasourceUID
+					}
+					if sv > 0 {
+						numericDSID = sv
+					}
 				}
 			}
+		}
+
+		if rn.DatasourceUID == "" && numericDSID == 0 {
+			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
 		}
 
 		var node Node
