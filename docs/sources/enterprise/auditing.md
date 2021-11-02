@@ -84,7 +84,7 @@ For example, creating an API key produces an audit log like this:
 | Log in                           | `{"action": "login-AUTH-MODULE"}` \*                       |
 | Log out \*\*                     | `{"action": "logout"}`                                     |
 | Force logout for user            | `{"action": "logout-user"}`                                |
-| Remove user authentication token | `{"action": "revoke-auth-token"}`                          |
+| Remove user authentication token | `{"action": "revoke-auth-token", "resources": [{"type": "auth-token"}, {"type": "user"}]}` |
 | Create API key                   | `{"action": "create", "resources": [{"type": "api-key"}]}` |
 | Delete API key                   | `{"action": "delete", "resources": [{"type": "api-key"}]}` |
 
@@ -109,7 +109,7 @@ For example, creating an API key produces an audit log like this:
 | Click signup link         | `{"action": "signup"}`                                              |
 | Reload LDAP configuration | `{"action": "ldap-reload"}`                                         |
 | Get user in LDAP          | `{"action": "ldap-search"}`                                         |
-| Sync user with LDAP       | `{"action": "ldap-sync"}`                                           |
+| Sync user with LDAP       | `{"action": "ldap-sync", "resources": [{"type": "user"}]` |
 
 #### Team and organization management
 
@@ -127,7 +127,7 @@ For example, creating an API key produces an audit log like this:
 | Add user to organization                            | `{"action": "create", "resources": [{"type": "org"}, {"type": "user"}]}`  |
 | Change user role in organization                    | `{"action": "update", "resources": [{"type": "user"}, {"type": "org"}]}`  |
 | Remove user from organization                       | `{"action": "delete", "resources": [{"type": "user"}, {"type": "org"}]}`  |
-| Invite external user to organization                | `{"action": "org-invite", "resources": [{"type": "org"}]}`                |
+| Invite external user to organization                | `{"action": "org-invite", "resources": [{"type": "org"}, {"type": "user"}]}`                |
 | Revoke invitation                                   | `{"action": "revoke-org-invite", "resources": [{"type": "org"}]}`         |
 
 #### Folder and dashboard management
@@ -165,17 +165,17 @@ For example, creating an API key produces an audit log like this:
 | Test alert rule           | `{"action": "test", "resources": [{"type": "panel"}]}`                |
 | Pause alert               | `{"action": "pause", "resources": [{"type": "alert"}]}`               |
 | Pause all alerts          | `{"action": "pause-all"}`                                             |
-| Test alert notification   | `{"action": "test", "resources": [{"type": "alert-notification"}]}`   |
-| Create alert notification | `{"action": "create", "resources": [{"type": "alert-notification"}]}` |
-| Update alert notification | `{"action": "update", "resources": [{"type": "alert-notification"}]}` |
-| Delete alert notification | `{"action": "delete", "resources": [{"type": "alert-notification"}]}` |
+| Test alert notification channel   | `{"action": "test", "resources": [{"type": "alert-notification"}]}`   |
+| Create alert notification channel | `{"action": "create", "resources": [{"type": "alert-notification"}]}` |
+| Update alert notification channel | `{"action": "update", "resources": [{"type": "alert-notification"}]}` |
+| Delete alert notification channel | `{"action": "delete", "resources": [{"type": "alert-notification"}]}` |
 
 #### Reporting
 
 | Action                    | Distinguishing fields                                     |
 | ------------------------- | --------------------------------------------------------- |
-| Create report             | `{"action": "create", "resources": [{"type": "report"}]}` |
-| Update report             | `{"action": "update", "resources": [{"type": "report"}]}` |
+| Create report             | `{"action": "create", "resources": [{"type": "report"}, {"type": "dashboard"}]}` |
+| Update report             | `{"action": "update", "resources": [{"type": "report"}, {"type": "dashboard"}]}` |
 | Delete report             | `{"action": "delete", "resources": [{"type": "report"}]}` |
 | Send report by email      | `{"action": "email", "resources": [{"type": "report"}]}`  |
 | Update reporting settings | `{"action": "change-settings"}`                           |
