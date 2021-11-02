@@ -133,16 +133,12 @@ export const updateDatasourcePluginResetOption = <J, S extends {} = KeyValue>(
   key: string
 ) => {
   const config = props.options;
-  if (!config.secureJsonData) {
-    return;
-  }
-
   props.onOptionsChange({
     ...config,
     secureJsonData: {
       ...config.secureJsonData,
       [key]: '',
-    },
+    } as S,
     secureJsonFields: {
       ...config.secureJsonFields,
       [key]: false,
