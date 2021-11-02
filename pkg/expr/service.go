@@ -61,13 +61,12 @@ func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*
 	return res, nil
 }
 
-func DataSourceModel(orgId int64) *models.DataSource {
+func DataSourceModel() *models.DataSource {
 	return &models.DataSource{
 		Id:             DatasourceID,
 		Uid:            DatasourceUID,
 		Name:           DatasourceUID,
 		Type:           DatasourceType,
-		OrgId:          orgId,
 		JsonData:       simplejson.New(),
 		SecureJsonData: make(map[string][]byte),
 	}

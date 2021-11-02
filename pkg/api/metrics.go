@@ -101,6 +101,11 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 	var err error
 	uid := query.Get("datasource").Get("uid").MustString()
 
+	// before 8.3 special types could be sent as datasource (expr)
+	if uid == "" {
+		uid = query.Get("datasource").MustString()
+	}
+
 	// check cache value
 	ds, ok := history[uid]
 	if ok {
@@ -108,8 +113,10 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 	}
 
 	switch uid {
+	case expr.OldDatasourceUID: // "-100" :(
+		fallthrough
 	case expr.DatasourceUID:
-		return expr.DataSourceModel((c.OrgId)), nil
+		return expr.DataSourceModel(), nil
 	case grafanads.DatasourceUID:
 		return grafanads.DataSourceModel(c.OrgId), nil
 	case "": // empty or mssing UID (old or invalid)
@@ -117,14 +124,9 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 	default:
 		ds, err = hs.DataSourceCache.GetDatasourceByUID(uid, c.SignedInUser, c.SkipCache)
 		if err != nil {
-			return nil, hs.handleGetDataSourceUIDError(err, uid)
+			return nil, hs.handleGetDataSourceError(err, uid)
 		}
 		return ds, nil
-	}
-
-	// Support legacy requets from before 8.3
-	if query.Get("datasource").MustString() == expr.DatasourceType {
-		return expr.DataSourceModel((c.OrgId)), nil
 	}
 
 	// Fallback to the datasourceId
@@ -150,24 +152,13 @@ func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
 	return response.JSONStreaming(statusCode, qdr)
 }
 
-func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *response.NormalResponse {
-	hs.log.Debug("Encountered error getting data source", "err", err, "id", datasourceID)
+func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceRef interface{}) *response.NormalResponse {
+	hs.log.Debug("Encountered error getting data source", "err", err, "ref", datasourceRef)
 	if errors.Is(err, models.ErrDataSourceAccessDenied) {
 		return response.Error(403, "Access denied to data source", err)
 	}
 	if errors.Is(err, models.ErrDataSourceNotFound) {
 		return response.Error(400, "Invalid data source ID", err)
-	}
-	return response.Error(500, "Unable to load data source metadata", err)
-}
-
-func (hs *HTTPServer) handleGetDataSourceUIDError(err error, datasourceUID string) *response.NormalResponse {
-	hs.log.Debug("Encountered error getting data source", "err", err, "uid", datasourceUID)
-	if errors.Is(err, models.ErrDataSourceAccessDenied) {
-		return response.Error(403, "Access denied to data source", err)
-	}
-	if errors.Is(err, models.ErrDataSourceNotFound) {
-		return response.Error(400, "Invalid data source UID", err)
 	}
 	return response.Error(500, "Unable to load data source metadata", err)
 }
