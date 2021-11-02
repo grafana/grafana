@@ -841,5 +841,50 @@ describe('ElasticQueryBuilder', () => {
 
       expect(serialDiff.lag).toBe(1);
     });
+
+    describe('date_histogram', () => {
+      it('should not include time_zone if not present in the query model', () => {
+        const query = builder.build({
+          refId: 'A',
+          metrics: [{ type: 'count', id: '1' }],
+          timeField: '@timestamp',
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2', settings: { min_doc_count: '1' } }],
+        });
+
+        expect(query.aggs['2'].date_histogram.time_zone).not.toBeDefined();
+      });
+
+      it('should not include time_zone if "utc" in the query model', () => {
+        const query = builder.build({
+          refId: 'A',
+          metrics: [{ type: 'count', id: '1' }],
+          timeField: '@timestamp',
+          bucketAggs: [
+            { type: 'date_histogram', field: '@timestamp', id: '2', settings: { min_doc_count: '1', timeZone: 'utc' } },
+          ],
+        });
+
+        expect(query.aggs['2'].date_histogram.time_zone).not.toBeDefined();
+      });
+
+      it('should include time_zone if not "utc" in the query model', () => {
+        const expectedTimezone = 'America/Los_angeles';
+        const query = builder.build({
+          refId: 'A',
+          metrics: [{ type: 'count', id: '1' }],
+          timeField: '@timestamp',
+          bucketAggs: [
+            {
+              type: 'date_histogram',
+              field: '@timestamp',
+              id: '2',
+              settings: { min_doc_count: '1', timeZone: expectedTimezone },
+            },
+          ],
+        });
+
+        expect(query.aggs['2'].date_histogram.time_zone).toBe(expectedTimezone);
+      });
+    });
   });
 });

@@ -8,25 +8,37 @@ import (
 	infrahttp "github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
-var cloudMonitoringRoute = struct {
-	path   string
+const (
+	cloudMonitor    = "cloudmonitoring"
+	resourceManager = "cloudresourcemanager"
+)
+
+type routeInfo struct {
 	method string
 	url    string
 	scopes []string
-}{
-	path:   "cloudmonitoring",
-	method: "GET",
-	url:    "https://monitoring.googleapis.com",
-	scopes: []string{"https://www.googleapis.com/auth/monitoring.read"},
 }
 
-func getMiddleware(model *datasourceInfo) (httpclient.Middleware, error) {
+var routes = map[string]routeInfo{
+	cloudMonitor: {
+		method: "GET",
+		url:    "https://monitoring.googleapis.com",
+		scopes: []string{"https://www.googleapis.com/auth/monitoring.read"},
+	},
+	resourceManager: {
+		method: "GET",
+		url:    "https://cloudresourcemanager.googleapis.com",
+		scopes: []string{"https://www.googleapis.com/auth/cloudplatformprojects.readonly"},
+	},
+}
+
+func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middleware, error) {
 	providerConfig := tokenprovider.Config{
-		RoutePath:         cloudMonitoringRoute.path,
-		RouteMethod:       cloudMonitoringRoute.method,
+		RoutePath:         routePath,
+		RouteMethod:       routes[routePath].method,
 		DataSourceID:      model.id,
 		DataSourceUpdated: model.updated,
-		Scopes:            cloudMonitoringRoute.scopes,
+		Scopes:            routes[routePath].scopes,
 	}
 
 	var provider tokenprovider.TokenProvider
@@ -45,8 +57,8 @@ func getMiddleware(model *datasourceInfo) (httpclient.Middleware, error) {
 	return tokenprovider.AuthMiddleware(provider), nil
 }
 
-func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvider infrahttp.Provider) (*http.Client, error) {
-	m, err := getMiddleware(model)
+func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvider infrahttp.Provider, route string) (*http.Client, error) {
+	m, err := getMiddleware(model, route)
 	if err != nil {
 		return nil, err
 	}

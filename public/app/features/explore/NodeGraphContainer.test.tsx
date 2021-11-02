@@ -39,7 +39,7 @@ describe('NodeGraphContainer', () => {
 
 const emptyFrame = new MutableDataFrame();
 
-export const nodes = new MutableDataFrame({
+const nodes = new MutableDataFrame({
   fields: toFields([
     ['id', ['3fa414edcef6ad90']],
     ['title', ['tempo-querier']],
@@ -50,7 +50,7 @@ export const nodes = new MutableDataFrame({
   ]),
 });
 
-export function toFields(fields: Array<[string, any[]]>) {
+function toFields(fields: Array<[string, any[]]>) {
   return fields.map(([name, values]) => {
     return { name, values };
   });

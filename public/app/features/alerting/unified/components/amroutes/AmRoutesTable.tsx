@@ -76,7 +76,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
               return (
                 <HorizontalGroup>
                   <Button
-                    data-testid="edit-route"
+                    aria-label="Edit route"
                     icon="pen"
                     onClick={expandWithCustomContent}
                     size="sm"
@@ -86,7 +86,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
                     Edit
                   </Button>
                   <IconButton
-                    data-testid="delete-route"
+                    aria-label="Delete route"
                     name="trash-alt"
                     onClick={() => {
                       const newRoutes = [...routes];
