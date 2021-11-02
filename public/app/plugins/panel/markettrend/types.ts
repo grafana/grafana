@@ -20,12 +20,22 @@ interface SemanticFieldMap {
   [semanticName: string]: string;
 }
 
+export interface MarketTrendColors {
+  up: string;
+  down: string;
+  flat: string;
+}
+
+export const defaultColors: MarketTrendColors = {
+  up: 'green',
+  down: 'red',
+  flat: 'grey',
+};
+
 export interface MarketOptions extends OptionsWithLegend, OptionsWithTooltip {
   mode: MarketTrendMode;
   priceStyle: PriceDrawStyle;
   movementMode: MovementMode;
   fields: SemanticFieldMap;
-  upColor: string;
-  downColor: string;
-  flatColor: string;
+  colors: MarketTrendColors;
 }

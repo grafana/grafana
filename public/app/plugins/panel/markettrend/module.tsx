@@ -2,7 +2,7 @@ import { GraphFieldConfig } from '@grafana/schema';
 import { PanelPlugin, SelectableValue } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { MarketTrendPanel } from './MarketTrendPanel';
-import { MarketOptions, MarketTrendMode, MovementMode, PriceDrawStyle } from './types';
+import { defaultColors, MarketOptions, MarketTrendMode, MovementMode, PriceDrawStyle } from './types';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 const modeOptions = [
@@ -59,16 +59,19 @@ export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTre
         showIf: (opts) => opts.mode !== MarketTrendMode.Volume && opts.priceStyle === PriceDrawStyle.Candles,
       })
       .addColorPicker({
-        path: 'upColor',
+        path: 'colors.up',
         name: 'Up color',
+        defaultValue: defaultColors.up,
       })
       .addColorPicker({
-        path: 'downColor',
+        path: 'colors.down',
         name: 'Down color',
+        defaultValue: defaultColors.down,
       })
       .addColorPicker({
-        path: 'flatColor',
+        path: 'colors.flat',
         name: 'Flat color',
+        defaultValue: defaultColors.flat,
       })
       .addFieldNamePicker({
         path: 'fieldMap.open',

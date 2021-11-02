@@ -15,6 +15,7 @@ import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPl
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { drawMarkers } from './utils';
+import { defaultColors } from './types';
 
 interface FieldIndices {
   [fieldKey: string]: number;
@@ -42,7 +43,8 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
   const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
 
   const renderers = useMemo(() => {
-    let { mode, priceStyle, fieldMap, movementMode, downColor, upColor, flatColor } = options;
+    const { mode, priceStyle, fieldMap, movementMode } = options;
+    const colors = { ...defaultColors, ...options.colors };
     let { open, high, low, close, volume } = fieldMap;
 
     if (open == null || close == null) {
@@ -58,9 +60,9 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
             drawMarkers({
               mode,
               fields: fieldIndices,
-              upColor: config.theme2.visualization.getColorByName(upColor),
-              downColor: config.theme2.visualization.getColorByName(downColor),
-              flatColor: config.theme2.visualization.getColorByName(flatColor),
+              upColor: config.theme2.visualization.getColorByName(colors.up),
+              downColor: config.theme2.visualization.getColorByName(colors.down),
+              flatColor: config.theme2.visualization.getColorByName(colors.flat),
               movementMode,
               priceStyle,
             })
