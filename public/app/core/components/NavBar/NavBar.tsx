@@ -44,7 +44,7 @@ export const NavBar: FC = React.memo(() => {
     toggleSwitcherModal
   );
   const activeItemId = isSearchActive(location)
-    ? 'search'
+    ? searchItem.id
     : navTree.find((item) => isLinkActive(location.pathname, item))?.id;
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

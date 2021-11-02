@@ -13,47 +13,37 @@ export interface Props {
   url?: string;
 }
 
-export function NavBarMenuItem({
-  icon,
-  isActive,
-  isSectionHeader,
-  label,
-  onClick,
-  target,
-  url,
-}: Props) {
+export function NavBarMenuItem({ icon, isActive, isSectionHeader, label, onClick, target, url }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, isSectionHeader);
 
+  const linkContent = (
+    <div className={styles.linkContent}>
+      <div>
+        {icon && <Icon data-testid="dropdown-child-icon" name={icon} className={styles.icon} />}
+        {label}
+      </div>
+      {target === '_blank' && (
+        <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
+      )}
+    </div>
+  );
+
   let element = (
     <button className={styles.element} onClick={onClick}>
-      {icon && (
-        <Icon className={styles.icon} name={icon} />
-      )}
-      {label}
+      {linkContent}
     </button>
   );
 
   if (url) {
     element =
       !target && url.startsWith('/') ? (
-        <Link
-          className={styles.element}
-          href={url}
-          target={target}
-          onClick={onClick}
-        >
-          {icon && (
-            <Icon className={styles.icon} name={icon} />
-          )}
-          {label}
+        <Link className={styles.element} href={url} target={target} onClick={onClick}>
+          {linkContent}
         </Link>
       ) : (
         <a href={url} target={target} className={styles.element} onClick={onClick}>
-          {icon && (
-            <Icon className={styles.icon} name={icon} />
-          )}
-          {label}
+          {linkContent}
         </a>
       );
   }
@@ -68,7 +58,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isSectionH
     background: none;
     border: none;
     color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
-    font-size: ${isSectionHeader ? theme.typography.h5.fontSize : 'auto'};
+    font-size: ${isSectionHeader ? theme.typography.h5.fontSize : 'unset'};
     padding: ${theme.spacing(1)} ${theme.spacing(2)};
     position: relative;
     text-align: left;
@@ -99,7 +89,17 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isSectionH
       background-image: ${theme.colors.gradients.brandVertical};
     }
   `,
+  externalLinkIcon: css`
+    color: ${theme.colors.text.secondary};
+    margin-left: ${theme.spacing(1)};
+  `,
   icon: css`
     margin-right: ${theme.spacing(1)};
-  `
-})
+  `,
+  linkContent: css`
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    justify-content: space-between;
+  `,
+});
