@@ -1,13 +1,13 @@
 import React, { FC } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
-import { Role } from 'app/types';
+import { Role, OrgRole } from 'app/types';
 import { RolePicker } from './RolePicker';
 
 export interface Props {
-  builtInRole: string;
+  builtInRole: OrgRole;
   userId: number;
   orgId?: number;
-  onBuiltinRoleChange: (newRole: string) => void;
+  onBuiltinRoleChange: (newRole: OrgRole) => void;
   disabled?: boolean;
 }
 

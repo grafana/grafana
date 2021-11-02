@@ -4,16 +4,16 @@ import { ClickOutsideWrapper, Tooltip, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
-import { Role } from 'app/types';
+import { Role, OrgRole } from 'app/types';
 import { ValueContainer } from './ValueContainer';
 
 export interface Props {
-  builtInRole: string;
+  builtInRole: OrgRole;
   getRoles: () => Promise<Role[]>;
   getRoleOptions: () => Promise<Role[]>;
   getBuiltinRoles: () => Promise<{ [key: string]: Role[] }>;
   onRolesChange: (newRoles: string[]) => void;
-  onBuiltinRoleChange: (newRole: string) => void;
+  onBuiltinRoleChange: (newRole: OrgRole) => void;
   disabled?: boolean;
 }
 
@@ -80,7 +80,7 @@ export const RolePicker = ({
     }
   };
 
-  const onUpdate = (newBuiltInRole: string, newRoles: string[]) => {
+  const onUpdate = (newBuiltInRole: OrgRole, newRoles: string[]) => {
     onBuiltinRoleChange(newBuiltInRole);
     onRolesChange(newRoles);
   };

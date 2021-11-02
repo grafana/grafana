@@ -4,13 +4,14 @@ import { uniqueId } from 'lodash';
 import { useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { RoleRadioButton } from './RoleRadioButton';
+import { OrgRole } from 'app/types';
 
 const BuiltinRoles = ['Viewer', 'Editor', 'Admin'];
 const BuiltinRoleOption: Array<SelectableValue<string>> = BuiltinRoles.map((r: string) => ({ label: r, value: r }));
 
 interface BuiltinRoleSelectorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: OrgRole) => void;
   className?: string;
 }
 

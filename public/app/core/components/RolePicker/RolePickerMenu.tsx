@@ -4,16 +4,16 @@ import { Button, Checkbox, CustomScrollbar, HorizontalGroup, Tooltip, useStyles2
 import { GrafanaTheme2 } from '@grafana/data';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
-import { Role } from 'app/types';
+import { Role, OrgRole } from 'app/types';
 
 type BuiltInRoles = { [key: string]: Role[] };
 
 interface RolePickerMenuProps {
-  builtInRole: string;
+  builtInRole: OrgRole;
   builtInRoles: BuiltInRoles;
   options: Role[];
   appliedRoles: Role[];
-  onUpdate: (newBuiltInRole: string, newRoles: string[]) => void;
+  onUpdate: (newBuiltInRole: OrgRole, newRoles: string[]) => void;
   onClear?: () => void;
 }
 
@@ -28,7 +28,7 @@ export const RolePickerMenu = ({
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
-  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState(builtInRole);
+  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
 
   const onSelect = (option: Role) => {
     if (selectedOptions.find((role) => role.uid === option.uid)) {
@@ -38,7 +38,7 @@ export const RolePickerMenu = ({
     }
   };
 
-  const onSelectedBuiltinRoleChange = (newRole: string) => {
+  const onSelectedBuiltinRoleChange = (newRole: OrgRole) => {
     setSelectedBuiltInRole(newRole);
   };
 
