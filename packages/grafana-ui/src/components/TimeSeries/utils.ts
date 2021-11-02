@@ -165,7 +165,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     //if (customRenderedFields.indexOf('volume') > -1) {
     if (field.name === 'volume') {
       scaleRange = (u: uPlot, min: number, max: number) => [0, max * 7];
-      axisSpace = 15;
+      axisSpace = 20;
       axisFilter = (u: uPlot, splits: number[]) => {
         let _splits = [];
         let max = u.series[5].max as number;

@@ -11,9 +11,9 @@ export enum PriceDrawStyle {
   'Bars' = 'bars',
 }
 
-export enum MovementCalc {
-  'Inter' = 'inter',
-  'Intra' = 'intra',
+export enum MovementMode {
+  'Solid' = 'solid',
+  'Hollow' = 'hollow',
 }
 
 interface SemanticFieldMap {
@@ -23,10 +23,9 @@ interface SemanticFieldMap {
 export interface MarketOptions extends OptionsWithLegend, OptionsWithTooltip {
   mode: MarketTrendMode;
   priceStyle: PriceDrawStyle;
+  movementMode: MovementMode;
   fields: SemanticFieldMap;
   upColor: string;
   downColor: string;
   flatColor: string;
-  fillMode: MovementCalc;
-  strokeMode: MovementCalc;
 }

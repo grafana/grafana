@@ -42,7 +42,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
   const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
 
   const renderers = useMemo(() => {
-    let { mode, priceStyle, fieldMap, fillMode, strokeMode, downColor, upColor, flatColor } = options;
+    let { mode, priceStyle, fieldMap, movementMode, downColor, upColor, flatColor } = options;
     let { open, high, low, close, volume } = fieldMap;
 
     if (open == null || close == null) {
@@ -61,8 +61,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
               upColor: config.theme2.visualization.getColorByName(upColor),
               downColor: config.theme2.visualization.getColorByName(downColor),
               flatColor: config.theme2.visualization.getColorByName(flatColor),
-              fillMode,
-              strokeMode,
+              movementMode,
               priceStyle,
             })
           );

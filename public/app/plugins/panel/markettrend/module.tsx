@@ -2,7 +2,7 @@ import { GraphFieldConfig } from '@grafana/schema';
 import { PanelPlugin, SelectableValue } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { MarketTrendPanel } from './MarketTrendPanel';
-import { MarketOptions, MarketTrendMode, MovementCalc, PriceDrawStyle } from './types';
+import { MarketOptions, MarketTrendMode, MovementMode, PriceDrawStyle } from './types';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 const modeOptions = [
@@ -16,10 +16,14 @@ const priceStyle = [
   { label: 'Bars', value: PriceDrawStyle.Bars },
 ] as Array<SelectableValue<PriceDrawStyle>>;
 
-const calcModes = [
-  { label: 'Close vs Close', value: 'inter' },
-  { label: 'Open vs Close', value: 'intra' },
-] as Array<SelectableValue<MovementCalc>>;
+const movementMode = [
+  // up/down color depends on current close vs prior close
+  // filled/hollow depends on current close vs current open
+  { label: 'Hollow', value: 'hollow' },
+  // up/down color depends on current close vs current open
+  // filled always
+  { label: 'Solid', value: 'solid' },
+] as Array<SelectableValue<MovementMode>>;
 
 export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTrendPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
@@ -44,6 +48,16 @@ export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTre
         },
         showIf: (opts) => opts.mode !== MarketTrendMode.Volume,
       })
+      .addRadio({
+        path: 'movementMode',
+        name: 'Movement mode',
+        description: '',
+        defaultValue: MovementMode.Hollow,
+        settings: {
+          options: movementMode,
+        },
+        showIf: (opts) => opts.mode !== MarketTrendMode.Volume && opts.priceStyle === PriceDrawStyle.Candles,
+      })
       .addColorPicker({
         path: 'upColor',
         name: 'Up color',
@@ -55,21 +69,6 @@ export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTre
       .addColorPicker({
         path: 'flatColor',
         name: 'Flat color',
-      })
-      .addSelect({
-        path: 'fillMode',
-        name: 'Fill mode',
-        settings: {
-          options: calcModes,
-        },
-        showIf: (opts) => opts.mode !== MarketTrendMode.Volume && opts.priceStyle === PriceDrawStyle.Candles,
-      })
-      .addSelect({
-        path: 'strokeMode',
-        name: 'Stroke mode',
-        settings: {
-          options: calcModes,
-        },
       })
       .addFieldNamePicker({
         path: 'fieldMap.open',
@@ -94,9 +93,6 @@ export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTre
         name: 'Volume field',
         showIf: (opts) => opts.mode !== MarketTrendMode.Price,
       });
-
-    // color picker for up / down
-    // filled / empty picker (derived field)
 
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
