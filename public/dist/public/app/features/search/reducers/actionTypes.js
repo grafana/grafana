@@ -1,0 +1,23 @@
+export var FETCH_RESULTS = 'FETCH_RESULTS';
+export var TOGGLE_SECTION = 'TOGGLE_SECTION';
+export var FETCH_ITEMS = 'FETCH_ITEMS';
+export var FETCH_ITEMS_START = 'FETCH_ITEMS_START';
+export var MOVE_SELECTION_UP = 'MOVE_SELECTION_UP';
+export var MOVE_SELECTION_DOWN = 'MOVE_SELECTION_DOWN';
+export var SEARCH_START = 'SEARCH_START';
+// Manage dashboards
+export var TOGGLE_ALL_CHECKED = 'TOGGLE_ALL_CHECKED';
+export var TOGGLE_CHECKED = 'TOGGLE_SECTION_CHECKED';
+export var MOVE_ITEMS = 'MOVE_ITEMS';
+export var DELETE_ITEMS = 'DELETE_ITEMS';
+// Search Query
+export var TOGGLE_STARRED = 'TOGGLE_STARRED';
+export var REMOVE_STARRED = 'REMOVE_STARRED';
+export var QUERY_CHANGE = 'QUERY_CHANGE';
+export var REMOVE_TAG = 'REMOVE_TAG';
+export var CLEAR_FILTERS = 'CLEAR_FILTERS';
+export var SET_TAGS = 'SET_TAGS';
+export var ADD_TAG = 'ADD_TAG';
+export var TOGGLE_SORT = 'TOGGLE_SORT';
+export var LAYOUT_CHANGE = 'LAYOUT_CHANGE';
+//# sourceMappingURL=actionTypes.js.map

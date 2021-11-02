@@ -1,0 +1,1 @@
+{"version":3,"file":"mocks.js","sourceRoot":"","sources":["../../../../../../../app/plugins/datasource/prometheus/configuration/mocks.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,wBAAwB,EAAE,MAAM,wCAAwC,CAAC;AAElF,MAAM,UAAU,0BAA0B;IACxC,OAAO,wBAAwB,CAAc;QAC3C,YAAY,EAAE,IAAI;QAClB,YAAY,EAAE,IAAI;QAClB,UAAU,EAAE,KAAK;QACjB,SAAS,EAAE,KAAK;KACjB,CAAC,CAAC;AACL,CAAC"}

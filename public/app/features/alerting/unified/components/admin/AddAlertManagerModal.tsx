@@ -13,7 +13,7 @@ interface Props {
 export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const defaultValues = useMemo(
+  const defaultValues: Record<string, any> = useMemo(
     () => ({
       alertmanagers: alertmanagers,
     }),

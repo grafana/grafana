@@ -1,0 +1,35 @@
+import { __assign, __makeTemplateObject, __rest } from "tslib";
+import React, { useCallback } from 'react';
+import { getLabelStyles } from './Label';
+import { stylesFactory, useStyles2 } from '../../themes';
+import { css, cx } from '@emotion/css';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+export var Checkbox = React.forwardRef(function (_a, ref) {
+    var label = _a.label, description = _a.description, value = _a.value, onChange = _a.onChange, disabled = _a.disabled, className = _a.className, inputProps = __rest(_a, ["label", "description", "value", "onChange", "disabled", "className"]);
+    var handleOnChange = useCallback(function (e) {
+        if (onChange) {
+            onChange(e);
+        }
+    }, [onChange]);
+    var styles = useStyles2(getCheckboxStyles);
+    return (React.createElement("label", { className: cx(styles.wrapper, className) },
+        React.createElement("input", __assign({ type: "checkbox", className: styles.input, checked: value, disabled: disabled, onChange: handleOnChange }, inputProps, { ref: ref })),
+        React.createElement("span", { className: styles.checkmark }),
+        label && React.createElement("span", { className: styles.label }, label),
+        description && React.createElement("span", { className: styles.description }, description)));
+});
+export var getCheckboxStyles = stylesFactory(function (theme) {
+    var labelStyles = getLabelStyles(theme);
+    var checkboxSize = 2;
+    var labelPadding = 1;
+    return {
+        wrapper: css(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n      position: relative;\n      vertical-align: middle;\n      font-size: 0;\n    "], ["\n      position: relative;\n      vertical-align: middle;\n      font-size: 0;\n    "]))),
+        input: css(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n      position: absolute;\n      z-index: 1;\n      top: 0;\n      left: 0;\n      width: 100% !important; // global styles unset this\n      height: 100%;\n      opacity: 0;\n\n      &:focus + span,\n      &:focus-visible + span {\n        ", "\n      }\n\n      &:focus:not(:focus-visible) + span {\n        ", "\n      }\n\n      /**\n       * Using adjacent sibling selector to style checked state.\n       * Primarily to limit the classes necessary to use when these classes will be used\n       * for angular components styling\n       * */\n      &:checked + span {\n        background: blue;\n        background: ", ";\n        border: none;\n\n        &:hover {\n          background: ", ";\n        }\n\n        &:after {\n          content: '';\n          position: absolute;\n          z-index: 2;\n          left: 5px;\n          top: 1px;\n          width: 6px;\n          height: 12px;\n          border: solid ", ";\n          border-width: 0 3px 3px 0;\n          transform: rotate(45deg);\n        }\n      }\n\n      &:disabled + span {\n        background-color: ", ";\n        cursor: not-allowed;\n\n        &:hover {\n          background-color: ", ";\n        }\n\n        &:after {\n          border-color: ", ";\n        }\n      }\n    "], ["\n      position: absolute;\n      z-index: 1;\n      top: 0;\n      left: 0;\n      width: 100% !important; // global styles unset this\n      height: 100%;\n      opacity: 0;\n\n      &:focus + span,\n      &:focus-visible + span {\n        ", "\n      }\n\n      &:focus:not(:focus-visible) + span {\n        ", "\n      }\n\n      /**\n       * Using adjacent sibling selector to style checked state.\n       * Primarily to limit the classes necessary to use when these classes will be used\n       * for angular components styling\n       * */\n      &:checked + span {\n        background: blue;\n        background: ", ";\n        border: none;\n\n        &:hover {\n          background: ", ";\n        }\n\n        &:after {\n          content: '';\n          position: absolute;\n          z-index: 2;\n          left: 5px;\n          top: 1px;\n          width: 6px;\n          height: 12px;\n          border: solid ", ";\n          border-width: 0 3px 3px 0;\n          transform: rotate(45deg);\n        }\n      }\n\n      &:disabled + span {\n        background-color: ", ";\n        cursor: not-allowed;\n\n        &:hover {\n          background-color: ", ";\n        }\n\n        &:after {\n          border-color: ", ";\n        }\n      }\n    "])), getFocusStyles(theme), getMouseFocusStyles(theme), theme.colors.primary.main, theme.colors.primary.shade, theme.colors.primary.contrastText, theme.colors.action.disabledBackground, theme.colors.action.disabledBackground, theme.colors.action.disabledText),
+        checkmark: css(templateObject_3 || (templateObject_3 = __makeTemplateObject(["\n      position: relative; /* Checkbox should be layered on top of the invisible input so it recieves :hover */\n      z-index: 2;\n      display: inline-block;\n      width: ", ";\n      height: ", ";\n      border-radius: ", ";\n      background: ", ";\n      border: 1px solid ", ";\n\n      &:hover {\n        cursor: pointer;\n        border-color: ", ";\n      }\n    "], ["\n      position: relative; /* Checkbox should be layered on top of the invisible input so it recieves :hover */\n      z-index: 2;\n      display: inline-block;\n      width: ", ";\n      height: ", ";\n      border-radius: ", ";\n      background: ", ";\n      border: 1px solid ", ";\n\n      &:hover {\n        cursor: pointer;\n        border-color: ", ";\n      }\n    "])), theme.spacing(checkboxSize), theme.spacing(checkboxSize), theme.shape.borderRadius(), theme.components.input.background, theme.components.input.borderColor, theme.components.input.borderHover),
+        label: cx(labelStyles.label, css(templateObject_4 || (templateObject_4 = __makeTemplateObject(["\n        position: relative;\n        z-index: 2;\n        padding-left: ", ";\n        white-space: nowrap;\n        cursor: pointer;\n        position: relative;\n        top: -3px;\n      "], ["\n        position: relative;\n        z-index: 2;\n        padding-left: ", ";\n        white-space: nowrap;\n        cursor: pointer;\n        position: relative;\n        top: -3px;\n      "])), theme.spacing(labelPadding))),
+        description: cx(labelStyles.description, css(templateObject_5 || (templateObject_5 = __makeTemplateObject(["\n        line-height: ", ";\n        padding-left: ", ";\n        margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */\n      "], ["\n        line-height: ", ";\n        padding-left: ", ";\n        margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */\n      "])), theme.typography.bodySmall.lineHeight, theme.spacing(checkboxSize + labelPadding))),
+    };
+});
+Checkbox.displayName = 'Checkbox';
+var templateObject_1, templateObject_2, templateObject_3, templateObject_4, templateObject_5;
+//# sourceMappingURL=Checkbox.js.map

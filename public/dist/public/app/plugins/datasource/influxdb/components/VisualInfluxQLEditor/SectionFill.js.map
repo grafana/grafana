@@ -1,0 +1,1 @@
+{"version":3,"file":"SectionFill.js","sourceRoot":"","sources":["../../../../../../../../app/plugins/datasource/influxdb/components/VisualInfluxQLEditor/SectionFill.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAE1B,MAAM,CAAC,IAAM,WAAW,GAAG,cAAM,OAAA,CAC/B,6BAAK,SAAS,EAAC,uBAAuB;IACpC,+BAAO,SAAS,EAAC,mCAAmC,GAAS,CACzD,CACP,EAJgC,CAIhC,CAAC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../../../../packages/grafana-data/src/text/index.ts"],"names":[],"mappings":"AAAA,cAAc,UAAU,CAAC;AACzB,cAAc,YAAY,CAAC;AAC3B,cAAc,QAAQ,CAAC;AACvB,OAAO,EAAE,UAAU,EAAE,YAAY,EAAE,QAAQ,EAAE,WAAW,EAAE,MAAM,YAAY,CAAC;AAE7E,MAAM,CAAC,IAAM,QAAQ,GAAG;IACtB,UAAU,YAAA;IACV,YAAY,cAAA;IACZ,QAAQ,UAAA;IACR,WAAW,aAAA;CACZ,CAAC"}

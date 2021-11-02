@@ -1,0 +1,33 @@
+// Permission actions
+export var AccessControlAction;
+(function (AccessControlAction) {
+    AccessControlAction["UsersRead"] = "users:read";
+    AccessControlAction["UsersWrite"] = "users:write";
+    AccessControlAction["UsersTeamRead"] = "users.teams:read";
+    AccessControlAction["UsersAuthTokenList"] = "users.authtoken:list";
+    AccessControlAction["UsersAuthTokenUpdate"] = "users.authtoken:update";
+    AccessControlAction["UsersPasswordUpdate"] = "users.password:update";
+    AccessControlAction["UsersDelete"] = "users:delete";
+    AccessControlAction["UsersCreate"] = "users:create";
+    AccessControlAction["UsersEnable"] = "users:enable";
+    AccessControlAction["UsersDisable"] = "users:disable";
+    AccessControlAction["UsersPermissionsUpdate"] = "users.permissions:update";
+    AccessControlAction["UsersLogout"] = "users:logout";
+    AccessControlAction["UsersQuotasList"] = "users.quotas:list";
+    AccessControlAction["UsersQuotasUpdate"] = "users.quotas:update";
+    AccessControlAction["OrgUsersRead"] = "org.users:read";
+    AccessControlAction["OrgUsersAdd"] = "org.users:add";
+    AccessControlAction["OrgUsersRemove"] = "org.users:remove";
+    AccessControlAction["OrgUsersRoleUpdate"] = "org.users.role:update";
+    AccessControlAction["LDAPUsersRead"] = "ldap.user:read";
+    AccessControlAction["LDAPUsersSync"] = "ldap.user:sync";
+    AccessControlAction["LDAPStatusRead"] = "ldap.status:read";
+    AccessControlAction["DataSourcesExplore"] = "datasources:explore";
+    AccessControlAction["DataSourcesRead"] = "datasources:read";
+    AccessControlAction["DataSourcesCreate"] = "datasources:create";
+    AccessControlAction["DataSourcesWrite"] = "datasources:write";
+    AccessControlAction["DataSourcesDelete"] = "datasources:delete";
+    AccessControlAction["DataSourcesPermissionsRead"] = "datasources.permissions:read";
+    AccessControlAction["ActionServerStatsRead"] = "server.stats:read";
+})(AccessControlAction || (AccessControlAction = {}));
+//# sourceMappingURL=accessControl.js.map
