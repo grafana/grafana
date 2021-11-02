@@ -37,7 +37,6 @@ func (e *DashAlertExtractor) lookupQueryDataSource(panel *simplejson.Json, panel
 	datasource, ok := panelQuery.CheckGet("datasource")
 
 	if !ok {
-		fmt.Printf("no query level data soure \n")
 		datasource = panel.Get("datasource")
 	}
 
