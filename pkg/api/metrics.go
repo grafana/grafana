@@ -32,26 +32,29 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		Queries:   make([]plugins.DataSubQuery, 0, len(reqDTO.Queries)),
 	}
 
-	// Parse all query types
+	// Parse the queries
 	hasExpression := false
-	allSameUID := true
-	prevUID := ""
+	datasources := make(map[string]bool, len(reqDTO.Queries))
 	queryInfo := make([]queryDSInfo, 0, len(reqDTO.Queries))
 	for _, query := range reqDTO.Queries {
 		q := hs.getDataSourceFromQuery(c, query)
 		if q.errRes != nil {
 			return q.errRes
 		}
-		if q.isExpr {
-			hasExpression = true
-		}
 		if q.ds == nil {
 			return response.Error(http.StatusBadRequest, "Datasource not found for query", nil)
+		}
+
+		if q.isExpr {
+			hasExpression = true
 		} else {
-			if prevUID != "" && prevUID != q.ds.Uid {
-				allSameUID = false
+			uid := q.ds.Uid
+			_, found := datasources[uid]
+			if !found {
+				// TODO? check permissions here?
+				// hs.PluginRequestValidator.Validate(ds.Uid, nil) ?? (but the paramerts seem wrong)
+				datasources[uid] = true
 			}
-			prevUID = q.ds.Uid
 		}
 		queryInfo = append(queryInfo, q)
 	}
@@ -59,7 +62,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	ds := queryInfo[0].ds
 	if hasExpression {
 		ds = nil // Don't attach datsource model for transform
-	} else if !allSameUID {
+	} else if len(datasources) > 1 {
 		return response.Error(http.StatusBadRequest, "All queries must use the same datasource", nil)
 	}
 
@@ -71,7 +74,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			MaxDataPoints: info.query.Get("maxDataPoints").MustInt64(100),
 			IntervalMS:    info.query.Get("intervalMs").MustInt64(1000),
 			QueryType:     info.query.Get("queryType").MustString(""),
-			Model:         info.query, // includes full datasource info for expressions
+			Model:         info.query,
 			DataSource:    info.ds,
 		})
 	}
