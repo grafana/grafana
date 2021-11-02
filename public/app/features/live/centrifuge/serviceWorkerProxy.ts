@@ -11,7 +11,7 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
   private centrifugeWorker;
 
   constructor(deps: CentrifugeSrvDeps) {
-    this.centrifugeWorker = comlink.wrap<RemoteCentrifugeService>(new CentrifugeWorker());
+    this.centrifugeWorker = comlink.wrap<RemoteCentrifugeService>(new CentrifugeWorker() as comlink.Endpoint);
     this.centrifugeWorker.initialize(deps, comlink.proxy(deps.dataStreamSubscriberReadiness));
   }
 
