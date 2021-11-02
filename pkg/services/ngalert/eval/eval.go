@@ -12,9 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -165,10 +165,10 @@ type NumberValueCapture struct {
 	Value  *float64
 }
 
-func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) ExecutionResults {
+func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, legacyDataRequestHandler legacydata.RequestHandler) ExecutionResults {
 	result := ExecutionResults{}
 
-	execResp, err := executeQueriesAndExpressions(ctx, c.Data, now, dataService)
+	execResp, err := executeQueriesAndExpressions(ctx, c.Data, now, legacyDataRequestHandler)
 
 	if err != nil {
 		return ExecutionResults{Error: err}
@@ -232,7 +232,7 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 	return result
 }
 
-func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (resp *backend.QueryDataResponse, err error) {
+func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, legacyDataRequestHandler legacydata.RequestHandler) (resp *backend.QueryDataResponse, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			ctx.Log.Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
@@ -251,8 +251,8 @@ func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, no
 	}
 
 	exprService := expr.Service{
-		Cfg:         &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
-		DataService: dataService,
+		Cfg:                      &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
+		LegacyDataRequestHandler: legacyDataRequestHandler,
 	}
 	return exprService.TransformData(ctx.Ctx, queryDataReq)
 }
@@ -431,26 +431,26 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, dataService *tsdb.Service) (Results, error) {
+func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, legacyDataRequestHandler legacydata.RequestHandler) (Results, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.Cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
 
-	execResult := executeCondition(alertExecCtx, condition, now, dataService)
+	execResult := executeCondition(alertExecCtx, condition, now, legacyDataRequestHandler)
 
 	evalResults := evaluateExecutionResult(execResult, now)
 	return evalResults, nil
 }
 
 // QueriesAndExpressionsEval executes queries and expressions and returns the result.
-func (e *Evaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
+func (e *Evaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time, legacyDataRequestHandler legacydata.RequestHandler) (*backend.QueryDataResponse, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.Cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
 
-	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, dataService)
+	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, legacyDataRequestHandler)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}

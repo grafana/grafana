@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/pkg/errors"
@@ -223,7 +223,7 @@ func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.Sign
 	return refIDs, nil
 }
 
-func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, dataService *tsdb.Service, cfg *setting.Cfg, log log.Logger) response.Response {
+func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, dataService legacydata.RequestHandler, cfg *setting.Cfg, log log.Logger) response.Response {
 	evalCond := ngmodels.Condition{
 		Condition: cmd.Condition,
 		OrgID:     c.SignedInUser.OrgId,

@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
@@ -68,7 +68,7 @@ type schedule struct {
 	instanceStore    store.InstanceStore
 	adminConfigStore store.AdminConfigurationStore
 	orgStore         store.OrgStore
-	dataService      *tsdb.Service
+	dataService      legacydata.RequestHandler
 
 	stateManager *state.Manager
 
@@ -107,7 +107,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, dataService legacydata.RequestHandler, appURL *url.URL, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 
 	sch := schedule{

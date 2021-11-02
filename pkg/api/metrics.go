@@ -5,15 +5,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/grafanads"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // QueryMetricsV2 returns query metrics.
@@ -23,12 +22,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
 	}
 
-	timeRange := plugins.NewDataTimeRange(reqDTO.From, reqDTO.To)
-	request := plugins.DataQuery{
+	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
+	request := legacydata.DataQuery{
 		TimeRange: &timeRange,
 		Debug:     reqDTO.Debug,
 		User:      c.SignedInUser,
-		Queries:   make([]plugins.DataSubQuery, 0, len(reqDTO.Queries)),
+		Queries:   make([]legacydata.DataSubQuery, 0, len(reqDTO.Queries)),
 	}
 
 	// Loop to see if we have an expression.
@@ -69,7 +68,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	for _, query := range reqDTO.Queries {
 		hs.log.Debug("Processing metrics query", "query", query)
 
-		request.Queries = append(request.Queries, plugins.DataSubQuery{
+		request.Queries = append(request.Queries, legacydata.DataSubQuery{
 			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
@@ -110,12 +109,12 @@ func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
-	timeRange := plugins.NewDataTimeRange(reqDTO.From, reqDTO.To)
-	request := plugins.DataQuery{
+	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
+	request := legacydata.DataQuery{
 		TimeRange: &timeRange,
 		Debug:     reqDTO.Debug,
 		User:      c.SignedInUser,
-		Queries:   make([]plugins.DataSubQuery, 0, len(reqDTO.Queries)),
+		Queries:   make([]legacydata.DataSubQuery, 0, len(reqDTO.Queries)),
 	}
 
 	for _, query := range reqDTO.Queries {
@@ -136,7 +135,7 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 			}
 		}
 
-		request.Queries = append(request.Queries, plugins.DataSubQuery{
+		request.Queries = append(request.Queries, legacydata.DataSubQuery{
 			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
@@ -146,8 +145,8 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 	}
 
 	exprService := expr.Service{
-		Cfg:         hs.Cfg,
-		DataService: hs.DataService,
+		Cfg:                      hs.Cfg,
+		LegacyDataRequestHandler: hs.LegacyDataRequestHandler,
 	}
 	qdr, err := exprService.WrapTransformData(c.Req.Context(), request)
 	if err != nil {
@@ -189,15 +188,15 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	timeRange := plugins.NewDataTimeRange(reqDto.From, reqDto.To)
-	request := plugins.DataQuery{
+	timeRange := legacydata.NewDataTimeRange(reqDto.From, reqDto.To)
+	request := legacydata.DataQuery{
 		TimeRange: &timeRange,
 		Debug:     reqDto.Debug,
 		User:      c.SignedInUser,
 	}
 
 	for _, query := range reqDto.Queries {
-		request.Queries = append(request.Queries, plugins.DataSubQuery{
+		request.Queries = append(request.Queries, legacydata.DataSubQuery{
 			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
@@ -206,7 +205,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 		})
 	}
 
-	resp, err := hs.DataService.HandleRequest(c.Req.Context(), ds, request)
+	resp, err := hs.LegacyDataRequestHandler.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
@@ -224,7 +223,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 }
 
 // nolint:staticcheck // plugins.DataQueryResponse deprecated
-func (hs *HTTPServer) createRequest(ds *models.DataSource, query plugins.DataQuery) (*backend.QueryDataRequest, error) {
+func (hs *HTTPServer) createRequest(ds *models.DataSource, query legacydata.DataQuery) (*backend.QueryDataRequest, error) {
 	instanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
 	if err != nil {
 		return nil, err

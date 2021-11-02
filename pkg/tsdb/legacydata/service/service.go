@@ -1,4 +1,4 @@
-package legacydata
+package service
 
 import (
 	"context"
@@ -11,26 +11,36 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-type RequestHandler struct {
+var dsDecryptedValuesFunc = func(s *datasources.Service, ds *models.DataSource) map[string]string {
+	return s.DecryptedValues(ds)
+}
+
+var oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *models.DataSource) bool {
+	return oAuthTokenService.IsOAuthPassThruEnabled(ds)
+}
+
+type Service struct {
 	pluginsClient      plugins.Client
 	oAuthTokenService  oauthtoken.OAuthTokenService
 	dataSourcesService *datasources.Service
 }
 
-func ProvideService(pluginsClient plugins.Client, oAuthTokenService oauthtoken.OAuthTokenService, dataSourcesService *datasources.Service) *RequestHandler {
-	return &RequestHandler{
+func ProvideService(pluginsClient plugins.Client, oAuthTokenService oauthtoken.OAuthTokenService, dataSourcesService *datasources.Service) *Service {
+	return &Service{
 		pluginsClient:      pluginsClient,
 		oAuthTokenService:  oAuthTokenService,
 		dataSourcesService: dataSourcesService,
 	}
 }
 
-func (h *RequestHandler) HandleRequest(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error) {
+//nolint: staticcheck // legacydata.DataResponse deprecated
+func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (legacydata.DataResponse, error) {
 	jsonDataBytes, err := ds.JsonData.MarshalJSON()
 	if err != nil {
-		return DataResponse{}, err
+		return legacydata.DataResponse{}, err
 	}
 
 	instanceSettings := &backend.DataSourceInstanceSettings{
@@ -42,7 +52,7 @@ func (h *RequestHandler) HandleRequest(ctx context.Context, ds *models.DataSourc
 		BasicAuthEnabled:        ds.BasicAuth,
 		BasicAuthUser:           ds.BasicAuthUser,
 		JSONData:                jsonDataBytes,
-		DecryptedSecureJSONData: h.dataSourcesService.DecryptedValues(ds),
+		DecryptedSecureJSONData: dsDecryptedValuesFunc(h.dataSourcesService, ds),
 		Updated:                 ds.Updated,
 		UID:                     ds.Uid,
 	}
@@ -51,7 +61,7 @@ func (h *RequestHandler) HandleRequest(ctx context.Context, ds *models.DataSourc
 		query.Headers = make(map[string]string)
 	}
 
-	if h.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
+	if oAuthIsOAuthPassThruEnabledFunc(h.oAuthTokenService, ds) {
 		if token := h.oAuthTokenService.GetCurrentOAuthToken(ctx, query.User); token != nil {
 			delete(query.Headers, "Authorization")
 			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
@@ -72,7 +82,7 @@ func (h *RequestHandler) HandleRequest(ctx context.Context, ds *models.DataSourc
 	for _, q := range query.Queries {
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
-			return DataResponse{}, err
+			return legacydata.DataResponse{}, err
 		}
 		req.Queries = append(req.Queries, backend.DataQuery{
 			RefID:         q.RefID,
@@ -89,15 +99,15 @@ func (h *RequestHandler) HandleRequest(ctx context.Context, ds *models.DataSourc
 
 	resp, err := h.pluginsClient.QueryData(ctx, req)
 	if err != nil {
-		return DataResponse{}, err
+		return legacydata.DataResponse{}, err
 	}
 
-	tR := DataResponse{
-		Results: make(map[string]DataQueryResult, len(resp.Responses)),
+	tR := legacydata.DataResponse{
+		Results: make(map[string]legacydata.DataQueryResult, len(resp.Responses)),
 	}
 
 	for refID, r := range resp.Responses {
-		qr := DataQueryResult{
+		qr := legacydata.DataQueryResult{
 			RefID: refID,
 		}
 
@@ -107,7 +117,7 @@ func (h *RequestHandler) HandleRequest(ctx context.Context, ds *models.DataSourc
 			}
 		}
 
-		qr.Dataframes = NewDecodedDataFrames(r.Frames)
+		qr.Dataframes = legacydata.NewDecodedDataFrames(r.Frames)
 
 		if r.Error != nil {
 			qr.Error = r.Error
@@ -118,3 +128,5 @@ func (h *RequestHandler) HandleRequest(ctx context.Context, ds *models.DataSourc
 
 	return tR, nil
 }
+
+var _ legacydata.RequestHandler = &Service{}

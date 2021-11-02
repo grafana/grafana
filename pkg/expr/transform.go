@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 )
@@ -33,7 +33,7 @@ func init() {
 }
 
 // WrapTransformData creates and executes transform requests
-func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery) (*backend.QueryDataResponse, error) {
+func (s *Service) WrapTransformData(ctx context.Context, query legacydata.DataQuery) (*backend.QueryDataResponse, error) {
 	req := Request{
 		OrgId:   query.User.OrgId,
 		Queries: []Query{},
@@ -183,13 +183,13 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	// Convert plugin-model (datasource) queries to tsdb queries
-	queries := make([]plugins.DataSubQuery, len(req.Queries))
+	queries := make([]legacydata.DataSubQuery, len(req.Queries))
 	for i, query := range req.Queries {
 		sj, err := simplejson.NewJson(query.JSON)
 		if err != nil {
 			return nil, err
 		}
-		queries[i] = plugins.DataSubQuery{
+		queries[i] = legacydata.DataSubQuery{
 			RefID:         query.RefID,
 			IntervalMS:    query.Interval.Milliseconds(),
 			MaxDataPoints: query.MaxDataPoints,
@@ -200,17 +200,17 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	// For now take Time Range from first query.
-	timeRange := plugins.NewDataTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10),
+	timeRange := legacydata.NewDataTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10),
 		strconv.FormatInt(req.Queries[0].TimeRange.To.Unix()*1000, 10))
 
-	tQ := plugins.DataQuery{
+	tQ := legacydata.DataQuery{
 		TimeRange: &timeRange,
 		Queries:   queries,
 		Headers:   req.Headers,
 	}
 
 	// Execute the converted queries
-	tsdbRes, err := s.DataService.HandleRequest(ctx, getDsInfo.Result, tQ)
+	tsdbRes, err := s.LegacyDataRequestHandler.HandleRequest(ctx, getDsInfo.Result, tQ)
 	if err != nil {
 		return nil, err
 	}

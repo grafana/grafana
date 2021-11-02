@@ -12,11 +12,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/require"
 )
 
-// nolint:staticcheck // plugins.DataPlugin deprecated
 func TestService(t *testing.T) {
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
@@ -25,7 +24,7 @@ func TestService(t *testing.T) {
 	me := &mockEndpoint{
 		Frames: []*data.Frame{dsDF},
 	}
-	s := Service{DataService: me}
+	s := Service{LegacyDataRequestHandler: me}
 	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
 		return nil
@@ -88,18 +87,18 @@ type mockEndpoint struct {
 	Frames data.Frames
 }
 
-// nolint:staticcheck // plugins.DataQueryResponse deprecated
-func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
-	return plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{
+// nolint:staticcheck // plugins.DataResponse deprecated
+func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (legacydata.DataResponse, error) {
+	return legacydata.DataResponse{
+		Results: map[string]legacydata.DataQueryResult{
 			"A": {
-				Dataframes: plugins.NewDecodedDataFrames(me.Frames),
+				Dataframes: legacydata.NewDecodedDataFrames(me.Frames),
 			},
 		},
 	}, nil
 }
 
-// nolint:staticcheck // plugins.DataQueryResponse deprecated
-func (me *mockEndpoint) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
+// nolint:staticcheck // plugins.DataResponse deprecated
+func (me *mockEndpoint) HandleRequest(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (legacydata.DataResponse, error) {
 	return me.DataQuery(ctx, ds, query)
 }

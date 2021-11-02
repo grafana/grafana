@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,7 +38,7 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
-	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
+	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, dataService legacydata.RequestHandler, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, encryptionService encryption.Service, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:               cfg,
@@ -72,7 +72,7 @@ type AlertNG struct {
 	RouteRegister     routing.RouteRegister
 	SQLStore          *sqlstore.SQLStore
 	KVStore           kvstore.KVStore
-	DataService       *tsdb.Service
+	DataService       legacydata.RequestHandler
 	DataProxy         *datasourceproxy.DataSourceProxyService
 	QuotaService      *quota.QuotaService
 	EncryptionService encryption.Service

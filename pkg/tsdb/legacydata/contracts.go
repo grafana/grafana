@@ -13,10 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// DataRequestHandler is a data request handler interface.
-type DataRequestHandler interface {
+// RequestHandler is a data request handler interface.
+// Deprecated: use backend.QueryDataHandler instead.
+type RequestHandler interface {
 	// HandleRequest handles a data request.
-	// Deprecated: HandleRequest should use backend.QueryDataHandler.QueryData instead.
 	HandleRequest(context.Context, *models.DataSource, DataQuery) (DataResponse, error)
 }
 

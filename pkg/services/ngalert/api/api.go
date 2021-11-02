@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // timeNow makes it possible to test usage of time
@@ -54,7 +54,7 @@ type API struct {
 	Cfg                  *setting.Cfg
 	DatasourceCache      datasources.CacheService
 	RouteRegister        routing.RouteRegister
-	DataService          *tsdb.Service
+	DataService          legacydata.RequestHandler
 	QuotaService         *quota.QuotaService
 	Schedule             schedule.ScheduleService
 	RuleStore            store.RuleStore

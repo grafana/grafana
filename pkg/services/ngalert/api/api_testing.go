@@ -14,14 +14,14 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type TestingApiSrv struct {
 	*AlertingProxy
 	Cfg             *setting.Cfg
-	DataService     *tsdb.Service
+	DataService     legacydata.RequestHandler
 	DatasourceCache datasources.CacheService
 	log             log.Logger
 }

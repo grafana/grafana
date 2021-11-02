@@ -7,10 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +26,7 @@ func TestQueryInterval(t *testing.T) {
 
 			timeRange := "5m"
 
-			verifier := func(query plugins.DataSubQuery) {
+			verifier := func(query legacydata.DataSubQuery) {
 				// 5minutes timerange = 300000milliseconds; default-resolution is 1500pixels,
 				// so we should have 300000/1500 = 200milliseconds here
 				require.Equal(t, int64(200), query.IntervalMS)
@@ -44,7 +44,7 @@ func TestQueryInterval(t *testing.T) {
 
 			timeRange := "5m"
 
-			verifier := func(query plugins.DataSubQuery) {
+			verifier := func(query legacydata.DataSubQuery) {
 				require.Equal(t, int64(123000), query.IntervalMS)
 				require.Equal(t, intervalv2.DefaultRes, query.MaxDataPoints)
 			}
@@ -63,7 +63,7 @@ func TestQueryInterval(t *testing.T) {
 
 			timeRange := "5m"
 
-			verifier := func(query plugins.DataSubQuery) {
+			verifier := func(query legacydata.DataSubQuery) {
 				require.Equal(t, int64(71000), query.IntervalMS)
 				require.Equal(t, intervalv2.DefaultRes, query.MaxDataPoints)
 			}
@@ -82,7 +82,7 @@ func TestQueryInterval(t *testing.T) {
 
 			timeRange := "5m"
 
-			verifier := func(query plugins.DataSubQuery) {
+			verifier := func(query legacydata.DataSubQuery) {
 				// when both panel-min-interval and datasource-min-interval exists,
 				// panel-min-interval is used
 				require.Equal(t, int64(19000), query.IntervalMS)
@@ -101,7 +101,7 @@ func TestQueryInterval(t *testing.T) {
 
 			timeRange := "1s"
 
-			verifier := func(query plugins.DataSubQuery) {
+			verifier := func(query legacydata.DataSubQuery) {
 				// no min-interval exists, the default-min-interval will be used,
 				// and for such a short time-range this will cause the value to be 1millisecond.
 				require.Equal(t, int64(1), query.IntervalMS)
@@ -118,24 +118,24 @@ type queryIntervalTestContext struct {
 	condition *QueryCondition
 }
 
-type queryIntervalVerifier func(query plugins.DataSubQuery)
+type queryIntervalVerifier func(query legacydata.DataSubQuery)
 
 type fakeIntervalTestReqHandler struct {
-	//nolint: staticcheck // plugins.DataResponse deprecated
-	response plugins.DataResponse
+	//nolint: staticcheck // legacydata.DataResponse deprecated
+	response legacydata.DataResponse
 	verifier queryIntervalVerifier
 }
 
-//nolint: staticcheck // plugins.DataResponse deprecated
-func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *models.DataSource, query plugins.DataQuery) (
-	plugins.DataResponse, error) {
+//nolint: staticcheck // legacydata.DataResponse deprecated
+func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *models.DataSource, query legacydata.DataQuery) (
+	legacydata.DataResponse, error) {
 	q := query.Queries[0]
 	rh.verifier(q)
 	return rh.response, nil
 }
 
-//nolint: staticcheck // plugins.DataResponse deprecated
-func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejson.Json, queryModel string, verifier func(query plugins.DataSubQuery)) {
+//nolint: staticcheck // legacydata.DataResponse deprecated
+func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejson.Json, queryModel string, verifier func(query legacydata.DataSubQuery)) {
 	t.Run("desc", func(t *testing.T) {
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
@@ -166,11 +166,11 @@ func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejso
 
 		ctx.condition = condition
 
-		qr := plugins.DataQueryResult{}
+		qr := legacydata.DataQueryResult{}
 
 		reqHandler := fakeIntervalTestReqHandler{
-			response: plugins.DataResponse{
-				Results: map[string]plugins.DataQueryResult{
+			response: legacydata.DataResponse{
+				Results: map[string]legacydata.DataQueryResult{
 					"A": qr,
 				},
 			},
