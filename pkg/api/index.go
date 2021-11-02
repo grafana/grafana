@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/navlinks"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -65,21 +66,21 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 }
 
 func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
-	enabledPlugins, err := hs.PluginManager.GetEnabledPlugins(c.OrgId)
+	enabledPlugins, err := hs.enabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
 	}
 
 	appLinks := []*dtos.NavLink{}
-	for _, plugin := range enabledPlugins.Apps {
+	for _, plugin := range enabledPlugins[plugins.App] {
 		if !plugin.Pinned {
 			continue
 		}
 
 		appLink := &dtos.NavLink{
 			Text:       plugin.Name,
-			Id:         "plugin-page-" + plugin.Id,
-			Url:        plugin.DefaultNavUrl,
+			Id:         "plugin-page-" + plugin.ID,
+			Url:        plugin.DefaultNavURL,
 			Img:        plugin.Info.Logos.Small,
 			SortWeight: dtos.WeightPlugin,
 		}
@@ -101,7 +102,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 					}
 				} else {
 					link = &dtos.NavLink{
-						Url:  hs.Cfg.AppSubURL + "/plugins/" + plugin.Id + "/page/" + include.Slug,
+						Url:  hs.Cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug,
 						Text: include.Name,
 					}
 				}
@@ -504,8 +505,8 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
 		BuildCommit:             setting.BuildCommit,
-		NewGrafanaVersion:       hs.PluginManager.GrafanaLatestVersion(),
-		NewGrafanaVersionExists: hs.PluginManager.GrafanaHasUpdate(),
+		NewGrafanaVersion:       hs.updateChecker.LatestGrafanaVersion(),
+		NewGrafanaVersionExists: hs.updateChecker.GrafanaUpdateAvailable(),
 		AppName:                 setting.ApplicationName,
 		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
 		FavIcon:                 "public/img/fav32.png",

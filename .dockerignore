@@ -12,7 +12,15 @@ Dockerfile
 docs
 dump.rdb
 node_modules
+**/node_modules
 /local
 /tmp
 *.yml
+!.yarnrc.yml
 *.md
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/versions
+!.yarn/cache

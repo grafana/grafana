@@ -11,7 +11,7 @@ import (
 )
 
 func TestSearch_SortedResults(t *testing.T) {
-	bus.AddHandler("test", func(query *FindPersistedDashboardsQuery) error {
+	bus.AddHandlerCtx("test", func(_ context.Context, query *FindPersistedDashboardsQuery) error {
 		query.Result = HitList{
 			&Hit{ID: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
 			&Hit{ID: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
@@ -22,12 +22,12 @@ func TestSearch_SortedResults(t *testing.T) {
 		return nil
 	})
 
-	bus.AddHandler("test", func(query *models.GetUserStarsQuery) error {
+	bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetUserStarsQuery) error {
 		query.Result = map[int64]bool{10: true, 12: true}
 		return nil
 	})
 
-	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+	bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetSignedInUserQuery) error {
 		query.Result = &models.SignedInUser{IsGrafanaAdmin: true}
 		return nil
 	})
@@ -41,7 +41,7 @@ func TestSearch_SortedResults(t *testing.T) {
 		},
 	}
 
-	err := svc.searchHandler(query)
+	err := svc.searchHandler(context.Background(), query)
 	require.Nil(t, err)
 
 	// Assert results are sorted.

@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -55,31 +55,30 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, logsService *LogsService, backendPM backendplugin.Manager) (*CloudWatchService, error) {
+func ProvideService(cfg *setting.Cfg, logsService *LogsService, registrar plugins.CoreBackendRegistrar) (*CloudWatchService, error) {
 	plog.Debug("initing")
 
-	im := datasource.NewInstanceManager(NewInstanceSettings())
-
+	executor := newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings()), cfg, awsds.NewSessionCache())
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(logsService, im, cfg, awsds.NewSessionCache()),
+		QueryDataHandler: executor,
 	})
 
-	if err := backendPM.Register("cloudwatch", factory); err != nil {
+	if err := registrar.LoadAndRegister("cloudwatch", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}
 
 	return &CloudWatchService{
-		LogsService:          logsService,
-		Cfg:                  cfg,
-		BackendPluginManager: backendPM,
+		LogsService: logsService,
+		Cfg:         cfg,
+		Executor:    executor,
 	}, nil
 }
 
 type CloudWatchService struct {
-	LogsService          *LogsService
-	BackendPluginManager backendplugin.Manager
-	Cfg                  *setting.Cfg
+	LogsService *LogsService
+	Cfg         *setting.Cfg
+	Executor    *cloudWatchExecutor
 }
 
 type SessionCache interface {

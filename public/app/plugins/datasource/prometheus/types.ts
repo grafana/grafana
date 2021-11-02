@@ -29,6 +29,10 @@ export interface PromOptions extends DataSourceJsonData {
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
 }
 
+export enum PromQueryType {
+  timeSeriesQuery = 'timeSeriesQuery',
+}
+
 export type ExemplarTraceIdDestination = {
   name: string;
   url?: string;
