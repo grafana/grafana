@@ -81,7 +81,7 @@ function makeStorageService() {
     },
 
     logStorage: (): void => {
-      console.log('storage log');
+      console.log('logStorage: not implemented');
     },
 
     migrate: (): Promise<void> => {
