@@ -4,8 +4,9 @@ import { Alert, Select, stylesFactory, useTheme2 } from '@grafana/ui';
 import { COUNTRIES_GAZETTEER_PATH, getGazetteer } from '../gazetteer/gazetteer';
 import { css } from '@emotion/css';
 import { useAsync } from 'react-use';
+import { GazetteerPathEditorConfigSettings } from '../types';
 
-const paths: Array<SelectableValue<string>> = [
+const defaultPaths: Array<SelectableValue<string>> = [
   {
     label: 'Countries',
     description: 'Lookup countries by name, two letter code, or three letter code',
@@ -13,7 +14,7 @@ const paths: Array<SelectableValue<string>> = [
   },
   {
     label: 'USA States',
-    description: 'Lookup states by name or 2 ',
+    description: 'Lookup states by name or code',
     value: 'public/gazetteer/usa-states.json',
   },
   {
@@ -23,12 +24,17 @@ const paths: Array<SelectableValue<string>> = [
   },
 ];
 
-export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({ value, onChange, context }) => {
+export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, GazetteerPathEditorConfigSettings>> = ({
+  value,
+  onChange,
+  context,
+  item,
+}) => {
   const styles = getStyles(useTheme2());
   const gaz = useAsync(() => getGazetteer(value), [value]);
 
   const { current, options } = useMemo(() => {
-    let options = [...paths];
+    let options = [...defaultPaths];
     let current = options.find((f) => f.value === value);
     if (!current && value) {
       current = {

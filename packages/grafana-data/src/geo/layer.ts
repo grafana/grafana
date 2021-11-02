@@ -66,10 +66,15 @@ export interface MapLayerOptions<TConfig = any> {
 /**
  * @alpha
  */
-export interface MapLayerHandler {
+export interface MapLayerHandler<TConfig = any> {
   init: () => BaseLayer;
   update?: (data: PanelData) => void;
   legend?: ReactNode;
+
+  /**
+   * Show custom elements in the panel edit UI
+   */
+  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<MapLayerOptions<TConfig>>) => void;
 }
 
 /**
@@ -98,9 +103,4 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * @param options
    */
   create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
-
-  /**
-   * Show custom elements in the panel edit UI
-   */
-  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<MapLayerOptions<TConfig>>) => void;
 }

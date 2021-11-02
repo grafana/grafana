@@ -3,6 +3,7 @@ import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
+import { unByKey } from 'ol/Observable';
 import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
 import { getGeoMapStyle } from '../../utils/getGeoMapStyle';
@@ -54,6 +55,19 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       format: new GeoJSON(),
     });
 
+    const key = source.on('change', () => {
+      if (source.getState() == 'ready') {
+        unByKey(key);
+        // var olFeatures = source.getFeatures(); // olFeatures.length === 1
+        // window.setTimeout(function () {
+        //     var olFeatures = source.getFeatures(); // olFeatures.length > 1
+        //     // Only after using setTimeout can I search the feature list... :(
+        // }, 100)
+
+        console.log('SOURCE READY!!!', source.getFeatures().length);
+      }
+    });
+
     const defaultStyle = new Style({
       image: new CircleStyle({
         radius: 5,
@@ -61,7 +75,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           color: DEFAULT_STYLE_RULE.fillColor,
           width: DEFAULT_STYLE_RULE.strokeWidth,
         }),
-        fill: new Fill({color: 'red'}),
+        fill: new Fill({ color: 'red' }),
       }),
       stroke: new Stroke({
         color: DEFAULT_STYLE_RULE.fillColor,
@@ -70,14 +84,14 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     });
 
     const styles = config?.styles ?? [];
-    if(!styles.length) {
-      styles.push
+    if (!styles.length) {
+      styles.push;
     }
     const vectorLayer = new VectorLayer({
       source,
       style: (feature: FeatureLike) => {
         const geom = feature?.getGeometry();
-        if(!geom) {
+        if (!geom) {
           return defaultStyle;
         }
 
@@ -108,39 +122,38 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       init: () => vectorLayer,
       update: (data: PanelData) => {
         // console.log('todo... find values matching the ID and update');
-
         // // Update each feature
         // source.getFeatures().forEach((f) => {
         //   console.log('Find: ', f.getId(), f.getProperties());
         // });
       },
+
+      // Geojson source url
+      registerOptionsUI: (builder) => {
+        builder
+          .addSelect({
+            path: 'config.src',
+            name: 'GeoJSON URL',
+            settings: {
+              options: [
+                { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
+                { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
+                { label: 'public/gazetteer/airports.geojson', value: 'public/gazetteer/airports.geojson' },
+              ],
+              allowCustomValue: true,
+            },
+            defaultValue: defaultOptions.src,
+          })
+          .addCustomEditor({
+            id: 'config.styles',
+            path: 'config.styles',
+            name: 'Style Rules',
+            editor: GeomapStyleRulesEditor,
+            settings: {},
+            defaultValue: [],
+          });
+      },
+      defaultOptions,
     };
   },
-
-  // Geojson source url
-  registerOptionsUI: (builder) => {
-    builder
-      .addSelect({
-        path: 'config.src',
-        name: 'GeoJSON URL',
-        settings: {
-          options: [
-            { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
-            { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
-            { label: 'public/gazetteer/airports.geojson', value: 'public/gazetteer/airports.geojson' },
-          ],
-          allowCustomValue: true,
-        },
-        defaultValue: defaultOptions.src,
-      })
-      .addCustomEditor({
-        id: 'config.styles',
-        path: 'config.styles',
-        name: 'Style Rules',
-        editor: GeomapStyleRulesEditor,
-        settings: {},
-        defaultValue: [],
-      });
-  },
-  defaultOptions,
 };

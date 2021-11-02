@@ -275,12 +275,16 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
       return <LockedRow label={label} value={value} lockMessage={lockMessage} />;
     }
 
+    const inputId = `${label}-input`;
     return (
       <tr>
-        <td className={labelClass}>{label}</td>
+        <td className={labelClass}>
+          <label htmlFor={inputId}>{label}</label>
+        </td>
         <td className="width-25" colSpan={2}>
           {this.state.editing ? (
             <Input
+              id={inputId}
               type={inputType}
               defaultValue={value}
               onBlur={this.onInputBlur}

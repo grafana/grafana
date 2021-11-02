@@ -18,12 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginManager plugifaces.Manager,
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugifaces.Store,
 	encryptionService encryption.Service) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
 		SQLStore:                sqlStore,
-		PluginManager:           pluginManager,
+		pluginStore:             pluginStore,
 		EncryptionService:       encryptionService,
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: dashboards.New,
@@ -61,7 +61,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string, encryption.Service) error,
 	provisionDatasources func(context.Context, string) error,
-	provisionPlugins func(string, plugifaces.Manager) error,
+	provisionPlugins func(string, plugifaces.Store) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -75,7 +75,7 @@ func newProvisioningServiceImpl(
 type ProvisioningServiceImpl struct {
 	Cfg                     *setting.Cfg
 	SQLStore                *sqlstore.SQLStore
-	PluginManager           plugifaces.Manager
+	pluginStore             plugifaces.Store
 	EncryptionService       encryption.Service
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
@@ -83,7 +83,7 @@ type ProvisioningServiceImpl struct {
 	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string, encryption.Service) error
 	provisionDatasources    func(context.Context, string) error
-	provisionPlugins        func(string, plugifaces.Manager) error
+	provisionPlugins        func(string, plugifaces.Store) error
 	mutex                   sync.Mutex
 }
 
@@ -143,7 +143,7 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins() error {
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
-	err := ps.provisionPlugins(appPath, ps.PluginManager)
+	err := ps.provisionPlugins(appPath, ps.pluginStore)
 	return errutil.Wrap("app provisioning error", err)
 }
 

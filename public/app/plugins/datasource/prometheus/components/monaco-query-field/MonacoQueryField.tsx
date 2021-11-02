@@ -15,23 +15,37 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   fixedOverflowWidgets: true,
   folding: false,
   fontSize: 14,
-  lineDecorationsWidth: 8,
+  lineDecorationsWidth: 8, // used as "padding-left"
   lineNumbers: 'off',
   minimap: { enabled: false },
   overviewRulerBorder: false,
   overviewRulerLanes: 0,
   padding: {
+    // these numbers were picked so that visually this matches the previous version
+    // of the query-editor the best
     top: 4,
-    bottom: 4,
+    bottom: 5,
   },
   renderLineHighlight: 'none',
   scrollbar: {
     vertical: 'hidden',
+    verticalScrollbarSize: 8, // used as "padding-right"
+    horizontal: 'hidden',
+    horizontalScrollbarSize: 0,
   },
   scrollBeyondLastLine: false,
   suggestFontSize: 12,
-  wordWrap: 'off',
+  wordWrap: 'on',
 };
+
+// this number was chosen by testing various values. it might be necessary
+// because of the width of the border, not sure.
+//it needs to do 2 things:
+// 1. when the editor is single-line, it should make the editor height be visually correct
+// 2. when the editor is multi-line, the editor should not be "scrollable" (meaning,
+//    you do a scroll-movement in the editor, and it will scroll the content by a couple pixels
+//    up & down. this we want to avoid)
+const EDITOR_HEIGHT_OFFSET = 2;
 
 const PROMQL_LANG_ID = promLanguageDefinition.id;
 
@@ -62,11 +76,12 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 const MonacoQueryField = (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onChange, initialValue } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
-  const onChangeRef = useLatest(onChange);
+  const onRunQueryRef = useLatest(onRunQuery);
+  const onBlurRef = useLatest(onBlur);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
 
@@ -96,7 +111,7 @@ const MonacoQueryField = (props: Props) => {
         onMount={(editor, monaco) => {
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
-            onChangeRef.current(editor.getValue());
+            onBlurRef.current(editor.getValue());
           });
 
           // we construct a DataProvider object
@@ -156,7 +171,7 @@ const MonacoQueryField = (props: Props) => {
             const containerDiv = containerRef.current;
             if (containerDiv !== null) {
               const pixelHeight = editor.getContentHeight();
-              containerDiv.style.height = `${pixelHeight}px`;
+              containerDiv.style.height = `${pixelHeight + EDITOR_HEIGHT_OFFSET}px`;
               containerDiv.style.width = '100%';
               const pixelWidth = containerDiv.clientWidth;
               editor.layout({ width: pixelWidth, height: pixelHeight });
@@ -169,9 +184,7 @@ const MonacoQueryField = (props: Props) => {
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-            const text = editor.getValue();
-            props.onChange(text);
-            props.onRunQuery();
+            onRunQueryRef.current(editor.getValue());
           });
         }}
       />
