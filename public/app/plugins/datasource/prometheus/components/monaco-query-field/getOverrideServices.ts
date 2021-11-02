@@ -90,8 +90,9 @@ function makeStorageService() {
     },
 
     isNew: (scope: unknown): boolean => {
-      // we do not implement this
-      return false;
+      // we create a new storage for every session, we do not persist it,
+      // so we return `true`.
+      return true;
     },
 
     flush: (reason?: unknown): Promise<void> => {
