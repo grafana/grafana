@@ -6,6 +6,8 @@ import {
   PagerDutylNotificationChannel,
   SlackNotificationChannel,
   PagerDutyKeyType,
+  WebHookNotificationChannel,
+  WebHookAuthType,
 } from '../NotificationChannel.types';
 import { TYPE_OPTIONS, PAGER_DUTY_TYPE_OPTIONS } from './AddNotificationChannel.constants';
 
@@ -40,6 +42,37 @@ export const INITIAL_VALUES = {
     type: getOptionFrom(type),
     channel: channel,
   }),
+  [NotificationChannelType.webhook]: ({
+    type,
+    summary,
+    url,
+    username,
+    password,
+    token,
+    ca,
+    cert,
+    key,
+    serverName,
+    skipVerify,
+    maxAlerts,
+    sendResolved,
+  }: WebHookNotificationChannel): NotificationChannelRenderProps => ({
+    name: summary,
+    type: getOptionFrom(type),
+    url,
+    webHookType: getWebhookAuthType(username, token),
+    useWebhookTls: isWebhookUsingTLS(ca, cert, key, serverName, skipVerify),
+    username,
+    password,
+    token,
+    ca,
+    cert,
+    key,
+    serverName,
+    skipVerify,
+    maxAlerts,
+    sendResolved,
+  }),
 };
 
 export const getInitialValues = (notificationChannel?: NotificationChannel) => {
@@ -55,8 +88,25 @@ export const getInitialValues = (notificationChannel?: NotificationChannel) => {
 
   return notificationChannel
     ? INITIAL_VALUES[notificationChannel.type](
-        notificationChannel as EmailNotificationChannel & SlackNotificationChannel & PagerDutylNotificationChannel
+        notificationChannel as EmailNotificationChannel &
+          SlackNotificationChannel &
+          PagerDutylNotificationChannel &
+          WebHookNotificationChannel
       )
     : defaultValues;
 };
 export const getOptionFrom = (type: NotificationChannelType) => TYPE_OPTIONS.find((opt) => opt.value === type);
+export const getWebhookAuthType = (username?: string, token?: string): WebHookAuthType => {
+  if (username) {
+    return WebHookAuthType.basic;
+  }
+
+  return token ? WebHookAuthType.token : WebHookAuthType.none;
+};
+export const isWebhookUsingTLS = (
+  ca?: string,
+  cert?: string,
+  key?: string,
+  serverName?: string,
+  skipVerify?: boolean
+) => !!ca || !!cert || !!key || !!serverName || skipVerify !== undefined;

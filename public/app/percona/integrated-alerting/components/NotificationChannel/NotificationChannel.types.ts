@@ -11,12 +11,20 @@ export enum NotificationChannelType {
   email = 'email',
   pagerDuty = 'pagerDuty',
   slack = 'slack',
+  webhook = 'webhook',
 }
 
 export enum PagerDutyKeyType {
   service = 'service',
   routing = 'routing',
 }
+
+export enum WebHookAuthType {
+  basic = 'basic',
+  token = 'token',
+  none = 'none',
+}
+
 export interface NotificationChannel {
   type: NotificationChannelType;
   channelId?: string;
@@ -38,6 +46,20 @@ export interface PagerDutylNotificationChannel extends NotificationChannel {
 export interface SlackNotificationChannel extends NotificationChannel {
   sendResolved?: boolean;
   channel?: string;
+}
+
+export interface WebHookNotificationChannel extends NotificationChannel {
+  sendResolved?: boolean;
+  url: string;
+  username?: string;
+  password?: string;
+  token?: string;
+  ca?: string;
+  cert?: string;
+  key?: string;
+  serverName?: string;
+  skipVerify?: boolean;
+  maxAlerts?: number;
 }
 
 export interface NotificationChannelTotals {
@@ -62,6 +84,25 @@ export interface NotificationChannelListResponse {
   totals: NotificationChannelTotals;
 }
 
+export interface WebHookBasicAuthConfigAPI {
+  username?: string;
+  password?: string;
+}
+
+export interface WebHookTLSConfigAPI {
+  ca_file_content: string;
+  cert_file_content: string;
+  key_file_content: string;
+  server_name: string;
+  insecure_skip_verify: boolean;
+}
+export interface WebHookHttpConfigAPI {
+  basic_auth?: WebHookBasicAuthConfigAPI;
+  bearer_token?: string;
+  tls_config?: WebHookTLSConfigAPI;
+  proxy_url?: string;
+}
+
 export interface NotificationChannelAPI {
   channel_id?: string;
   disabled?: boolean;
@@ -69,6 +110,7 @@ export interface NotificationChannelAPI {
   email_config?: EmailNotificationChannelAPI;
   pagerduty_config?: PagerDutyNotificationChannelAPI;
   slack_config?: SlackNotificationChannelAPI;
+  webhook_config?: WebHookNotificationChannelAPI;
 }
 
 export interface EmailNotificationChannelAPI {
@@ -87,6 +129,13 @@ export interface SlackNotificationChannelAPI {
   channel?: string;
 }
 
+export interface WebHookNotificationChannelAPI {
+  send_resolved?: boolean;
+  url?: string;
+  http_config: WebHookHttpConfigAPI;
+  max_alerts?: number;
+}
+
 export interface NotificationChannelRenderProps {
   name: string;
   type?: SelectableValue<NotificationChannelType>;
@@ -95,4 +144,17 @@ export interface NotificationChannelRenderProps {
   routing?: string;
   service?: string;
   channel?: string;
+  webHookType?: WebHookAuthType;
+  useWebhookTls?: boolean;
+  url?: string;
+  username?: string;
+  password?: string;
+  token?: string;
+  ca?: string;
+  cert?: string;
+  key?: string;
+  serverName?: string;
+  skipVerify?: boolean;
+  maxAlerts?: number;
+  sendResolved?: boolean;
 }
