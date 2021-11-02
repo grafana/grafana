@@ -14,6 +14,16 @@ import { NavBarSection } from './NavBarSection';
 import NavBarItem from './NavBarItem';
 import { NavBarMenu } from '../NavBarMenu/NavBarMenu';
 
+const onOpenSearch = () => {
+  locationService.partial({ search: 'open' });
+};
+
+const searchItem: NavModelItem = {
+  id: 'search',
+  onClick: onOpenSearch,
+  text: 'Search dashboards',
+};
+
 export const NavBarNext: FC = React.memo(() => {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -41,10 +51,6 @@ export const NavBarNext: FC = React.memo(() => {
     return null;
   }
 
-  const onOpenSearch = () => {
-    locationService.partial({ search: 'open' });
-  };
-
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
       <div className={styles.mobileSidemenuLogo} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} key="hamburger">
@@ -62,9 +68,9 @@ export const NavBarNext: FC = React.memo(() => {
         </NavBarItem>
         <NavBarItem
           className={styles.search}
-          isActive={activeItemId === 'search'}
-          label="Search dashboards"
-          onClick={onOpenSearch}
+          isActive={activeItemId === searchItem.id}
+          label={searchItem.text}
+          onClick={searchItem.onClick}
         >
           <Icon name="search" size="xl" />
         </NavBarItem>
@@ -131,7 +137,7 @@ export const NavBarNext: FC = React.memo(() => {
       {mobileMenuOpen && (
         <NavBarMenu
           activeItemId={activeItemId}
-          navItems={coreItems.concat(pluginItems).concat(configItems)}
+          navItems={[searchItem].concat(coreItems).concat(pluginItems).concat(configItems)}
           onClose={() => setMobileMenuOpen(false)}
         />
       )}
