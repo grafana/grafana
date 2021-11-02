@@ -45,6 +45,35 @@ type Plugin struct {
 	log      log.Logger
 }
 
+type PluginDTO struct {
+	JSONData
+
+	PluginDir string
+	Class     Class
+
+	// App fields
+	IncludedInAppID string
+	DefaultNavURL   string
+	Pinned          bool
+
+	// Signature fields
+	Signature     SignatureStatus
+	SignatureType SignatureType
+	SignatureOrg  string
+	//Parent         *Plugin
+	//Children       []*Plugin
+	//SignedFiles    PluginFiles
+	SignatureError *SignatureError
+
+	// GCOM update checker fields
+	GrafanaComVersion   string
+	GrafanaComHasUpdate bool
+
+	// SystemJS fields
+	Module  string
+	BaseURL string
+}
+
 // JSONData represents the plugin's plugin.json
 type JSONData struct {
 	// Common settings
@@ -250,6 +279,25 @@ type PluginClient interface {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.StreamHandler
+}
+
+func (p *Plugin) ToDTO() PluginDTO {
+	return PluginDTO{
+		JSONData:            p.JSONData,
+		PluginDir:           p.PluginDir,
+		Class:               p.Class,
+		IncludedInAppID:     p.IncludedInAppID,
+		DefaultNavURL:       p.DefaultNavURL,
+		Pinned:              p.Pinned,
+		Signature:           p.Signature,
+		SignatureType:       p.SignatureType,
+		SignatureOrg:        p.SignatureOrg,
+		SignatureError:      p.SignatureError,
+		GrafanaComVersion:   p.GrafanaComVersion,
+		GrafanaComHasUpdate: p.GrafanaComHasUpdate,
+		Module:              p.Module,
+		BaseURL:             p.BaseURL,
+	}
 }
 
 func (p *Plugin) StaticRoute() *StaticRoute {
