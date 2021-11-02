@@ -147,10 +147,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       outline-offset: -2px;
       transition: none;
     }
-
-    .sidemenu-open--xs & {
-      display: none;
-    }
   `,
   icon: css`
     height: 100%;

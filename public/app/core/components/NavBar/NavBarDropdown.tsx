@@ -89,25 +89,10 @@ const getStyles = (
       &:hover {
         background-color: ${theme.colors.action.hover};
       }
-
-      .sidemenu-open--xs & {
-        display: flex;
-        font-size: ${theme.typography.body.fontSize};
-        font-weight: ${theme.typography.body.fontWeight};
-        padding-left: ${theme.spacing(1)} !important;
-      }
     `,
     menu: css`
       border: 1px solid ${theme.components.panel.borderColor};
       flex-direction: ${reverseDirection ? 'column-reverse' : 'column'};
-
-      .sidemenu-open--xs & {
-        display: flex;
-        flex-direction: column;
-        float: none;
-        position: unset;
-        width: 100%;
-      }
     `,
     subtitle: css`
       border-${reverseDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
@@ -116,10 +101,6 @@ const getStyles = (
       font-weight: ${theme.typography.bodySmall.fontWeight};
       padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
       white-space: nowrap;
-
-      .sidemenu-open--xs & {
-        border-${reverseDirection ? 'bottom' : 'top'}: none;
-      }
     `,
   };
 };

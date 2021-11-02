@@ -11,6 +11,7 @@ import { KioskMode } from 'app/types';
 import { enrichConfigItems, isLinkActive, isSearchActive } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import NavBarItem from './NavBarItem';
+import { NavBarSection } from './NavBarSection';
 import { NavBarMenu } from '../NavBarMenu/NavBarMenu';
 
 const homeUrl = config.appSubUrl || '/';
@@ -52,50 +53,56 @@ export const NavBar: FC = React.memo(() => {
         <Icon name="bars" size="xl" />
       </div>
 
-      <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
-        <Branding.MenuLogo />
-      </NavBarItem>
-      <NavBarItem
-        className={styles.search}
-        isActive={activeItemId === 'search'}
-        label="Search dashboards"
-        onClick={onOpenSearch}
-      >
-        <Icon name="search" size="xl" />
-      </NavBarItem>
-
-      {topItems.map((link, index) => (
-        <NavBarItem
-          key={`${link.id}-${index}`}
-          isActive={activeItemId === link.id}
-          label={link.text}
-          menuItems={link.children}
-          target={link.target}
-          url={link.url}
-        >
-          {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-          {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+      <NavBarSection>
+        <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
+          <Branding.MenuLogo />
         </NavBarItem>
-      ))}
+        <NavBarItem
+          className={styles.search}
+          isActive={activeItemId === 'search'}
+          label="Search dashboards"
+          onClick={onOpenSearch}
+        >
+          <Icon name="search" size="xl" />
+        </NavBarItem>
+      </NavBarSection>
+
+      <NavBarSection>
+        {topItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={activeItemId === link.id}
+            label={link.text}
+            menuItems={link.children}
+            target={link.target}
+            url={link.url}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
+      </NavBarSection>
 
       <div className={styles.spacer} />
 
-      {bottomItems.map((link, index) => (
-        <NavBarItem
-          key={`${link.id}-${index}`}
-          isActive={activeItemId === link.id}
-          label={link.text}
-          menuItems={link.children}
-          menuSubTitle={link.subTitle}
-          onClick={link.onClick}
-          reverseMenuDirection
-          target={link.target}
-          url={link.url}
-        >
-          {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-          {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-        </NavBarItem>
-      ))}
+      <NavBarSection>
+        {bottomItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={activeItemId === link.id}
+            label={link.text}
+            menuItems={link.children}
+            menuSubTitle={link.subTitle}
+            onClick={link.onClick}
+            reverseMenuDirection
+            target={link.target}
+            url={link.url}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
+      </NavBarSection>
 
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
       {mobileMenuOpen && (
@@ -119,11 +126,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     ${theme.breakpoints.up('md')} {
       display: block;
     }
-
-    .sidemenu-open--xs & {
-      display: block;
-      margin-top: 0;
-    }
   `,
   sidemenu: css`
     display: flex;
@@ -142,16 +144,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     .sidemenu-hidden & {
       display: none;
     }
-
-    .sidemenu-open--xs & {
-      background-color: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z1};
-      gap: ${theme.spacing(1)};
-      height: auto;
-      margin-left: 0;
-      position: absolute;
-      width: 100%;
-    }
   `,
   grafanaLogo: css`
     display: none;
@@ -164,14 +156,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       align-items: center;
       display: flex;
       justify-content: center;
-    }
-  `,
-  closeButton: css`
-    display: none;
-
-    .sidemenu-open--xs & {
-      display: block;
-      font-size: ${theme.typography.fontSize}px;
     }
   `,
   mobileSidemenuLogo: css`
@@ -188,9 +172,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   spacer: css`
     flex: 1;
-
-    .sidemenu-open--xs & {
-      display: none;
-    }
   `,
 });

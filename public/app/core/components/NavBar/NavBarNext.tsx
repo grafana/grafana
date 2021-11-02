@@ -149,11 +149,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     ${theme.breakpoints.up('md')} {
       display: block;
     }
-
-    .sidemenu-open--xs & {
-      display: block;
-      margin-top: 0;
-    }
   `,
   sidemenu: css`
     display: flex;
@@ -174,16 +169,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     .sidemenu-hidden & {
       display: none;
     }
-
-    .sidemenu-open--xs & {
-      background-color: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z1};
-      gap: ${theme.spacing(1)};
-      height: auto;
-      margin-left: 0;
-      position: absolute;
-      width: 100%;
-    }
   `,
   grafanaLogo: css`
     display: none;
@@ -196,14 +181,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       align-items: center;
       display: flex;
       justify-content: center;
-    }
-  `,
-  closeButton: css`
-    display: none;
-
-    .sidemenu-open--xs & {
-      display: block;
-      font-size: ${theme.typography.fontSize}px;
     }
   `,
   mobileSidemenuLogo: css`
@@ -220,9 +197,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   spacer: css`
     flex: 1;
-
-    .sidemenu-open--xs & {
-      display: none;
-    }
   `,
 });
