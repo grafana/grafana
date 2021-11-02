@@ -317,10 +317,12 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
       return dsSettings.map((d) => d.settings);
     },
     getInstanceSettings(name: string) {
-      return dsSettings.map((d) => d.settings).find((x) => x.name === name);
+      return dsSettings.map((d) => d.settings).find((x) => x.name === name || x.uid === name);
     },
     get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-      return Promise.resolve((name ? dsSettings.find((d) => d.api.name === name) : dsSettings[0])!.api);
+      return Promise.resolve(
+        (name ? dsSettings.find((d) => d.api.name === name || d.api.uid === name) : dsSettings[0])!.api
+      );
     },
   } as any);
 
@@ -392,7 +394,9 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
         },
       },
       name: name,
+      uid: name,
       query: jest.fn(),
+      getRef: jest.fn(),
       meta,
     } as any,
   };

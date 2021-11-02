@@ -1,20 +1,22 @@
 package plugindashboards
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func ProvideService(dataService *tsdb.Service, pluginManager plugins.Manager, sqlStore *sqlstore.SQLStore) *Service {
+func ProvideService(pluginStore plugins.Store, pluginDashboardManager plugins.PluginDashboardManager,
+	sqlStore *sqlstore.SQLStore) *Service {
 	s := &Service{
-		DataService:   dataService,
-		PluginManager: pluginManager,
-		SQLStore:      sqlStore,
-		logger:        log.New("plugindashboards"),
+		sqlStore:               sqlStore,
+		pluginStore:            pluginStore,
+		pluginDashboardManager: pluginDashboardManager,
+		logger:                 log.New("plugindashboards"),
 	}
 	bus.AddEventListener(s.handlePluginStateChanged)
 	s.updateAppDashboards()
@@ -22,9 +24,9 @@ func ProvideService(dataService *tsdb.Service, pluginManager plugins.Manager, sq
 }
 
 type Service struct {
-	DataService   *tsdb.Service
-	PluginManager plugins.Manager
-	SQLStore      *sqlstore.SQLStore
+	sqlStore               *sqlstore.SQLStore
+	pluginStore            plugins.Store
+	pluginDashboardManager plugins.PluginDashboardManager
 
 	logger log.Logger
 }
@@ -32,7 +34,7 @@ type Service struct {
 func (s *Service) updateAppDashboards() {
 	s.logger.Debug("Looking for app dashboard updates")
 
-	pluginSettings, err := s.SQLStore.GetPluginSettings(0)
+	pluginSettings, err := s.sqlStore.GetPluginSettings(context.Background(), 0)
 	if err != nil {
 		s.logger.Error("Failed to get all plugin settings", "error", err)
 		return
@@ -44,19 +46,19 @@ func (s *Service) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef := s.PluginManager.GetPlugin(pluginSetting.PluginId); pluginDef != nil {
+		if pluginDef := s.pluginStore.Plugin(pluginSetting.PluginId); pluginDef != nil {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				s.syncPluginDashboards(pluginDef, pluginSetting.OrgId)
+				s.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgId)
 			}
 		}
 	}
 }
 
-func (s *Service) syncPluginDashboards(pluginDef *plugins.PluginBase, orgID int64) {
-	s.logger.Info("Syncing plugin dashboards to DB", "pluginId", pluginDef.Id)
+func (s *Service) syncPluginDashboards(ctx context.Context, pluginDef *plugins.Plugin, orgID int64) {
+	s.logger.Info("Syncing plugin dashboards to DB", "pluginId", pluginDef.ID)
 
 	// Get plugin dashboards
-	dashboards, err := s.PluginManager.GetPluginDashboards(orgID, pluginDef.Id)
+	dashboards, err := s.pluginDashboardManager.GetPluginDashboards(orgID, pluginDef.ID)
 	if err != nil {
 		s.logger.Error("Failed to load app dashboards", "error", err)
 		return
@@ -66,11 +68,11 @@ func (s *Service) syncPluginDashboards(pluginDef *plugins.PluginBase, orgID int6
 	for _, dash := range dashboards {
 		// remove removed ones
 		if dash.Removed {
-			s.logger.Info("Deleting plugin dashboard", "pluginId", pluginDef.Id, "dashboard", dash.Slug)
+			s.logger.Info("Deleting plugin dashboard", "pluginId", pluginDef.ID, "dashboard", dash.Slug)
 
 			deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dash.DashboardId}
 			if err := bus.Dispatch(&deleteCmd); err != nil {
-				s.logger.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
+				s.logger.Error("Failed to auto update app dashboard", "pluginId", pluginDef.ID, "error", err)
 				return
 			}
 
@@ -80,15 +82,15 @@ func (s *Service) syncPluginDashboards(pluginDef *plugins.PluginBase, orgID int6
 		// update updated ones
 		if dash.ImportedRevision != dash.Revision {
 			if err := s.autoUpdateAppDashboard(dash, orgID); err != nil {
-				s.logger.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
+				s.logger.Error("Failed to auto update app dashboard", "pluginId", pluginDef.ID, "error", err)
 				return
 			}
 		}
 	}
 
 	// update version in plugin_setting table to mark that we have processed the update
-	query := models.GetPluginSettingByIdQuery{PluginId: pluginDef.Id, OrgId: orgID}
-	if err := bus.Dispatch(&query); err != nil {
+	query := models.GetPluginSettingByIdQuery{PluginId: pluginDef.ID, OrgId: orgID}
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		s.logger.Error("Failed to read plugin setting by ID", "error", err)
 		return
 	}
@@ -100,7 +102,7 @@ func (s *Service) syncPluginDashboards(pluginDef *plugins.PluginBase, orgID int6
 		PluginVersion: pluginDef.Info.Version,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
 		s.logger.Error("Failed to update plugin setting version", "error", err)
 	}
 }
@@ -109,10 +111,10 @@ func (s *Service) handlePluginStateChanged(event *models.PluginStateChangedEvent
 	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {
-		s.syncPluginDashboards(s.PluginManager.GetPlugin(event.PluginId), event.OrgId)
+		s.syncPluginDashboards(context.TODO(), s.pluginStore.Plugin(event.PluginId), event.OrgId)
 	} else {
 		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 			return err
 		}
 
@@ -129,14 +131,14 @@ func (s *Service) handlePluginStateChanged(event *models.PluginStateChangedEvent
 }
 
 func (s *Service) autoUpdateAppDashboard(pluginDashInfo *plugins.PluginDashboardInfoDTO, orgID int64) error {
-	dash, err := s.PluginManager.LoadPluginDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path)
+	dash, err := s.pluginDashboardManager.LoadPluginDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path)
 	if err != nil {
 		return err
 	}
 	s.logger.Info("Auto updating App dashboard", "dashboard", dash.Title, "newRev",
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
 	user := &models.SignedInUser{UserId: 0, OrgRole: models.ROLE_ADMIN}
-	_, _, err = s.PluginManager.ImportDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path, orgID, 0, dash.Data, true,
-		nil, user, s.DataService)
+	_, _, err = s.pluginDashboardManager.ImportDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path, orgID, 0, dash.Data, true,
+		nil, user)
 	return err
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
@@ -31,7 +30,7 @@ var (
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginManager plugins.Manager, backendPluginManager backendplugin.Manager) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, registrar plugins.CoreBackendRegistrar) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
@@ -40,14 +39,12 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, p
 		insightsAnalytics:  &InsightsAnalyticsDatasource{proxy: proxy},
 		azureResourceGraph: &AzureResourceGraphDatasource{proxy: proxy},
 	}
-
 	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, *httpClientProvider, executors))
 
 	s := &Service{
-		Cfg:           cfg,
-		PluginManager: pluginManager,
-		im:            im,
-		executors:     executors,
+		Cfg:       cfg,
+		im:        im,
+		executors: executors,
 	}
 
 	mux := s.newMux()
@@ -58,9 +55,10 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, p
 		CallResourceHandler: httpadapter.New(resourceMux),
 	})
 
-	if err := backendPluginManager.RegisterAndStart(context.Background(), dsName, factory); err != nil {
+	if err := registrar.LoadAndRegister(dsName, factory); err != nil {
 		azlog.Error("Failed to register plugin", "error", err)
 	}
+
 	return s
 }
 
@@ -69,10 +67,9 @@ type serviceProxy interface {
 }
 
 type Service struct {
-	PluginManager plugins.Manager
-	Cfg           *setting.Cfg
-	im            instancemgmt.InstanceManager
-	executors     map[string]azDatasourceExecutor
+	Cfg       *setting.Cfg
+	im        instancemgmt.InstanceManager
+	executors map[string]azDatasourceExecutor
 }
 
 type azureMonitorSettings struct {
