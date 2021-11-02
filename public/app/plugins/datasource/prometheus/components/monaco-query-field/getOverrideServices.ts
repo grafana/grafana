@@ -7,7 +7,7 @@ import { monacoTypes } from '@grafana/ui';
 // but there is no API to achieve it.
 // the way to do it is to implement the `storageService`
 // interface, and provide our custom implementation,
-// which will defeault to `true` for the correct string-key.
+// which will default to `true` for the correct string-key.
 // unfortunately, while the typescript-interface exists,
 // it is not exported from monaco-editor,
 // so we cannot rely on typescript to make sure
