@@ -114,7 +114,7 @@ export function drawMarkers(opts) {
           outerPath.rect(tPx - halfWidth, top, barWidth, hgt);
 
           if (movementMode === MovementMode.Hollow) {
-            if (interDir >= 0) {
+            if (intraDir >= 0) {
               hollowPath.rect(
                 tPx - halfWidth + outlineWidth,
                 top + outlineWidth,
