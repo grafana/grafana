@@ -27,7 +27,7 @@ export function LogsVolumePanel(props: Props) {
     return null;
   } else if (logsVolumeData?.error) {
     return (
-      <Alert title="Failed to load volume logs for this query">
+      <Alert title="Failed to load log volume for this query">
         {logsVolumeData.error.data?.message || logsVolumeData.error.statusText || logsVolumeData.error.message}
       </Alert>
     );
