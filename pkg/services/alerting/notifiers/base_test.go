@@ -9,8 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/validations"
-	. "github.com/smartystreets/goconvey/convey"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShouldSendAlertNotification(t *testing.T) {
@@ -184,38 +185,36 @@ func TestShouldSendAlertNotification(t *testing.T) {
 }
 
 func TestBaseNotifier(t *testing.T) {
-	Convey("default constructor for notifiers", t, func() {
-		bJSON := simplejson.New()
+	bJSON := simplejson.New()
 
-		model := &models.AlertNotification{
-			Uid:      "1",
-			Name:     "name",
-			Type:     "email",
-			Settings: bJSON,
-		}
+	model := &models.AlertNotification{
+		Uid:      "1",
+		Name:     "name",
+		Type:     "email",
+		Settings: bJSON,
+	}
 
-		Convey("can parse false value", func() {
-			bJSON.Set("uploadImage", false)
+	t.Run("can parse false value", func(t *testing.T) {
+		bJSON.Set("uploadImage", false)
 
-			base := NewNotifierBase(model)
-			So(base.UploadImage, ShouldBeFalse)
-		})
+		base := NewNotifierBase(model)
+		require.False(t, base.UploadImage)
+	})
 
-		Convey("can parse true value", func() {
-			bJSON.Set("uploadImage", true)
+	t.Run("can parse true value", func(t *testing.T) {
+		bJSON.Set("uploadImage", true)
 
-			base := NewNotifierBase(model)
-			So(base.UploadImage, ShouldBeTrue)
-		})
+		base := NewNotifierBase(model)
+		require.True(t, base.UploadImage)
+	})
 
-		Convey("default value should be true for backwards compatibility", func() {
-			base := NewNotifierBase(model)
-			So(base.UploadImage, ShouldBeTrue)
-		})
+	t.Run("default value should be true for backwards compatibility", func(t *testing.T) {
+		base := NewNotifierBase(model)
+		require.True(t, base.UploadImage)
+	})
 
-		Convey("default value should be false for backwards compatibility", func() {
-			base := NewNotifierBase(model)
-			So(base.DisableResolveMessage, ShouldBeFalse)
-		})
+	t.Run("default value should be false for backwards compatibility", func(t *testing.T) {
+		base := NewNotifierBase(model)
+		require.False(t, base.DisableResolveMessage)
 	})
 }

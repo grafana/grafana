@@ -45,7 +45,7 @@ func (dr *dashboardServiceImpl) GetFolders(ctx context.Context, limit int64, pag
 		Page:         page,
 	}
 
-	if err := bus.Dispatch(&searchQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, &searchQuery); err != nil {
 		return nil, err
 	}
 

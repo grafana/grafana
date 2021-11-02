@@ -31,7 +31,7 @@ interface Props extends OwnProps, ConnectedProps<typeof connector> {}
  * This component is responsible for handling initialization of an Explore pane and triggering synchronization
  * of state based on URL changes and preventing any infinite loops.
  */
-export class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
+class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   el: any;
   exploreEvents: EventBusExtended;
 

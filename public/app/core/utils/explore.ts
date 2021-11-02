@@ -49,40 +49,35 @@ const MAX_HISTORY_ITEMS = 100;
 export const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
 export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
 
-/**
- * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
- *
- * @param panelTargets The origin panel's query targets
- * @param panelDatasource The origin panel's datasource
- * @param datasourceSrv Datasource service to query other datasources in case the panel datasource is mixed
- * @param timeSrv Time service to get the current dashboard range from
- */
 export interface GetExploreUrlArguments {
   panel: PanelModel;
-  panelTargets: DataQuery[];
-  panelDatasource: DataSourceApi;
+  /** Datasource service to query other datasources in case the panel datasource is mixed */
   datasourceSrv: DataSourceSrv;
+  /** Time service to get the current dashboard range from */
   timeSrv: TimeSrv;
 }
 
+/**
+ * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
+ */
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
-  const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
-  let exploreDatasource = panelDatasource;
+  const { panel, datasourceSrv, timeSrv } = args;
+  let exploreDatasource = await datasourceSrv.get(panel.datasource);
 
   /** In Explore, we don't have legend formatter and we don't want to keep
    * legend formatting as we can't change it
    */
-  let exploreTargets: DataQuery[] = panelTargets.map((t) => omit(t, 'legendFormat'));
+  let exploreTargets: DataQuery[] = panel.targets.map((t) => omit(t, 'legendFormat'));
   let url: string | undefined;
 
   // Mixed datasources need to choose only one datasource
-  if (panelDatasource.meta?.id === 'mixed' && exploreTargets) {
+  if (exploreDatasource.meta?.id === 'mixed' && exploreTargets) {
     // Find first explore datasource among targets
     for (const t of exploreTargets) {
       const datasource = await datasourceSrv.get(t.datasource || undefined);
       if (datasource) {
         exploreDatasource = datasource;
-        exploreTargets = panelTargets.filter((t) => t.datasource === datasource.name);
+        exploreTargets = panel.targets.filter((t) => t.datasource === datasource.name);
         break;
       }
     }
@@ -104,7 +99,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
         ...state,
         datasource: exploreDatasource.name,
         context: 'explore',
-        queries: exploreTargets.map((t) => ({ ...t, datasource: exploreDatasource.name })),
+        queries: exploreTargets.map((t) => ({ ...t, datasource: exploreDatasource.getRef() })),
       };
     }
 
@@ -206,6 +201,25 @@ export const safeStringifyValue = (value: any, space?: number) => {
   return '';
 };
 
+export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
+
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
+
+const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
+// we use this function to take any kind of data we loaded
+// from an external source (URL, localStorage, whatever),
+// and extract the graph-style from it, or return the default
+// graph-style if we are not able to do that.
+// it is important that this function is able to take any form of data,
+// (be it objects, or arrays, or booleans or whatever),
+// and produce a best-effort graphStyle.
+// note that typescript makes sure we make no mistake in this function.
+// we do not rely on ` as ` or ` any `.
+export const toGraphStyle = (data: unknown): ExploreGraphStyle => {
+  const found = EXPLORE_GRAPH_STYLES.find((v) => v === data);
+  return found ?? DEFAULT_GRAPH_STYLE;
+};
+
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsed = safeParseJson(initial);
   const errorResult: any = {
@@ -282,9 +296,12 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
 }
 
 /**
- * A target is non-empty when it has keys (with non-empty values) other than refId, key and context.
+ * A target is non-empty when it has keys (with non-empty values) other than refId, key, context and datasource.
+ * FIXME: While this is reasonable for practical use cases, a query without any propery might still be "non-empty"
+ * in its own scope, for instance when there's no user input needed. This might be the case for an hypothetic datasource in
+ * which query options are only set in its config and the query object itself, as generated from its query editor it's always "empty"
  */
-const validKeys = ['refId', 'key', 'context'];
+const validKeys = ['refId', 'key', 'context', 'datasource'];
 export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): boolean {
   return (
     queries &&

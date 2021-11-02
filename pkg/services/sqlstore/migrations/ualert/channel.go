@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"sort"
 	"strings"
 
@@ -127,21 +126,6 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUid
 		settings, decryptedSecureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
 		if err != nil {
 			return err
-		}
-
-		// Grafana accepts any type of string as a URL for the Slack notification channel.
-		// However, the Alertmanager will fail if provided with an invalid URL we have two options at this point:
-		// Either we fail the migration or remove the URL, we've chosen the latter and assume that the notification
-		// channel was broken to begin with.
-		if c.Type == "slack" {
-			u, ok := decryptedSecureSettings["url"]
-			if ok {
-				_, err := url.Parse(u)
-				if err != nil {
-					m.mg.Logger.Warn("slack notification channel had invalid URL, removing", "name", c.Name, "uid", c.Uid, "org", c.OrgID)
-					delete(decryptedSecureSettings, "url")
-				}
-			}
 		}
 
 		portedChannels = append(portedChannels, &PostableGrafanaReceiver{

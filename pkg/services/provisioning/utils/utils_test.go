@@ -5,25 +5,26 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCheckOrgExists(t *testing.T) {
-	Convey("with default org in database", t, func() {
+	t.Run("with default org in database", func(t *testing.T) {
 		sqlstore.InitTestDB(t)
 
 		defaultOrg := models.CreateOrgCommand{Name: "Main Org."}
 		err := sqlstore.CreateOrg(&defaultOrg)
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey("default org exists", func() {
+		t.Run("default org exists", func(t *testing.T) {
 			err := CheckOrgExists(defaultOrg.Result.Id)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 		})
 
-		Convey("other org doesn't exist", func() {
+		t.Run("other org doesn't exist", func(t *testing.T) {
 			err := CheckOrgExists(defaultOrg.Result.Id + 1)
-			So(err, ShouldEqual, models.ErrOrgNotFound)
+			require.Equal(t, err, models.ErrOrgNotFound)
 		})
 	})
 }

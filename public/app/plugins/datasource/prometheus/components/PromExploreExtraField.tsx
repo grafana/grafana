@@ -48,7 +48,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
     }
 
     function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-      if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey)) {
+      if (e.key === 'Enter' && e.shiftKey) {
         onRunQuery();
       }
     }

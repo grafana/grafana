@@ -10,10 +10,20 @@ const (
 	ActionProvisioningReload = "provisioning:reload"
 
 	ActionDatasourcesRead   = "datasources:read"
+	ActionDatasourcesQuery  = "datasources:query"
 	ActionDatasourcesCreate = "datasources:create"
 	ActionDatasourcesWrite  = "datasources:write"
 	ActionDatasourcesDelete = "datasources:delete"
 	ActionDatasourcesIDRead = "datasources.id:read"
+
+	ActionOrgsRead             = "orgs:read"
+	ActionOrgsPreferencesRead  = "orgs.preferences:read"
+	ActionOrgsQuotasRead       = "orgs.quotas:read"
+	ActionOrgsWrite            = "orgs:write"
+	ActionOrgsPreferencesWrite = "orgs.preferences:write"
+	ActionOrgsQuotasWrite      = "orgs.quotas:write"
+	ActionOrgsDelete           = "orgs:delete"
+	ActionOrgsCreate           = "orgs:create"
 )
 
 // API related scopes
@@ -28,6 +38,12 @@ var (
 	ScopeDatasourceID   = accesscontrol.Scope("datasources", "id", accesscontrol.Parameter(":id"))
 	ScopeDatasourceUID  = accesscontrol.Scope("datasources", "uid", accesscontrol.Parameter(":uid"))
 	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
+
+	ScopeOrgsAll      = accesscontrol.Scope("orgs", "*")
+	ScopeOrgID        = accesscontrol.Scope("orgs", "id", accesscontrol.Parameter(":orgId"))
+	ScopeOrgCurrentID = accesscontrol.Scope("orgs", "id", accesscontrol.Field("OrgID"))
+	ScopeOrgName      = accesscontrol.Scope("orgs", "name", accesscontrol.Parameter(":name"))
+	ScopeOrgCurrent   = accesscontrol.Scope("orgs", "current")
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
@@ -63,9 +79,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 						Action: ActionDatasourcesWrite,
 						Scope:  ScopeDatasourcesAll,
 					},
-					{Action: ActionDatasourcesCreate},
+					{
+						Action: ActionDatasourcesCreate,
+					},
 					{
 						Action: ActionDatasourcesDelete,
+						Scope:  ScopeDatasourcesAll,
+					},
+					{
+						Action: ActionDatasourcesQuery,
 						Scope:  ScopeDatasourcesAll,
 					},
 				},
@@ -85,6 +107,96 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 			Grants: []string{string(models.ROLE_VIEWER)},
+		},
+		{
+			Role: accesscontrol.RoleDTO{
+				Version:     1,
+				Name:        "fixed:datasources:compatibility:querier",
+				Description: "Query data sources when data source permissions are not in use",
+				Permissions: []accesscontrol.Permission{
+					{Action: ActionDatasourcesQuery},
+				},
+			},
+			Grants: []string{string(models.ROLE_VIEWER)},
+		},
+		{
+			Role: accesscontrol.RoleDTO{
+				Version:     1,
+				Name:        "fixed:current:org:reader",
+				Description: "Read current organization and its quotas.",
+				Permissions: []accesscontrol.Permission{
+					{
+						Action: ActionOrgsRead,
+						Scope:  ScopeOrgCurrent,
+					},
+					{
+						Action: ActionOrgsQuotasRead,
+						Scope:  ScopeOrgCurrent,
+					},
+				},
+			},
+			Grants: []string{string(models.ROLE_VIEWER)},
+		},
+		{
+			Role: accesscontrol.RoleDTO{
+				Version:     1,
+				Name:        "fixed:current:org:writer",
+				Description: "Read current organization, its quotas, and its preferences. Write current organization and its preferences.",
+				Permissions: []accesscontrol.Permission{
+					{
+						Action: ActionOrgsRead,
+						Scope:  ScopeOrgCurrent,
+					},
+					{
+						Action: ActionOrgsQuotasRead,
+						Scope:  ScopeOrgCurrent,
+					},
+					{
+						Action: ActionOrgsPreferencesRead,
+						Scope:  ScopeOrgCurrent,
+					},
+					{
+						Action: ActionOrgsWrite,
+						Scope:  ScopeOrgCurrent,
+					},
+					{
+						Action: ActionOrgsPreferencesWrite,
+						Scope:  ScopeOrgCurrent,
+					},
+				},
+			},
+			Grants: []string{string(models.ROLE_ADMIN)},
+		},
+		{
+			Role: accesscontrol.RoleDTO{
+				Version:     1,
+				Name:        "fixed:orgs:writer",
+				Description: "Create, read, write, or delete an organization. Read or write an organization's quotas.",
+				Permissions: []accesscontrol.Permission{
+					{Action: ActionOrgsCreate},
+					{
+						Action: ActionOrgsRead,
+						Scope:  ScopeOrgsAll,
+					},
+					{
+						Action: ActionOrgsWrite,
+						Scope:  ScopeOrgsAll,
+					},
+					{
+						Action: ActionOrgsDelete,
+						Scope:  ScopeOrgsAll,
+					},
+					{
+						Action: ActionOrgsQuotasRead,
+						Scope:  ScopeOrgsAll,
+					},
+					{
+						Action: ActionOrgsQuotasWrite,
+						Scope:  ScopeOrgsAll,
+					},
+				},
+			},
+			Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
 		},
 	}
 
