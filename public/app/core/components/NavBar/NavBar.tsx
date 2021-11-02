@@ -98,9 +98,13 @@ export const NavBar: FC = React.memo(() => {
       ))}
 
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
-      {mobileMenuOpen &&
-        <NavBarMenu onClose={() => setMobileMenuOpen(false)} />
-      }
+      {mobileMenuOpen && (
+        <NavBarMenu
+          activeItemId={activeItemId}
+          navItems={topItems.concat(bottomItems)}
+          onClose={() => setMobileMenuOpen(false)}
+        />
+      )}
     </nav>
   );
 });
