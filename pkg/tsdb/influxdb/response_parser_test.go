@@ -218,9 +218,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 		result := parser.Parse(prepare(response), query)
-
 		t.Run("should parse aliases", func(t *testing.T) {
-
 			frame := result.Responses["A"]
 			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
