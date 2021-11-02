@@ -118,16 +118,13 @@ export const updateDatasourcePluginSecureJsonDataOption = <J, S extends {} = Key
   val: any
 ) => {
   const config = props.options;
-  if (!config.secureJsonData) {
-    return;
-  }
 
   props.onOptionsChange({
     ...config,
     secureJsonData: {
-      ...config.secureJsonData,
+      ...(config.secureJsonData ? config.secureJsonData : {}),
       [key]: val,
-    },
+    } as S,
   });
 };
 
