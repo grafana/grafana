@@ -69,7 +69,7 @@ export interface SelectCommonProps<T> {
   tabSelectsValue?: boolean;
   value?: SelectValue<T> | null;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
-  width?: number;
+  width?: number | 'auto';
   isOptionDisabled?: () => boolean;
   /** allowCustomValue must be enabled. Determines whether the "create new" option should be displayed based on the current input value, select value and options array. */
   isValidNewOption?: (

@@ -127,6 +127,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     locationService.partial({
       editPanel: null,
       tab: null,
+      showCategory: null,
     });
   };
 
@@ -421,7 +422,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   onGoBackToDashboard = () => {
-    locationService.partial({ editPanel: null, tab: null });
+    locationService.partial({ editPanel: null, tab: null, showCategory: null });
   };
 
   onConfirmAndDismissLibarayPanelModel = () => {
