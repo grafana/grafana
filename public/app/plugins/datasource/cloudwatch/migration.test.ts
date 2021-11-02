@@ -1,6 +1,6 @@
 import { DataQuery } from '@grafana/data';
 import { migrateMultipleStatsAnnotationQuery, migrateMultipleStatsMetricsQuery } from './migrations';
-import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from './types';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsAnnotationQuery, CloudWatchMetricsQuery } from './types';
 
 describe('migration', () => {
   describe('migrateMultipleStatsMetricsQuery', () => {
@@ -71,7 +71,7 @@ describe('migration', () => {
     };
 
     const newAnnotations = migrateMultipleStatsAnnotationQuery(annotationToMigrate as CloudWatchAnnotationQuery);
-    const newCloudWatchAnnotations = newAnnotations as CloudWatchAnnotationQuery[];
+    const newCloudWatchAnnotations = newAnnotations as CloudWatchMetricsAnnotationQuery[];
 
     it('should create one new annotation for each stat', () => {
       expect(newAnnotations.length).toBe(1);
@@ -110,7 +110,7 @@ describe('migration', () => {
       });
 
       it('should use statistics prop and remove statistics prop', () => {
-        expect(annotationToMigrate.statistic).toEqual('p23.23');
+        expect('statistic' in annotationToMigrate && annotationToMigrate.statistic).toEqual('p23.23');
         expect(annotationToMigrate).not.toHaveProperty('statistics');
       });
     });
