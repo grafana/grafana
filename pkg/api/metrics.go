@@ -35,33 +35,29 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	// Parse the queries
 	hasExpression := false
 	datasources := make(map[string]*models.DataSource, len(reqDTO.Queries))
-	queryInfo := make([]queryDSInfo, 0, len(reqDTO.Queries))
 	for _, query := range reqDTO.Queries {
-		q := hs.getDataSourceFromQuery(c, query, datasources)
-		if q.errRes != nil {
-			return q.errRes
+		ds, errRsp := hs.getDataSourceFromQuery(c, query, datasources)
+		if errRsp != nil {
+			return errRsp
 		}
-		if q.ds == nil {
+		if ds == nil {
 			return response.Error(http.StatusBadRequest, "Datasource not found for query", nil)
 		}
 
-		datasources[q.ds.Uid] = q.ds
-		if q.ds.Uid == expr.DatasourceUID {
+		datasources[ds.Uid] = ds
+		if ds.Uid == expr.DatasourceUID {
 			hasExpression = true
 		}
-		queryInfo = append(queryInfo, q)
-	}
 
-	for _, info := range queryInfo {
-		hs.log.Debug("Processing metrics query", "query", info.query)
+		hs.log.Debug("Processing metrics query", "query", query)
 
 		request.Queries = append(request.Queries, plugins.DataSubQuery{
-			RefID:         info.query.Get("refId").MustString("A"),
-			MaxDataPoints: info.query.Get("maxDataPoints").MustInt64(100),
-			IntervalMS:    info.query.Get("intervalMs").MustInt64(1000),
-			QueryType:     info.query.Get("queryType").MustString(""),
-			Model:         info.query,
-			DataSource:    info.ds,
+			RefID:         query.Get("refId").MustString("A"),
+			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
+			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
+			QueryType:     query.Get("queryType").MustString(""),
+			Model:         query,
+			DataSource:    ds,
 		})
 	}
 
@@ -77,7 +73,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return toMacronResponse(qdr)
 	}
 
-	ds := queryInfo[0].ds
+	ds := request.Queries[0].DataSource
 	if len(datasources) > 1 {
 		// We do not (yet) support mixed query type
 		return response.Error(http.StatusBadRequest, "All queries must use the same datasource", nil)
@@ -101,58 +97,46 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	return toMacronResponse(resp)
 }
 
-type queryDSInfo struct {
-	ds     *models.DataSource
-	query  *simplejson.Json
-	errRes response.Response
-}
-
-func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simplejson.Json, history map[string]*models.DataSource) (info queryDSInfo) {
+func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simplejson.Json, history map[string]*models.DataSource) (*models.DataSource, response.Response) {
 	var err error
-	info.query = query
 	uid := query.Get("datasource").Get("uid").MustString()
 
 	// check cache value
 	ds, ok := history[uid]
 	if ok {
-		info.ds = ds
-		return
+		return ds, nil
 	}
 
 	switch uid {
 	case expr.DatasourceUID:
-		info.ds = expr.DataSourceModel((c.OrgId))
-		return
+		return expr.DataSourceModel((c.OrgId)), nil
 	case grafanads.DatasourceUID:
-		info.ds = grafanads.DataSourceModel(c.OrgId)
-		return
+		return grafanads.DataSourceModel(c.OrgId), nil
 	case "": // empty or mssing UID (old or invalid)
 		break
 	default:
-		info.ds, err = hs.DataSourceCache.GetDatasourceByUID(uid, c.SignedInUser, c.SkipCache)
+		ds, err = hs.DataSourceCache.GetDatasourceByUID(uid, c.SignedInUser, c.SkipCache)
 		if err != nil {
-			info.errRes = hs.handleGetDataSourceUIDError(err, uid)
+			return nil, hs.handleGetDataSourceUIDError(err, uid)
 		}
-		return
+		return ds, nil
 	}
 
 	// Support legacy requets from before 8.3
 	if query.Get("datasource").MustString() == expr.DatasourceType {
-		info.ds = expr.DataSourceModel((c.OrgId))
-		return
+		return expr.DataSourceModel((c.OrgId)), nil
 	}
 
 	// Fallback to the datasourceId
 	id, err := query.Get("datasourceId").Int64()
 	if err != nil {
-		info.errRes = response.Error(http.StatusBadRequest, "Query missing data source ID/UID", nil)
-	} else {
-		info.ds, err = hs.DataSourceCache.GetDatasource(id, c.SignedInUser, c.SkipCache)
-		if err != nil {
-			info.errRes = hs.handleGetDataSourceError(err, id)
-		}
+		return nil, response.Error(http.StatusBadRequest, "Query missing data source ID/UID", nil)
 	}
-	return info
+	ds, err = hs.DataSourceCache.GetDatasource(id, c.SignedInUser, c.SkipCache)
+	if err != nil {
+		return nil, hs.handleGetDataSourceError(err, id)
+	}
+	return ds, nil
 }
 
 func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
