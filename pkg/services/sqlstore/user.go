@@ -201,9 +201,6 @@ func (ss *SQLStore) CloneUserToServiceAccount(ctx context.Context, siUser *model
 		return nil, errors.Errorf("Failed to create user: %v", err)
 	}
 
-	//TODO: roles from current user and copy them to new service account
-	//TODO: Only apply selected roles, once we have the select roles UI
-
 	return newuser, err
 }
 
