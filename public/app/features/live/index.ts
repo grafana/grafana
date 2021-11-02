@@ -5,6 +5,7 @@ import { GrafanaLiveChannelConfigService } from './channel-config';
 import { GrafanaLiveChannelConfigSrv } from './channel-config/types';
 import { contextSrv } from '../../core/services/context_srv';
 import { CentrifugeServiceWorkerProxy } from './centrifuge/serviceWorkerProxy';
+import { CentrifugeService } from './centrifuge/service';
 import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 
 const grafanaLiveScopesSingleton = new GrafanaLiveChannelConfigService();
@@ -28,7 +29,9 @@ export function initGrafanaLive() {
     dataStreamSubscriberReadiness: liveTimer.ok.asObservable(),
   };
 
-  const centrifugeSrv = new CentrifugeServiceWorkerProxy(centrifugeServiceDeps);
+  const centrifugeSrv = config.featureToggles['live-service-web-worker']
+    ? new CentrifugeServiceWorkerProxy(centrifugeServiceDeps)
+    : new CentrifugeService(centrifugeServiceDeps);
 
   setGrafanaLiveSrv(
     new GrafanaLiveService({
