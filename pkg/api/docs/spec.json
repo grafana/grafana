@@ -27,6 +27,778 @@
   "host": "localhost:10081",
   "basePath": "/api",
   "paths": {
+    "/admin/ldap/reload": {
+      "post": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.",
+        "tags": [
+          "admin_ldap"
+        ],
+        "summary": "Reloads the LDAP configuration.",
+        "operationId": "reloadLDAP",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/ldap/status": {
+      "get": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.status:read`.",
+        "tags": [
+          "admin_ldap"
+        ],
+        "summary": "Attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.",
+        "operationId": "getLDAPStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/ldap/sync/{user_id}": {
+      "post": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:sync`.",
+        "tags": [
+          "admin_ldap"
+        ],
+        "summary": "Enables a single Grafana user to be synchronized against LDAP.",
+        "operationId": "syncLDAPUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/ldap/{user_name}": {
+      "get": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:read`.",
+        "tags": [
+          "admin_ldap"
+        ],
+        "summary": "Finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.",
+        "operationId": "getLDAPUser",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UserID",
+            "name": "user_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/pause-all-alerts": {
+      "post": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Pause/unpause all (legacy) alerts.",
+        "operationId": "pauseAllAlerts",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PauseAllAlertsCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/pauseAlertsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/provisioning/accesscontrol/reload": {
+      "post": {
+        "description": "Reloads the provisioning config files for access control again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:accesscontrol`.",
+        "tags": [
+          "admin_provisioning"
+        ],
+        "summary": "Reload access control provisioning configurations.",
+        "operationId": "reloadProvisionedAccessControl",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/provisioning/dashboards/reload": {
+      "post": {
+        "description": "Reloads the provisioning config files for dashboards again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:dashboards`.",
+        "tags": [
+          "admin_provisioning"
+        ],
+        "summary": "Reload dashboard provisioning configurations.",
+        "operationId": "reloadProvisionedDashboards",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/provisioning/datasources/reload": {
+      "post": {
+        "description": "Reloads the provisioning config files for datasources again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:datasources`.",
+        "tags": [
+          "admin_provisioning"
+        ],
+        "summary": "Reload datasource provisioning configurations.",
+        "operationId": "reloadProvisionedDatasources",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/provisioning/notifications/reload": {
+      "post": {
+        "description": "Reloads the provisioning config files for legacy alert notifiers again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:notifications`.",
+        "tags": [
+          "admin_provisioning"
+        ],
+        "summary": "Reload legacy alert notifier provisioning configurations.",
+        "operationId": "reloadProvisionedAlertNotifiers",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/provisioning/plugins/reload": {
+      "post": {
+        "description": "Reloads the provisioning config files for plugins again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:plugin`.",
+        "tags": [
+          "admin_provisioning"
+        ],
+        "summary": "Reload plugin provisioning configurations.",
+        "operationId": "reloadProvisionedPlugins",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/settings": {
+      "get": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `settings:read` and scopes: `settings:*`, `settings:auth.saml:` and `settings:auth.saml:enabled` (property level).",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Fetch settings.",
+        "operationId": "getSettings",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getSettingsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          }
+        }
+      }
+    },
+    "/admin/stats": {
+      "get": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `server:stats:read`.",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Fetch Grafana Stats.",
+        "operationId": "getStats",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getStatsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users": {
+      "post": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:create`.\n\nNote that OrgId is an optional parameter that can be used to assign a new user to a different organization when `auto_assign_org` is set to `true`.",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Create new user.",
+        "operationId": "createUser",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AdminCreateUserForm"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createUserResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "412": {
+            "$ref": "#/responses/preconditionFailedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}": {
+      "delete": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global:users:*`.",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Delete global User.",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/auth-tokens": {
+      "get": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global:users:*`.",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Return a list of all auth tokens (devices) that the user currently have logged in from.",
+        "operationId": "getAuthTokens",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAuthTokensResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/disable": {
+      "post": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global:users:1` (userIDScope).",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Disable user.",
+        "operationId": "disableUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/enable": {
+      "post": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global:users:1` (userIDScope).",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Enable user.",
+        "operationId": "enableUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/logout": {
+      "post": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global:users:*`.",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity.",
+        "operationId": "logoutUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/password": {
+      "put": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global:users:*`.",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Set password for user.",
+        "operationId": "setPassword",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AdminUpdateUserPasswordForm"
+            }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/permissions": {
+      "put": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global:users:*`.",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Set permissions for user.",
+        "operationId": "setPermissions",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AdminUpdateUserPermissionsForm"
+            }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/quotas": {
+      "get": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global:users:1` (userIDScope).",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Fetch user quota.",
+        "operationId": "getUserQuota",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQuotaResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/quotas/{quota_target}": {
+      "put": {
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global:users:1` (userIDScope).",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Update user quota.",
+        "operationId": "updateUserQuota",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "QuotaTarget",
+            "name": "quota_target",
+            "in": "path",
+            "required": true
+          },
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateUserQuotaCmd"
+            }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/revoke-auth-token": {
+      "post": {
+        "description": "Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global:users:*`.",
+        "tags": [
+          "admin_users"
+        ],
+        "summary": "Revoke auth token for user.",
+        "operationId": "revokeAuthToken",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RevokeAuthTokenCmd"
+            }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/auth/keys": {
       "get": {
         "description": "Will return auth keys.",
@@ -1973,7 +2745,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "FolderID",
+            "x-go-name": "UserID",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -2008,7 +2780,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "FolderID",
+            "x-go-name": "UserID",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -2055,7 +2827,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "FolderID",
+            "x-go-name": "UserID",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -2092,7 +2864,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "FolderID",
+            "x-go-name": "UserID",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -2208,6 +2980,169 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AdminCreateUserForm": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "login": {
+          "type": "string",
+          "x-go-name": "Login"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgId"
+        },
+        "password": {
+          "type": "string",
+          "x-go-name": "Password"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "AdminStats": {
+      "type": "object",
+      "properties": {
+        "activeAdmins": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ActiveAdmins"
+        },
+        "activeEditors": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ActiveEditors"
+        },
+        "activeSessions": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ActiveSessions"
+        },
+        "activeUsers": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ActiveUsers"
+        },
+        "activeViewers": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ActiveViewers"
+        },
+        "admins": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Admins"
+        },
+        "alerts": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Alerts"
+        },
+        "dailyActiveAdmins": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DailyActiveAdmins"
+        },
+        "dailyActiveEditors": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DailyActiveEditors"
+        },
+        "dailyActiveSessions": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DailyActiveSessions"
+        },
+        "dailyActiveUsers": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DailyActiveUsers"
+        },
+        "dailyActiveViewers": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DailyActiveViewers"
+        },
+        "dashboards": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Dashboards"
+        },
+        "datasources": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Datasources"
+        },
+        "editors": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Editors"
+        },
+        "orgs": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Orgs"
+        },
+        "playlists": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Playlists"
+        },
+        "snapshots": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Snapshots"
+        },
+        "stars": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Stars"
+        },
+        "tags": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Tags"
+        },
+        "users": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Users"
+        },
+        "viewers": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Viewers"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AdminUpdateUserPasswordForm": {
+      "type": "object",
+      "properties": {
+        "password": {
+          "type": "string",
+          "x-go-name": "Password"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "AdminUpdateUserPermissionsForm": {
+      "type": "object",
+      "properties": {
+        "isGrafanaAdmin": {
+          "type": "boolean",
+          "x-go-name": "IsGrafanaAdmin"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "ApiKeyDTO": {
       "type": "object",
@@ -3450,6 +4385,16 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "PauseAllAlertsCommand": {
+      "type": "object",
+      "properties": {
+        "paused": {
+          "type": "boolean",
+          "x-go-name": "Paused"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
     "PermissionType": {
       "type": "integer",
       "format": "int64",
@@ -3473,6 +4418,17 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "RevokeAuthTokenCmd": {
+      "type": "object",
+      "properties": {
+        "authTokenId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "AuthTokenId"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "RoleType": {
       "type": "string",
@@ -3547,6 +4503,16 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "SettingsBag": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/setting"
     },
     "SuccessResponseBody": {
       "type": "object",
@@ -3792,6 +4758,36 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "UpdateUserQuotaCmd": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Limit"
+        },
+        "target": {
+          "type": "string",
+          "x-go-name": "Target"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "UserIdDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "UserOrgDTO": {
       "type": "object",
       "properties": {
@@ -3875,6 +4871,31 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "UserQuotaDTO": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Limit"
+        },
+        "target": {
+          "type": "string",
+          "x-go-name": "Target"
+        },
+        "used": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Used"
+        },
+        "user_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UserId"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "UserSearchHitDTO": {
       "type": "object",
       "properties": {
@@ -3922,6 +4943,59 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "UserToken": {
+      "description": "UserToken represents a user token",
+      "type": "object",
+      "properties": {
+        "AuthToken": {
+          "type": "string"
+        },
+        "AuthTokenSeen": {
+          "type": "boolean"
+        },
+        "ClientIp": {
+          "type": "string"
+        },
+        "CreatedAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PrevAuthToken": {
+          "type": "string"
+        },
+        "RevokedAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "RotatedAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "SeenAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "UnhashedToken": {
+          "type": "string"
+        },
+        "UpdatedAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "UserAgent": {
+          "type": "string"
+        },
+        "UserId": {
+          "type": "integer",
+          "format": "int64"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -4006,6 +5080,12 @@
             "x-go-name": "URL"
           }
         }
+      }
+    },
+    "createUserResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/UserIdDTO"
       }
     },
     "dashboardDiffResponse": {
@@ -4170,6 +5250,15 @@
         }
       }
     },
+    "getAuthTokensResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/UserToken"
+        }
+      }
+    },
     "getDashboardPermissionsResponse": {
       "description": "",
       "schema": {
@@ -4224,6 +5313,21 @@
         "$ref": "#/definitions/GetHomeDashboardResponse"
       }
     },
+    "getQuotaResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/UserQuotaDTO"
+        }
+      }
+    },
+    "getSettingsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SettingsBag"
+      }
+    },
     "getSnapshotSharingOptionsResponse": {
       "description": "",
       "schema": {
@@ -4251,6 +5355,12 @@
         "items": {
           "$ref": "#/definitions/DashboardSnapshotDTO"
         }
+      }
+    },
+    "getStatsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/AdminStats"
       }
     },
     "getUserOrgListResponse": {
@@ -4299,6 +5409,33 @@
       "description": "An OKResponse is returned if the request was successful.",
       "schema": {
         "$ref": "#/definitions/SuccessResponseBody"
+      }
+    },
+    "pauseAlertsResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "required": [
+          "alertsAffected",
+          "message"
+        ],
+        "properties": {
+          "alertsAffected": {
+            "description": "AlertsAffected is the number of the affected alerts.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "AlertsAffected"
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          },
+          "state": {
+            "description": "Alert result state\nrequired true",
+            "type": "string",
+            "x-go-name": "State"
+          }
+        }
       }
     },
     "postAPIkeyResponse": {
@@ -4474,8 +5611,8 @@
       "name": "folder_permissions"
     },
     {
-      "description": "The identifier (ID) of a library element is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a library element uniquely identifies library elements between multiple Grafana installs. It’s automatically generated unless you specify it during library element creation. The UID provides consistent URLs for accessing library elements and when syncing library elements between multiple Grafana installs.\nThe maximum length of a UID is 40 characters.",
-      "name": "library_elements"
+      "description": "The Admin HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission. (The default admin user is called admin and has permission to use this API.)",
+      "name": "admin"
     }
   ]
 }

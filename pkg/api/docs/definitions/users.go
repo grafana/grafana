@@ -122,10 +122,12 @@ type SearchUsersWithPagingParams struct {
 }
 
 // swagger:parameters getUserByID updateUser getUserOrgList getUserTeams
+// swagger:parameters setPassword setPermissions deleteUser getAuthTokens logoutUser revokeAuthToken
+// swagger:parameters syncLDAPUser disableUser enableUser getUserQuota updateUserQuota
 type UserIDParam struct {
 	// in:path
 	// required:true
-	FolderID int64 `json:"user_id"`
+	UserID int64 `json:"user_id"`
 }
 
 // swagger:parameters getUserByLoginOrEmail
