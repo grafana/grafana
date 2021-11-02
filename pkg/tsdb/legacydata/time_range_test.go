@@ -247,4 +247,119 @@ func TestTimeRange(t *testing.T) {
 			require.True(t, expected.Equal(res))
 		})
 	})
+
+	t.Run("Can parse now-1w/w, now-1w/w without timezone and week start on Monday", func(t *testing.T) {
+		tr := DataTimeRange{
+			From: "now-1w/w",
+			To:   "now-1w/w",
+			Now:  now,
+		}
+		weekstart := time.Monday
+		require.Nil(t, err)
+
+		t.Run("from now-1w/w ", func(t *testing.T) {
+			expected, err := time.Parse(time.RFC3339Nano, "2020-07-13T00:00:00.000Z")
+			require.Nil(t, err)
+
+			res, err := tr.ParseFromWithWeekStart(nil, weekstart)
+			require.Nil(t, err)
+			require.True(t, expected.Equal(res))
+		})
+
+		t.Run("to now-1w/w ", func(t *testing.T) {
+			expected, err := time.Parse(time.RFC3339Nano, "2020-07-19T23:59:59.999Z")
+			require.Nil(t, err)
+
+			res, err := tr.ParseToWithWeekStart(nil, weekstart)
+			require.Nil(t, err)
+			require.True(t, expected.Equal(res))
+		})
+	})
+
+	t.Run("Can parse now-1w/w, now-1w/w with America/Chicago timezone and week start on Monday", func(t *testing.T) {
+		tr := DataTimeRange{
+			From: "now-1w/w",
+			To:   "now-1w/w",
+			Now:  now,
+		}
+		weekstart := time.Monday
+		location, err := time.LoadLocation("America/Chicago")
+		require.Nil(t, err)
+
+		t.Run("from now-1w/w ", func(t *testing.T) {
+			expected, err := time.Parse(time.RFC3339Nano, "2020-07-13T00:00:00.000-05:00")
+			require.Nil(t, err)
+
+			res, err := tr.ParseFromWithWeekStart(location, weekstart)
+			require.Nil(t, err)
+			require.True(t, expected.Equal(res))
+		})
+
+		t.Run("to now-1w/w ", func(t *testing.T) {
+			expected, err := time.Parse(time.RFC3339Nano, "2020-07-19T23:59:59.999-05:00")
+			require.Nil(t, err)
+
+			res, err := tr.ParseToWithWeekStart(location, weekstart)
+			require.Nil(t, err)
+			require.True(t, expected.Equal(res))
+		})
+	})
+
+	t.Run("Can parse now-1w/w, now-1w/w with America/Chicago timezone and week start on Sunday", func(t *testing.T) {
+		tr := DataTimeRange{
+			From: "now-1w/w",
+			To:   "now-1w/w",
+			Now:  now,
+		}
+		weekstart := time.Sunday
+		location, err := time.LoadLocation("America/Chicago")
+		require.Nil(t, err)
+
+		t.Run("from now-1w/w ", func(t *testing.T) {
+			expected, err := time.Parse(time.RFC3339Nano, "2020-07-19T00:00:00.000-05:00")
+			require.Nil(t, err)
+
+			res, err := tr.ParseFromWithWeekStart(location, weekstart)
+			require.Nil(t, err)
+			require.True(t, expected.Equal(res))
+		})
+
+		t.Run("to now-1w/w ", func(t *testing.T) {
+			expected, err := time.Parse(time.RFC3339Nano, "2020-07-25T23:59:59.999-05:00")
+			require.Nil(t, err)
+
+			res, err := tr.ParseToWithWeekStart(location, weekstart)
+			require.Nil(t, err)
+			require.True(t, expected.Equal(res))
+		})
+	})
+
+	t.Run("Can parse now-1w/w, now-1w/w with America/Chicago timezone and week start on Saturday", func(t *testing.T) {
+		tr := DataTimeRange{
+			From: "now-1w/w",
+			To:   "now-1w/w",
+			Now:  now,
+		}
+		weekstart := time.Saturday
+		location, err := time.LoadLocation("America/Chicago")
+		require.Nil(t, err)
+
+		t.Run("from now-1w/w ", func(t *testing.T) {
+			expected, err := time.Parse(time.RFC3339Nano, "2020-07-18T00:00:00.000-05:00")
+			require.Nil(t, err)
+
+			res, err := tr.ParseFromWithWeekStart(location, weekstart)
+			require.Nil(t, err)
+			require.True(t, expected.Equal(res))
+		})
+
+		t.Run("to now-1w/w ", func(t *testing.T) {
+			expected, err := time.Parse(time.RFC3339Nano, "2020-07-24T23:59:59.999-05:00")
+			require.Nil(t, err)
+
+			res, err := tr.ParseToWithWeekStart(location, weekstart)
+			require.Nil(t, err)
+			require.True(t, expected.Equal(res))
+		})
+	})
 }

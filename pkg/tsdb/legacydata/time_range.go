@@ -77,7 +77,19 @@ func (tr DataTimeRange) ParseToWithLocation(location *time.Location) (time.Time,
 	return parseTimeRange(tr.To, tr.Now, true, location)
 }
 
+func (tr DataTimeRange) ParseFromWithWeekStart(location *time.Location, weekstart time.Weekday) (time.Time, error) {
+	return parseTimeRangeWithWeekStart(tr.From, tr.Now, false, location, weekstart)
+}
+
+func (tr *DataTimeRange) ParseToWithWeekStart(location *time.Location, weekstart time.Weekday) (time.Time, error) {
+	return parseTimeRangeWithWeekStart(tr.To, tr.Now, true, location, weekstart)
+}
+
 func parseTimeRange(s string, now time.Time, withRoundUp bool, location *time.Location) (time.Time, error) {
+	return parseTimeRangeWithWeekStart(s, now, withRoundUp, location, -1)
+}
+
+func parseTimeRangeWithWeekStart(s string, now time.Time, withRoundUp bool, location *time.Location, weekstart time.Weekday) (time.Time, error) {
 	if val, err := strconv.ParseInt(s, 10, 64); err == nil {
 		seconds := val / 1000
 		nano := (val - seconds*1000) * 1000000
@@ -92,6 +104,12 @@ func parseTimeRange(s string, now time.Time, withRoundUp bool, location *time.Lo
 		}
 		if location != nil {
 			options = append(options, datemath.WithLocation(location))
+		}
+		if weekstart != -1 {
+			if weekstart > now.Weekday() {
+				weekstart = weekstart - 7
+			}
+			options = append(options, datemath.WithStartOfWeek(weekstart))
 		}
 
 		return datemath.ParseAndEvaluate(s, options...)
