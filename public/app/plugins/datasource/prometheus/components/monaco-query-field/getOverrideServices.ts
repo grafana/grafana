@@ -104,7 +104,7 @@ function makeStorageService() {
 let overrideServices: monacoTypes.editor.IEditorOverrideServices | null = null;
 
 export function getOverrideServices(): monacoTypes.editor.IEditorOverrideServices {
-  // the idea is that we will only have one instance of this for every query editor
+  // only have one instance of this for every query editor
   if (overrideServices === null) {
     overrideServices = {
       storageService: makeStorageService(),
