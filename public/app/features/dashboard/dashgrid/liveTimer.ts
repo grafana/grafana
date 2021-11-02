@@ -79,7 +79,7 @@ class LiveTimer {
     this.lastUpdate = now;
 
     // For live dashboards, listen to changes
-    if (this.ok.getValue() && this.isLive && this.timeRange) {
+    if (this.isLive && this.ok.getValue() && this.timeRange) {
       // when the time-range is relative fire events
       let tr: TimeRange | undefined = undefined;
       for (const listener of this.listeners) {
