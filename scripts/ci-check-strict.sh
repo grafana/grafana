@@ -3,7 +3,7 @@ set -e
 
 echo -e "Collecting code stats (typescript errors & more)"
 
-ERROR_COUNT_LIMIT=6
+ERROR_COUNT_LIMIT=1
 ERROR_COUNT="$(yarn run tsc --project tsconfig.json --noEmit --strict true | grep -oP 'Found \K(\d+)')"
 
 if [ "$ERROR_COUNT" -gt $ERROR_COUNT_LIMIT ]; then
