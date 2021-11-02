@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,15 +34,17 @@ func Test_GetPluginAssets(t *testing.T) {
 	requestedFile := filepath.Clean(tmpFile.Name())
 
 	t.Run("Given a request for an existing plugin file that is listed as a signature covered file", func(t *testing.T) {
-		p := &plugins.PluginBase{
-			Id:        pluginID,
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID: pluginID,
+			},
 			PluginDir: pluginDir,
 			SignedFiles: map[string]struct{}{
 				requestedFile: {},
 			},
 		}
-		service := &pluginManager{
-			plugins: map[string]*plugins.PluginBase{
+		service := &pluginStore{
+			plugins: map[string]*plugins.Plugin{
 				pluginID: p,
 			},
 		}
@@ -61,12 +62,14 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		p := &plugins.PluginBase{
-			Id:        pluginID,
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID: pluginID,
+			},
 			PluginDir: pluginDir,
 		}
-		service := &pluginManager{
-			plugins: map[string]*plugins.PluginBase{
+		service := &pluginStore{
+			plugins: map[string]*plugins.Plugin{
 				pluginID: p,
 			},
 		}
@@ -84,12 +87,14 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := &plugins.PluginBase{
-			Id:        pluginID,
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID: pluginID,
+			},
 			PluginDir: pluginDir,
 		}
-		service := &pluginManager{
-			plugins: map[string]*plugins.PluginBase{
+		service := &pluginStore{
+			plugins: map[string]*plugins.Plugin{
 				pluginID: p,
 			},
 		}
@@ -111,8 +116,8 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
-		service := &pluginManager{
-			plugins: map[string]*plugins.PluginBase{},
+		service := &pluginStore{
+			plugins: map[string]*plugins.Plugin{},
 		}
 		l := &logger{}
 
@@ -132,10 +137,10 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &pluginManager{
-			plugins: map[string]*plugins.PluginBase{
+		service := &pluginStore{
+			plugins: map[string]*plugins.Plugin{
 				pluginID: {
-					IsCorePlugin: true,
+					Class: plugins.Core,
 				},
 			},
 		}
@@ -157,15 +162,15 @@ func callGetPluginAsset(sc *scenarioContext) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
-func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginManager plugins.Manager,
+func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginStore plugins.Store,
 	logger log.Logger, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		hs := HTTPServer{
-			Cfg:           setting.NewCfg(),
-			PluginManager: pluginManager,
-			log:           logger,
+			Cfg:         setting.NewCfg(),
+			pluginStore: pluginStore,
+			log:         logger,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -180,13 +185,13 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 	})
 }
 
-type pluginManager struct {
-	manager.PluginManager
+type pluginStore struct {
+	plugins.Store
 
-	plugins map[string]*plugins.PluginBase
+	plugins map[string]*plugins.Plugin
 }
 
-func (pm *pluginManager) GetPlugin(id string) *plugins.PluginBase {
+func (pm *pluginStore) Plugin(id string) *plugins.Plugin {
 	return pm.plugins[id]
 }
 
