@@ -29,7 +29,7 @@ export enum PluginIconName {
   app = 'apps',
   datasource = 'database',
   panel = 'credit-card',
-  renderer = 'pen',
+  renderer = 'capture',
 }
 
 export interface CatalogPlugin {

@@ -1,4 +1,4 @@
-package manager
+package signature
 
 import (
 	"bytes"
@@ -15,13 +15,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/clearsign"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
-
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/clearsign"
 )
 
 // Soon we can fetch keys from:
@@ -59,11 +59,11 @@ type pluginManifest struct {
 	Files   map[string]string `json:"files"`
 
 	// V2 supported fields
-	ManifestVersion string                      `json:"manifestVersion"`
-	SignatureType   plugins.PluginSignatureType `json:"signatureType"`
-	SignedByOrg     string                      `json:"signedByOrg"`
-	SignedByOrgName string                      `json:"signedByOrgName"`
-	RootURLs        []string                    `json:"rootUrls"`
+	ManifestVersion string                `json:"manifestVersion"`
+	SignatureType   plugins.SignatureType `json:"signatureType"`
+	SignedByOrg     string                `json:"signedByOrg"`
+	SignedByOrgName string                `json:"signedByOrgName"`
+	RootURLs        []string              `json:"rootUrls"`
 }
 
 func (m *pluginManifest) isV2() bool {
@@ -99,9 +99,13 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	return manifest, nil
 }
 
-// getPluginSignatureState returns the signature state for a plugin.
-func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugins.PluginSignatureState, error) {
-	log.Debug("Getting signature state of plugin", "plugin", plugin.Id, "isBackend", plugin.Backend)
+func Calculate(log log.Logger, plugin *plugins.Plugin) (plugins.Signature, error) {
+	if plugin.IsCorePlugin() {
+		return plugins.Signature{
+			Status: plugins.SignatureInternal,
+		}, nil
+	}
+
 	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
 	// nolint:gosec
@@ -109,62 +113,55 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 	// on plugin the folder structure on disk and not user input.
 	byteValue, err := ioutil.ReadFile(manifestPath)
 	if err != nil || len(byteValue) < 10 {
-		log.Debug("Plugin is unsigned", "id", plugin.Id)
-		return plugins.PluginSignatureState{
-			Status: plugins.PluginSignatureUnsigned,
+		log.Debug("Plugin is unsigned", "id", plugin.ID)
+		return plugins.Signature{
+			Status: plugins.SignatureUnsigned,
 		}, nil
 	}
 
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
-		log.Debug("Plugin signature invalid", "id", plugin.Id)
-		return plugins.PluginSignatureState{
-			Status: plugins.PluginSignatureInvalid,
+		log.Debug("Plugin signature invalid", "id", plugin.ID)
+		return plugins.Signature{
+			Status: plugins.SignatureInvalid,
 		}, nil
 	}
 
 	// Make sure the versions all match
-	if manifest.Plugin != plugin.Id || manifest.Version != plugin.Info.Version {
-		return plugins.PluginSignatureState{
-			Status: plugins.PluginSignatureModified,
+	if manifest.Plugin != plugin.ID || manifest.Version != plugin.Info.Version {
+		return plugins.Signature{
+			Status: plugins.SignatureModified,
 		}, nil
 	}
 
 	// Validate that private is running within defined root URLs
-	if manifest.SignatureType == plugins.PrivateType {
+	if manifest.SignatureType == plugins.PrivateSignature {
 		appURL, err := url.Parse(setting.AppUrl)
 		if err != nil {
-			return plugins.PluginSignatureState{}, err
+			return plugins.Signature{}, err
 		}
-		appSubURL, err := url.Parse(setting.AppSubUrl)
-		if err != nil {
-			return plugins.PluginSignatureState{}, err
-		}
-		appURLPath := path.Join(appSubURL.RequestURI(), appURL.RequestURI())
 
 		foundMatch := false
 		for _, u := range manifest.RootURLs {
 			rootURL, err := url.Parse(u)
 			if err != nil {
-				log.Warn("Could not parse plugin root URL", "plugin", plugin.Id, "rootUrl", rootURL)
-				return plugins.PluginSignatureState{}, err
+				log.Warn("Could not parse plugin root URL", "plugin", plugin.ID, "rootUrl", rootURL)
+				return plugins.Signature{}, err
 			}
 
 			if rootURL.Scheme == appURL.Scheme &&
-				rootURL.Host == appURL.Host {
-				foundMatch = path.Clean(rootURL.RequestURI()) == appURLPath
-
-				if foundMatch {
-					break
-				}
+				rootURL.Host == appURL.Host &&
+				path.Clean(rootURL.RequestURI()) == path.Clean(appURL.RequestURI()) {
+				foundMatch = true
+				break
 			}
 		}
 
 		if !foundMatch {
-			log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.Id,
+			log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.ID,
 				"appUrl", appURL, "rootUrls", manifest.RootURLs)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureInvalid,
+			return plugins.Signature{
+				Status: plugins.SignatureInvalid,
 			}, nil
 		}
 	}
@@ -172,24 +169,23 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 	manifestFiles := make(map[string]struct{}, len(manifest.Files))
 
 	// Verify the manifest contents
-	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.Id)
-	for fp, hash := range manifest.Files {
-		err = verifyHash(plugin.Id, filepath.Join(plugin.PluginDir, fp), hash)
+	for p, hash := range manifest.Files {
+		err = verifyHash(plugin.ID, filepath.Join(plugin.PluginDir, p), hash)
 		if err != nil {
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
+			return plugins.Signature{
+				Status: plugins.SignatureModified,
 			}, nil
 		}
 
-		manifestFiles[fp] = struct{}{}
+		manifestFiles[p] = struct{}{}
 	}
 
 	if manifest.isV2() {
 		pluginFiles, err := pluginFilesRequiringVerification(plugin)
 		if err != nil {
-			log.Warn("Could not collect plugin file information in directory", "pluginID", plugin.Id, "dir", plugin.PluginDir)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureInvalid,
+			log.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
+			return plugins.Signature{
+				Status: plugins.SignatureInvalid,
 			}, err
 		}
 
@@ -202,20 +198,18 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		}
 
 		if len(unsignedFiles) > 0 {
-			log.Warn("The following files were not included in the signature", "plugin", plugin.Id, "files", unsignedFiles)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
+			log.Warn("The following files were not included in the signature", "plugin", plugin.ID, "files", unsignedFiles)
+			return plugins.Signature{
+				Status: plugins.SignatureModified,
 			}, nil
 		}
 	}
 
-	// Everything OK
-	log.Debug("Plugin signature valid", "id", plugin.Id)
-	return plugins.PluginSignatureState{
-		Status:     plugins.PluginSignatureValid,
+	log.Debug("Plugin signature valid", "id", plugin.ID)
+	return plugins.Signature{
+		Status:     plugins.SignatureValid,
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
-		Files:      manifestFiles,
 	}, nil
 }
 
@@ -247,9 +241,9 @@ func verifyHash(pluginID string, path string, hash string) error {
 	return nil
 }
 
-// gets plugin filenames that require verification for plugin signing
+// pluginFilesRequiringVerification gets plugin filenames that require verification for plugin signing
 // returns filenames as a slice of posix style paths relative to plugin directory
-func pluginFilesRequiringVerification(plugin *plugins.PluginBase) ([]string, error) {
+func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) {
 	var files []string
 	err := filepath.Walk(plugin.PluginDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

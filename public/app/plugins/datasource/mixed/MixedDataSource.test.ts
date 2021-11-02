@@ -30,9 +30,9 @@ describe('MixedDatasource', () => {
       const ds = new MixedDatasource({} as any);
       const requestMixed = getQueryOptions({
         targets: [
-          { refId: 'QA', datasource: 'A' }, // 1
-          { refId: 'QB', datasource: 'B' }, // 2
-          { refId: 'QC', datasource: 'C' }, // 3
+          { refId: 'QA', datasource: { uid: 'A' } }, // 1
+          { refId: 'QB', datasource: { uid: 'B' } }, // 2
+          { refId: 'QC', datasource: { uid: 'C' } }, // 3
         ],
       });
 
@@ -52,11 +52,11 @@ describe('MixedDatasource', () => {
       const ds = new MixedDatasource({} as any);
       const requestMixed = getQueryOptions({
         targets: [
-          { refId: 'QA', datasource: 'A' }, // 1
-          { refId: 'QD', datasource: 'D' }, // 2
-          { refId: 'QB', datasource: 'B' }, // 3
-          { refId: 'QE', datasource: 'E' }, // 4
-          { refId: 'QC', datasource: 'C' }, // 5
+          { refId: 'QA', datasource: { uid: 'A' } }, // 1
+          { refId: 'QD', datasource: { uid: 'D' } }, // 2
+          { refId: 'QB', datasource: { uid: 'B' } }, // 3
+          { refId: 'QE', datasource: { uid: 'E' } }, // 4
+          { refId: 'QC', datasource: { uid: 'C' } }, // 5
         ],
       });
 
@@ -84,9 +84,9 @@ describe('MixedDatasource', () => {
     const ds = new MixedDatasource({} as any);
     const request: any = {
       targets: [
-        { refId: 'A', datasource: 'Loki' },
-        { refId: 'B', datasource: 'Loki' },
-        { refId: 'C', datasource: 'A' },
+        { refId: 'A', datasource: { uid: 'Loki' } },
+        { refId: 'B', datasource: { uid: 'Loki' } },
+        { refId: 'C', datasource: { uid: 'A' } },
       ],
     };
 
@@ -115,8 +115,8 @@ describe('MixedDatasource', () => {
     await expect(
       ds.query({
         targets: [
-          { refId: 'QA', datasource: 'A' },
-          { refId: 'QB', datasource: 'B' },
+          { refId: 'QA', datasource: { uid: 'A' } },
+          { refId: 'QB', datasource: { uid: 'B' } },
         ],
       } as any)
     ).toEmitValuesWith((results) => {
