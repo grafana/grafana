@@ -420,9 +420,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         return;
       }
       if (Object.keys(possibleLabels).length === 0) {
-        // Sometimes the backend does not return a valid set
-        console.error('No results for label combination, but should not occur.');
-        this.setState({ error: `Facetting failed for ${selector}` });
+        this.setState({ error: `Empty results, no matching label for ${selector}` });
         return;
       }
       const labels: SelectableLabel[] = facetLabels(this.state.labels, possibleLabels, lastFacetted);

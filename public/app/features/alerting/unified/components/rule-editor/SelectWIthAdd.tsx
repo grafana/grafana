@@ -13,6 +13,7 @@ interface Props {
   onCustomChange?: (custom: boolean) => void;
   width?: number;
   disabled?: boolean;
+  'aria-label'?: string;
 }
 
 export const SelectWithAdd: FC<Props> = ({
@@ -26,6 +27,7 @@ export const SelectWithAdd: FC<Props> = ({
   onCustomChange,
   disabled = false,
   addLabel = '+ Add new',
+  'aria-label': ariaLabel,
 }) => {
   const [isCustom, setIsCustom] = useState(custom);
 
@@ -43,6 +45,7 @@ export const SelectWithAdd: FC<Props> = ({
   if (isCustom) {
     return (
       <Input
+        aria-label={ariaLabel}
         width={width}
         autoFocus={!custom}
         value={value || ''}
@@ -56,6 +59,7 @@ export const SelectWithAdd: FC<Props> = ({
     return (
       <Select
         menuShouldPortal
+        aria-label={ariaLabel}
         width={width}
         options={_options}
         value={value}

@@ -6,17 +6,18 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
+  DataSourceRef,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
 } from '@grafana/data';
 
-export function isSharedDashboardQuery(datasource: string | DataSourceApi | null) {
+export function isSharedDashboardQuery(datasource: string | DataSourceRef | DataSourceApi | null) {
   if (!datasource) {
     // default datasource
     return false;
   }
-  if (datasource === SHARED_DASHBODARD_QUERY) {
+  if (datasource === SHARED_DASHBODARD_QUERY || (datasource as any)?.uid === SHARED_DASHBODARD_QUERY) {
     return true;
   }
   const ds = datasource as DataSourceApi;

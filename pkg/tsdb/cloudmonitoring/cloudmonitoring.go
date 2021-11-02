@@ -21,12 +21,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
 
@@ -62,7 +62,7 @@ var (
 )
 
 const (
-	dsName = "stackdriver"
+	pluginID string = "stackdriver"
 
 	gceAuthentication         string = "gce"
 	jwtAuthentication         string = "jwt"
@@ -73,34 +73,33 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginManager plugins.Manager,
-	backendPluginManager backendplugin.Manager, dsService *datasources.Service) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar,
+	dsService *datasources.Service) *Service {
 	s := &Service{
-		pluginManager:        pluginManager,
-		backendPluginManager: backendPluginManager,
-		httpClientProvider:   httpClientProvider,
-		cfg:                  cfg,
-		im:                   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		dsService:            dsService,
+		httpClientProvider: httpClientProvider,
+		cfg:                cfg,
+		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		dsService:          dsService,
 	}
 
+	mux := http.NewServeMux()
+	s.registerRoutes(mux)
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
+		QueryDataHandler:    s,
+		CallResourceHandler: httpadapter.New(mux),
 	})
 
-	if err := s.backendPluginManager.Register(dsName, factory); err != nil {
+	if err := registrar.LoadAndRegister(pluginID, factory); err != nil {
 		slog.Error("Failed to register plugin", "error", err)
 	}
 	return s
 }
 
 type Service struct {
-	pluginManager        plugins.Manager
-	backendPluginManager backendplugin.Manager
-	httpClientProvider   httpclient.Provider
-	cfg                  *setting.Cfg
-	im                   instancemgmt.InstanceManager
-	dsService            *datasources.Service
+	httpClientProvider httpclient.Provider
+	cfg                *setting.Cfg
+	im                 instancemgmt.InstanceManager
+	dsService          *datasources.Service
 }
 
 type QueryModel struct {
@@ -115,9 +114,14 @@ type datasourceInfo struct {
 	defaultProject     string
 	clientEmail        string
 	tokenUri           string
-	client             *http.Client
+	services           map[string]datasourceService
 
 	decryptedSecureJSONData map[string]string
+}
+
+type datasourceService struct {
+	url    string
+	client *http.Client
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -157,6 +161,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			clientEmail:             clientEmail,
 			tokenUri:                tokenUri,
 			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
+			services:                map[string]datasourceService{},
 		}
 
 		opts, err := settings.HTTPClientOptions()
@@ -164,18 +169,23 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		dsInfo.client, err = newHTTPClient(dsInfo, opts, httpClientProvider)
-		if err != nil {
-			return nil, err
+		for name, info := range routes {
+			client, err := newHTTPClient(dsInfo, opts, httpClientProvider, name)
+			if err != nil {
+				return nil, err
+			}
+			dsInfo.services[name] = datasourceService{
+				url:    info.url,
+				client: client,
+			}
 		}
 
 		return dsInfo, nil
 	}
 }
 
-// Query takes in the frontend queries, parses them into the CloudMonitoring query format
-// executes the queries against the CloudMonitoring API and parses the response into
-// the data frames
+// QueryData takes in the frontend queries, parses them into the CloudMonitoring query format
+// executes the queries against the CloudMonitoring API and parses the response into data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	if len(req.Queries) == 0 {
@@ -571,7 +581,7 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginContext, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
+func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.url)
 	if err != nil {
 		return nil, err
@@ -582,7 +592,7 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 	if body != nil {
 		method = http.MethodPost
 	}
-	req, err := http.NewRequest(method, cloudMonitoringRoute.url, body)
+	req, err := http.NewRequest(method, dsInfo.services[cloudMonitor].url, body)
 	if err != nil {
 		slog.Error("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)

@@ -2,24 +2,32 @@ package api
 
 import "github.com/grafana/grafana/pkg/plugins"
 
-type fakePluginManager struct {
-	plugins.Manager
-
-	staticRoutes []*plugins.PluginStaticRoute
+type fakePluginStore struct {
+	plugins.Store
 }
 
-func (pm *fakePluginManager) GetPlugin(id string) *plugins.PluginBase {
+func (ps *fakePluginStore) Plugin(pluginID string) *plugins.Plugin {
 	return nil
 }
 
-func (pm *fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
+func (ps *fakePluginStore) Plugins(pluginType ...plugins.Type) []*plugins.Plugin {
 	return nil
 }
 
-func (pm *fakePluginManager) Renderer() *plugins.RendererPlugin {
+type fakeRendererManager struct {
+	plugins.RendererManager
+}
+
+func (ps *fakeRendererManager) Renderer() *plugins.Plugin {
 	return nil
 }
 
-func (pm *fakePluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
-	return pm.staticRoutes
+type fakePluginStaticRouteResolver struct {
+	plugins.StaticRouteResolver
+
+	routes []*plugins.StaticRoute
+}
+
+func (psrr *fakePluginStaticRouteResolver) Routes() []*plugins.StaticRoute {
+	return psrr.routes
 }

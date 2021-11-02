@@ -32,7 +32,7 @@ export const TestStuffPage: FC = () => {
 
     queryRunner.run({
       queries: queryOptions.queries,
-      datasource: queryOptions.dataSource.name!,
+      datasource: queryOptions.dataSource,
       timezone: 'browser',
       timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
       maxDataPoints: queryOptions.maxDataPoints ?? 100,

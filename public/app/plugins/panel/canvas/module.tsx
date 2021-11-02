@@ -28,8 +28,6 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
             scene: state.scene,
           })
         );
-      } else {
-        console.log('NO Single seleciton', selection?.length);
       }
 
       builder.addNestedOptions(getLayerEditor(state));

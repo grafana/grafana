@@ -13,10 +13,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -38,19 +37,19 @@ type RenderUser struct {
 
 type RenderingService struct {
 	log             log.Logger
-	pluginInfo      *plugins.RendererPlugin
+	pluginInfo      *plugins.Plugin
 	renderAction    renderFunc
 	renderCSVAction renderCSVFunc
 	domain          string
 	inProgressCount int32
 	version         string
 
-	Cfg                *setting.Cfg
-	RemoteCacheService *remotecache.RemoteCache
-	PluginManager      plugins.Manager
+	Cfg                   *setting.Cfg
+	RemoteCacheService    *remotecache.RemoteCache
+	RendererPluginManager plugins.RendererManager
 }
 
-func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm plugins.Manager) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
@@ -81,11 +80,11 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm p
 	}
 
 	s := &RenderingService{
-		Cfg:                cfg,
-		RemoteCacheService: remoteCache,
-		PluginManager:      pm,
-		log:                log.New("rendering"),
-		domain:             domain,
+		Cfg:                   cfg,
+		RemoteCacheService:    remoteCache,
+		RendererPluginManager: rm,
+		log:                   log.New("rendering"),
+		domain:                domain,
 	}
 	return s, nil
 }
@@ -109,7 +108,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 
 	if rs.pluginAvailable() {
 		rs.log = rs.log.New("renderer", "plugin")
-		rs.pluginInfo = rs.PluginManager.Renderer()
+		rs.pluginInfo = rs.RendererPluginManager.Renderer()
 
 		if err := rs.startPlugin(ctx); err != nil {
 			return err
@@ -142,7 +141,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) pluginAvailable() bool {
-	return rs.PluginManager.Renderer() != nil
+	return rs.RendererPluginManager.Renderer() != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
@@ -157,7 +156,7 @@ func (rs *RenderingService) Version() string {
 	return rs.version
 }
 
-func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
+func (rs *RenderingService) RenderErrorImage(_ error) (*RenderResult, error) {
 	imgUrl := "public/img/rendering_error.png"
 	imgPath := filepath.Join(setting.HomePath, imgUrl)
 	if _, err := os.Stat(imgPath); errors.Is(err, os.ErrNotExist) {

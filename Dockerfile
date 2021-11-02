@@ -1,9 +1,10 @@
 FROM node:16-alpine3.14 as js-builder
 
-WORKDIR /usr/src/app/
+ENV NODE_OPTIONS=--max_old_space_size=8000
 
-COPY package.json yarn.lock ./
-COPY .yarnrc.yml ./
+WORKDIR /grafana
+
+COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
@@ -23,16 +24,16 @@ FROM golang:1.17.0-alpine3.14 as go-builder
 
 RUN apk add --no-cache gcc g++ make
 
-WORKDIR $GOPATH/src/github.com/grafana/grafana
+WORKDIR /grafana
 
-COPY go.mod go.sum embed.go ./
+COPY go.mod go.sum embed.go Makefile build.go package.json ./
 COPY cue cue
-COPY cue.mod cue.mod
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
 COPY pkg pkg
+COPY scripts scripts
+COPY cue.mod cue.mod
 COPY .bingo .bingo
-COPY Makefile build.go package.json ./
 
 RUN go mod verify
 RUN make build-go
@@ -56,7 +57,9 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 WORKDIR $GF_PATHS_HOME
 
 RUN apk add --no-cache ca-certificates bash tzdata musl-utils
-RUN apk add --no-cache openssl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
+RUN apk add --no-cache openssl ncurses-libs ncurses-terminfo-base --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
+RUN apk upgrade ncurses-libs ncurses-terminfo-base --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
+RUN apk info -vv | sort
 
 COPY conf ./conf
 
@@ -80,9 +83,9 @@ RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
     chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
-COPY --from=go-builder /go/src/github.com/grafana/grafana/bin/*/grafana-server /go/src/github.com/grafana/grafana/bin/*/grafana-cli ./bin/
-COPY --from=js-builder /usr/src/app/public ./public
-COPY --from=js-builder /usr/src/app/tools ./tools
+COPY --from=go-builder /grafana/bin/*/grafana-server /go/src/github.com/grafana/grafana/bin/*/grafana-cli ./bin/
+COPY --from=js-builder /grafana/public ./public
+COPY --from=js-builder /grafana/tools ./tools
 
 EXPOSE 3000
 
