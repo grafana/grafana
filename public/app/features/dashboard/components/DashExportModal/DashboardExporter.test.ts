@@ -2,16 +2,12 @@ import { find } from 'lodash';
 import config from 'app/core/config';
 import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
-import { PanelPluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta } from '@grafana/data';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 import { LibraryElementKind } from '../../../library-panels/types';
-
-function getStub(arg: string) {
-  return Promise.resolve(stubs[arg || 'gfdb']);
-}
 
 jest.mock('app/core/store', () => {
   return {
@@ -22,9 +18,16 @@ jest.mock('app/core/store', () => {
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getDataSourceSrv: () => ({
-    get: jest.fn((arg) => getStub(arg)),
-  }),
+  getDataSourceSrv: () => {
+    return {
+      get: (v: any) => {
+        const s = getStubInstanceSettings(v);
+        // console.log('GET', v, s);
+        return Promise.resolve(s);
+      },
+      getInstanceSettings: getStubInstanceSettings,
+    };
+  },
   config: {
     buildInfo: {},
     panels: {},
@@ -48,7 +51,7 @@ describe('given dashboard with repeated panels', () => {
           {
             name: 'apps',
             type: 'query',
-            datasource: 'gfdb',
+            datasource: { uid: 'gfdb', type: 'testdb' },
             current: { value: 'Asd', text: 'Asd' },
             options: [{ value: 'Asd', text: 'Asd' }],
           },
@@ -72,22 +75,22 @@ describe('given dashboard with repeated panels', () => {
         list: [
           {
             name: 'logs',
-            datasource: 'gfdb',
+            datasource: { uid: 'gfdb', type: 'testdb' },
           },
         ],
       },
       panels: [
-        { id: 6, datasource: 'gfdb', type: 'graph' },
+        { id: 6, datasource: { uid: 'gfdb', type: 'testdb' }, type: 'graph' },
         { id: 7 },
         {
           id: 8,
-          datasource: '-- Mixed --',
-          targets: [{ datasource: 'other' }],
+          datasource: { uid: '-- Mixed --', type: 'mixed' },
+          targets: [{ datasource: { uid: 'other', type: 'other' } }],
         },
-        { id: 9, datasource: '$ds' },
+        { id: 9, datasource: { uid: '$ds', type: 'other2' } },
         {
           id: 17,
-          datasource: '$ds',
+          datasource: { uid: '$ds', type: 'other2' },
           type: 'graph',
           libraryPanel: {
             name: 'Library Panel 2',
@@ -97,7 +100,7 @@ describe('given dashboard with repeated panels', () => {
         {
           id: 2,
           repeat: 'apps',
-          datasource: 'gfdb',
+          datasource: { uid: 'gfdb', type: 'testdb' },
           type: 'graph',
         },
         { id: 3, repeat: null, repeatPanelId: 2 },
@@ -105,24 +108,24 @@ describe('given dashboard with repeated panels', () => {
           id: 4,
           collapsed: true,
           panels: [
-            { id: 10, datasource: 'gfdb', type: 'table' },
+            { id: 10, datasource: { uid: 'gfdb', type: 'testdb' }, type: 'table' },
             { id: 11 },
             {
               id: 12,
-              datasource: '-- Mixed --',
-              targets: [{ datasource: 'other' }],
+              datasource: { uid: '-- Mixed --', type: 'mixed' },
+              targets: [{ datasource: { uid: 'other', type: 'other' } }],
             },
-            { id: 13, datasource: '$ds' },
+            { id: 13, datasource: { uid: '$uid', type: 'other' } },
             {
               id: 14,
               repeat: 'apps',
-              datasource: 'gfdb',
+              datasource: { uid: 'gfdb', type: 'testdb' },
               type: 'heatmap',
             },
             { id: 15, repeat: null, repeatPanelId: 14 },
             {
               id: 16,
-              datasource: 'gfdb',
+              datasource: { uid: 'gfdb', type: 'testdb' },
               type: 'graph',
               libraryPanel: {
                 name: 'Library Panel',
@@ -264,7 +267,7 @@ describe('given dashboard with repeated panels', () => {
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
       id: 17,
-      datasource: '$ds',
+      datasource: '${DS_OTHER2}',
       type: 'graph',
       fieldConfig: {
         defaults: {},
@@ -286,6 +289,11 @@ describe('given dashboard with repeated panels', () => {
     });
   });
 });
+
+function getStubInstanceSettings(v: string | DataSourceRef): DataSourceInstanceSettings {
+  let key = (v as DataSourceRef)?.type ?? v;
+  return (stubs[(key as any) ?? 'gfdb'] ?? stubs['gfdb']) as any;
+}
 
 // Stub responses
 const stubs: { [key: string]: {} } = {};

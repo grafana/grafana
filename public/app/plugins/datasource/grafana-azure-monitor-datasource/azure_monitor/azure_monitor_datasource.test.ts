@@ -573,6 +573,16 @@ describe('AzureMonitorDatasource', () => {
             expect(results[0].value).toEqual('nodeapp');
           });
       });
+
+      it('should return ignore letter case', () => {
+        return ctx.ds
+          .getResourceNames('9935389e-9122-4ef9-95f9-1513dd24753f', 'nodeapp', 'microsoft.insights/Components')
+          .then((results: Array<{ text: string; value: string }>) => {
+            expect(results.length).toEqual(1);
+            expect(results[0].text).toEqual('nodeapp');
+            expect(results[0].value).toEqual('nodeapp');
+          });
+      });
     });
 
     describe('and the metric definition is blobServices', () => {

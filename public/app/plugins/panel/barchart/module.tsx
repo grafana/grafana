@@ -20,6 +20,7 @@ import {
   ValueRotationMode,
 } from 'app/plugins/panel/barchart/types';
 import React from 'react';
+import { BarChartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
@@ -27,6 +28,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       [FieldConfigProperty.Color]: {
         settings: {
           byValueSupport: true,
+          preferThresholdsMode: false,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
@@ -153,7 +155,8 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
     commonOptionsBuilder.addTextSizeOptions(builder, false);
-  });
+  })
+  .setSuggestionsSupplier(new BarChartSuggestionsSupplier());
 
 function countNumberFields(data?: DataFrame[]): number {
   let count = 0;

@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -27,7 +26,7 @@ func NewLineNotifier(model *NotificationChannelConfig, t *template.Template, fn 
 	}
 
 	return &LineNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -43,7 +42,7 @@ func NewLineNotifier(model *NotificationChannelConfig, t *template.Template, fn 
 // LineNotifier is responsible for sending
 // alert notifications to LINE.
 type LineNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	Token string
 	log   log.Logger
 	tmpl  *template.Template

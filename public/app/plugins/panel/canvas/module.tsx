@@ -14,7 +14,7 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
     builder.addBooleanSwitch({
       path: 'inlineEditing',
       name: 'Inline editing',
-      description: 'Enable editing while the panel is in dashboard mode',
+      description: 'Enable editing the panel directly',
       defaultValue: true,
     });
 
@@ -28,8 +28,6 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
             scene: state.scene,
           })
         );
-      } else {
-        console.log('NO Single seleciton', selection?.length);
       }
 
       builder.addNestedOptions(getLayerEditor(state));

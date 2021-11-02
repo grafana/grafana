@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
+  Badge,
   FileDropzone,
   InlineField,
   InlineFieldRow,
@@ -129,6 +130,14 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
               size="md"
             />
           </InlineField>
+
+          {query.queryType === 'nativeSearch' && (
+            <p>
+              <Badge icon="rocket" text="Beta" color="blue" />
+              &nbsp;Tempo search is currently in beta and is designed to return recent traces only. It ignores the time
+              range picker. We are actively working on full backend search. Look for improvements in the near future!
+            </p>
+          )}
         </InlineFieldRow>
         {query.queryType === 'search' && (
           <SearchSection

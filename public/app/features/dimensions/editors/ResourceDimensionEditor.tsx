@@ -75,7 +75,13 @@ export const ResourceDimensionEditor: FC<
     <>
       {isOpen && (
         <Modal isOpen={isOpen} title={`Select ${mediaType}`} onDismiss={() => setOpen(false)} closeOnEscape>
-          <ResourcePicker onChange={onFixedChange} value={value?.fixed} mediaType={mediaType} folderName={folderName} />
+          <ResourcePicker
+            onChange={onFixedChange}
+            value={value?.fixed}
+            mediaType={mediaType}
+            folderName={folderName}
+            setOpen={setOpen}
+          />
         </Modal>
       )}
       {showSourceRadio && (
@@ -101,14 +107,14 @@ export const ResourceDimensionEditor: FC<
         <InlineFieldRow>
           <InlineField label={null} grow>
             <Input
-              value={value?.fixed}
+              value={niceName(value?.fixed)}
               placeholder="Resource URL"
               readOnly={true}
               onClick={openModal}
               prefix={srcPath && <SVG src={srcPath} className={styles.icon} />}
+              suffix={<Button icon="ellipsis-h" variant="secondary" fill="text" size="sm" onClick={openModal} />}
             />
           </InlineField>
-          <Button icon="folder-open" variant="secondary" onClick={openModal} />
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Mapping && (
@@ -122,10 +128,22 @@ export const ResourceDimensionEditor: FC<
   );
 };
 
+export function niceName(value?: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const idx = value.lastIndexOf('/');
+  if (idx > 0) {
+    return value.substring(idx + 1);
+  }
+  return value;
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   icon: css`
     vertical-align: middle;
     display: inline-block;
     fill: currentColor;
+    max-width: 25px;
   `,
 });

@@ -98,7 +98,6 @@ export const Basic: Story<StoryProps> = (args) => {
           setValue(v);
           action('onChange')(v);
         }}
-        prefix={getPrefix(args.icon)}
         {...args}
       />
     </>
@@ -294,6 +293,29 @@ export const AutoMenuPlacement: Story = (args) => {
 };
 AutoMenuPlacement.args = {
   menuPlacement: auto,
+};
+
+export const WidthAuto: Story = (args) => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <>
+      <div style={{ width: '100%' }}>
+        <Select
+          menuShouldPortal
+          options={generateOptions()}
+          value={value}
+          onChange={(v) => {
+            setValue(v);
+            action('onChange')(v);
+          }}
+          prefix={getPrefix(args.icon)}
+          {...args}
+          width="auto"
+        />
+      </div>
+    </>
+  );
 };
 
 export const CustomValueCreation: Story = (args) => {
