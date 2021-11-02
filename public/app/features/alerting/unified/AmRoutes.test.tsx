@@ -11,7 +11,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
@@ -76,8 +76,8 @@ const ui = {
   editButton: byRole('button', { name: 'Edit' }),
   saveButton: byRole('button', { name: 'Save' }),
 
-  editRouteButton: byTestId('edit-route'),
-  deleteRouteButton: byTestId('delete-route'),
+  editRouteButton: byLabelText('Edit route'),
+  deleteRouteButton: byLabelText('Delete route'),
   newPolicyButton: byRole('button', { name: /New policy/ }),
 
   receiverSelect: byTestId('am-receiver-select'),
