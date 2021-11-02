@@ -421,7 +421,6 @@ def lint_frontend_step():
             'yarn run prettier:check',
             'yarn run lint',
             'yarn run typecheck',
-            'yarn run check-strict',
         ],
     }
 
