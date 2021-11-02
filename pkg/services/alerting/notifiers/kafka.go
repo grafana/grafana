@@ -36,6 +36,26 @@ func init() {
 				PropertyName: "kafkaTopic",
 				Required:     true,
 			},
+			{
+				Label:		  "Basic Authentication?",
+				Element:	  alerting.ElementTypeCheckBox,
+				PropertyName: "basicAuth",
+				Required:	  false,
+			},
+			{
+				Label:		  "Username",
+				Element:	  alerting.ElementTypeInput,
+				InputType:	  alerting.InputTypeText,
+				PropertyName: "basicAuthUser",
+				Required:	  false,
+			},
+			{
+				Label:		  "Password",
+				Element:	  alerting.ElementTypeInput,
+				InputType:    alerting.InputTypePassword,
+				PropertyName: "basicAuthPass",
+				Required:	  false,
+			}
 		},
 	})
 }
@@ -51,10 +71,24 @@ func NewKafkaNotifier(model *models.AlertNotification, _ alerting.GetDecryptedVa
 		return nil, alerting.ValidationError{Reason: "Could not find kafka topic property in settings"}
 	}
 
+	basicAuth := model.Settings.Get("basicAuth")
+
+	username := model.Settings.Get("basicAuthUser")
+	if basicAuth && user == ""{
+		return nil, alerting.ValidationError{Reason: "Could not find user for BasicAuth"}
+	}
+	password := model.Settings.Get("basicAuthPass")
+	if basicAuth && pass == "" {
+		return nil, alerting.ValidationError{Reason: "Couldnot find pass for BasicAuth"}
+	}
+
 	return &KafkaNotifier{
 		NotifierBase: NewNotifierBase(model),
 		Endpoint:     endpoint,
 		Topic:        topic,
+		AuthUser:	  username,
+		AuthPass:	  password,
+		BasicAuth:	  basicAuth,
 		log:          log.New("alerting.notifier.kafka"),
 	}, nil
 }
@@ -65,6 +99,9 @@ type KafkaNotifier struct {
 	NotifierBase
 	Endpoint string
 	Topic    string
+	AuthUser string
+	AuthPass string
+	BasicAuth	bool
 	log      log.Logger
 }
 
@@ -122,6 +159,11 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 			"Content-Type": "application/vnd.kafka.json.v2+json",
 			"Accept":       "application/vnd.kafka.v2+json",
 		},
+	}
+	// Optionally supply Basic Auth credentials
+	if kn.BasicAuth {
+		cmd.User 		= kn.AuthUser
+		cmd.Password 	= kn.AuthPass
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
