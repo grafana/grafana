@@ -42,7 +42,7 @@ describe('LogsVolumePanel', () => {
 
   it('shows error message', () => {
     renderPanel({ state: LoadingState.Error, error: { data: { message: 'Test error message' } }, data: [] });
-    expect(screen.getByText('Failed to load volume logs for this query')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load log volume for this query')).toBeInTheDocument();
     expect(screen.getByText('Test error message')).toBeInTheDocument();
   });
 
