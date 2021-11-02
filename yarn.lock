@@ -2360,9 +2360,9 @@ __metadata:
     "@braintree/sanitize-url": 5.0.2
     "@grafana/schema": 8.3.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
-    "@rollup/plugin-commonjs": 16.0.0
+    "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-json": 4.1.0
-    "@rollup/plugin-node-resolve": 10.0.0
+    "@rollup/plugin-node-resolve": 13.0.6
     "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.9
     "@testing-library/react": 11.1.2
@@ -2396,11 +2396,11 @@ __metadata:
     react-dom: 17.0.1
     react-test-renderer: 17.0.1
     rimraf: 3.0.1
-    rollup: 2.33.3
+    rollup: 2.58.3
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    rollup-plugin-typescript2: 0.29.0
-    rollup-plugin-visualizer: 4.2.0
+    rollup-plugin-typescript2: 0.30.0
+    rollup-plugin-visualizer: 5.5.2
     rxjs: 7.3.0
     sinon: 8.1.1
     tinycolor2: 1.4.1
@@ -2416,18 +2416,18 @@ __metadata:
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
     "@grafana/tsconfig": ^1.0.0-rc1
-    "@rollup/plugin-commonjs": 16.0.0
-    "@rollup/plugin-node-resolve": 10.0.0
+    "@rollup/plugin-commonjs": 21.0.1
+    "@rollup/plugin-node-resolve": 13.0.6
     "@types/node": 14.17.27
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
     execa: 5.1.1
     rimraf: 3.0.1
-    rollup: 2.33.3
+    rollup: 2.58.3
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    rollup-plugin-typescript2: 0.29.0
-    rollup-plugin-visualizer: 4.2.0
+    rollup-plugin-typescript2: 0.30.0
+    rollup-plugin-visualizer: 5.5.2
     ts-loader: 6.2.1
     ts-node: 9.0.0
     tslib: 2.3.1
@@ -2446,8 +2446,8 @@ __metadata:
     "@grafana/e2e-selectors": 8.3.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
-    "@rollup/plugin-commonjs": 16.0.0
-    "@rollup/plugin-node-resolve": 10.0.0
+    "@rollup/plugin-commonjs": 21.0.1
+    "@rollup/plugin-node-resolve": 13.0.6
     "@types/node": 14.17.27
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/uuid": 8.3.0
@@ -2461,12 +2461,12 @@ __metadata:
     mocha: 7.0.1
     resolve-as-bin: 2.1.0
     rimraf: 3.0.1
-    rollup: 2.33.3
-    rollup-plugin-copy: 3.3.0
+    rollup: 2.58.3
+    rollup-plugin-copy: 3.4.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    rollup-plugin-typescript2: 0.29.0
-    rollup-plugin-visualizer: 4.2.0
+    rollup-plugin-typescript2: 0.30.0
+    rollup-plugin-visualizer: 5.5.2
     ts-loader: 6.2.1
     tslib: 2.3.1
     typescript: 4.4.3
@@ -2505,8 +2505,8 @@ __metadata:
     "@grafana/e2e-selectors": 8.3.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
     "@grafana/ui": 8.3.0-pre
-    "@rollup/plugin-commonjs": 16.0.0
-    "@rollup/plugin-node-resolve": 10.0.0
+    "@rollup/plugin-commonjs": 21.0.1
+    "@rollup/plugin-node-resolve": 13.0.6
     "@sentry/browser": 5.25.0
     "@types/angular": 1.6.56
     "@types/history": ^4.7.8
@@ -2520,11 +2520,11 @@ __metadata:
     pretty-format: 25.1.0
     react: 17.0.1
     rimraf: 3.0.1
-    rollup: 2.33.3
+    rollup: 2.58.3
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    rollup-plugin-typescript2: 0.29.0
-    rollup-plugin-visualizer: 4.2.0
+    rollup-plugin-typescript2: 0.30.0
+    rollup-plugin-visualizer: 5.5.2
     rxjs: 7.3.0
     systemjs: 0.20.19
     systemjs-plugin-css: 0.1.37
@@ -2539,16 +2539,16 @@ __metadata:
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
     "@grafana/tsconfig": ^1.0.0-rc1
-    "@rollup/plugin-commonjs": 16.0.0
+    "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-json": 4.1.0
-    "@rollup/plugin-node-resolve": 10.0.0
+    "@rollup/plugin-node-resolve": 13.0.6
     "@types/rollup-plugin-visualizer": 4.2.1
     rimraf: 3.0.1
-    rollup: 2.33.3
+    rollup: 2.58.3
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    rollup-plugin-typescript2: 0.29.0
-    rollup-plugin-visualizer: 4.2.0
+    rollup-plugin-typescript2: 0.30.0
+    rollup-plugin-visualizer: 5.5.2
     tslib: 2.3.1
     typescript: 4.4.3
   languageName: unknown
@@ -2694,9 +2694,9 @@ __metadata:
     "@popperjs/core": 2.5.4
     "@react-aria/focus": 3.4.1
     "@react-aria/overlays": 3.7.2
-    "@rollup/plugin-commonjs": 16.0.0
-    "@rollup/plugin-image": 2.0.5
-    "@rollup/plugin-node-resolve": 10.0.0
+    "@rollup/plugin-commonjs": 21.0.1
+    "@rollup/plugin-image": 2.1.1
+    "@rollup/plugin-node-resolve": 13.0.6
     "@sentry/browser": 5.25.0
     "@storybook/addon-a11y": 6.3.7
     "@storybook/addon-actions": 6.3.7
@@ -2806,11 +2806,11 @@ __metadata:
     react-use: 17.2.4
     react-window: 1.8.5
     rimraf: 3.0.1
-    rollup: 2.33.3
+    rollup: 2.58.3
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    rollup-plugin-typescript2: 0.29.0
-    rollup-plugin-visualizer: 4.2.0
+    rollup-plugin-typescript2: 0.30.0
+    rollup-plugin-visualizer: 5.5.2
     rxjs: 7.3.0
     sass-loader: 12.1.0
     slate: 0.47.8
@@ -5004,9 +5004,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-commonjs@npm:16.0.0":
-  version: 16.0.0
-  resolution: "@rollup/plugin-commonjs@npm:16.0.0"
+"@rollup/plugin-commonjs@npm:21.0.1":
+  version: 21.0.1
+  resolution: "@rollup/plugin-commonjs@npm:21.0.1"
   dependencies:
     "@rollup/pluginutils": ^3.1.0
     commondir: ^1.0.1
@@ -5016,20 +5016,20 @@ __metadata:
     magic-string: ^0.25.7
     resolve: ^1.17.0
   peerDependencies:
-    rollup: ^2.30.0
-  checksum: 70b6b2d8df189ad84788b5a18946a48e0476ec0d1d53109f5b7cafed7530c0e21c96532f571b9e0fb6a97a139828daaec9a112e3dfb1404b643d054d35e99f48
+    rollup: ^2.38.3
+  checksum: 3e56be58c72d655face6f361f85923ddcc3cc07760b5a3a91cfc728115dfed358fc595781148c512d53a03be8c703133379f228e78fd2aed8655fae9d83800b6
   languageName: node
   linkType: hard
 
-"@rollup/plugin-image@npm:2.0.5":
-  version: 2.0.5
-  resolution: "@rollup/plugin-image@npm:2.0.5"
+"@rollup/plugin-image@npm:2.1.1":
+  version: 2.1.1
+  resolution: "@rollup/plugin-image@npm:2.1.1"
   dependencies:
-    "@rollup/pluginutils": ^3.0.4
-    mini-svg-data-uri: ^1.1.3
+    "@rollup/pluginutils": ^3.1.0
+    mini-svg-data-uri: ^1.2.3
   peerDependencies:
     rollup: ^1.20.0 || ^2.0.0
-  checksum: ecfac03a9fb1a67382b33fbe5425973ff58bd122962459655e7411a07ea12405a4476a3f8e74c5bbf8a5432189b82a0e8edd2e154c7bbfbcdff2953ff29c0e75
+  checksum: a629c8f22233ca159c23655fdbc3449dab3c939372178ed4462fc9c525cc4ecd8b11fae359eb94be4f769d26f48b85fb18eb16ce1fbc33ed16b6a7c1f84391f6
   languageName: node
   linkType: hard
 
@@ -5044,23 +5044,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-node-resolve@npm:10.0.0":
-  version: 10.0.0
-  resolution: "@rollup/plugin-node-resolve@npm:10.0.0"
+"@rollup/plugin-node-resolve@npm:13.0.6":
+  version: 13.0.6
+  resolution: "@rollup/plugin-node-resolve@npm:13.0.6"
   dependencies:
     "@rollup/pluginutils": ^3.1.0
     "@types/resolve": 1.17.1
     builtin-modules: ^3.1.0
     deepmerge: ^4.2.2
     is-module: ^1.0.0
-    resolve: ^1.17.0
+    resolve: ^1.19.0
   peerDependencies:
-    rollup: ^1.20.0||^2.0.0
-  checksum: 1e449755c12bc973820c0b58de52746d61d41cb1ea8f5dec8df963a48886fc7e2d184c7edaba9ed873817f93f3f87231afcf6363301319a456ab12583b8dfc95
+    rollup: ^2.42.0
+  checksum: da304025ca898f3ad70e3a24d788634298f2ca6e139517adff43f27ea9cf821af3ee3530ca6f8abaf7e697294b59803837cd8f0ec22e3b1d34d3411c39e9a32c
   languageName: node
   linkType: hard
 
-"@rollup/pluginutils@npm:^3.0.4, @rollup/pluginutils@npm:^3.0.8, @rollup/pluginutils@npm:^3.0.9, @rollup/pluginutils@npm:^3.1.0":
+"@rollup/pluginutils@npm:^3.0.8, @rollup/pluginutils@npm:^3.0.9, @rollup/pluginutils@npm:^3.1.0":
   version: 3.1.0
   resolution: "@rollup/pluginutils@npm:3.1.0"
   dependencies:
@@ -5070,6 +5070,16 @@ __metadata:
   peerDependencies:
     rollup: ^1.20.0||^2.0.0
   checksum: 8be16e27863c219edbb25a4e6ec2fe0e1e451d9e917b6a43cf2ae5bc025a6b8faaa40f82a6e53b66d0de37b58ff472c6c3d57a83037ae635041f8df959d6d9aa
+  languageName: node
+  linkType: hard
+
+"@rollup/pluginutils@npm:^4.1.0":
+  version: 4.1.1
+  resolution: "@rollup/pluginutils@npm:4.1.1"
+  dependencies:
+    estree-walker: ^2.0.1
+    picomatch: ^2.2.2
+  checksum: 405f681c7d32661980aa3caa928ff22e1c06f0e081db1550e6ab9c179dc9d3d8d63c05dcc7338fe65ab3f856a56c465696a51300b83e98171956fcb141106e39
   languageName: node
   linkType: hard
 
@@ -17105,7 +17115,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fsevents@npm:~2.1.1, fsevents@npm:~2.1.2":
+"fsevents@npm:~2.1.1":
   version: 2.1.3
   resolution: "fsevents@npm:2.1.3"
   dependencies:
@@ -17134,7 +17144,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fsevents@patch:fsevents@~2.1.1#~builtin<compat/fsevents>, fsevents@patch:fsevents@~2.1.2#~builtin<compat/fsevents>":
+"fsevents@patch:fsevents@~2.1.1#~builtin<compat/fsevents>":
   version: 2.1.3
   resolution: "fsevents@patch:fsevents@npm%3A2.1.3#~builtin<compat/fsevents>::version=2.1.3&hash=18f3a7"
   dependencies:
@@ -23060,7 +23070,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mini-svg-data-uri@npm:^1.1.3":
+"mini-svg-data-uri@npm:^1.2.3":
   version: 1.4.3
   resolution: "mini-svg-data-uri@npm:1.4.3"
   bin:
@@ -23562,7 +23572,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.0.1, nanoid@npm:^3.1.23, nanoid@npm:^3.1.30":
+"nanoid@npm:^3.1.22, nanoid@npm:^3.1.23, nanoid@npm:^3.1.30":
   version: 3.1.30
   resolution: "nanoid@npm:3.1.30"
   bin:
@@ -24437,7 +24447,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"open@npm:^7.0.2, open@npm:^7.0.3":
+"open@npm:^7.0.2, open@npm:^7.0.3, open@npm:^7.4.2":
   version: 7.4.2
   resolution: "open@npm:7.4.2"
   dependencies:
@@ -29482,22 +29492,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@npm:1.17.0, resolve@npm:~1.17.0":
-  version: 1.17.0
-  resolution: "resolve@npm:1.17.0"
-  dependencies:
-    path-parse: ^1.0.6
-  checksum: 9ceaf83b3429f2d7ff5d0281b8d8f18a1f05b6ca86efea7633e76b8f76547f33800799dfdd24434942dec4fbd9e651ed3aef577d9a6b5ec87ad89c1060e24759
-  languageName: node
-  linkType: hard
-
-"resolve@npm:^1.10.0, resolve@npm:^1.12.0, resolve@npm:^1.14.2, resolve@npm:^1.17.0, resolve@npm:^1.18.1, resolve@npm:^1.19.0, resolve@npm:^1.3.2, resolve@npm:^1.9.0":
+"resolve@npm:1.20.0, resolve@npm:^1.10.0, resolve@npm:^1.12.0, resolve@npm:^1.14.2, resolve@npm:^1.17.0, resolve@npm:^1.18.1, resolve@npm:^1.19.0, resolve@npm:^1.3.2, resolve@npm:^1.9.0":
   version: 1.20.0
   resolution: "resolve@npm:1.20.0"
   dependencies:
     is-core-module: ^2.2.0
     path-parse: ^1.0.6
   checksum: 40cf70b2cde00ef57f99daf2dc63c6a56d6c14a1b7fc51735d06a6f0a3b97cb67b4fb7ef6c747b4e13a7baba83b0ef625d7c4ce92a483cd5af923c3b65fd16fe
+  languageName: node
+  linkType: hard
+
+"resolve@npm:~1.17.0":
+  version: 1.17.0
+  resolution: "resolve@npm:1.17.0"
+  dependencies:
+    path-parse: ^1.0.6
+  checksum: 9ceaf83b3429f2d7ff5d0281b8d8f18a1f05b6ca86efea7633e76b8f76547f33800799dfdd24434942dec4fbd9e651ed3aef577d9a6b5ec87ad89c1060e24759
   languageName: node
   linkType: hard
 
@@ -29511,22 +29521,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@patch:resolve@1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@~1.17.0#~builtin<compat/resolve>":
-  version: 1.17.0
-  resolution: "resolve@patch:resolve@npm%3A1.17.0#~builtin<compat/resolve>::version=1.17.0&hash=07638b"
-  dependencies:
-    path-parse: ^1.0.6
-  checksum: 6fd799f282ddf078c4bc20ce863e3af01fa8cb218f0658d9162c57161a2dbafe092b13015b9a4c58d0e1e801cf7aa7a4f13115fea9db98c3f9a0c43e429bad6f
-  languageName: node
-  linkType: hard
-
-"resolve@patch:resolve@^1.10.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.18.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.3.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.9.0#~builtin<compat/resolve>":
+"resolve@patch:resolve@1.20.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.10.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.18.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.3.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.9.0#~builtin<compat/resolve>":
   version: 1.20.0
   resolution: "resolve@patch:resolve@npm%3A1.20.0#~builtin<compat/resolve>::version=1.20.0&hash=07638b"
   dependencies:
     is-core-module: ^2.2.0
     path-parse: ^1.0.6
   checksum: a0dd7d16a8e47af23afa9386df2dff10e3e0debb2c7299a42e581d9d9b04d7ad5d2c53f24f1e043f7b3c250cbdc71150063e53d0b6559683d37f790b7c8c3cd5
+  languageName: node
+  linkType: hard
+
+"resolve@patch:resolve@~1.17.0#~builtin<compat/resolve>":
+  version: 1.17.0
+  resolution: "resolve@patch:resolve@npm%3A1.17.0#~builtin<compat/resolve>::version=1.17.0&hash=07638b"
+  dependencies:
+    path-parse: ^1.0.6
+  checksum: 6fd799f282ddf078c4bc20ce863e3af01fa8cb218f0658d9162c57161a2dbafe092b13015b9a4c58d0e1e801cf7aa7a4f13115fea9db98c3f9a0c43e429bad6f
   languageName: node
   linkType: hard
 
@@ -29659,16 +29669,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-copy@npm:3.3.0":
-  version: 3.3.0
-  resolution: "rollup-plugin-copy@npm:3.3.0"
+"rollup-plugin-copy@npm:3.4.0":
+  version: 3.4.0
+  resolution: "rollup-plugin-copy@npm:3.4.0"
   dependencies:
     "@types/fs-extra": ^8.0.1
     colorette: ^1.1.0
     fs-extra: ^8.1.0
     globby: 10.0.1
     is-plain-object: ^3.0.0
-  checksum: 585036d112d0b684aeadefdf6624d14c49562f6a304267362abc686080ab7d9dea1bec726a15fe52f2d37fa2bfe46833c0921b4471a4909448bb18b3b69eeca7
+  checksum: 6eed5b2498fbe44d694f65ae9a9287b13a606b98a232b5a144a94140e8631efae5f5953b573ba68bf2dc59ab11c223ad3ea6f6cd15b51f42287f4bcc234f0e8b
   languageName: node
   linkType: hard
 
@@ -29702,53 +29712,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-typescript2@npm:0.29.0":
-  version: 0.29.0
-  resolution: "rollup-plugin-typescript2@npm:0.29.0"
+"rollup-plugin-typescript2@npm:0.30.0":
+  version: 0.30.0
+  resolution: "rollup-plugin-typescript2@npm:0.30.0"
   dependencies:
-    "@rollup/pluginutils": ^3.1.0
+    "@rollup/pluginutils": ^4.1.0
     find-cache-dir: ^3.3.1
     fs-extra: 8.1.0
-    resolve: 1.17.0
-    tslib: 2.0.1
+    resolve: 1.20.0
+    tslib: 2.1.0
   peerDependencies:
     rollup: ">=1.26.3"
     typescript: ">=2.4.0"
-  checksum: a99181072d3f8333f5ba171b0429436eb1ccd53520bff9681d9f83d56868ccf86d7311e368c1d7b364cac341cd5ca40e9bb2cc4074a7a3c8a33ce79a78dd27ef
+  checksum: e3097bb25c00e78cca556ed6a77b3bdf2330e5e5647847d1f967ade67dc6b66009b52bb8810de2b2c40857310693e4e663900a13da4f711f082fabac5165091a
   languageName: node
   linkType: hard
 
-"rollup-plugin-visualizer@npm:4.2.0":
-  version: 4.2.0
-  resolution: "rollup-plugin-visualizer@npm:4.2.0"
+"rollup-plugin-visualizer@npm:5.5.2":
+  version: 5.5.2
+  resolution: "rollup-plugin-visualizer@npm:5.5.2"
   dependencies:
-    nanoid: ^3.0.1
-    open: ^7.0.3
+    nanoid: ^3.1.22
+    open: ^7.4.2
     source-map: ^0.7.3
-    yargs: ^16.0.3
+    yargs: ^16.2.0
   peerDependencies:
-    rollup: ">=1.20.0"
+    rollup: ^2.0.0
   bin:
-    rollup-plugin-visualizer: bin/cli.js
-  checksum: 163dfcc6661ebd20a525bd06f45790cc9e4cd3c7193fceb6c5bec253f24d624913c28597ff07a15175d2ce58640c0987c9c0d9732488a5813b9b389b23f88941
+    rollup-plugin-visualizer: dist/bin/cli.js
+  checksum: b8a252c25efcf3dbd17557517768acc43208005dc9e3b805c3411dc226dd6765fc9779bf5c91577e909801a83b5f0bc2f6338e5b715f8ca8b4ecc924b12e8f25
   languageName: node
   linkType: hard
 
-"rollup@npm:2.33.3":
-  version: 2.33.3
-  resolution: "rollup@npm:2.33.3"
-  dependencies:
-    fsevents: ~2.1.2
-  dependenciesMeta:
-    fsevents:
-      optional: true
-  bin:
-    rollup: dist/bin/rollup
-  checksum: fc133b95e823536571b9c6fecd56779b754ea6bae5d23f25c6ffd5ad7c5469053f65b8ca98424109a2034000275d2dfea6dc3f6bf0c5de73477708713aa19714
-  languageName: node
-  linkType: hard
-
-"rollup@npm:^2.42.3":
+"rollup@npm:2.58.3, rollup@npm:^2.42.3":
   version: 2.58.3
   resolution: "rollup@npm:2.58.3"
   dependencies:
@@ -32774,10 +32770,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:2.0.1":
-  version: 2.0.1
-  resolution: "tslib@npm:2.0.1"
-  checksum: 507f32fc24a614c5097d414b622373b6cbb99e305413517e7fd49bef1e63570c0dd15b417ae68152088c3496218e82a5d8c7cd6b48c7a32dcee1a3f7191fff74
+"tslib@npm:2.1.0, tslib@npm:~2.1.0":
+  version: 2.1.0
+  resolution: "tslib@npm:2.1.0"
+  checksum: aa189c8179de0427b0906da30926fd53c59d96ec239dff87d6e6bc831f608df0cbd6f77c61dabc074408bd0aa0b9ae4ec35cb2c15f729e32f37274db5730cb78
   languageName: node
   linkType: hard
 
@@ -32792,13 +32788,6 @@ __metadata:
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
   checksum: dbe628ef87f66691d5d2959b3e41b9ca0045c3ee3c7c7b906cc1e328b39f199bb1ad9e671c39025bd56122ac57dfbf7385a94843b1cc07c60a4db74795829acd
-  languageName: node
-  linkType: hard
-
-"tslib@npm:~2.1.0":
-  version: 2.1.0
-  resolution: "tslib@npm:2.1.0"
-  checksum: aa189c8179de0427b0906da30926fd53c59d96ec239dff87d6e6bc831f608df0cbd6f77c61dabc074408bd0aa0b9ae4ec35cb2c15f729e32f37274db5730cb78
   languageName: node
   linkType: hard
 
@@ -35018,7 +35007,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:^16.0.3, yargs@npm:^16.2.0":
+"yargs@npm:^16.2.0":
   version: 16.2.0
   resolution: "yargs@npm:16.2.0"
   dependencies:
