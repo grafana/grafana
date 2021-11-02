@@ -2478,21 +2478,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/eslint-config@npm:2.5.0":
-  version: 2.5.0
-  resolution: "@grafana/eslint-config@npm:2.5.0"
+"@grafana/eslint-config@npm:2.5.1":
+  version: 2.5.1
+  resolution: "@grafana/eslint-config@npm:2.5.1"
   dependencies:
     "@typescript-eslint/eslint-plugin": 4.28.0
     "@typescript-eslint/parser": 4.28.0
     eslint: 7.21.0
-    eslint-config-prettier: 7.2.0
-    eslint-plugin-jsdoc: 31.6.1
+    eslint-config-prettier: 8.3.0
+    eslint-plugin-jsdoc: 37.0.3
     eslint-plugin-prettier: 3.3.1
     eslint-plugin-react: 7.22.0
     eslint-plugin-react-hooks: 4.2.0
     prettier: 2.2.1
     typescript: 4.3.4
-  checksum: 02790c8823b6d5b52244574263adb49fc87d686d740916911a525f957eea5572b9782d30d49719fcaf8cd31f4f550b3cadcd9dde53e3058ece2d41d1a45ca657
+  checksum: 735e987fdd2b2c5857eac1d0c88ce169c2b6d56a8b1bdf9173ee295196da6a01fb025aa6c737a4f1f1d808ff039ddd53a58e3acb183078be70da8048860a76bd
   languageName: node
   linkType: hard
 
@@ -2590,7 +2590,7 @@ __metadata:
     "@babel/core": 7.13.14
     "@babel/preset-env": 7.13.12
     "@grafana/data": 8.3.0-pre
-    "@grafana/eslint-config": 2.5.0
+    "@grafana/eslint-config": 2.5.1
     "@grafana/tsconfig": ^1.0.0-rc1
     "@grafana/ui": 8.3.0-pre
     "@jest/core": 26.6.3
@@ -12497,13 +12497,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"comment-parser@npm:1.1.2":
-  version: 1.1.2
-  resolution: "comment-parser@npm:1.1.2"
-  checksum: 5ccf2863f1b818aa9759e9f1ba68abcd3f9be9beec97f946cdf18338e335cb0e04f0e6875e4f26cfe451ff6eac84b58e8c810f9355455bdaa5c13bcaf63801e6
-  languageName: node
-  linkType: hard
-
 "comment-parser@npm:1.2.4":
   version: 1.2.4
   resolution: "comment-parser@npm:1.2.4"
@@ -15682,17 +15675,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-prettier@npm:7.2.0":
-  version: 7.2.0
-  resolution: "eslint-config-prettier@npm:7.2.0"
-  peerDependencies:
-    eslint: ">=7.0.0"
-  bin:
-    eslint-config-prettier: bin/cli.js
-  checksum: e3f7bba98e743bf62e937518104d3eb1dbbd17e8aef2b64ac4683c0e6d0643aca678b9f7321d1da79e7a4fd8c65b8836a20a8b0721647cb81787fd2caa046361
-  languageName: node
-  linkType: hard
-
 "eslint-config-prettier@npm:8.3.0":
   version: 8.3.0
   resolution: "eslint-config-prettier@npm:8.3.0"
@@ -15704,26 +15686,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:31.6.1":
-  version: 31.6.1
-  resolution: "eslint-plugin-jsdoc@npm:31.6.1"
-  dependencies:
-    comment-parser: 1.1.2
-    debug: ^4.3.1
-    jsdoctypeparser: ^9.0.0
-    lodash: ^4.17.20
-    regextras: ^0.7.1
-    semver: ^7.3.4
-    spdx-expression-parse: ^3.0.1
-  peerDependencies:
-    eslint: ^6.0.0 || ^7.0.0
-  checksum: 504fe05fcef80011d705b31bc3ba95925aa6bf90d06b1a6a12cb9e17ff21cf33fe070d0bc11c69f0a018cca5534eb0753b186233260cc3972f3f51df1346b505
-  languageName: node
-  linkType: hard
-
-"eslint-plugin-jsdoc@npm:37.0.0":
-  version: 37.0.0
-  resolution: "eslint-plugin-jsdoc@npm:37.0.0"
+"eslint-plugin-jsdoc@npm:37.0.3":
+  version: 37.0.3
+  resolution: "eslint-plugin-jsdoc@npm:37.0.3"
   dependencies:
     "@es-joy/jsdoccomment": 0.12.0
     comment-parser: 1.2.4
@@ -15736,7 +15701,7 @@ __metadata:
     spdx-expression-parse: ^3.0.1
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0
-  checksum: 86f5ad4777b3a4343229919c6c2fb697b5bd5533d0810c15e72236db93443c5110741d7710884eba92027943a3ab7648ae3f26e7e9aae459dec5ea567f8fff43
+  checksum: 1659009bb285a728796f7a4ac69c0dc7c48f8189c4cbb26548eb7778be9a020796d8265f258c7fe0f625b83a4d95f21c28278e50deeff6c741c3fc4d62a9bfb5
   languageName: node
   linkType: hard
 
@@ -17906,7 +17871,7 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": 2.5.0
+    "@grafana/eslint-config": 2.5.1
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
@@ -18030,7 +17995,7 @@ __metadata:
     es6-shim: 0.35.5
     eslint: 7.21.0
     eslint-config-prettier: 8.3.0
-    eslint-plugin-jsdoc: 37.0.0
+    eslint-plugin-jsdoc: 37.0.3
     eslint-plugin-lodash: ^7.2.0
     eslint-plugin-no-only-tests: 2.4.0
     eslint-plugin-prettier: 3.3.1
@@ -21291,15 +21256,6 @@ __metadata:
   version: 2.0.0
   resolution: "jsdoc-type-pratt-parser@npm:2.0.0"
   checksum: 0e49e7e10a1ef047aa2cfcce9b5102214b9f8b5294593beba09bf825b115345c9efba153c422a6a649bbe0dca9aa5b4c8d34dca21e74ad42bd2252d7ecbda92d
-  languageName: node
-  linkType: hard
-
-"jsdoctypeparser@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "jsdoctypeparser@npm:9.0.0"
-  bin:
-    jsdoctypeparser: bin/jsdoctypeparser
-  checksum: d9fd932fc657ee8df93b112ceb23f0c27862da7302c27325101d3700110d78d264f9ef08837ed84e7dd47b83657ffb323b47b1942b237111055cefb647b4a8ba
   languageName: node
   linkType: hard
 
@@ -29124,13 +29080,6 @@ __metadata:
     unicode-match-property-ecmascript: ^2.0.0
     unicode-match-property-value-ecmascript: ^2.0.0
   checksum: df92e3e6482409f0a0de162ca1b4e17897e9b0b0687caead6804f04e9b89847e47abbfd0bfc62f52a0b833acf764ea5bdb7b707bb088034824a675ee95d31dec
-  languageName: node
-  linkType: hard
-
-"regextras@npm:^0.7.1":
-  version: 0.7.1
-  resolution: "regextras@npm:0.7.1"
-  checksum: ffcd5bfd5842564ed4db94af58ee3280cfc00bd19c235afc4b681be0f84b60ac2d3da345af5e92099b2b05d4d8b7063ab720c92bfee1162b2b7ae063d879baec
   languageName: node
   linkType: hard
 
