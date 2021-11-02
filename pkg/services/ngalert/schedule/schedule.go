@@ -426,9 +426,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	logger.Debug("alert rule routine started")
 
 	orgID := fmt.Sprint(key.OrgID)
-	evalTotalMetric := sch.metrics.EvalTotal.WithLabelValues(orgID)
-	evalDurationMetric := sch.metrics.EvalDuration.WithLabelValues(orgID)
-	evalTotalFailuresMetric := sch.metrics.EvalFailures.WithLabelValues(orgID)
+	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
+	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
+	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
 	updateRule := func() (*models.AlertRule, error) {
 		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
@@ -451,10 +451,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		}
 		results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
 		dur := sch.clock.Now().Sub(start)
-		evalTotalMetric.Inc()
-		evalDurationMetric.Observe(dur.Seconds())
+		evalTotal.Inc()
+		evalDuration.Observe(dur.Seconds())
 		if err != nil {
-			evalTotalFailuresMetric.Inc()
+			evalTotalFailures.Inc()
 			// consider saving alert instance on error
 			logger.Error("failed to evaluate alert rule", "duration", dur, "err", err)
 			return err
