@@ -1,55 +1,78 @@
 import { Fill, RegularShape, Stroke, Style, Circle } from 'ol/style';
 import { Registry, RegistryItem } from '@grafana/data';
-
-interface MarkerMaker extends RegistryItem {
-  make: (color: string, fillColor: string, radius: number) => Style;
+import { StyleMaker, StyleMakerConfig } from '../types';
+export interface MarkerMaker extends RegistryItem {
+  // path to icon that will be shown (but then replaced)
+  aliasIds: string[];
+  make: StyleMaker;
   hasFill: boolean;
 }
 
+export enum RegularShapeId {
+  circle = 'circle',
+  square = 'square',
+  triangle = 'triangle',
+  star = 'star',
+  cross = 'cross',
+  x = 'x',
+}
+
+const MarkerShapePath = {
+  circle: 'img/icons/marker/circle.svg',
+  square: 'img/icons/marker/square.svg',
+  triangle: 'img/icons/marker/triangle.svg',
+  star: 'img/icons/marker/star.svg',
+  cross: 'img/icons/marker/cross.svg',
+  x: 'img/icons/marker/x-mark.svg',
+};
+
 export const circleMarker: MarkerMaker = {
-  id: 'circle',
+  id: RegularShapeId.circle,
   name: 'Circle',
   hasFill: true,
-  make: (color: string, fillColor: string, radius: number) => {
+  aliasIds: [MarkerShapePath.circle],
+  make: (cfg: StyleMakerConfig) => {
     return new Style({
       image: new Circle({
-        stroke: new Stroke({ color: color }),
-        fill: new Fill({ color: fillColor }),
-        radius: radius,
+        stroke: new Stroke({ color: cfg.color }),
+        fill: new Fill({ color: cfg.fillColor }),
+        radius: cfg.size,
       }),
     });
   },
 };
 
-export const markerMakers = new Registry<MarkerMaker>(() => [
+const makers: MarkerMaker[] = [
   circleMarker,
   {
-    id: 'square',
+    id: RegularShapeId.square,
     name: 'Square',
     hasFill: true,
-    make: (color: string, fillColor: string, radius: number) => {
+    aliasIds: [MarkerShapePath.square],
+    make: (cfg: StyleMakerConfig) => {
       return new Style({
         image: new RegularShape({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: color, width: 1 }),
+          fill: new Fill({ color: cfg.fillColor }),
+          stroke: new Stroke({ color: cfg.color, width: 1 }),
           points: 4,
-          radius: radius,
+          radius: cfg.size,
           angle: Math.PI / 4,
         }),
       });
     },
   },
   {
-    id: 'triangle',
+    id: RegularShapeId.triangle,
     name: 'Triangle',
     hasFill: true,
-    make: (color: string, fillColor: string, radius: number) => {
+    aliasIds: [MarkerShapePath.triangle],
+    make: (cfg: StyleMakerConfig) => {
       return new Style({
         image: new RegularShape({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: color, width: 1 }),
+          fill: new Fill({ color: cfg.fillColor }),
+          stroke: new Stroke({ color: cfg.color, width: 1 }),
           points: 3,
-          radius: radius,
+          radius: cfg.size,
           rotation: Math.PI / 4,
           angle: 0,
         }),
@@ -57,33 +80,35 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
   {
-    id: 'star',
+    id: RegularShapeId.star,
     name: 'Star',
     hasFill: true,
-    make: (color: string, fillColor: string, radius: number) => {
+    aliasIds: [MarkerShapePath.star],
+    make: (cfg: StyleMakerConfig) => {
       return new Style({
         image: new RegularShape({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: color, width: 1 }),
+          fill: new Fill({ color: cfg.fillColor }),
+          stroke: new Stroke({ color: cfg.color, width: 1 }),
           points: 5,
-          radius: radius,
-          radius2: radius * 0.4,
+          radius: cfg.size,
+          radius2: cfg.size * 0.4,
           angle: 0,
         }),
       });
     },
   },
   {
-    id: 'cross',
+    id: RegularShapeId.cross,
     name: 'Cross',
     hasFill: false,
-    make: (color: string, fillColor: string, radius: number) => {
+    aliasIds: [MarkerShapePath.cross],
+    make: (cfg: StyleMakerConfig) => {
       return new Style({
         image: new RegularShape({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: color, width: 1 }),
+          fill: new Fill({ color: cfg.fillColor }),
+          stroke: new Stroke({ color: cfg.color, width: 1 }),
           points: 4,
-          radius: radius,
+          radius: cfg.size,
           radius2: 0,
           angle: 0,
         }),
@@ -91,20 +116,32 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
   {
-    id: 'x',
+    id: RegularShapeId.x,
     name: 'X',
     hasFill: false,
-    make: (color: string, fillColor: string, radius: number) => {
+    aliasIds: [MarkerShapePath.x],
+    make: (cfg: StyleMakerConfig) => {
       return new Style({
         image: new RegularShape({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: color, width: 1 }),
+          fill: new Fill({ color: cfg.fillColor }),
+          stroke: new Stroke({ color: cfg.color, width: 1 }),
           points: 4,
-          radius: radius,
+          radius: cfg.size,
           radius2: 0,
           angle: Math.PI / 4,
         }),
       });
     },
   },
-]);
+];
+
+export const markerMakers = new Registry<MarkerMaker>(() => makers);
+
+export const getMarkerFromPath = (svgPath: string): MarkerMaker | undefined => {
+  for (const [key, val] of Object.entries(MarkerShapePath)) {
+    if (val === svgPath) {
+      return markerMakers.getIfExists(key);
+    }
+  }
+  return undefined;
+};

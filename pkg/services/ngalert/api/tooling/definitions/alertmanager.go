@@ -138,6 +138,8 @@ type MultiStatus struct{}
 // swagger:parameters RoutePostTestReceivers
 type TestReceiversConfigParams struct {
 	// in:body
+	Alert *TestReceiversConfigAlertParams `yaml:"alert,omitempty" json:"alert,omitempty"`
+	// in:body
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
@@ -145,10 +147,16 @@ func (c *TestReceiversConfigParams) ProcessConfig(encrypt EncryptFn) error {
 	return processReceiverConfigs(c.Receivers, encrypt)
 }
 
+type TestReceiversConfigAlertParams struct {
+	Annotations model.LabelSet `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Labels      model.LabelSet `yaml:"labels,omitempty" json:"labels,omitempty"`
+}
+
 // swagger:model
 type TestReceiversResult struct {
-	Receivers []TestReceiverResult `json:"receivers"`
-	NotifedAt time.Time            `json:"notified_at"`
+	Alert      TestReceiversConfigAlertParams `json:"alert"`
+	Receivers  []TestReceiverResult           `json:"receivers"`
+	NotifiedAt time.Time                      `json:"notified_at"`
 }
 
 // swagger:model

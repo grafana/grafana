@@ -3,8 +3,8 @@ import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
-import { VariableModel } from '../variables/types';
-import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
+import { AdHocVariableFilter, AdHocVariableModel, VariableModel } from '../variables/types';
+import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { FormatOptions, formatRegistry, FormatRegistryID } from './formatRegistry';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
 import { safeStringifyValue } from '../../core/utils/explore';
@@ -92,14 +92,21 @@ export class TemplateSrv implements BaseTemplateSrv {
     this.index[variable.name] = variable;
   }
 
-  getAdhocFilters(datasourceName: string) {
+  getAdhocFilters(datasourceName: string): AdHocVariableFilter[] {
     let filters: any = [];
+    let ds = getDataSourceSrv().getInstanceSettings(datasourceName);
+
+    if (!ds) {
+      return [];
+    }
 
     for (const variable of this.getAdHocVariables()) {
-      if (variable.datasource === null || variable.datasource === datasourceName) {
+      const variableUid = variable.datasource?.uid;
+
+      if (variableUid === ds.uid || (variable.datasource == null && ds?.isDefault)) {
         filters = filters.concat(variable.filters);
-      } else if (variable.datasource.indexOf('$') === 0) {
-        if (this.replace(variable.datasource) === datasourceName) {
+      } else if (variableUid?.indexOf('$') === 0) {
+        if (this.replace(variableUid) === datasourceName) {
           filters = filters.concat(variable.filters);
         }
       }
@@ -334,8 +341,8 @@ export class TemplateSrv implements BaseTemplateSrv {
     return this.index[name];
   }
 
-  private getAdHocVariables(): any[] {
-    return this.dependencies.getFilteredVariables(isAdHoc);
+  private getAdHocVariables(): AdHocVariableModel[] {
+    return this.dependencies.getFilteredVariables(isAdHoc) as AdHocVariableModel[];
   }
 }
 

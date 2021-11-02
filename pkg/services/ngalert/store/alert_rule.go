@@ -535,7 +535,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 				continue
 			}
 
-			new := ngmodels.AlertRule{
+			newAlertRule := ngmodels.AlertRule{
 				OrgID:           cmd.OrgID,
 				Title:           r.GrafanaManagedAlert.Title,
 				Condition:       r.GrafanaManagedAlert.Condition,
@@ -549,25 +549,25 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 			}
 
 			if r.ApiRuleNode != nil {
-				new.For = time.Duration(r.ApiRuleNode.For)
-				new.Annotations = r.ApiRuleNode.Annotations
-				new.Labels = r.ApiRuleNode.Labels
+				newAlertRule.For = time.Duration(r.ApiRuleNode.For)
+				newAlertRule.Annotations = r.ApiRuleNode.Annotations
+				newAlertRule.Labels = r.ApiRuleNode.Labels
 			}
 
-			if s := new.Annotations["__dashboardUid__"]; s != "" {
-				new.DashboardUID = &s
+			if s := newAlertRule.Annotations[ngmodels.DashboardUIDAnnotation]; s != "" {
+				newAlertRule.DashboardUID = &s
 			}
 
-			if s := new.Annotations["__panelId__"]; s != "" {
+			if s := newAlertRule.Annotations[ngmodels.PanelIDAnnotation]; s != "" {
 				panelID, err := strconv.ParseInt(s, 10, 64)
 				if err != nil {
-					return fmt.Errorf("the __panelId__ annotation does not contain a valid Panel ID: %w", err)
+					return fmt.Errorf("the %s annotation does not contain a valid Panel ID: %w", ngmodels.PanelIDAnnotation, err)
 				}
-				new.PanelID = &panelID
+				newAlertRule.PanelID = &panelID
 			}
 
 			upsertRule := UpsertRule{
-				New: new,
+				New: newAlertRule,
 			}
 
 			if existingGroupRule, ok := existingGroupRulesUIDs[r.GrafanaManagedAlert.UID]; ok {

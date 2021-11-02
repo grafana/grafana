@@ -1,6 +1,6 @@
 import { Column, Row } from 'react-table';
 import memoizeOne from 'memoize-one';
-import { ContentPosition } from 'csstype';
+import { Property } from 'csstype';
 import {
   DataFrame,
   Field,
@@ -17,7 +17,7 @@ import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
 import { getFooterValue } from './FooterRow';
 
-export function getTextAlign(field?: Field): ContentPosition {
+export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
     return 'flex-start';
   }
@@ -238,12 +238,12 @@ export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
 }
 
 function toNumber(value: any): number {
-  if (typeof value === 'number') {
-    return value;
-  }
-
   if (value === null || value === undefined || value === '' || isNaN(value)) {
     return Number.NEGATIVE_INFINITY;
+  }
+
+  if (typeof value === 'number') {
+    return value;
   }
 
   return Number(value);

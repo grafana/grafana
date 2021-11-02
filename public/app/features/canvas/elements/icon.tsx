@@ -14,7 +14,7 @@ import { isString } from 'lodash';
 import { LineConfig } from '../types';
 import { DimensionContext } from 'app/features/dimensions/context';
 
-interface IconConfig {
+export interface IconConfig {
   path?: ResourceDimensionConfig;
   fill?: ColorDimensionConfig;
   stroke?: LineConfig;
@@ -64,18 +64,20 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   display: IconDisplay,
 
-  defaultConfig: {
-    path: {
-      mode: ResourceDimensionMode.Fixed,
-      fixed: 'img/icons/unicons/question-circle.svg',
+  getNewOptions: (options) => ({
+    placement: {
+      width: 50,
+      height: 50,
     },
-    fill: { fixed: '#FFF899' },
-  },
-
-  defaultSize: {
-    width: 50,
-    height: 50,
-  },
+    ...options,
+    config: {
+      path: {
+        mode: ResourceDimensionMode.Fixed,
+        fixed: 'img/icons/unicons/question-circle.svg',
+      },
+      fill: { fixed: '#FFF899' },
+    },
+  }),
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: IconConfig) => {

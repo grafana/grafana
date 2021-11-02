@@ -11,33 +11,40 @@ import Feature from 'ol/Feature';
 import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
-
-import tinycolor from 'tinycolor2';
+import * as style from 'ol/style';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import {
   ColorDimensionConfig,
   ScaleDimensionConfig,
   getScaledDimension,
   getColorDimension,
+  ResourceDimensionConfig,
+  ResourceDimensionMode,
+  ResourceFolderName,
+  getPublicOrAbsoluteUrl,
 } from 'app/features/dimensions';
-import { ScaleDimensionEditor, ColorDimensionEditor } from 'app/features/dimensions/editors';
+import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { circleMarker, markerMakers } from '../../utils/regularShapes';
+import { getMarkerFromPath } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
+import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
+import { StyleMaker, StyleMakerConfig } from '../../types';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
   size: ScaleDimensionConfig;
   color: ColorDimensionConfig;
   fillOpacity: number;
-  shape?: string;
   showLegend?: boolean;
+  markerSymbol: ResourceDimensionConfig;
 }
+
+const DEFAULT_SIZE = 5;
 
 const defaultOptions: MarkersConfig = {
   size: {
-    fixed: 5,
+    fixed: DEFAULT_SIZE,
     min: 2,
     max: 15,
   },
@@ -45,8 +52,11 @@ const defaultOptions: MarkersConfig = {
     fixed: 'dark-green', // picked from theme
   },
   fillOpacity: 0.4,
-  shape: 'circle',
   showLegend: true,
+  markerSymbol: {
+    mode: ResourceDimensionMode.Fixed,
+    fixed: 'img/icons/marker/circle.svg',
+  },
 };
 
 export const MARKERS_LAYER_ID = 'markers';
@@ -88,7 +98,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     if (config.showLegend) {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
-    const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
 
     return {
       init: () => vectorLayer,
@@ -97,6 +106,24 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         if (!data.series?.length) {
           return; // ignore empty
         }
+
+        const markerPath =
+          getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
+
+        const marker = getMarkerFromPath(config.markerSymbol?.fixed);
+
+        const makeIconStyle = (cfg: StyleMakerConfig) => {
+          return new style.Style({
+            image: new style.Icon({
+              src: markerPath,
+              color: cfg.color,
+              //  opacity,
+              scale: (DEFAULT_SIZE + cfg.size) / 100,
+            }),
+          });
+        };
+
+        const shape: StyleMaker = marker?.make ?? makeIconStyle;
 
         const features: Feature<Point>[] = [];
 
@@ -111,24 +138,17 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           const sizeDim = getScaledDimension(frame, config.size);
           const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
 
-          // Map each data value into new points
-          for (let i = 0; i < frame.length; i++) {
-            // Get the circle color for a specific data value depending on color scheme
-            const color = colorDim.get(i);
-            // Set the opacity determined from user configuration
-            const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
-            // Get circle size from user configuration
-            const radius = sizeDim.get(i);
+          const featureDimensionConfig: FeaturesStylesBuilderConfig = {
+            colorDim: colorDim,
+            sizeDim: sizeDim,
+            opacity: opacity,
+            styleMaker: shape,
+          };
 
-            // Create a new Feature for each point returned from dataFrameToPoints
-            const dot = new Feature(info.points[i]);
-            dot.setProperties({
-              frame,
-              rowIndex: i,
-            });
+          const frameFeatures = getFeatures(frame, info, featureDimensionConfig);
 
-            dot.setStyle(shape!.make(color, fillColor, radius));
-            features.push(dot);
+          if (frameFeatures) {
+            features.push(...frameFeatures);
           }
 
           // Post updates to the legend component
@@ -145,63 +165,67 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         const vectorSource = new source.Vector({ features });
         vectorLayer.setSource(vectorSource);
       },
+
+      // Marker overlay options
+      registerOptionsUI: (builder) => {
+        builder
+          .addCustomEditor({
+            id: 'config.size',
+            path: 'config.size',
+            name: 'Marker Size',
+            editor: ScaleDimensionEditor,
+            settings: {
+              min: 1,
+              max: 100, // possible in the UI
+            },
+            defaultValue: {
+              // Configured values
+              fixed: DEFAULT_SIZE,
+              min: 1,
+              max: 20,
+            },
+          })
+          .addCustomEditor({
+            id: 'config.markerSymbol',
+            path: 'config.markerSymbol',
+            name: 'Marker Symbol',
+            editor: ResourceDimensionEditor,
+            defaultValue: defaultOptions.markerSymbol,
+            settings: {
+              resourceType: 'icon',
+              showSourceRadio: false,
+              folderName: ResourceFolderName.Marker,
+            },
+          })
+          .addCustomEditor({
+            id: 'config.color',
+            path: 'config.color',
+            name: 'Marker Color',
+            editor: ColorDimensionEditor,
+            settings: {},
+            defaultValue: {
+              // Configured values
+              fixed: 'grey',
+            },
+          })
+          .addSliderInput({
+            path: 'config.fillOpacity',
+            name: 'Fill opacity',
+            defaultValue: defaultOptions.fillOpacity,
+            settings: {
+              min: 0,
+              max: 1,
+              step: 0.1,
+            },
+          })
+          .addBooleanSwitch({
+            path: 'config.showLegend',
+            name: 'Show legend',
+            description: 'Show legend',
+            defaultValue: defaultOptions.showLegend,
+          });
+      },
     };
-  },
-  // Marker overlay options
-  registerOptionsUI: (builder) => {
-    builder
-      .addCustomEditor({
-        id: 'config.color',
-        path: 'config.color',
-        name: 'Marker Color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {
-          // Configured values
-          fixed: 'grey',
-        },
-      })
-      .addCustomEditor({
-        id: 'config.size',
-        path: 'config.size',
-        name: 'Marker Size',
-        editor: ScaleDimensionEditor,
-        settings: {
-          min: 1,
-          max: 100, // possible in the UI
-        },
-        defaultValue: {
-          // Configured values
-          fixed: 5,
-          min: 1,
-          max: 20,
-        },
-      })
-      .addSelect({
-        path: 'config.shape',
-        name: 'Marker Shape',
-        settings: {
-          options: markerMakers.selectOptions().options,
-        },
-        defaultValue: 'circle',
-      })
-      .addSliderInput({
-        path: 'config.fillOpacity',
-        name: 'Fill opacity',
-        defaultValue: defaultOptions.fillOpacity,
-        settings: {
-          min: 0,
-          max: 1,
-          step: 0.1,
-        },
-        showIf: (cfg) => markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill,
-      })
-      .addBooleanSwitch({
-        path: 'config.showLegend',
-        name: 'Show legend',
-        description: 'Show legend',
-        defaultValue: defaultOptions.showLegend,
-      });
   },
 
   // fill in the default values

@@ -1,7 +1,7 @@
 import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
 import { closeEditor, initialState, PanelEditorState } from './reducers';
 import { exitPanelEditor, initPanelEditor, skipPanelUpdate } from './actions';
-import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
+import { cleanUpPanelState, panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import { DashboardModel, PanelModel } from '../../../state';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
@@ -14,15 +14,20 @@ describe('panelEditor actions', () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
 
       const dispatchedActions = await thunkTester({
-        panelEditorNew: { ...initialState },
+        panelEditor: { ...initialState },
+        plugins: {
+          panels: {},
+        },
       })
         .givenThunk(initPanelEditor)
         .whenThunkIsDispatched(sourcePanel, dashboard);
 
-      expect(dispatchedActions.length).toBe(1);
-      expect(dispatchedActions[0].payload.sourcePanel).toBe(sourcePanel);
-      expect(dispatchedActions[0].payload.panel).not.toBe(sourcePanel);
-      expect(dispatchedActions[0].payload.panel.id).not.toBe(sourcePanel.id);
+      expect(dispatchedActions.length).toBe(2);
+      expect(dispatchedActions[0].type).toBe(panelModelAndPluginReady.type);
+
+      expect(dispatchedActions[1].payload.sourcePanel).toBe(sourcePanel);
+      expect(dispatchedActions[1].payload.panel).not.toBe(sourcePanel);
+      expect(dispatchedActions[1].payload.panel.id).toBe(sourcePanel.id);
     });
   });
 
@@ -52,8 +57,8 @@ describe('panelEditor actions', () => {
         .whenThunkIsDispatched();
 
       expect(dispatchedActions.length).toBe(2);
-      expect(dispatchedActions[0].type).toBe(closeEditor.type);
-      expect(dispatchedActions[1].type).toBe(cleanUpEditPanel.type);
+      expect(dispatchedActions[0].type).toBe(cleanUpPanelState.type);
+      expect(dispatchedActions[1].type).toBe(closeEditor.type);
       expect(sourcePanel.getOptions()).toEqual({ prop: true });
       expect(sourcePanel.id).toEqual(12);
     });
@@ -140,7 +145,7 @@ describe('panelEditor actions', () => {
     describe('when called with a panel that is the same as the modified panel', () => {
       it('then it should return true', () => {
         const meta: any = {};
-        const modified: any = { editSourceId: 14, libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
+        const modified: any = { id: 14, libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
         const panel: any = { id: 14, libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
 
         expect(skipPanelUpdate(modified, panel)).toEqual(true);

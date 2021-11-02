@@ -17,7 +17,7 @@ This guide helps you identify the steps you need to take based on the Grafana ve
     - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
     - [2. Update the way you bootstrap your plugin](#2-update-the-way-you-bootstrap-your-plugin)
     - [3. Update the plugin package](#3-update-the-plugin-package)
-  - [Unsigned backend plugins will not be loaded](#unsigned-backend-plugins-will-not-be-loaded)
+  - [Sign and load backend plugins](#sign-and-load-backend-plugins)
   - [Update react-hook-form from v6 to v7](#update-react-hook-form-from-v6-to-v7)
   - [Update the plugin.json](#update-the-pluginjson)
   - [Update imports to match emotion 11](#update-imports-to-match-emotion-11)
@@ -176,7 +176,7 @@ We strongly recommend that you not allow unsigned plugins in your Grafana instal
 
 To sign your plugin, see [Sign a plugin](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin).
 
-You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins configuration setting.]({{< relref "../administration/#allow_loading_unsigned_plugins" >}})
+You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins configuration setting.]({{< relref "../../administration/#allow_loading_unsigned_plugins" >}})
 
 ### Update react-hook-form from v6 to v7
 

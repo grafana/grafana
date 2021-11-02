@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -18,7 +17,7 @@ import (
 // WebhookNotifier is responsible for sending
 // alert notifications as webhooks.
 type WebhookNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	URL        string
 	User       string
 	Password   string
@@ -26,6 +25,7 @@ type WebhookNotifier struct {
 	MaxAlerts  int
 	log        log.Logger
 	tmpl       *template.Template
+	orgID      int64
 }
 
 // NewWebHookNotifier is the constructor for
@@ -39,13 +39,14 @@ func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, 
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
 	}
 	return &WebhookNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
+		orgID:      model.OrgID,
 		URL:        url,
 		User:       model.Settings.Get("username").MustString(),
 		Password:   fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString(), setting.SecretKey),
@@ -64,6 +65,7 @@ type webhookMessage struct {
 	Version         string `json:"version"`
 	GroupKey        string `json:"groupKey"`
 	TruncatedAlerts int    `json:"truncatedAlerts"`
+	OrgID           int64  `json:"orgId"`
 
 	// Deprecated, to be removed in 8.1.
 	// These are present to make migration a little less disruptive.
@@ -87,10 +89,10 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		ExtendedData:    data,
 		GroupKey:        groupKey.String(),
 		TruncatedAlerts: numTruncated,
+		OrgID:           wn.orgID,
 		Title:           tmpl(`{{ template "default.title" . }}`),
 		Message:         tmpl(`{{ template "default.message" . }}`),
 	}
-
 	if types.Alerts(as...).Status() == model.AlertFiring {
 		msg.State = string(models.AlertStateAlerting)
 	} else {

@@ -1,7 +1,6 @@
 import { e2e } from '@grafana/e2e';
 import { expect } from '../../../public/test/lib/common';
 
-const PANEL_UNDER_TEST = 'Random walk series';
 const flakyTimeout = 10000;
 
 e2e.scenario({
@@ -11,9 +10,7 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard({ uid: '5SdHCadmz' });
-
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
+    e2e.flows.openDashboard({ uid: '5SdHCadmz', queryParams: { editPanel: 3 } });
 
     // New panel editor opens when navigating from Panel menu
     e2e.components.PanelEditor.General.content().should('be.visible');
@@ -50,7 +47,7 @@ e2e.scenario({
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().eq(0).should('be.visible').click();
+        e2e().get('input[id*="test-data-scenario-select-"]').eq(0).should('be.visible').click();
       });
 
     cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').eq(0).click();

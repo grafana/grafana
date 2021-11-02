@@ -117,7 +117,7 @@ func GetPlaylistItems(c *models.ReqContext) response.Response {
 func GetPlaylistDashboards(c *models.ReqContext) response.Response {
 	playlistID := c.ParamsInt64(":id")
 
-	playlists, err := LoadPlaylistDashboards(c.OrgId, c.SignedInUser, playlistID)
+	playlists, err := LoadPlaylistDashboards(c.Req.Context(), c.OrgId, c.SignedInUser, playlistID)
 	if err != nil {
 		return response.Error(500, "Could not load dashboards", err)
 	}

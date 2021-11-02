@@ -21,6 +21,7 @@ import {
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
+  DataSourceRef,
   DataTransformerConfig,
   LoadingState,
   PanelData,
@@ -38,7 +39,7 @@ export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
-  datasource: string | DataSourceApi<TQuery, TOptions> | null;
+  datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
   dashboardId?: number;
@@ -223,7 +224,7 @@ export class PanelQueryRunner {
       // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
         if (!query.datasource) {
-          query.datasource = ds.name;
+          query.datasource = { uid: ds.uid };
         }
         return query;
       });
@@ -257,8 +258,7 @@ export class PanelQueryRunner {
 
     if (dataSupport.alertStates || dataSupport.annotations) {
       const panel = (this.dataConfigSource as unknown) as PanelModel;
-      const id = panel.editSourceId ?? panel.id;
-      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(id));
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panel.id));
     }
 
     this.subscription = panelData.subscribe({
@@ -292,6 +292,12 @@ export class PanelQueryRunner {
     }
   };
 
+  clearLastResult() {
+    this.lastResult = undefined;
+    // A new subject is also needed since it's a replay subject that remembers/sends last value
+    this.subject = new ReplaySubject(1);
+  }
+
   /**
    * Called when the panel is closed
    */
@@ -321,7 +327,7 @@ export class PanelQueryRunner {
 }
 
 async function getDataSource(
-  datasource: string | DataSourceApi | null,
+  datasource: DataSourceRef | string | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
   if (datasource && (datasource as any).query) {

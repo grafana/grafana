@@ -23,7 +23,10 @@ Use [Homebrew](http://brew.sh/) to install the most recent released version of G
    brew install grafana
    ```
 
-   The brew page downloads and untars the files into `/usr/local/Cellar/grafana/version`.
+   The brew page downloads and untars the files into:
+
+   - `/usr/local/Cellar/grafana/[version]` (if using Homebrew v2)
+   - `/opt/homebrew/Cellar/grafana/[version]` (Homebrew v3)
 
 1. Start Grafana using the command:
    ```bash

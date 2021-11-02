@@ -16,9 +16,10 @@
   ></gf-form-switch>
 
   <div class="gf-form" ng-if="ctrl.panel.lines">
-    <label class="gf-form-label width-8">Line width</label>
+    <label class="gf-form-label width-8" for="linewidth-select-input">Line width</label>
     <div class="gf-form-select-wrapper max-width-5">
       <select
+        id="linewidth-select-input"
         class="gf-form-input"
         ng-model="ctrl.panel.linewidth"
         ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"
@@ -37,9 +38,10 @@
   ></gf-form-switch>
 
   <div class="gf-form" ng-if="ctrl.panel.lines">
-    <label class="gf-form-label width-8">Area fill</label>
+    <label class="gf-form-label width-8" for="fill-select-input">Area fill</label>
     <div class="gf-form-select-wrapper max-width-5">
       <select
+        id="fill-select-input"
         class="gf-form-input"
         ng-model="ctrl.panel.fill"
         ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"
@@ -69,9 +71,10 @@
   ></gf-form-switch>
 
   <div class="gf-form" ng-if="ctrl.panel.points">
-    <label class="gf-form-label width-8">Point Radius</label>
+    <label class="gf-form-label width-8" for="pointradius-select-input">Point Radius</label>
     <div class="gf-form-select-wrapper max-width-5">
       <select
+        id="pointradius-select-input"
         class="gf-form-input"
         ng-model="ctrl.panel.pointradius"
         ng-options="f for f in [0.5,1,2,3,4,5,6,7,8,9,10]"
@@ -87,7 +90,6 @@
     checked="ctrl.panel.options.alertThreshold"
     on-change="ctrl.render()"
   ></gf-form-switch>
-
 </div>
 
 <div class="gf-form-group">
@@ -110,9 +112,10 @@
   >
   </gf-form-switch>
   <div class="gf-form">
-    <label class="gf-form-label width-7">Null value</label>
+    <label class="gf-form-label width-7" for="null-value-select-input">Null value</label>
     <div class="gf-form-select-wrapper">
       <select
+        id="null-value-select-input"
         class="gf-form-input max-width-9"
         ng-model="ctrl.panel.nullPointMode"
         ng-options="f for f in ['connected', 'null', 'null as zero']"
@@ -125,9 +128,10 @@
 <div class="gf-form-group">
   <h5 class="section-heading">Hover tooltip</h5>
   <div class="gf-form">
-    <label class="gf-form-label width-9">Mode</label>
+    <label class="gf-form-label width-9" for="tooltip-mode-select-input">Mode</label>
     <div class="gf-form-select-wrapper max-width-8">
       <select
+        id="tooltip-mode-select-input"
         class="gf-form-input"
         ng-model="ctrl.panel.tooltip.shared"
         ng-options="f.value as f.text for f in [{text: 'All series', value: true}, {text: 'Single', value: false}]"
@@ -136,9 +140,10 @@
     </div>
   </div>
   <div class="gf-form">
-    <label class="gf-form-label width-9">Sort order</label>
+    <label class="gf-form-label width-9" for="tooltip-sort-select-input">Sort order</label>
     <div class="gf-form-select-wrapper max-width-8">
       <select
+        id="tooltip-sort-select-input"
         class="gf-form-input"
         ng-model="ctrl.panel.tooltip.sort"
         ng-options="f.value as f.text for f in [{text: 'None', value: 0}, {text: 'Increasing', value: 1}, {text: 'Decreasing', value: 2}]"
