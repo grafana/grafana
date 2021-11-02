@@ -34,10 +34,10 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 
 	// Parse the queries
 	hasExpression := false
-	datasources := make(map[string]bool, len(reqDTO.Queries))
+	datasources := make(map[string]*models.DataSource, len(reqDTO.Queries))
 	queryInfo := make([]queryDSInfo, 0, len(reqDTO.Queries))
 	for _, query := range reqDTO.Queries {
-		q := hs.getDataSourceFromQuery(c, query)
+		q := hs.getDataSourceFromQuery(c, query, datasources)
 		if q.errRes != nil {
 			return q.errRes
 		}
@@ -45,25 +45,11 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			return response.Error(http.StatusBadRequest, "Datasource not found for query", nil)
 		}
 
-		if q.isExpr {
+		datasources[q.ds.Uid] = q.ds
+		if q.ds.Uid == expr.DatasourceUID {
 			hasExpression = true
-		} else {
-			uid := q.ds.Uid
-			_, found := datasources[uid]
-			if !found {
-				// TODO? check permissions here?
-				// hs.PluginRequestValidator.Validate(ds.Uid, nil) ?? (but the paramerts seem wrong)
-				datasources[uid] = true
-			}
 		}
 		queryInfo = append(queryInfo, q)
-	}
-
-	ds := queryInfo[0].ds
-	if hasExpression {
-		ds = nil // Don't attach datsource model for transform
-	} else if len(datasources) > 1 {
-		return response.Error(http.StatusBadRequest, "All queries must use the same datasource", nil)
 	}
 
 	for _, info := range queryInfo {
@@ -91,6 +77,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return toMacronResponse(qdr)
 	}
 
+	ds := queryInfo[0].ds
+	if len(datasources) > 1 {
+		// We do not (yet) support mixed query type
+		return response.Error(http.StatusBadRequest, "All queries must use the same datasource", nil)
+	}
+
 	err := hs.PluginRequestValidator.Validate(ds.Url, nil)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
@@ -110,20 +102,25 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 }
 
 type queryDSInfo struct {
-	isExpr bool
 	ds     *models.DataSource
 	query  *simplejson.Json
 	errRes response.Response
 }
 
-func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simplejson.Json) (info queryDSInfo) {
+func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simplejson.Json, history map[string]*models.DataSource) (info queryDSInfo) {
 	var err error
 	info.query = query
 	uid := query.Get("datasource").Get("uid").MustString()
 
+	// check cache value
+	ds, ok := history[uid]
+	if ok {
+		info.ds = ds
+		return
+	}
+
 	switch uid {
 	case expr.DatasourceUID:
-		info.isExpr = true
 		info.ds = expr.DataSourceModel((c.OrgId))
 		return
 	case grafanads.DatasourceUID:
@@ -141,7 +138,6 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 
 	// Support legacy requets from before 8.3
 	if query.Get("datasource").MustString() == expr.DatasourceType {
-		info.isExpr = true
 		info.ds = expr.DataSourceModel((c.OrgId))
 		return
 	}
