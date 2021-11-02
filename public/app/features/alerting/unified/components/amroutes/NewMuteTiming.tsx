@@ -56,8 +56,8 @@ const createMuteTiming = (fields: MuteTimingFields): MuteTimeInterval => {
 };
 
 const NewMuteTiming = (props: Props) => {
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const styles = useStyles2(getStyles);
   const formApi = useForm({ defaultValues });
   const { fields: timeRanges = [], append, remove } = useFieldArray<MuteTimingFields>({
@@ -88,15 +88,17 @@ const NewMuteTiming = (props: Props) => {
   const onSubmit = (values: MuteTimingFields) => {
     const muteTiming = createMuteTiming(values);
 
+    const newConfig = {
+      ...result,
+      alertmanager_config: {
+        ...config,
+        mute_time_intervals: [...(config?.mute_time_intervals || []), muteTiming],
+      },
+    };
+
     dispatch(
       updateAlertManagerConfigAction({
-        newConfig: {
-          ...result,
-          alertmanager_config: {
-            ...config,
-            mute_time_intervals: [...config.mute_timing_intervals, muteTiming],
-          },
-        },
+        newConfig,
         oldConfig: result,
         alertManagerSourceName: alertManagerSourceName!,
         successMessage: 'Mute timing saved',
