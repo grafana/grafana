@@ -1,12 +1,23 @@
 import React, { FormEvent, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Button, Checkbox, CustomScrollbar, HorizontalGroup, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import {
+  Button,
+  Checkbox,
+  CustomScrollbar,
+  HorizontalGroup,
+  RadioButtonGroup,
+  Tooltip,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
-import { BuiltinRoleSelector } from './BuiltinRoleSelector';
-import { Role, OrgRole } from 'app/types';
+import { OrgRole, Role } from 'app/types';
 
 type BuiltInRoles = { [key: string]: Role[] };
+
+const BuiltinRoles = ['Viewer', 'Editor', 'Admin'];
+const BuiltinRoleOption: Array<SelectableValue<string>> = BuiltinRoles.map((r: string) => ({ label: r, value: r }));
 
 interface RolePickerMenuProps {
   builtInRole: OrgRole;
@@ -65,7 +76,13 @@ export const RolePickerMenu = ({
     <div className={cx(styles.menu, customStyles.menu)} aria-label="Role picker menu">
       <CustomScrollbar autoHide={false} autoHeightMax="250px" hideHorizontalTrack>
         <div className={customStyles.groupHeader}>Built-in roles</div>
-        <BuiltinRoleSelector value={builtInRole} onChange={onSelectedBuiltinRoleChange} />
+        <RadioButtonGroup
+          className={customStyles.builtInRoleSelector}
+          options={BuiltinRoleOption}
+          value={selectedBuiltInRole}
+          onChange={onSelectedBuiltinRoleChange}
+          fullWidth={true}
+        />
         {[
           { header: 'Custom roles', roles: customRoles },
           {
@@ -178,7 +195,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(0, 4)};
       display: flex;
       align-items: center;
-      color: ${theme.colors.primary.text};
+      color: ${theme.colors.text.primary};
+      font-weight: ${theme.typography.fontWeightBold};
     `,
     container: css`
       padding: ${theme.spacing(1)};
@@ -198,6 +216,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     menuOptionDisabled: css`
       color: ${theme.colors.text.disabled};
       cursor: not-allowed;
+    `,
+    builtInRoleSelector: css`
+      margin-bottom: ${theme.spacing(1)};
     `,
   };
 };
