@@ -15,7 +15,7 @@ import (
 type ServiceAccountsAPI struct {
 	service        serviceaccounts.Service
 	accesscontrol  accesscontrol.AccessControl
-	routerRegister routing.RouteRegister
+	RouterRegister routing.RouteRegister
 }
 
 func NewServiceAccountsAPI(
@@ -26,14 +26,14 @@ func NewServiceAccountsAPI(
 	return &ServiceAccountsAPI{
 		service:        service,
 		accesscontrol:  accesscontrol,
-		routerRegister: routerRegister,
+		RouterRegister: routerRegister,
 	}
 }
 
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 	// ServiceAccounts
 	auth := acmiddleware.Middleware(api.accesscontrol)
-	api.routerRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
+	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
 	})
 }
