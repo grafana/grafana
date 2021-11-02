@@ -113,10 +113,10 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 // AddAPIKey adds an additional API key to a service account
 func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext, cmd models.AddApiKeyCommand) response.Response {
 	if !hs.Cfg.FeatureToggles["service-accounts"] {
-		return response.Error(500, "Requires services-accounts feature", errors.New("Feature missing"))
+		return response.Error(500, "Requires services-accounts feature", errors.New("feature missing"))
 	}
 	if cmd.CreateNewServiceAccount {
-		return response.Error(500, "Don't create service account while adding additional API key", nil)
+		return response.Error(500, "Can't create service account while adding additional API key", nil)
 	}
 
 	return hs.AddAPIKey(c, cmd)
