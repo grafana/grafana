@@ -561,7 +561,7 @@ export function aggregateRawLogsVolume(
   rawLogsVolume: DataFrame[],
   extractLevel: (dataFrame: DataFrame) => LogLevel
 ): DataFrame[] {
-  const logsVolumeByLevelMap: { [level in LogLevel]?: DataFrame[] } = {};
+  const logsVolumeByLevelMap: Partial<Record<LogLevel, DataFrame[]>> = {};
   rawLogsVolume.forEach((dataFrame) => {
     const level = extractLevel(dataFrame);
     if (!logsVolumeByLevelMap[level]) {
@@ -570,10 +570,10 @@ export function aggregateRawLogsVolume(
     logsVolumeByLevelMap[level]!.push(dataFrame);
   });
 
-  return Object.keys(logsVolumeByLevelMap).map((level: LogLevel) => {
+  return Object.keys(logsVolumeByLevelMap).map((level: string) => {
     return aggregateFields(
-      logsVolumeByLevelMap[level]!,
-      getLogVolumeFieldConfig(level, Object.keys(logsVolumeByLevelMap).length === 1)
+      logsVolumeByLevelMap[level as LogLevel]!,
+      getLogVolumeFieldConfig(level as LogLevel, Object.keys(logsVolumeByLevelMap).length === 1)
     );
   });
 }

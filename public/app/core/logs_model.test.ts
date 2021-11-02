@@ -950,8 +950,8 @@ describe('getSeriesProperties()', () => {
 
 describe('logs volume', () => {
   class TestDataQuery implements DataQuery {
-    refId: string;
-    target: string;
+    refId = 'a';
+    target = '';
   }
 
   let volumeProvider: Observable<DataQueryResponse>,
