@@ -51,12 +51,19 @@ export const GrafanaConditionsStep: FC = () => {
     formState: { errors },
   } = useFormContext<RuleFormValues>();
 
+  const evaluateEveryId = 'eval-every-input';
+  const evaluateForId = 'eval-for-input';
+
   return (
     <RuleEditorSection stepNo={3} title="Define alert conditions">
       <ConditionField />
       <Field label="Evaluate">
         <div className={styles.flexRow}>
-          <InlineLabel width={16} tooltip="How often the alert will be evaluated to see if it fires">
+          <InlineLabel
+            htmlFor={evaluateEveryId}
+            width={16}
+            tooltip="How often the alert will be evaluated to see if it fires"
+          >
             Evaluate every
           </InlineLabel>
           <Field
@@ -65,9 +72,10 @@ export const GrafanaConditionsStep: FC = () => {
             invalid={!!errors.evaluateEvery?.message}
             validationMessageHorizontalOverflow={true}
           >
-            <Input width={8} {...register('evaluateEvery', evaluateEveryValidationOptions)} />
+            <Input id={evaluateEveryId} width={8} {...register('evaluateEvery', evaluateEveryValidationOptions)} />
           </Field>
           <InlineLabel
+            htmlFor={evaluateForId}
             width={7}
             tooltip='Once condition is breached, alert will go into pending state. If it is pending for longer than the "for" value, it will become a firing alert.'
           >
@@ -79,7 +87,7 @@ export const GrafanaConditionsStep: FC = () => {
             invalid={!!errors.evaluateFor?.message}
             validationMessageHorizontalOverflow={true}
           >
-            <Input width={8} {...register('evaluateFor', forValidationOptions)} />
+            <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions)} />
           </Field>
         </div>
       </Field>
@@ -92,11 +100,12 @@ export const GrafanaConditionsStep: FC = () => {
       />
       {showErrorHandling && (
         <>
-          <Field label="Alert state if no data or all values are null">
+          <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}
+                  inputId="no-data-state-input"
                   width={42}
                   includeNoData={true}
                   onChange={(value) => onChange(value?.value)}
@@ -105,11 +114,12 @@ export const GrafanaConditionsStep: FC = () => {
               name="noDataState"
             />
           </Field>
-          <Field label="Alert state if execution error or timeout">
+          <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}
+                  inputId="exec-err-state-input"
                   width={42}
                   includeNoData={false}
                   onChange={(value) => onChange(value?.value)}

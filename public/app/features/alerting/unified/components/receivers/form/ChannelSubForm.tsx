@@ -72,17 +72,19 @@ export function ChannelSubForm<R extends ChannelValues>({
   const mandatoryOptions = notifier?.options.filter((o) => o.required);
   const optionalOptions = notifier?.options.filter((o) => !o.required);
 
+  const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
   return (
     <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <Field label="Contact point type" data-testid={`${pathPrefix}type`}>
+          <Field label="Contact point type" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
             <InputControl
               name={name('type')}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Select
                   disabled={readOnly}
+                  inputId={contactPointTypeInputId}
                   menuShouldPortal
                   {...field}
                   width={37}
