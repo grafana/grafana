@@ -6,11 +6,15 @@ import {
   AbsoluteTimeRange,
   DataFrame,
   DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
   dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   FieldCache,
   FieldColorModeId,
+  FieldConfig,
   FieldType,
   FieldWithIndex,
   findCommonLabels,
@@ -18,19 +22,24 @@ import {
   getLogLevel,
   getLogLevelFromKey,
   Labels,
+  LoadingState,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
   LogsMetaItem,
   LogsMetaKind,
   LogsModel,
+  MutableDataFrame,
   rangeUtil,
+  ScopedVars,
   sortInAscendingOrder,
   textUtil,
+  TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+import { Observable, throwError, timeout } from 'rxjs';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -44,6 +53,11 @@ export const LogLevelColor = {
   [LogLevel.trace]: colors[2],
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
+
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
 
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
 function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy?: LogsDedupStrategy): boolean {
@@ -509,4 +523,195 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
   }
 
   return logsModelMeta;
+}
+
+/**
+ * Returns field configuration used to render logs volume bars
+ */
+function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
+  const name = oneLevelDetected && level === LogLevel.unknown ? 'logs' : level;
+  const color = LogLevelColor[level];
+  return {
+    displayNameFromDS: name,
+    color: {
+      mode: FieldColorModeId.Fixed,
+      fixedColor: color,
+    },
+    custom: {
+      drawStyle: GraphDrawStyle.Bars,
+      barAlignment: BarAlignment.Center,
+      lineColor: color,
+      pointColor: color,
+      fillColor: color,
+      lineWidth: 1,
+      fillOpacity: 100,
+      stacking: {
+        mode: StackingMode.Normal,
+        group: 'A',
+      },
+    },
+  };
+}
+
+/**
+ * Take multiple data frames, sum up values and group by level.
+ * Return a list of data frames, each representing single level.
+ */
+export function aggregateRawLogsVolume(
+  rawLogsVolume: DataFrame[],
+  extractLevel: (dataFrame: DataFrame) => LogLevel
+): DataFrame[] {
+  const logsVolumeByLevelMap: Partial<Record<LogLevel, DataFrame[]>> = {};
+  rawLogsVolume.forEach((dataFrame) => {
+    const level = extractLevel(dataFrame);
+    if (!logsVolumeByLevelMap[level]) {
+      logsVolumeByLevelMap[level] = [];
+    }
+    logsVolumeByLevelMap[level]!.push(dataFrame);
+  });
+
+  return Object.keys(logsVolumeByLevelMap).map((level: string) => {
+    return aggregateFields(
+      logsVolumeByLevelMap[level as LogLevel]!,
+      getLogVolumeFieldConfig(level as LogLevel, Object.keys(logsVolumeByLevelMap).length === 1)
+    );
+  });
+}
+
+/**
+ * Aggregate multiple data frames into a single data frame by adding values.
+ * Multiple data frames for the same level are passed here to get a single
+ * data frame for a given level. Aggregation by level happens in aggregateRawLogsVolume()
+ */
+function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFrame {
+  const aggregatedDataFrame = new MutableDataFrame();
+  if (!dataFrames.length) {
+    return aggregatedDataFrame;
+  }
+
+  const totalLength = dataFrames[0].length;
+  const timeField = new FieldCache(dataFrames[0]).getFirstFieldOfType(FieldType.time);
+
+  if (!timeField) {
+    return aggregatedDataFrame;
+  }
+
+  aggregatedDataFrame.addField({ name: 'Time', type: FieldType.time }, totalLength);
+  aggregatedDataFrame.addField({ name: 'Value', type: FieldType.number, config }, totalLength);
+
+  dataFrames.forEach((dataFrame) => {
+    dataFrame.fields.forEach((field) => {
+      if (field.type === FieldType.number) {
+        for (let pointIndex = 0; pointIndex < totalLength; pointIndex++) {
+          const currentValue = aggregatedDataFrame.get(pointIndex).Value;
+          const valueToAdd = field.values.get(pointIndex);
+          const totalValue =
+            currentValue === null && valueToAdd === null ? null : (currentValue || 0) + (valueToAdd || 0);
+          aggregatedDataFrame.set(pointIndex, { Value: totalValue, Time: timeField.values.get(pointIndex) });
+        }
+      }
+    });
+  });
+
+  return aggregatedDataFrame;
+}
+
+const LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT = 60000;
+
+type LogsVolumeQueryOptions<T extends DataQuery> = {
+  timeout?: number;
+  extractLevel: (dataFrame: DataFrame) => LogLevel;
+  targets: T[];
+  range: TimeRange;
+};
+
+/**
+ * Creates an observable, which makes requests to get logs volume and aggregates results.
+ */
+export function queryLogsVolume<T extends DataQuery>(
+  datasource: DataSourceApi<T, any, any>,
+  logsVolumeRequest: DataQueryRequest<T>,
+  options: LogsVolumeQueryOptions<T>
+): Observable<DataQueryResponse> {
+  const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars);
+  logsVolumeRequest.interval = intervalInfo.interval;
+  logsVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
+  if (intervalInfo.intervalMs !== undefined) {
+    logsVolumeRequest.intervalMs = intervalInfo.intervalMs;
+    logsVolumeRequest.scopedVars.__interval_ms = { value: intervalInfo.intervalMs, text: intervalInfo.intervalMs };
+  }
+
+  return new Observable((observer) => {
+    let rawLogsVolume: DataFrame[] = [];
+    observer.next({
+      state: LoadingState.Loading,
+      error: undefined,
+      data: [],
+    });
+
+    const subscription = (datasource.query(logsVolumeRequest) as Observable<DataQueryResponse>)
+      .pipe(
+        timeout({
+          each: options.timeout || LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT,
+          with: () => throwError(new Error('Request timed-out. Please make your query more specific and try again.')),
+        })
+      )
+      .subscribe({
+        complete: () => {
+          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
+          if (aggregatedLogsVolume[0]) {
+            aggregatedLogsVolume[0].meta = {
+              custom: {
+                targets: options.targets,
+                absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              },
+            };
+          }
+          observer.next({
+            state: LoadingState.Done,
+            error: undefined,
+            data: aggregatedLogsVolume,
+          });
+          observer.complete();
+        },
+        next: (dataQueryResponse: DataQueryResponse) => {
+          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+        },
+        error: (error) => {
+          observer.next({
+            state: LoadingState.Error,
+            error: error,
+            data: [],
+          });
+          observer.error(error);
+        },
+      });
+    return () => {
+      subscription?.unsubscribe();
+    };
+  });
+}
+
+function getIntervalInfo(scopedVars: ScopedVars): { interval: string; intervalMs?: number } {
+  if (scopedVars.__interval) {
+    let intervalMs: number = scopedVars.__interval_ms.value;
+    let interval = '';
+    if (intervalMs > HOUR) {
+      intervalMs = DAY;
+      interval = '1d';
+    } else if (intervalMs > MINUTE) {
+      intervalMs = HOUR;
+      interval = '1h';
+    } else if (intervalMs > SECOND) {
+      intervalMs = MINUTE;
+      interval = '1m';
+    } else {
+      intervalMs = SECOND;
+      interval = '1s';
+    }
+
+    return { interval, intervalMs };
+  } else {
+    return { interval: '$__interval' };
+  }
 }
