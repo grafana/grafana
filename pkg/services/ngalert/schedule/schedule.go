@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/atomic"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -389,7 +391,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					item.ruleInfo.evalCh <- &evalContext{now: tick, version: item.version}
+					item.ruleInfo.Eval(tick, item.version)
 				})
 			}
 
@@ -400,7 +402,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 					sch.log.Error("unable to delete alert rule routine information because it did not exist", "uid", key.UID, "org_id", key.OrgID)
 					continue
 				}
-				ruleInfo.stopCh <- struct{}{}
+				ruleInfo.Stop()
 			}
 		case <-ctx.Done():
 			waitErr := dispatcherGroup.Wait()
@@ -588,10 +590,10 @@ func (r *alertRuleRegistry) getOrCreateInfo(key models.AlertRuleKey) (*alertRule
 
 	info, ok := r.alertRuleInfo[key]
 	if !ok {
-		r.alertRuleInfo[key] = &alertRuleInfo{evalCh: make(chan *evalContext), stopCh: make(chan struct{})}
-		return r.alertRuleInfo[key], true
+		info = newAlertRuleInfo()
+		r.alertRuleInfo[key] = info
 	}
-	return info, false
+	return info, !ok
 }
 
 // get returns the channel for the specific alert rule
@@ -654,8 +656,45 @@ func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 }
 
 type alertRuleInfo struct {
-	evalCh chan *evalContext
-	stopCh chan struct{}
+	evalCh  chan *evalContext
+	stopCh  chan struct{}
+	mtx     sync.Mutex
+	stopped *atomic.Bool // indicates that the stopCh was closed and therefore the rule evaluation routine should exit
+}
+
+func newAlertRuleInfo() *alertRuleInfo {
+	return &alertRuleInfo{evalCh: make(chan *evalContext), stopCh: make(chan struct{}), stopped: atomic.NewBool(false)}
+}
+
+// Stop signals the rule evaluation routine to stop via stopCh and sets flag stopped to true. Does nothing If the loop is stopped
+func (a *alertRuleInfo) Stop() bool {
+	if a.stopped.Load() {
+		return false
+	}
+	a.mtx.Lock()
+	defer a.mtx.Unlock()
+	if a.stopped.Swap(true) {
+		return false
+	}
+	close(a.stopCh)
+	return true
+}
+
+// Eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
+func (a *alertRuleInfo) Eval(t time.Time, version int64) bool {
+	if a.stopped.Load() {
+		return false
+	}
+	a.mtx.Lock()
+	defer a.mtx.Unlock()
+	if a.stopped.Load() {
+		return false
+	}
+	a.evalCh <- &evalContext{
+		now:     t,
+		version: version,
+	}
+	return true
 }
 
 type evalContext struct {

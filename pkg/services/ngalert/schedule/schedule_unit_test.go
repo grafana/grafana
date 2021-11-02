@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
+	"sync"
 	"testing"
 	"time"
 
@@ -568,6 +569,82 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	t.Run("when there are no alerts to send it should not call notifiers", func(t *testing.T) {
 		// TODO needs some mocking/stubbing for Alertmanager and Sender to make sure it was not called
 		t.Skip()
+	})
+}
+
+func TestSchedule_alertRuleInfo(t *testing.T) {
+	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
+		t.Run("Eval should send to evalCh", func(t *testing.T) {
+			r := newAlertRuleInfo()
+			expected := time.Now()
+			resultCh := make(chan bool)
+			version := rand.Int63()
+			go func() {
+				resultCh <- r.Eval(expected, version)
+			}()
+			select {
+			case ctx := <-r.evalCh:
+				require.Equal(t, version, ctx.version)
+				require.Equal(t, expected, ctx.now)
+				require.True(t, <-resultCh)
+			case <-time.After(5 * time.Second):
+				t.Fatal("No message was received on eval channel")
+			}
+		})
+		t.Run("Stop should close stopCh and set stopped", func(t *testing.T) {
+			r := newAlertRuleInfo()
+			require.True(t, r.Stop())
+			require.True(t, r.stopped.Load())
+			_, ok := <-r.stopCh
+			require.False(t, ok)
+		})
+	})
+	t.Run("when rule evaluation is stopped", func(t *testing.T) {
+		t.Run("Eval should do nothing", func(t *testing.T) {
+			r := newAlertRuleInfo()
+			r.Stop()
+			require.False(t, r.Eval(time.Now(), rand.Int63()))
+		})
+		t.Run("Stop should do nothing", func(t *testing.T) {
+			r := newAlertRuleInfo()
+			r.Stop()
+			require.False(t, r.Stop())
+		})
+	})
+	t.Run("should be thread-safe", func(t *testing.T) {
+		r := newAlertRuleInfo()
+		wg := sync.WaitGroup{}
+		go func() {
+			for {
+				select {
+				case <-r.evalCh:
+					time.Sleep(time.Millisecond)
+				case <-r.stopCh:
+					return
+				}
+			}
+		}()
+
+		for i := 0; i < 10; i++ {
+			wg.Add(1)
+			go func() {
+				for i := 0; i < 20; i++ {
+					max := 2
+					if i <= 10 {
+						max = 1
+					}
+					switch rand.Intn(max) + 1 {
+					case 1:
+						r.Eval(time.Now(), rand.Int63())
+					case 2:
+						r.Stop()
+					}
+				}
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
 	})
 }
 
