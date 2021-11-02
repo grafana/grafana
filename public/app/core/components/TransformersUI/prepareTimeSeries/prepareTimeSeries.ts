@@ -12,8 +12,7 @@ import {
   ArrayVector,
 } from '@grafana/data';
 import { Labels } from 'app/types/unified-alerting-dto';
-import { from } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 /**
  * There is currently an effort to figure out consistent names
@@ -280,18 +279,14 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
   return result;
 }
 
-async function getXYZ(data: DataFrame[], arg: string): Promise<DataFrame[]> {
-  return data;
-}
-
 export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = {
   id: DataTransformerID.prepareTimeSeries,
   name: 'Prepare time series',
   description: `Will stretch data frames from the wide format into the long format. This is really helpful to be able to keep backwards compatibility for panels not supporting the new wide format.`,
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(mergeMap((data) => from(getXYZ(data, 'aaa')))),
-  //source.pipe(map((data) => prepareTimeSeriesTransformer.transformer(options)(data))),
+  operator: (options) => (source) =>
+    source.pipe(map((data) => prepareTimeSeriesTransformer.transformer(options)(data))),
 
   transformer: (options: PrepareTimeSeriesOptions) => {
     const format = options?.format ?? timeSeriesFormat.TimeSeriesWide;
