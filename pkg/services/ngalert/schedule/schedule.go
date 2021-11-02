@@ -111,7 +111,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, 
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 
 	sch := schedule{
-		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
+		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:             cfg.MaxAttempts,
 		clock:                   cfg.C,
 		baseInterval:            cfg.BaseInterval,
@@ -340,15 +340,15 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 			type readyToRunItem struct {
 				key      models.AlertRuleKey
-				ruleInfo alertRuleInfo
+				ruleInfo *alertRuleInfo
+				version  int64
 			}
 
 			readyToRun := make([]readyToRunItem, 0)
 			for _, item := range alertRules {
 				key := item.GetKey()
 				itemVersion := item.Version
-				newRoutine := !sch.registry.exists(key)
-				ruleInfo := sch.registry.getOrCreateInfo(key, itemVersion)
+				ruleInfo, newRoutine := sch.registry.getOrCreateInfo(key)
 
 				// enforce minimum evaluation interval
 				if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
@@ -373,7 +373,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleInfo: ruleInfo})
+					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleInfo: ruleInfo, version: itemVersion})
 				}
 
 				// remove the alert rule from the registered alert rules
@@ -389,7 +389,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					item.ruleInfo.evalCh <- &evalContext{now: tick, version: item.ruleInfo.version}
+					item.ruleInfo.evalCh <- &evalContext{now: tick, version: item.version}
 				})
 			}
 
@@ -577,23 +577,21 @@ func (sch *schedule) saveAlertStates(states []*state.State) {
 
 type alertRuleRegistry struct {
 	mu            sync.Mutex
-	alertRuleInfo map[models.AlertRuleKey]alertRuleInfo
+	alertRuleInfo map[models.AlertRuleKey]*alertRuleInfo
 }
 
-// getOrCreateInfo returns the channel for the specific alert rule
-// if it does not exists creates one and returns it
-func (r *alertRuleRegistry) getOrCreateInfo(key models.AlertRuleKey, ruleVersion int64) alertRuleInfo {
+// getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
+// Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
+func (r *alertRuleRegistry) getOrCreateInfo(key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	info, ok := r.alertRuleInfo[key]
 	if !ok {
-		r.alertRuleInfo[key] = alertRuleInfo{evalCh: make(chan *evalContext), stopCh: make(chan struct{}), version: ruleVersion}
-		return r.alertRuleInfo[key]
+		r.alertRuleInfo[key] = &alertRuleInfo{evalCh: make(chan *evalContext), stopCh: make(chan struct{})}
+		return r.alertRuleInfo[key], true
 	}
-	info.version = ruleVersion
-	r.alertRuleInfo[key] = info
-	return info
+	return info, false
 }
 
 // get returns the channel for the specific alert rule
@@ -606,7 +604,7 @@ func (r *alertRuleRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error)
 	if !ok {
 		return nil, fmt.Errorf("%v key not found", key)
 	}
-	return &info, nil
+	return info, nil
 }
 
 func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
@@ -618,7 +616,7 @@ func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
 }
 
 // del removes pair that has specific key from alertRuleInfo.
-// Returns 2-tuple where first element is value of the removed pair
+// Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
 func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
@@ -656,9 +654,8 @@ func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 }
 
 type alertRuleInfo struct {
-	evalCh  chan *evalContext
-	stopCh  chan struct{}
-	version int64
+	evalCh chan *evalContext
+	stopCh chan struct{}
 }
 
 type evalContext struct {
