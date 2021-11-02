@@ -9,7 +9,6 @@
     "d3",
     "d3-force", // we should bump this once we move to esm modules
     "globby", // we should bump this once we move to esm modules
-    "husky",
     "slate",
     "slate-plain-serializer",
     "systemjs",
