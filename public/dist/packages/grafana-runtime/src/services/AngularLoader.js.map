@@ -1,1 +1,0 @@
-{"version":3,"file":"AngularLoader.js","sourceRoot":"","sources":["../../../../../../packages/grafana-runtime/src/services/AngularLoader.ts"],"names":[],"mappings":"AAgEA,IAAI,QAAuB,CAAC;AAE5B;;;;;GAKG;AACH,MAAM,UAAU,gBAAgB,CAAC,CAAgB;IAC/C,QAAQ,GAAG,CAAC,CAAC;AACf,CAAC;AAED;;;;;;;GAOG;AACH,MAAM,UAAU,gBAAgB;IAC9B,OAAO,QAAQ,CAAC;AAClB,CAAC"}

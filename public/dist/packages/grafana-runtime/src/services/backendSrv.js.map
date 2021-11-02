@@ -1,1 +1,0 @@
-{"version":3,"file":"backendSrv.js","sourceRoot":"","sources":["../../../../../../packages/grafana-runtime/src/services/backendSrv.ts"],"names":[],"mappings":"AAyKA,IAAI,iBAA6B,CAAC;AAElC;;;;;GAKG;AACH,MAAM,CAAC,IAAM,aAAa,GAAG,UAAC,QAAoB;IAChD,iBAAiB,GAAG,QAAQ,CAAC;AAC/B,CAAC,CAAC;AAEF;;;;;GAKG;AACH,MAAM,CAAC,IAAM,aAAa,GAAG,cAAkB,OAAA,iBAAiB,EAAjB,CAAiB,CAAC"}

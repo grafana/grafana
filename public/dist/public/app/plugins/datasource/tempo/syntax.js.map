@@ -1,1 +1,0 @@
-{"version":3,"file":"syntax.js","sourceRoot":"","sources":["../../../../../../app/plugins/datasource/tempo/syntax.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,IAAM,SAAS,GAAY;IAChC,GAAG,EAAE;QACH,OAAO,EAAE,aAAa;QACtB,KAAK,EAAE,WAAW;KACnB;IACD,QAAQ,EAAE,KAAK;IACf,KAAK,EAAE;QACL;YACE,OAAO,EAAE,QAAQ;SAClB;QACD;YACE,OAAO,EAAE,QAAQ;SAClB;KACF;CACF,CAAC"}

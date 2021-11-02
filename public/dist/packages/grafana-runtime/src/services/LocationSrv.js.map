@@ -1,1 +1,0 @@
-{"version":3,"file":"LocationSrv.js","sourceRoot":"","sources":["../../../../../../packages/grafana-runtime/src/services/LocationSrv.ts"],"names":[],"mappings":"AAsDA,IAAI,iBAA8B,CAAC;AAEnC;;;;;GAKG;AACH,MAAM,UAAU,cAAc,CAAC,QAAqB;IAClD,iBAAiB,GAAG,QAAQ,CAAC;AAC/B,CAAC;AAED;;;;;GAKG;AACH,MAAM,UAAU,cAAc;IAC5B,OAAO,iBAAiB,CAAC;AAC3B,CAAC"}

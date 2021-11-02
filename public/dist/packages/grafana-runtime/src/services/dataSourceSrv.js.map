@@ -1,1 +1,0 @@
-{"version":3,"file":"dataSourceSrv.js","sourceRoot":"","sources":["../../../../../../packages/grafana-runtime/src/services/dataSourceSrv.ts"],"names":[],"mappings":"AAoEA,IAAI,iBAAgC,CAAC;AAErC;;;;;GAKG;AACH,MAAM,UAAU,gBAAgB,CAAC,QAAuB;IACtD,iBAAiB,GAAG,QAAQ,CAAC;AAC/B,CAAC;AAED;;;;;GAKG;AACH,MAAM,UAAU,gBAAgB;IAC9B,OAAO,iBAAiB,CAAC;AAC3B,CAAC"}

@@ -1,1 +1,0 @@
-{"version":3,"file":"grafana.js","sourceRoot":"","sources":["../../../../../../../app/features/alerting/unified/api/grafana.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,aAAa,EAAE,MAAM,kBAAkB,CAAC;AAGjD,MAAM,UAAU,cAAc;IAC5B,OAAO,aAAa,EAAE,CAAC,GAAG,CAAC,sBAAsB,CAAC,CAAC;AACrD,CAAC"}

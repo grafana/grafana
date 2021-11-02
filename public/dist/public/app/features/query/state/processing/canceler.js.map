@@ -1,1 +1,0 @@
-{"version":3,"file":"canceler.js","sourceRoot":"","sources":["../../../../../../../app/features/query/state/processing/canceler.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,QAAQ,EAAE,MAAM,gBAAgB,CAAC;AAE1C,MAAM,UAAU,kCAAkC,CAChD,UAAsB,EACtB,SAA6B;IAE7B,OAAO,QAAQ,CAAC;QACd,IAAI,SAAS,EAAE;YACb,UAAU,CAAC,uBAAuB,CAAC,SAAS,CAAC,CAAC;SAC/C;IACH,CAAC,CAAC,CAAC;AACL,CAAC"}

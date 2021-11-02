@@ -1,1 +1,0 @@
-{"version":3,"file":"pluginSignature.js","sourceRoot":"","sources":["../../../../../../packages/grafana-data/src/types/pluginSignature.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,qBAAqB,EAAE,MAAM,UAAU,CAAC;AAEjD;;;;;GAKG;AACH,MAAM,UAAU,yBAAyB,CAAC,SAAiC;IACzE,OAAO,SAAS,IAAI,SAAS,KAAK,qBAAqB,CAAC,KAAK,IAAI,SAAS,KAAK,qBAAqB,CAAC,QAAQ,CAAC;AAChH,CAAC"}

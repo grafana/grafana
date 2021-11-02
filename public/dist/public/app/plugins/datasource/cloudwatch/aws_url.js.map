@@ -1,1 +1,0 @@
-{"version":3,"file":"aws_url.js","sourceRoot":"","sources":["../../../../../../app/plugins/datasource/cloudwatch/aws_url.ts"],"names":[],"mappings":"AAAA,IAAM,KAAK,GAAG,OAAO,CAAC,OAAO,CAAC,CAAC;AAa/B,MAAM,UAAU,SAAS,CAAC,GAAW,EAAE,MAAc;IACnD,OAAO,aAAW,MAAM,uDAAkD,MAAM,mCAA8B,KAAK,CAAC,SAAS,CAC3H,GAAG,CACF,CAAC;AACN,CAAC"}

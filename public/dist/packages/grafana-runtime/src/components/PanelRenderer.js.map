@@ -1,1 +1,0 @@
-{"version":3,"file":"PanelRenderer.js","sourceRoot":"","sources":["../../../../../../packages/grafana-runtime/src/components/PanelRenderer.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAiC1B;;;;;;GAMG;AACH,MAAM,CAAC,IAAI,aAAa,GAAsB;IAC5C,OAAO,2GAAkF,CAAC;AAC5F,CAAC,CAAC;AAEF;;;;;GAKG;AACH,MAAM,UAAU,gBAAgB,CAAC,QAA2B;IAC1D,aAAa,GAAG,QAAQ,CAAC;AAC3B,CAAC"}

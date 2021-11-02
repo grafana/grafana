@@ -1,1 +1,0 @@
-{"version":3,"file":"RouteProvider.js","sourceRoot":"","sources":["../../../../../../app/core/navigation/patch/RouteProvider.ts"],"names":[],"mappings":"AAAA,oEAAoE;AACpE,+FAA+F;AAE/F,OAAO,EAAE,gBAAgB,EAAE,MAAM,kBAAkB,CAAC;AAEpD;IACE;QACE,gBAAgB,CAAC,eAAe,EAAE,KAAK,EAAE,eAAe,CAAC,CAAC;IAC5D,CAAC;IAED,4BAAI,GAAJ;QACE,OAAO,IAAI,CAAC;IACd,CAAC;IACH,oBAAC;AAAD,CAAC,AARD,IAQC"}
