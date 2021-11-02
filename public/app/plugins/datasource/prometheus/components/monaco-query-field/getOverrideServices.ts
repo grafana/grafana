@@ -19,7 +19,7 @@ import { monacoTypes } from '@grafana/ui';
 // i would use an another approach, if there was one available.
 
 function makeStorageService() {
-  // we need to return an object that fullfills this interface:
+  // we need to return an object that fulfills this interface:
   // https://github.com/microsoft/vscode/blob/ff1e16eebb93af79fd6d7af1356c4003a120c563/src/vs/platform/storage/common/storage.ts#L37
   // unfortunately it is not export from monaco-editor
 
