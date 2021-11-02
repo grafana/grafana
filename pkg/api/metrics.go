@@ -150,7 +150,7 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 			info.errRes = hs.handleGetDataSourceError(err, id)
 		}
 	}
-	return
+	return info
 }
 
 func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
