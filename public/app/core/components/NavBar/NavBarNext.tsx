@@ -80,7 +80,7 @@ export const NavBarNext: FC = React.memo(() => {
         {coreItems.map((link, index) => (
           <NavBarItem
             key={`${link.id}-${index}`}
-            isActive={activeItemId === link.id || link.children?.some((link) => activeItemId === link.id)}
+            isActive={activeItemId === link.id}
             label={link.text}
             menuItems={link.children}
             target={link.target}
