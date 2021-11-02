@@ -11,11 +11,12 @@ import config from 'app/core/config';
 import { CoreEvents, KioskMode } from 'app/types';
 import { enrichConfigItems, isLinkActive, isSearchActive } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
+import { NavBarSection } from './NavBarSection';
 import NavBarItem from './NavBarItem';
 
 const homeUrl = config.appSubUrl || '/';
 
-export const NavBar: FC = React.memo(() => {
+export const NavBarNext: FC = React.memo(() => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -26,8 +27,9 @@ export const NavBar: FC = React.memo(() => {
     setShowSwitcherModal(!showSwitcherModal);
   };
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
-  const topItems = navTree.filter((item) => item.section === NavSection.Core);
-  const bottomItems = enrichConfigItems(
+  const coreItems = navTree.filter((item) => item.section === NavSection.Core);
+  const pluginItems = navTree.filter((item) => item.section === NavSection.Plugin);
+  const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
     toggleSwitcherModal
@@ -58,62 +60,88 @@ export const NavBar: FC = React.memo(() => {
         </span>
       </div>
 
-      <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
-        <Branding.MenuLogo />
-      </NavBarItem>
-      <NavBarItem
-        className={styles.search}
-        isActive={activeItemId === 'search'}
-        label="Search dashboards"
-        onClick={onOpenSearch}
-      >
-        <Icon name="search" size="xl" />
-      </NavBarItem>
-
-      {topItems.map((link, index) => (
-        <NavBarItem
-          key={`${link.id}-${index}`}
-          isActive={activeItemId === link.id}
-          label={link.text}
-          menuItems={link.children}
-          target={link.target}
-          url={link.url}
-        >
-          {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-          {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+      <NavBarSection>
+        <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
+          <Branding.MenuLogo />
         </NavBarItem>
-      ))}
+        <NavBarItem
+          className={styles.search}
+          isActive={activeItemId === 'search'}
+          label="Search dashboards"
+          onClick={onOpenSearch}
+        >
+          <Icon name="search" size="xl" />
+        </NavBarItem>
+      </NavBarSection>
+
+      <NavBarSection>
+        {coreItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={activeItemId === link.id}
+            label={link.text}
+            menuItems={link.children}
+            target={link.target}
+            url={link.url}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
+      </NavBarSection>
+
+      {pluginItems.length > 0 && (
+        <NavBarSection>
+          {pluginItems.map((link, index) => (
+            <NavBarItem
+              key={`${link.id}-${index}`}
+              isActive={activeItemId === link.id}
+              label={link.text}
+              menuItems={link.children}
+              menuSubTitle={link.subTitle}
+              onClick={link.onClick}
+              target={link.target}
+              url={link.url}
+            >
+              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+              {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+            </NavBarItem>
+          ))}
+        </NavBarSection>
+      )}
 
       <div className={styles.spacer} />
 
-      {bottomItems.map((link, index) => (
-        <NavBarItem
-          key={`${link.id}-${index}`}
-          isActive={activeItemId === link.id}
-          label={link.text}
-          menuItems={link.children}
-          menuSubTitle={link.subTitle}
-          onClick={link.onClick}
-          reverseMenuDirection
-          target={link.target}
-          url={link.url}
-        >
-          {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-          {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-        </NavBarItem>
-      ))}
+      <NavBarSection>
+        {configItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={activeItemId === link.id}
+            label={link.text}
+            menuItems={link.children}
+            menuSubTitle={link.subTitle}
+            onClick={link.onClick}
+            reverseMenuDirection
+            target={link.target}
+            url={link.url}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
+      </NavBarSection>
 
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
     </nav>
   );
 });
 
-NavBar.displayName = 'NavBar';
+NavBarNext.displayName = 'NavBar';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   search: css`
     display: none;
-    margin-top: ${theme.spacing(5)};
+    margin-top: 0;
 
     ${theme.breakpoints.up('md')} {
       display: block;
@@ -131,9 +159,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     z-index: ${theme.zIndex.sidemenu};
 
     ${theme.breakpoints.up('md')} {
-      background: ${theme.colors.background.primary};
-      border-right: 1px solid ${theme.components.panel.borderColor};
-      padding: 0 0 ${theme.spacing(1)} 0;
+      background: none;
+      border-right: none;
+      gap: ${theme.spacing(1)};
+      margin-left: ${theme.spacing(1)};
+      padding: ${theme.spacing(1)} 0;
       position: relative;
       width: ${theme.components.sidemenu.width}px;
     }
@@ -155,8 +185,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   grafanaLogo: css`
     display: none;
     img {
-      height: ${theme.spacing(3.5)};
-      width: ${theme.spacing(3.5)};
+      height: ${theme.spacing(3)};
+      width: ${theme.spacing(3)};
     }
 
     ${theme.breakpoints.up('md')} {
