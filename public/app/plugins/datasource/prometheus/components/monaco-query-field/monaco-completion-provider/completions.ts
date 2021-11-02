@@ -47,6 +47,11 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
   documentation: f.documentation,
 }));
 
+async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+  const metricNames = await getAllMetricNamesCompletions(dataProvider);
+  return [...FUNCTION_COMPLETIONS, ...metricNames];
+}
+
 const DURATION_COMPLETIONS: Completion[] = [
   '$__interval',
   '$__range',
@@ -144,10 +149,9 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;
     case 'IN_FUNCTION':
-      return getAllMetricNamesCompletions(dataProvider);
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
     case 'AT_ROOT': {
-      const metricNames = await getAllMetricNamesCompletions(dataProvider);
-      return [...FUNCTION_COMPLETIONS, ...metricNames];
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
     }
     case 'EMPTY': {
       const metricNames = await getAllMetricNamesCompletions(dataProvider);
