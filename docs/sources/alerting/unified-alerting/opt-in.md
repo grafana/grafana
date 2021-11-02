@@ -16,7 +16,7 @@ To enable Grafana 8 alerts:
 
 1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [unified alerts]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section.
 1. Set the `enabled` property to `true`.
-1. Next, for [legacy dashboard alerting]({{< relref "../../administration/configuration.md#alerting" >}}), set the `enabled` flag to `true`.
+1. Next, for [legacy dashboard alerting]({{< relref "../../administration/configuration.md#alerting" >}}), set the `enabled` flag to `false`.
 1. Restart Grafana for the configuration changes to take effect.
 
 > **Note:** The `ngalert` toggle previously used to enable or disable Grafana 8 alerting is no longer available.
