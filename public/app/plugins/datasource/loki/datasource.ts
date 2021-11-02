@@ -21,7 +21,11 @@ import {
   dateMath,
   DateTime,
   FieldCache,
+  FieldType,
+  getLogLevelFromKey,
+  Labels,
   LoadingState,
+  LogLevel,
   LogRowModel,
   QueryResultMeta,
   ScopedVars,
@@ -54,12 +58,18 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
-import { createLokiLogsVolumeProvider } from './dataProviders/logsVolumeProvider';
+import { queryLogsVolume } from 'app/core/logs_model';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
 const NS_IN_MS = 1000000;
+
+/**
+ * Loki's logs volume query may be expensive as it requires counting all logs in the selected range. If such query
+ * takes too much time it may need be made more specific to limit number of logs processed under the hood.
+ */
+const LOGS_VOLUME_TIMEOUT = 10000;
 
 const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
 const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
@@ -109,7 +119,27 @@ export class LokiDatasource
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
     const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
-    return isLogsVolumeAvailable ? createLokiLogsVolumeProvider(this, request) : undefined;
+    if (!isLogsVolumeAvailable) {
+      return undefined;
+    }
+
+    const logsVolumeRequest = cloneDeep(request);
+    logsVolumeRequest.targets = logsVolumeRequest.targets
+      .filter((target) => target.expr && !isMetricsQuery(target.expr))
+      .map((target) => {
+        return {
+          ...target,
+          instant: false,
+          expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+        };
+      });
+
+    return queryLogsVolume(this, logsVolumeRequest, {
+      timeout: LOGS_VOLUME_TIMEOUT,
+      extractLevel,
+      range: request.range,
+      targets: request.targets,
+    });
   }
 
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
@@ -719,6 +749,26 @@ export function isMetricsQuery(query: string): boolean {
     // Not sure in which cases it can be string maybe if nothing matched which means it should not be a function
     return typeof t !== 'string' && t.type === 'function';
   });
+}
+
+function extractLevel(dataFrame: DataFrame): LogLevel {
+  let valueField;
+  try {
+    valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
+  } catch {}
+  return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
+}
+
+function getLogLevelFromLabels(labels: Labels): LogLevel {
+  const labelNames = ['level', 'lvl', 'loglevel'];
+  let levelLabel;
+  for (let labelName of labelNames) {
+    if (labelName in labels) {
+      levelLabel = labelName;
+      break;
+    }
+  }
+  return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }
 
 export default LokiDatasource;
