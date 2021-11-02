@@ -39,14 +39,8 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	queryInfo := make([]queryDSInfo, 0, len(reqDTO.Queries))
 	for _, query := range reqDTO.Queries {
 		q := hs.getDataSourceFromQuery(c, query)
-		if q.err != nil {
-			if q.uid != "" {
-				return hs.handleGetDataSourceUIDError(q.err, q.uid)
-			}
-			if q.id > 0 {
-				return hs.handleGetDataSourceError(q.err, q.id)
-			}
-			return response.Error(http.StatusBadRequest, "Query missing data source ID/UID", nil)
+		if q.errRes != nil {
+			return q.errRes
 		}
 		if q.isExpr {
 			hasExpression = true
@@ -63,7 +57,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 
 	ds := queryInfo[0].ds
 	if hasExpression {
-		ds = nil // Don't attach datsource model
+		ds = nil // Don't attach datsource model for transform
 	} else if !allSameUID {
 		return response.Error(http.StatusBadRequest, "All queries must use the same datasource", nil)
 	}
@@ -114,9 +108,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 type queryDSInfo struct {
 	isExpr bool
 	ds     *models.DataSource
-	err    error
-	uid    string
-	id     int64
+	errRes response.Response
 	query  *simplejson.Json
 }
 
@@ -132,9 +124,12 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 		return
 	}
 
+	var err error
 	if uid != "" {
-		info.uid = uid
-		info.ds, info.err = hs.DataSourceCache.GetDatasourceByUID(uid, c.SignedInUser, c.SkipCache)
+		info.ds, err = hs.DataSourceCache.GetDatasourceByUID(uid, c.SignedInUser, c.SkipCache)
+		if err != nil {
+			info.errRes = hs.handleGetDataSourceUIDError(err, uid)
+		}
 		return
 	}
 
@@ -144,9 +139,14 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 	}
 
 	// Fallback to the datasourceId
-	info.id, info.err = query.Get("datasourceId").Int64()
-	if info.err == nil {
-		info.ds, info.err = hs.DataSourceCache.GetDatasource(info.id, c.SignedInUser, c.SkipCache)
+	id, err := query.Get("datasourceId").Int64()
+	if err != nil {
+		info.errRes = response.Error(http.StatusBadRequest, "Query missing data source ID/UID", nil)
+	} else {
+		info.ds, err = hs.DataSourceCache.GetDatasource(id, c.SignedInUser, c.SkipCache)
+		if err != nil {
+			info.errRes = hs.handleGetDataSourceError(err, id)
+		}
 	}
 	return
 }
