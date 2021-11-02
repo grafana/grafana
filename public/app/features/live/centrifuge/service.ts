@@ -16,6 +16,7 @@ import {
   LiveChannelPresenceStatus,
   LoadingState,
   StreamingDataFrame,
+  toDataFrameDTO,
 } from '@grafana/data';
 import { CentrifugeLiveChannel } from './channel';
 
@@ -196,7 +197,16 @@ export class CentrifugeService implements CentrifugeSrv {
         }
 
         filtered.length = data.length;
-        subscriber.next({ state, data: [filtered], key });
+        subscriber.next({
+          state,
+          data: [
+            // workaround for serializing issues when sending DataFrame from web worker to the main thread
+            // DataFrame is making use of ArrayVectors which are es6 classes and thus not cloneable out of the box
+            // `toDataFrameDTO` converts ArrayVectors into native arrays.
+            toDataFrameDTO(filtered),
+          ],
+          key,
+        });
       };
 
       if (options.frame) {

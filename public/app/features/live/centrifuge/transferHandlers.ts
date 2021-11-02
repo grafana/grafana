@@ -1,28 +1,5 @@
-import { ArrayVector, LoadingState, StreamingDataFrame } from '@grafana/data';
 import * as comlink from 'comlink';
 import { Subscriber } from 'rxjs';
-
-const streamingDataFrameHandler: any = {
-  canHandle: (v: unknown) => {
-    const isArray = Array.isArray(v) && v.length > 0;
-    const isStreamingEvent = isArray && v[0].state === LoadingState.Streaming;
-
-    return isArray && isStreamingEvent;
-  },
-  serialize: (value: { state: LoadingState; data: [StreamingDataFrame]; key: string }) => {
-    return [value, []];
-  },
-
-  deserialize: (value: [{ state: LoadingState; data: [StreamingDataFrame]; key: string }]) => {
-    const event: { state: string; data: [StreamingDataFrame]; key: string } = value[0];
-
-    const frame = event.data[0];
-    frame.fields = frame.fields.map((field) => ({ ...field, values: new ArrayVector<any>(field.values.buffer) }));
-    return value;
-  },
-};
-
-comlink.transferHandlers.set('StreamingDataFrameHandler', streamingDataFrameHandler);
 
 // Observers, ie. functions passed to `observable.subscribe(...)`, are converted to a subclass of `Subscriber` before they are sent to the source Observable.
 // The conversion happens internally in the RxJS library - this transfer handler is catches them and wraps them with a proxy
