@@ -5,7 +5,6 @@ import './transferHandlers';
 import * as comlink from 'comlink';
 import { asyncScheduler, Observable, observeOn } from 'rxjs';
 import { LiveChannelAddress, LiveChannelConfig, LiveChannelEvent } from '@grafana/data';
-import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
 
 export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
@@ -13,7 +12,7 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
 
   constructor(deps: CentrifugeSrvDeps) {
     this.centrifugeWorker = comlink.wrap<RemoteCentrifugeService>(new CentrifugeWorker());
-    this.centrifugeWorker.initialize(deps, comlink.proxy(liveTimer.ok));
+    this.centrifugeWorker.initialize(deps, comlink.proxy(deps.dataStreamSubscriberReadiness));
   }
 
   getConnectionState: CentrifugeSrv['getConnectionState'] = () => {

@@ -26,6 +26,7 @@ export type CentrifugeSrvDeps = {
   orgRole: string;
   sessionId: string;
   liveEnabled: boolean;
+  dataStreamSubscriberReadiness: Observable<boolean>;
 };
 
 export interface CentrifugeSrv {
@@ -57,8 +58,10 @@ export class CentrifugeService implements CentrifugeSrv {
   readonly centrifuge: Centrifuge;
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
+  private dataStreamSubscriberReady = true;
 
   constructor(private deps: CentrifugeSrvDeps) {
+    deps.dataStreamSubscriberReadiness.subscribe((next) => (this.dataStreamSubscriberReady = next));
     const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
     this.centrifuge = new Centrifuge(liveUrl, {});
     this.centrifuge.setConnectData({
@@ -196,17 +199,19 @@ export class CentrifugeService implements CentrifugeSrv {
           }
         }
 
-        filtered.length = data.length;
-        subscriber.next({
-          state,
-          data: [
-            // workaround for serializing issues when sending DataFrame from web worker to the main thread
-            // DataFrame is making use of ArrayVectors which are es6 classes and thus not cloneable out of the box
-            // `toDataFrameDTO` converts ArrayVectors into native arrays.
-            toDataFrameDTO(filtered),
-          ],
-          key,
-        });
+        if (this.dataStreamSubscriberReady) {
+          filtered.length = data.length; // make sure they stay up-to-date
+          subscriber.next({
+            state,
+            data: [
+              // workaround for serializing issues when sending DataFrame from web worker to the main thread
+              // DataFrame is making use of ArrayVectors which are es6 classes and thus not cloneable out of the box
+              // `toDataFrameDTO` converts ArrayVectors into native arrays.
+              toDataFrameDTO(filtered),
+            ],
+            key,
+          });
+        }
       };
 
       if (options.frame) {
