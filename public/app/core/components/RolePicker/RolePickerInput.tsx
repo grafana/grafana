@@ -1,6 +1,6 @@
 import React, { FormEvent, HTMLProps, MutableRefObject } from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2, getInputStyles, sharedInputStyle, DropdownIndicator, focusCss, Tooltip } from '@grafana/ui';
+import { useStyles2, getInputStyles, sharedInputStyle, DropdownIndicator, styleMixins, Tooltip } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { ValueContainer } from './ValueContainer';
 import { Role } from '../../../types';
@@ -92,7 +92,7 @@ const getRolePickerInputStyles = (
       sharedInputStyle(theme, invalid),
       focused &&
         css`
-          ${focusCss(theme.v1)}
+          ${styleMixins.focusCss(theme.v1)}
         `,
       disabled && styles.inputDisabled,
       css`

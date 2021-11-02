@@ -221,7 +221,6 @@ export { RelativeTimeRangePicker } from './DateTimePickers/RelativeTimeRangePick
 export { Card, Props as CardProps, getCardStyles } from './Card/Card';
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
-export { focusCss } from '../themes/mixins';
 export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 
