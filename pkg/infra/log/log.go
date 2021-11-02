@@ -36,52 +36,8 @@ func New(logger string, ctx ...interface{}) Logger {
 	return Root.New(params...)
 }
 
-func Tracef(format string, v ...interface{}) {
-	var message string
-	if len(v) > 0 {
-		message = fmt.Sprintf(format, v...)
-	} else {
-		message = format
-	}
-
-	Root.Debug(message)
-}
-
-func Debugf(format string, v ...interface{}) {
-	var message string
-	if len(v) > 0 {
-		message = fmt.Sprintf(format, v...)
-	} else {
-		message = format
-	}
-
-	Root.Debug(message)
-}
-
-func Infof(format string, v ...interface{}) {
-	var message string
-	if len(v) > 0 {
-		message = fmt.Sprintf(format, v...)
-	} else {
-		message = format
-	}
-
-	Root.Info(message)
-}
-
 func Warn(msg string, v ...interface{}) {
 	Root.Warn(msg, v...)
-}
-
-func Warnf(format string, v ...interface{}) {
-	var message string
-	if len(v) > 0 {
-		message = fmt.Sprintf(format, v...)
-	} else {
-		message = format
-	}
-
-	Root.Warn(message)
 }
 
 func Debug(msg string, args ...interface{}) {
@@ -94,18 +50,6 @@ func Info(msg string, args ...interface{}) {
 
 func Error(msg string, args ...interface{}) {
 	Root.Error(msg, args...)
-}
-
-func Errorf(skip int, format string, v ...interface{}) {
-	Root.Error(fmt.Sprintf(format, v...))
-}
-
-func Fatalf(skip int, format string, v ...interface{}) {
-	Root.Crit(fmt.Sprintf(format, v...))
-	if err := Close(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
-	}
-	os.Exit(1)
 }
 
 func Close() error {
