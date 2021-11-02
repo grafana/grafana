@@ -19,6 +19,7 @@ import { getInitialValues } from './AddNotificationChannelModal.utils';
 import { EmailFields } from './EmailFields/EmailFields';
 import { SlackFields } from './SlackFields/SlackFields';
 import { PagerDutyFields } from './PagerDutyFields/PagerDutyFields';
+import { WebHookFields } from './WebHookFields/WebHookFields';
 
 const { required } = validators;
 // Our "values" typings won't be right without using this
@@ -34,6 +35,8 @@ const TypeField: FC<{ values: NotificationChannelRenderProps }> = ({ values }) =
       return <PagerDutyFields values={values} />;
     case NotificationChannelType.slack:
       return <SlackFields />;
+    case NotificationChannelType.webhook:
+      return <WebHookFields values={values} />;
     default:
       return null;
   }
@@ -53,6 +56,14 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
       submittedValues.service = '';
     } else {
       submittedValues.routing = '';
+    }
+
+    if (!submittedValues.useWebhookTls) {
+      submittedValues.ca = undefined;
+      submittedValues.cert = undefined;
+      submittedValues.key = undefined;
+      submittedValues.serverName = undefined;
+      submittedValues.skipVerify = undefined;
     }
 
     try {
@@ -77,10 +88,10 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
         render={({ handleSubmit, valid, pristine, submitting, values }) => (
           <form onSubmit={handleSubmit}>
             <>
-              <TextInputField name="name" label={Messages.fields.name} validators={[required]} />
               <Field name="type">
                 {({ input }) => <SelectField label={Messages.fields.type} options={TYPE_OPTIONS} {...input} />}
               </Field>
+              <TextInputField name="name" label={Messages.fields.name} validators={[required]} />
               <TypeField values={values} />
               <HorizontalGroup justify="center" spacing="md">
                 <LoaderButton
