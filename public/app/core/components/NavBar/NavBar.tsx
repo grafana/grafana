@@ -1,17 +1,17 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
-import appEvents from '../../app_events';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
-import { CoreEvents, KioskMode } from 'app/types';
+import { KioskMode } from 'app/types';
 import { enrichConfigItems, isLinkActive, isSearchActive } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import NavBarItem from './NavBarItem';
+import { NavBarMenu } from '../NavBarMenu/NavBarMenu';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -36,9 +36,7 @@ export const NavBar: FC = React.memo(() => {
     ? 'search'
     : navTree.find((item) => isLinkActive(location.pathname, item))?.id;
 
-  const toggleNavBarSmallBreakpoint = useCallback(() => {
-    appEvents.emit(CoreEvents.toggleSidemenuMobile);
-  }, []);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (kiosk !== null) {
     return null;
@@ -50,12 +48,8 @@ export const NavBar: FC = React.memo(() => {
 
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
-      <div className={styles.mobileSidemenuLogo} onClick={toggleNavBarSmallBreakpoint} key="hamburger">
+      <div className={styles.mobileSidemenuLogo} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} key="hamburger">
         <Icon name="bars" size="xl" />
-        <span className={styles.closeButton}>
-          <Icon name="times" />
-          Close
-        </span>
       </div>
 
       <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
@@ -104,6 +98,9 @@ export const NavBar: FC = React.memo(() => {
       ))}
 
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
+      {mobileMenuOpen &&
+        <NavBarMenu onClose={() => setMobileMenuOpen(false)} />
+      }
     </nav>
   );
 });
