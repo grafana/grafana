@@ -33,18 +33,6 @@ import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 import Mock = jest.Mock;
-import { config } from '@grafana/runtime';
-
-jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  config: {
-    ...((jest.requireActual('@grafana/runtime') as unknown) as any).config,
-    featureToggles: {
-      fullRangeLogsVolume: true,
-      autoLoadFullRangeLogsVolume: false,
-    },
-  },
-}));
 
 const t = toUtc();
 const testRange = {
@@ -398,7 +386,6 @@ describe('reducer', () => {
     });
 
     it('should load logs volume after running the query', async () => {
-      config.featureToggles.autoLoadFullRangeLogsVolume = true;
       await dispatch(runQueries(ExploreId.left));
       expect(unsubscribes).toHaveLength(1);
     });

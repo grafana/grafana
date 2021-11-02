@@ -38,7 +38,6 @@ import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
-import { config } from '@grafana/runtime';
 import deepEqual from 'fast-deep-equal';
 
 //
@@ -478,7 +477,7 @@ export const runQueries = (
           })
         );
         dispatch(cleanLogsVolumeAction({ exploreId }));
-      } else if (config.featureToggles.fullRangeLogsVolume && hasLogsVolumeSupport(datasourceInstance)) {
+      } else if (hasLogsVolumeSupport(datasourceInstance)) {
         const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
         dispatch(
           storeLogsVolumeDataProviderAction({
@@ -489,9 +488,7 @@ export const runQueries = (
         const { logsVolumeData, absoluteRange } = getState().explore[exploreId]!;
         if (!canReuseLogsVolumeData(logsVolumeData, queries, absoluteRange)) {
           dispatch(cleanLogsVolumeAction({ exploreId }));
-          if (config.featureToggles.autoLoadFullRangeLogsVolume) {
-            dispatch(loadLogsVolumeData(exploreId));
-          }
+          dispatch(loadLogsVolumeData(exploreId));
         }
       } else {
         dispatch(

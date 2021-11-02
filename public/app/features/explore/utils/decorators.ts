@@ -147,10 +147,7 @@ export const decorateWithLogsResult = (
   const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
   const rows = sortedNewResults.rows;
-  const series =
-    config.featureToggles.fullRangeLogsVolume && options.fullRangeLogsVolumeAvailable
-      ? undefined
-      : sortedNewResults.series;
+  const series = options.fullRangeLogsVolumeAvailable ? undefined : sortedNewResults.series;
   const logsResult = { ...sortedNewResults, rows, series };
 
   return { ...data, logsResult };
