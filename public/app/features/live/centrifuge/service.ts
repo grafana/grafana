@@ -1,6 +1,6 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
 import { LiveDataStreamOptions } from '@grafana/runtime';
-import { toDataQueryError } from './toDataQueryError';
+import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
   DataFrame,
