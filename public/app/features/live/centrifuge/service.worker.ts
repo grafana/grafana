@@ -47,8 +47,6 @@ export type RemoteCentrifugeService = typeof workObj;
 
 comlink.expose(workObj);
 
-export default class extends Worker {
-  constructor() {
-    super('');
-  }
+export default class {
+  constructor() {}
 }
