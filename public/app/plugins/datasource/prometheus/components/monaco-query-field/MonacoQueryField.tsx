@@ -134,7 +134,11 @@ const MonacoQueryField = (props: Props) => {
             return Promise.resolve(result);
           };
 
-          const dataProvider = { getSeries, getHistory, getAllMetricNames };
+          const getAllLabelNames = () => Promise.resolve(lpRef.current.getLabelKeys());
+
+          const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
+
+          const dataProvider = { getSeries, getHistory, getAllMetricNames, getAllLabelNames, getLabelValues };
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,
