@@ -105,23 +105,20 @@ const getStyles = (
         display: flex;
         flex-direction: column;
         float: none;
-        margin-bottom: ${theme.spacing(1)};
         position: unset;
         width: 100%;
       }
     `,
     subtitle: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
+      border-${reverseDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       font-weight: ${theme.typography.bodySmall.fontWeight};
-      margin-bottom: ${theme.spacing(1)};
       padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
       white-space: nowrap;
 
       .sidemenu-open--xs & {
-        border-bottom: none;
-        margin-bottom: 0;
+        border-${reverseDirection ? 'bottom' : 'top'}: none;
       }
     `,
   };

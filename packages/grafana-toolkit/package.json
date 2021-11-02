@@ -29,7 +29,7 @@
     "@babel/core": "7.13.14",
     "@babel/preset-env": "7.13.12",
     "@grafana/data": "8.3.0-pre",
-    "@grafana/eslint-config": "2.5.0",
+    "@grafana/eslint-config": "2.5.1",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@grafana/ui": "8.3.0-pre",
     "@jest/core": "26.6.3",

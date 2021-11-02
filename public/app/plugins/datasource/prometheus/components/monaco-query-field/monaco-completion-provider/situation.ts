@@ -84,31 +84,31 @@ export type Label = {
   op: LabelOperator;
 };
 
-export type Intent =
+export type Situation =
   | {
-      type: 'ALL_METRIC_NAMES';
+      type: 'IN_FUNCTION';
     }
   | {
-      type: 'FUNCTIONS_AND_ALL_METRIC_NAMES';
+      type: 'AT_ROOT';
     }
   | {
-      type: 'HISTORY_AND_FUNCTIONS_AND_ALL_METRIC_NAMES';
+      type: 'EMPTY';
     }
   | {
-      type: 'ALL_DURATIONS';
+      type: 'IN_DURATION';
     }
   | {
-      type: 'LABEL_NAMES_FOR_SELECTOR';
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME';
       metricName?: string;
       otherLabels: Label[];
     }
   | {
-      type: 'LABEL_NAMES_FOR_BY';
+      type: 'IN_GROUPING';
       metricName: string;
       otherLabels: Label[];
     }
   | {
-      type: 'LABEL_VALUES';
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME';
       metricName?: string;
       labelName: string;
       otherLabels: Label[];
@@ -116,7 +116,7 @@ export type Intent =
 
 type Resolver = {
   path: NodeTypeName[];
-  fun: (node: SyntaxNode, text: string, pos: number) => Intent | null;
+  fun: (node: SyntaxNode, text: string, pos: number) => Situation | null;
 };
 
 function isPathMatch(resolverPath: string[], cursorPath: string[]): boolean {
@@ -259,7 +259,7 @@ function getNodeInSubtree(node: SyntaxNode, typeName: NodeTypeName): SyntaxNode 
   return null;
 }
 
-function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): Intent | null {
+function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): Situation | null {
   const aggrExpNode = walk(node, [
     ['parent', 'AggregateModifier'],
     ['parent', 'AggregateExpr'],
@@ -284,13 +284,13 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
 
   const metricName = getNodeText(idNode, text);
   return {
-    type: 'LABEL_NAMES_FOR_BY',
+    type: 'IN_GROUPING',
     metricName,
     otherLabels: [],
   };
 }
 
-function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): Intent | null {
+function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): Situation | null {
   // we are probably in the scenario where the user is before entering the
   // label-value, like `{job=^}` (^ marks the cursor)
   const parent = walk(node, [['parent', 'LabelMatcher']]);
@@ -355,7 +355,7 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
   if (metricNameNode === null) {
     // we are probably in a situation without a metric name
     return {
-      type: 'LABEL_VALUES',
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       labelName,
       otherLabels,
     };
@@ -364,28 +364,28 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
   const metricName = getNodeText(metricNameNode, text);
 
   return {
-    type: 'LABEL_VALUES',
+    type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
     metricName,
     labelName,
     otherLabels,
   };
 }
 
-function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Intent {
+function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation {
   return {
-    type: 'FUNCTIONS_AND_ALL_METRIC_NAMES',
+    type: 'AT_ROOT',
   };
 }
 
-function resolveInFunction(node: SyntaxNode, text: string, pos: number): Intent {
+function resolveInFunction(node: SyntaxNode, text: string, pos: number): Situation {
   return {
-    type: 'ALL_METRIC_NAMES',
+    type: 'IN_FUNCTION',
   };
 }
 
-function resolveDurations(node: SyntaxNode, text: string, pos: number): Intent {
+function resolveDurations(node: SyntaxNode, text: string, pos: number): Situation {
   return {
-    type: 'ALL_DURATIONS',
+    type: 'IN_DURATION',
   };
 }
 
@@ -393,7 +393,7 @@ function subTreeHasError(node: SyntaxNode): boolean {
   return getNodeInSubtree(node, ERROR_NODE_NAME) !== null;
 }
 
-function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Intent | null {
+function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
   // for example `something{^}`
 
   // there are some false positives that can end up in this situation, that we want
@@ -414,7 +414,7 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
   if (metricNameNode === null) {
     // we are probably in a situation without a metric name.
     return {
-      type: 'LABEL_NAMES_FOR_SELECTOR',
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels,
     };
   }
@@ -422,7 +422,7 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
   const metricName = getNodeText(metricNameNode, text);
 
   return {
-    type: 'LABEL_NAMES_FOR_SELECTOR',
+    type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
     metricName,
     otherLabels,
   };
@@ -451,13 +451,13 @@ function getErrorNode(tree: Tree, pos: number): SyntaxNode | null {
   return null;
 }
 
-export function getIntent(text: string, pos: number): Intent | null {
+export function getSituation(text: string, pos: number): Situation | null {
   // there is a special-case when we are at the start of writing text,
   // so we handle that case first
 
   if (text === '') {
     return {
-      type: 'HISTORY_AND_FUNCTIONS_AND_ALL_METRIC_NAMES',
+      type: 'EMPTY',
     };
   }
 

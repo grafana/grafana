@@ -35,7 +35,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		coreFilter = "1"
 	}
 
-	pluginSettingsMap, err := hs.pluginSettings(c.OrgId)
+	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return response.Error(500, "Failed to get list of plugins", err)
 	}
@@ -134,7 +134,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
 			return response.Error(500, "Failed to get login settings", nil)
 		}
@@ -156,7 +156,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.Updat
 
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
 
@@ -317,7 +317,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser, false)
+	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, "", c.SignedInUser, false)
 	if err != nil {
 		return response.Error(500, "Failed to get plugin settings", err)
 	}
@@ -361,7 +361,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser, false)
+	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, "", c.SignedInUser, false)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return
