@@ -215,7 +215,7 @@ Once the result is returned, the log panel shows a list of log rows and a bar ch
 
 Note that the fields used for log message and level is based on an [optional data source configuration](#logs).
 
-Log volume panel above the log panel shows logs distribution over time for all log queries. Results are split by level when level field is configured.
+Log volume panel above the log panel shows accumulated log distribution over time for all log queries. Results are split by level when level field is configured.
 
 ### Filter Log Messages
 
