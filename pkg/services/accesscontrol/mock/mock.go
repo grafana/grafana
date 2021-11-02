@@ -14,13 +14,13 @@ type fullAccessControl interface {
 }
 
 type Calls struct {
-	Evaluate                   []interface{}
-	GetUserPermissions         []interface{}
-	GetUserRoles               []interface{}
-	IsDisabled                 []interface{}
-	DeclareFixedRoles          []interface{}
-	GetUserBuiltInRoles        []interface{}
-	RegisterFixedRoles         []interface{}
+	Evaluate            []interface{}
+	GetUserPermissions  []interface{}
+	GetUserRoles        []interface{}
+	IsDisabled          []interface{}
+	DeclareFixedRoles   []interface{}
+	GetUserBuiltInRoles []interface{}
+	RegisterFixedRoles  []interface{}
 }
 
 type Mock struct {
@@ -37,13 +37,13 @@ type Mock struct {
 	Calls Calls
 
 	// Override functions
-	EvaluateFunc                   func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
-	GetUserPermissionsFunc         func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
-	GetUserRolesFunc               func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
-	IsDisabledFunc                 func() bool
-	DeclareFixedRolesFunc          func(...accesscontrol.RoleRegistration) error
-	GetUserBuiltInRolesFunc        func(user *models.SignedInUser) []string
-	RegisterFixedRolesFunc         func() error
+	EvaluateFunc            func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
+	GetUserPermissionsFunc  func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
+	GetUserRolesFunc        func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
+	IsDisabledFunc          func() bool
+	DeclareFixedRolesFunc   func(...accesscontrol.RoleRegistration) error
+	GetUserBuiltInRolesFunc func(user *models.SignedInUser) []string
+	RegisterFixedRolesFunc  func() error
 }
 
 // Ensure the mock stays in line with the interface
