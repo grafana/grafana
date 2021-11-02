@@ -161,6 +161,13 @@ class DataSourceWithBackend<
   filterQuery?(query: TQuery): boolean;
 
   /**
+   * Apply template variables for explore
+   */
+  interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars) as TQuery);
+  }
+
+  /**
    * Override to apply template variables.  The result is usually also `TQuery`, but sometimes this can
    * be used to modify the query structure before sending to the backend.
    *
