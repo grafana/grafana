@@ -141,7 +141,7 @@ Please refer to each datasource documentation for specific provisioning examples
 
 Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `jsonData` field. Here are the most common settings that the core datasources use.
 
-> **Note:** Datasources denoted _HTTP\*_ below means any datasource communicating using the HTTP protocol, e.g. all core datasources except MySQL, PostgreSQL and MSSQL.
+> **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
 
 | Name                    | Type    | Datasource                                                       | Description                                                                                                                                       |
 | ----------------------- | ------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -195,7 +195,7 @@ Since not all datasources have the same configuration settings we only have the 
 
 Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "configuration.md#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
-> **Note:** Datasources denoted _HTTP\*_ below means any datasource communicating using the HTTP protocol, e.g. all core datasources except MySQL, PostgreSQL and MSSQL.
+> **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
 
 | Name              | Type   | Datasource                         | Description                                              |
 | ----------------- | ------ | ---------------------------------- | -------------------------------------------------------- |
