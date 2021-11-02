@@ -38,7 +38,9 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   wordWrap: 'on',
 };
 
-// this number was chosen by testing various values. it needs to do 2 things:
+// this number was chosen by testing various values. it might be necessary
+// because of the width of the border, not sure.
+//it needs to do 2 things:
 // 1. when the editor is single-line, it should make the editor height be visually correct
 // 2. when the editor is multi-line, the editor should not be "scrollable" (meaning,
 //    you do a scroll-movement in the editor, and it will scroll the content by a couple pixels
