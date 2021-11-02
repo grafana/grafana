@@ -72,7 +72,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		// Get alert so we can use its ID in tests
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
-		err2 := HandleAlertsQuery(context.Background(), &alertQuery)
+		err2 := sqlStore.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 
 		insertedAlert := alertQuery.Result[0]
@@ -87,7 +87,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			require.Nil(t, err)
 		})
 
-		alert, _ := getAlertById(t, insertedAlert.Id)
+		alert, _ := getAlertById(t, insertedAlert.Id, sqlStore)
 		stateDateBeforePause := alert.NewStateDate
 
 		t.Run("can pause all alerts", func(t *testing.T) {
@@ -105,13 +105,13 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 
 			t.Run("alert is paused", func(t *testing.T) {
-				alert, _ = getAlertById(t, insertedAlert.Id)
+				alert, _ = getAlertById(t, insertedAlert.Id, sqlStore)
 				currentState := alert.State
 				require.Equal(t, models.AlertStatePaused, currentState)
 			})
 
 			t.Run("pausing alerts should update their NewStateDate", func(t *testing.T) {
-				alert, _ = getAlertById(t, insertedAlert.Id)
+				alert, _ = getAlertById(t, insertedAlert.Id, sqlStore)
 				stateDateAfterPause := alert.NewStateDate
 				require.True(t, stateDateBeforePause.Before(stateDateAfterPause))
 			})
@@ -119,7 +119,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			t.Run("unpausing alerts should update their NewStateDate again", func(t *testing.T) {
 				err := pauseAllAlerts(t, false)
 				require.Nil(t, err)
-				alert, _ = getAlertById(t, insertedAlert.Id)
+				alert, _ = getAlertById(t, insertedAlert.Id, sqlStore)
 				stateDateAfterUnpause := alert.NewStateDate
 				require.True(t, stateDateBeforePause.Before(stateDateAfterUnpause))
 			})
@@ -129,7 +129,7 @@ func TestAlertingDataAccess(t *testing.T) {
 	t.Run("Can read properties", func(t *testing.T) {
 		setup(t)
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
-		err2 := HandleAlertsQuery(context.Background(), &alertQuery)
+		err2 := sqlStore.HandleAlertsQuery(context.Background(), &alertQuery)
 
 		alert := alertQuery.Result[0]
 		require.Nil(t, err2)
@@ -151,7 +151,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		setup(t)
 		viewerUser := &models.SignedInUser{OrgRole: models.ROLE_VIEWER, OrgId: 1}
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
-		err2 := HandleAlertsQuery(context.Background(), &alertQuery)
+		err2 := sqlStore.HandleAlertsQuery(context.Background(), &alertQuery)
 
 		require.Nil(t, err2)
 		require.Equal(t, 1, len(alertQuery.Result))
@@ -177,7 +177,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		t.Run("Alerts should be updated", func(t *testing.T) {
 			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
-			err2 := HandleAlertsQuery(context.Background(), &query)
+			err2 := sqlStore.HandleAlertsQuery(context.Background(), &query)
 
 			require.Nil(t, err2)
 			require.Equal(t, 1, len(query.Result))
@@ -227,7 +227,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
-			err2 := HandleAlertsQuery(context.Background(), &queryForDashboard)
+			err2 := sqlStore.HandleAlertsQuery(context.Background(), &queryForDashboard)
 
 			require.Nil(t, err2)
 			require.Equal(t, 3, len(queryForDashboard.Result))
@@ -241,7 +241,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			t.Run("should delete the missing alert", func(t *testing.T) {
 				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
-				err2 := HandleAlertsQuery(context.Background(), &query)
+				err2 := sqlStore.HandleAlertsQuery(context.Background(), &query)
 				require.Nil(t, err2)
 				require.Equal(t, 2, len(query.Result))
 			})
@@ -277,7 +277,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		t.Run("Alerts should be removed", func(t *testing.T) {
 			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
-			err2 := HandleAlertsQuery(context.Background(), &query)
+			err2 := sqlStore.HandleAlertsQuery(context.Background(), &query)
 
 			require.Nil(t, err2)
 			require.Equal(t, 0, len(query.Result))
@@ -301,7 +301,7 @@ func TestPausingAlerts(t *testing.T) {
 
 		// Get alert so we can use its ID in tests
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
-		err2 := HandleAlertsQuery(context.Background(), &alertQuery)
+		err2 := sqlStore.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 
 		insertedAlert := alertQuery.Result[0]
@@ -311,7 +311,7 @@ func TestPausingAlerts(t *testing.T) {
 			require.Nil(t, err)
 
 			t.Run("the NewStateDate should be updated", func(t *testing.T) {
-				alert, err := getAlertById(t, insertedAlert.Id)
+				alert, err := getAlertById(t, insertedAlert.Id, sqlStore)
 				require.Nil(t, err)
 
 				stateDateAfterPause = alert.NewStateDate
@@ -324,7 +324,7 @@ func TestPausingAlerts(t *testing.T) {
 			require.Nil(t, err)
 
 			t.Run("the NewStateDate should be updated again", func(t *testing.T) {
-				alert, err := getAlertById(t, insertedAlert.Id)
+				alert, err := getAlertById(t, insertedAlert.Id, sqlStore)
 				require.Nil(t, err)
 
 				stateDateAfterUnpause := alert.NewStateDate
@@ -367,11 +367,11 @@ func insertTestAlert(title string, message string, orgId int64, dashId int64, se
 	return cmd.Alerts[0], err
 }
 
-func getAlertById(t *testing.T, id int64) (*models.Alert, error) {
+func getAlertById(t *testing.T, id int64, ss *SQLStore) (*models.Alert, error) {
 	q := &models.GetAlertByIdQuery{
 		Id: id,
 	}
-	err := GetAlertById(context.Background(), q)
+	err := ss.GetAlertById(context.Background(), q)
 	require.Nil(t, err)
 	return q.Result, err
 }
