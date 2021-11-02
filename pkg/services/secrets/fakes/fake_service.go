@@ -39,3 +39,13 @@ func (f FakeSecretsService) GetDecryptedValue(_ context.Context, sjd map[string]
 	}
 	return fallback
 }
+
+func (f FakeSecretsService) CurrentProviderID() string {
+	return "fakeProvider"
+}
+
+func (f FakeSecretsService) GetProviders() map[string]secrets.Provider {
+	return make(map[string]secrets.Provider)
+}
+
+func (f FakeSecretsService) RegisterProvider(_ string, _ secrets.Provider) {}

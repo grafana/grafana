@@ -14,6 +14,12 @@ type Service interface {
 	GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key, fallback string) string
 }
 
+type ProvidersRegistrar interface {
+	CurrentProviderID() string
+	GetProviders() map[string]Provider
+	RegisterProvider(providerID string, provider Provider)
+}
+
 type Store interface {
 	GetDataKey(ctx context.Context, name string) (*DataKey, error)
 	GetAllDataKeys(ctx context.Context) ([]*DataKey, error)

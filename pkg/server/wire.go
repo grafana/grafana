@@ -156,6 +156,7 @@ var wireBasicSet = wire.NewSet(
 	elasticsearch.ProvideService,
 	secretsManager.ProvideSecretsService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
+	wire.Bind(new(secrets.ProvidersRegistrar), new(*secretsManager.SecretsService)),
 	secretsDatabase.ProvideSecretsStore,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	grafanads.ProvideService,
