@@ -53,6 +53,10 @@ const RulesFilter = () => {
     setQueryParams({ dataSource: dataSourceValue.name });
   };
 
+  const clearDataSource = () => {
+    setQueryParams({ dataSource: null });
+  };
+
   const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
     setQueryParams({ queryString: target.value || null });
@@ -89,8 +93,10 @@ const RulesFilter = () => {
           key={dataSourceKey}
           alerting
           noDefault
+          isClearable={true}
           current={dataSource}
           onChange={handleDataSourceChange}
+          onClear={clearDataSource}
         />
       </div>
       <div className={cx(styles.flexRow, styles.spaceBetween)}>
