@@ -8,7 +8,6 @@
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
     "build": "webpack --config scripts/webpack/webpack.prod.js",
-    "check-strict": "./scripts/ci-check-strict.sh",
     "dev": "webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
