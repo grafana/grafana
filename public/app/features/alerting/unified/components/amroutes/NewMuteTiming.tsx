@@ -1,19 +1,23 @@
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { Field, FieldSet, IconButton, Input, Label, Button, useStyles2 } from '@grafana/ui';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
+import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
 import { MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { omitBy, isUndefined } from 'lodash';
 import { AlertManagerPicker } from '../AlertManagerPicker';
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
+import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { initialAsyncRequestState } from '../../utils/redux';
 
 interface Props {}
 
 type MuteTimingFields = {
   name: string;
-  time_range: Array<{
+  times: Array<{
     start_time: string;
     end_time: string;
   }>;
@@ -25,18 +29,20 @@ type MuteTimingFields = {
 
 const defaultValues: MuteTimingFields = {
   name: '',
-  time_range: [{ start_time: '', end_time: '' }],
+  times: [{ start_time: '', end_time: '' }],
   weekdays: '',
   days_of_month: '',
   months: '',
   years: '',
 };
 
-const convertStringToArray = (str: string) => str.split(',').map((s) => s.trim());
+const convertStringToArray = (str: string) => {
+  return str ? str.split(',').map((s) => s.trim()) : undefined;
+};
 
 const createMuteTiming = (fields: MuteTimingFields): MuteTimeInterval => {
   const timeInterval: TimeInterval = {
-    time_range: fields.time_range,
+    times: fields.times.filter(({ start_time, end_time }) => !!start_time && !!end_time),
     weekdays: convertStringToArray(fields.weekdays),
     days_of_month: convertStringToArray(fields.days_of_month),
     months: convertStringToArray(fields.months),
@@ -49,23 +55,60 @@ const createMuteTiming = (fields: MuteTimingFields): MuteTimeInterval => {
   };
 };
 
-const onSubmit = (values: MuteTimingFields) => {
-  const muteTiming = createMuteTiming(values);
-  console.log(muteTiming);
-};
-
 const NewMuteTiming = (props: Props) => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const formApi = useForm({ defaultValues });
   const { fields: timeRanges = [], append, remove } = useFieldArray<MuteTimingFields>({
-    name: 'time_range',
+    name: 'times',
     control: formApi.control,
   });
+
+  const fetchConfig = useCallback(() => {
+    if (alertManagerSourceName) {
+      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+    }
+  }, [alertManagerSourceName, dispatch]);
+
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
+
+  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
+  const { result, error: resultError } =
+    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+
+  if (resultError) {
+    console.error(resultError);
+  }
+
+  const config = result?.alertmanager_config;
+
+  const onSubmit = (values: MuteTimingFields) => {
+    const muteTiming = createMuteTiming(values);
+
+    dispatch(
+      updateAlertManagerConfigAction({
+        newConfig: {
+          ...result,
+          alertmanager_config: {
+            ...config,
+            mute_time_intervals: [...config.mute_timing_intervals, muteTiming],
+          },
+        },
+        oldConfig: result,
+        alertManagerSourceName: alertManagerSourceName!,
+        successMessage: 'Mute timing saved',
+        redirectPath: '/alerting/routes/',
+      })
+    );
+  };
+
   return (
     <AlertingPageWrapper pageId="am-routes">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      <form onSubmit={(e) => e.preventDefault()}>
+      <form onSubmit={formApi.handleSubmit(onSubmit)}>
         <FieldSet label={'Create mute timing'}>
           <Field
             required
@@ -87,14 +130,14 @@ const NewMuteTiming = (props: Props) => {
                     <div className={styles.timeRange}>
                       <Label>Start time</Label>
                       <Input
-                        {...formApi.register(`time_range.${index}.start_time`)}
+                        {...formApi.register(`times.${index}.start_time`)}
                         className={styles.timeRangeInput}
                         defaultValue={timeRange.start_time}
                         placeholder="HH:MM"
                       />
                       <Label>End time</Label>
                       <Input
-                        {...formApi.register(`time_range.${index}.end_time`)}
+                        {...formApi.register(`times.${index}.end_time`)}
                         className={styles.timeRangeInput}
                         defaultValue={timeRange.end_time}
                         placeholder="HH:MM"
@@ -143,7 +186,7 @@ const NewMuteTiming = (props: Props) => {
           <Field label="Years">
             <Input {...formApi.register('years')} className={styles.input} placeholder="Example: 2021:2022, 2030" />
           </Field>
-          <Button onClick={formApi.handleSubmit(onSubmit)}>Submit</Button>
+          <Button type="submit">Submit</Button>
         </FieldSet>
       </form>
     </AlertingPageWrapper>
