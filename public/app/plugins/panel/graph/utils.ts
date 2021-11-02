@@ -1,4 +1,11 @@
-import { DataFrame, ReducerID, reduceField, AbsoluteTimeRange, FieldType } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  DataFrame,
+  FieldType,
+  LegacyGraphHoverEventPayload,
+  reduceField,
+  ReducerID,
+} from '@grafana/data';
 
 /**
  * Find the min and max time that covers all data
@@ -21,4 +28,9 @@ export function getDataTimeRange(frames: DataFrame[]): AbsoluteTimeRange | undef
     }
   }
   return found ? range : undefined;
+}
+
+// Check wether event is LegacyGraphHoverEvent
+export function isLegacyGraphHoverEvent(event: any): event is LegacyGraphHoverEventPayload {
+  return event.hasOwnProperty('pos');
 }
