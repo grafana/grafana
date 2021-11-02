@@ -434,7 +434,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
 		err := sch.ruleStore.GetAlertRuleByUID(&q)
 		if err != nil {
-			logger.Error("failed to fetch alert rule", "error", err)
+			logger.Error("failed to fetch alert rule", "err", err)
 			return nil, err
 		}
 		return q.Result, nil
@@ -456,7 +456,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		if err != nil {
 			evalTotalFailuresMetric.Inc()
 			// consider saving alert instance on error
-			logger.Error("failed to evaluate alert rule", "duration", dur, "error", err)
+			logger.Error("failed to evaluate alert rule", "duration", dur, "err", err)
 			return err
 		}
 		logger.Debug("alert rule evaluated", "results", results, "duration", dur)
@@ -476,13 +476,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		if err == nil {
 			localNotifierExist = true
 			if err := n.PutAlerts(alerts); err != nil {
-				logger.Error("failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "error", err)
+				logger.Error("failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "err", err)
 			}
 		} else {
 			if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
 				logger.Debug("local notifier was not found")
 			} else {
-				logger.Error("local notifier is not available", "error", err)
+				logger.Error("local notifier is not available", "err", err)
 			}
 		}
 
@@ -491,17 +491,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		defer sch.sendersMtx.RUnlock()
 		s, ok := sch.senders[alertRule.OrgID]
 		if ok {
-			logger.Debug("found external notifier. Sending alerts")
+			logger.Debug("sending alerts to external notifier", "count", len(alerts.PostableAlerts))
 			s.SendAlerts(alerts)
 			externalNotifierExist = true
-		} else {
-			logger.Debug("external notifier was not found")
 		}
 
 		if !localNotifierExist && !externalNotifierExist {
-			logger.Error("unable to lookup notifier for the org - alerts not delivered!", "count", len(alerts.PostableAlerts))
-		} else {
-			logger.Debug("notifications have been sent.")
+			logger.Error("no external or internal notifier - alerts not delivered!", "count", len(alerts.PostableAlerts))
 		}
 		return nil
 	}
@@ -547,7 +543,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					return evaluate(currentRule, attempt, ctx)
 				})
 				if err != nil {
-					log.Error("evaluation failed after all retries", "error", err)
+					log.Error("evaluation failed after all retries", "err", err)
 				}
 			}()
 		case <-stopCh:
