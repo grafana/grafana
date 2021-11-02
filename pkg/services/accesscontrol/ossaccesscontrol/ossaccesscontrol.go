@@ -43,7 +43,7 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {
-	ac.UsageStats.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+	ac.UsageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 		return map[string]interface{}{
 			"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
 		}, nil

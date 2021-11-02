@@ -97,7 +97,7 @@ func (e *AlertEngine) alertingTicker(grafanaCtx context.Context) error {
 		case tick := <-e.ticker.C:
 			// TEMP SOLUTION update rules ever tenth tick
 			if tickIndex%10 == 0 {
-				e.scheduler.Update(e.ruleReader.fetch())
+				e.scheduler.Update(e.ruleReader.fetch(grafanaCtx))
 			}
 
 			e.scheduler.Tick(tick, e.execQueue)
@@ -246,8 +246,8 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 }
 
 func (e *AlertEngine) registerUsageMetrics() {
-	e.usageStatsService.RegisterMetricsFunc(func() (map[string]interface{}, error) {
-		alertingUsageStats, err := e.QueryUsageStats()
+	e.usageStatsService.RegisterMetricsFunc(func(ctx context.Context) (map[string]interface{}, error) {
+		alertingUsageStats, err := e.QueryUsageStats(ctx)
 		if err != nil {
 			return nil, err
 		}
