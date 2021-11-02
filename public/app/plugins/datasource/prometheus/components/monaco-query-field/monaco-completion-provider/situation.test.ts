@@ -1,7 +1,7 @@
 import { getSituation, Situation } from './situation';
 
 // we use the `^` character as the cursor-marker in the string.
-function assertSituation(situation: string, expectedIntent: Situation | null) {
+function assertSituation(situation: string, expectedSituation: Situation | null) {
   // first we find the cursor-position
   const pos = situation.indexOf('^');
   if (pos === -1) {
@@ -18,10 +18,10 @@ function assertSituation(situation: string, expectedIntent: Situation | null) {
 
   const result = getSituation(text, pos);
 
-  if (expectedIntent === null) {
+  if (expectedSituation === null) {
     expect(result).toStrictEqual(null);
   } else {
-    expect(result).toMatchObject(expectedIntent);
+    expect(result).toMatchObject(expectedSituation);
   }
 }
 
