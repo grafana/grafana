@@ -10,7 +10,7 @@ import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 
 const propsToDiff: string[] = ['legend'];
 
-type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> & { panelId: number };
+type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
 export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
   static contextType = PanelContextRoot;
@@ -18,7 +18,7 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { eventBus, sync } = this.context;
-    const { theme, timeZone, legend, panelId } = this.props;
+    const { theme, timeZone, legend } = this.props;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -29,7 +29,6 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
       sync,
       allFrames,
       legend,
-      panelId,
     });
   };
 
