@@ -68,7 +68,6 @@ steps:
   - yarn run prettier:check
   - yarn run lint
   - yarn run typecheck
-  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -340,7 +339,6 @@ steps:
   - yarn run prettier:check
   - yarn run lint
   - yarn run typecheck
-  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -793,7 +791,6 @@ steps:
   - yarn run prettier:check
   - yarn run lint
   - yarn run typecheck
-  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -1171,7 +1168,6 @@ steps:
   - yarn run prettier:check
   - yarn run lint
   - yarn run typecheck
-  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -1727,7 +1723,6 @@ steps:
   - yarn run prettier:check
   - yarn run lint
   - yarn run typecheck
-  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -2094,7 +2089,6 @@ steps:
   - yarn run prettier:check
   - yarn run lint
   - yarn run typecheck
-  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -2647,7 +2641,6 @@ steps:
   - yarn run prettier:check
   - yarn run lint
   - yarn run typecheck
-  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -2986,7 +2979,6 @@ steps:
   - yarn run prettier:check
   - yarn run lint
   - yarn run typecheck
-  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -3449,6 +3441,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 0fc151dbfb52c9055ebe8b2c8393d351bed186b1c52a1ca61e67a58c1e7fce52
+hmac: 746a9f310520cd57b0a464b91049565aa99138fbec92568cadd99d51871e8e56
 
 ...
