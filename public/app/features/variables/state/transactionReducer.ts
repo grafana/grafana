@@ -6,7 +6,6 @@ import {
   changeVariableType,
   duplicateVariable,
   removeVariable,
-  setCurrentVariableValue,
 } from './sharedReducer';
 
 export enum TransactionStatus {
@@ -65,7 +64,6 @@ function actionAffectsDirtyState(action: AnyAction): boolean {
     changeVariableOrder.type,
     duplicateVariable.type,
     changeVariableType.type,
-    setCurrentVariableValue.type,
   ].includes(action.type);
 }
 
