@@ -102,7 +102,7 @@ class DataSourceWithBackend<
         const ds = getDataSourceSrv().getInstanceSettings(q.datasource);
 
         if (!ds) {
-          throw new Error('Unknown Datasource: ' + q.datasource);
+          throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
         datasourceId = ds.id;
@@ -159,6 +159,13 @@ class DataSourceWithBackend<
    * @virtual
    */
   filterQuery?(query: TQuery): boolean;
+
+  /**
+   * Apply template variables for explore
+   */
+  interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars) as TQuery);
+  }
 
   /**
    * Override to apply template variables.  The result is usually also `TQuery`, but sometimes this can

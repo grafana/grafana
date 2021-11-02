@@ -121,7 +121,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   getQueryDataSourceIdentifier(): string | null | undefined {
     const { query, dataSource: dsSettings } = this.props;
-    return query.datasource ?? dsSettings.name;
+    return query.datasource?.uid ?? dsSettings.uid;
   }
 
   async loadDatasource() {

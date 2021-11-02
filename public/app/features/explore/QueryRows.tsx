@@ -22,7 +22,7 @@ const makeSelectors = (exploreId: ExploreId) => {
     getEventBridge: createSelector(exploreItemSelector, (s) => s!.eventBridge),
     getDatasourceInstanceSettings: createSelector(
       exploreItemSelector,
-      (s) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.name)!
+      (s) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
     ),
   };
 };

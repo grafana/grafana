@@ -20,7 +20,7 @@ export interface Props {
   width?: number;
   autoFocus?: boolean;
   onBlur?: () => void;
-  includeInternal?: boolean;
+  includeInternal?: boolean | InternalTimeZones[];
   disabled?: boolean;
 }
 
@@ -63,7 +63,7 @@ interface SelectableZoneGroup extends SelectableValue<string> {
   options: SelectableZone[];
 }
 
-const useTimeZones = (includeInternal: boolean): SelectableZoneGroup[] => {
+const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): SelectableZoneGroup[] => {
   const now = Date.now();
 
   const timeZoneGroups = getTimeZoneGroups(includeInternal).map((group: GroupedTimeZones) => {

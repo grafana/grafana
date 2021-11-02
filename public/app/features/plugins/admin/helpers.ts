@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
-import { PluginSignatureStatus, dateTimeParse, PluginError } from '@grafana/data';
+import { PluginSignatureStatus, dateTimeParse, PluginError, PluginErrorCode } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Settings } from 'app/core/config';
 import { CatalogPlugin, LocalPlugin, RemotePlugin } from './types';
@@ -59,11 +59,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     updatedAt,
     createdAt: publishedAt,
     status,
-    versionSignatureType,
-    signatureType,
   } = plugin;
 
-  const hasSignature = signatureType !== '' || versionSignatureType !== '';
   const isDisabled = !!error;
   const catalogPlugin = {
     description,
@@ -79,7 +76,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     orgName,
     popularity,
     publishedAt,
-    signature: hasSignature ? PluginSignatureStatus.valid : PluginSignatureStatus.missing,
+    signature: getPluginSignature({ remote: plugin, error }),
     updatedAt,
     version,
     hasUpdate: false,
@@ -115,7 +112,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     orgName: author.name,
     popularity: 0,
     publishedAt: '',
-    signature,
+    signature: getPluginSignature({ local: plugin, error }),
     signatureOrg,
     signatureType,
     updatedAt: updated,
@@ -136,7 +133,6 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const hasUpdate =
     local?.hasUpdate || Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
   const id = remote?.slug || local?.id || '';
-  const hasRemoteSignature = remote?.signatureType || remote?.versionSignatureType;
   const isDisabled = !!error;
 
   let logos = {
@@ -171,7 +167,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     popularity: remote?.popularity || 0,
     publishedAt: remote?.createdAt || '',
     type: remote?.typeCode || local?.type,
-    signature: local?.signature || (hasRemoteSignature ? PluginSignatureStatus.valid : PluginSignatureStatus.missing),
+    signature: getPluginSignature({ local, remote, error }),
     signatureOrg: local?.signatureOrg || remote?.versionSignedByOrgName,
     signatureType: local?.signatureType || remote?.versionSignatureType || remote?.signatureType || undefined,
     updatedAt: remote?.updatedAt || local?.info.updated || '',
@@ -213,6 +209,35 @@ function groupErrorsByPluginId(errors: PluginError[] = []): Record<string, Plugi
     byId[error.pluginId] = error;
     return byId;
   }, {} as Record<string, PluginError | undefined>);
+}
+
+function getPluginSignature(options: {
+  local?: LocalPlugin;
+  remote?: RemotePlugin;
+  error?: PluginError;
+}): PluginSignatureStatus {
+  const { error, local, remote } = options;
+
+  if (error) {
+    switch (error.errorCode) {
+      case PluginErrorCode.invalidSignature:
+        return PluginSignatureStatus.invalid;
+      case PluginErrorCode.missingSignature:
+        return PluginSignatureStatus.missing;
+      case PluginErrorCode.modifiedSignature:
+        return PluginSignatureStatus.modified;
+    }
+  }
+
+  if (local?.signature) {
+    return local.signature;
+  }
+
+  if (remote?.signatureType || remote?.versionSignatureType) {
+    return PluginSignatureStatus.valid;
+  }
+
+  return PluginSignatureStatus.missing;
 }
 
 // Updates the core Grafana config to have the correct list available panels

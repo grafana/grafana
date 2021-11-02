@@ -8,7 +8,6 @@
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
     "build": "webpack --config scripts/webpack/webpack.prod.js",
-    "check-strict": "./scripts/ci-check-strict.sh",
     "dev": "webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
@@ -34,8 +33,8 @@
     "packages:typecheck": "lerna run typecheck",
     "packages:clean": "lerna run clean",
     "precommit": "yarn run lint-staged",
-    "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss,md,mdx}\"",
-    "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss,js,md,mdx}\" --write",
+    "prettier:check": "prettier --list-different \"**/*.{scss,md,mdx}\"",
+    "prettier:write": "prettier --list-different \"**/*.{scss,md,mdx}\" --write",
     "start": "yarn themes:generate && webpack --progress --color --watch --env noTsCheck=0 --config scripts/webpack/webpack.dev.js",
     "start:hot": "yarn themes:generate && webpack serve --progress --color --config scripts/webpack/webpack.hot.js",
     "start:noTsCheck": "yarn themes:generate && webpack --progress --color --watch --env noTsCheck=1 --config scripts/webpack/webpack.dev.js",
@@ -46,16 +45,12 @@
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check"
+    "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check",
+    "postinstall": "husky install"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-2/",
     "releaseNotesUrl": "https://grafana.com/docs/grafana/next/release-notes/"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn run precommit"
-    }
   },
   "lint-staged": {
     "*.{js,ts,tsx}": [
@@ -83,7 +78,7 @@
     "@emotion/eslint-plugin": "11.2.0",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/e2e": "workspace:*",
-    "@grafana/eslint-config": "2.5.0",
+    "@grafana/eslint-config": "2.5.1",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@kusto/monaco-kusto": "4.0.6",
@@ -165,7 +160,7 @@
     "es6-shim": "0.35.5",
     "eslint": "7.21.0",
     "eslint-config-prettier": "8.3.0",
-    "eslint-plugin-jsdoc": "37.0.0",
+    "eslint-plugin-jsdoc": "37.0.3",
     "eslint-plugin-lodash": "^7.2.0",
     "eslint-plugin-no-only-tests": "2.4.0",
     "eslint-plugin-prettier": "3.3.1",
@@ -175,7 +170,7 @@
     "expect.js": "0.3.1",
     "expose-loader": "3.0.0",
     "file-loader": "6.2.0",
-    "fork-ts-checker-webpack-plugin": "6.3.4",
+    "fork-ts-checker-webpack-plugin": "6.4.0",
     "fs-extra": "10.0.0",
     "gaze": "1.1.3",
     "glob": "7.1.6",
@@ -183,7 +178,7 @@
     "html-webpack-harddisk-plugin": "2.0.0",
     "html-webpack-plugin": "5.3.2",
     "http-server": "13.0.1",
-    "husky": "4.2.1",
+    "husky": "^7.0.0",
     "iconscout-unicons-tarball": "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28",
     "jest": "26.6.3",
     "jest-canvas-mock": "2.3.0",
@@ -278,7 +273,7 @@
     "d3-force": "^2.1.1",
     "d3-scale-chromatic": "1.5.0",
     "dangerously-set-html-content": "1.0.9",
-    "date-fns": "1.30.1",
+    "date-fns": "2.25.0",
     "debounce-promise": "3.1.2",
     "emotion": "10.0.27",
     "eventemitter3": "4.0.0",

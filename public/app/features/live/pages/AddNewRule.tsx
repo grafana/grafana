@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Input, Field, Button, ValuePicker, HorizontalGroup } from '@grafana/ui';
 import { DataSourcePicker, getBackendSrv } from '@grafana/runtime';
-import { AppEvents, DatasourceRef, LiveChannelScope, SelectableValue } from '@grafana/data';
+import { AppEvents, DataSourceRef, LiveChannelScope, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { Rule } from './types';
 
@@ -28,7 +28,7 @@ export function AddNewRule({ onRuleAdded }: Props) {
   const [patternType, setPatternType] = useState<PatternType>();
   const [pattern, setPattern] = useState<string>();
   const [patternPrefix, setPatternPrefix] = useState<string>('');
-  const [datasource, setDatasource] = useState<DatasourceRef>();
+  const [datasource, setDatasource] = useState<DataSourceRef>();
 
   const onSubmit = () => {
     if (!pattern) {
@@ -85,7 +85,7 @@ export function AddNewRule({ onRuleAdded }: Props) {
                 <DataSourcePicker
                   current={datasource}
                   onChange={(ds) => {
-                    setDatasource(ds.name);
+                    setDatasource(ds);
                     setPatternPrefix(`${LiveChannelScope.DataSource}/${ds.uid}/`);
                   }}
                 />
