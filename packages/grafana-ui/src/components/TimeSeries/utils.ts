@@ -79,7 +79,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       scaleKey: xScaleKey,
       isTime: true,
       placement: AxisPlacement.Bottom,
-      label: xField.config.custom?.xAxisLabel,
       timeZone,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
@@ -99,7 +98,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     builder.addAxis({
       scaleKey: xScaleKey,
       placement: AxisPlacement.Bottom,
-      label: xField.config.custom?.xAxisLabel,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
     });
