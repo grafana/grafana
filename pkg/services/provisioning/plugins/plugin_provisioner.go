@@ -11,11 +11,11 @@ import (
 
 // Provision scans a directory for provisioning config files
 // and provisions the app in those files.
-func Provision(configDirectory string, pluginManager plugins.Manager) error {
+func Provision(configDirectory string, pluginStore plugins.Store) error {
 	logger := log.New("provisioning.plugins")
 	ap := PluginProvisioner{
 		log:         logger,
-		cfgProvider: newConfigReader(logger, pluginManager),
+		cfgProvider: newConfigReader(logger, pluginStore),
 	}
 	return ap.applyChanges(configDirectory)
 }

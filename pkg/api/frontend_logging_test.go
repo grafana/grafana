@@ -71,11 +71,11 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 		}
 
 		// fake plugin route so we will try to find a source map there
-		pm := fakePluginManager{
-			staticRoutes: []*plugins.PluginStaticRoute{
+		pm := fakePluginStaticRouteResolver{
+			routes: []*plugins.StaticRoute{
 				{
 					Directory: "/usr/local/telepathic-panel",
-					PluginId:  "telepathic",
+					PluginID:  "telepathic",
 				},
 			},
 		}

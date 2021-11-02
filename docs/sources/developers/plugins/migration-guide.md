@@ -17,7 +17,7 @@ This guide helps you identify the steps you need to take based on the Grafana ve
     - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
     - [2. Update the way you bootstrap your plugin](#2-update-the-way-you-bootstrap-your-plugin)
     - [3. Update the plugin package](#3-update-the-plugin-package)
-  - [Unsigned backend plugins will not be loaded](#unsigned-backend-plugins-will-not-be-loaded)
+  - [Sign and load backend plugins](#sign-and-load-backend-plugins)
   - [Update react-hook-form from v6 to v7](#update-react-hook-form-from-v6-to-v7)
   - [Update the plugin.json](#update-the-pluginjson)
   - [Update imports to match emotion 11](#update-imports-to-match-emotion-11)
