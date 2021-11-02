@@ -4,8 +4,6 @@ import { colorManipulator } from '@grafana/data';
 
 const { alpha } = colorManipulator;
 
-const outlineWidth = 2;
-
 export function drawMarkers(opts) {
   let { mode, priceStyle, fields, movementMode, upColor = '#73BF69', downColor = '#F2495C', flatColor } = opts;
 
@@ -61,7 +59,15 @@ export function drawMarkers(opts) {
 
     let colWidth = u.bbox.width / (idx1 - idx0);
     let barWidth = Math.round(0.6 * colWidth);
+
     let stickWidth = 2;
+    let outlineWidth = 2;
+
+    if (barWidth < 8) {
+      stickWidth = outlineWidth = 1;
+    }
+
+    let halfWidth = Math.floor(barWidth / 2);
 
     for (let i = idx0; i <= idx1; i++) {
       let tPx = Math.round(u.valToPos(tData[i]!, 'x', true));
@@ -81,7 +87,7 @@ export function drawMarkers(opts) {
         );
 
         let vPx = Math.round(u.valToPos(vData![i]!, u.series[vIdx!].scale!, true));
-        outerPath.rect(tPx - barWidth / 2, vPx, barWidth, zeroPx! - vPx);
+        outerPath.rect(tPx - halfWidth, vPx, barWidth, zeroPx! - vPx);
       }
 
       if (drawPrice) {
@@ -95,7 +101,7 @@ export function drawMarkers(opts) {
         // stick
         let hPx = Math.round(u.valToPos(hData![i]!, u.series[hIdx!].scale!, true));
         let lPx = Math.round(u.valToPos(lData![i]!, u.series[lIdx!].scale!, true));
-        outerPath.rect(tPx - stickWidth / 2, hPx, stickWidth, lPx - hPx);
+        outerPath.rect(tPx - Math.floor(stickWidth / 2), hPx, stickWidth, lPx - hPx);
 
         let oPx = Math.round(u.valToPos(oData[i]!, u.series[oIdx!].scale!, true));
         let cPx = Math.round(u.valToPos(cData[i]!, u.series[cIdx!].scale!, true));
@@ -105,12 +111,12 @@ export function drawMarkers(opts) {
           let top = Math.min(oPx, cPx);
           let btm = Math.max(oPx, cPx);
           let hgt = btm - top;
-          outerPath.rect(tPx - barWidth / 2, top, barWidth, hgt);
+          outerPath.rect(tPx - halfWidth, top, barWidth, hgt);
 
           if (movementMode === MovementMode.Hollow) {
             if (interDir >= 0) {
               hollowPath.rect(
-                tPx - barWidth / 2 + outlineWidth,
+                tPx - halfWidth + outlineWidth,
                 top + outlineWidth,
                 barWidth - outlineWidth * 2,
                 hgt - outlineWidth * 2
@@ -118,9 +124,9 @@ export function drawMarkers(opts) {
             }
           }
         } else {
-          outerPath.rect(tPx - barWidth / 2, oPx, barWidth / 2, stickWidth);
+          outerPath.rect(tPx - halfWidth, oPx, halfWidth, stickWidth);
           // prettier-ignore
-          outerPath.rect(tPx,                cPx, barWidth / 2, stickWidth);
+          outerPath.rect(tPx,                cPx, halfWidth, stickWidth);
         }
       }
     }

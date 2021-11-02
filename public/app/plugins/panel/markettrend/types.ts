@@ -29,7 +29,7 @@ export interface MarketTrendColors {
 export const defaultColors: MarketTrendColors = {
   up: 'green',
   down: 'red',
-  flat: 'grey',
+  flat: 'gray',
 };
 
 export interface MarketOptions extends OptionsWithLegend, OptionsWithTooltip {

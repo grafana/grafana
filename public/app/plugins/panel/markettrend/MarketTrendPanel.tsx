@@ -86,7 +86,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       for (const field of frame.fields) {
         let dispName = getFieldDisplayName(field, frame, data?.series);
 
-        console.log(dispName);
+        // todo: also set fill opacity here?
 
         if (dispName === options.fieldMap?.volume) {
           field.config.unit = 'short';
