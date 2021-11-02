@@ -195,33 +195,33 @@ func TestServicebuildPipeLine(t *testing.T) {
 			},
 			expectErrContains: "classic conditions may not be the input for other expressions",
 		},
-		{
-			name: "Queries with new datasource ref object",
-			req: &Request{
-				Queries: []Query{
-					{
-						RefID: "A",
-						JSON: json.RawMessage(`{
-							"datasource":  {
-										"uid": "MyDS"
-									}
-							}`),
-					},
-					{
-						RefID: "B",
-						JSON: json.RawMessage(`{
-							"datasource":  {
-								"uid": "MyDS"
-							},
-							"expression": "A",
-							"reducer": "mean",
-							"type": "reduce"
-						}`),
-					},
-				},
-			},
-			expectedOrder: []string{"B", "A"},
-		},
+		//{
+		//	name: "Queries with new datasource ref object",
+		//	req: &Request{
+		//		Queries: []Query{
+		//			{
+		//				RefID: "A",
+		//				JSON: json.RawMessage(`{
+		//					"datasource":  {
+		//								"uid": "MyDS"
+		//							}
+		//					}`),
+		//			},
+		//			{
+		//				RefID: "B",
+		//				JSON: json.RawMessage(`{
+		//					"datasource":  {
+		//						"uid": "MyDS"
+		//					},
+		//					"expression": "A",
+		//					"reducer": "mean",
+		//					"type": "reduce"
+		//				}`),
+		//			},
+		//		},
+		//	},
+		//	expectedOrder: []string{"B", "A"},
+		//},
 	}
 	s := Service{}
 	for _, tt := range tests {
