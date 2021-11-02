@@ -108,24 +108,25 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 type queryDSInfo struct {
 	isExpr bool
 	ds     *models.DataSource
-	errRes response.Response
 	query  *simplejson.Json
+	errRes response.Response
 }
 
 func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simplejson.Json) (info queryDSInfo) {
+	var err error
 	info.query = query
 	uid := query.Get("datasource").Get("uid").MustString()
-	if uid == grafanads.DatasourceUID {
-		info.ds = grafanads.DataSourceModel(c.OrgId)
-		return
-	}
-	if uid == expr.DatasourceUID {
+
+	switch uid {
+	case expr.DatasourceUID:
 		info.isExpr = true
 		return
-	}
-
-	var err error
-	if uid != "" {
+	case grafanads.DatasourceUID:
+		info.ds = grafanads.DataSourceModel(c.OrgId)
+		return
+	case "": // empty or mssing UID (old or invalid)
+		break
+	default:
 		info.ds, err = hs.DataSourceCache.GetDatasourceByUID(uid, c.SignedInUser, c.SkipCache)
 		if err != nil {
 			info.errRes = hs.handleGetDataSourceUIDError(err, uid)
@@ -136,6 +137,7 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 	// Support legacy requets from before 8.3
 	if query.Get("datasource").MustString() == expr.DatasourceType {
 		info.isExpr = true
+		return
 	}
 
 	// Fallback to the datasourceId
