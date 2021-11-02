@@ -71,13 +71,6 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
     [onChange, value]
   );
 
-  const onChangeOpacity = useCallback(
-    (o: number | undefined) => {
-      onChange({ ...value, opacity: o ?? value.opacity ?? 0.8 });
-    },
-    [onChange, value]
-  );
-
   const onChangeStrokeWidth = useCallback(
     (num: number | undefined) => {
       onChange({ ...value, strokeWidth: num ?? value.strokeWidth ?? 1 });
@@ -123,16 +116,6 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
       <InlineFieldRow className={styles.row}>
         <InlineField label="Style" labelWidth={LABEL_WIDTH} className={styles.color}>
           <ColorPicker color={value?.fillColor} onChange={onChangeColor} />
-        </InlineField>
-        <InlineField label="Opacity">
-          <NumberInput
-            value={value?.opacity}
-            min={0}
-            max={1}
-            step={0.05}
-            aria-label={'Color Opacity'}
-            onChange={onChangeOpacity}
-          />
         </InlineField>
         <InlineField label="Stroke" className={styles.inline} grow={true}>
           <NumberInput

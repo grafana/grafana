@@ -28,7 +28,6 @@ const defaultOptions: GeoJSONMapperConfig = {
 export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
   fillColor: '#1F60C4',
   strokeWidth: 1,
-  opacity: 0.8,
   rule: {
     property: '',
     operation: ComparisonOperation.EQ,
