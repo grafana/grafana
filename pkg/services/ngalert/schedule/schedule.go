@@ -607,6 +607,27 @@ func (r *alertRuleRegistry) getOrCreateInfo(context context.Context, key models.
 	return info, !ok
 }
 
+// get returns the channel for the specific alert rule
+// if the key does not exist returns an error
+func (r *alertRuleRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	info, ok := r.alertRuleInfo[key]
+	if !ok {
+		return nil, fmt.Errorf("%v key not found", key)
+	}
+	return info, nil
+}
+
+func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	_, ok := r.alertRuleInfo[key]
+	return ok
+}
+
 // del removes pair that has specific key from alertRuleInfo.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
