@@ -53,7 +53,6 @@ AxisConfig: {
 	axisSoftMax?:       number
 	axisGridShow?:      bool
 	scaleDistribution?: ScaleDistributionConfig
-	xAxisLabel?:		string
 } @cuetsy(kind="interface")
 HideSeriesConfig: {
 	tooltip: bool

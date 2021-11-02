@@ -113,7 +113,6 @@ export interface AxisConfig {
   axisSoftMin?: number;
   axisWidth?: number;
   scaleDistribution?: ScaleDistributionConfig;
-  xAxisLabel?: string;
 }
 
 export interface HideSeriesConfig {
