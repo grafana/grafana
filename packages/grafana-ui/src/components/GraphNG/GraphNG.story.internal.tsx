@@ -62,7 +62,6 @@ export const Lines: Story<StoryProps> = ({ placement, unit, legendDisplayMode, .
         placement: placement,
         calcs: [],
       }}
-      panelId={1}
       timeZone="browser"
     />
   );
