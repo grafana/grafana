@@ -425,10 +425,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
 
-	tenant := fmt.Sprint(key.OrgID)
-	evalTotalMetric := sch.metrics.EvalTotal.WithLabelValues(tenant)
-	evalDurationMetric := sch.metrics.EvalDuration.WithLabelValues(tenant)
-	evalTotalFailuresMetric := sch.metrics.EvalFailures.WithLabelValues(tenant)
+	orgID := fmt.Sprint(key.OrgID)
+	evalTotalMetric := sch.metrics.EvalTotal.WithLabelValues(orgID)
+	evalDurationMetric := sch.metrics.EvalDuration.WithLabelValues(orgID)
+	evalTotalFailuresMetric := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
 	updateRule := func() (*models.AlertRule, error) {
 		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
