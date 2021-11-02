@@ -6,6 +6,8 @@ import createMockDatasource from '../../__mocks__/datasource';
 import { AzureMonitorQuery, AzureQueryType } from '../../types';
 import { select } from 'react-select-event';
 import * as ui from '@grafana/ui';
+// eslint-disable-next-line lodash/import-scope
+import _ from 'lodash';
 
 // Have to mock CodeEditor because it doesnt seem to work in tests???
 jest.mock('@grafana/ui', () => ({
@@ -14,6 +16,12 @@ jest.mock('@grafana/ui', () => ({
     return <input data-testid="mockeditor" value={value} onChange={(event) => onSave(event.target.value)} />;
   },
 }));
+
+jest.mock('lodash', () => ({
+  ...jest.requireActual<typeof _>('lodash'),
+  debounce: jest.fn((fn: unknown) => fn),
+}));
+
 describe('VariableEditor:', () => {
   it('can select a query type', async () => {
     const onChange = jest.fn();
@@ -71,7 +79,7 @@ describe('VariableEditor:', () => {
       expect(screen.queryByText('Resource')).toBeInTheDocument();
       expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
     });
-    it('should call on change it the query changes', async () => {
+    it('should call on change if the query changes', async () => {
       const props = {
         query: {
           refId: 'A',
@@ -120,23 +128,24 @@ describe('VariableEditor:', () => {
       expect(screen.queryByDisplayValue('test query')).toBeInTheDocument();
     });
 
-    it('should call on change it the query changes', async () => {
+    it('should call on change if the query changes', async () => {
       const props = {
         query: {
           refId: 'A',
           queryType: AzureQueryType.GrafanaTemplateVariableFn,
           grafanaTemplateVariableFn: {
-            rawQuery: 'S',
+            rawQuery: 'Su',
             kind: 'UnknownQuery',
           },
           subscription: 'subscriptionId',
         } as AzureMonitorQuery,
         onChange: jest.fn(),
         datasource: createMockDatasource(),
+        debounceTime: 1,
       };
       render(<VariableEditor {...props} />);
       await waitFor(() => screen.queryByText('Grafana template variable function'));
-      userEvent.type(screen.getByDisplayValue('S'), 'ubscriptions()');
+      userEvent.type(screen.getByDisplayValue('Su'), 'bscriptions()');
       expect(screen.getByDisplayValue('Subscriptions()')).toBeInTheDocument();
       screen.getByDisplayValue('Subscriptions()').blur();
       await waitFor(() => screen.queryByText('None'));

@@ -224,16 +224,21 @@ const createLogAnalyticsTemplateVariableQuery = async (
   datasource: DataSource
 ): Promise<AzureMonitorQuery> => {
   const defaultSubscriptionId = datasource.azureMonitorDatasource.defaultSubscriptionId;
-
-  // convert old workspace ids into new resources (same logic as in useMigrations but out of the react-hook land)
-  const defaultWorkspaceId = datasource.azureLogAnalyticsDatasource.getDeprecatedDefaultWorkSpace();
   let resource = '';
-  if (defaultWorkspaceId) {
-    const isWorkspaceGUID = isGUIDish(defaultWorkspaceId);
-    if (isWorkspaceGUID) {
-      resource = await datasource.resourcePickerData.getResourceURIFromWorkspace(defaultWorkspaceId);
+  // if there's an existing query, we try to get the resourcesuri from a deprecated default workspace
+  // a note this is very similar logic to what is used in useMigrations but moved out of the react-hook land
+  if (rawQuery) {
+    const defaultWorkspaceId = datasource.azureLogAnalyticsDatasource.getDeprecatedDefaultWorkSpace();
+    if (defaultWorkspaceId) {
+      const isWorkspaceGUID = isGUIDish(defaultWorkspaceId);
+      if (isWorkspaceGUID) {
+        resource = await datasource.resourcePickerData.getResourceURIFromWorkspace(defaultWorkspaceId);
+      } else {
+        resource = defaultWorkspaceId;
+      }
     } else {
-      resource = defaultWorkspaceId;
+      const maybeFirstWorkspace = await datasource.azureLogAnalyticsDatasource.getFirstWorkspace();
+      resource = maybeFirstWorkspace || '';
     }
   }
 

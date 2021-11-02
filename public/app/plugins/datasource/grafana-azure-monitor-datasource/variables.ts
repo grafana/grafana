@@ -25,10 +25,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     const promisedResults = async () => {
       const queryObj = await migrateStringQueriesToObjectQueries(request.targets[0], { datasource: this.datasource });
 
-      if (
-        queryObj.queryType === AzureQueryType.GrafanaTemplateVariableFn &&
-        queryObj.grafanaTemplateVariableFn?.rawQuery
-      ) {
+      if (queryObj.queryType === AzureQueryType.GrafanaTemplateVariableFn && queryObj.grafanaTemplateVariableFn) {
         const templateVariablesResults = await this.callGrafanaTemplateVariableFn(queryObj.grafanaTemplateVariableFn);
         return {
           data: templateVariablesResults ? [toDataFrame(templateVariablesResults)] : [],
@@ -58,51 +55,51 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     }
 
     if (query.kind === 'ResourceGroupsQuery') {
-      return this.datasource.getResourceGroups(this.toVariable(query.subscription));
+      return this.datasource.getResourceGroups(this.replaceVariable(query.subscription));
     }
 
     if (query.kind === 'MetricDefinitionsQuery') {
       return this.datasource.getMetricDefinitions(
-        this.toVariable(query.subscription),
-        this.toVariable(query.resourceGroup)
+        this.replaceVariable(query.subscription),
+        this.replaceVariable(query.resourceGroup)
       );
     }
 
     if (query.kind === 'ResourceNamesQuery') {
       return this.datasource.getResourceNames(
-        this.toVariable(query.subscription),
-        this.toVariable(query.resourceGroup),
-        this.toVariable(query.metricDefinition)
+        this.replaceVariable(query.subscription),
+        this.replaceVariable(query.resourceGroup),
+        this.replaceVariable(query.metricDefinition)
       );
     }
 
     if (query.kind === 'MetricNamespaceQuery') {
       return this.datasource.getMetricNamespaces(
-        this.toVariable(query.subscription),
-        this.toVariable(query.resourceGroup),
-        this.toVariable(query.metricDefinition),
-        this.toVariable(query.resourceName)
+        this.replaceVariable(query.subscription),
+        this.replaceVariable(query.resourceGroup),
+        this.replaceVariable(query.metricDefinition),
+        this.replaceVariable(query.resourceName)
       );
     }
 
     if (query.kind === 'MetricNamesQuery') {
       return this.datasource.getMetricNames(
-        this.toVariable(query.subscription),
-        this.toVariable(query.resourceGroup),
-        this.toVariable(query.metricDefinition),
-        this.toVariable(query.resourceName),
-        this.toVariable(query.metricNamespace)
+        this.replaceVariable(query.subscription),
+        this.replaceVariable(query.resourceGroup),
+        this.replaceVariable(query.metricDefinition),
+        this.replaceVariable(query.resourceName),
+        this.replaceVariable(query.metricNamespace)
       );
     }
 
     if (query.kind === 'WorkspacesQuery') {
-      return this.datasource.azureLogAnalyticsDatasource.getWorkspaces(query.subscription);
+      return this.datasource.azureLogAnalyticsDatasource.getWorkspaces(this.replaceVariable(query.subscription));
     }
 
     return null;
   }
 
-  toVariable(metric: string) {
+  replaceVariable(metric: string) {
     return getTemplateSrv().replace((metric || '').trim());
   }
 }

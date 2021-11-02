@@ -1,12 +1,13 @@
 import { SelectableValue } from '@grafana/data';
 import { Alert, InlineField, Input, Select } from '@grafana/ui';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { AzureMonitorQuery, AzureQueryType } from '../../types';
 import LogsQueryEditor from '../LogsQueryEditor';
 import DataSource from '../../datasource';
 import useLastError from '../../utils/useLastError';
 import { Space } from '../Space';
 import { migrateStringQueriesToObjectQueries } from '../../grafanaTemplateVariableFns';
+import { debounce } from 'lodash';
 
 const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
   { label: 'Grafana Query Function', value: AzureQueryType.GrafanaTemplateVariableFn },
@@ -26,24 +27,30 @@ const GrafanaTemplateVariableFnInput = ({
   useEffect(() => {
     setInputVal(query.grafanaTemplateVariableFn?.rawQuery || '');
   }, [query.grafanaTemplateVariableFn?.rawQuery]);
+
+  const onRunQuery = useCallback(
+    (newQuery: string) => {
+      migrateStringQueriesToObjectQueries(newQuery, { datasource }).then((updatedQuery) => {
+        if (updatedQuery.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
+          updateQuery(updatedQuery);
+        } else {
+          updateQuery({
+            ...query,
+            grafanaTemplateVariableFn: {
+              kind: 'UnknownQuery',
+              rawQuery: newQuery,
+            },
+          });
+        }
+      });
+    },
+    [datasource, query, updateQuery]
+  );
+  const debouncedRunQuery = useMemo(() => debounce(onRunQuery, 500), [onRunQuery]);
+
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     setInputVal(event.target.value);
-  };
-  const onBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const stringVal = event.target.value;
-    migrateStringQueriesToObjectQueries(stringVal, { datasource }).then((updatedQuery) => {
-      if (updatedQuery.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
-        updateQuery(updatedQuery);
-      } else {
-        updateQuery({
-          ...query,
-          grafanaTemplateVariableFn: {
-            kind: 'UnknownQuery',
-            rawQuery: stringVal,
-          },
-        });
-      }
-    });
+    debouncedRunQuery(event.target.value);
   };
   return (
     <InlineField label="Grafana template variable function">
@@ -51,7 +58,6 @@ const GrafanaTemplateVariableFnInput = ({
         placeholder={'type a grafana template variable function, ex: Subscriptions()'}
         value={inputVal}
         onChange={onChange}
-        onBlur={onBlur}
       />
     </InlineField>
   );

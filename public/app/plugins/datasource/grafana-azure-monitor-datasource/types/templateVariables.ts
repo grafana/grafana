@@ -12,7 +12,6 @@ export type GrafanaTemplateVariableQueryType =
 
 interface BaseGrafanaTemplateVariableQuery {
   rawQuery?: string;
-  kind: GrafanaTemplateVariableQueryType;
 }
 
 export interface UnknownQuery extends BaseGrafanaTemplateVariableQuery {

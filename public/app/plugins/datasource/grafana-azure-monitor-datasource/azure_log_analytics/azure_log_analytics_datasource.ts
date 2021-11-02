@@ -217,7 +217,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     This has been deprecated, however is still used by a few legacy template queries.
   */
   getDeprecatedDefaultWorkSpace() {
-    return this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
+    return this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace;
   }
 
   private buildQuery(query: string, options: any, workspace: string): AdhocQuery[] {
