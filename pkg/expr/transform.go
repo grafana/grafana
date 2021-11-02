@@ -40,11 +40,13 @@ func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery
 	}
 
 	for _, q := range query.Queries {
+		if q.DataSource == nil {
+			return nil, fmt.Errorf("mising datasource info: " + q.RefID)
+		}
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
-		ref := q.Model.Get("datasource")
 		req.Queries = append(req.Queries, Query{
 			JSON:          modelJSON,
 			Interval:      time.Duration(q.IntervalMS) * time.Millisecond,
@@ -52,8 +54,8 @@ func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery
 			MaxDataPoints: q.MaxDataPoints,
 			QueryType:     q.QueryType,
 			Datasource: DataSourceRef{
-				Type: ref.Get("type").MustString(),
-				UID:  ref.Get("uid").MustString(),
+				Type: q.DataSource.Type,
+				UID:  q.DataSource.Uid,
 			},
 			TimeRange: TimeRange{
 				From: query.TimeRange.GetFromAsTimeUTC(),

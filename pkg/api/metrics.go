@@ -44,7 +44,8 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		}
 		if q.isExpr {
 			hasExpression = true
-		} else if q.ds == nil {
+		}
+		if q.ds == nil {
 			return response.Error(http.StatusBadRequest, "Datasource not found for query", nil)
 		} else {
 			if prevUID != "" && prevUID != q.ds.Uid {
@@ -71,7 +72,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			IntervalMS:    info.query.Get("intervalMs").MustInt64(1000),
 			QueryType:     info.query.Get("queryType").MustString(""),
 			Model:         info.query, // includes full datasource info for expressions
-			DataSource:    ds,
+			DataSource:    info.ds,
 		})
 	}
 
@@ -120,6 +121,7 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 	switch uid {
 	case expr.DatasourceUID:
 		info.isExpr = true
+		info.ds = expr.DataSourceModel((c.OrgId))
 		return
 	case grafanads.DatasourceUID:
 		info.ds = grafanads.DataSourceModel(c.OrgId)
@@ -137,6 +139,7 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 	// Support legacy requets from before 8.3
 	if query.Get("datasource").MustString() == expr.DatasourceType {
 		info.isExpr = true
+		info.ds = expr.DataSourceModel((c.OrgId))
 		return
 	}
 
