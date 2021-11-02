@@ -350,7 +350,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               <Button
                 variant="secondary"
                 aria-label="Load volume button"
-                title="Execute a query to show full range logs volume"
+                title="Execute a query to show full range log volume"
                 onClick={onClickLoadLogsVolume}
                 icon="graph-bar"
                 className={styles.headerButton}

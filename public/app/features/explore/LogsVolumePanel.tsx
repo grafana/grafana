@@ -32,7 +32,7 @@ export function LogsVolumePanel(props: Props) {
       </Alert>
     );
   } else if (logsVolumeData?.state === LoadingState.Loading) {
-    LogsVolumePanelContent = <span>Logs volume is loading...</span>;
+    LogsVolumePanelContent = <span>Log volume is loading...</span>;
   } else if (logsVolumeData?.data) {
     if (logsVolumeData.data.length > 0) {
       LogsVolumePanelContent = (
@@ -60,14 +60,14 @@ export function LogsVolumePanel(props: Props) {
   if (zoomRatio !== undefined && zoomRatio < 1) {
     zoomLevelInfo = (
       <>
-        <span className={styles.zoomInfo}>Reload logs volume</span>
+        <span className={styles.zoomInfo}>Reload log volume</span>
         <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} />
       </>
     );
   }
 
   return (
-    <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
+    <Collapse label="Log volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
       <div style={{ height }} className={styles.contentContainer}>
         {LogsVolumePanelContent}
       </div>
