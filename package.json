@@ -46,16 +46,12 @@
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check"
+    "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check",
+    "postinstall": "husky install"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-2/",
     "releaseNotesUrl": "https://grafana.com/docs/grafana/next/release-notes/"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn run precommit"
-    }
   },
   "lint-staged": {
     "*.{js,ts,tsx}": [
@@ -183,7 +179,7 @@
     "html-webpack-harddisk-plugin": "2.0.0",
     "html-webpack-plugin": "5.3.2",
     "http-server": "13.0.1",
-    "husky": "4.2.1",
+    "husky": "^7.0.0",
     "iconscout-unicons-tarball": "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28",
     "jest": "26.6.3",
     "jest-canvas-mock": "2.3.0",
