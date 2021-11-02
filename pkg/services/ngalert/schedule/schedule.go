@@ -395,13 +395,12 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 			// unregister and stop routines of the deleted alert rules
 			for key := range registeredDefinitions {
-				ruleInfo, err := sch.registry.get(key)
-				if err != nil {
-					sch.log.Error("failed to get alert rule routine information", "err", err)
+				ruleInfo, ok := sch.registry.del(key)
+				if !ok {
+					sch.log.Error("unable to delete alert rule routine information because it did not exist", "uid", key.UID, "org_id", key.OrgID)
 					continue
 				}
 				ruleInfo.stopCh <- struct{}{}
-				sch.registry.del(key)
 			}
 		case <-ctx.Done():
 			waitErr := dispatcherGroup.Wait()
@@ -618,11 +617,17 @@ func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
 	return ok
 }
 
-func (r *alertRuleRegistry) del(key models.AlertRuleKey) {
+// del removes pair that has specific key from alertRuleInfo.
+// Returns 2-tuple where first element is value of the removed pair
+// and the second element indicates whether element with the specified key existed.
+func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-
-	delete(r.alertRuleInfo, key)
+	info, ok := r.alertRuleInfo[key]
+	if ok {
+		delete(r.alertRuleInfo, key)
+	}
+	return info, ok
 }
 
 func (r *alertRuleRegistry) iter() <-chan models.AlertRuleKey {
