@@ -29,7 +29,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
-	r, err := s.createRequest(ctx, req.PluginContext, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries"), nil)
+	r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries"), nil)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil

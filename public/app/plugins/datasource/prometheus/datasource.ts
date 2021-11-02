@@ -811,7 +811,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
-          datasource: this.name,
+          datasource: this.getRef(),
           expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };

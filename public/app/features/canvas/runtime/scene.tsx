@@ -7,13 +7,7 @@ import Selecto from 'selecto';
 import { config } from 'app/core/config';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
-import {
-  Anchor,
-  CanvasElementOptions,
-  CanvasGroupOptions,
-  DEFAULT_CANVAS_ELEMENT_CONFIG,
-  Placement,
-} from 'app/features/canvas';
+import { Anchor, CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG, Placement } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
   ResourceDimensionConfig,
@@ -31,7 +25,6 @@ import { ElementState } from './element';
 import { RootElement } from './root';
 
 export class Scene {
-  private lookup = new Map<number, ElementState>();
   styles = getStyles(config.theme2);
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
@@ -56,18 +49,15 @@ export class Scene {
         type: 'group',
         elements: [DEFAULT_CANVAS_ELEMENT_CONFIG],
       },
+      this,
       this.save // callback when changes are made
     );
 
-    // Build the scene registry
-    this.lookup.clear();
-    this.root.visit((v) => {
-      this.lookup.set(v.UID, v);
-    });
-
     setTimeout(() => {
-      if (this.div && enableEditing) {
-        this.initMoveable();
+      if (this.div) {
+        // If editing is enabled, clear selecto instance
+        const destroySelecto = enableEditing;
+        this.initMoveable(destroySelecto, enableEditing);
       }
     }, 100);
     return this.root;
@@ -92,20 +82,13 @@ export class Scene {
     this.root.updateSize(width, height);
 
     if (this.selecto?.getSelectedTargets().length) {
-      let event: MouseEvent = new MouseEvent('click');
-      this.selecto.clickTarget(event, this.div);
+      this.clearCurrentSelection();
     }
   }
 
-  onChange(uid: number, cfg: CanvasElementOptions) {
-    const elem = this.lookup.get(uid);
-    if (!elem) {
-      throw new Error('element not found: ' + uid + ' // ' + [...this.lookup.keys()]);
-    }
-    this.revId++;
-    elem.onChange(cfg);
-    elem.updateData(this.context); // Refresh any data that may have changed
-    this.save();
+  clearCurrentSelection() {
+    let event: MouseEvent = new MouseEvent('click');
+    this.selecto?.clickTarget(event, this.div);
   }
 
   toggleAnchor(element: ElementState, k: keyof Anchor) {
@@ -157,11 +140,15 @@ export class Scene {
     this.div = sceneContainer;
   };
 
-  initMoveable = () => {
+  initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);
     });
+
+    if (destroySelecto) {
+      this.selecto?.destroy();
+    }
 
     this.selecto = new Selecto({
       container: this.div,
@@ -170,8 +157,9 @@ export class Scene {
     });
 
     const moveable = new Moveable(this.div!, {
-      draggable: true,
-      resizable: true,
+      draggable: allowChanges,
+      resizable: allowChanges,
+      origin: false,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
@@ -187,6 +175,14 @@ export class Scene {
           targetedElement!.applyDrag(event);
         });
         this.moved.next(Date.now()); // TODO only on end
+      })
+      .on('dragEnd', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement && targetedElement.parent) {
+          const parent = targetedElement.parent;
+          targetedElement.updateSize(parent.width, parent.height);
+        }
       })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -219,7 +215,6 @@ export class Scene {
 
       const s = event.selected.map((t) => this.findElementByTarget(t)!);
       this.selection.next(s);
-      console.log('UPDATE selection', s);
 
       if (event.isDragStart) {
         event.inputEvent.preventDefault();

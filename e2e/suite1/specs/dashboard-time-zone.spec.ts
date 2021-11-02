@@ -1,5 +1,14 @@
 import { e2e } from '@grafana/e2e';
-import { addDays, addHours, differenceInCalendarDays, differenceInMinutes, format, isBefore, parse } from 'date-fns';
+import {
+  addDays,
+  addHours,
+  differenceInCalendarDays,
+  differenceInMinutes,
+  format,
+  isBefore,
+  parseISO,
+  toDate,
+} from 'date-fns';
 
 e2e.scenario({
   describeName: 'Dashboard time zone support',
@@ -79,13 +88,13 @@ const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => 
     return false;
   }
 
-  const reference = format(new Date(), 'YYYY-MM-DD');
+  const reference = format(new Date(), 'yyyy-LL-dd');
 
-  const utcDate = parse(`${reference} ${inUtc}`);
-  const utcDateWithOffset = addHours(parse(`${reference} ${inUtc}`), offset);
+  const utcDate = toDate(parseISO(`${reference} ${inUtc}`));
+  const utcDateWithOffset = addHours(toDate(parseISO(`${reference} ${inUtc}`)), offset);
   const dayDifference = differenceInCalendarDays(utcDate, utcDateWithOffset); // if the utcDate +/- offset is the day before/after then we need to adjust reference
   const dayOffset = isBefore(utcDateWithOffset, utcDate) ? dayDifference * -1 : dayDifference;
-  const tzDate = addDays(parse(`${reference} ${inTz}`), dayOffset); // adjust tzDate with any dayOffset
+  const tzDate = addDays(toDate(parseISO(`${reference} ${inTz}`)), dayOffset); // adjust tzDate with any dayOffset
   const diff = Math.abs(differenceInMinutes(utcDate, tzDate)); // use Math.abs if tzDate is in future
 
   return diff <= Math.abs(offset * 60);

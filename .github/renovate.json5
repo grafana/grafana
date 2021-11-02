@@ -8,7 +8,7 @@
     "@types/d3-force",
     "d3",
     "d3-force", // we should bump this once we move to esm modules
-    "husky",
+    "globby", // we should bump this once we move to esm modules
     "slate",
     "slate-plain-serializer",
     "systemjs",

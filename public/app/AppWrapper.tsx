@@ -89,7 +89,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     navigationLogger('AppWrapper', false, 'rendering');
 
     // @ts-ignore
-    const appSeed = `<grafana-app ng-cloak></app-notifications-list><div id="ngRoot"></div></grafana-app>`;
+    const appSeed = `<grafana-app ng-cloak></app-notifications-list></grafana-app>`;
 
     return (
       <Provider store={store}>
@@ -105,12 +105,15 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                       {pageBanners.map((Banner, index) => (
                         <Banner key={index.toString()} />
                       ))}
+
                       <div
+                        id="ngRoot"
                         ref={this.container}
                         dangerouslySetInnerHTML={{
                           __html: appSeed,
                         }}
                       />
+
                       <AppNotificationList />
                       <SearchWrapper />
                       {this.state.ngInjector && this.container && this.renderRoutes()}

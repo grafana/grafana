@@ -45,12 +45,12 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
   /** The default width/height to use when adding  */
   defaultSize?: Placement;
 
-  defaultConfig: TConfig;
-
   prepareData?: (ctx: DimensionContext, cfg: TConfig) => TData;
 
   /** Component used to draw */
   display: ComponentType<CanvasElementProps<TConfig, TData>>;
+
+  getNewOptions: (options?: CanvasElementOptions) => Omit<CanvasElementOptions<TConfig>, 'type'>;
 
   /** Build the configuraiton UI */
   registerOptionsUI?: PanelOptionsSupplier<CanvasElementOptions<TConfig>>;
