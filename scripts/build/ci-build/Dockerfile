@@ -113,8 +113,8 @@ FROM debian:stretch-20210208
 ENV GOVERSION=1.17 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=14.17.6-1nodesource1 \
-    YARNVERSION=3.1.0-rc.5
+    NODEVERSION=14.18.1-1nodesource1 \
+    YARNVERSION=1.22.15-1
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive

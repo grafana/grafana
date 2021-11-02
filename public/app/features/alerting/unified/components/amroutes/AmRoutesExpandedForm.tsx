@@ -79,6 +79,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                                 className={styles.matchersOperator}
                                 onChange={(value) => onChange(value?.value)}
                                 options={matcherFieldOptions}
+                                aria-label="Operator"
                               />
                             )}
                             defaultValue={field.operator}
@@ -127,11 +128,12 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
                 <Select
-                  menuShouldPortal
+                  aria-label="Contact point"
                   {...field}
                   className={formStyles.input}
                   onChange={(value) => onChange(mapSelectValueToString(value))}
                   options={receivers}
+                  menuShouldPortal
                 />
               )}
               control={control}
@@ -139,10 +141,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             />
           </Field>
           <Field label="Continue matching subsequent sibling nodes">
-            <Switch {...register('continue')} />
+            <Switch id="continue-toggle" {...register('continue')} />
           </Field>
           <Field label="Override grouping">
             <Switch
+              id="override-grouping-toggle"
               value={overrideGrouping}
               onChange={() => setOverrideGrouping((overrideGrouping) => !overrideGrouping)}
             />
@@ -152,6 +155,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               <InputControl
                 render={({ field: { onChange, ref, ...field } }) => (
                   <MultiSelect
+                    aria-label="Group by"
                     menuShouldPortal
                     {...field}
                     allowCustomValue
@@ -173,6 +177,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
           )}
           <Field label="Override general timings">
             <Switch
+              id="override-timings-toggle"
               value={overrideTimings}
               onChange={() => setOverrideTimings((overrideTimings) => !overrideTimings)}
             />
@@ -189,7 +194,13 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
+                        <Input
+                          {...field}
+                          className={formStyles.smallInput}
+                          invalid={invalid}
+                          placeholder="Time"
+                          aria-label="Group wait value"
+                        />
                       )}
                       control={control}
                       name="groupWaitValue"
@@ -205,6 +216,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           className={formStyles.input}
                           onChange={(value) => onChange(mapSelectValueToString(value))}
                           options={timeOptions}
+                          aria-label="Group wait type"
                         />
                       )}
                       control={control}
@@ -223,7 +235,13 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
+                        <Input
+                          {...field}
+                          className={formStyles.smallInput}
+                          invalid={invalid}
+                          placeholder="Time"
+                          aria-label="Group interval value"
+                        />
                       )}
                       control={control}
                       name="groupIntervalValue"
@@ -239,6 +257,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           className={formStyles.input}
                           onChange={(value) => onChange(mapSelectValueToString(value))}
                           options={timeOptions}
+                          aria-label="Group interval type"
                         />
                       )}
                       control={control}
@@ -257,7 +276,13 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
+                        <Input
+                          {...field}
+                          className={formStyles.smallInput}
+                          invalid={invalid}
+                          placeholder="Time"
+                          aria-label="Repeat interval value"
+                        />
                       )}
                       control={control}
                       name="repeatIntervalValue"
@@ -274,6 +299,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           menuPlacement="top"
                           onChange={(value) => onChange(mapSelectValueToString(value))}
                           options={timeOptions}
+                          aria-label="Repeat interval type"
                         />
                       )}
                       control={control}

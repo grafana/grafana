@@ -1,6 +1,6 @@
 import React from 'react';
 import angular from 'angular';
-import { find, isEmpty, isString, set } from 'lodash';
+import { find, findLast, isEmpty, isString, set } from 'lodash';
 import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
 import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
 import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
@@ -446,9 +446,11 @@ export class CloudWatchDatasource
           return { data: [] };
         }
 
+        const lastError = findLast(res.results, (v) => !!v.error);
+
         return {
           data: dataframes,
-          error: Object.values(res.results).reduce((acc, curr) => (curr.error ? { message: curr.error } : acc), null),
+          error: lastError ? { message: lastError.error } : null,
         };
       }),
       catchError((err) => {

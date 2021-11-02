@@ -245,7 +245,7 @@ func TestUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = SavePreferences(&models.SavePreferencesCommand{
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{
 			UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark",
 		})
 		require.Nil(t, err)
@@ -267,7 +267,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Len(t, permQuery.Result, 0)
 
 		prefsQuery := &models.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[1].Id}
-		err = GetPreferences(prefsQuery)
+		err = ss.GetPreferences(context.Background(), prefsQuery)
 		require.Nil(t, err)
 
 		require.EqualValues(t, prefsQuery.Result.OrgId, 0)
@@ -296,7 +296,7 @@ func TestUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = SavePreferences(&models.SavePreferencesCommand{
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{
 			UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark",
 		})
 		require.Nil(t, err)
@@ -353,7 +353,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Len(t, permQuery.Result, 0)
 
 		prefsQuery = &models.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[1].Id}
-		err = GetPreferences(prefsQuery)
+		err = ss.GetPreferences(context.Background(), prefsQuery)
 		require.Nil(t, err)
 
 		require.EqualValues(t, prefsQuery.Result.OrgId, 0)
