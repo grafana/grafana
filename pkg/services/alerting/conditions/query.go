@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 
 	gocontext "context"

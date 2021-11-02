@@ -4,14 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/validations"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +30,7 @@ func TestQueryInterval(t *testing.T) {
 				// 5minutes timerange = 300000milliseconds; default-resolution is 1500pixels,
 				// so we should have 300000/1500 = 200milliseconds here
 				require.Equal(t, int64(200), query.IntervalMS)
-				require.Equal(t, interval.DefaultRes, query.MaxDataPoints)
+				require.Equal(t, intervalv2.DefaultRes, query.MaxDataPoints)
 			}
 
 			applyScenario(t, timeRange, dataSourceJson, queryModel, verifier)
@@ -47,7 +46,7 @@ func TestQueryInterval(t *testing.T) {
 
 			verifier := func(query plugins.DataSubQuery) {
 				require.Equal(t, int64(123000), query.IntervalMS)
-				require.Equal(t, interval.DefaultRes, query.MaxDataPoints)
+				require.Equal(t, intervalv2.DefaultRes, query.MaxDataPoints)
 			}
 
 			applyScenario(t, timeRange, dataSourceJson, queryModel, verifier)
@@ -66,7 +65,7 @@ func TestQueryInterval(t *testing.T) {
 
 			verifier := func(query plugins.DataSubQuery) {
 				require.Equal(t, int64(71000), query.IntervalMS)
-				require.Equal(t, interval.DefaultRes, query.MaxDataPoints)
+				require.Equal(t, intervalv2.DefaultRes, query.MaxDataPoints)
 			}
 
 			applyScenario(t, timeRange, dataSourceJson, queryModel, verifier)
@@ -87,7 +86,7 @@ func TestQueryInterval(t *testing.T) {
 				// when both panel-min-interval and datasource-min-interval exists,
 				// panel-min-interval is used
 				require.Equal(t, int64(19000), query.IntervalMS)
-				require.Equal(t, interval.DefaultRes, query.MaxDataPoints)
+				require.Equal(t, intervalv2.DefaultRes, query.MaxDataPoints)
 			}
 
 			applyScenario(t, timeRange, dataSourceJson, queryModel, verifier)
@@ -106,7 +105,7 @@ func TestQueryInterval(t *testing.T) {
 				// no min-interval exists, the default-min-interval will be used,
 				// and for such a short time-range this will cause the value to be 1millisecond.
 				require.Equal(t, int64(1), query.IntervalMS)
-				require.Equal(t, interval.DefaultRes, query.MaxDataPoints)
+				require.Equal(t, intervalv2.DefaultRes, query.MaxDataPoints)
 			}
 
 			applyScenario(t, timeRange, dataSourceJson, queryModel, verifier)
