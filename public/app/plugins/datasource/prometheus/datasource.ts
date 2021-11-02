@@ -1,5 +1,5 @@
 import { cloneDeep, defaults } from 'lodash';
-import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError, switchMap } from 'rxjs';
+import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import LRU from 'lru-cache';
 import {
@@ -37,7 +37,6 @@ import { getInitHints, getQueryHints } from './query_hints';
 import { getOriginalMetricName, renderTemplate, transform, transformV2 } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
-  isFetchErrorResponse,
   PromDataErrorResponse,
   PromDataSuccessResponse,
   PromExemplarData,
@@ -60,7 +59,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   editorSrc: string;
   ruleMappings: { [index: string]: string };
   url: string;
-  id: string;
+  id: number;
   directUrl: string;
   access: 'direct' | 'proxy';
   basicAuth: any;
@@ -719,7 +718,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     const timeValueTuple: Array<[number, number]> = [];
 
     let idx = 0;
-    valueField.values.forEach((value) => {
+    valueField.values.toArray().forEach((value: string) => {
       let timeStampValue: number;
       let valueValue: number;
       const time = timeField.values.get(idx);

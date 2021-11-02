@@ -9,7 +9,6 @@ import {
   getFieldDisplayName,
   LoadingState,
   toDataFrame,
-  MutableDataFrame,
 } from '@grafana/data';
 
 import {
