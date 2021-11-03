@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -11,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -174,5 +177,793 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 				assert.Equal(t, testUserLogin, resp[0].Login)
 				assert.Equal(t, "user2", resp[1].Login)
 			})
+	})
+}
+
+var (
+	testServerAdminViewer = models.SignedInUser{
+		UserId:         1,
+		OrgId:          1,
+		OrgName:        "TestOrg1",
+		OrgRole:        models.ROLE_VIEWER,
+		Login:          "testServerAdmin",
+		Name:           "testServerAdmin",
+		Email:          "testServerAdmin@example.org",
+		OrgCount:       2,
+		IsGrafanaAdmin: true,
+		IsAnonymous:    false,
+	}
+
+	testAdminOrg2 = models.SignedInUser{
+		UserId:         2,
+		OrgId:          2,
+		OrgName:        "TestOrg2",
+		OrgRole:        models.ROLE_ADMIN,
+		Login:          "testAdmin",
+		Name:           "testAdmin",
+		Email:          "testAdmin@example.org",
+		OrgCount:       1,
+		IsGrafanaAdmin: false,
+		IsAnonymous:    false,
+	}
+
+	testEditorOrg1 = models.SignedInUser{
+		UserId:         3,
+		OrgId:          1,
+		OrgName:        "TestOrg1",
+		OrgRole:        models.ROLE_EDITOR,
+		Login:          "testEditor",
+		Name:           "testEditor",
+		Email:          "testEditor@example.org",
+		OrgCount:       1,
+		IsGrafanaAdmin: false,
+		IsAnonymous:    false,
+	}
+)
+
+// setupOrgUsersDBForAccessControlTests creates three users placed in two orgs
+// Org1: testServerAdminViewer, testEditorOrg1
+// Org2: testServerAdminViewer, testAdminOrg2
+func setupOrgUsersDBForAccessControlTests(t *testing.T, db sqlstore.SQLStore) {
+	t.Helper()
+
+	var err error
+
+	_, err = db.CreateUser(context.Background(), models.CreateUserCommand{Email: testServerAdminViewer.Email, SkipOrgSetup: true, Login: testServerAdminViewer.Login})
+	require.NoError(t, err)
+	_, err = db.CreateUser(context.Background(), models.CreateUserCommand{Email: testAdminOrg2.Email, SkipOrgSetup: true, Login: testAdminOrg2.Login})
+	require.NoError(t, err)
+	_, err = db.CreateUser(context.Background(), models.CreateUserCommand{Email: testEditorOrg1.Email, SkipOrgSetup: true, Login: testEditorOrg1.Login})
+	require.NoError(t, err)
+
+	// Create both orgs with server admin
+	_, err = db.CreateOrgWithMember(testServerAdminViewer.OrgName, testServerAdminViewer.UserId)
+	require.NoError(t, err)
+	_, err = db.CreateOrgWithMember(testAdminOrg2.OrgName, testServerAdminViewer.UserId)
+	require.NoError(t, err)
+
+	err = sqlstore.AddOrgUser(&models.AddOrgUserCommand{LoginOrEmail: testAdminOrg2.Login, Role: testAdminOrg2.OrgRole, OrgId: testAdminOrg2.OrgId, UserId: testAdminOrg2.UserId})
+	require.NoError(t, err)
+	err = sqlstore.AddOrgUser(&models.AddOrgUserCommand{LoginOrEmail: testEditorOrg1.Login, Role: testEditorOrg1.OrgRole, OrgId: testEditorOrg1.OrgId, UserId: testEditorOrg1.UserId})
+	require.NoError(t, err)
+}
+
+// resetOrgUsersDefaultHandlers resets the handlers that the other test removes (with loggedInUserScenario)
+func resetOrgUsersDefaultHandlers(t *testing.T) {
+	t.Helper()
+
+	bus.ClearBusHandlers()
+	t.Cleanup(func() { bus.ClearBusHandlers() })
+	bus.AddHandler("sql", sqlstore.AddOrgUser)
+	bus.AddHandler("sql", sqlstore.GetUserByLogin)
+	bus.AddHandler("sql", sqlstore.GetOrgUsers)
+	bus.AddHandler("sql", sqlstore.UpdateOrgUser)
+	bus.AddHandler("sql", sqlstore.RemoveOrgUser)
+}
+
+func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
+	var err error
+	// Use real accesscontrol service
+	sc := setupHTTPServer(t, false, true)
+	resetOrgUsersDefaultHandlers(t)
+	setupOrgUsersDBForAccessControlTests(t, *sc.db)
+
+	url := "/api/orgs/%v/users/"
+	t.Run("server admin can get users in his org", func(t *testing.T) {
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, testServerAdminViewer.OrgId), nil, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		var userList []*models.OrgUserDTO
+		err = json.NewDecoder(response.Body).Decode(&userList)
+		require.NoError(t, err)
+
+		assert.Len(t, userList, 2)
+	})
+	t.Run("server admin can get users in another org", func(t *testing.T) {
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, 2), nil, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		var userList []*models.OrgUserDTO
+		err = json.NewDecoder(response.Body).Decode(&userList)
+		require.NoError(t, err)
+
+		assert.Len(t, userList, 2)
+	})
+	t.Run("org admin can get users in his org", func(t *testing.T) {
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, testAdminOrg2.OrgId), nil, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		var userList []*models.OrgUserDTO
+		err = json.NewDecoder(response.Body).Decode(&userList)
+		require.NoError(t, err)
+
+		assert.Len(t, userList, 2)
+	})
+	t.Run("org admin cannot get users from another org", func(t *testing.T) {
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, 1), nil, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestGetOrgUsersAPIEndpoint_LegacyAccessControl(t *testing.T) {
+	var err error
+	// Use legacy accesscontrol
+	sc := setupHTTPServer(t, false, false)
+	resetOrgUsersDefaultHandlers(t)
+	setupOrgUsersDBForAccessControlTests(t, *sc.db)
+
+	url := "/api/orgs/%v/users/"
+	t.Run("server admin can get users in his org", func(t *testing.T) {
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, testServerAdminViewer.OrgId), nil, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		var userList []*models.OrgUserDTO
+		err = json.NewDecoder(response.Body).Decode(&userList)
+		require.NoError(t, err)
+
+		assert.Len(t, userList, 2)
+	})
+	t.Run("server admin can get users in another org", func(t *testing.T) {
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, 2), nil, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		var userList []*models.OrgUserDTO
+		err = json.NewDecoder(response.Body).Decode(&userList)
+		require.NoError(t, err)
+
+		assert.Len(t, userList, 2)
+	})
+	t.Run("org admin cannot get users in his org", func(t *testing.T) {
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, testAdminOrg2.OrgId), nil, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+	t.Run("org admin cannot get users from another org", func(t *testing.T) {
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, 1), nil, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
+	var err error
+	// Use real accesscontrol service
+	sc := setupHTTPServer(t, false, true)
+	resetOrgUsersDefaultHandlers(t)
+	setupOrgUsersDBForAccessControlTests(t, *sc.db)
+
+	url := "/api/orgs/%v/users/"
+	t.Run("server admin can add users to his org", func(t *testing.T) {
+		// Remove user after test
+		t.Cleanup(func() {
+			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testAdminOrg2.UserId, OrgId: testServerAdminViewer.OrgId})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`)
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, testServerAdminViewer.OrgId), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "User added to organization", result["message"])
+		require.Contains(t, result, "userId")
+		assert.EqualValuesf(t, testAdminOrg2.UserId, result["userId"], "userId %v differs from expected", result["userId"])
+
+		getUsersQuery := models.GetOrgUsersQuery{OrgId: testServerAdminViewer.OrgId}
+		err = sqlstore.GetOrgUsers(&getUsersQuery)
+		require.NoError(t, err)
+		assert.Len(t, getUsersQuery.Result, 3)
+	})
+	t.Run("server admin can add users to another org", func(t *testing.T) {
+		// Remove user after test
+		t.Cleanup(func() {
+			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testEditorOrg1.UserId, OrgId: 2})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`)
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, 2), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "User added to organization", result["message"])
+		require.Contains(t, result, "userId")
+		assert.EqualValuesf(t, testEditorOrg1.UserId, result["userId"], "userId %v differs from expected", result["userId"])
+
+		getUsersQuery := models.GetOrgUsersQuery{OrgId: 2}
+		err = sqlstore.GetOrgUsers(&getUsersQuery)
+		require.NoError(t, err)
+		assert.Len(t, getUsersQuery.Result, 3)
+	})
+	t.Run("org admin can add users to his org", func(t *testing.T) {
+		// Remove user after test
+		t.Cleanup(func() {
+			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testEditorOrg1.UserId, OrgId: testAdminOrg2.OrgId})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`)
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, testAdminOrg2.OrgId), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "User added to organization", result["message"])
+		require.Contains(t, result, "userId")
+		assert.EqualValuesf(t, testEditorOrg1.UserId, result["userId"], "userId %v differs from expected", result["userId"])
+
+		getUsersQuery := models.GetOrgUsersQuery{OrgId: testAdminOrg2.OrgId}
+		err = sqlstore.GetOrgUsers(&getUsersQuery)
+		require.NoError(t, err)
+		assert.Len(t, getUsersQuery.Result, 3)
+	})
+	t.Run("org admin cannot add users to another org", func(t *testing.T) {
+		// Remove user after test
+		t.Cleanup(func() {
+			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testAdminOrg2.UserId, OrgId: 1})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`)
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, 1), input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestPostOrgUsersAPIEndpoint_LegacyAccessControl(t *testing.T) {
+	var err error
+	// Use legacy accesscontrol
+	sc := setupHTTPServer(t, false, false)
+	resetOrgUsersDefaultHandlers(t)
+	setupOrgUsersDBForAccessControlTests(t, *sc.db)
+
+	url := "/api/orgs/%v/users/"
+	t.Run("server admin can add users to his org", func(t *testing.T) {
+		// Remove user after test
+		t.Cleanup(func() {
+			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testAdminOrg2.UserId, OrgId: testServerAdminViewer.OrgId})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`)
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, testServerAdminViewer.OrgId), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "User added to organization", result["message"])
+		require.Contains(t, result, "userId")
+		assert.EqualValuesf(t, testAdminOrg2.UserId, result["userId"], "userId %v differs from expected", result["userId"])
+
+		getUsersQuery := models.GetOrgUsersQuery{OrgId: testServerAdminViewer.OrgId}
+		err = sqlstore.GetOrgUsers(&getUsersQuery)
+		require.NoError(t, err)
+		assert.Len(t, getUsersQuery.Result, 3)
+	})
+	t.Run("server admin can add users to another org", func(t *testing.T) {
+		// Remove user after test
+		t.Cleanup(func() {
+			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testEditorOrg1.UserId, OrgId: 2})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`)
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, 2), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "User added to organization", result["message"])
+		require.Contains(t, result, "userId")
+		assert.EqualValuesf(t, testEditorOrg1.UserId, result["userId"], "userId %v differs from expected", result["userId"])
+
+		getUsersQuery := models.GetOrgUsersQuery{OrgId: 2}
+		err = sqlstore.GetOrgUsers(&getUsersQuery)
+		require.NoError(t, err)
+		assert.Len(t, getUsersQuery.Result, 3)
+	})
+	t.Run("org admin cannot add users to his org", func(t *testing.T) {
+		// Remove user after test
+		t.Cleanup(func() {
+			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testEditorOrg1.UserId, OrgId: testAdminOrg2.OrgId})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`)
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, testAdminOrg2.OrgId), input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+	t.Run("org admin cannot add users to another org", func(t *testing.T) {
+		// Remove user after test
+		t.Cleanup(func() {
+			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testAdminOrg2.UserId, OrgId: 1})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`)
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, 1), input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
+	var err error
+	// Use real accesscontrol service
+	sc := setupHTTPServer(t, false, true)
+	resetOrgUsersDefaultHandlers(t)
+	setupOrgUsersDBForAccessControlTests(t, *sc.db)
+
+	url := "/api/orgs/%v/users/%v"
+	t.Run("server admin can update users in his org", func(t *testing.T) {
+		// Reset user's role after test
+		t.Cleanup(func() {
+			_ = sqlstore.UpdateOrgUser(&models.UpdateOrgUserCommand{
+				Role:   testEditorOrg1.OrgRole,
+				UserId: testEditorOrg1.UserId,
+				OrgId:  testServerAdminViewer.OrgId,
+			})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"role": "Viewer"}`)
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodPatch, fmt.Sprintf(url, testServerAdminViewer.OrgId, testEditorOrg1.UserId), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "Organization user updated", result["message"])
+
+		getUserQuery := models.GetSignedInUserQuery{
+			UserId: testEditorOrg1.UserId,
+			OrgId:  testServerAdminViewer.OrgId,
+		}
+		err = sqlstore.GetSignedInUser(context.TODO(), &getUserQuery)
+		require.NoError(t, err)
+		assert.Equal(t, models.ROLE_VIEWER, getUserQuery.Result.OrgRole)
+	})
+	t.Run("server admin can update users in another org", func(t *testing.T) {
+		// Reset user's role after test
+		t.Cleanup(func() {
+			_ = sqlstore.UpdateOrgUser(&models.UpdateOrgUserCommand{
+				Role:   testServerAdminViewer.OrgRole,
+				UserId: testServerAdminViewer.UserId,
+				OrgId:  2,
+			})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"role": "Editor"}`)
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodPatch, fmt.Sprintf(url, 2, testServerAdminViewer.UserId), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "Organization user updated", result["message"])
+
+		getUserQuery := models.GetSignedInUserQuery{
+			UserId: testServerAdminViewer.UserId,
+			OrgId:  2,
+		}
+		err = sqlstore.GetSignedInUser(context.TODO(), &getUserQuery)
+		require.NoError(t, err)
+		assert.Equal(t, models.ROLE_EDITOR, getUserQuery.Result.OrgRole)
+	})
+	t.Run("org admin can update users in his org", func(t *testing.T) {
+		// Reset user's role after test
+		t.Cleanup(func() {
+			_ = sqlstore.UpdateOrgUser(&models.UpdateOrgUserCommand{
+				Role:   testServerAdminViewer.OrgRole,
+				UserId: testServerAdminViewer.UserId,
+				OrgId:  testAdminOrg2.OrgId,
+			})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"role": "Editor"}`)
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodPatch, fmt.Sprintf(url, testAdminOrg2.OrgId, testServerAdminViewer.UserId), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "Organization user updated", result["message"])
+
+		getUserQuery := models.GetSignedInUserQuery{
+			UserId: testServerAdminViewer.UserId,
+			OrgId:  testAdminOrg2.OrgId,
+		}
+		err = sqlstore.GetSignedInUser(context.TODO(), &getUserQuery)
+		require.NoError(t, err)
+		assert.Equal(t, models.ROLE_EDITOR, getUserQuery.Result.OrgRole)
+	})
+	t.Run("org admin cannot update users in another org", func(t *testing.T) {
+		// Reset user's role after test
+		t.Cleanup(func() {
+			_ = sqlstore.UpdateOrgUser(&models.UpdateOrgUserCommand{
+				Role:   testServerAdminViewer.OrgRole,
+				UserId: testServerAdminViewer.UserId,
+				OrgId:  1,
+			})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"role": "Editor"}`)
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodPatch, fmt.Sprintf(url, 1, testServerAdminViewer.UserId), input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestPatchOrgUsersAPIEndpoint_LegacyAccessControl(t *testing.T) {
+	var err error
+	// Use legacy accesscontrol
+	sc := setupHTTPServer(t, false, false)
+	resetOrgUsersDefaultHandlers(t)
+	setupOrgUsersDBForAccessControlTests(t, *sc.db)
+
+	url := "/api/orgs/%v/users/%v"
+	t.Run("server admin can update users in his org", func(t *testing.T) {
+		// Reset user's role after test
+		t.Cleanup(func() {
+			_ = sqlstore.UpdateOrgUser(&models.UpdateOrgUserCommand{
+				Role:   testEditorOrg1.OrgRole,
+				UserId: testEditorOrg1.UserId,
+				OrgId:  testServerAdminViewer.OrgId,
+			})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"role": "Viewer"}`)
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodPatch, fmt.Sprintf(url, testServerAdminViewer.OrgId, testEditorOrg1.UserId), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "Organization user updated", result["message"])
+
+		getUserQuery := models.GetSignedInUserQuery{
+			UserId: testEditorOrg1.UserId,
+			OrgId:  testServerAdminViewer.OrgId,
+		}
+		err = sqlstore.GetSignedInUser(context.TODO(), &getUserQuery)
+		require.NoError(t, err)
+		assert.Equal(t, models.ROLE_VIEWER, getUserQuery.Result.OrgRole)
+	})
+	t.Run("server admin can update users in another org", func(t *testing.T) {
+		// Reset user's role after test
+		t.Cleanup(func() {
+			_ = sqlstore.UpdateOrgUser(&models.UpdateOrgUserCommand{
+				Role:   testServerAdminViewer.OrgRole,
+				UserId: testServerAdminViewer.UserId,
+				OrgId:  2,
+			})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"role": "Editor"}`)
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodPatch, fmt.Sprintf(url, 2, testServerAdminViewer.UserId), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "Organization user updated", result["message"])
+
+		getUserQuery := models.GetSignedInUserQuery{
+			UserId: testServerAdminViewer.UserId,
+			OrgId:  2,
+		}
+		err = sqlstore.GetSignedInUser(context.TODO(), &getUserQuery)
+		require.NoError(t, err)
+		assert.Equal(t, models.ROLE_EDITOR, getUserQuery.Result.OrgRole)
+	})
+	t.Run("org admin cannot update users in his org", func(t *testing.T) {
+		// Reset user's role after test
+		t.Cleanup(func() {
+			_ = sqlstore.UpdateOrgUser(&models.UpdateOrgUserCommand{
+				Role:   testServerAdminViewer.OrgRole,
+				UserId: testServerAdminViewer.UserId,
+				OrgId:  testAdminOrg2.OrgId,
+			})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"role": "Editor"}`)
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodPatch, fmt.Sprintf(url, testAdminOrg2.OrgId, testServerAdminViewer.UserId), input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+	t.Run("org admin cannot update users in another org", func(t *testing.T) {
+		// Reset user's role after test
+		t.Cleanup(func() {
+			_ = sqlstore.UpdateOrgUser(&models.UpdateOrgUserCommand{
+				Role:   testServerAdminViewer.OrgRole,
+				UserId: testServerAdminViewer.UserId,
+				OrgId:  1,
+			})
+		})
+
+		// Perform request
+		input := strings.NewReader(`{"role": "Editor"}`)
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodPatch, fmt.Sprintf(url, 1, testServerAdminViewer.UserId), input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
+	var err error
+	// Use real accesscontrol service
+	sc := setupHTTPServer(t, false, true)
+	resetOrgUsersDefaultHandlers(t)
+	setupOrgUsersDBForAccessControlTests(t, *sc.db)
+
+	url := "/api/orgs/%v/users/%v"
+	t.Run("server admin can delete users from his org", func(t *testing.T) {
+		// Reset user after test
+		t.Cleanup(func() {
+			_ = sqlstore.AddOrgUser(&models.AddOrgUserCommand{
+				LoginOrEmail: testEditorOrg1.Login,
+				Role:         testEditorOrg1.OrgRole,
+				UserId:       testEditorOrg1.UserId,
+				OrgId:        testServerAdminViewer.OrgId,
+			})
+		})
+
+		// Perform request
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(url, testServerAdminViewer.OrgId, testEditorOrg1.UserId), nil, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "User removed from organization", result["message"])
+
+		getUsersQuery := models.GetOrgUsersQuery{OrgId: testServerAdminViewer.OrgId}
+		err = sqlstore.GetOrgUsers(&getUsersQuery)
+		require.NoError(t, err)
+		assert.Len(t, getUsersQuery.Result, 1)
+	})
+	t.Run("server admin can delete users from another org", func(t *testing.T) {
+		// Reset user after test
+		t.Cleanup(func() {
+			_ = sqlstore.AddOrgUser(&models.AddOrgUserCommand{
+				LoginOrEmail: testServerAdminViewer.Login,
+				Role:         testServerAdminViewer.OrgRole,
+				UserId:       testServerAdminViewer.UserId,
+				OrgId:        2,
+			})
+		})
+
+		// Perform request
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(url, 2, testServerAdminViewer.UserId), nil, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "User removed from organization", result["message"])
+
+		getUsersQuery := models.GetOrgUsersQuery{OrgId: 2}
+		err = sqlstore.GetOrgUsers(&getUsersQuery)
+		require.NoError(t, err)
+		assert.Len(t, getUsersQuery.Result, 1)
+	})
+	t.Run("org admin can delete users from his org", func(t *testing.T) {
+		// Reset user after test
+		t.Cleanup(func() {
+			_ = sqlstore.AddOrgUser(&models.AddOrgUserCommand{
+				LoginOrEmail: testServerAdminViewer.Login,
+				Role:         testServerAdminViewer.OrgRole,
+				UserId:       testServerAdminViewer.UserId,
+				OrgId:        testAdminOrg2.OrgId,
+			})
+		})
+
+		// Perform request
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(url, testAdminOrg2.OrgId, testServerAdminViewer.UserId), nil, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "User removed from organization", result["message"])
+
+		getUsersQuery := models.GetOrgUsersQuery{OrgId: testAdminOrg2.OrgId}
+		err = sqlstore.GetOrgUsers(&getUsersQuery)
+		require.NoError(t, err)
+		assert.Len(t, getUsersQuery.Result, 1)
+	})
+	t.Run("org admin cannot delete users from another org", func(t *testing.T) {
+		// Reset user after test
+		t.Cleanup(func() {
+			_ = sqlstore.AddOrgUser(&models.AddOrgUserCommand{
+				LoginOrEmail: testEditorOrg1.Login,
+				Role:         testEditorOrg1.OrgRole,
+				UserId:       testEditorOrg1.UserId,
+				OrgId:        1,
+			})
+		})
+
+		// Perform request
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(url, 1, testEditorOrg1.UserId), nil, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestDeleteOrgUsersAPIEndpoint_LegacyAccessControl(t *testing.T) {
+	var err error
+	// Use legacy accesscontrol
+	sc := setupHTTPServer(t, false, false)
+	resetOrgUsersDefaultHandlers(t)
+	setupOrgUsersDBForAccessControlTests(t, *sc.db)
+
+	url := "/api/orgs/%v/users/%v"
+	t.Run("server admin can delete users from his org", func(t *testing.T) {
+		// Reset user after test
+		t.Cleanup(func() {
+			_ = sqlstore.AddOrgUser(&models.AddOrgUserCommand{
+				LoginOrEmail: testEditorOrg1.Login,
+				Role:         testEditorOrg1.OrgRole,
+				UserId:       testEditorOrg1.UserId,
+				OrgId:        testServerAdminViewer.OrgId,
+			})
+		})
+
+		// Perform request
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(url, testServerAdminViewer.OrgId, testEditorOrg1.UserId), nil, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "User removed from organization", result["message"])
+
+		getUsersQuery := models.GetOrgUsersQuery{OrgId: testServerAdminViewer.OrgId}
+		err = sqlstore.GetOrgUsers(&getUsersQuery)
+		require.NoError(t, err)
+		assert.Len(t, getUsersQuery.Result, 1)
+	})
+	t.Run("server admin can delete users from another org", func(t *testing.T) {
+		// Reset user after test
+		t.Cleanup(func() {
+			_ = sqlstore.AddOrgUser(&models.AddOrgUserCommand{
+				LoginOrEmail: testServerAdminViewer.Login,
+				Role:         testServerAdminViewer.OrgRole,
+				UserId:       testServerAdminViewer.UserId,
+				OrgId:        2,
+			})
+		})
+
+		// Perform request
+		setSignedInUser(sc.initCtx, testServerAdminViewer)
+		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(url, 2, testServerAdminViewer.UserId), nil, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		// Check result
+		var result util.DynMap
+		err = json.NewDecoder(response.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Contains(t, result, "message")
+		assert.Equal(t, "User removed from organization", result["message"])
+
+		getUsersQuery := models.GetOrgUsersQuery{OrgId: 2}
+		err = sqlstore.GetOrgUsers(&getUsersQuery)
+		require.NoError(t, err)
+		assert.Len(t, getUsersQuery.Result, 1)
+	})
+	t.Run("org admin cannot delete users from his org", func(t *testing.T) {
+		// Reset user after test
+		t.Cleanup(func() {
+			_ = sqlstore.AddOrgUser(&models.AddOrgUserCommand{
+				LoginOrEmail: testServerAdminViewer.Login,
+				Role:         testServerAdminViewer.OrgRole,
+				UserId:       testServerAdminViewer.UserId,
+				OrgId:        testAdminOrg2.OrgId,
+			})
+		})
+
+		// Perform request
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(url, testAdminOrg2.OrgId, testServerAdminViewer.UserId), nil, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+	t.Run("org admin cannot delete users from another org", func(t *testing.T) {
+		// Reset user after test
+		t.Cleanup(func() {
+			_ = sqlstore.AddOrgUser(&models.AddOrgUserCommand{
+				LoginOrEmail: testEditorOrg1.Login,
+				Role:         testEditorOrg1.OrgRole,
+				UserId:       testEditorOrg1.UserId,
+				OrgId:        1,
+			})
+		})
+
+		// Perform request
+		setSignedInUser(sc.initCtx, testAdminOrg2)
+		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(url, 1, testEditorOrg1.UserId), nil, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 }

@@ -95,8 +95,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	return permissions, nil
 }
 
-// TODO shouldn't this be placed in the replace org middleware instead
-func fetchUserRole(ctx context.Context, userID, orgID int64) (models.RoleType, error) {
+func fetchUserRole(ctx context.Context, orgID, userID int64) (models.RoleType, error) {
 	var err error
 	query := models.GetSignedInUserQuery{UserId: userID, OrgId: orgID}
 	if err := sqlstore.GetSignedInUser(ctx, &query); err != nil {
@@ -111,9 +110,8 @@ func fetchUserRole(ctx context.Context, userID, orgID int64) (models.RoleType, e
 	return userOrgRole, err
 }
 
-// TODO maybe modify the signature of this function (+in: context, +out: error), but this will require enterprise changes
 func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
-	userOrgRole, err := fetchUserRole(context.TODO(), user.UserId, user.OrgId)
+	userOrgRole, err := fetchUserRole(context.TODO(), user.OrgId, user.UserId)
 	if err != nil {
 		ac.Log.Debug(fmt.Sprintf("could not fetch user %v role in org %v: %v", user.UserId, user.OrgId, err))
 		return []string{}
