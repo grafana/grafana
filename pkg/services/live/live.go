@@ -1210,7 +1210,7 @@ func (g *GrafanaLive) resetLiveStats() {
 func (g *GrafanaLive) registerUsageMetrics() {
 	g.usageStatsService.RegisterSendReportCallback(g.resetLiveStats)
 
-	g.usageStatsService.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+	g.usageStatsService.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 		liveUsersAvg := 0
 		liveClientsAvg := 0
 
