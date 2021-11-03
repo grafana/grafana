@@ -1,6 +1,6 @@
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { getIntent } from './intent';
+import { getSituation } from './situation';
 import { getCompletions, DataProvider, CompletionType } from './completions';
 import { NeverCaseError } from './util';
 
@@ -47,8 +47,8 @@ export function getCompletionProvider(
       lineNumber: position.lineNumber,
     };
     const offset = model.getOffsetAt(positionClone);
-    const intent = getIntent(model.getValue(), offset);
-    const completionsPromise = intent != null ? getCompletions(intent, dataProvider) : Promise.resolve([]);
+    const situation = getSituation(model.getValue(), offset);
+    const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
     return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.
       // to stop it, we use a number-as-string sortkey,

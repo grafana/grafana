@@ -5,12 +5,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"golang.org/x/net/context"
 )
 
 // Provision alert notifiers
-func Provision(configDirectory string, encryptionService encryption.Service) error {
+func Provision(ctx context.Context, configDirectory string, encryptionService encryption.Service) error {
 	dc := newNotificationProvisioner(encryptionService, log.New("provisioning.notifiers"))
-	return dc.applyChanges(configDirectory)
+	return dc.applyChanges(ctx, configDirectory)
 }
 
 // NotificationProvisioner is responsible for provsioning alert notifiers
@@ -132,8 +133,8 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 	return nil
 }
 
-func (dc *NotificationProvisioner) applyChanges(configPath string) error {
-	configs, err := dc.cfgProvider.readConfig(configPath)
+func (dc *NotificationProvisioner) applyChanges(ctx context.Context, configPath string) error {
+	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
 	if err != nil {
 		return err
 	}
