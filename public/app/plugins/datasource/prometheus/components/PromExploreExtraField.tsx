@@ -82,7 +82,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
 
           <RadioButtonGroup
             options={rangeOptions}
-            value={query.range === query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+            value={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
             onChange={onQueryTypeChange}
           />
         </div>
