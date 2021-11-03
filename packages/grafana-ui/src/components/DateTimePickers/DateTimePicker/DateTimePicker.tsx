@@ -135,7 +135,7 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
     }
   }, [internalDate.value, onChange]);
 
-  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+  const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
   return (
     <InlineField
       label={label}
@@ -195,7 +195,9 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onClose, onChange, 
         prev2Label={null}
         value={internalDate}
         nextLabel={<Icon name="angle-right" />}
+        nextAriaLabel="Next month"
         prevLabel={<Icon name="angle-left" />}
+        prevAriaLabel="Previous month"
         onChange={onChangeDate}
         locale="en"
         className={calendarStyles.body}

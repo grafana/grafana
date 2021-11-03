@@ -61,6 +61,8 @@ def get_steps(edition, is_downstream=False):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
@@ -90,8 +92,6 @@ def get_steps(edition, is_downstream=False):
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=publish),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=publish),
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
     ])
 
     if include_enterprise2:

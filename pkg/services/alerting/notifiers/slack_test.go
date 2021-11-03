@@ -147,63 +147,6 @@ func TestSlackNotifier(t *testing.T) {
 		assert.Equal(t, "xenc-XXXXXXXX-XXXXXXXX-XXXXXXXXXX", slackNotifier.token)
 	})
 
-	t.Run("with channel recipient with spaces should return an error", func(t *testing.T) {
-		json := `
-                    {
-                      "url": "http://google.com",
-                      "recipient": "#open tsdb"
-                    }`
-
-		settingsJSON, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
-		model := &models.AlertNotification{
-			Name:     "ops",
-			Type:     "slack",
-			Settings: settingsJSON,
-		}
-
-		_, err = NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-		assert.EqualError(t, err, "alert validation error: recipient on invalid format: \"#open tsdb\"")
-	})
-
-	t.Run("with user recipient with spaces should return an error", func(t *testing.T) {
-		json := `
-                    {
-                      "url": "http://google.com",
-                      "recipient": "@user name"
-                    }`
-
-		settingsJSON, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
-		model := &models.AlertNotification{
-			Name:     "ops",
-			Type:     "slack",
-			Settings: settingsJSON,
-		}
-
-		_, err = NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-		assert.EqualError(t, err, "alert validation error: recipient on invalid format: \"@user name\"")
-	})
-
-	t.Run("with user recipient with uppercase letters should return an error", func(t *testing.T) {
-		json := `
-                    {
-                      "url": "http://google.com",
-                      "recipient": "@User"
-                    }`
-
-		settingsJSON, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
-		model := &models.AlertNotification{
-			Name:     "ops",
-			Type:     "slack",
-			Settings: settingsJSON,
-		}
-
-		_, err = NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-		assert.EqualError(t, err, "alert validation error: recipient on invalid format: \"@User\"")
-	})
-
 	t.Run("with Slack ID for recipient should work", func(t *testing.T) {
 		json := `
                     {
@@ -273,20 +216,19 @@ func TestSendSlackRequest(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "Success case, no response body",
-			statusCode:  http.StatusOK,
-			expectError: false,
+			name:       "No response body",
+			statusCode: http.StatusOK,
 		},
 		{
 			name:          "Success case, unexpected response body",
 			statusCode:    http.StatusOK,
-			slackResponse: "{}",
+			slackResponse: `{"test": true}`,
 			expectError:   false,
 		},
 		{
 			name:          "Success case, ok: true",
 			statusCode:    http.StatusOK,
-			slackResponse: "{\"ok\": true}",
+			slackResponse: `{"ok": true}`,
 			expectError:   false,
 		},
 		{

@@ -86,7 +86,7 @@ interface State {
   forceEscape: boolean;
 }
 
-export class UnthemedLogs extends PureComponent<Props, State> {
+class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
@@ -305,6 +305,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               response.
             </div>
             <ExploreGraph
+              graphStyle="lines"
               data={logsSeries}
               height={150}
               width={width}

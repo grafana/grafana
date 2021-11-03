@@ -2,6 +2,7 @@ package kvstore
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -88,7 +89,8 @@ func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, ke
 // Del deletes an item from the store.
 func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, key string) error {
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		_, err := dbSession.Exec("DELETE FROM kv_store WHERE org_id=? and namespace=? and key=?", orgId, namespace, key)
+		query := fmt.Sprintf("DELETE FROM kv_store WHERE org_id=? and namespace=? and %s=?", kv.sqlStore.Quote("key"))
+		_, err := dbSession.Exec(query, orgId, namespace, key)
 		return err
 	})
 	return err
@@ -99,7 +101,7 @@ func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, ke
 func (kv *kvStoreSQL) Keys(ctx context.Context, orgId int64, namespace string, keyPrefix string) ([]Key, error) {
 	var keys []Key
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		query := dbSession.Where("namespace = ?", namespace).And("key LIKE ?", keyPrefix+"%")
+		query := dbSession.Where("namespace = ?", namespace).And(fmt.Sprintf("%s LIKE ?", kv.sqlStore.Quote("key")), keyPrefix+"%")
 		if orgId != AllOrganizations {
 			query.And("org_id = ?", orgId)
 		}

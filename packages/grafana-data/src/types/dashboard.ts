@@ -1,5 +1,5 @@
 import { FieldConfigSource } from './fieldOverrides';
-import { DataQuery, DatasourceRef } from './query';
+import { DataQuery, DataSourceRef } from './query';
 
 export enum DashboardCursorSync {
   Off,
@@ -10,7 +10,7 @@ export enum DashboardCursorSync {
 /**
  * @public
  */
-export interface PanelModel<TOptions = any, TCustomFieldConfig extends object = any> {
+export interface PanelModel<TOptions = any, TCustomFieldConfig = any> {
   /** ID of the panel within the current dashboard */
   id: number;
 
@@ -30,7 +30,7 @@ export interface PanelModel<TOptions = any, TCustomFieldConfig extends object = 
   pluginVersion?: string;
 
   /** The datasource used in all targets */
-  datasource?: DatasourceRef | null;
+  datasource?: DataSourceRef | null;
 
   /** The queries in a panel */
   targets?: DataQuery[];

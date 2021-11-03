@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.5.5'
-build_image = 'grafana/build-container:1.4.3'
+build_image = 'grafana/build-container:1.4.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -421,7 +421,6 @@ def lint_frontend_step():
             'yarn run prettier:check',
             'yarn run lint',
             'yarn run typecheck',
-            'yarn run check-strict',
         ],
     }
 
@@ -681,8 +680,7 @@ def postgres_integration_tests_step():
         'name': 'postgres-integration-tests',
         'image': build_image,
         'depends_on': [
-            'test-backend',
-            'test-frontend',
+            'initialize',
         ],
         'environment': {
             'PGPASSWORD': 'grafanatest',
@@ -706,8 +704,7 @@ def mysql_integration_tests_step():
         'name': 'mysql-integration-tests',
         'image': build_image,
         'depends_on': [
-            'test-backend',
-            'test-frontend',
+            'initialize',
         ],
         'environment': {
             'GRAFANA_TEST_DB': 'mysql',
@@ -795,8 +792,6 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
     dependencies = [
         'end-to-end-tests' + enterprise2_suffix(edition),
-        'mysql-integration-tests',
-        'postgres-integration-tests',
     ]
 
     if edition in ('enterprise', 'enterprise2'):
@@ -998,7 +993,7 @@ def ensure_cuetsified_step():
             '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
             '# It is required that the generated Typescript be in sync with the input CUE files.',
             '# ...Modulo eslint auto-fixes...:',
-            './node_modules/.bin/eslint . --ext .gen.ts --fix',
+            'yarn run eslint . --ext .gen.ts --fix',
             '# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result.',
             './scripts/clean-git-or-error.sh',
             '# Un-stash changes.',

@@ -56,13 +56,13 @@ func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 			return err
 		}
 		if !cmd.SignupAllowed {
-			log.Warnf("Not allowing %s login, user not found in internal user database and allow signup = false", extUser.AuthModule)
+			log.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
 			return login.ErrInvalidCredentials
 		}
 
 		limitReached, err := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
 		if err != nil {
-			log.Warnf("Error getting user quota. error: %v", err)
+			log.Warn("Error getting user quota.", "error", err)
 			return login.ErrGettingUserQuota
 		}
 		if limitReached {

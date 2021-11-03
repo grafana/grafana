@@ -38,7 +38,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgId:        1,
 						DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
-					err := SearchDashboards(context.Background(), query)
+					err := sqlStore.SearchDashboards(context.Background(), query)
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 2)
 					require.Equal(t, query.Result[0].ID, folder.Id)
@@ -61,7 +61,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						OrgId:        1, DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
-					err := SearchDashboards(context.Background(), query)
+					err := sqlStore.SearchDashboards(context.Background(), query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 1)
@@ -80,7 +80,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id},
 						}
-						err := SearchDashboards(context.Background(), query)
+						err := sqlStore.SearchDashboards(context.Background(), query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
 						require.Equal(t, query.Result[0].ID, folder.Id)
@@ -99,7 +99,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id},
 						}
-						err := SearchDashboards(context.Background(), query)
+						err := sqlStore.SearchDashboards(context.Background(), query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
 						require.Equal(t, query.Result[0].ID, folder.Id)
@@ -121,7 +121,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &search.FindPersistedDashboardsQuery{
 						SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id},
 					}
-					err := SearchDashboards(context.Background(), query)
+					err := sqlStore.SearchDashboards(context.Background(), query)
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 1)
 					require.Equal(t, query.Result[0].ID, dashInRoot.Id)
@@ -135,7 +135,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 					t.Run("should be able to search for child dashboard but not folder", func(t *testing.T) {
 						query := &search.FindPersistedDashboardsQuery{SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
-						err := SearchDashboards(context.Background(), query)
+						err := sqlStore.SearchDashboards(context.Background(), query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
 						require.Equal(t, query.Result[0].ID, childDash.Id)
@@ -154,7 +154,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id, childDash.Id},
 						}
-						err := SearchDashboards(context.Background(), query)
+						err := sqlStore.SearchDashboards(context.Background(), query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 3)
 						require.Equal(t, query.Result[0].ID, folder.Id)
@@ -192,7 +192,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						},
 						OrgId: 1,
 					}
-					err := SearchDashboards(context.Background(), query)
+					err := sqlStore.SearchDashboards(context.Background(), query)
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 4)
 					require.Equal(t, query.Result[0].ID, folder1.Id)
@@ -218,7 +218,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder1.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
-						err := SearchDashboards(context.Background(), query)
+						err := sqlStore.SearchDashboards(context.Background(), query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 1)
 						require.Equal(t, query.Result[0].ID, dashInRoot.Id)
@@ -234,7 +234,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
-						err := SearchDashboards(context.Background(), query)
+						err := sqlStore.SearchDashboards(context.Background(), query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 4)
 						require.Equal(t, query.Result[0].ID, folder2.Id)
@@ -258,7 +258,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
-						err = SearchDashboards(context.Background(), query)
+						err = sqlStore.SearchDashboards(context.Background(), query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 4)
 						require.Equal(t, query.Result[0].ID, folder2.Id)
@@ -296,7 +296,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						Type:         "dash-folder",
 					}
 
-					err := SearchDashboards(context.Background(), &query)
+					err := sqlStore.SearchDashboards(context.Background(), &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 2)
@@ -349,7 +349,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				}
 
 				t.Run("Should have write access to all dashboard folders with default ACL", func(t *testing.T) {
-					err := SearchDashboards(context.Background(), &query)
+					err := sqlStore.SearchDashboards(context.Background(), &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 2)
@@ -381,7 +381,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					})
 					require.NoError(t, err)
 
-					err = SearchDashboards(context.Background(), &query)
+					err = sqlStore.SearchDashboards(context.Background(), &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 1)
@@ -415,7 +415,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				}
 
 				t.Run("Should have no write access to any dashboard folders with default ACL", func(t *testing.T) {
-					err := SearchDashboards(context.Background(), &query)
+					err := sqlStore.SearchDashboards(context.Background(), &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 0)
@@ -447,7 +447,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					})
 					require.NoError(t, err)
 
-					err = SearchDashboards(context.Background(), &query)
+					err = sqlStore.SearchDashboards(context.Background(), &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 1)

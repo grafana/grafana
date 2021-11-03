@@ -68,6 +68,7 @@ export const TagFilter: FC<Props> = ({
   const value = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
 
   const selectOptions = {
+    allowCreateWhileLoading: true,
     allowCustomValue,
     formatCreateLabel,
     defaultOptions: true,

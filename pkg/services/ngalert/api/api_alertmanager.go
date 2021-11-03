@@ -444,8 +444,12 @@ func contextWithTimeoutFromRequest(ctx context.Context, r *http.Request, default
 
 func newTestReceiversResult(r *notifier.TestReceiversResult) apimodels.TestReceiversResult {
 	v := apimodels.TestReceiversResult{
-		Receivers: make([]apimodels.TestReceiverResult, len(r.Receivers)),
-		NotifedAt: r.NotifedAt,
+		Alert: apimodels.TestReceiversConfigAlertParams{
+			Annotations: r.Alert.Annotations,
+			Labels:      r.Alert.Labels,
+		},
+		Receivers:  make([]apimodels.TestReceiverResult, len(r.Receivers)),
+		NotifiedAt: r.NotifedAt,
 	}
 	for ix, next := range r.Receivers {
 		configs := make([]apimodels.TestReceiverConfigResult, len(next.Configs))
