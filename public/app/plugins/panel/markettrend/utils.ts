@@ -5,7 +5,16 @@ import { colorManipulator } from '@grafana/data';
 const { alpha } = colorManipulator;
 
 export function drawMarkers(opts) {
-  let { mode, priceStyle, fields, movementMode, upColor = '#73BF69', downColor = '#F2495C', flatColor } = opts;
+  let {
+    mode,
+    priceStyle,
+    fields,
+    movementMode,
+    upColor = '#73BF69',
+    downColor = '#F2495C',
+    flatColor,
+    volumeAlpha,
+  } = opts;
 
   let drawPrice = mode !== MarketTrendMode.Volume && fields.high != null && fields.low != null;
   let asCandles = drawPrice && priceStyle === PriceDrawStyle.Candles;
@@ -134,13 +143,13 @@ export function drawMarkers(opts) {
     ctx.save();
 
     if (drawVolume) {
-      ctx.fillStyle = alpha(upColor, 0.5);
+      ctx.fillStyle = alpha(upColor, volumeAlpha);
       ctx.fill(upPathVol);
 
-      ctx.fillStyle = alpha(downColor, 0.5);
+      ctx.fillStyle = alpha(downColor, volumeAlpha);
       ctx.fill(downPathVol);
 
-      ctx.fillStyle = alpha(flatColor, 0.5);
+      ctx.fillStyle = alpha(flatColor, volumeAlpha);
       ctx.fill(flatPathVol);
     }
 

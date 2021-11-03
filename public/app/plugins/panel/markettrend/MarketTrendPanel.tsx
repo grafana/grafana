@@ -51,6 +51,21 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       return [];
     }
 
+    let volumeAlpha = 0.5;
+
+    for (const frame of frames) {
+      for (const field of frame.fields) {
+        if (field.name === volume) {
+          let { fillOpacity } = field.config.custom;
+
+          if (fillOpacity) {
+            volumeAlpha = fillOpacity / 100;
+            break;
+          }
+        }
+      }
+    }
+
     return [
       {
         fields: { open, high, low, close, volume },
@@ -63,6 +78,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
               upColor: config.theme2.visualization.getColorByName(colors.up),
               downColor: config.theme2.visualization.getColorByName(colors.down),
               flatColor: config.theme2.visualization.getColorByName(colors.flat),
+              volumeAlpha,
               movementMode,
               priceStyle,
             })
@@ -70,7 +86,8 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
         },
       },
     ];
-  }, [options]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options, data.structureRev]);
 
   if (!frames || warn) {
     return (
