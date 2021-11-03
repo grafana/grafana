@@ -37,25 +37,25 @@ func init() {
 				Required:     true,
 			},
 			{
-				Label:		  "Basic Authentication?",
-				Element:	  alerting.ElementTypeCheckBox,
+				Label:        "Basic Authentication?",
+				Element:      alerting.ElementTypeCheckBox,
 				PropertyName: "basicAuth",
-				Required:	  false,
+				Required:     false,
 			},
 			{
-				Label:		  "Username",
-				Element:	  alerting.ElementTypeInput,
-				InputType:	  alerting.InputTypeText,
+				Label:        "Username",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				PropertyName: "basicAuthUser",
-				Required:	  false,
+				Required:     false,
 			},
 			{
-				Label:		  "Password",
-				Element:	  alerting.ElementTypeInput,
+				Label:        "Password",
+				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypePassword,
 				PropertyName: "basicAuthPass",
-				Required:	  false,
-			}
+				Required:     false,
+			},
 		},
 	})
 }
@@ -74,7 +74,7 @@ func NewKafkaNotifier(model *models.AlertNotification, _ alerting.GetDecryptedVa
 	basicAuth := model.Settings.Get("basicAuth")
 
 	username := model.Settings.Get("basicAuthUser")
-	if basicAuth && user == ""{
+	if basicAuth && user == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find user for BasicAuth"}
 	}
 	password := model.Settings.Get("basicAuthPass")
@@ -86,9 +86,9 @@ func NewKafkaNotifier(model *models.AlertNotification, _ alerting.GetDecryptedVa
 		NotifierBase: NewNotifierBase(model),
 		Endpoint:     endpoint,
 		Topic:        topic,
-		AuthUser:	  username,
-		AuthPass:	  password,
-		BasicAuth:	  basicAuth,
+		AuthUser:     username,
+		AuthPass:     password,
+		BasicAuth:    basicAuth,
 		log:          log.New("alerting.notifier.kafka"),
 	}, nil
 }
@@ -97,12 +97,12 @@ func NewKafkaNotifier(model *models.AlertNotification, _ alerting.GetDecryptedVa
 // alert notifications to Kafka.
 type KafkaNotifier struct {
 	NotifierBase
-	Endpoint string
-	Topic    string
-	AuthUser string
-	AuthPass string
-	BasicAuth	bool
-	log      log.Logger
+	Endpoint  string
+	Topic     string
+	AuthUser  string
+	AuthPass  string
+	BasicAuth bool
+	log       log.Logger
 }
 
 // Notify sends the alert notification.
@@ -162,8 +162,8 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	// Optionally supply Basic Auth credentials
 	if kn.BasicAuth {
-		cmd.User 		= kn.AuthUser
-		cmd.Password 	= kn.AuthPass
+		cmd.User = kn.AuthUser
+		cmd.Password = kn.AuthPass
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
