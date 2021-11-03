@@ -12,6 +12,7 @@ import {
   StreamingFrameOptions,
   StreamingFrameAction,
   getDataSourceRef,
+  DataSourceRef,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -22,6 +23,17 @@ export const ExpressionDatasourceRef = Object.freeze({
   type: '__expr__',
   uid: '__expr__',
 });
+
+/**
+ * @public
+ */
+export function isExpressionReference(ref?: DataSourceRef | string): boolean {
+  if (!ref) {
+    return false;
+  }
+  const v = (ref as any).type ?? ref;
+  return v === ExpressionDatasourceRef.type || v === '-100'; // -100 was a legacy accident that should be removed
+}
 
 class HealthCheckError extends Error {
   details: HealthCheckResultDetails;
@@ -95,7 +107,7 @@ class DataSourceWithBackend<
     const queries = targets.map((q) => {
       let datasource = this.getRef();
 
-      if (q.datasource?.type === ExpressionDatasourceRef.type) {
+      if (isExpressionReference(q.datasource)) {
         return {
           ...q,
           datasource: ExpressionDatasourceRef,

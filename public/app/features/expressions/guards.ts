@@ -1,5 +1,5 @@
 import { DataQuery } from '@grafana/data';
-import { ExpressionDatasourceRef } from '@grafana/runtime';
+import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { ExpressionQuery, ExpressionQueryType } from './types';
 
 export const isExpressionQuery = (dataQuery?: DataQuery): dataQuery is ExpressionQuery => {
@@ -7,11 +7,7 @@ export const isExpressionQuery = (dataQuery?: DataQuery): dataQuery is Expressio
     return false;
   }
 
-  if (dataQuery.datasource?.type === ExpressionDatasourceRef.type) {
-    return true;
-  }
-
-  if (dataQuery.datasource === ExpressionDatasourceRef.type) {
+  if (isExpressionReference(dataQuery.datasource)) {
     return true;
   }
 
