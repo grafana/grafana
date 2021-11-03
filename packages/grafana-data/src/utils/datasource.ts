@@ -122,9 +122,9 @@ export const updateDatasourcePluginSecureJsonDataOption = <J, S extends {} = Key
   props.onOptionsChange({
     ...config,
     secureJsonData: {
-      ...(config.secureJsonData ? config.secureJsonData : {}),
+      ...(config.secureJsonData ? config.secureJsonData : ({} as S)),
       [key]: val,
-    } as S,
+    },
   });
 };
 
@@ -136,9 +136,9 @@ export const updateDatasourcePluginResetOption = <J, S extends {} = KeyValue>(
   props.onOptionsChange({
     ...config,
     secureJsonData: {
-      ...(config.secureJsonData ? config.secureJsonData : {}),
+      ...(config.secureJsonData ? config.secureJsonData : ({} as S)),
       [key]: '',
-    } as S,
+    },
     secureJsonFields: {
       ...config.secureJsonFields,
       [key]: false,
