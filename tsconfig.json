@@ -3,13 +3,7 @@
     "jsx": "react",
     "baseUrl": "public/",
     "outDir": "public/dist",
-    "paths": {
-      "@grafana/slate-react": ["../node_modules/@types/slate-react"],
-      "app": ["app/"],
-      "sass": ["sass/"]
-    },
     "rootDirs": ["public/"],
-    "typeRoots": ["node_modules/@types", "public/app/types"],
     "allowJs": true,
     "strictNullChecks": true,
     "resolveJsonModule": true,

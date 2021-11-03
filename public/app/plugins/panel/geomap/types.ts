@@ -1,5 +1,6 @@
 import { MapLayerOptions } from '@grafana/data';
 import { Units } from 'ol/proj/Units';
+import { Style } from 'ol/style';
 import { MapCenterID } from './view';
 
 export interface ControlsOptions {
@@ -61,3 +62,12 @@ export enum ComparisonOperation {
   GT = 'gt',
   GTE = 'gte',
 }
+export interface StyleMakerConfig {
+  color: string;
+  fillColor: string;
+  size: number;
+  markerPath?: string;
+  text?: string;
+}
+
+export type StyleMaker = (config: StyleMakerConfig) => Style;

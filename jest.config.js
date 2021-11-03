@@ -6,7 +6,7 @@ process.env.TZ = 'Pacific/Easter';
 module.exports = {
   verbose: false,
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': 'ts-jest',
+    '^.+\\.(ts|tsx|js|jsx)$': require.resolve('ts-jest'),
   },
   transformIgnorePatterns: [
     'node_modules/(?!(ol)/)', // <- exclude the open layers library
@@ -27,11 +27,6 @@ module.exports = {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
-    '^react($|/.+)$': '<rootDir>/node_modules/react$1',
-    '^react-router(.+)$': '<rootDir>/node_modules/react-router$1',
-    '^react-hook-form$': '<rootDir>/node_modules/react-hook-form',
-    '^enzyme($|/.+)$': '<rootDir>/node_modules/enzyme$1',
-    '^jquery$': '<rootDir>/node_modules/jquery',
   },
   watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
 };

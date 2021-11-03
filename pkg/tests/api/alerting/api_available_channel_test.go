@@ -790,7 +790,7 @@ var expAvailableChannelJsonOutput = `
         "element": "input",
         "inputType": "text",
         "label": "Recipient",
-        "description": "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID - required unless you provide a webhook",
+        "description": "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
         "placeholder": "",
         "propertyName": "recipient",
         "selectOptions": null,

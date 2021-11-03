@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -83,7 +84,7 @@ func (s *SearchService) searchHandler(query *Query) error {
 		dashboardQuery.Sort = sortOpt
 	}
 
-	if err := bus.Dispatch(&dashboardQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &dashboardQuery); err != nil {
 		return err
 	}
 
@@ -119,7 +120,7 @@ func setStarredDashboards(userID int64, hits []*Hit) error {
 		UserId: userID,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return err
 	}
 
