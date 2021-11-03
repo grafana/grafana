@@ -144,11 +144,7 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 		})
 	}
 
-	exprService := expr.Service{
-		Cfg:                      hs.Cfg,
-		LegacyDataRequestHandler: hs.LegacyDataRequestHandler,
-	}
-	qdr, err := exprService.WrapTransformData(c.Req.Context(), request)
+	qdr, err := hs.expressionService.WrapTransformData(c.Req.Context(), request)
 	if err != nil {
 		return response.Error(500, "expression request error", err)
 	}

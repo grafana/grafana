@@ -7,6 +7,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -22,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,7 +38,7 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
-	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, dataService legacydata.RequestHandler, dataProxy *datasourceproxy.DataSourceProxyService,
+	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, encryptionService encryption.Service, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:               cfg,
@@ -46,7 +46,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		RouteRegister:     routeRegister,
 		SQLStore:          sqlStore,
 		KVStore:           kvStore,
-		DataService:       dataService,
+		ExpressionService: expressionService,
 		DataProxy:         dataProxy,
 		QuotaService:      quotaService,
 		EncryptionService: encryptionService,
@@ -72,7 +72,7 @@ type AlertNG struct {
 	RouteRegister     routing.RouteRegister
 	SQLStore          *sqlstore.SQLStore
 	KVStore           kvstore.KVStore
-	DataService       legacydata.RequestHandler
+	ExpressionService *expr.Service
 	DataProxy         *datasourceproxy.DataSourceProxyService
 	QuotaService      *quota.QuotaService
 	EncryptionService encryption.Service
@@ -136,7 +136,7 @@ func (ng *AlertNG) init() error {
 		appUrl = nil
 	}
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store)
-	scheduler := schedule.NewScheduler(schedCfg, ng.DataService, appUrl, stateManager)
+	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
@@ -145,7 +145,7 @@ func (ng *AlertNG) init() error {
 		Cfg:                  ng.Cfg,
 		DatasourceCache:      ng.DataSourceCache,
 		RouteRegister:        ng.RouteRegister,
-		DataService:          ng.DataService,
+		ExpressionService:    ng.ExpressionService,
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,

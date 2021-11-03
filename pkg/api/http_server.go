@@ -17,6 +17,7 @@ import (
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -113,6 +114,7 @@ type HTTPServer struct {
 	internalMetricsSvc        *metrics.InternalMetricsService
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
+	expressionService         *expr.Service
 }
 
 type ServerOptions struct {
@@ -139,7 +141,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	encryptionService encryption.Service, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service) (*HTTPServer, error) {
+	dataSourcesService *datasources.Service, expressionService *expr.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -192,6 +194,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		EncryptionService:         encryptionService,
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
+		expressionService:         expressionService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

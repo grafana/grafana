@@ -26,6 +26,13 @@ type Service struct {
 	LegacyDataRequestHandler legacydata.RequestHandler
 }
 
+func ProvideService(cfg *setting.Cfg, dataService legacydata.RequestHandler) *Service {
+	return &Service{
+		Cfg:                      cfg,
+		LegacyDataRequestHandler: dataService,
+	}
+}
+
 func (s *Service) isDisabled() bool {
 	if s.Cfg == nil {
 		return true
