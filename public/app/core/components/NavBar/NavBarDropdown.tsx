@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { IconName, Link, useTheme2 } from '@grafana/ui';
-import DropdownChild from './DropdownChild';
+import { NavBarMenuItem } from './NavBarMenuItem';
 
 interface Props {
   headerTarget?: HTMLAnchorElement['target'];
@@ -49,7 +49,7 @@ const NavBarDropdown = ({
     <ul className={`${styles.menu} dropdown-menu dropdown-menu--sidemenu`} role="menu">
       <li>{header}</li>
       {filteredItems.map((child, index) => (
-        <DropdownChild
+        <NavBarMenuItem
           key={`${child.url}-${index}`}
           isDivider={child.divider}
           icon={child.icon as IconName}

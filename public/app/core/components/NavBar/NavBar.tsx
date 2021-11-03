@@ -12,7 +12,7 @@ import { enrichConfigItems, isLinkActive, isSearchActive } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import NavBarItem from './NavBarItem';
 import { NavBarSection } from './NavBarSection';
-import { NavBarMenu } from '../NavBarMenu/NavBarMenu';
+import { NavBarMenu } from './NavBarMenu';
 
 const homeUrl = config.appSubUrl || '/';
 

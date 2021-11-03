@@ -6,14 +6,15 @@ import { css } from '@emotion/css';
 export interface Props {
   icon?: IconName;
   isActive?: boolean;
+  isDivider?: boolean;
   isSectionHeader?: boolean;
-  label: string;
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
+  text: string;
   url?: string;
 }
 
-export function NavBarMenuItem({ icon, isActive, isSectionHeader, label, onClick, target, url }: Props) {
+export function NavBarMenuItem({ icon, isActive, isDivider, isSectionHeader, onClick, target, text, url }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, isSectionHeader);
 
@@ -21,7 +22,7 @@ export function NavBarMenuItem({ icon, isActive, isSectionHeader, label, onClick
     <div className={styles.linkContent}>
       <div>
         {icon && <Icon data-testid="dropdown-child-icon" name={icon} className={styles.icon} />}
-        {label}
+        {text}
       </div>
       {target === '_blank' && (
         <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
@@ -48,14 +49,24 @@ export function NavBarMenuItem({ icon, isActive, isSectionHeader, label, onClick
       );
   }
 
-  return <li className={styles.container}>{element}</li>;
+  return isDivider ? (
+    <li data-testid="dropdown-child-divider" className={styles.divider} />
+  ) : (
+    <li className={styles.container}>{element}</li>
+  );
 }
 
-NavBarMenuItem.displayName = 'NavBarMenu';
+NavBarMenuItem.displayName = 'NavBarMenuItem';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isSectionHeader: Props['isSectionHeader']) => ({
   container: css`
     display: flex;
+  `,
+  divider: css`
+    border-bottom: 1px solid ${theme.colors.border.weak};
+    height: 1px;
+    margin: ${theme.spacing(1)} 0;
+    overflow: hidden;
   `,
   element: css`
     background: none;

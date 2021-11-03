@@ -12,7 +12,7 @@ import { enrichConfigItems, isLinkActive, isSearchActive } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { NavBarSection } from './NavBarSection';
 import NavBarItem from './NavBarItem';
-import { NavBarMenu } from '../NavBarMenu/NavBarMenu';
+import { NavBarMenu } from './NavBarMenu';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });

@@ -40,30 +40,29 @@ export function NavBarMenu({ activeItemId, navItems, onClose }: Props) {
                   <NavBarMenuItem
                     isActive={activeItemId === link.id}
                     isSectionHeader
-                    label={link.text}
                     onClick={() => {
                       link.onClick?.();
                       onClose();
                     }}
                     target={link.target}
+                    text={link.text}
                     url={link.url}
                   />
-                  {link.children?.map((childLink) => {
-                    return !childLink.divider ? (
-                      <NavBarMenuItem
-                        key={childLink.id}
-                        icon={childLink.icon as IconName}
-                        isActive={activeItemId === childLink.id}
-                        label={childLink.text}
-                        onClick={() => {
-                          childLink.onClick?.();
-                          onClose();
-                        }}
-                        target={childLink.target}
-                        url={childLink.url}
-                      />
-                    ) : null;
-                  })}
+                  {link.children?.map((childLink) => (
+                    <NavBarMenuItem
+                      key={childLink.id}
+                      icon={childLink.icon as IconName}
+                      isActive={activeItemId === childLink.id}
+                      isDivider={childLink.divider}
+                      onClick={() => {
+                        childLink.onClick?.();
+                        onClose();
+                      }}
+                      target={childLink.target}
+                      text={childLink.text}
+                      url={childLink.url}
+                    />
+                  ))}
                 </div>
               ))}
             </ul>
