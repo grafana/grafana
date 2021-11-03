@@ -53,14 +53,26 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
 
     let volumeAlpha = 0.5;
 
-    for (const frame of frames) {
-      for (const field of frame.fields) {
-        if (field.name === volume) {
-          let { fillOpacity } = field.config.custom;
+    // find volume field and set overrides
+    if (frames && volume != null) {
+      loop: for (const frame of frames) {
+        for (const field of frame.fields) {
+          let dispName = getFieldDisplayName(field, frame, data?.series);
 
-          if (fillOpacity) {
-            volumeAlpha = fillOpacity / 100;
-            break;
+          if (dispName === volume) {
+            let { fillOpacity } = field.config.custom;
+
+            if (fillOpacity) {
+              volumeAlpha = fillOpacity / 100;
+            }
+
+            field.config.unit = 'short';
+            field.display = getDisplayProcessor({
+              field: field,
+              theme: config.theme2,
+            });
+
+            break loop;
           }
         }
       }
@@ -95,25 +107,6 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
         <p>{warn ?? 'No data found in response'}</p>
       </div>
     );
-  }
-
-  // find volume field and set overrides
-  if (frames && options.fieldMap?.volume != null) {
-    for (const frame of frames) {
-      for (const field of frame.fields) {
-        let dispName = getFieldDisplayName(field, frame, data?.series);
-
-        // todo: also set fill opacity here?
-
-        if (dispName === options.fieldMap?.volume) {
-          field.config.unit = 'short';
-          field.display = getDisplayProcessor({
-            field: field,
-            theme: config.theme2,
-          });
-        }
-      }
-    }
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
