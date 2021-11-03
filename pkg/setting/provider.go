@@ -49,6 +49,8 @@ type Provider interface {
 	// RegisterReloadHandler registers a handler for validation and reload
 	// of configuration updates tied to a specific section
 	RegisterReloadHandler(section string, handler ReloadHandler)
+	// FeatureToggles returns feature toggles
+	FeatureToggles() map[string]bool
 }
 
 // Section is a settings section copy
@@ -128,6 +130,10 @@ func (o *OSSImpl) Section(section string) Section {
 }
 
 func (OSSImpl) RegisterReloadHandler(string, ReloadHandler) {}
+
+func (o OSSImpl) FeatureToggles() map[string]bool {
+	return o.Cfg.FeatureToggles
+}
 
 type keyValImpl struct {
 	key *ini.Key
