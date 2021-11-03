@@ -101,7 +101,7 @@ export class DatasourceSrv implements DataSourceService {
       if (!dsSettings) {
         return undefined;
       }
-      // The return name or uid needs preservet string containing the variable
+      // Return a copy with template variables for name and uid rather than the resolved values
       const clone = cloneDeep(dsSettings);
       clone.name = nameOrUid;
       clone.uid = nameOrUid;
