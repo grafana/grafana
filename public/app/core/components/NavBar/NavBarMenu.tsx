@@ -7,12 +7,12 @@ import { css } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
 
 export interface Props {
-  activeItemId?: string;
+  activeItem?: NavModelItem;
   navItems: NavModelItem[];
   onClose: () => void;
 }
 
-export function NavBarMenu({ activeItemId, navItems, onClose }: Props) {
+export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const ref = useRef(null);
@@ -38,7 +38,7 @@ export function NavBarMenu({ activeItemId, navItems, onClose }: Props) {
               {navItems.map((link) => (
                 <div className={styles.section} key={link.id}>
                   <NavBarMenuItem
-                    isActive={activeItemId === link.id}
+                    isActive={activeItem === link}
                     isSectionHeader
                     onClick={() => {
                       link.onClick?.();
@@ -52,7 +52,7 @@ export function NavBarMenu({ activeItemId, navItems, onClose }: Props) {
                     <NavBarMenuItem
                       key={childLink.id}
                       icon={childLink.icon as IconName}
-                      isActive={activeItemId === childLink.id}
+                      isActive={activeItem === childLink}
                       isDivider={childLink.divider}
                       onClick={() => {
                         childLink.onClick?.();

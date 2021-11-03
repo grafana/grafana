@@ -8,7 +8,7 @@ import { locationService } from '@grafana/runtime';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
 import { KioskMode } from 'app/types';
-import { enrichConfigItems, isLinkActive, isSearchActive } from './utils';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import NavBarItem from './NavBarItem';
 import { NavBarSection } from './NavBarSection';
@@ -21,7 +21,7 @@ const onOpenSearch = () => {
 };
 
 const searchItem: NavModelItem = {
-  id: 'search',
+  id: SEARCH_ITEM_ID,
   onClick: onOpenSearch,
   text: 'Search dashboards',
 };
@@ -43,9 +43,7 @@ export const NavBar: FC = React.memo(() => {
     location,
     toggleSwitcherModal
   );
-  const activeItemId = isSearchActive(location)
-    ? searchItem.id
-    : navTree.find((item) => isLinkActive(location.pathname, item))?.id;
+  const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -65,7 +63,7 @@ export const NavBar: FC = React.memo(() => {
         </NavBarItem>
         <NavBarItem
           className={styles.search}
-          isActive={activeItemId === searchItem.id}
+          isActive={activeItem === searchItem.id}
           label={searchItem.text}
           onClick={searchItem.onClick}
         >
@@ -77,7 +75,7 @@ export const NavBar: FC = React.memo(() => {
         {topItems.map((link, index) => (
           <NavBarItem
             key={`${link.id}-${index}`}
-            isActive={activeItemId === link.id}
+            isActive={isMatchOrChildMatch(link, activeItem)}
             label={link.text}
             menuItems={link.children}
             target={link.target}
@@ -95,7 +93,7 @@ export const NavBar: FC = React.memo(() => {
         {bottomItems.map((link, index) => (
           <NavBarItem
             key={`${link.id}-${index}`}
-            isActive={activeItemId === link.id}
+            isActive={isMatchOrChildMatch(link, activeItem)}
             label={link.text}
             menuItems={link.children}
             menuSubTitle={link.subTitle}
@@ -113,7 +111,7 @@ export const NavBar: FC = React.memo(() => {
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
       {mobileMenuOpen && (
         <NavBarMenu
-          activeItemId={activeItemId}
+          activeItem={activeItem}
           navItems={[searchItem, ...topItems, ...bottomItems]}
           onClose={() => setMobileMenuOpen(false)}
         />
