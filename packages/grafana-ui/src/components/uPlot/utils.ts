@@ -183,7 +183,7 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
 
   // if y is out of canvas bounds, snap it to the bottom
   if (y !== undefined && y < 0) {
-    y = u.bbox.height;
+    y = u.bbox.height / devicePixelRatio;
   }
 
   return y;
