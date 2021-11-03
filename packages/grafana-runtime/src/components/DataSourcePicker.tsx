@@ -40,7 +40,6 @@ export interface DataSourcePickerProps {
   noDefault?: boolean;
   width?: number;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
-  isClearable?: boolean;
   onClear?: () => void;
 }
 
@@ -151,11 +150,12 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   render() {
-    const { autoFocus, onBlur, openMenuOnFocus, placeholder, width, isClearable } = this.props;
+    const { autoFocus, onBlur, onClear, openMenuOnFocus, placeholder, width } = this.props;
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
     const styles = getStyles();
+    const isClearable = typeof onClear === 'function';
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>

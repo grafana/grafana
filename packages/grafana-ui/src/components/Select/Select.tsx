@@ -31,5 +31,3 @@ export function AsyncMultiSelect<T>(props: AsyncMultiSelectProps<T>) {
   // @ts-ignore
   return <SelectBase {...props} isMulti />;
 }
-
-export { ActionMeta } from './types';

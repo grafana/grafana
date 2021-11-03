@@ -93,7 +93,6 @@ const RulesFilter = () => {
           key={dataSourceKey}
           alerting
           noDefault
-          isClearable={true}
           current={dataSource}
           onChange={handleDataSourceChange}
           onClear={clearDataSource}
