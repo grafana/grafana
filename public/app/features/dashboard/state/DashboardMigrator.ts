@@ -40,7 +40,6 @@ import { config } from 'app/core/config';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
@@ -704,34 +703,24 @@ export class DashboardMigrator {
         if (variable.type !== 'query') {
           continue;
         }
-        let name = (variable as any).datasource as string;
-        if (name) {
-          variable.datasource = migrateDatasourceNameToRef(name);
+        if (variable.name != null) {
+          variable.datasource = migrateDatasourceNameToRef((variable as any).datasource as string);
         }
       }
 
       // Mutate panel models
       for (const panel of this.dashboard.panels) {
-        let name = (panel as any).datasource as string;
-        if (!name) {
-          panel.datasource = null; // use default
-        } else if (name === MIXED_DATASOURCE_NAME) {
-          panel.datasource = { type: MIXED_DATASOURCE_NAME };
-          for (const target of panel.targets) {
-            name = (target as any).datasource as string;
-            panel.datasource = migrateDatasourceNameToRef(name);
-          }
-          continue; // do not cleanup targets
-        } else {
-          panel.datasource = migrateDatasourceNameToRef(name);
+        if (panel.datasource != null) {
+          panel.datasource = migrateDatasourceNameToRef((panel.datasource as any) as string);
         }
 
-        // cleanup query datasource references
         if (!panel.targets) {
           panel.targets = [];
-        } else {
-          for (const target of panel.targets) {
-            delete target.datasource;
+        }
+
+        for (const target of panel.targets) {
+          if (target.datasource != null) {
+            target.datasource = migrateDatasourceNameToRef((target as any).datasource as string);
           }
         }
       }
@@ -1061,7 +1050,7 @@ export function migrateDatasourceNameToRef(name: string): DataSourceRef | null {
     return { uid: name }; // not found
   }
 
-  return { type: ds.meta.id, uid: ds.uid };
+  return { type: ds.type, uid: ds.uid };
 }
 
 // mutates transformations appending a new transformer after the existing one
