@@ -1,4 +1,6 @@
 import { cloneDeep } from 'lodash';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceRef } from '@grafana/data';
 
 import { AdHocVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
@@ -9,8 +11,6 @@ import { AdHocVariableEditor } from './AdHocVariableEditor';
 import { setFiltersFromUrl } from './actions';
 import * as urlParser from './urlParser';
 import { isAdHoc, isLegacyAdHocDataSource } from '../guard';
-import { getDataSourceSrv } from '../../../../../packages/grafana-runtime';
-import { getDataSourceRef } from '../../../../../packages/grafana-data';
 
 const noop = async () => {};
 
