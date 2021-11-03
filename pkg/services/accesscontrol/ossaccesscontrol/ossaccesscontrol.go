@@ -2,12 +2,14 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -93,9 +95,32 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	return permissions, nil
 }
 
+// TODO shouldn't this be placed in the replace org middleware instead
+func fetchUserRole(ctx context.Context, userID, orgID int64) (models.RoleType, error) {
+	var err error
+	query := models.GetSignedInUserQuery{UserId: userID, OrgId: orgID}
+	if err := sqlstore.GetSignedInUser(ctx, &query); err != nil {
+		return "", err
+	}
+
+	userOrgRole := query.Result.OrgRole
+	if userOrgRole == "" {
+		err = fmt.Errorf("user has no role")
+	}
+
+	return userOrgRole, err
+}
+
+// TODO maybe modify the signature of this function (+in: context, +out: error), but this will require enterprise changes
 func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
-	roles := []string{string(user.OrgRole)}
-	for _, role := range user.OrgRole.Children() {
+	userOrgRole, err := fetchUserRole(context.TODO(), user.UserId, user.OrgId)
+	if err != nil {
+		ac.Log.Debug(fmt.Sprintf("could not fetch user %v role in org %v: %v", user.UserId, user.OrgId, err))
+		return []string{}
+	}
+
+	roles := []string{string(userOrgRole)}
+	for _, role := range userOrgRole.Children() {
 		roles = append(roles, string(role))
 	}
 	if user.IsGrafanaAdmin {

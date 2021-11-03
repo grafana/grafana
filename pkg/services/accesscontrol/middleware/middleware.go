@@ -69,3 +69,15 @@ func newID() string {
 	}
 	return "ACE" + id
 }
+
+func ReplaceContextOrgMiddleware(c *models.ReqContext) {
+	orgID := c.ParamsInt64(":orgId")
+	// Special case of macaron handling invalid params
+	if orgID == 0 {
+		c.JsonApiErr(404, "Org not found", fmt.Errorf("Invalid org"))
+		return
+	}
+	// TODO wouldn't it be better to have a target org in the context for accesscontrol
+	// Set the context organization.
+	c.OrgId = orgID
+}
