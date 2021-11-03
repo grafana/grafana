@@ -2373,7 +2373,7 @@ __metadata:
     "@types/jest": 27.0.2
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
-    "@types/marked": 1.1.0
+    "@types/marked": 3.0.2
     "@types/node": 14.17.27
     "@types/papaparse": 5.2.0
     "@types/react": 17.0.30
@@ -7870,10 +7870,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/marked@npm:1.1.0":
-  version: 1.1.0
-  resolution: "@types/marked@npm:1.1.0"
-  checksum: 9ac8f5aa788fc4d8af87faad7844bdfa331c130035d927cd96e3deb6a5d4fd5e3f7422f006d38a6af248feda5b3da637f9ac528d39f42c3557c1c2e525c8fc73
+"@types/marked@npm:3.0.2":
+  version: 3.0.2
+  resolution: "@types/marked@npm:3.0.2"
+  checksum: 48c3c190f97bffafbaacfc2ebcb8b87bfee12977b302ebf5ca028258f8131ffa1d3042455eaac4087bc816a3d5e0c8f65f4250e792b9dd18a533d49e99742d35
   languageName: node
   linkType: hard
 
