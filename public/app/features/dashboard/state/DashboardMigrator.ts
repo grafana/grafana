@@ -703,15 +703,15 @@ export class DashboardMigrator {
         if (variable.type !== 'query') {
           continue;
         }
-        if (variable.name != null) {
-          variable.datasource = migrateDatasourceNameToRef((variable as any).datasource as string);
+        if (variable.datasource != null) {
+          variable.datasource = migrateDatasourceNameToRef(variable.datasource);
         }
       }
 
       // Mutate panel models
       for (const panel of this.dashboard.panels) {
         if (panel.datasource != null) {
-          panel.datasource = migrateDatasourceNameToRef((panel.datasource as any) as string);
+          panel.datasource = migrateDatasourceNameToRef(panel.datasource);
         }
 
         if (!panel.targets) {
@@ -720,7 +720,7 @@ export class DashboardMigrator {
 
         for (const target of panel.targets) {
           if (target.datasource != null) {
-            target.datasource = migrateDatasourceNameToRef((target as any).datasource as string);
+            target.datasource = migrateDatasourceNameToRef(target.datasource);
           }
         }
       }
@@ -1040,14 +1040,18 @@ function migrateSinglestat(panel: PanelModel) {
   return panel;
 }
 
-export function migrateDatasourceNameToRef(name: string): DataSourceRef | null {
-  if (!name || name === 'default') {
+export function migrateDatasourceNameToRef(nameOrRef: string | DataSourceRef | null): DataSourceRef | null {
+  if (nameOrRef == null || nameOrRef === 'default') {
     return null;
   }
 
-  const ds = getDataSourceSrv().getInstanceSettings(name);
+  if ((nameOrRef as any).uid) {
+    return nameOrRef as DataSourceRef;
+  }
+
+  const ds = getDataSourceSrv().getInstanceSettings(nameOrRef);
   if (!ds) {
-    return { uid: name }; // not found
+    return { uid: nameOrRef as string }; // not found
   }
 
   return { type: ds.type, uid: ds.uid };
@@ -1074,7 +1078,7 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
     return panel;
   }
 
-  if (fieldConfig.defaults) {
+  if (fieldConfig.defaults && fieldConfig.defaults.mappings) {
     fieldConfig.defaults.mappings = upgradeValueMappings(
       fieldConfig.defaults.mappings,
       fieldConfig.defaults.thresholds
