@@ -251,5 +251,5 @@ export function getLatestCompatibleVersion(versions: Version[] | undefined): str
     return;
   }
   const [latest] = versions;
-  return latest.version;
+  return latest?.version;
 }
