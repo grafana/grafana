@@ -38,12 +38,6 @@ var (
 	ScopeDatasourceID   = accesscontrol.Scope("datasources", "id", accesscontrol.Parameter(":id"))
 	ScopeDatasourceUID  = accesscontrol.Scope("datasources", "uid", accesscontrol.Parameter(":uid"))
 	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
-
-	ScopeOrgsAll      = accesscontrol.Scope("orgs", "*")
-	ScopeOrgID        = accesscontrol.Scope("orgs", "id", accesscontrol.Parameter(":orgId"))
-	ScopeOrgCurrentID = accesscontrol.Scope("orgs", "id", accesscontrol.Field("OrgID"))
-	ScopeOrgName      = accesscontrol.Scope("orgs", "name", accesscontrol.Parameter(":name"))
-	ScopeOrgCurrent   = accesscontrol.Scope("orgs", "current")
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
@@ -121,17 +115,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:current:org:reader",
 				Description: "Read current organization and its quotas.",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionOrgsRead,
-						Scope:  ScopeOrgCurrent,
 					},
 					{
 						Action: ActionOrgsQuotasRead,
-						Scope:  ScopeOrgCurrent,
 					},
 				},
 			},
@@ -139,64 +131,29 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
-				Name:        "fixed:current:org:writer",
-				Description: "Read current organization, its quotas, and its preferences. Write current organization and its preferences.",
-				Permissions: []accesscontrol.Permission{
-					{
-						Action: ActionOrgsRead,
-						Scope:  ScopeOrgCurrent,
-					},
-					{
-						Action: ActionOrgsQuotasRead,
-						Scope:  ScopeOrgCurrent,
-					},
-					{
-						Action: ActionOrgsPreferencesRead,
-						Scope:  ScopeOrgCurrent,
-					},
-					{
-						Action: ActionOrgsWrite,
-						Scope:  ScopeOrgCurrent,
-					},
-					{
-						Action: ActionOrgsPreferencesWrite,
-						Scope:  ScopeOrgCurrent,
-					},
-				},
-			},
-			Grants: []string{string(models.ROLE_ADMIN)},
-		},
-		{
-			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:orgs:writer",
 				Description: "Create, read, write, or delete an organization. Read or write an organization's quotas.",
 				Permissions: []accesscontrol.Permission{
 					{Action: ActionOrgsCreate},
 					{
 						Action: ActionOrgsRead,
-						Scope:  ScopeOrgsAll,
 					},
 					{
 						Action: ActionOrgsWrite,
-						Scope:  ScopeOrgsAll,
 					},
 					{
 						Action: ActionOrgsDelete,
-						Scope:  ScopeOrgsAll,
 					},
 					{
 						Action: ActionOrgsQuotasRead,
-						Scope:  ScopeOrgsAll,
 					},
 					{
 						Action: ActionOrgsQuotasWrite,
-						Scope:  ScopeOrgsAll,
 					},
 				},
 			},
-			Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+			Grants: []string{accesscontrol.RoleGrafanaAdmin, string(models.ROLE_ADMIN)},
 		},
 	}
 
