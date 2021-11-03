@@ -104,6 +104,7 @@ export class DatasourceSrv implements DataSourceService {
       // The return name or uid needs preservet string containing the variable
       const clone = cloneDeep(dsSettings);
       clone.name = nameOrUid;
+      clone.uid = nameOrUid;
       // A data source being looked up using a variable should not be considered default
       clone.isDefault = false;
 
@@ -243,6 +244,7 @@ export class DatasourceSrv implements DataSourceService {
           base.push({
             ...dsSettings,
             name: key,
+            uid: key,
           });
         }
       }
