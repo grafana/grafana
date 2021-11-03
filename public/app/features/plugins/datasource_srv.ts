@@ -7,7 +7,6 @@ import {
   DataSourceSrv as DataSourceService,
   getDataSourceSrv as getDataSourceService,
   TemplateSrv,
-  ExpressionDatasourceRef,
 } from '@grafana/runtime';
 // Types
 import {
@@ -28,6 +27,7 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 import { DataSourceVariableModel } from '../variables/types';
 import { cloneDeep } from 'lodash';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID

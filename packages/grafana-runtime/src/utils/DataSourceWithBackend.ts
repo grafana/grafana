@@ -19,13 +19,16 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { getBackendSrv, getDataSourceSrv, getGrafanaLiveSrv } from '../services';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
+/**
+ * @internal
+ */
 export const ExpressionDatasourceRef = Object.freeze({
   type: '__expr__',
   uid: '__expr__',
 });
 
 /**
- * @public
+ * @internal
  */
 export function isExpressionReference(ref?: DataSourceRef | string): boolean {
   if (!ref) {

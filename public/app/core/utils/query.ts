@@ -1,5 +1,5 @@
 import { DataQuery, DataSourceInstanceSettings, DataSourceRef, getDataSourceRef } from '@grafana/data';
-import { ExpressionDatasourceRef } from '@grafana/runtime';
+import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
@@ -31,7 +31,7 @@ export function updateQueries(
 
   if (!newSettings.meta.mixed && dsSettings?.meta.mixed) {
     return queries.map((q) => {
-      if (q.datasource?.type !== ExpressionDatasourceRef.type) {
+      if (!isExpressionReference(q.datasource)) {
         q.datasource = datasource;
       }
       return q;
