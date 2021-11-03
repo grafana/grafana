@@ -112,7 +112,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     splits: config.xSplits,
     values: config.xValues,
     grid: { show: false },
-    ticks: false,
+    ticks: { show: false },
     gap: 15,
     theme,
   });
