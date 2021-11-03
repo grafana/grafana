@@ -1,5 +1,7 @@
+import { SelectInstance } from '../../panel.types';
+
 export interface DiscoverySearchPanelProps {
-  selectInstance: (instanceData: any) => void;
+  selectInstance: SelectInstance;
 }
 
 export interface Instance {

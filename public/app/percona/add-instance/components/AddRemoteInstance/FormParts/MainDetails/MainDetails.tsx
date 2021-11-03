@@ -2,14 +2,13 @@ import React, { FC, useMemo } from 'react';
 import { PasswordInputField, TextInputField, validators } from '@percona/platform-core';
 import Validators from 'app/percona/shared/helpers/validators';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
-import { useTheme } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { MainDetailsFormPartProps } from '../FormParts.types';
 import { getStyles } from '../FormParts.styles';
 import { Messages } from '../FormParts.messages';
 
 export const MainDetailsFormPart: FC<MainDetailsFormPartProps> = ({ form, remoteInstanceCredentials }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
   const formValues = form && form.getState().values;
   const tlsFlag = formValues && formValues['tls'];
 

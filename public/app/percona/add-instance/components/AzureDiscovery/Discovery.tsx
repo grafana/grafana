@@ -4,6 +4,7 @@ import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import DiscoveryService from './Discovery.service';
 import Credentials from './components/Credentials/Credentials';
 import Instances from './components/Instances/Instances';
+import { useStyles } from '@grafana/ui';
 import { getStyles } from './Discovery.styles';
 import { DiscoverySearchPanelProps, Instance } from './Discovery.types';
 import { AzureCredentialsForm } from './components/Credentials/Credentials.types';
@@ -11,7 +12,7 @@ import { logger } from '@percona/platform-core';
 import { DISCOVERY_AZURE_CANCEL_TOKEN } from './Discovery.constants';
 
 const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
-  const styles = getStyles();
+  const styles = useStyles(getStyles);
 
   const [instances, setInstances] = useState<Instance[]>([]);
   const [credentials, setCredentials] = useState<AzureCredentialsForm>({});

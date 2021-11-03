@@ -6,22 +6,22 @@ import DiscoveryService from './Discovery.service';
 import Credentials from './components/Credentials/Credentials';
 import Instances from './components/Instances/Instances';
 import { getStyles } from './Discovery.styles';
-import { DiscoverySearchPanelProps } from './Discovery.types';
+import { DiscoverySearchPanelProps, Instance } from './Discovery.types';
+import { RDSCredentialsForm } from './components/Credentials/Credentials.types';
 import { logger } from '@percona/platform-core';
 import { DISCOVERY_RDS_CANCEL_TOKEN, INITIAL_CREDENTIALS } from './Discovery.constants';
-import { CredentialsForm } from './components/Credentials/Credentials.types';
 import { DiscoveryDocs } from './components/DiscoveryDocs/DiscoveryDocs';
 
 const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
   const styles = useStyles(getStyles);
 
-  const [instances, setInstances] = useState([] as any);
+  const [instances, setInstances] = useState<Instance[]>([]);
   const [credentials, setCredentials] = useState(INITIAL_CREDENTIALS);
   const [loading, startLoading] = useState(false);
   const [generateToken] = useCancelToken();
 
   const discover = useCallback(
-    async (credentials: CredentialsForm, disableNotifications = false) => {
+    async (credentials: RDSCredentialsForm, disableNotifications = false) => {
       try {
         setCredentials(credentials);
         startLoading(true);

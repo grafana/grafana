@@ -1,5 +1,6 @@
+import { SelectInstance } from '../../panel.types';
 export interface DiscoverySearchPanelProps {
-  selectInstance: (instanceData: any) => void;
+  selectInstance: SelectInstance;
 }
 
 export interface Instance {
@@ -13,5 +14,5 @@ export interface Instance {
   engine_version: string;
 }
 export interface RDSInstances {
-  rds_instances: Instance;
+  rds_instances: Instance[];
 }

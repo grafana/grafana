@@ -1,7 +1,10 @@
 import { Button } from '@grafana/ui';
 import React from 'react';
+import { SelectInstance } from 'app/percona/add-instance/panel.types';
 import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
 import { styles } from './Instances.styles';
+import { Instance } from '../../Discovery.types';
+import { RDSCredentialsForm } from '../Credentials/Credentials.types';
 
 const getEngineType = (type?: string) => {
   switch (type) {
@@ -27,8 +30,7 @@ const getDatabaseType = (type?: string) => {
   }
 };
 
-// @ts-ignore
-export const getInstancesColumns = (credentials, onSelectInstance) => [
+export const getInstancesColumns = (credentials: RDSCredentialsForm, onSelectInstance: SelectInstance) => [
   {
     Header: 'Region',
     accessor: 'region',
@@ -39,7 +41,7 @@ export const getInstancesColumns = (credentials, onSelectInstance) => [
   },
   {
     Header: 'Engine',
-    accessor: (element: any) =>
+    accessor: (element: Instance) =>
       element.engine ? `${getEngineType(element.engine)}  ${element.engine_version}` : 'nothing',
   },
   {
@@ -48,11 +50,11 @@ export const getInstancesColumns = (credentials, onSelectInstance) => [
   },
   {
     Header: 'Address',
-    accessor: (element: any) => element.address.split(':')[0],
+    accessor: (element: Instance) => element.address.split(':')[0],
   },
   {
     Header: 'Action',
-    accessor: (element: any) => {
+    accessor: (element: Instance) => {
       const selectionHandler = () => {
         onSelectInstance({
           type: getDatabaseType(element.engine),

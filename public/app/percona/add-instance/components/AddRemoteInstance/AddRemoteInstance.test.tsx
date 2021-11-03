@@ -2,10 +2,12 @@ import { mount } from 'enzyme';
 import React from 'react';
 import { dataTestId } from '@percona/platform-core';
 import AddRemoteInstance from './AddRemoteInstance';
+import { Databases } from 'app/percona/shared/core';
+import { InstanceTypesExtra } from '../../panel.types';
 
 xdescribe('Add remote instance:: ', () => {
   it('should render correct for mysql and highlight empty mandatory fields on submit', async () => {
-    const type = 'mysql';
+    const type = Databases.mysql;
 
     const root = mount(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
 
@@ -21,7 +23,7 @@ xdescribe('Add remote instance:: ', () => {
   });
 
   it('should render for external service and highlight empty mandatory fields on submit', () => {
-    const type = 'external';
+    const type = InstanceTypesExtra.external;
 
     const root = mount(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
 
@@ -41,7 +43,7 @@ xdescribe('Add remote instance:: ', () => {
   });
 
   it('should render correct for HAProxy and highlight empty mandatory fields on submit', async () => {
-    const type = 'haproxy';
+    const type = Databases.haproxy;
 
     const root = mount(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
 

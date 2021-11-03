@@ -1,7 +1,6 @@
-import { stylesFactory } from '@grafana/ui';
 import { css } from 'emotion';
 
-export const getStyles = stylesFactory(() => ({
+export const getStyles = () => ({
   content: css`
     display: flex;
     flex-direction: column;
@@ -13,4 +12,4 @@ export const getStyles = stylesFactory(() => ({
     position: absolute;
     left: 50px;
   `,
-}));
+});

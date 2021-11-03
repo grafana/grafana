@@ -1,11 +1,11 @@
-import { InstanceTypes } from '../../panel.types';
+import { Databases } from 'app/percona/shared/core';
 
 export const DEFAULT_PORTS = {
-  [InstanceTypes.mysql]: '3306',
-  [InstanceTypes.mongodb]: '27017',
-  [InstanceTypes.postgresql]: '5432',
-  [InstanceTypes.proxysql]: '6032',
-  [InstanceTypes.haproxy]: '8404',
+  [Databases.mysql]: '3306',
+  [Databases.mongodb]: '27017',
+  [Databases.postgresql]: '5432',
+  [Databases.proxysql]: '6032',
+  [Databases.haproxy]: '8404',
 };
 
 export const ADD_RDS_CANCEL_TOKEN = 'addRds';

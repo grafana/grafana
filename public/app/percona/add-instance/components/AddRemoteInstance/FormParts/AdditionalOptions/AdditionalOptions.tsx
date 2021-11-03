@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import { CheckboxField, NumberInputField, RadioButtonGroupField, validators } from '@percona/platform-core';
-import { useTheme } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { AdditionalOptionsFormPartProps, PostgreSQLAdditionalOptionsProps } from '../FormParts.types';
 import { getStyles } from '../FormParts.styles';
 import { Messages } from '../FormParts.messages';
@@ -8,18 +8,18 @@ import { rdsTrackingOptions, trackingOptions } from '../FormParts.constants';
 import { tablestatOptions } from './AdditionalOptions.constants';
 import { TablestatOptionsInterface } from './AdditionalOptions.types';
 import { FormApi } from 'final-form';
-import { InstanceTypes } from '../../../../panel.types';
+import { InstanceAvailableType, RemoteInstanceCredentials } from 'app/percona/add-instance/panel.types';
 import { MysqlTLSCertificate } from './MysqlTLSCertificate';
 import { MongodbTLSCertificate } from './MongodbTLSCertificate';
 import { PostgreTLSCertificate } from './PostgreTLSCertificate';
+import { Databases } from 'app/percona/shared/core';
 
 export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
   instanceType,
   remoteInstanceCredentials,
   form,
 }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   return (
     <div className={styles.groupWrapper}>
@@ -83,9 +83,13 @@ const MySQLOptions = ({ form }: { form: FormApi }) => {
   );
 };
 
-export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredentials: any, form: FormApi) => {
+export const getAdditionalOptions = (
+  type: InstanceAvailableType,
+  remoteInstanceCredentials: RemoteInstanceCredentials,
+  form: FormApi
+) => {
   switch (type) {
-    case InstanceTypes.postgresql:
+    case Databases.postgresql:
       return (
         <>
           <CheckboxField label={Messages.form.labels.additionalOptions.tls} name="tls" />
@@ -115,7 +119,7 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
           ) : null}
         </>
       );
-    case InstanceTypes.mysql:
+    case Databases.mysql:
       return (
         <>
           <CheckboxField label={Messages.form.labels.additionalOptions.tls} name="tls" />
@@ -146,7 +150,7 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
           ) : null}
         </>
       );
-    case InstanceTypes.mongodb:
+    case Databases.mongodb:
       return (
         <>
           <CheckboxField label={Messages.form.labels.additionalOptions.tls} name="tls" />
@@ -158,7 +162,7 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
           />
         </>
       );
-    case InstanceTypes.haproxy:
+    case Databases.haproxy:
       return null;
     default:
       return (
