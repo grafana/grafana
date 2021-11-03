@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -22,7 +23,7 @@ var validateLoginAttempts = func(query *models.LoginUserQuery) error {
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
 
-	if err := bus.Dispatch(&loginAttemptCountQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &loginAttemptCountQuery); err != nil {
 		return err
 	}
 

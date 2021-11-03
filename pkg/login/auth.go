@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,11 +26,11 @@ var (
 var loginLogger = log.New("login")
 
 func Init() {
-	bus.AddHandler("auth", authenticateUser)
+	bus.AddHandlerCtx("auth", authenticateUser)
 }
 
 // authenticateUser authenticates the user via username & password
-func authenticateUser(query *models.LoginUserQuery) error {
+func authenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
 	if err := validateLoginAttempts(query); err != nil {
 		return err
 	}
@@ -38,7 +39,7 @@ func authenticateUser(query *models.LoginUserQuery) error {
 		return err
 	}
 
-	err := loginUsingGrafanaDB(query)
+	err := loginUsingGrafanaDB(ctx, query)
 	if err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
 		!errors.Is(err, ErrUserDisabled)) {
 		query.AuthModule = "grafana"
