@@ -151,12 +151,15 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
     const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
     const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
 
+    const inputId = `${org.name}-input`;
     return (
       <tr>
-        <td className={labelClass}>{org.name}</td>
+        <td className={labelClass}>
+          <label htmlFor={inputId}>{org.name}</label>
+        </td>
         {isChangingRole ? (
           <td>
-            <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} />
+            <OrgRolePicker inputId={inputId} value={currentRole} onChange={this.onOrgRoleChange} />
           </td>
         ) : (
           <td className="width-25">{org.role}</td>
@@ -257,10 +260,10 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         onDismiss={this.onCancel}
       >
         <Field label="Organization">
-          <OrgPicker onSelected={this.onOrgSelect} />
+          <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} />
         </Field>
         <Field label="Role">
-          <OrgRolePicker value={role} onChange={this.onOrgRoleChange} />
+          <OrgRolePicker inputId="new-org-role-input" value={role} onChange={this.onOrgRoleChange} />
         </Field>
         <Modal.ButtonRow>
           <HorizontalGroup spacing="md" justify="center">
