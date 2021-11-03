@@ -78,11 +78,14 @@ export function runWithRetry(
                 ...(dataResponse.error ?? {}),
                 message: `Some queries timed out: ${dataResponse.error?.message}`,
               };
+              // So we consider this a partial success and pass the data forward but also with error to be shown to
+              // the user.
               observer.next({
                 error: dataResponse.error,
                 frames: dataResponse.data,
               });
             } else {
+              // So we timed out and there was no data to pass forward so we just pass the error
               const dataResponse = toDataQueryResponse({ data: { results: error.data?.results ?? {} } });
               observer.error(dataResponse.error);
             }
@@ -103,6 +106,8 @@ export function runWithRetry(
     }
     run(targets);
     return () => {
+      // We clear only the latest timer and subscription but the observable should complete after one response so
+      // there should not be more things running at the same time.
       clearTimeout(timerID);
       subscription.unsubscribe();
     };
