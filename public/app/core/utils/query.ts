@@ -24,14 +24,14 @@ export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datas
 export function updateQueries(
   newSettings: DataSourceInstanceSettings,
   queries: DataQuery[],
-  expressionDataSourceName: string, // pass this in because importing it creates a circular dependency
+  extensionID: string, // pass this in because importing it creates a circular dependency
   dsSettings?: DataSourceInstanceSettings
 ): DataQuery[] {
   const datasource = getDataSourceRef(newSettings);
 
   if (!newSettings.meta.mixed && dsSettings?.meta.mixed) {
     return queries.map((q) => {
-      if (q.datasource !== expressionDataSourceName) {
+      if (q.datasource !== extensionID) {
         q.datasource = datasource;
       }
       return q;
@@ -39,12 +39,9 @@ export function updateQueries(
   } else if (!newSettings.meta.mixed && dsSettings?.meta.id !== newSettings.meta.id) {
     // we are changing data source type, clear queries
     return [{ refId: 'A', datasource }];
-  } else {
-    return queries.map((q) => {
-      q.datasource = datasource;
-      return q;
-    });
   }
+
+  return queries;
 }
 
 export function isDataQuery(url: string): boolean {
