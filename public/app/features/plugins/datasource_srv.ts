@@ -27,7 +27,6 @@ import {
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
 import { DataSourceVariableModel } from '../variables/types';
-import { cloneDeep } from 'lodash';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -101,14 +100,14 @@ export class DatasourceSrv implements DataSourceService {
       if (!dsSettings) {
         return undefined;
       }
-      // The return name or uid needs preservet string containing the variable
-      const clone = cloneDeep(dsSettings);
-      clone.name = nameOrUid;
-      clone.uid = nameOrUid;
-      // A data source being looked up using a variable should not be considered default
-      clone.isDefault = false;
 
-      return clone;
+      // The return an instance with name and uid with the original variable string
+      return {
+        ...dsSettings,
+        isDefault: false,
+        name: nameOrUid,
+        uid: nameOrUid,
+      };
     }
 
     return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];
