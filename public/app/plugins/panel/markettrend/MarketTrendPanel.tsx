@@ -2,7 +2,7 @@
 // with some extra renderers passed to the <TimeSeries> component
 
 import React, { useMemo } from 'react';
-import { Field, getDisplayProcessor, getFieldDisplayName, PanelProps } from '@grafana/data';
+import { DataFrame, Field, getDisplayProcessor, getFieldDisplayName, PanelProps } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, UPlotConfigBuilder } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -22,6 +22,16 @@ interface FieldIndices {
 }
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
+
+function findField(frames: DataFrame[], name: string) {
+  for (const frame of frames) {
+    for (const field of frame.fields) {
+      if (getFieldDisplayName(field, frame, frames) === name) {
+        return field;
+      }
+    }
+  }
+}
 
 export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
   data,
@@ -55,26 +65,20 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
 
     // find volume field and set overrides
     if (frames && volume != null) {
-      loop: for (const frame of frames) {
-        for (const field of frame.fields) {
-          let dispName = getFieldDisplayName(field, frame, data?.series);
+      let volumeField = findField(data?.series, volume);
 
-          if (dispName === volume) {
-            let { fillOpacity } = field.config.custom;
+      if (volumeField) {
+        let { fillOpacity } = volumeField.config.custom;
 
-            if (fillOpacity) {
-              volumeAlpha = fillOpacity / 100;
-            }
-
-            field.config.unit = 'short';
-            field.display = getDisplayProcessor({
-              field: field,
-              theme: config.theme2,
-            });
-
-            break loop;
-          }
+        if (fillOpacity) {
+          volumeAlpha = fillOpacity / 100;
         }
+
+        volumeField.config.unit = 'short';
+        volumeField.display = getDisplayProcessor({
+          field: volumeField,
+          theme: config.theme2,
+        });
       }
     }
 
