@@ -35,8 +35,8 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
         <nav className={styles.content}>
           <CustomScrollbar>
             <ul>
-              {navItems.map((link) => (
-                <div className={styles.section} key={link.id}>
+              {navItems.map((link, index) => (
+                <div className={styles.section} key={`${link.id}-${index}`}>
                   <NavBarMenuItem
                     isActive={activeItem === link}
                     isSectionHeader
@@ -48,9 +48,9 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
                     text={link.text}
                     url={link.url}
                   />
-                  {link.children?.map((childLink) => (
+                  {link.children?.map((childLink, childIndex) => (
                     <NavBarMenuItem
-                      key={childLink.id}
+                      key={`${childLink.id}-${childIndex}`}
                       icon={childLink.icon as IconName}
                       isActive={activeItem === childLink}
                       isDivider={childLink.divider}

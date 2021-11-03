@@ -63,7 +63,7 @@ export const NavBar: FC = React.memo(() => {
         </NavBarItem>
         <NavBarItem
           className={styles.search}
-          isActive={activeItem === searchItem.id}
+          isActive={activeItem === searchItem}
           label={searchItem.text}
           onClick={searchItem.onClick}
         >
