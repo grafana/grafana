@@ -26,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/database"
@@ -61,7 +61,7 @@ type CoreGrafanaScope struct {
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	logsService *cloudwatch.LogsService, pluginManager *manager.PluginManager, cacheService *localcache.CacheService,
+	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore,
 	usageStatsService usagestats.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
@@ -69,7 +69,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
 		LogsService:           logsService,
-		PluginManager:         pluginManager,
+		pluginStore:           pluginStore,
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
@@ -361,10 +361,10 @@ type GrafanaLive struct {
 	Cfg                   *setting.Cfg
 	RouteRegister         routing.RouteRegister
 	LogsService           *cloudwatch.LogsService
-	PluginManager         *manager.PluginManager
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
+	pluginStore           plugins.Store
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
@@ -393,15 +393,14 @@ type GrafanaLive struct {
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
-	plugin, ok := g.PluginManager.BackendPluginManager.Get(pluginID)
-	if !ok {
+	plugin := g.pluginStore.Plugin(pluginID)
+	if plugin == nil {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	streamHandler, ok := plugin.(backend.StreamHandler)
-	if !ok {
-		return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
+	if plugin.SupportsStreaming() {
+		return plugin, nil
 	}
-	return streamHandler, nil
+	return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {

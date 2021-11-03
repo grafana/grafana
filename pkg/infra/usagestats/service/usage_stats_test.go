@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -318,9 +317,9 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, getSystemStatsQuery.Result.Viewers, metrics.Get("stats.viewers.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
-			assert.Equal(t, uss.PluginManager.AppCount(), metrics.Get("stats.plugins.apps.count").MustInt())
-			assert.Equal(t, uss.PluginManager.PanelCount(), metrics.Get("stats.plugins.panels.count").MustInt())
-			assert.Equal(t, uss.PluginManager.DataSourceCount(), metrics.Get("stats.plugins.datasources.count").MustInt())
+			assert.Equal(t, uss.appCount(), metrics.Get("stats.plugins.apps.count").MustInt())
+			assert.Equal(t, uss.panelCount(), metrics.Get("stats.plugins.panels.count").MustInt())
+			assert.Equal(t, uss.dataSourceCount(), metrics.Get("stats.plugins.datasources.count").MustInt())
 			assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.ActiveUsers, metrics.Get("stats.active_users.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.ActiveAdmins, metrics.Get("stats.active_admins.count").MustInt64())
@@ -552,57 +551,45 @@ func TestMetrics(t *testing.T) {
 	})
 }
 
-type fakePluginManager struct {
-	manager.PluginManager
+type fakePluginStore struct {
+	plugins.Store
 
-	dataSources map[string]*plugins.DataSourcePlugin
-	panels      map[string]*plugins.PanelPlugin
+	plugins map[string]*plugins.Plugin
 }
 
-func (pm *fakePluginManager) DataSourceCount() int {
-	return len(pm.dataSources)
+func (pr fakePluginStore) Plugin(pluginID string) *plugins.Plugin {
+	return pr.plugins[pluginID]
 }
 
-func (pm *fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
-	return pm.dataSources[id]
-}
+func (pr fakePluginStore) Plugins(pluginTypes ...plugins.Type) []*plugins.Plugin {
+	var result []*plugins.Plugin
+	for _, v := range pr.plugins {
+		for _, t := range pluginTypes {
+			if v.Type == t {
+				result = append(result, v)
+			}
+		}
+	}
 
-func (pm *fakePluginManager) PanelCount() int {
-	return len(pm.panels)
+	return result
 }
 
 func setupSomeDataSourcePlugins(t *testing.T, uss *UsageStats) {
 	t.Helper()
 
-	uss.PluginManager = &fakePluginManager{
-		dataSources: map[string]*plugins.DataSourcePlugin{
+	uss.pluginStore = &fakePluginStore{
+		plugins: map[string]*plugins.Plugin{
 			models.DS_ES: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 			models.DS_PROMETHEUS: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 			models.DS_GRAPHITE: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 			models.DS_MYSQL: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 		},
 	}
@@ -624,7 +611,7 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStats {
 		Cfg:             &cfg,
 		SQLStore:        sqlStore,
 		externalMetrics: make([]usagestats.MetricsFunc, 0),
-		PluginManager:   &fakePluginManager{},
+		pluginStore:     &fakePluginStore{},
 		kvStore:         kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
 		log:             log.New("infra.usagestats"),
 		startTime:       time.Now().Add(-1 * time.Minute),

@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -29,7 +29,7 @@ var (
 )
 
 func TestDatasourceAsConfig(t *testing.T) {
-	Convey("Testing datasource as configuration", t, func() {
+	setup := func() {
 		fakeRepo = &fakeRepository{}
 		bus.ClearBusHandlers()
 		bus.AddHandler("test", mockDelete)
@@ -37,226 +37,229 @@ func TestDatasourceAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockUpdate)
 		bus.AddHandler("test", mockGet)
 		bus.AddHandler("test", mockGetOrg)
+	}
 
-		Convey("apply default values when missing", func() {
+	t.Run("apply default values when missing", func(t *testing.T) {
+		setup()
+		dc := newDatasourceProvisioner(logger)
+		err := dc.applyChanges(context.Background(), withoutDefaults)
+		if err != nil {
+			t.Fatalf("applyChanges return an error %v", err)
+		}
+
+		require.Equal(t, len(fakeRepo.inserted), 1)
+		require.Equal(t, fakeRepo.inserted[0].OrgId, int64(1))
+		require.Equal(t, fakeRepo.inserted[0].Access, models.DsAccess("proxy"))
+	})
+
+	t.Run("no datasource in database", func(t *testing.T) {
+		setup()
+		dc := newDatasourceProvisioner(logger)
+		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
+		if err != nil {
+			t.Fatalf("applyChanges return an error %v", err)
+		}
+
+		require.Equal(t, len(fakeRepo.deleted), 0)
+		require.Equal(t, len(fakeRepo.inserted), 2)
+		require.Equal(t, len(fakeRepo.updated), 0)
+	})
+
+	t.Run("One datasource in database with same name", func(t *testing.T) {
+		setup()
+		fakeRepo.loadAll = []*models.DataSource{
+			{Name: "Graphite", OrgId: 1, Id: 1},
+		}
+
+		t.Run("should update one datasource", func(t *testing.T) {
 			dc := newDatasourceProvisioner(logger)
-			err := dc.applyChanges(context.Background(), withoutDefaults)
+			err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 			if err != nil {
 				t.Fatalf("applyChanges return an error %v", err)
 			}
 
-			So(len(fakeRepo.inserted), ShouldEqual, 1)
-			So(fakeRepo.inserted[0].OrgId, ShouldEqual, 1)
-			So(fakeRepo.inserted[0].Access, ShouldEqual, "proxy")
+			require.Equal(t, len(fakeRepo.deleted), 0)
+			require.Equal(t, len(fakeRepo.inserted), 1)
+			require.Equal(t, len(fakeRepo.updated), 1)
 		})
+	})
 
-		Convey("One configured datasource", func() {
-			Convey("no datasource in database", func() {
+	t.Run("Two datasources with is_default", func(t *testing.T) {
+		setup()
+		dc := newDatasourceProvisioner(logger)
+		err := dc.applyChanges(context.Background(), doubleDatasourcesConfig)
+		t.Run("should raise error", func(t *testing.T) { require.Equal(t, err, ErrInvalidConfigToManyDefault) })
+	})
+
+	t.Run("Multiple datasources in different organizations with isDefault in each organization", func(t *testing.T) {
+		setup()
+		dc := newDatasourceProvisioner(logger)
+		err := dc.applyChanges(context.Background(), multipleOrgsWithDefault)
+		t.Run("should not raise error", func(t *testing.T) {
+			require.NoError(t, err)
+			require.Equal(t, len(fakeRepo.inserted), 4)
+			require.True(t, fakeRepo.inserted[0].IsDefault)
+			require.Equal(t, fakeRepo.inserted[0].OrgId, int64(1))
+			require.True(t, fakeRepo.inserted[2].IsDefault)
+			require.Equal(t, fakeRepo.inserted[2].OrgId, int64(2))
+		})
+	})
+
+	t.Run("Two configured datasource and purge others ", func(t *testing.T) {
+		setup()
+		t.Run("two other datasources in database", func(t *testing.T) {
+			fakeRepo.loadAll = []*models.DataSource{
+				{Name: "old-graphite", OrgId: 1, Id: 1},
+				{Name: "old-graphite2", OrgId: 1, Id: 2},
+			}
+
+			t.Run("should have two new datasources", func(t *testing.T) {
+				dc := newDatasourceProvisioner(logger)
+				err := dc.applyChanges(context.Background(), twoDatasourcesConfigPurgeOthers)
+				if err != nil {
+					t.Fatalf("applyChanges return an error %v", err)
+				}
+
+				require.Equal(t, len(fakeRepo.deleted), 2)
+				require.Equal(t, len(fakeRepo.inserted), 2)
+				require.Equal(t, len(fakeRepo.updated), 0)
+			})
+		})
+	})
+
+	t.Run("Two configured datasource and purge others = false", func(t *testing.T) {
+		setup()
+		t.Run("two other datasources in database", func(t *testing.T) {
+			fakeRepo.loadAll = []*models.DataSource{
+				{Name: "Graphite", OrgId: 1, Id: 1},
+				{Name: "old-graphite2", OrgId: 1, Id: 2},
+			}
+
+			t.Run("should have two new datasources", func(t *testing.T) {
 				dc := newDatasourceProvisioner(logger)
 				err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
 
-				So(len(fakeRepo.deleted), ShouldEqual, 0)
-				So(len(fakeRepo.inserted), ShouldEqual, 2)
-				So(len(fakeRepo.updated), ShouldEqual, 0)
-			})
-
-			Convey("One datasource in database with same name", func() {
-				fakeRepo.loadAll = []*models.DataSource{
-					{Name: "Graphite", OrgId: 1, Id: 1},
-				}
-
-				Convey("should update one datasource", func() {
-					dc := newDatasourceProvisioner(logger)
-					err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
-					if err != nil {
-						t.Fatalf("applyChanges return an error %v", err)
-					}
-
-					So(len(fakeRepo.deleted), ShouldEqual, 0)
-					So(len(fakeRepo.inserted), ShouldEqual, 1)
-					So(len(fakeRepo.updated), ShouldEqual, 1)
-				})
-			})
-
-			Convey("Two datasources with is_default", func() {
-				dc := newDatasourceProvisioner(logger)
-				err := dc.applyChanges(context.Background(), doubleDatasourcesConfig)
-				Convey("should raise error", func() {
-					So(err, ShouldEqual, ErrInvalidConfigToManyDefault)
-				})
+				require.Equal(t, len(fakeRepo.deleted), 0)
+				require.Equal(t, len(fakeRepo.inserted), 1)
+				require.Equal(t, len(fakeRepo.updated), 1)
 			})
 		})
+	})
 
-		Convey("Multiple datasources in different organizations with isDefault in each organization", func() {
-			dc := newDatasourceProvisioner(logger)
-			err := dc.applyChanges(context.Background(), multipleOrgsWithDefault)
-			Convey("should not raise error", func() {
-				So(err, ShouldBeNil)
-				So(len(fakeRepo.inserted), ShouldEqual, 4)
-				So(fakeRepo.inserted[0].IsDefault, ShouldBeTrue)
-				So(fakeRepo.inserted[0].OrgId, ShouldEqual, 1)
-				So(fakeRepo.inserted[2].IsDefault, ShouldBeTrue)
-				So(fakeRepo.inserted[2].OrgId, ShouldEqual, 2)
-			})
-		})
+	t.Run("broken yaml should return error", func(t *testing.T) {
+		reader := &configReader{}
+		_, err := reader.readConfig(brokenYaml)
+		require.NotNil(t, err)
+	})
 
-		Convey("Two configured datasource and purge others ", func() {
-			Convey("two other datasources in database", func() {
-				fakeRepo.loadAll = []*models.DataSource{
-					{Name: "old-graphite", OrgId: 1, Id: 1},
-					{Name: "old-graphite2", OrgId: 1, Id: 2},
-				}
+	t.Run("invalid access should warn about invalid value and return 'proxy'", func(t *testing.T) {
+		reader := &configReader{log: logger}
+		configs, err := reader.readConfig(invalidAccess)
+		require.NoError(t, err)
+		require.Equal(t, configs[0].Datasources[0].Access, models.DS_ACCESS_PROXY)
+	})
 
-				Convey("should have two new datasources", func() {
-					dc := newDatasourceProvisioner(logger)
-					err := dc.applyChanges(context.Background(), twoDatasourcesConfigPurgeOthers)
-					if err != nil {
-						t.Fatalf("applyChanges return an error %v", err)
-					}
+	t.Run("skip invalid directory", func(t *testing.T) {
+		cfgProvider := &configReader{log: log.New("test logger")}
+		cfg, err := cfgProvider.readConfig("./invalid-directory")
+		if err != nil {
+			t.Fatalf("readConfig return an error %v", err)
+		}
 
-					So(len(fakeRepo.deleted), ShouldEqual, 2)
-					So(len(fakeRepo.inserted), ShouldEqual, 2)
-					So(len(fakeRepo.updated), ShouldEqual, 0)
-				})
-			})
-		})
+		require.Equal(t, len(cfg), 0)
+	})
 
-		Convey("Two configured datasource and purge others = false", func() {
-			Convey("two other datasources in database", func() {
-				fakeRepo.loadAll = []*models.DataSource{
-					{Name: "Graphite", OrgId: 1, Id: 1},
-					{Name: "old-graphite2", OrgId: 1, Id: 2},
-				}
+	t.Run("can read all properties from version 1", func(t *testing.T) {
+		_ = os.Setenv("TEST_VAR", "name")
+		cfgProvider := &configReader{log: log.New("test logger")}
+		cfg, err := cfgProvider.readConfig(allProperties)
+		_ = os.Unsetenv("TEST_VAR")
+		if err != nil {
+			t.Fatalf("readConfig return an error %v", err)
+		}
 
-				Convey("should have two new datasources", func() {
-					dc := newDatasourceProvisioner(logger)
-					err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
-					if err != nil {
-						t.Fatalf("applyChanges return an error %v", err)
-					}
+		require.Equal(t, len(cfg), 3)
 
-					So(len(fakeRepo.deleted), ShouldEqual, 0)
-					So(len(fakeRepo.inserted), ShouldEqual, 1)
-					So(len(fakeRepo.updated), ShouldEqual, 1)
-				})
-			})
-		})
+		dsCfg := cfg[0]
 
-		Convey("broken yaml should return error", func() {
-			reader := &configReader{}
-			_, err := reader.readConfig(brokenYaml)
-			So(err, ShouldNotBeNil)
-		})
+		require.Equal(t, dsCfg.APIVersion, int64(1))
 
-		Convey("invalid access should warn about invalid value and return 'proxy'", func() {
-			reader := &configReader{log: logger}
-			configs, err := reader.readConfig(invalidAccess)
-			So(err, ShouldBeNil)
-			So(configs[0].Datasources[0].Access, ShouldEqual, models.DS_ACCESS_PROXY)
-		})
+		validateDatasourceV1(t, dsCfg)
+		validateDeleteDatasources(t, dsCfg)
 
-		Convey("skip invalid directory", func() {
-			cfgProvider := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvider.readConfig("./invalid-directory")
-			if err != nil {
-				t.Fatalf("readConfig return an error %v", err)
-			}
+		dsCount := 0
+		delDsCount := 0
 
-			So(len(cfg), ShouldEqual, 0)
-		})
+		for _, c := range cfg {
+			dsCount += len(c.Datasources)
+			delDsCount += len(c.DeleteDatasources)
+		}
 
-		Convey("can read all properties from version 1", func() {
-			_ = os.Setenv("TEST_VAR", "name")
-			cfgProvider := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvider.readConfig(allProperties)
-			_ = os.Unsetenv("TEST_VAR")
-			if err != nil {
-				t.Fatalf("readConfig return an error %v", err)
-			}
+		require.Equal(t, dsCount, 2)
+		require.Equal(t, delDsCount, 1)
+	})
 
-			So(len(cfg), ShouldEqual, 3)
+	t.Run("can read all properties from version 0", func(t *testing.T) {
+		cfgProvider := &configReader{log: log.New("test logger")}
+		cfg, err := cfgProvider.readConfig(versionZero)
+		if err != nil {
+			t.Fatalf("readConfig return an error %v", err)
+		}
 
-			dsCfg := cfg[0]
+		require.Equal(t, len(cfg), 1)
 
-			So(dsCfg.APIVersion, ShouldEqual, 1)
+		dsCfg := cfg[0]
 
-			validateDatasourceV1(dsCfg)
-			validateDeleteDatasources(dsCfg)
+		require.Equal(t, dsCfg.APIVersion, int64(0))
 
-			dsCount := 0
-			delDsCount := 0
-
-			for _, c := range cfg {
-				dsCount += len(c.Datasources)
-				delDsCount += len(c.DeleteDatasources)
-			}
-
-			So(dsCount, ShouldEqual, 2)
-			So(delDsCount, ShouldEqual, 1)
-		})
-
-		Convey("can read all properties from version 0", func() {
-			cfgProvider := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvider.readConfig(versionZero)
-			if err != nil {
-				t.Fatalf("readConfig return an error %v", err)
-			}
-
-			So(len(cfg), ShouldEqual, 1)
-
-			dsCfg := cfg[0]
-
-			So(dsCfg.APIVersion, ShouldEqual, 0)
-
-			validateDatasource(dsCfg)
-			validateDeleteDatasources(dsCfg)
-		})
+		validateDatasource(t, dsCfg)
+		validateDeleteDatasources(t, dsCfg)
 	})
 }
 
-func validateDeleteDatasources(dsCfg *configs) {
-	So(len(dsCfg.DeleteDatasources), ShouldEqual, 1)
+func validateDeleteDatasources(t *testing.T, dsCfg *configs) {
+	require.Equal(t, len(dsCfg.DeleteDatasources), 1)
 	deleteDs := dsCfg.DeleteDatasources[0]
-	So(deleteDs.Name, ShouldEqual, "old-graphite3")
-	So(deleteDs.OrgID, ShouldEqual, 2)
+	require.Equal(t, deleteDs.Name, "old-graphite3")
+	require.Equal(t, deleteDs.OrgID, int64(2))
 }
 
-func validateDatasource(dsCfg *configs) {
+func validateDatasource(t *testing.T, dsCfg *configs) {
 	ds := dsCfg.Datasources[0]
-	So(ds.Name, ShouldEqual, "name")
-	So(ds.Type, ShouldEqual, "type")
-	So(ds.Access, ShouldEqual, models.DS_ACCESS_PROXY)
-	So(ds.OrgID, ShouldEqual, 2)
-	So(ds.URL, ShouldEqual, "url")
-	So(ds.User, ShouldEqual, "user")
-	So(ds.Password, ShouldEqual, "password")
-	So(ds.Database, ShouldEqual, "database")
-	So(ds.BasicAuth, ShouldBeTrue)
-	So(ds.BasicAuthUser, ShouldEqual, "basic_auth_user")
-	So(ds.BasicAuthPassword, ShouldEqual, "basic_auth_password")
-	So(ds.WithCredentials, ShouldBeTrue)
-	So(ds.IsDefault, ShouldBeTrue)
-	So(ds.Editable, ShouldBeTrue)
-	So(ds.Version, ShouldEqual, 10)
+	require.Equal(t, ds.Name, "name")
+	require.Equal(t, ds.Type, "type")
+	require.Equal(t, ds.Access, models.DS_ACCESS_PROXY)
+	require.Equal(t, ds.OrgID, int64(2))
+	require.Equal(t, ds.URL, "url")
+	require.Equal(t, ds.User, "user")
+	require.Equal(t, ds.Password, "password")
+	require.Equal(t, ds.Database, "database")
+	require.True(t, ds.BasicAuth)
+	require.Equal(t, ds.BasicAuthUser, "basic_auth_user")
+	require.Equal(t, ds.BasicAuthPassword, "basic_auth_password")
+	require.True(t, ds.WithCredentials)
+	require.True(t, ds.IsDefault)
+	require.True(t, ds.Editable)
+	require.Equal(t, ds.Version, 10)
 
-	So(len(ds.JSONData), ShouldBeGreaterThan, 2)
-	So(ds.JSONData["graphiteVersion"], ShouldEqual, "1.1")
-	So(ds.JSONData["tlsAuth"], ShouldEqual, true)
-	So(ds.JSONData["tlsAuthWithCACert"], ShouldEqual, true)
+	require.Greater(t, len(ds.JSONData), 2)
+	require.Equal(t, ds.JSONData["graphiteVersion"], "1.1")
+	require.Equal(t, ds.JSONData["tlsAuth"], true)
+	require.Equal(t, ds.JSONData["tlsAuthWithCACert"], true)
 
-	So(len(ds.SecureJSONData), ShouldBeGreaterThan, 2)
-	So(ds.SecureJSONData["tlsCACert"], ShouldEqual, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==")
-	So(ds.SecureJSONData["tlsClientCert"], ShouldEqual, "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ==")
-	So(ds.SecureJSONData["tlsClientKey"], ShouldEqual, "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A==")
+	require.Greater(t, len(ds.SecureJSONData), 2)
+	require.Equal(t, ds.SecureJSONData["tlsCACert"], "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==")
+	require.Equal(t, ds.SecureJSONData["tlsClientCert"], "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ==")
+	require.Equal(t, ds.SecureJSONData["tlsClientKey"], "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A==")
 }
 
-func validateDatasourceV1(dsCfg *configs) {
-	validateDatasource(dsCfg)
+func validateDatasourceV1(t *testing.T, dsCfg *configs) {
+	validateDatasource(t, dsCfg)
 	ds := dsCfg.Datasources[0]
-	So(ds.UID, ShouldEqual, "test_uid")
+	require.Equal(t, ds.UID, "test_uid")
 }
 
 type fakeRepository struct {

@@ -361,7 +361,7 @@ describe('Receivers', () => {
         ],
       },
     });
-  }, 10000);
+  });
 
   it('Prometheus Alertmanager receiver cannot be edited', async () => {
     mocks.api.fetchStatus.mockResolvedValue({
@@ -397,7 +397,7 @@ describe('Receivers', () => {
 
     expect(mocks.api.fetchConfig).not.toHaveBeenCalled();
     expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
-  }, 10000);
+  });
 
   it('Loads config from status endpoint if there is no user config', async () => {
     // loading an empty config with make it fetch config from status endpoint
