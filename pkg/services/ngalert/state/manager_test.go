@@ -859,6 +859,10 @@ func TestProcessEvalResults(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(context.Background(), tc.alertRule, res)
 			}
+
+			states := st.GetStatesForRuleUID(tc.alertRule.OrgID, tc.alertRule.UID)
+			assert.Len(t, states, len(tc.expectedStates))
+
 			for _, s := range tc.expectedStates {
 				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				require.NoError(t, err)
