@@ -1,4 +1,40 @@
-import { DataSourcePluginOptionsEditorProps, SelectableValue, KeyValue, DataSourceSettings } from '../types';
+import { isString } from 'lodash';
+import {
+  DataSourcePluginOptionsEditorProps,
+  SelectableValue,
+  KeyValue,
+  DataSourceSettings,
+  DataSourceInstanceSettings,
+  DataSourceRef,
+} from '../types';
+
+/**
+ * Convert instance settings to a reference
+ *
+ * @public
+ */
+export function getDataSourceRef(ds: DataSourceInstanceSettings): DataSourceRef {
+  return { uid: ds.uid, type: ds.type };
+}
+
+function isDataSourceRef(ref: DataSourceRef | string | null): ref is DataSourceRef {
+  return typeof ref === 'object' && (typeof ref?.uid === 'string' || typeof ref?.uid === 'undefined');
+}
+
+/**
+ * Get the UID from a string of reference
+ *
+ * @public
+ */
+export function getDataSourceUID(ref: DataSourceRef | string | null): string | undefined {
+  if (isDataSourceRef(ref)) {
+    return ref.uid;
+  }
+  if (isString(ref)) {
+    return ref;
+  }
+  return undefined;
+}
 
 export const onUpdateDatasourceOption = (props: DataSourcePluginOptionsEditorProps, key: keyof DataSourceSettings) => (
   event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>

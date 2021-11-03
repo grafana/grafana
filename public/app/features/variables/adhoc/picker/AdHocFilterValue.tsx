@@ -1,10 +1,10 @@
 import React, { FC } from 'react';
 import { SegmentAsync } from '@grafana/ui';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
-import { MetricFindValue, SelectableValue } from '@grafana/data';
+import { DataSourceRef, MetricFindValue, SelectableValue } from '@grafana/data';
 
 interface Props {
-  datasource: string;
+  datasource: DataSourceRef;
   filterKey: string;
   filterValue?: string;
   onChange: (item: SelectableValue<string>) => void;
@@ -27,7 +27,7 @@ export const AdHocFilterValue: FC<Props> = ({ datasource, onChange, filterKey, f
   );
 };
 
-const fetchFilterValues = async (datasource: string, key: string): Promise<Array<SelectableValue<string>>> => {
+const fetchFilterValues = async (datasource: DataSourceRef, key: string): Promise<Array<SelectableValue<string>>> => {
   const ds = await getDatasourceSrv().get(datasource);
 
   if (!ds || !ds.getTagValues) {

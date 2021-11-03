@@ -8,8 +8,10 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { PanelOptions } from '../models.gen';
 import { InstanceState } from '../CanvasPanel';
 import { LayerActionID } from '../types';
-import { canvasElementRegistry } from 'app/features/canvas';
+import { CanvasElementOptions, canvasElementRegistry } from 'app/features/canvas';
 import appEvents from 'app/core/app_events';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
 
 type Props = StandardEditorProps<any, InstanceState, PanelOptions>;
 
@@ -17,20 +19,22 @@ export class LayerElementListEditor extends PureComponent<Props> {
   style = getLayerDragStyles(config.theme);
 
   onAddItem = (sel: SelectableValue<string>) => {
-    // const reg = drawItemsRegistry.getIfExists(sel.value);
-    // if (!reg) {
-    //   console.error('NOT FOUND', sel);
-    //   return;
-    // }
-    // const layer = this.props.value;
-    // const item = newItem(reg, layer.items.length);
-    // const isList = this.props.context.options?.mode === LayoutMode.List;
-    // const items = isList ? [item, ...layer.items] : [...layer.items, item];
-    // this.props.onChange({
-    //   ...layer,
-    //   items,
-    // });
-    // this.onSelect(item);
+    const { settings } = this.props.item;
+    if (!settings?.layer) {
+      return;
+    }
+    const { layer } = settings;
+
+    const item = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
+    const newElementOptions = item.getNewOptions() as CanvasElementOptions;
+    newElementOptions.type = item.id;
+    const newElement = new ElementState(item, newElementOptions, layer);
+    newElement.updateSize(newElement.width, newElement.height);
+    newElement.updateData(layer.scene.context);
+    layer.elements.push(newElement);
+    layer.scene.save();
+
+    layer.reinitializeMoveable();
   };
 
   onSelect = (item: any) => {
@@ -40,9 +44,21 @@ export class LayerElementListEditor extends PureComponent<Props> {
       try {
         settings.scene.selecto.clickTarget(item, item?.div);
       } catch (error) {
-        appEvents.emit(AppEvents.alertError, ['Unable to select element with inline editing disabled']);
+        appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
       }
     }
+  };
+
+  onClearSelection = () => {
+    const { settings } = this.props.item;
+
+    if (!settings?.layer) {
+      return;
+    }
+
+    const { layer } = settings;
+
+    layer.scene.clearCurrentSelection();
   };
 
   getRowStyle = (sel: boolean) => {
@@ -108,7 +124,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
                             <IconButton
                               name="copy"
-                              title={'duplicate'}
+                              title={'Duplicate'}
                               className={styles.actionIcon}
                               onClick={() => layer.doAction(LayerActionID.Duplicate, element)}
                               surface="header"
@@ -116,7 +132,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
                             <IconButton
                               name="trash-alt"
-                              title={'remove'}
+                              title={'Remove'}
                               className={cx(styles.actionIcon, styles.dragIcon)}
                               onClick={() => layer.doAction(LayerActionID.Delete, element)}
                               surface="header"
@@ -152,7 +168,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
             isFullWidth={false}
           />
           {selection.length > 0 && (
-            <Button size="sm" variant="secondary" onClick={() => console.log('TODO!')}>
+            <Button size="sm" variant="secondary" onClick={this.onClearSelection}>
               Clear Selection
             </Button>
           )}

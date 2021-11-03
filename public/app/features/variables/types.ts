@@ -3,6 +3,7 @@ import {
   BusEventWithPayload,
   DataQuery,
   DataSourceJsonData,
+  DataSourceRef,
   LoadingState,
   QueryEditorProps,
   VariableModel as BaseVariableModel,
@@ -49,7 +50,7 @@ export interface AdHocVariableFilter {
 }
 
 export interface AdHocVariableModel extends VariableModel {
-  datasource: string | null;
+  datasource: DataSourceRef | null;
   filters: AdHocVariableFilter[];
 }
 

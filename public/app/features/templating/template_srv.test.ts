@@ -6,6 +6,8 @@ import { createQueryVariableAdapter } from '../variables/query/adapter';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { VariableModel } from '../variables/types';
 import { FormatRegistryID } from './formatRegistry';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
 
 variableAdapters.setInit(() => [
   (createQueryVariableAdapter() as unknown) as VariableAdapter<VariableModel>,
@@ -119,9 +121,17 @@ describe('templateSrv', () => {
           name: 'ds',
           current: { value: 'logstash', text: 'logstash' },
         },
-        { type: 'adhoc', name: 'test', datasource: 'oogle', filters: [1] },
-        { type: 'adhoc', name: 'test2', datasource: '$ds', filters: [2] },
+        { type: 'adhoc', name: 'test', datasource: { uid: 'oogle' }, filters: [1] },
+        { type: 'adhoc', name: 'test2', datasource: { uid: '$ds' }, filters: [2] },
       ]);
+      setDataSourceSrv(
+        new MockDataSourceSrv({
+          oogle: mockDataSource({
+            name: 'oogle',
+            uid: 'oogle',
+          }),
+        })
+      );
     });
 
     it('should return filters if datasourceName match', () => {
