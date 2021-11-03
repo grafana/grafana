@@ -33,7 +33,7 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext, form dtos.AdminCreat
 		return response.Error(400, "Password is missing or too short", nil)
 	}
 
-	user, err := hs.Login.CreateUser(cmd)
+	user, err := hs.Login.CreateUser(c.Req.Context(), cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(400, err.Error(), nil)

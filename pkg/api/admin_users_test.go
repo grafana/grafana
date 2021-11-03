@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -16,8 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -487,7 +488,7 @@ type fakeLoginService struct {
 	expected dtos.AdminCreateUserForm
 }
 
-func (s fakeLoginService) CreateUser(cmd models.CreateUserCommand) (*models.User, error) {
+func (s fakeLoginService) CreateUser(ctx interface{}, cmd models.CreateUserCommand) (*models.User, error) {
 	if cmd.OrgId == nonExistingOrgID {
 		return nil, models.ErrOrgNotFound
 	}

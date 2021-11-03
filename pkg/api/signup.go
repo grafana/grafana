@@ -81,7 +81,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2For
 		createUserCmd.EmailVerified = true
 	}
 
-	user, err := hs.Login.CreateUser(createUserCmd)
+	user, err := hs.Login.CreateUser(c.Req.Context(), createUserCmd)
 	if err != nil {
 		if errors.Is(err, models.ErrUserAlreadyExists) {
 			return response.Error(401, "User with same email address already exists", nil)

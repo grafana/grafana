@@ -1,15 +1,17 @@
 package loginservice
 
 import (
+	"context"
 	"errors"
 	"testing"
+
+	log "github.com/inconshreveable/log15"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/quota"
-	log "github.com/inconshreveable/log15"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) {
@@ -109,7 +111,7 @@ func Test_teamSync(t *testing.T) {
 	var actualExternalUser *models.ExternalUserInfo
 
 	t.Run("login.TeamSync should not be called when  nil", func(t *testing.T) {
-		err := login.UpsertUser(upserCmd)
+		err := login.UpsertUser(context.Background(), upserCmd)
 		require.Nil(t, err)
 		assert.Nil(t, actualUser)
 		assert.Nil(t, actualExternalUser)
@@ -121,7 +123,7 @@ func Test_teamSync(t *testing.T) {
 				return nil
 			}
 			login.TeamSync = teamSyncFunc
-			err := login.UpsertUser(upserCmd)
+			err := login.UpsertUser(context.Background(), upserCmd)
 			require.Nil(t, err)
 			assert.Equal(t, actualUser, expectedUser)
 			assert.Equal(t, actualExternalUser, upserCmd.ExternalUser)
@@ -132,7 +134,7 @@ func Test_teamSync(t *testing.T) {
 				return errors.New("teamsync test error")
 			}
 			login.TeamSync = teamSyncFunc
-			err := login.UpsertUser(upserCmd)
+			err := login.UpsertUser(context.Background(), upserCmd)
 			require.Error(t, err)
 		})
 	})

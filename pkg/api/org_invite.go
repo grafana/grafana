@@ -187,7 +187,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.C
 		SkipOrgSetup: true,
 	}
 
-	user, err := hs.Login.CreateUser(cmd)
+	user, err := hs.Login.CreateUser(c.Req.Context(), cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrUserAlreadyExists) {
 			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", completeInvite.Email, completeInvite.Username), err)

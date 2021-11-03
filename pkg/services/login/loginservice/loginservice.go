@@ -23,7 +23,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, quotaService *quot
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
 	}
-	bus.AddHandler(s.UpsertUser)
+	bus.AddHandlerCtx(s.UpsertUser)
 	return s
 }
 
@@ -36,12 +36,12 @@ type Implementation struct {
 }
 
 // CreateUser creates inserts a new one.
-func (ls *Implementation) CreateUser(cmd models.CreateUserCommand) (*models.User, error) {
-	return ls.SQLStore.CreateUser(context.Background(), cmd)
+func (ls *Implementation) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
+	return ls.SQLStore.CreateUser(ctx, cmd)
 }
 
 // UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
-func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
+func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
 	user, err := ls.AuthInfoService.LookupAndUpdate(&models.GetUserByAuthInfoQuery{
@@ -69,7 +69,7 @@ func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 			return login.ErrUsersQuotaReached
 		}
 
-		cmd.Result, err = ls.createUser(extUser)
+		cmd.Result, err = ls.createUser(ctx, extUser)
 		if err != nil {
 			return err
 		}
@@ -135,7 +135,7 @@ func (ls *Implementation) SetTeamSyncFunc(teamSyncFunc login.TeamSyncFunc) {
 	ls.TeamSync = teamSyncFunc
 }
 
-func (ls *Implementation) createUser(extUser *models.ExternalUserInfo) (*models.User, error) {
+func (ls *Implementation) createUser(ctx context.Context, extUser *models.ExternalUserInfo) (*models.User, error) {
 	cmd := models.CreateUserCommand{
 		Login:        extUser.Login,
 		Email:        extUser.Email,
@@ -143,7 +143,7 @@ func (ls *Implementation) createUser(extUser *models.ExternalUserInfo) (*models.
 		SkipOrgSetup: len(extUser.OrgRoles) > 0,
 	}
 
-	return ls.CreateUser(cmd)
+	return ls.CreateUser(ctx, cmd)
 }
 
 func updateUser(user *models.User, extUser *models.ExternalUserInfo) error {
