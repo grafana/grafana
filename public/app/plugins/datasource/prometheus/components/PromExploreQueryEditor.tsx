@@ -19,7 +19,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       onChange({ ...query, exemplar: true });
     }
 
-    // Override query type to "Both" only for new queries (no query.expr). Otherwise rely on defaults.
+    // Override query type to "Both" only for new queries (no query.expr).
     if (!query.instant && !query.range && !query.expr) {
       onChange({ ...query, instant: true, range: true });
     }
