@@ -31,7 +31,6 @@ func NewServiceAccountsAPI(
 }
 
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
-	// ServiceAccounts
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
@@ -42,7 +41,7 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 	scopeID := ctx.ParamsInt64(":serviceAccountId")
 	err := api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error", err)
+		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
 	return response.Success("service account deleted")
 }
