@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -37,7 +38,7 @@ func TestDashboardService(t *testing.T) {
 
 				for _, title := range titles {
 					dto.Dashboard = models.NewDashboard(title)
-					_, err := service.SaveDashboard(dto, false)
+					_, err := service.SaveDashboard(context.Background(), dto, false)
 					require.Equal(t, err, models.ErrDashboardTitleEmpty)
 				}
 			})
@@ -45,13 +46,13 @@ func TestDashboardService(t *testing.T) {
 			t.Run("Should return validation error if it's a folder and have a folder id", func(t *testing.T) {
 				dto.Dashboard = models.NewDashboardFolder("Folder")
 				dto.Dashboard.FolderId = 1
-				_, err := service.SaveDashboard(dto, false)
+				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, models.ErrDashboardFolderCannotHaveParent)
 			})
 
 			t.Run("Should return validation error if folder is named General", func(t *testing.T) {
 				dto.Dashboard = models.NewDashboardFolder("General")
-				_, err := service.SaveDashboard(dto, false)
+				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, models.ErrDashboardFolderNameExists)
 			})
 
@@ -104,7 +105,7 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.SaveDashboard(dto, false)
+				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, models.ErrDashboardCannotSaveProvisionedDashboard)
 			})
 
@@ -120,7 +121,7 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.SaveDashboard(dto, true)
+				_, err := service.SaveDashboard(context.Background(), dto, true)
 				require.NoError(t, err)
 			})
 
@@ -134,7 +135,7 @@ func TestDashboardService(t *testing.T) {
 				}
 
 				dto.Dashboard = models.NewDashboard("Dash")
-				_, err := service.SaveDashboard(dto, false)
+				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err.Error(), "alert validation error")
 			})
 		})
@@ -147,7 +148,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
 				})
-				UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+				UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard,
 					user *models.SignedInUser) error {
 					return nil
 				}
@@ -163,7 +164,7 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.SaveProvisionedDashboard(dto, nil)
+				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
 				require.NoError(t, err)
 			})
 
@@ -184,7 +185,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
 				})
-				UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+				UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard,
 					user *models.SignedInUser) error {
 					return nil
 				}
@@ -193,7 +194,7 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
 				dto.Dashboard.Data.Set("refresh", "1s")
-				_, err := service.SaveProvisionedDashboard(dto, nil)
+				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
 				require.NoError(t, err)
 				require.Equal(t, dto.Dashboard.Data.Get("refresh").MustString(), "5m")
 			})
@@ -220,7 +221,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
 				})
-				UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+				UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard,
 					user *models.SignedInUser) error {
 					return nil
 				}
@@ -317,6 +318,6 @@ func (s *fakeDashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*mo
 	return cmd.GetDashboardModel(), nil
 }
 
-func (s *fakeDashboardStore) SaveAlerts(dashID int64, alerts []*models.Alert) error {
+func (s *fakeDashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
 	return nil
 }
