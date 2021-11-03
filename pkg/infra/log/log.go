@@ -74,6 +74,29 @@ func New(logger string, ctx ...interface{}) MultiLoggers {
 	return newloger
 }
 
+<<<<<<< HEAD
+=======
+func (rt *MultiLoggers) Warn(msg string, v ...interface{}) {
+	params := append([]interface{}{"msg", msg}, v...)
+	rt.Log(level.Key(), level.WarnValue(), "msg", params)
+}
+
+func (rt *MultiLoggers) Debug(msg string, v ...interface{}) {
+	params := append([]interface{}{"msg", msg}, v...)
+	rt.Log(level.Key(), level.DebugValue(), "msg", params)
+}
+
+func (rt *MultiLoggers) Info(msg string, v ...interface{}) {
+	params := append([]interface{}{"msg", msg}, v...)
+	rt.Log(level.Key(), level.InfoValue(), "msg", params)
+}
+
+func Error(msg string, args ...interface{}) {
+	params := append([]interface{}{"msg", msg}, args...)
+	Root.LogWithLevel(level.Error, params...)
+}
+
+>>>>>>> cf2a3708c4 (syslog)
 var logLevels = map[string]log15.Lvl{
 	"trace":    log15.LvlDebug,
 	"debug":    log15.LvlDebug,
