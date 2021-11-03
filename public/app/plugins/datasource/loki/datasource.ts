@@ -130,6 +130,7 @@ export class LokiDatasource
         return {
           ...target,
           instant: false,
+          volumeQuery: true,
           expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
         };
       });
@@ -242,9 +243,12 @@ export class LokiDatasource
       };
     }
 
+    const hint: { hint?: 'logvolhist' } = target.volumeQuery ? { hint: 'logvolhist' } : {};
+
     return {
       ...DEFAULT_QUERY_PARAMS,
       ...range,
+      ...hint,
       query,
       limit,
     };

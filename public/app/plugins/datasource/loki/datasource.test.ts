@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
-import LokiDatasource from './datasource';
+import LokiDatasource, { RangeQueryOptions } from './datasource';
 import { LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -163,6 +163,30 @@ describe('LokiDatasource', () => {
       expect(adjustIntervalSpy).toHaveBeenCalledWith(0.0005, expect.anything(), 1000);
       // Step is in seconds (1 ms === 0.001 s)
       expect(req.step).toEqual(0.001);
+    });
+
+    describe('log volume hint', () => {
+      let options: RangeQueryOptions;
+
+      beforeEach(() => {
+        const raw = { from: 'now', to: 'now-1h' };
+        const range = { from: dateTime(), to: dateTime(), raw: raw };
+        options = ({
+          range,
+        } as unknown) as RangeQueryOptions;
+      });
+
+      it('should add volume hint param for log volume queries', () => {
+        const target = { expr: '{job="grafana"}', refId: 'B', volumeQuery: true };
+        const req = ds.createRangeQuery(target, options as any, 1000);
+        expect(req.hint).toBe('logvolhist');
+      });
+
+      it('should not add volume hint param for regular queries', () => {
+        const target = { expr: '{job="grafana"}', refId: 'B', volumeQuery: false };
+        const req = ds.createRangeQuery(target, options as any, 1000);
+        expect(req.hint).not.toBeDefined();
+      });
     });
   });
 
