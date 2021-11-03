@@ -197,7 +197,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// This can be unreasonable to have in production scenario with many
 		// organizations.
 		query := &models.SearchOrgsQuery{}
-		err := sqlstore.SearchOrgs(query)
+		err := sqlstore.SearchOrgs(context.TODO(), query)
 		if err != nil {
 			return nil, fmt.Errorf("can't get org list: %w", err)
 		}
