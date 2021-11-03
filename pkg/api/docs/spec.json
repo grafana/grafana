@@ -799,6 +799,598 @@
         }
       }
     },
+    "/alert-notifications": {
+      "get": {
+        "description": "Returns all notification channels that the authenticated user has permission to view.",
+        "tags": [
+          "legacy_notification_channels"
+        ],
+        "summary": "Get all notification channels.",
+        "operationId": "getAlertNotificationChannels",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAlertNotificationChannelsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "You can find the full list of [supported notifiers](https://grafana.com/docs/grafana/latest/alerting/old-alerting/notifications/#list-of-supported-notifiers) on the alert notifiers page.",
+        "tags": [
+          "legacy_notification_channels"
+        ],
+        "summary": "Create notification channel.",
+        "operationId": "createAlertNotificationChannel",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateAlertNotificationCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAlertNotificationChannelResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/alert-notifications/lookup": {
+      "get": {
+        "description": "Returns all notification channels, but with less detailed information. Accessible by any authenticated user and is mainly used by providing alert notification channels in Grafana UI when configuring alert rule.",
+        "tags": [
+          "legacy_notification_channels"
+        ],
+        "summary": "Get all notification channels (lookup)",
+        "operationId": "lookupAlertNotificationChannels",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/lookupAlertNotificationChannelsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/alert-notifications/test": {
+      "post": {
+        "description": "Sends a test notification to the channel.",
+        "tags": [
+          "legacy_notification_channels"
+        ],
+        "summary": "Test notification channel.",
+        "operationId": "notificationChannelTest",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NotificationTestCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "412": {
+            "$ref": "#/responses/SMTPNotEnabledError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/alert-notifications/uid/{notification_channel_uid}": {
+      "get": {
+        "description": "Returns the notification channel given the notification channel UID.",
+        "tags": [
+          "legacy_notification_channels"
+        ],
+        "summary": "Get notification channel by UID",
+        "operationId": "getAlertNotificationChannelByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "NotificationUID",
+            "name": "notification_channel_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAlertNotificationChannelResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Updates an existing notification channel identified by uid.",
+        "tags": [
+          "legacy_notification_channels"
+        ],
+        "summary": "Update notification channel by UID.",
+        "operationId": "updateAlertNotificationChannelBYUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "NotificationUID",
+            "name": "notification_channel_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateAlertNotificationWithUidCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAlertNotificationChannelResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes an existing notification channel identified by UID.",
+        "tags": [
+          "legacy_notification_channels"
+        ],
+        "summary": "Delete alert notification by UID.",
+        "operationId": "deleteAlertNotificationChannelByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "NotificationUID",
+            "name": "notification_channel_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deleteAlertNotificationChannelResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/alert-notifications/{notification_channel_id}": {
+      "get": {
+        "description": "Returns the notification channel given the notification channel ID.",
+        "tags": [
+          "legacy_notification_channels"
+        ],
+        "summary": "Get notification channel by ID.",
+        "operationId": "getAlertNotificationChannelByID",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "NotificationID",
+            "name": "notification_channel_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAlertNotificationChannelResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Updates an existing notification channel identified by ID.",
+        "tags": [
+          "legacy_notification_channels"
+        ],
+        "summary": "Update notification channel by ID.",
+        "operationId": "updateAlertNotificationChannel",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "NotificationID",
+            "name": "notification_channel_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateAlertNotificationCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAlertNotificationChannelResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes an existing notification channel identified by ID.",
+        "tags": [
+          "legacy_notification_channels"
+        ],
+        "summary": "Delete alert notification by ID.",
+        "operationId": "deleteAlertNotificationChannel",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "NotificationID",
+            "name": "notification_channel_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/alerts": {
+      "get": {
+        "tags": [
+          "legacy_alerting"
+        ],
+        "summary": "Get legacy alerts.",
+        "operationId": "getAlerts",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "DashboardID",
+            "description": "Limit response to alerts in specified dashboard(s). You can specify multiple dashboards.",
+            "name": "dashboardId",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "PanelID",
+            "description": "Limit response to alert for a specified panel on a dashboard.",
+            "name": "panelId",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Query",
+            "description": "Limit response to alerts having a name like this value.",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "all",
+              "no_data",
+              "paused",
+              "alerting",
+              "ok",
+              "pending",
+              "unknown"
+            ],
+            "type": "string",
+            "x-go-name": "State",
+            "description": "Return alerts with one or more of the following alert states",
+            "name": "state",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Limit",
+            "description": "Limit response to X number of alerts.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "FolderID",
+            "description": "Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders",
+            "name": "folderId",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "DashboardQuery",
+            "description": "Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.",
+            "name": "dashboardQuery",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "DashboardTag",
+            "description": "Limit response to alerts of dashboards with specified tags. To do an “AND” filtering with multiple tags, specify the tags parameter multiple times",
+            "name": "dashboardTag",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAlertsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/alerts/states-for-dashboard": {
+      "get": {
+        "tags": [
+          "legacy_alerting"
+        ],
+        "summary": "Get alert states for a dashboard.",
+        "operationId": "getDashboardStates",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "DashboardID",
+            "name": "dashboardId",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDashboardStatesResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/alerts/test": {
+      "post": {
+        "tags": [
+          "legacy_alerting"
+        ],
+        "summary": "Test alert.",
+        "operationId": "testAlert",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AlertTestCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/testAlertResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/alerts/{alert_id}": {
+      "get": {
+        "description": "“evalMatches” data in the response is cached in the db when and only when the state of the alert changes (e.g. transitioning from “ok” to “alerting” state).\nIf data from one server triggers the alert first and, before that server is seen leaving alerting state, a second server also enters a state that would trigger the alert, the second server will not be visible in “evalMatches” data.",
+        "tags": [
+          "legacy_alerting"
+        ],
+        "summary": "Get alert by ID.",
+        "operationId": "getAlertByID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "AlertID",
+            "name": "alert_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAlertResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/alerts/{alert_id}/pause": {
+      "post": {
+        "tags": [
+          "legacy_alerting"
+        ],
+        "summary": "Pause/unpause alert by id.",
+        "operationId": "pauseAlert",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "AlertID",
+            "name": "alert_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PauseAlertCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/pauseAlertResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/auth/keys": {
       "get": {
         "description": "Will return auth keys.",
@@ -2895,6 +3487,10 @@
       "description": "COMMANDS",
       "type": "object",
       "properties": {
+        "createServiceAccount": {
+          "type": "boolean",
+          "x-go-name": "CreateNewServiceAccount"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
@@ -2906,6 +3502,11 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "SecondsToLive"
+        },
+        "serviceAccount": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ServiceAccountId"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -3144,6 +3745,326 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "Alert": {
+      "type": "object",
+      "properties": {
+        "Created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "DashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "EvalData": {
+          "$ref": "#/definitions/Json"
+        },
+        "ExecutionError": {
+          "type": "string"
+        },
+        "For": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Frequency": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Handler": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Message": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "NewStateDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "OrgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PanelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "Severity": {
+          "type": "string"
+        },
+        "Silenced": {
+          "type": "boolean"
+        },
+        "State": {
+          "$ref": "#/definitions/AlertStateType"
+        },
+        "StateChanges": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AlertListItemDTO": {
+      "type": "object",
+      "properties": {
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DashboardId"
+        },
+        "dashboardSlug": {
+          "type": "string",
+          "x-go-name": "DashboardSlug"
+        },
+        "dashboardUid": {
+          "type": "string",
+          "x-go-name": "DashboardUid"
+        },
+        "evalData": {
+          "$ref": "#/definitions/Json"
+        },
+        "evalDate": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "EvalDate"
+        },
+        "executionError": {
+          "type": "string",
+          "x-go-name": "ExecutionError"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "newStateDate": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "NewStateDate"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PanelId"
+        },
+        "state": {
+          "$ref": "#/definitions/AlertStateType"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Url"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AlertNotification": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Created"
+        },
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "frequency": {
+          "type": "string",
+          "x-go-name": "Frequency"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "secureFields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "x-go-name": "SecureFields"
+        },
+        "sendReminder": {
+          "type": "boolean",
+          "x-go-name": "SendReminder"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "Uid"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "AlertNotificationLookup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "Uid"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "AlertStateInfoDTO": {
+      "type": "object",
+      "properties": {
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DashboardId"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "newStateDate": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "NewStateDate"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PanelId"
+        },
+        "state": {
+          "$ref": "#/definitions/AlertStateType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AlertStateType": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AlertTestCommand": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PanelId"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "AlertTestResult": {
+      "type": "object",
+      "properties": {
+        "conditionEvals": {
+          "type": "string",
+          "x-go-name": "ConditionEvals"
+        },
+        "error": {
+          "type": "string",
+          "x-go-name": "Error"
+        },
+        "firing": {
+          "type": "boolean",
+          "x-go-name": "Firing"
+        },
+        "logs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertTestResultLog"
+          },
+          "x-go-name": "Logs"
+        },
+        "matches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EvalMatch"
+          },
+          "x-go-name": "EvalMatches"
+        },
+        "state": {
+          "$ref": "#/definitions/AlertStateType"
+        },
+        "timeMs": {
+          "type": "string",
+          "x-go-name": "TimeMs"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "AlertTestResultLog": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "x-go-name": "Data"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
@@ -3185,6 +4106,53 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "CreateAlertNotificationCommand": {
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/AlertNotification"
+        },
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "frequency": {
+          "type": "string",
+          "x-go-name": "Frequency"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "secureSettings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "SecureSettings"
+        },
+        "sendReminder": {
+          "type": "boolean",
+          "x-go-name": "SendReminder"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "Uid"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "CreateDashboardSnapshotCommand": {
       "description": "CreateDashboardSnapshotCommand is same as models.CreateDashboardSnapshotCommand but with swagger annotations",
@@ -4028,6 +4996,12 @@
       "type": "string",
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "Duration": {
+      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
+      "type": "integer",
+      "format": "int64",
+      "x-go-package": "time"
+    },
     "ErrorResponseBody": {
       "type": "object",
       "required": [
@@ -4051,6 +5025,26 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+    },
+    "EvalMatch": {
+      "type": "object",
+      "properties": {
+        "metric": {
+          "type": "string",
+          "x-go-name": "Metric"
+        },
+        "tags": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Tags"
+        },
+        "value": {
+          "$ref": "#/definitions/Float"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "Float": {
       "description": "It does not consider zero values to be null.\nIt will decode to null, not zero, if null.",
@@ -4385,6 +5379,62 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "NotificationTestCommand": {
+      "type": "object",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "frequency": {
+          "type": "string",
+          "x-go-name": "Frequency"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "secureSettings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "SecureSettings"
+        },
+        "sendReminder": {
+          "type": "boolean",
+          "x-go-name": "SendReminder"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "PauseAlertCommand": {
+      "type": "object",
+      "properties": {
+        "alertId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "AlertId"
+        },
+        "paused": {
+          "type": "boolean",
+          "x-go-name": "Paused"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
     "PauseAllAlertsCommand": {
       "type": "object",
       "properties": {
@@ -4415,6 +5465,10 @@
         "timezone": {
           "type": "string",
           "x-go-name": "Timezone"
+        },
+        "weekStart": {
+          "type": "string",
+          "x-go-name": "WeekStart"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
@@ -4586,6 +5640,109 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "UpdateAlertNotificationCommand": {
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/AlertNotification"
+        },
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "frequency": {
+          "type": "string",
+          "x-go-name": "Frequency"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "secureSettings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "SecureSettings"
+        },
+        "sendReminder": {
+          "type": "boolean",
+          "x-go-name": "SendReminder"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "Uid"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "UpdateAlertNotificationWithUidCommand": {
+      "type": "object",
+      "properties": {
+        "OrgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Result": {
+          "$ref": "#/definitions/AlertNotification"
+        },
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "frequency": {
+          "type": "string",
+          "x-go-name": "Frequency"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "secureSettings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "SecureSettings"
+        },
+        "sendReminder": {
+          "type": "boolean",
+          "x-go-name": "SendReminder"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "NewUid"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "UpdateDashboardAclCommand": {
       "description": "UpdateDashboardAclCommand is same as dtos.UpdateDashboardAclCommand but with swagger annotations",
@@ -5002,6 +6159,9 @@
     }
   },
   "responses": {
+    "SMTPNotEnabledError": {
+      "description": ""
+    },
     "badRequestError": {
       "description": "BadRequestError is returned when the request is invalid and it cannot be processed.",
       "schema": {
@@ -5128,6 +6288,30 @@
         }
       }
     },
+    "deleteAlertNotificationChannelResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the deleted notification channel.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the deleted notificatiton channel.",
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
+      }
+    },
     "deleteDashboardResponse": {
       "description": "",
       "schema": {
@@ -5250,6 +6434,39 @@
         }
       }
     },
+    "getAlertNotificationChannelResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/AlertNotification"
+      }
+    },
+    "getAlertNotificationChannelsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AlertNotification"
+        }
+      }
+    },
+    "getAlertResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Alert"
+        }
+      }
+    },
+    "getAlertsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AlertListItemDTO"
+        }
+      }
+    },
     "getAuthTokensResponse": {
       "description": "",
       "schema": {
@@ -5265,6 +6482,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/DashboardAclInfoDTO"
+        }
+      }
+    },
+    "getDashboardStatesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AlertStateInfoDTO"
         }
       }
     },
@@ -5399,6 +6625,15 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "lookupAlertNotificationChannelsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AlertNotificationLookup"
+        }
+      }
+    },
     "notFoundError": {
       "description": "NotFoundError is returned when the requested resource was not found.",
       "schema": {
@@ -5409,6 +6644,32 @@
       "description": "An OKResponse is returned if the request was successful.",
       "schema": {
         "$ref": "#/definitions/SuccessResponseBody"
+      }
+    },
+    "pauseAlertResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "required": [
+          "alertId",
+          "message"
+        ],
+        "properties": {
+          "alertId": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "AlertID"
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          },
+          "state": {
+            "description": "Alert result state\nrequired true",
+            "type": "string",
+            "x-go-name": "State"
+          }
+        }
       }
     },
     "pauseAlertsResponse": {
@@ -5554,6 +6815,12 @@
     "snapshotResponse": {
       "description": ""
     },
+    "testAlertResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/AlertTestResult"
+      }
+    },
     "trimDashboardResponse": {
       "description": "Trimmed dashboard response.",
       "schema": {
@@ -5613,6 +6880,14 @@
     {
       "description": "The Admin HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission. (The default admin user is called admin and has permission to use this API.)",
       "name": "admin"
+    },
+    {
+      "description": "You can use the Alerting API to get information about legacy dashboard alerts and their states but this API cannot be used to modify the alert. To create new alerts or modify them you need to update the dashboard JSON that contains the alerts.\nThis topic is relevant for the legacy dashboard alerts only.\nYou can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).",
+      "name": "legacy_alerting"
+    },
+    {
+      "description": "The identifier (id) of a notification channel is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a notification channel can be used for uniquely identify a notification channel between multiple Grafana installs. It’s automatically generated if not provided when creating a notification channel. The uid allows having consistent URLs for accessing notification channels and when syncing notification channels between multiple Grafana installations, refer to alert notification channel provisioning.\nThe uid can have a maximum length of 40 characters.",
+      "name": "legacy_notification_channels"
     }
   ]
 }
