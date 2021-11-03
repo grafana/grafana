@@ -114,7 +114,7 @@ export const NavBar: FC = React.memo(() => {
       {mobileMenuOpen && (
         <NavBarMenu
           activeItemId={activeItemId}
-          navItems={[searchItem].concat(topItems).concat(bottomItems)}
+          navItems={[searchItem, ...topItems, ...bottomItems]}
           onClose={() => setMobileMenuOpen(false)}
         />
       )}
