@@ -1,5 +1,6 @@
 import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent } from 'react';
 import SliderComponent from 'rc-slider';
+
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -20,6 +21,8 @@ export const Slider: FunctionComponent<SliderProps> = ({
   step,
   value,
   ariaLabelForHandle,
+  marks,
+  included,
 }) => {
   const isHorizontal = orientation === 'horizontal';
   const theme = useTheme2();
@@ -93,6 +96,8 @@ export const Slider: FunctionComponent<SliderProps> = ({
           vertical={!isHorizontal}
           reverse={reverse}
           ariaLabelForHandle={ariaLabelForHandle}
+          marks={marks}
+          included={included}
         />
         {/* Uses text input so that the number spinners are not shown */}
         <Input
