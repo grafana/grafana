@@ -37,34 +37,31 @@ export function NavBarMenu({ activeItemId, navItems, onClose }: Props) {
             <ul>
               {navItems.map((link) => (
                 <div className={styles.section} key={link.id}>
-                  <li className={styles.item}>
-                    <NavBarMenuItem
-                      isActive={activeItemId === link.id}
-                      isSectionHeader
-                      label={link.text}
-                      onClick={() => {
-                        link.onClick?.();
-                        onClose();
-                      }}
-                      target={link.target}
-                      url={link.url}
-                    />
-                  </li>
+                  <NavBarMenuItem
+                    isActive={activeItemId === link.id}
+                    isSectionHeader
+                    label={link.text}
+                    onClick={() => {
+                      link.onClick?.();
+                      onClose();
+                    }}
+                    target={link.target}
+                    url={link.url}
+                  />
                   {link.children?.map((childLink) => {
                     return !childLink.divider ? (
-                      <li className={styles.item} key={childLink.id}>
-                        <NavBarMenuItem
-                          icon={childLink.icon as IconName}
-                          isActive={activeItemId === childLink.id}
-                          label={childLink.text}
-                          onClick={() => {
-                            childLink.onClick?.();
-                            onClose();
-                          }}
-                          target={childLink.target}
-                          url={childLink.url}
-                        />
-                      </li>
+                      <NavBarMenuItem
+                        key={childLink.id}
+                        icon={childLink.icon as IconName}
+                        isActive={activeItemId === childLink.id}
+                        label={childLink.text}
+                        onClick={() => {
+                          childLink.onClick?.();
+                          onClose();
+                        }}
+                        target={childLink.target}
+                        url={childLink.url}
+                      />
                     ) : null;
                   })}
                 </div>

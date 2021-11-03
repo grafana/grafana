@@ -48,12 +48,15 @@ export function NavBarMenuItem({ icon, isActive, isSectionHeader, label, onClick
       );
   }
 
-  return element;
+  return <li className={styles.container}>{element}</li>;
 }
 
 NavBarMenuItem.displayName = 'NavBarMenu';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isSectionHeader: Props['isSectionHeader']) => ({
+  container: css`
+    display: flex;
+  `,
   element: css`
     background: none;
     border: none;
