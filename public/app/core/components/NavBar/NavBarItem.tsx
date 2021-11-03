@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem, textUtil } from '@grafana/data';
 import { Link, useTheme2 } from '@grafana/ui';
 import NavBarDropdown from './NavBarDropdown';
 
@@ -34,13 +34,14 @@ const NavBarItem = ({
       <span className={styles.icon}>{children}</span>
     </button>
   );
+  const sanitizedUrl = textUtil.sanitizeAngularInterpolation(url ?? '');
 
   if (url) {
     element =
-      !target && url.startsWith('/') ? (
+      !target && sanitizedUrl.startsWith('/') ? (
         <Link
           className={styles.element}
-          href={url}
+          href={sanitizedUrl}
           target={target}
           aria-label={label}
           onClick={onClick}
@@ -49,7 +50,7 @@ const NavBarItem = ({
           <span className={styles.icon}>{children}</span>
         </Link>
       ) : (
-        <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
+        <a href={sanitizedUrl} target={target} className={styles.element} onClick={onClick} aria-label={label}>
           <span className={styles.icon}>{children}</span>
         </a>
       );
@@ -61,7 +62,7 @@ const NavBarItem = ({
       <NavBarDropdown
         headerTarget={target}
         headerText={label}
-        headerUrl={url}
+        headerUrl={sanitizedUrl}
         items={menuItems}
         onHeaderClick={onClick}
         reverseDirection={reverseMenuDirection}
