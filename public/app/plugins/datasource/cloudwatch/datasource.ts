@@ -164,20 +164,6 @@ export class CloudWatchDatasource
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
-    // This first starts the query which returns queryId which can be used to retrieve results.
-    // this.makeLogActionRequest('StartQuery', queryParams, {
-    //   makeReplacements: true,
-    //   scopedVars: options.scopedVars,
-    //   skipCache: true,
-    // }).pipe(
-    //   retryWhen(
-    //     logsRetryStrategy({
-    //       maxRetryAttempts: 3,
-    //       scalingDuration: 1000,
-    //     })
-    //   )
-    // );
-
     return runWithRetry(
       (targets: StartQueryRequest[]) => {
         return this.makeLogActionRequest('StartQuery', targets, {

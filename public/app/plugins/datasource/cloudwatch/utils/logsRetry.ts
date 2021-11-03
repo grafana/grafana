@@ -1,50 +1,23 @@
-import { Observable, Subscription, timer } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { FetchError, toDataQueryResponse } from '@grafana/runtime';
-import { mergeMap } from 'rxjs/operators';
 import { StartQueryRequest } from '../types';
 import { DataFrame, DataFrameJSON, DataQueryError } from '@grafana/data';
 
-type options = {
-  maxRetryAttempts?: number;
-  scalingDuration?: number;
-};
-
-type DSError = FetchError<{ results?: Record<string, { error?: string }> }>;
-
-export const logsRetryStrategy = ({ maxRetryAttempts = 3, scalingDuration = 1000 }: options = {}) => (
-  attempts: Observable<any>
-) => {
-  return attempts.pipe(
-    mergeMap((error: DSError | string, i) => {
-      // We get 500 errors as string here but we can ignore them as we do not want to retry those
-      if (typeof error === 'string') {
-        throw error;
-      }
-
-      if (!isQueryConcurrencyLimitError(error)) {
-        throw error;
-      }
-
-      const retryAttempt = i + 1;
-      if (retryAttempt > maxRetryAttempts) {
-        throw error;
-      }
-
-      console.log(`Attempt ${retryAttempt}: retrying in ${retryAttempt * scalingDuration}ms`);
-      // retry after 1s, 2s, etc...
-      return timer(retryAttempt * scalingDuration);
-    })
-  );
-};
-
-function isQueryConcurrencyLimitError(error: DSError) {
-  return error.data?.results
-    ? Object.values(error.data?.results).some((v) => v.error?.startsWith('LimitExceededException'))
-    : false;
-}
-
 type Result = { frames: DataFrameJSON[]; error?: string };
 
+/**
+ * A retry strategy specifically for cloud watch logs query. Cloud watch logs queries need first starting the query
+ * and the polling for the results. The start query can fail because of the concurrent queries rate limit,
+ * and so we hove to retry the start query call if there is already lot of queries running.
+ *
+ * As we send multiple queries in single request some can fail and some can succeed and we have to also handle those
+ * cases by only retrying the failed queries. We retry the failed queries until we hit the time limit or all queries
+ * succeed and only then we pass the data forward. This means we wait longer but makes the code a bit simpler as we
+ * can treat starting the query and polling as steps in a pipeline.
+ * @param queryFun
+ * @param targets
+ * @param timeout
+ */
 export function runWithRetry(
   queryFun: (targets: StartQueryRequest[]) => Observable<DataFrame[]>,
   targets: StartQueryRequest[],
@@ -57,6 +30,7 @@ export function runWithRetry(
   let collected = {};
 
   return new Observable((observer) => {
+    // Run function is where the logic takes place. We have it in a function so we can call it recursively.
     function run(currentQueryParams: StartQueryRequest[]) {
       subscription = queryFun(currentQueryParams).subscribe({
         next(frames) {
