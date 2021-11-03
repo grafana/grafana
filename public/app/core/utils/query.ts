@@ -1,4 +1,5 @@
 import { DataQuery, DataSourceInstanceSettings, DataSourceRef, getDataSourceRef } from '@grafana/data';
+import { ExpressionDatasourceRef } from '@grafana/runtime';
 
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
@@ -24,14 +25,13 @@ export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datas
 export function updateQueries(
   newSettings: DataSourceInstanceSettings,
   queries: DataQuery[],
-  extensionID: string, // pass this in because importing it creates a circular dependency
   dsSettings?: DataSourceInstanceSettings
 ): DataQuery[] {
   const datasource = getDataSourceRef(newSettings);
 
   if (!newSettings.meta.mixed && dsSettings?.meta.mixed) {
     return queries.map((q) => {
-      if (q.datasource !== extensionID) {
+      if (q.datasource?.type !== ExpressionDatasourceRef.type) {
         q.datasource = datasource;
       }
       return q;
