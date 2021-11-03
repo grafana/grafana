@@ -246,9 +246,9 @@ export const updatePanels = () =>
       config.panels = settings.panels;
     });
 
-export function getLatestCompatibleVersion(versions: Version[] | undefined): string {
+export function getLatestCompatibleVersion(versions: Version[] | undefined): string | undefined {
   if (!versions) {
-    return 'N/A';
+    return;
   }
   const [latest] = versions;
   return latest.version;

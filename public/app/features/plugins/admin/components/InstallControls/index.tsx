@@ -1,6 +1,5 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
@@ -9,7 +8,7 @@ import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { ExternallyManagedButton } from './ExternallyManagedButton';
 import { InstallControlsButton } from './InstallControlsButton';
 import { CatalogPlugin, PluginStatus } from '../../types';
-import { getExternalManageLink } from '../../helpers';
+import { getExternalManageLink, getLatestCompatibleVersion } from '../../helpers';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';
 import { isGrafanaAdmin } from '../../permissions';
 
@@ -21,14 +20,9 @@ export const InstallControls = ({ plugin }: Props) => {
   const styles = useStyles2(getStyles);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const hasPermission = isGrafanaAdmin();
-  const grafanaDependency = plugin.details?.grafanaDependency;
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
-  const unsupportedGrafanaVersion = grafanaDependency
-    ? !satisfies(config.buildInfo.version, grafanaDependency, {
-        // needed for when running against main
-        includePrerelease: true,
-      })
-    : false;
+  const isCompatible = Boolean(getLatestCompatibleVersion(plugin.details?.versions));
+
   const pluginStatus = plugin.isInstalled
     ? plugin.hasUpdate
       ? PluginStatus.UPDATE
@@ -68,7 +62,7 @@ export const InstallControls = ({ plugin }: Props) => {
     return <div className={styles.message}>{message}</div>;
   }
 
-  if (unsupportedGrafanaVersion) {
+  if (!isCompatible) {
     return (
       <div className={styles.message}>
         <Icon name="exclamation-triangle" />

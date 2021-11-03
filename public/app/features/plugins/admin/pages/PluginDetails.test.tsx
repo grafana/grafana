@@ -8,14 +8,7 @@ import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPerm
 import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import {
-  CatalogPlugin,
-  CatalogPluginDetails,
-  PluginDetails,
-  PluginTabIds,
-  ReducerState,
-  RequestStatus,
-} from '../types';
+import { CatalogPlugin, CatalogPluginDetails, PluginTabIds, ReducerState, RequestStatus } from '../types';
 import * as api from '../api';
 import { fetchRemotePlugins } from '../state/actions';
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';

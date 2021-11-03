@@ -20,6 +20,7 @@ type Props = {
 
 export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
+  const version = plugin.installedVersion || getLatestCompatibleVersion(plugin.details?.versions);
 
   return (
     <div className={styles.headerContainer}>
@@ -71,7 +72,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
           )}
 
           {/* Version */}
-          <span>{plugin.installedVersion ?? getLatestCompatibleVersion(plugin.details?.versions)}</span>
+          {Boolean(version) && <span>{version}</span>}
 
           {/* Signature information */}
           <PluginDetailsHeaderSignature plugin={plugin} />

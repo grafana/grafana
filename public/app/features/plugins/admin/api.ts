@@ -29,16 +29,9 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     getLocalPluginReadme(id),
   ]);
   const dependencies = remote?.json?.dependencies;
-  // Prepend semver range when we fallback to grafanaVersion (deprecated in favour of grafanaDependency)
-  // otherwise plugins cannot be installed.
-  const grafanaDependency = dependencies?.grafanaDependency
-    ? dependencies?.grafanaDependency
-    : dependencies?.grafanaVersion
-    ? `>=${dependencies?.grafanaVersion}`
-    : '';
 
   return {
-    grafanaDependency,
+    grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
     pluginDependencies: dependencies?.plugins || [],
     links: remote?.json?.info.links || local?.info.links || [],
     readme: localReadme || remote?.readme,
