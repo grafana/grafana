@@ -51,22 +51,11 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 		Email:      extUser.Email,
 		Login:      extUser.Login,
 	})
-	if err != nil {
-		if !errors.Is(err, models.ErrUserNotFound) {
-			return err
-		}
-		if !cmd.SignupAllowed {
-			log.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
-			return login.ErrInvalidCredentials
-		}
-
-		limitReached, err := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
+	switch {
+	case err == models.ErrUserNotFound && cmd.SignupAllowed: // create new user
+		err := ls.validateUserQuota(cmd.ReqContext)
 		if err != nil {
-			log.Warn("Error getting user quota.", "error", err)
-			return login.ErrGettingUserQuota
-		}
-		if limitReached {
-			return login.ErrUsersQuotaReached
+			return err
 		}
 
 		cmd.Result, err = ls.createUser(ctx, extUser)
@@ -75,17 +64,17 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 		}
 
 		if extUser.AuthModule != "" {
-			cmd2 := &models.SetAuthInfoCommand{
-				UserId:     cmd.Result.Id,
-				AuthModule: extUser.AuthModule,
-				AuthId:     extUser.AuthId,
-				OAuthToken: extUser.OAuthToken,
-			}
-			if err := ls.Bus.Dispatch(cmd2); err != nil {
+			err = ls.setUserAuth(cmd.Result, extUser)
+			if err != nil {
 				return err
 			}
 		}
-	} else {
+	case err == models.ErrUserNotFound && !cmd.SignupAllowed: // new user creation is not allowed
+		log.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
+		return login.ErrInvalidCredentials
+	case err != nil:
+		return err
+	default: // user exists, update user properties
 		cmd.Result = user
 
 		err = updateUser(cmd.Result, extUser)
@@ -95,17 +84,17 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 
 		// Always persist the latest token at log-in
 		if extUser.AuthModule != "" && extUser.OAuthToken != nil {
-			err = updateUserAuth(cmd.Result, extUser)
+			err = ls.updateUserAuth(cmd.Result, extUser)
 			if err != nil {
 				return err
 			}
 		}
+	}
 
-		if extUser.AuthModule == models.AuthModuleLDAP && user.IsDisabled {
-			// Re-enable user when it found in LDAP
-			if err := ls.Bus.Dispatch(&models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
-				return err
-			}
+	if extUser.AuthModule == models.AuthModuleLDAP && user.IsDisabled {
+		// Re-enable user when it found in LDAP
+		if err := ls.Bus.Dispatch(&models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
+			return err
 		}
 	}
 
@@ -179,7 +168,19 @@ func updateUser(user *models.User, extUser *models.ExternalUserInfo) error {
 	return bus.Dispatch(updateCmd)
 }
 
-func updateUserAuth(user *models.User, extUser *models.ExternalUserInfo) error {
+func (ls *Implementation) validateUserQuota(c *models.ReqContext) error {
+	limitReached, err := ls.QuotaService.QuotaReached(c, "user")
+	if err != nil {
+		log.Warn("Error getting user quota.", "error", err)
+		return login.ErrGettingUserQuota
+	}
+	if limitReached {
+		return login.ErrUsersQuotaReached
+	}
+	return nil
+}
+
+func (ls *Implementation) updateUserAuth(user *models.User, extUser *models.ExternalUserInfo) error {
 	updateCmd := &models.UpdateAuthInfoCommand{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
@@ -188,7 +189,19 @@ func updateUserAuth(user *models.User, extUser *models.ExternalUserInfo) error {
 	}
 
 	logger.Debug("Updating user_auth info", "user_id", user.Id)
-	return bus.Dispatch(updateCmd)
+	return ls.Bus.Dispatch(updateCmd)
+}
+
+func (ls *Implementation) setUserAuth(user *models.User, extUser *models.ExternalUserInfo) error {
+	setCmd := &models.SetAuthInfoCommand{
+		AuthModule: extUser.AuthModule,
+		AuthId:     extUser.AuthId,
+		UserId:     user.Id,
+		OAuthToken: extUser.OAuthToken,
+	}
+
+	logger.Debug("Setting user_auth info", "user_id", user.Id)
+	return ls.Bus.Dispatch(setCmd)
 }
 
 func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
