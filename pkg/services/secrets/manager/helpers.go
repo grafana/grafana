@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"gopkg.in/ini.v1"
@@ -22,7 +23,11 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 		[security]
 		secret_key = ` + defaultKey))
 	require.NoError(tb, err)
-	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+	cfg := &setting.Cfg{Raw: raw}
+	cfg.FeatureToggles = map[string]bool{feature: true}
+
+	settings := &setting.OSSImpl{Cfg: cfg}
+	assert.True(tb, settings.IsFeatureToggleEnabled(feature))
 
 	return ProvideSecretsService(
 		store,

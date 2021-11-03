@@ -16,7 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const defaultProvider = "secretKey"
+const (
+	defaultProvider = "secretKey"
+	feature         = "envelopeEncryption"
+)
 
 type SecretsService struct {
 	store    secrets.Store
@@ -55,6 +58,12 @@ type dataKeyCacheItem struct {
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
+	// Use legacy encryption service if feature toggle is off
+	if !s.settings.IsFeatureToggleEnabled(feature) {
+		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
+	}
+
+	// If encryption feature toggle is on, use envelope encryption
 	scope := opt()
 	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.currentProvider)
 
@@ -88,6 +97,12 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
+	// Use legacy encryption service if feature toggle is off
+	if !s.settings.IsFeatureToggleEnabled(feature) {
+		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
+	}
+
+	// If encryption feature toggle is on, use envelope encryption
 	if len(payload) == 0 {
 		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}
