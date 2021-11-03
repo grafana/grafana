@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
-import { getCompletionProvider } from './monaco-completion-provider';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 
@@ -35,6 +35,7 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
     horizontalScrollbarSize: 0,
   },
   scrollBeyondLastLine: false,
+  suggest: getSuggestOptions(),
   suggestFontSize: 12,
   wordWrap: 'on',
 };
