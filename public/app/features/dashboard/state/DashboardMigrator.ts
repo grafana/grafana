@@ -23,6 +23,8 @@ import {
   DataTransformerConfig,
   AnnotationQuery,
   DataQuery,
+  getDataSourceRef,
+  isDataSourceRef,
 } from '@grafana/data';
 // Constants
 import {
@@ -1045,8 +1047,8 @@ export function migrateDatasourceNameToRef(nameOrRef: string | DataSourceRef | n
     return null;
   }
 
-  if ((nameOrRef as any).uid) {
-    return nameOrRef as DataSourceRef;
+  if (isDataSourceRef(nameOrRef)) {
+    return nameOrRef;
   }
 
   const ds = getDataSourceSrv().getInstanceSettings(nameOrRef);
@@ -1054,7 +1056,7 @@ export function migrateDatasourceNameToRef(nameOrRef: string | DataSourceRef | n
     return { uid: nameOrRef as string }; // not found
   }
 
-  return { type: ds.type, uid: ds.uid };
+  return getDataSourceRef(ds);
 }
 
 // mutates transformations appending a new transformer after the existing one
