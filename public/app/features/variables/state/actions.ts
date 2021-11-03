@@ -14,7 +14,7 @@ import {
   VariableRefresh,
   VariablesChanged,
   VariablesChangedInUrl,
-  VariablesTimeRangeChanged,
+  VariablesFinishedProcessingTimeRangeChange,
   VariableWithMultiSupport,
   VariableWithOptions,
 } from '../types';
@@ -566,7 +566,7 @@ export const onTimeRangeUpdated = (
 
   try {
     await Promise.all(promises);
-    dependencies.events.publish(new VariablesTimeRangeChanged({ panelIds: undefined }));
+    dependencies.events.publish(new VariablesFinishedProcessingTimeRangeChange({ panelIds: undefined }));
   } catch (error) {
     console.error(error);
     dispatch(notifyApp(createVariableErrorNotification('Template variable service failed', error)));

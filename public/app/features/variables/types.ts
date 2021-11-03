@@ -160,8 +160,8 @@ export class VariablesChanged extends BusEventWithPayload<VariablesChangedEvent>
   static type = 'variables-changed';
 }
 
-export class VariablesTimeRangeChanged extends BusEventWithPayload<VariablesChangedEvent> {
-  static type = 'variables-time-range-changed';
+export class VariablesFinishedProcessingTimeRangeChange extends BusEventWithPayload<VariablesChangedEvent> {
+  static type = 'variables-finished-processing-time-range-change';
 }
 
 export class VariablesChangedInUrl extends BusEventWithPayload<VariablesChangedEvent> {

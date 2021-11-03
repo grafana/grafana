@@ -49,7 +49,11 @@ import { isOnTheSameGridRow } from './utils';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
-import { VariablesChanged, VariablesChangedInUrl, VariablesTimeRangeChanged } from '../../variables/types';
+import {
+  VariablesChanged,
+  VariablesChangedInUrl,
+  VariablesFinishedProcessingTimeRangeChange,
+} from '../../variables/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -179,7 +183,10 @@ export class DashboardModel {
     this.lastRefresh = Date.now();
     this.appEventsSubscription.add(appEvents.subscribe(VariablesChanged, this.variablesChangedHandler.bind(this)));
     this.appEventsSubscription.add(
-      appEvents.subscribe(VariablesTimeRangeChanged, this.variablesTimeRangeChangedHandler.bind(this))
+      appEvents.subscribe(
+        VariablesFinishedProcessingTimeRangeChange,
+        this.variablesFinishedProcessingTimeRangeChangeHandler.bind(this)
+      )
     );
     this.appEventsSubscription.add(
       appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
@@ -1211,11 +1218,14 @@ export class DashboardModel {
     this.variablesChangedBaseHandler(event, true);
   }
 
-  private variablesTimeRangeChangedHandler(event: VariablesTimeRangeChanged) {
+  private variablesFinishedProcessingTimeRangeChangeHandler(event: VariablesFinishedProcessingTimeRangeChange) {
     this.variablesChangedBaseHandler(event);
   }
 
-  private variablesChangedBaseHandler(event: VariablesChanged | VariablesTimeRangeChanged, processRepeats = false) {
+  private variablesChangedBaseHandler(
+    event: VariablesChanged | VariablesFinishedProcessingTimeRangeChange,
+    processRepeats = false
+  ) {
     if (processRepeats) {
       this.processRepeats();
     }
