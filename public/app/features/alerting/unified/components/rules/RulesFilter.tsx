@@ -88,11 +88,12 @@ const RulesFilter = () => {
   return (
     <div className={styles.container}>
       <div className={styles.inputWidth}>
-        <Label>Select data source</Label>
+        <Label>Search by data source</Label>
         <DataSourcePicker
           key={dataSourceKey}
           alerting
           noDefault
+          placeholder="Any data source"
           current={dataSource}
           onChange={handleDataSourceChange}
           onClear={clearDataSource}
