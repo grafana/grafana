@@ -25,7 +25,7 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 		secret_key = ` + defaultKey))
 	require.NoError(tb, err)
 	cfg := &setting.Cfg{Raw: raw}
-	cfg.FeatureToggles[feature] = true
+	cfg.FeatureToggles = map[string]bool{feature: true}
 
 	settings := &setting.OSSImpl{Cfg: cfg}
 	assert.True(tb, settings.IsFeatureToggleEnabled(feature))
