@@ -54,8 +54,10 @@ export class Scene {
     );
 
     setTimeout(() => {
-      if (this.div && enableEditing) {
-        this.initMoveable();
+      if (this.div) {
+        // If editing is enabled, clear selecto instance
+        const destroySelecto = enableEditing;
+        this.initMoveable(destroySelecto, enableEditing);
       }
     }, 100);
     return this.root;
@@ -138,7 +140,7 @@ export class Scene {
     this.div = sceneContainer;
   };
 
-  initMoveable = (destroySelecto = false) => {
+  initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);
@@ -155,8 +157,9 @@ export class Scene {
     });
 
     const moveable = new Moveable(this.div!, {
-      draggable: true,
-      resizable: true,
+      draggable: allowChanges,
+      resizable: allowChanges,
+      origin: false,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
@@ -212,7 +215,6 @@ export class Scene {
 
       const s = event.selected.map((t) => this.findElementByTarget(t)!);
       this.selection.next(s);
-      console.log('UPDATE selection', s);
 
       if (event.isDragStart) {
         event.inputEvent.preventDefault();

@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
-	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 )
@@ -129,9 +128,11 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	for _, query := range req.Queries {
 		rawQueryProp := make(map[string]interface{})
 		queryBytes, err := query.JSON.MarshalJSON()
+
 		if err != nil {
 			return nil, err
 		}
+
 		err = json.Unmarshal(queryBytes, &rawQueryProp)
 		if err != nil {
 			return nil, err
@@ -145,23 +146,23 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 			DatasourceUID: query.DatasourceUID,
 		}
 
-		dsName, err := rn.GetDatasourceName()
+		isExpr, err := rn.IsExpressionQuery()
 		if err != nil {
 			return nil, err
 		}
 
-		dsUID := rn.DatasourceUID
+		var node Node
 
-		var node graph.Node
-		switch {
-		case dsName == DatasourceName || dsUID == DatasourceUID:
+		if isExpr {
 			node, err = buildCMDNode(dp, rn)
-		default: // If it's not an expression query, it's a data source query.
+		} else {
 			node, err = s.buildDSNode(dp, rn, req)
 		}
+
 		if err != nil {
 			return nil, err
 		}
+
 		dp.AddNode(node)
 	}
 	return dp, nil

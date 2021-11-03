@@ -52,6 +52,16 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 		return err
 	}
 
+	model := models.AlertNotification{
+		Name:     cmd.Name,
+		Type:     cmd.Type,
+		Settings: cmd.Settings,
+	}
+
+	if err := s.validateAlertNotification(ctx, &model, cmd.SecureSettings); err != nil {
+		return err
+	}
+
 	return s.SQLStore.CreateAlertNotificationCommand(cmd)
 }
 
@@ -59,6 +69,17 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 	var err error
 	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
+		return err
+	}
+
+	model := models.AlertNotification{
+		Id:       cmd.Id,
+		Name:     cmd.Name,
+		Type:     cmd.Type,
+		Settings: cmd.Settings,
+	}
+
+	if err := s.validateAlertNotification(ctx, &model, cmd.SecureSettings); err != nil {
 		return err
 	}
 
@@ -99,4 +120,49 @@ func (s *AlertNotificationService) DeleteAlertNotificationWithUid(cmd *models.De
 
 func (s *AlertNotificationService) GetAlertNotificationsWithUidToSend(query *models.GetAlertNotificationsWithUidToSendQuery) error {
 	return s.SQLStore.GetAlertNotificationsWithUidToSend(query)
+}
+
+func (s *AlertNotificationService) createNotifier(ctx context.Context, model *models.AlertNotification, secureSettings map[string]string) (Notifier, error) {
+	secureSettingsMap := map[string]string{}
+
+	if model.Id > 0 {
+		query := &models.GetAlertNotificationsQuery{
+			OrgId: model.OrgId,
+			Id:    model.Id,
+		}
+		if err := s.SQLStore.GetAlertNotifications(query); err != nil {
+			return nil, err
+		}
+
+		if query.Result != nil && query.Result.SecureSettings != nil {
+			var err error
+			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	for k, v := range secureSettings {
+		secureSettingsMap[k] = v
+	}
+
+	var err error
+	model.SecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, secureSettingsMap, setting.SecretKey)
+	if err != nil {
+		return nil, err
+	}
+
+	notifier, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue)
+	if err != nil {
+		logger.Error("Failed to create notifier", "error", err.Error())
+		return nil, err
+	}
+
+	return notifier, nil
+}
+
+func (s *AlertNotificationService) validateAlertNotification(ctx context.Context, model *models.AlertNotification, secureSettings map[string]string) error {
+	_, err := s.createNotifier(ctx, model, secureSettings)
+	return err
 }

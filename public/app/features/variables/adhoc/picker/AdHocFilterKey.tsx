@@ -1,10 +1,10 @@
 import React, { FC, ReactElement } from 'react';
 import { Icon, SegmentAsync } from '@grafana/ui';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
-import { SelectableValue } from '@grafana/data';
+import { DataSourceRef, SelectableValue } from '@grafana/data';
 
 interface Props {
-  datasource: string;
+  datasource: DataSourceRef;
   filterKey: string | null;
   onChange: (item: SelectableValue<string | null>) => void;
 }
@@ -51,7 +51,7 @@ const plusSegment: ReactElement = (
   </a>
 );
 
-const fetchFilterKeys = async (datasource: string): Promise<Array<SelectableValue<string>>> => {
+const fetchFilterKeys = async (datasource: DataSourceRef): Promise<Array<SelectableValue<string>>> => {
   const ds = await getDatasourceSrv().get(datasource);
 
   if (!ds || !ds.getTagKeys) {
@@ -62,7 +62,7 @@ const fetchFilterKeys = async (datasource: string): Promise<Array<SelectableValu
   return metrics.map((m) => ({ label: m.text, value: m.text }));
 };
 
-const fetchFilterKeysWithRemove = async (datasource: string): Promise<Array<SelectableValue<string>>> => {
+const fetchFilterKeysWithRemove = async (datasource: DataSourceRef): Promise<Array<SelectableValue<string>>> => {
   const keys = await fetchFilterKeys(datasource);
   return [REMOVE_VALUE, ...keys];
 };

@@ -38,7 +38,7 @@ func interpolateString(text string, data templateData) (string, error) {
 }
 
 // addHeaders interpolates route headers and injects them into the request headers
-func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
+func addHeaders(reqHeaders *http.Header, route *plugins.Route, data templateData) error {
 	for _, header := range route.Headers {
 		interpolated, err := interpolateString(header.Content, data)
 		if err != nil {
@@ -51,7 +51,7 @@ func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data tem
 }
 
 // addQueryString interpolates route params and injects them into the request object
-func addQueryString(req *http.Request, route *plugins.AppPluginRoute, data templateData) error {
+func addQueryString(req *http.Request, route *plugins.Route, data templateData) error {
 	q := req.URL.Query()
 	for _, param := range route.URLParams {
 		interpolatedName, err := interpolateString(param.Name, data)
@@ -71,7 +71,7 @@ func addQueryString(req *http.Request, route *plugins.AppPluginRoute, data templ
 	return nil
 }
 
-func setBodyContent(req *http.Request, route *plugins.AppPluginRoute, data templateData) error {
+func setBodyContent(req *http.Request, route *plugins.Route, data templateData) error {
 	if route.Body != nil {
 		interpolatedBody, err := interpolateString(string(route.Body), data)
 		if err != nil {
