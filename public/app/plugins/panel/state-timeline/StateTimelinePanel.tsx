@@ -20,7 +20,6 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   width,
   height,
   onChangeTimeRange,
-  id,
 }) => {
   const theme = useTheme2();
   const { sync } = usePanelContext();
@@ -96,7 +95,6 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       width={width}
       height={height}
       legendItems={legendItems}
-      panelId={id}
       {...options}
       mode={TimelineMode.Changes}
     >

@@ -23,7 +23,6 @@ export interface TimelineProps
   mode: TimelineMode;
   rowHeight: number;
   showValue: VisibilityMode;
-  panelId: number;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
   legendItems?: VizLegendItem[];

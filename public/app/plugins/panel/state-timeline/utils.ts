@@ -21,8 +21,6 @@ import {
   getFieldConfigWithMinMax,
   outerJoinDataFrames,
   ThresholdsMode,
-  LegacyGraphHoverClearEvent,
-  LegacyGraphHoverEvent,
 } from '@grafana/data';
 import {
   FIXED_UNIT,
@@ -58,7 +56,7 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
   });
 }
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions & { panelId: number }> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   frame,
   theme,
   timeZone,
@@ -70,7 +68,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions & { pan
   colWidth,
   showValue,
   alignValue,
-  panelId,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -252,20 +249,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions & { pan
             payload.point[xScaleUnit] = null;
             payload.point[FIXED_UNIT] = null;
             eventBus.publish(new DataHoverClearEvent());
-            eventBus.publish(new LegacyGraphHoverClearEvent());
           } else {
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
             payload.down = undefined;
             eventBus.publish(new DataHoverEvent(payload));
-            eventBus.publish(
-              new LegacyGraphHoverEvent({
-                panel: { id: panelId },
-                point: payload.point,
-                pos: { x: payload.point[xScaleUnit], panelRelY: y / h },
-                data: frame,
-                down: undefined,
-              })
-            );
           }
           return true;
         },
