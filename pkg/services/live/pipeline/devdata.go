@@ -99,7 +99,10 @@ type DevRuleBuilder struct {
 func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
-			Pattern:   "plugin/testdata/random-20Hz-stream",
+			Pattern:        "plugin/testdata/random-20Hz-stream",
+			DataOutputters: []DataOutputter{
+				//NewLokiDataOutput(LokiDataOutputConfig{}),
+			},
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
@@ -109,6 +112,7 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 					Password:           os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 					SampleMilliseconds: 1000,
 				}),
+				//NewLokiFrameOutput(LokiFrameOutputConfig{}),
 			},
 			Subscribers: []Subscriber{
 				NewBuiltinSubscriber(f.ChannelHandlerGetter),
