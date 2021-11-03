@@ -2,9 +2,10 @@ import { CheckboxField, NumberInputField, RadioButtonGroupField, validators } fr
 import { FormApi } from 'final-form';
 import React, { FC, useEffect, useState } from 'react';
 
-import { useTheme } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
+import { InstanceAvailableType, RemoteInstanceCredentials } from 'app/percona/add-instance/panel.types';
+import { Databases } from 'app/percona/shared/core';
 
-import { InstanceTypes } from '../../../../panel.types';
 import { rdsTrackingOptions, trackingOptions } from '../FormParts.constants';
 import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';
@@ -21,8 +22,7 @@ export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
   remoteInstanceCredentials,
   form,
 }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   return (
     <div className={styles.groupWrapper}>
@@ -86,9 +86,13 @@ const MySQLOptions = ({ form }: { form: FormApi }) => {
   );
 };
 
-export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredentials: any, form: FormApi) => {
+export const getAdditionalOptions = (
+  type: InstanceAvailableType,
+  remoteInstanceCredentials: RemoteInstanceCredentials,
+  form: FormApi
+) => {
   switch (type) {
-    case InstanceTypes.postgresql:
+    case Databases.postgresql:
       return (
         <>
           <CheckboxField label={Messages.form.labels.additionalOptions.tls} name="tls" />
@@ -118,7 +122,7 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
           ) : null}
         </>
       );
-    case InstanceTypes.mysql:
+    case Databases.mysql:
       return (
         <>
           <CheckboxField label={Messages.form.labels.additionalOptions.tls} name="tls" />
@@ -149,7 +153,7 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
           ) : null}
         </>
       );
-    case InstanceTypes.mongodb:
+    case Databases.mongodb:
       return (
         <>
           <CheckboxField label={Messages.form.labels.additionalOptions.tls} name="tls" />
@@ -161,7 +165,7 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
           />
         </>
       );
-    case InstanceTypes.haproxy:
+    case Databases.haproxy:
       return null;
     default:
       return (

@@ -1,9 +1,8 @@
 import { css } from 'emotion';
 
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
 
-export const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+export const getStyles = ({ spacing }: GrafanaTheme) => ({
   formWrapper: css`
     background-color: transparent !important;
     max-width: 1000px;
@@ -24,10 +23,10 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     align-items: center;
   `,
   addInstance: css`
-    margin-top: ${theme.spacing.sm};
+    margin-top: ${spacing.sm};
   `,
   addInstanceTitle: css`
-    margin-top: ${theme.spacing.sm};
+    margin-top: ${spacing.sm};
     width: 65%;
     height: 1.5em;
     white-space: nowrap;
@@ -36,10 +35,10 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     text-align: center;
   `,
   addRemoteInstanceButtons: css`
-    margin-top: ${theme.spacing.md};
-    margin-bottom: ${theme.spacing.md};
+    margin-top: ${spacing.md};
+    margin-bottom: ${spacing.md};
   `,
   returnButton: css`
-    margin-left: ${theme.spacing.md};
+    margin-left: ${spacing.md};
   `,
-}));
+});

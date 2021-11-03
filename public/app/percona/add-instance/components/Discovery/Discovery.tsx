@@ -8,22 +8,22 @@ import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { DISCOVERY_RDS_CANCEL_TOKEN, INITIAL_CREDENTIALS } from './Discovery.constants';
 import DiscoveryService from './Discovery.service';
 import { getStyles } from './Discovery.styles';
-import { DiscoverySearchPanelProps } from './Discovery.types';
+import { DiscoverySearchPanelProps, Instance } from './Discovery.types';
 import Credentials from './components/Credentials/Credentials';
-import { CredentialsForm } from './components/Credentials/Credentials.types';
+import { RDSCredentialsForm } from './components/Credentials/Credentials.types';
 import { DiscoveryDocs } from './components/DiscoveryDocs/DiscoveryDocs';
 import Instances from './components/Instances/Instances';
 
 const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
   const styles = useStyles(getStyles);
 
-  const [instances, setInstances] = useState([] as any);
+  const [instances, setInstances] = useState<Instance[]>([]);
   const [credentials, setCredentials] = useState(INITIAL_CREDENTIALS);
   const [loading, startLoading] = useState(false);
   const [generateToken] = useCancelToken();
 
   const discover = useCallback(
-    async (credentials: CredentialsForm, disableNotifications = false) => {
+    async (credentials: RDSCredentialsForm, disableNotifications = false) => {
       try {
         setCredentials(credentials);
         startLoading(true);

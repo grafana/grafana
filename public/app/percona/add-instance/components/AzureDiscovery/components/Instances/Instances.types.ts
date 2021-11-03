@@ -1,11 +1,15 @@
-import { Databases } from '../../../../../shared/core';
-import { Instance } from '../../Discovery.types';
+import { SelectInstance } from 'app/percona/add-instance/panel.types';
 
-export type OnSelectInstance = ({ type, credentials }: { type: Databases | string; credentials: any }) => void;
+import { Instance } from '../../Discovery.types';
+import { AzureCredentialsForm } from '../Credentials/Credentials.types';
+
+export type AzureCredentials = AzureCredentialsForm & {
+  isAzure?: boolean;
+};
 
 export interface InstancesTableProps {
   instances: Instance[];
-  selectInstance: OnSelectInstance;
+  selectInstance: SelectInstance;
   loading: boolean;
-  credentials: any;
+  credentials: AzureCredentialsForm;
 }

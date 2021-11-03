@@ -19,6 +19,7 @@ export const Messages = {
     },
     titles: {
       addExternalService: 'Add external service',
+      addRemoteInstance: 'Add remote instance',
     },
   },
 };

@@ -2,14 +2,14 @@
 import React from 'react';
 
 import { Button } from '@grafana/ui';
+import { InstanceAvailableType, SelectInstance } from 'app/percona/add-instance/panel.types';
 import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
 
-import { RemoteInstanceCredentials } from '../../../../panel.types';
 import { Instance } from '../../Discovery.types';
+import { AzureCredentialsForm } from '../Credentials/Credentials.types';
 
 import { Messages } from './Instances.messages';
 import { styles } from './Instances.styles';
-import { OnSelectInstance } from './Instances.types';
 
 const getEngineType = (type?: string) => {
   switch (type) {
@@ -26,7 +26,7 @@ const getEngineType = (type?: string) => {
   }
 };
 
-const getDatabaseType = (type?: string): Databases | string => {
+const getDatabaseType = (type?: string): InstanceAvailableType => {
   switch (type) {
     case 'DISCOVER_AZURE_DATABASE_TYPE_MYSQL':
     case 'DISCOVER_AZURE_DATABASE_TYPE_MARIADB':
@@ -38,7 +38,7 @@ const getDatabaseType = (type?: string): Databases | string => {
   }
 };
 
-export const getInstancesColumns = (credentials: RemoteInstanceCredentials, onSelectInstance: OnSelectInstance) => [
+export const getInstancesColumns = (credentials: AzureCredentialsForm, onSelectInstance: SelectInstance) => [
   {
     Header: 'Region',
     accessor: 'region',

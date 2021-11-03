@@ -1,7 +1,7 @@
 import { PasswordInputField, TextInputField, validators } from '@percona/platform-core';
 import React, { FC, useCallback, useMemo } from 'react';
 
-import { useTheme } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import Validators from 'app/percona/shared/helpers/validators';
 
@@ -10,8 +10,7 @@ import { getStyles } from '../FormParts.styles';
 import { MainDetailsFormPartProps } from '../FormParts.types';
 
 export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteInstanceCredentials }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   const portValidators = useMemo(() => [validators.required, Validators.validatePort], []);
   const trim = useCallback((value) => (value ? value.trim() : value), []);

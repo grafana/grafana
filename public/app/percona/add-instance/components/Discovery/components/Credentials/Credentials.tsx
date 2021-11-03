@@ -2,18 +2,17 @@ import { TextInputField, PasswordInputField } from '@percona/platform-core';
 import React, { FC, useCallback } from 'react';
 import { Form as FormFinal } from 'react-final-form';
 
-import { Button, useTheme } from '@grafana/ui';
+import { Button, useStyles } from '@grafana/ui';
 
 import { Messages } from './Credentials.messages';
 import { getStyles } from './Credentials.styles';
-import { CredentialsForm, CredentialsProps } from './Credentials.types';
+import { CredentialsProps, RDSCredentialsForm } from './Credentials.types';
 
 const Credentials: FC<CredentialsProps> = ({ discover, selectInstance }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   const onSubmit = useCallback(
-    (values: CredentialsForm) => {
+    (values: RDSCredentialsForm) => {
       discover(values);
     },
     [discover]

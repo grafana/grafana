@@ -2,7 +2,7 @@ import { TextInputField, validators, PasswordInputField } from '@percona/platfor
 import React, { FC, useCallback } from 'react';
 import { Form as FormFinal } from 'react-final-form';
 
-import { Button, useTheme } from '@grafana/ui';
+import { Button, useStyles } from '@grafana/ui';
 
 import { SECURITY_CREDENTIALS_DOC_LINK } from './Credentials.constants';
 import { Messages } from './Credentials.messages';
@@ -10,8 +10,7 @@ import { getStyles } from './Credentials.styles';
 import { AzureCredentialsForm, CredentialsProps } from './Credentials.types';
 
 const Credentials: FC<CredentialsProps> = ({ onSetCredentials, selectInstance }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   const onSubmit = useCallback(
     (values: AzureCredentialsForm) => {

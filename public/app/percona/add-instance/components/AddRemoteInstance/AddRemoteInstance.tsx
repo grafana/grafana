@@ -4,50 +4,57 @@ import { FormApi } from 'final-form';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Form as FormFinal } from 'react-final-form';
 
-import { Button, useTheme } from '@grafana/ui';
+import { Button, useStyles } from '@grafana/ui';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
+import { Databases } from 'app/percona/shared/core';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
-import { InstanceTypes } from '../../panel.types';
+import { InstanceTypesExtra, InstanceTypes, INSTANCE_TYPES_LABELS, InstanceAvailableType } from '../../panel.types';
 
 import { ADD_AZURE_CANCEL_TOKEN, ADD_RDS_CANCEL_TOKEN } from './AddRemoteInstance.constants';
 import { Messages } from './AddRemoteInstance.messages';
 import AddRemoteInstanceService, { toPayload } from './AddRemoteInstance.service';
 import { getStyles } from './AddRemoteInstance.styles';
 import { getInstanceData, remoteToken } from './AddRemoteInstance.tools';
-import { AddRemoteInstanceProps } from './AddRemoteInstance.types';
+import {
+  AddRemoteInstanceProps,
+  FormValues,
+  RDSPayload,
+  MSAzurePayload,
+  TrackingOptions,
+} from './AddRemoteInstance.types';
 import { AdditionalOptions, Labels, MainDetails } from './FormParts';
 import { ExternalServiceConnectionDetails } from './FormParts/ExternalServiceConnectionDetails/ExternalServiceConnectionDetails';
 import { HAProxyConnectionDetails } from './FormParts/HAProxyConnectionDetails/HAProxyConnectionDetails';
 
 const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, credentials }, selectInstance }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   const { remoteInstanceCredentials, discoverName } = getInstanceData(type, credentials);
   const [loading, setLoading] = useState<boolean>(false);
   const [generateToken] = useCancelToken();
-  const initialValues: any = { ...remoteInstanceCredentials };
+  const initialValues: FormValues = { ...remoteInstanceCredentials };
 
-  if (type === Databases.mysql || type === Databases.mariadb) {
+  if (type === Databases.mysql) {
     initialValues.qan_mysql_perfschema = true;
   }
 
   if (type === Databases.postgresql) {
-    initialValues.tracking = 'qan_postgresql_pgstatements_agent';
+    initialValues.tracking = TrackingOptions.pgStatements;
   }
 
   const onSubmit = useCallback(
-    async (values) => {
+    async (values: FormValues) => {
       try {
         setLoading(true);
-
         if (values.isRDS) {
-          await AddRemoteInstanceService.addRDS(toPayload(values, discoverName), generateToken(ADD_RDS_CANCEL_TOKEN));
+          await AddRemoteInstanceService.addRDS(
+            toPayload(values, discoverName) as RDSPayload,
+            generateToken(ADD_RDS_CANCEL_TOKEN)
+          );
         } else if (values.isAzure) {
           await AddRemoteInstanceService.addAzure(
-            toPayload(values, discoverName),
+            toPayload(values, discoverName) as MSAzurePayload,
             generateToken(ADD_AZURE_CANCEL_TOKEN)
           );
         } else {
@@ -67,14 +74,14 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
   );
 
   const ConnectionDetails = useCallback(
-    ({ form, type }: { form: FormApi; type: InstanceTypes }) => {
+    ({ form, type }: { form: FormApi; type: InstanceTypes | '' }) => {
       switch (type) {
-        case InstanceTypes.external:
+        case InstanceTypesExtra.external:
           return <ExternalServiceConnectionDetails form={form} />;
-        case InstanceTypes.haproxy:
+        case Databases.haproxy:
           return <HAProxyConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
         default:
-          return <MainDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
+          return <MainDetails form={form} remoteInstanceCredentials={remoteInstanceCredentials} />;
       }
     },
     [remoteInstanceCredentials]
@@ -86,7 +93,7 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
         <>
           <ConnectionDetails form={form} type={type} />
           <Labels />
-          {type !== InstanceTypes.external && (
+          {type !== InstanceTypesExtra.external && (
             <AdditionalOptions
               remoteInstanceCredentials={remoteInstanceCredentials}
               loading={loading}
@@ -99,13 +106,14 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
     [ConnectionDetails, loading, remoteInstanceCredentials, type]
   );
 
-  const getHeader = (databaseType: string) => {
-    if (databaseType === InstanceTypes.external) {
+  const getHeader = (databaseType: InstanceAvailableType) => {
+    if (databaseType === InstanceTypesExtra.external) {
       return Messages.form.titles.addExternalService;
     }
-
-    // @ts-ignore
-    return `Add remote ${DATABASE_LABELS[databaseType]} Instance`;
+    if (databaseType === '') {
+      return Messages.form.titles.addRemoteInstance;
+    }
+    return `Add remote ${INSTANCE_TYPES_LABELS[databaseType]} Instance`;
   };
 
   return (

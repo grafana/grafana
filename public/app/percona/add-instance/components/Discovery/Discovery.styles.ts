@@ -1,9 +1,8 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
 
-export const getStyles = stylesFactory(({ colors, spacing }: GrafanaTheme) => ({
+export const getStyles = ({ colors, spacing }: GrafanaTheme) => ({
   content: css`
     display: flex;
     flex-direction: column;
@@ -22,4 +21,4 @@ export const getStyles = stylesFactory(({ colors, spacing }: GrafanaTheme) => ({
     list-style-position: inside;
     margin-left: ${spacing.sm};
   `,
-}));
+});

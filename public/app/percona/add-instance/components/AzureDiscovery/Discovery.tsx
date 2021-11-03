@@ -1,6 +1,7 @@
 import { logger } from '@percona/platform-core';
 import React, { FC, useEffect, useState } from 'react';
 
+import { useStyles } from '@grafana/ui';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
@@ -13,7 +14,7 @@ import { AzureCredentialsForm } from './components/Credentials/Credentials.types
 import Instances from './components/Instances/Instances';
 
 const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
-  const styles = getStyles();
+  const styles = useStyles(getStyles);
 
   const [instances, setInstances] = useState<Instance[]>([]);
   const [credentials, setCredentials] = useState<AzureCredentialsForm>({});
