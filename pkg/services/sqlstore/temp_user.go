@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -8,15 +9,15 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", CreateTempUser)
-	bus.AddHandler("sql", GetTempUsersQuery)
-	bus.AddHandler("sql", UpdateTempUserStatus)
-	bus.AddHandler("sql", GetTempUserByCode)
-	bus.AddHandler("sql", UpdateTempUserWithEmailSent)
-	bus.AddHandler("sql", ExpireOldUserInvites)
+	bus.AddHandlerCtx("sql", CreateTempUser)
+	bus.AddHandlerCtx("sql", GetTempUsersQuery)
+	bus.AddHandlerCtx("sql", UpdateTempUserStatus)
+	bus.AddHandlerCtx("sql", GetTempUserByCode)
+	bus.AddHandlerCtx("sql", UpdateTempUserWithEmailSent)
+	bus.AddHandlerCtx("sql", ExpireOldUserInvites)
 }
 
-func UpdateTempUserStatus(cmd *models.UpdateTempUserStatusCommand) error {
+func UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSQL = "UPDATE temp_user SET status=? WHERE code=?"
 		_, err := sess.Exec(rawSQL, string(cmd.Status), cmd.Code)
@@ -24,7 +25,7 @@ func UpdateTempUserStatus(cmd *models.UpdateTempUserStatusCommand) error {
 	})
 }
 
-func CreateTempUser(cmd *models.CreateTempUserCommand) error {
+func CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// create user
 		user := &models.TempUser{
@@ -50,7 +51,7 @@ func CreateTempUser(cmd *models.CreateTempUserCommand) error {
 	})
 }
 
-func UpdateTempUserWithEmailSent(cmd *models.UpdateTempUserWithEmailSentCommand) error {
+func UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		user := &models.TempUser{
 			EmailSent:   true,
@@ -63,7 +64,7 @@ func UpdateTempUserWithEmailSent(cmd *models.UpdateTempUserWithEmailSentCommand)
 	})
 }
 
-func GetTempUsersQuery(query *models.GetTempUsersQuery) error {
+func GetTempUsersQuery(ctx context.Context, query *models.GetTempUsersQuery) error {
 	rawSQL := `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
@@ -101,7 +102,7 @@ func GetTempUsersQuery(query *models.GetTempUsersQuery) error {
 	return err
 }
 
-func GetTempUserByCode(query *models.GetTempUserByCodeQuery) error {
+func GetTempUserByCode(ctx context.Context, query *models.GetTempUserByCodeQuery) error {
 	var rawSQL = `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
@@ -134,7 +135,7 @@ func GetTempUserByCode(query *models.GetTempUserByCodeQuery) error {
 	return err
 }
 
-func ExpireOldUserInvites(cmd *models.ExpireTempUsersCommand) error {
+func ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSQL = "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
 		if result, err := sess.Exec(rawSQL, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
