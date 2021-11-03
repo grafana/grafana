@@ -3,13 +3,10 @@ package response
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -180,42 +177,25 @@ func Success(message string) *NormalResponse {
 // Error creates an error response.
 func Error(status int, message string, err error) *NormalResponse {
 	data := make(map[string]interface{})
-	var resp *NormalResponse
-	var responseStatus = status
 
-	var pluginRequestError *plugins.PluginRequestError
-	if errors.As(err, &pluginRequestError) {
-		responseStatus = 400
-		data["message"] = "Bad Request"
-		if pluginRequestError.Code != "" {
-			data["code"] = pluginRequestError.Code
-		}
-		if pluginRequestError.Message != "" {
-			data["error"] = pluginRequestError.Message
-		}
-		if pluginRequestError.Payload != nil {
-			data["payload"] = pluginRequestError.Payload
-		}
-	} else {
-		switch status {
-		case 404:
-			data["message"] = "Not Found"
-		case 500:
-			data["message"] = "Internal Server Error"
-		}
+	switch status {
+	case 404:
+		data["message"] = "Not Found"
+	case 500:
+		data["message"] = "Internal Server Error"
+	}
 
-		if message != "" {
-			data["message"] = message
-		}
+	if message != "" {
+		data["message"] = message
+	}
 
-		if err != nil {
-			if setting.Env != setting.Prod {
-				data["error"] = err.Error()
-			}
+	if err != nil {
+		if setting.Env != setting.Prod {
+			data["error"] = err.Error()
 		}
 	}
 
-	resp = JSON(responseStatus, data)
+	resp := JSON(status, data)
 
 	if err != nil {
 		resp.errMessage = message

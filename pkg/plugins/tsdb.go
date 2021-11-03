@@ -358,13 +358,3 @@ func convertDataTimePoint(point DataTimePoint) (t *time.Time, f *float64) {
 	}
 	return
 }
-
-type PluginRequestError struct {
-	Code    string
-	Message string
-	Payload map[string]string
-}
-
-func (e *PluginRequestError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Code, e.Message)
-}
