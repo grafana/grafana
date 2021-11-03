@@ -167,20 +167,8 @@ export class ElasticDatasource
       );
   }
 
-  /**
-   * Queries are transformed to an ES Logs query since it's the behaviour most users expect.
-   **/
   importAbstractQuery(labelBasedQuery: AbstractQuery): ElasticsearchQuery {
-    return {
-      metrics: [
-        {
-          id: '1',
-          type: 'logs',
-        },
-      ],
-      query: this.languageProvider.getElasticsearchQuery(labelBasedQuery.labelMatchers),
-      refId: labelBasedQuery.refId,
-    };
+    return this.languageProvider.importAbstractQuery(labelBasedQuery);
   }
 
   /**
