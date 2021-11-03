@@ -309,15 +309,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	}
 
 	if len(configNodes) > 0 {
-		navTree = append(navTree, &dtos.NavLink{
-			Id:         dtos.NavIDCfg,
-			Text:       "Configuration",
-			SubTitle:   "Organization: " + c.OrgName,
-			Icon:       "cog",
-			Url:        configNodes[0].Url,
-			SortWeight: dtos.WeightConfig,
-			Children:   configNodes,
-		})
 		configNode := &dtos.NavLink{
 			Id:         dtos.NavIDCfg,
 			Text:       "Configuration",
