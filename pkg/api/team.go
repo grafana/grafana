@@ -155,7 +155,7 @@ func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response
 		return response.Error(403, "Not allowed to view team preferences.", err)
 	}
 
-	return getPreferencesFor(orgId, 0, teamId)
+	return hs.getPreferencesFor(c.Req.Context(), orgId, 0, teamId)
 }
 
 // PUT /api/teams/:teamId/preferences
@@ -167,7 +167,7 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext, dtoCmd dtos.Up
 		return response.Error(403, "Not allowed to update team preferences.", err)
 	}
 
-	return updatePreferencesFor(orgId, 0, teamId, &dtoCmd)
+	return hs.updatePreferencesFor(c.Req.Context(), orgId, 0, teamId, &dtoCmd)
 }
 
 // createTeam creates a team.
