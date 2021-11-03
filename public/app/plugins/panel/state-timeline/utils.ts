@@ -235,8 +235,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     });
   }
 
-  builder.scaleKeys = [xScaleKey, FIXED_UNIT];
-
   if (sync !== DashboardCursorSync.Off) {
     let cursor: Partial<uPlot.Cursor> = {};
 
@@ -251,13 +249,15 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
             eventBus.publish(new DataHoverClearEvent());
           } else {
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
+            payload.point.panelRelY = y > 0 ? y / h : 1; // used for old graph panel to position tooltip
             payload.down = undefined;
             eventBus.publish(new DataHoverEvent(payload));
           }
           return true;
         },
       },
-      scales: builder.scaleKeys,
+      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
+      scales: [xScaleKey, null as any],
     };
     builder.setSync();
     builder.setCursor(cursor);
