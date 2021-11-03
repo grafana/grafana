@@ -1,7 +1,7 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { render, RenderResult, waitFor } from '@testing-library/react';
+import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { config } from '@grafana/runtime';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
@@ -122,9 +122,14 @@ describe('Plugin details page', () => {
     });
 
     it('should display the number of downloads in the header', async () => {
+      // depending on what locale you have the Intl.NumberFormat will return a format that contains
+      // whitespaces. In that case we don't want testing library to remove whitespaces.
       const downloads = 24324;
+      const options: SelectorMatcherOptions = { normalizer: getDefaultNormalizer({ collapseWhitespace: false }) };
+      const expected = new Intl.NumberFormat().format(downloads);
+
       const { queryByText } = renderPluginDetails({ id, downloads });
-      await waitFor(() => expect(queryByText(new Intl.NumberFormat().format(downloads))).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(expected, options)).toBeInTheDocument());
     });
 
     it('should display the version in the header', async () => {
