@@ -46,6 +46,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   allFrames,
   renderers,
   legend,
+  tweakScale = (opts) => opts,
+  tweakAxis = (opts) => opts,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -150,6 +152,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     if (field === xField || field.type !== FieldType.number) {
       continue;
     }
+
+    // TODO: skip this for fields with custom renderers?
     field.state!.seriesIndex = seriesIndex++;
 
     const fmt = field.display ?? defaultFormatter;
@@ -158,63 +162,37 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
 
-    let scaleRange = null;
-    let axisSpace = null;
-    let axisFilter = (u: uPlot, splits: number[]) => splits;
-
-    //if (customRenderedFields.indexOf('volume') > -1) {
-    if (field.name === 'volume') {
-      scaleRange = (u: uPlot, min: number, max: number) => [0, max * 7];
-      axisSpace = 20;
-      axisFilter = (u: uPlot, splits: number[]) => {
-        let _splits = [];
-        let max = u.series[5].max as number;
-
-        for (let i = 0; i < splits.length; i++) {
-          _splits.push(splits[i]);
-
-          if (splits[i] > max) {
-            break;
-          }
-        }
-
-        return _splits;
-      };
-    }
-
     // The builder will manage unique scaleKeys and combine where appropriate
-    builder.addScale({
-      scaleKey,
-      orientation: ScaleOrientation.Vertical,
-      direction: ScaleDirection.Up,
-      distribution: customConfig.scaleDistribution?.type,
-      log: customConfig.scaleDistribution?.log,
-      min: field.config.min,
-      max: field.config.max,
-      softMin: customConfig.axisSoftMin,
-      softMax: customConfig.axisSoftMax,
-      range: scaleRange,
-    });
+    builder.addScale(
+      tweakScale({
+        scaleKey,
+        orientation: ScaleOrientation.Vertical,
+        direction: ScaleDirection.Up,
+        distribution: customConfig.scaleDistribution?.type,
+        log: customConfig.scaleDistribution?.log,
+        min: field.config.min,
+        max: field.config.max,
+        softMin: customConfig.axisSoftMin,
+        softMax: customConfig.axisSoftMax,
+      })
+    );
 
     if (!yScaleKey) {
       yScaleKey = scaleKey;
     }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
-      builder.addAxis({
-        scaleKey,
-        label: customConfig.axisLabel,
-        size: customConfig.axisWidth,
-        placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-        formatValue: (v) => formattedValueToString(fmt(v)),
-        theme,
-        grid: { show: customConfig.axisGridShow },
-        space: axisSpace,
-        filter: axisFilter,
-        ticks: {
-          filter: axisFilter,
-        },
-      });
+      builder.addAxis(
+        tweakAxis({
+          scaleKey,
+          label: customConfig.axisLabel,
+          size: customConfig.axisWidth,
+          placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
+          formatValue: (v) => formattedValueToString(fmt(v)),
+          theme,
+          grid: { show: customConfig.axisGridShow },
+        })
+      );
     }
 
     const showPoints =

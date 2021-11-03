@@ -19,7 +19,7 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { eventBus, sync } = this.context;
-    const { theme, timeZone, legend, renderers } = this.props;
+    const { theme, timeZone, legend, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -31,6 +31,8 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
       allFrames,
       legend,
       renderers,
+      tweakScale,
+      tweakAxis,
     });
   };
 

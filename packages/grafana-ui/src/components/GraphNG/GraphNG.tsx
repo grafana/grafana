@@ -21,6 +21,8 @@ import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { UPlotChart } from '../uPlot/Plot';
+import { ScaleProps } from '../uPlot/config/UPlotScaleBuilder';
+import { AxisProps } from '../uPlot/config/UPlotAxisBuilder';
 
 /**
  * @internal -- not a public API
@@ -42,6 +44,8 @@ export interface GraphNGProps extends Themeable2 {
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   renderers?: Array<{ fields: string[]; init: (builder: UPlotConfigBuilder) => void }>;
+  tweakScale?: (opts: ScaleProps) => ScaleProps;
+  tweakAxis?: (opts: AxisProps) => AxisProps;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;

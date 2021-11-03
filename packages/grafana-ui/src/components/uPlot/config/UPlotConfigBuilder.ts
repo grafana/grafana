@@ -281,6 +281,8 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   eventBus: EventBus;
   allFrames: DataFrame[];
   renderers: Array<{ fields: string[]; init: (config: UPlotConfigBuilder) => void }>;
+  tweakScale?: (opts: ScaleProps) => ScaleProps;
+  tweakAxis?: (opts: AxisProps) => AxisProps;
 } & T;
 
 /** @alpha */

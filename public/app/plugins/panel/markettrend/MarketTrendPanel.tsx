@@ -16,6 +16,8 @@ import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControls
 import { config } from 'app/core/config';
 import { drawMarkers } from './utils';
 import { defaultColors } from './types';
+import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
+import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 
 interface FieldIndices {
   [fieldKey: string]: number;
@@ -52,7 +54,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
 
   const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
 
-  const renderers = useMemo(() => {
+  const { renderers, tweakScale, tweakAxis } = useMemo(() => {
     const { mode, priceStyle, fieldMap, movementMode } = options;
     const colors = { ...defaultColors, ...options.colors };
     let { open, high, low, close, volume } = fieldMap;
@@ -60,6 +62,9 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
     if (open == null || close == null) {
       return [];
     }
+
+    let tweakScale = (opts: ScaleProps) => opts;
+    let tweakAxis = (opts: AxisProps) => opts;
 
     let volumeAlpha = 0.5;
 
@@ -79,29 +84,66 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
           field: volumeField,
           theme: config.theme2,
         });
+
+        tweakAxis = (opts: AxisProps) => {
+          if (opts.scaleKey === 'short') {
+            let filter = (u: uPlot, splits: number[]) => {
+              let _splits = [];
+              let max = u.series[5].max as number;
+
+              for (let i = 0; i < splits.length; i++) {
+                _splits.push(splits[i]);
+
+                if (splits[i] > max) {
+                  break;
+                }
+              }
+
+              return _splits;
+            };
+
+            opts.space = 20; // reduce tick spacing
+            opts.filter = filter; // hide tick labels
+            opts.ticks = { ...opts.ticks, filter }; // hide tick marks
+          }
+
+          return opts;
+        };
+
+        tweakScale = (opts: ScaleProps) => {
+          if (opts.scaleKey === 'short') {
+            opts.range = (u: uPlot, min: number, max: number) => [0, max * 7];
+          }
+
+          return opts;
+        };
       }
     }
 
-    return [
-      {
-        fields: { open, high, low, close, volume },
-        init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
-          builder.addHook(
-            'drawAxes',
-            drawMarkers({
-              mode,
-              fields: fieldIndices,
-              upColor: config.theme2.visualization.getColorByName(colors.up),
-              downColor: config.theme2.visualization.getColorByName(colors.down),
-              flatColor: config.theme2.visualization.getColorByName(colors.flat),
-              volumeAlpha,
-              movementMode,
-              priceStyle,
-            })
-          );
+    return {
+      renderers: [
+        {
+          fields: { open, high, low, close, volume },
+          init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
+            builder.addHook(
+              'drawAxes',
+              drawMarkers({
+                mode,
+                fields: fieldIndices,
+                upColor: config.theme2.visualization.getColorByName(colors.up),
+                downColor: config.theme2.visualization.getColorByName(colors.down),
+                flatColor: config.theme2.visualization.getColorByName(colors.flat),
+                volumeAlpha,
+                movementMode,
+                priceStyle,
+              })
+            );
+          },
         },
-      },
-    ];
+      ],
+      tweakScale,
+      tweakAxis,
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
@@ -125,6 +167,8 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       height={height}
       legend={options.legend}
       renderers={renderers}
+      tweakAxis={tweakAxis}
+      tweakScale={tweakScale}
       options={options}
     >
       {(config, alignedDataFrame) => {
