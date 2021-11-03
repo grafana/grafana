@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,9 +26,13 @@ func TestService(t *testing.T) {
 	me := &mockEndpoint{
 		Frames: []*data.Frame{dsDF},
 	}
-	s := Service{LegacyDataRequestHandler: me}
-	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
-		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
+	s := Service{
+		cfg:               setting.NewCfg(),
+		dataService:       me,
+		encryptionService: ossencryption.ProvideService(),
+	}
+	bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetDataSourceQuery) error {
+		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test", JsonData: simplejson.New()}
 		return nil
 	})
 
@@ -88,17 +94,10 @@ type mockEndpoint struct {
 }
 
 // nolint:staticcheck // plugins.DataResponse deprecated
-func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (legacydata.DataResponse, error) {
-	return legacydata.DataResponse{
-		Results: map[string]legacydata.DataQueryResult{
-			"A": {
-				Dataframes: legacydata.NewDecodedDataFrames(me.Frames),
-			},
-		},
-	}, nil
-}
-
-// nolint:staticcheck // plugins.DataResponse deprecated
-func (me *mockEndpoint) HandleRequest(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (legacydata.DataResponse, error) {
-	return me.DataQuery(ctx, ds, query)
+func (me *mockEndpoint) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+	resp.Responses["A"] = backend.DataResponse{
+		Frames: me.Frames,
+	}
+	return resp, nil
 }

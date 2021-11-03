@@ -203,6 +203,7 @@ type Cfg struct {
 	EnforceDomain    bool
 
 	// Security settings
+	SecretKey             string
 	EmailCodeValidMinutes int
 
 	// build
@@ -1139,6 +1140,7 @@ func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
 	SecretKey = valueAsString(security, "secret_key", "")
+	cfg.SecretKey = SecretKey
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 

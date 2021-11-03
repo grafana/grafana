@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // DatasourceName is the string constant used as the datasource name in requests
@@ -22,22 +23,24 @@ const DatasourceUID = "-100"
 
 // Service is service representation for expression handling.
 type Service struct {
-	Cfg                      *setting.Cfg
-	LegacyDataRequestHandler legacydata.RequestHandler
+	cfg               *setting.Cfg
+	dataService       backend.QueryDataHandler
+	encryptionService encryption.Service
 }
 
-func ProvideService(cfg *setting.Cfg, dataService legacydata.RequestHandler) *Service {
+func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, encryptionService encryption.Service) *Service {
 	return &Service{
-		Cfg:                      cfg,
-		LegacyDataRequestHandler: dataService,
+		cfg:               cfg,
+		dataService:       pluginClient,
+		encryptionService: encryptionService,
 	}
 }
 
 func (s *Service) isDisabled() bool {
-	if s.Cfg == nil {
+	if s.cfg == nil {
 		return true
 	}
-	return !s.Cfg.ExpressionsEnabled
+	return !s.cfg.ExpressionsEnabled
 }
 
 // BuildPipeline builds a pipeline from a request.
