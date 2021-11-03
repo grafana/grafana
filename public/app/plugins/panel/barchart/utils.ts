@@ -11,13 +11,7 @@ import {
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
-import {
-  BarChartFieldConfig,
-  BarChartOptions,
-  defaultBarChartFieldConfig,
-  ValueRotationConfig,
-  ValueRotationMode,
-} from './types';
+import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
 import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
 import { Padding } from 'uplot';
@@ -105,9 +99,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
-  const rawRotation = getRotationAngle(valueRotation);
-  if (vizOrientation.xOri === ScaleOrientation.Horizontal && rawRotation !== 0) {
-    builder.setPadding(getRotationPadding(frame, rawRotation, theme, valueMaxLength));
+  if (vizOrientation.xOri === ScaleOrientation.Horizontal && valueRotation !== 0) {
+    builder.setPadding(getRotationPadding(frame, valueRotation, valueMaxLength));
   }
 
   builder.setPrepData(config.prepData);
@@ -129,7 +122,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     grid: { show: false },
     ticks: false,
     gap: 15,
-    valueRotation: rawRotation * -1,
+    valueRotation: valueRotation * -1,
     theme,
   });
 
@@ -241,29 +234,7 @@ function shortenValue(value: string, length: number) {
   }
 }
 
-export function getRotationAngle(config: ValueRotationConfig): number {
-  switch (config.mode) {
-    case ValueRotationMode.None: {
-      return 0;
-    }
-    case ValueRotationMode.Custom: {
-      return config.customRotation || 0;
-    }
-    case ValueRotationMode.Angled: {
-      return 45;
-    }
-    case ValueRotationMode.Vertical: {
-      return 90;
-    }
-  }
-}
-
-function getRotationPadding(
-  frame: DataFrame,
-  rotateLabel: number,
-  theme: GrafanaTheme2,
-  valueMaxLength: number
-): Padding {
+function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLength: number): Padding {
   const values = frame.fields[0].values;
   const fontSize = UPLOT_AXIS_FONT_SIZE;
   const displayProcessor = frame.fields[0].display ?? ((v) => v);

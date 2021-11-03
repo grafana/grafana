@@ -4,22 +4,12 @@ import {
   FieldConfigProperty,
   FieldType,
   PanelPlugin,
-  SelectableValue,
-  StandardEditorProps,
   VizOrientation,
 } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
 import { StackingMode, VisibilityMode } from '@grafana/schema';
-import { graphFieldOptions, commonOptionsBuilder, HorizontalGroup, RadioButtonGroup, Input } from '@grafana/ui';
-
-import {
-  BarChartFieldConfig,
-  BarChartOptions,
-  defaultBarChartFieldConfig,
-  ValueRotationConfig,
-  ValueRotationMode,
-} from 'app/plugins/panel/barchart/types';
-import React from 'react';
+import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from 'app/plugins/panel/barchart/types';
 import { BarChartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
@@ -86,12 +76,15 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
         defaultValue: VizOrientation.Auto,
       })
-      .addCustomEditor({
-        id: 'valueRotation',
+      .addSliderInput({
         path: 'valueRotation',
         name: 'Rotate values',
-        editor: ValueRotationEditor,
-        defaultValue: { presetRotation: 0 },
+        defaultValue: 0,
+        settings: {
+          min: -90,
+          max: 90,
+          step: 15,
+        },
         showIf: (opts) => {
           return opts.orientation === VizOrientation.Auto || opts.orientation === VizOrientation.Vertical;
         },
@@ -171,35 +164,3 @@ function countNumberFields(data?: DataFrame[]): number {
   }
   return count;
 }
-
-const ROTATION_OPTIONS: Array<SelectableValue<ValueRotationMode>> = [
-  { label: 'Off', value: ValueRotationMode.None },
-  { label: 'Angled', value: ValueRotationMode.Angled },
-  { label: 'Vertical', value: ValueRotationMode.Vertical },
-  { label: 'Custom', value: ValueRotationMode.Custom },
-];
-
-const ValueRotationEditor: React.FC<StandardEditorProps<ValueRotationConfig>> = ({ value, onChange }) => {
-  return (
-    <HorizontalGroup>
-      <RadioButtonGroup
-        value={value.mode}
-        options={ROTATION_OPTIONS}
-        onChange={(v: ValueRotationMode) => {
-          onChange({ mode: v, customRotation: value.customRotation });
-        }}
-      ></RadioButtonGroup>
-      {value.mode === ValueRotationMode.Custom && (
-        <Input
-          value={value.customRotation || 0}
-          type="number"
-          min={-90}
-          max={90}
-          onChange={(e) => {
-            onChange({ ...value, customRotation: e.currentTarget.valueAsNumber });
-          }}
-        ></Input>
-      )}
-    </HorizontalGroup>
-  );
-};

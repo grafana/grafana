@@ -10,21 +10,6 @@ import {
 } from '@grafana/schema';
 import { VizOrientation } from '@grafana/data';
 
-export enum ValueRotationMode {
-  None = 'none',
-  Angled = 'angled',
-  Vertical = 'vertical',
-  Custom = 'custom',
-}
-
-/**
- * @alpha
- */
-export interface ValueRotationConfig {
-  mode: ValueRotationMode;
-  customRotation?: number;
-}
-
 /**
  * @alpha
  */
@@ -34,7 +19,7 @@ export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, 
   showValue: VisibilityMode;
   barWidth: number;
   groupWidth: number;
-  valueRotation: ValueRotationConfig;
+  valueRotation: number;
   valueMaxLength: number;
   rawValue: (seriesIdx: number, valueIdx: number) => number;
 }
