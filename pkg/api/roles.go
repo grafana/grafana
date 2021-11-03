@@ -53,8 +53,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	registrations := []accesscontrol.RoleRegistration{
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
-				Name:        "fixed:provisioning:admin",
+				Version:     2,
+				Name:        "fixed:provisioning:writer",
+				DisplayName: "Provisioning writer",
 				Description: "Reload provisioning configurations",
 				Permissions: []accesscontrol.Permission{
 					{
@@ -67,9 +68,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
-				Name:        "fixed:datasources:admin",
-				Description: "Gives access to create, read, update, delete datasources",
+				Version:     2,
+				Name:        "fixed:datasources:writer",
+				DisplayName: "Datasources writer",
+				Description: "Create, read, update, delete and query datasources",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionDatasourcesRead,
@@ -97,8 +99,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		{
 			Role: accesscontrol.RoleDTO{
 				Version:     2,
-				Name:        "fixed:datasources:id:viewer",
-				Description: "Gives access to read datasources ID",
+				Name:        "fixed:datasources:id:reader",
+				DisplayName: "Datasource id reader",
+				Description: "Read id for datasources",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionDatasourcesIDRead,
