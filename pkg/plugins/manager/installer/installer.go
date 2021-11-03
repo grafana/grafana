@@ -600,7 +600,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		}
 	}
 
-	return
+	return err
 }
 
 func isSymlink(file *zip.File) bool {
