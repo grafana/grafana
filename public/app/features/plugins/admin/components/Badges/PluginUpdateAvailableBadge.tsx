@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, PluginType } from '@grafana/data';
-import { Tooltip, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { CatalogPlugin } from '../../types';
 
 type Props = {
@@ -12,11 +12,7 @@ export function PluginUpdateAvailableBadge({ plugin }: Props): React.ReactElemen
   const styles = useStyles2(getStyles);
 
   if (plugin.hasUpdate && !plugin.isCore && plugin.type !== PluginType.renderer) {
-    return (
-      <Tooltip content={plugin.latestVersion || ''}>
-        <p className={styles.hasUpdate}>Update available!</p>
-      </Tooltip>
-    );
+    return <p className={styles.hasUpdate}>Update available!</p>;
   }
 
   return null;

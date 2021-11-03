@@ -22,7 +22,7 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
 
   const onInstall = async () => {
-    await install(plugin.id, plugin.latestVersion);
+    await install(plugin.id);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
     }
@@ -37,7 +37,7 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   };
 
   const onUpdate = async () => {
-    await install(plugin.id, plugin.latestVersion, true);
+    await install(plugin.id, true);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
     }

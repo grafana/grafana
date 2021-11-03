@@ -121,10 +121,10 @@ async function getOrg(slug: string): Promise<Org> {
   return { ...org, avatarUrl: `${GRAFANA_API_ROOT}/orgs/${slug}/avatar` };
 }
 
-export async function installPlugin(id: string, version?: string) {
-  return await getBackendSrv().post(`${API_ROOT}/${id}/install`, {
-    version,
-  });
+export async function installPlugin(id: string) {
+  // This will install the latest compatible version based on the logic
+  // on the backend.
+  return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
 }
 
 export async function uninstallPlugin(id: string) {

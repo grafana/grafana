@@ -103,7 +103,6 @@ describe('Plugins/Helpers', () => {
         signature: 'valid',
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
-        latestVersion: '4.1.5',
       });
     });
 
@@ -211,7 +210,6 @@ describe('Plugins/Helpers', () => {
         signatureType: 'community',
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
-        latestVersion: '4.1.5',
         installedVersion: '4.2.2',
       });
     });

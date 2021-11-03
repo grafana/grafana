@@ -208,7 +208,7 @@ describe('Plugin details page', () => {
     });
 
     it("should display an install button for a plugin that isn't installed", async () => {
-      const { queryByRole, debug } = renderPluginDetails({ id, isInstalled: false });
+      const { queryByRole } = renderPluginDetails({ id, isInstalled: false });
 
       await waitFor(() => expect(queryByRole('button', { name: /^install/i })).toBeInTheDocument());
       // Does not display "uninstall" button

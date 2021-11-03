@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 import { PluginSignatureStatus, dateTimeParse, PluginError, PluginErrorCode } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Settings } from 'app/core/config';
-import { CatalogPlugin, LocalPlugin, RemotePlugin } from './types';
+import { CatalogPlugin, LocalPlugin, RemotePlugin, Version } from './types';
 
 export function mergeLocalsAndRemotes(
   local: LocalPlugin[] = [],
@@ -61,7 +61,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
   } = plugin;
 
   const isDisabled = !!error;
-  const catalogPlugin = {
+  return {
     description,
     downloads,
     id,
@@ -77,7 +77,6 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     publishedAt,
     signature: getPluginSignature({ remote: plugin, error }),
     updatedAt,
-    latestVersion: version,
     hasUpdate: false,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
@@ -87,7 +86,6 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     type: typeCode,
     error: error?.errorCode,
   };
-  return catalogPlugin;
 }
 
 export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): CatalogPlugin {
@@ -100,6 +98,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     type,
     signatureOrg,
     signatureType,
+    hasUpdate,
   } = plugin;
 
   return {
@@ -116,7 +115,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     signatureType,
     updatedAt: updated,
     installedVersion: version,
-    hasUpdate: false,
+    hasUpdate,
     isInstalled: true,
     isDisabled: !!error,
     isCore: signature === 'internal',
@@ -127,12 +126,13 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
   };
 }
 
+// TODO: change the signature by removing the optionals for local and remote.
 export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
   const installedVersion = local?.info.version;
-  const latestVersion = remote?.version;
   const id = remote?.slug || local?.id || '';
   const isDisabled = !!error;
 
+  // TODO: replace these with the local svg:s that we have witin the project.
   let logos = {
     small: 'https://grafana.com/api/plugins/404notfound/versions/none/logos/small',
     large: 'https://grafana.com/api/plugins/404notfound/versions/none/logos/large',
@@ -140,8 +140,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
 
   if (remote) {
     logos = {
-      small: `https://grafana.com/api/plugins/${id}/versions/${latestVersion}/logos/small`,
-      large: `https://grafana.com/api/plugins/${id}/versions/${latestVersion}/logos/large`,
+      small: `https://grafana.com/api/plugins/${id}/versions/${remote.version}/logos/small`,
+      large: `https://grafana.com/api/plugins/${id}/versions/${remote.version}/logos/large`,
     };
   } else if (local && local.info.logos) {
     logos = local.info.logos;
@@ -170,7 +170,6 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     signatureType: local?.signatureType || remote?.versionSignatureType || remote?.signatureType || undefined,
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     installedVersion,
-    latestVersion,
     error: error?.errorCode,
   };
 }
@@ -246,3 +245,11 @@ export const updatePanels = () =>
     .then((settings: Settings) => {
       config.panels = settings.panels;
     });
+
+export function getLatestCompatibleVersion(versions: Version[] | undefined): string {
+  if (!versions) {
+    return 'N/A';
+  }
+  const [latest] = versions;
+  return latest.version;
+}

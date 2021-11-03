@@ -22,7 +22,6 @@ describe('PluginListItemBadges', () => {
     signature: PluginSignatureStatus.valid,
     publishedAt: '2020-09-01',
     updatedAt: '2021-06-28',
-    latestVersion: '1.0.0',
     hasUpdate: false,
     isInstalled: false,
     isCore: false,

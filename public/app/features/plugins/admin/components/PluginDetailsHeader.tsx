@@ -10,6 +10,7 @@ import { PluginLogo } from './PluginLogo';
 import { CatalogPlugin } from '../types';
 import { PluginDisabledBadge } from './Badges';
 import { GetStartedWithPlugin } from './GetStartedWithPlugin';
+import { getLatestCompatibleVersion } from '../helpers';
 
 type Props = {
   currentUrl: string;
@@ -70,7 +71,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
           )}
 
           {/* Version */}
-          <span>{plugin.installedVersion ?? plugin.latestVersion}</span>
+          <span>{plugin.installedVersion ?? getLatestCompatibleVersion(plugin.details?.versions)}</span>
 
           {/* Signature information */}
           <PluginDetailsHeaderSignature plugin={plugin} />

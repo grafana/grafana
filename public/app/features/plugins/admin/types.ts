@@ -53,7 +53,6 @@ export interface CatalogPlugin {
   type?: PluginType;
   updatedAt: string;
   installedVersion?: string;
-  latestVersion?: string;
   details?: CatalogPluginDetails;
   error?: PluginErrorCode;
 }
@@ -147,7 +146,6 @@ export type LocalPlugin = {
     version: string;
     updated: string;
   };
-  latestVersion: string;
   name: string;
   pinned: boolean;
   signature: PluginSignatureStatus;
