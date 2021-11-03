@@ -8,7 +8,14 @@ import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPerm
 import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { CatalogPlugin, PluginTabIds, ReducerState, RequestStatus } from '../types';
+import {
+  CatalogPlugin,
+  CatalogPluginDetails,
+  PluginDetails,
+  PluginTabIds,
+  ReducerState,
+  RequestStatus,
+} from '../types';
 import * as api from '../api';
 import { fetchRemotePlugins } from '../state/actions';
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
@@ -132,11 +139,21 @@ describe('Plugin details page', () => {
       await waitFor(() => expect(queryByText(expected, options)).toBeInTheDocument());
     });
 
-    it('should display the version in the header', async () => {
+    it('should display the correct version in the header for a local plugin', async () => {
       const installedVersion = '1.3.443';
       const { queryByText } = renderPluginDetails({ id, installedVersion });
 
       await waitFor(() => expect(queryByText(installedVersion)).toBeInTheDocument());
+    });
+
+    it('should display the correct version in the header for remote plugin', async () => {
+      const details: CatalogPluginDetails = {
+        links: [],
+        versions: [{ version: '1.2.443', createdAt: '' }],
+      };
+
+      const { queryByText } = renderPluginDetails({ id, details });
+      await waitFor(() => expect(queryByText('1.2.443')).toBeInTheDocument());
     });
 
     it('should display description in the header', async () => {
