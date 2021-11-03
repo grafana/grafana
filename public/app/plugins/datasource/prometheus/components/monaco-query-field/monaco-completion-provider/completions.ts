@@ -1,4 +1,4 @@
-import type { Intent, Label } from './intent';
+import type { Situation, Label } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 import { FUNCTIONS } from '../../../promql';
@@ -139,28 +139,33 @@ async function getLabelValuesForMetricCompletions(
   }));
 }
 
-export async function getCompletions(intent: Intent, dataProvider: DataProvider): Promise<Completion[]> {
-  switch (intent.type) {
-    case 'ALL_DURATIONS':
+export async function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
+  switch (situation.type) {
+    case 'IN_DURATION':
       return DURATION_COMPLETIONS;
-    case 'ALL_METRIC_NAMES':
+    case 'IN_FUNCTION':
       return getAllMetricNamesCompletions(dataProvider);
-    case 'FUNCTIONS_AND_ALL_METRIC_NAMES': {
+    case 'AT_ROOT': {
       const metricNames = await getAllMetricNamesCompletions(dataProvider);
       return [...FUNCTION_COMPLETIONS, ...metricNames];
     }
-    case 'HISTORY_AND_FUNCTIONS_AND_ALL_METRIC_NAMES': {
+    case 'EMPTY': {
       const metricNames = await getAllMetricNamesCompletions(dataProvider);
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
       return [...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames];
     }
-    case 'LABEL_NAMES_FOR_SELECTOR':
-      return getLabelNamesForSelectorCompletions(intent.metricName, intent.otherLabels, dataProvider);
-    case 'LABEL_NAMES_FOR_BY':
-      return getLabelNamesForByCompletions(intent.metricName, intent.otherLabels, dataProvider);
-    case 'LABEL_VALUES':
-      return getLabelValuesForMetricCompletions(intent.metricName, intent.labelName, intent.otherLabels, dataProvider);
+    case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
+      return getLabelNamesForSelectorCompletions(situation.metricName, situation.otherLabels, dataProvider);
+    case 'IN_GROUPING':
+      return getLabelNamesForByCompletions(situation.metricName, situation.otherLabels, dataProvider);
+    case 'IN_LABEL_SELECTOR_WITH_LABEL_NAME':
+      return getLabelValuesForMetricCompletions(
+        situation.metricName,
+        situation.labelName,
+        situation.otherLabels,
+        dataProvider
+      );
     default:
-      throw new NeverCaseError(intent);
+      throw new NeverCaseError(situation);
   }
 }
