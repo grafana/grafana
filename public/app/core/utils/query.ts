@@ -39,9 +39,12 @@ export function updateQueries(
   } else if (!newSettings.meta.mixed && dsSettings?.meta.id !== newSettings.meta.id) {
     // we are changing data source type, clear queries
     return [{ refId: 'A', datasource }];
+  } else {
+    return queries.map((q) => {
+      q.datasource = datasource;
+      return q;
+    });
   }
-
-  return queries;
 }
 
 export function isDataQuery(url: string): boolean {
