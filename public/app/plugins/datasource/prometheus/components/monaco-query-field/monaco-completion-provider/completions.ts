@@ -23,6 +23,8 @@ type Metric = {
 export type DataProvider = {
   getHistory: () => Promise<string[]>;
   getAllMetricNames: () => Promise<Metric[]>;
+  getAllLabelNames: () => Promise<string[]>;
+  getLabelValues: (labelName: string) => Promise<string[]>;
   getSeries: (selector: string) => Promise<Record<string, string[]>>;
 };
 
@@ -46,6 +48,11 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
   detail: f.detail,
   documentation: f.documentation,
 }));
+
+async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+  const metricNames = await getAllMetricNamesCompletions(dataProvider);
+  return [...FUNCTION_COMPLETIONS, ...metricNames];
+}
 
 const DURATION_COMPLETIONS: Completion[] = [
   '$__interval',
@@ -88,6 +95,23 @@ function makeSelector(metricName: string | undefined, labels: Label[]): string {
   return `{${allLabelTexts.join(',')}}`;
 }
 
+async function getLabelNames(
+  metric: string | undefined,
+  otherLabels: Label[],
+  dataProvider: DataProvider
+): Promise<string[]> {
+  if (metric === undefined && otherLabels.length === 0) {
+    // if there is no filtering, we have to use a special endpoint
+    return dataProvider.getAllLabelNames();
+  } else {
+    const selector = makeSelector(metric, otherLabels);
+    const data = await dataProvider.getSeries(selector);
+    const possibleLabelNames = Object.keys(data); // all names from prometheus
+    const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
+    return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
+  }
+}
+
 async function getLabelNamesForCompletions(
   metric: string | undefined,
   suffix: string,
@@ -95,11 +119,7 @@ async function getLabelNamesForCompletions(
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
-  const selector = makeSelector(metric, otherLabels);
-  const data = await dataProvider.getSeries(selector);
-  const possibleLabelNames = Object.keys(data); // all names from prometheus
-  const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
-  const labelNames = possibleLabelNames.filter((l) => !usedLabelNames.has(l));
+  const labelNames = await getLabelNames(metric, otherLabels, dataProvider);
   return labelNames.map((text) => ({
     type: 'LABEL_NAME',
     label: text,
@@ -123,15 +143,29 @@ async function getLabelNamesForByCompletions(
   return getLabelNamesForCompletions(metric, '', false, otherLabels, dataProvider);
 }
 
+async function getLabelValues(
+  metric: string | undefined,
+  labelName: string,
+  otherLabels: Label[],
+  dataProvider: DataProvider
+): Promise<string[]> {
+  if (metric === undefined && otherLabels.length === 0) {
+    // if there is no filtering, we have to use a special endpoint
+    return dataProvider.getLabelValues(labelName);
+  } else {
+    const selector = makeSelector(metric, otherLabels);
+    const data = await dataProvider.getSeries(selector);
+    return data[labelName] ?? [];
+  }
+}
+
 async function getLabelValuesForMetricCompletions(
   metric: string | undefined,
   labelName: string,
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
-  const selector = makeSelector(metric, otherLabels);
-  const data = await dataProvider.getSeries(selector);
-  const values = data[labelName] ?? [];
+  const values = await getLabelValues(metric, labelName, otherLabels, dataProvider);
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
@@ -144,10 +178,9 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;
     case 'IN_FUNCTION':
-      return getAllMetricNamesCompletions(dataProvider);
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
     case 'AT_ROOT': {
-      const metricNames = await getAllMetricNamesCompletions(dataProvider);
-      return [...FUNCTION_COMPLETIONS, ...metricNames];
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
     }
     case 'EMPTY': {
       const metricNames = await getAllMetricNamesCompletions(dataProvider);
