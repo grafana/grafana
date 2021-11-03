@@ -7,6 +7,7 @@ import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { PanelModel } from '../../state';
+import { getDefaultTimeRange } from '@grafana/data';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: () => ({
@@ -76,6 +77,7 @@ function shareLinkScenario(description: string, scenarioFn: (ctx: ScenarioContex
       mount: (propOverrides?: any) => {
         const props: any = {
           panel: undefined,
+          dashboard: { time: getDefaultTimeRange() },
         };
 
         Object.assign(props, propOverrides);

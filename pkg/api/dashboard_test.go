@@ -972,7 +972,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
-			mock := provisioning.NewProvisioningServiceMock()
+			mock := provisioning.NewProvisioningServiceMock(context.Background())
 			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
 			}
@@ -985,7 +985,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
-			mock := provisioning.NewProvisioningServiceMock()
+			mock := provisioning.NewProvisioningServiceMock(context.Background())
 			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
 			}
@@ -1015,7 +1015,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 func getDashboardShouldReturn200WithConfig(sc *scenarioContext, provisioningService provisioning.ProvisioningService) dtos.
 	DashboardFullWithMeta {
 	if provisioningService == nil {
-		provisioningService = provisioning.NewProvisioningServiceMock()
+		provisioningService = provisioning.NewProvisioningServiceMock(context.Background())
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
@@ -1110,7 +1110,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		hs := HTTPServer{
 			Bus:                 bus.GetBus(),
 			Cfg:                 cfg,
-			ProvisioningService: provisioning.NewProvisioningServiceMock(),
+			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                newTestLive(t),
 			QuotaService: &quota.QuotaService{
 				Cfg: cfg,
@@ -1179,7 +1179,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		hs := HTTPServer{
 			Cfg:                   cfg,
 			Bus:                   bus.GetBus(),
-			ProvisioningService:   provisioning.NewProvisioningServiceMock(),
+			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t),
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
