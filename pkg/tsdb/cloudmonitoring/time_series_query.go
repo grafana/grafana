@@ -73,7 +73,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	}
 
 	r = r.WithContext(ctx)
-	res, err := dsInfo.client.Do(r)
+	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
