@@ -35,6 +35,8 @@ func ProvideServiceAccountsService(
 	if cfg.FeatureToggles["service-accounts"] {
 		serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister)
 		serviceaccountsAPI.RegisterAPIEndpoints()
+	} else {
+		s.log.Debug("FeatureToggle service-accounts not found")
 	}
 	return s, nil
 }

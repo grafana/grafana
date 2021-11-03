@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -22,25 +23,57 @@ var (
 	deletePermissionPath = "/api/serviceaccounts/%s"
 )
 
-func TestService_DeleteServiceAccount(t *testing.T) {
-	routerRegister := routing.NewRouteRegister()
-	svc, acmock := setupTestService(t, routerRegister, false)
-	server := setupServer(t, svc, routerRegister, acmock, false)
+type TestUser struct {
+	Email            string
+	Login            string
+	IsServiceAccount bool
+}
 
-	var getResponse = func() *httptest.ResponseRecorder {
-		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf(deletePermissionPath, "1"), nil)
+var (
+	testOrgID                 = 1
+	testUserServiceAccount    = TestUser{Email: "testuser1@grafana.com", Login: "testuser1", IsServiceAccount: true}
+	testUserNotServiceAccount = TestUser{Email: "testuser2@grafana.com", Login: "testuser2", IsServiceAccount: false}
+)
+
+func setupUserForTests(sqlStore *sqlstore.SQLStore) (user *models.User, err error) {
+	setting.AutoAssignOrg = true
+	setting.AutoAssignOrgId = int(testOrgID)
+	u1, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{
+		Email:            testUserServiceAccount.Email,
+		Login:            testUserServiceAccount.Login,
+		IsServiceAccount: testUserServiceAccount.IsServiceAccount,
+		SkipOrgSetup:     true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return u1, nil
+}
+
+func TestService_DeleteServiceAccount(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+	u, err := setupUserForTests(db)
+	if err != nil {
+		t.Fatalf("unable to setup test accounts for service accounts with err: %s", err)
+	}
+	routerRegister := routing.NewRouteRegister()
+	svc, acmock := setupTestService(t, db, routerRegister, false)
+	server := setupServer(t, svc, routerRegister, acmock)
+
+	var getResponse = func(server *macaron.Macaron) *httptest.ResponseRecorder {
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf(deletePermissionPath, fmt.Sprint(u.Id)), nil)
 		require.NoError(t, err)
 		recorder := httptest.NewRecorder()
 		server.ServeHTTP(recorder, req)
 		return recorder
 	}
-
-	t.Run("Service account is deleted successfully", func(t *testing.T) {
-		require.Equal(t, getResponse().Code, http.StatusOK)
+	t.Run("Service account should be removed", func(t *testing.T) {
+		require.Equal(t, http.StatusForbidden, getResponse(server).Code)
+		// TODO: test serviceaccounts deletion where we enable AC and add scope, action to the accesscontrol
 	})
 }
 
-func setupTestService(t *testing.T, routerRegister routing.RouteRegister, disableAccessControl bool) (*ServiceAccountsService, *accesscontrolmock.Mock) {
+func setupTestService(t *testing.T, sqlstore *sqlstore.SQLStore, routerRegister routing.RouteRegister, disableAccessControl bool) (*ServiceAccountsService, *accesscontrolmock.Mock) {
 	t.Helper()
 	acmock := accesscontrolmock.New()
 	if disableAccessControl {
@@ -48,7 +81,7 @@ func setupTestService(t *testing.T, routerRegister routing.RouteRegister, disabl
 	}
 	svc, err := ProvideServiceAccountsService(
 		&setting.Cfg{FeatureToggles: map[string]bool{"service-accounts": true}},
-		sqlstore.InitTestDB(t),
+		sqlstore,
 		acmock,
 		routerRegister,
 	)
@@ -58,7 +91,7 @@ func setupTestService(t *testing.T, routerRegister routing.RouteRegister, disabl
 	return svc, acmock
 }
 
-func setupServer(t *testing.T, svc *ServiceAccountsService, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock, disableAccessControl bool) *macaron.Macaron {
+func setupServer(t *testing.T, svc *ServiceAccountsService, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock) *macaron.Macaron {
 	a := api.NewServiceAccountsAPI(
 		svc,
 		acmock,

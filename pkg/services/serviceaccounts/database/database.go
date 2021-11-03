@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -24,17 +25,13 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, org
 }
 
 func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceAccountID int64) error {
-	user := models.User{
-		OrgId:            orgID,
-		Id:               serviceAccountID,
-		IsServiceAccount: true,
-	}
-	has, err := sess.Get(&user)
+	user := models.User{}
+	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`, orgID, serviceAccountID, true).Get(&user)
 	if err != nil {
 		return err
 	}
 	if !has {
-		return models.ErrUserNotFound
+		return serviceaccounts.ErrServiceAccountNotFound{OrgID: orgID, ID: serviceAccountID}
 	}
 	for _, sql := range sqlstore.ServiceAccountDeletions() {
 		_, err := sess.Exec(sql, user.Id)
