@@ -23,7 +23,6 @@ type Metric = {
 export type DataProvider = {
   getHistory: () => Promise<string[]>;
   getAllMetricNames: () => Promise<Metric[]>;
-  // these mirror the prometheus endpoints
   getAllLabelNames: () => Promise<string[]>;
   getLabelValues: (labelName: string) => Promise<string[]>;
   getSeries: (selector: string) => Promise<Record<string, string[]>>;
