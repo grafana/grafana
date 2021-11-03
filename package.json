@@ -183,7 +183,7 @@
     "jest": "26.6.3",
     "jest-canvas-mock": "2.3.0",
     "jest-date-mock": "1.0.8",
-    "jest-junit": "^6.4.0",
+    "jest-junit": "13.0.0",
     "jest-matcher-utils": "26.0.0",
     "lerna": "^4.0.0",
     "lint-staged": "10.0.7",
