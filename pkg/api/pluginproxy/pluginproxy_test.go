@@ -164,7 +164,7 @@ func TestPluginProxy(t *testing.T) {
 			Method: "GET",
 		}
 
-		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+		bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetPluginSettingByIdQuery) error {
 			query.Result = &models.PluginSetting{}
 			return nil
 		})
