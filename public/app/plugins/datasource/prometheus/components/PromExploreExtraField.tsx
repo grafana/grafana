@@ -100,7 +100,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
           <InlineFormLabel
             width={6}
             tooltip={
-              'Time units and built in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
+              'Time units and built-in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
             }
           >
             Min step
