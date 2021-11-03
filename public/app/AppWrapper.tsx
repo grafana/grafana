@@ -10,6 +10,7 @@ import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { NavBar } from './core/components/NavBar/NavBar';
+import { NavBarNext } from './core/components/NavBar/NavBarNext';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
@@ -90,6 +91,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
     // @ts-ignore
     const appSeed = `<grafana-app ng-cloak></app-notifications-list></grafana-app>`;
+    const newNavigationEnabled = config.featureToggles.newNavigation;
 
     return (
       <Provider store={store}>
@@ -100,7 +102,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 <GlobalStyles />
                 <div className="grafana-app">
                   <Router history={locationService.getHistory()}>
-                    <NavBar />
+                    {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
                     <main className="main-view">
                       {pageBanners.map((Banner, index) => (
                         <Banner key={index.toString()} />

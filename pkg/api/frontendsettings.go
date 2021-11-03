@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"strconv"
 
@@ -145,7 +146,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
-	enabledPlugins, err := hs.enabledPlugins(c.OrgId)
+	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return nil, err
 	}
@@ -360,10 +361,10 @@ func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (*plugins
 	return nil, false
 }
 
-func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
+func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledPlugins, error) {
 	ep := make(EnabledPlugins)
 
-	pluginSettingMap, err := hs.pluginSettings(orgID)
+	pluginSettingMap, err := hs.pluginSettings(ctx, orgID)
 	if err != nil {
 		return ep, err
 	}
@@ -396,8 +397,8 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 	return ep, nil
 }
 
-func (hs *HTTPServer) pluginSettings(orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
-	pluginSettings, err := hs.SQLStore.GetPluginSettings(orgID)
+func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
+	pluginSettings, err := hs.SQLStore.GetPluginSettings(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}

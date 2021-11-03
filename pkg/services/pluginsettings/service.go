@@ -42,15 +42,15 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 		},
 	}
 
-	s.Bus.AddHandler(s.GetPluginSettingById)
+	s.Bus.AddHandlerCtx(s.GetPluginSettingById)
 	s.Bus.AddHandlerCtx(s.UpdatePluginSetting)
-	s.Bus.AddHandler(s.UpdatePluginSettingVersion)
+	s.Bus.AddHandlerCtx(s.UpdatePluginSettingVersion)
 
 	return s
 }
 
-func (s *Service) GetPluginSettingById(query *models.GetPluginSettingByIdQuery) error {
-	return s.SQLStore.GetPluginSettingById(query)
+func (s *Service) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+	return s.SQLStore.GetPluginSettingById(ctx, query)
 }
 
 func (s *Service) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
@@ -60,11 +60,11 @@ func (s *Service) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePlu
 		return err
 	}
 
-	return s.SQLStore.UpdatePluginSetting(cmd)
+	return s.SQLStore.UpdatePluginSetting(ctx, cmd)
 }
 
-func (s *Service) UpdatePluginSettingVersion(cmd *models.UpdatePluginSettingVersionCmd) error {
-	return s.SQLStore.UpdatePluginSettingVersion(cmd)
+func (s *Service) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
+	return s.SQLStore.UpdatePluginSettingVersion(ctx, cmd)
 }
 
 func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
