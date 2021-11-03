@@ -24,14 +24,14 @@ export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datas
 export function updateQueries(
   newSettings: DataSourceInstanceSettings,
   queries: DataQuery[],
-  extensionID: string, // pass this in because importing it creates a circular dependency
+  expressionDataSourceName: string, // pass this in because importing it creates a circular dependency
   dsSettings?: DataSourceInstanceSettings
 ): DataQuery[] {
   const datasource = getDataSourceRef(newSettings);
 
   if (!newSettings.meta.mixed && dsSettings?.meta.mixed) {
     return queries.map((q) => {
-      if (q.datasource !== extensionID) {
+      if (q.datasource !== expressionDataSourceName) {
         q.datasource = datasource;
       }
       return q;
