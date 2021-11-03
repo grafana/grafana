@@ -25,6 +25,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/util/stacktrace"
 )
 
 type Installer struct {
@@ -509,8 +510,18 @@ func latestSupportedVersion(plugin *Plugin) *Version {
 	return nil
 }
 
-func (i *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) error {
-	var err error
+func (i *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("failed to extract files from archive")
+
+			if rErr, ok := r.(error); ok {
+				stack := stacktrace.Stack(3)
+				i.log.Debugf("Failed to extract files from archive, error: %v, stack: %s", rErr, string(stack))
+			}
+		}
+	}()
+
 	dest, err = filepath.Abs(dest)
 	if err != nil {
 		return err
@@ -589,7 +600,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		}
 	}
 
-	return nil
+	return
 }
 
 func isSymlink(file *zip.File) bool {
