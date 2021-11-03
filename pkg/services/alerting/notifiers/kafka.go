@@ -79,7 +79,7 @@ func NewKafkaNotifier(model *models.AlertNotification, _ alerting.GetDecryptedVa
 	}
 	password := model.Settings.Get("basicAuthPass")
 	if basicAuth && pass == "" {
-		return nil, alerting.ValidationError{Reason: "Couldnot find pass for BasicAuth"}
+		return nil, alerting.ValidationError{Reason: "Could not find pass for BasicAuth"}
 	}
 
 	return &KafkaNotifier{
