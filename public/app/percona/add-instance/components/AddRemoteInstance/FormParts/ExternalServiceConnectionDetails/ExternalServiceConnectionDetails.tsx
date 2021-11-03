@@ -2,15 +2,14 @@ import React, { FC, useCallback, useEffect, useMemo } from 'react';
 import { PasswordInputField, RadioButtonGroupField, TextInputField, validators } from '@percona/platform-core';
 import Validators from 'app/percona/shared/helpers/validators';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
-import { useTheme } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { FormPartProps, MetricsParameters, Schema } from '../FormParts.types';
 import { getStyles } from '../FormParts.styles';
 import { Messages } from '../FormParts.messages';
 import { metricsParametersOptions, schemaOptions } from '../FormParts.constants';
 
 export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
   const formValues = form.getState().values;
   const selectedOption = formValues?.metricsParameters;
   const urlValue = formValues?.url;

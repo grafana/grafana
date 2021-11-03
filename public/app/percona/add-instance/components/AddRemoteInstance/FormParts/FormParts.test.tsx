@@ -8,7 +8,7 @@ import { LabelsFormPart } from './Labels/Labels';
 import { MainDetailsFormPart } from './MainDetails/MainDetails';
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails/ExternalServiceConnectionDetails';
 import { getMount } from 'app/percona/shared/helpers/testUtils';
-import { InstanceTypes } from 'app/percona/add-instance/panel.types';
+import { Databases } from 'app/percona/shared/core';
 
 const form: Partial<FormApi> = {
   change: jest.fn(),
@@ -82,7 +82,7 @@ xdescribe('LabelsFormPart ::', () => {
 
 xdescribe('AdditionalOptionsFormPart ::', () => {
   it('should render correct for PostgreSQL instance', async () => {
-    const type = InstanceTypes.postgresql;
+    const type = Databases.postgresql;
     const remoteInstanceCredentials = {
       isRDS: false,
     };
@@ -109,7 +109,7 @@ xdescribe('AdditionalOptionsFormPart ::', () => {
 
 xdescribe('getAdditionalOptions ::', () => {
   it('should render correct for MongoDB', async () => {
-    const type = InstanceTypes.mongodb;
+    const type = Databases.mongodb;
     const remoteInstanceCredentials = {
       isRDS: false,
     };
@@ -127,7 +127,7 @@ xdescribe('getAdditionalOptions ::', () => {
   });
 
   it('should render correct for MySQL', async () => {
-    const type = InstanceTypes.mysql;
+    const type = Databases.mysql;
     const remoteInstanceCredentials = {
       isRDS: false,
     };
@@ -145,7 +145,7 @@ xdescribe('getAdditionalOptions ::', () => {
   });
 
   it('should render correct for RDS MySQL', async () => {
-    const type = InstanceTypes.mysql;
+    const type = Databases.mysql;
     const remoteInstanceCredentials = {
       isRDS: true,
     };
@@ -165,7 +165,7 @@ xdescribe('getAdditionalOptions ::', () => {
   });
 
   it('should render correct for PostgreSQL', async () => {
-    const type = InstanceTypes.postgresql;
+    const type = Databases.postgresql;
     const remoteInstanceCredentials = {
       isRDS: true,
     };

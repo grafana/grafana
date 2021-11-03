@@ -1,42 +1,43 @@
 import { Messages as AddInstanceMessages } from './components/AddInstance/AddInstance.messages';
-import { InstanceTypes } from './panel.types';
+import { InstanceTypesExtra } from './panel.types';
 import { PageModel } from '../../core/components/Breadcrumb';
+import { Databases } from '../../percona/shared/core';
 
 export const PAGE_TABS = [
   {
     title: AddInstanceMessages.titles.rds,
-    id: InstanceTypes.rds,
-    path: `add-instance/${InstanceTypes.rds}`,
+    id: InstanceTypesExtra.rds,
+    path: `add-instance/${InstanceTypesExtra.rds}`,
   },
   {
     title: AddInstanceMessages.titles.postgresql,
-    id: InstanceTypes.postgresql,
-    path: `add-instance/${InstanceTypes.postgresql}`,
+    id: Databases.postgresql,
+    path: `add-instance/${Databases.postgresql}`,
   },
   {
     title: AddInstanceMessages.titles.mysql,
-    id: InstanceTypes.mysql,
-    path: `add-instance/${InstanceTypes.mysql}`,
+    id: Databases.mysql,
+    path: `add-instance/${Databases.mysql}`,
   },
   {
     title: AddInstanceMessages.titles.mongodb,
-    id: InstanceTypes.mongodb,
-    path: `add-instance/${InstanceTypes.mongodb}`,
+    id: Databases.mongodb,
+    path: `add-instance/${Databases.mongodb}`,
   },
   {
     title: AddInstanceMessages.titles.proxysql,
-    id: InstanceTypes.proxysql,
-    path: `add-instance/${InstanceTypes.proxysql}`,
+    id: Databases.proxysql,
+    path: `add-instance/${Databases.proxysql}`,
   },
   {
     title: AddInstanceMessages.titles.external,
-    id: InstanceTypes.external,
-    path: `add-instance/${InstanceTypes.external}`,
+    id: InstanceTypesExtra.external,
+    path: `add-instance/${InstanceTypesExtra.external}`,
   },
   {
     title: AddInstanceMessages.titles.haproxy,
-    id: InstanceTypes.haproxy,
-    path: `add-instance/${InstanceTypes.haproxy}`,
+    id: Databases.haproxy,
+    path: `add-instance/${Databases.haproxy}`,
   },
 ];
 

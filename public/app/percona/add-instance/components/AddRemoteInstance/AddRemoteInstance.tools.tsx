@@ -1,8 +1,9 @@
 import { InstanceData } from './AddRemoteInstance.types';
-import { INSTANCE_TYPES_LABELS, InstanceTypes } from '../../panel.types';
+import { INSTANCE_TYPES_LABELS, InstanceAvailableType } from '../../panel.types';
 import { DEFAULT_PORTS } from './AddRemoteInstance.constants';
 import { logger } from '@percona/platform-core';
 import { MetricsParameters, Schema } from './FormParts/FormParts.types';
+import { Databases } from 'app/percona/shared/core';
 
 const getAzureCredentials = (credentials: any, instanceType: string) => {
   const instance: InstanceData = {
@@ -25,23 +26,23 @@ const getAzureCredentials = (credentials: any, instanceType: string) => {
   };
 
   switch (instanceType) {
-    case InstanceTypes.postgresql:
-      instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.postgresql];
+    case Databases.postgresql:
+      instance.instanceType = INSTANCE_TYPES_LABELS[Databases.postgresql];
       instance.discoverName = 'DISCOVER_AZURE_DATABASE_TYPE_POSTGRESQL';
       instance.remoteInstanceCredentials.port =
-        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[InstanceTypes.postgresql];
+        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.postgresql];
       break;
-    case InstanceTypes.mysql:
-      instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.mysql];
+    case Databases.mysql:
+      instance.instanceType = INSTANCE_TYPES_LABELS[Databases.mysql];
       instance.discoverName = 'DISCOVER_AZURE_DATABASE_TYPE_MYSQL';
       instance.remoteInstanceCredentials.port =
-        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[InstanceTypes.mysql];
+        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.mysql];
       break;
-    case InstanceTypes.mariadb:
-      instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.mariadb];
+    case Databases.mariadb:
+      instance.instanceType = INSTANCE_TYPES_LABELS[Databases.mariadb];
       instance.discoverName = 'DISCOVER_AZURE_DATABASE_TYPE_MARIADB';
       instance.remoteInstanceCredentials.port =
-        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[InstanceTypes.mysql];
+        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.mysql];
       break;
     default:
       logger.error('Not implemented');
@@ -50,7 +51,7 @@ const getAzureCredentials = (credentials: any, instanceType: string) => {
   return instance;
 };
 
-const getRDSCredentials = (credentials: any, instanceType: InstanceTypes): InstanceData => {
+const getRDSCredentials = (credentials: any, instanceType: InstanceAvailableType): InstanceData => {
   const instance: InstanceData = {
     remoteInstanceCredentials: {
       serviceName: !credentials.isRDS ? credentials.address : credentials.instance_id,
@@ -66,32 +67,32 @@ const getRDSCredentials = (credentials: any, instanceType: InstanceTypes): Insta
   };
 
   switch (instanceType) {
-    case InstanceTypes.postgresql:
-      instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.postgresql];
+    case Databases.postgresql:
+      instance.instanceType = INSTANCE_TYPES_LABELS[Databases.postgresql];
       instance.discoverName = 'DISCOVER_RDS_POSTGRESQL';
       instance.remoteInstanceCredentials.port =
-        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[InstanceTypes.postgresql];
+        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.postgresql];
       break;
-    case InstanceTypes.mysql:
-      instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.mysql];
+    case Databases.mysql:
+      instance.instanceType = INSTANCE_TYPES_LABELS[Databases.mysql];
       instance.discoverName = 'DISCOVER_RDS_MYSQL';
       instance.remoteInstanceCredentials.port =
-        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[InstanceTypes.mysql];
+        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.mysql];
       break;
-    case InstanceTypes.mongodb:
-      instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.mongodb];
+    case Databases.mongodb:
+      instance.instanceType = INSTANCE_TYPES_LABELS[Databases.mongodb];
       instance.remoteInstanceCredentials.port =
-        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[InstanceTypes.mongodb];
+        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.mongodb];
       break;
-    case InstanceTypes.proxysql:
-      instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.proxysql];
+    case Databases.proxysql:
+      instance.instanceType = INSTANCE_TYPES_LABELS[Databases.proxysql];
       instance.remoteInstanceCredentials.port =
-        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[InstanceTypes.proxysql];
+        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.proxysql];
       break;
-    case InstanceTypes.haproxy:
-      instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.haproxy];
+    case Databases.haproxy:
+      instance.instanceType = INSTANCE_TYPES_LABELS[Databases.haproxy];
       instance.remoteInstanceCredentials.port =
-        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[InstanceTypes.haproxy];
+        instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.haproxy];
       break;
     default:
       logger.error('Not implemented');
@@ -100,7 +101,7 @@ const getRDSCredentials = (credentials: any, instanceType: InstanceTypes): Insta
   return instance;
 };
 
-export const getInstanceData = (instanceType: InstanceTypes, credentials: any): InstanceData => {
+export const getInstanceData = (instanceType: InstanceAvailableType, credentials: any): InstanceData => {
   const extractCredentials = (credentials?: any): InstanceData => {
     if (credentials?.isRDS) {
       return getRDSCredentials(credentials, instanceType);
@@ -116,25 +117,25 @@ export const getInstanceData = (instanceType: InstanceTypes, credentials: any): 
     };
 
     switch (instanceType) {
-      case InstanceTypes.postgresql:
-        instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.postgresql];
-        instance.remoteInstanceCredentials.port = DEFAULT_PORTS[InstanceTypes.postgresql];
+      case Databases.postgresql:
+        instance.instanceType = INSTANCE_TYPES_LABELS[Databases.postgresql];
+        instance.remoteInstanceCredentials.port = DEFAULT_PORTS[Databases.postgresql];
         break;
-      case InstanceTypes.mysql:
-        instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.mysql];
-        instance.remoteInstanceCredentials.port = DEFAULT_PORTS[InstanceTypes.mysql];
+      case Databases.mysql:
+        instance.instanceType = INSTANCE_TYPES_LABELS[Databases.mysql];
+        instance.remoteInstanceCredentials.port = DEFAULT_PORTS[Databases.mysql];
         break;
-      case InstanceTypes.mongodb:
-        instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.mongodb];
-        instance.remoteInstanceCredentials.port = DEFAULT_PORTS[InstanceTypes.mongodb];
+      case Databases.mongodb:
+        instance.instanceType = INSTANCE_TYPES_LABELS[Databases.mongodb];
+        instance.remoteInstanceCredentials.port = DEFAULT_PORTS[Databases.mongodb];
         break;
-      case InstanceTypes.proxysql:
-        instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.proxysql];
-        instance.remoteInstanceCredentials.port = DEFAULT_PORTS[InstanceTypes.proxysql];
+      case Databases.proxysql:
+        instance.instanceType = INSTANCE_TYPES_LABELS[Databases.proxysql];
+        instance.remoteInstanceCredentials.port = DEFAULT_PORTS[Databases.proxysql];
         break;
-      case InstanceTypes.haproxy:
-        instance.instanceType = INSTANCE_TYPES_LABELS[InstanceTypes.haproxy];
-        instance.remoteInstanceCredentials.port = DEFAULT_PORTS[InstanceTypes.haproxy];
+      case Databases.haproxy:
+        instance.instanceType = INSTANCE_TYPES_LABELS[Databases.haproxy];
+        instance.remoteInstanceCredentials.port = DEFAULT_PORTS[Databases.haproxy];
         break;
       default:
         logger.error('Not implemented');

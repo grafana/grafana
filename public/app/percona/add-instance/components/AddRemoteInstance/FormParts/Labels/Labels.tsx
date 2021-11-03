@@ -1,14 +1,13 @@
 import React, { FC, useMemo } from 'react';
 import { TextareaInputField, TextInputField } from '@percona/platform-core';
 import Validators from 'app/percona/shared/helpers/validators';
-import { useTheme } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import { getStyles } from '../FormParts.styles';
 import { Messages } from '../FormParts.messages';
 
 export const LabelsFormPart: FC = () => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
   const customLabelsValidators = useMemo(() => [Validators.validateKeyValue], []);
 
   return (

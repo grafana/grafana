@@ -98,7 +98,6 @@ export const Advanced: FC<AdvancedProps> = ({
     frequentInterval,
   };
   const [loading, setLoading] = useState(false);
-  // @ts-ignore
   const applyChanges = (values: AdvancedFormProps, form: FormApi<AdvancedFormProps>) => {
     const {
       retention,

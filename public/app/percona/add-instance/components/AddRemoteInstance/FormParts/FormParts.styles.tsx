@@ -1,7 +1,7 @@
-import { stylesFactory } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 
-export const getStyles = stylesFactory((theme) => ({
+export const getStyles = ({ spacing }: GrafanaTheme) => ({
   groupWrapper: css`
     width: 50%;
   `,
@@ -18,9 +18,9 @@ export const getStyles = stylesFactory((theme) => ({
     font-weight: 500;
     color: rgb(159, 167, 179);
     svg {
-      margin-left: ${theme.spacing.xs};
+      margin-left: ${spacing.xs};
     }
-    margin-bottom: ${theme.spacing.xs};
+    margin-bottom: ${spacing.xs};
   `,
   urlFieldGroupWrapper: css`
     display: flex;
@@ -31,4 +31,4 @@ export const getStyles = stylesFactory((theme) => ({
     width: 100%;
     margin-right: 5px;
   `,
-}));
+});

@@ -1,3 +1,5 @@
+import { InstanceAvailable } from '../../panel.types';
+
 export interface SelectInstanceProps {
   type: string;
   title: string;
@@ -5,5 +7,5 @@ export interface SelectInstanceProps {
 }
 
 export interface AddInstanceProps {
-  onSelectInstanceType: (arg: { type: string }) => void;
+  onSelectInstanceType: (arg: InstanceAvailable) => void;
 }
