@@ -93,7 +93,7 @@ const RulesFilter = () => {
           key={dataSourceKey}
           alerting
           noDefault
-          placeholder="Any data source"
+          placeholder="All data sources"
           current={dataSource}
           onChange={handleDataSourceChange}
           onClear={clearDataSource}
