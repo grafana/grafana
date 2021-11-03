@@ -22,9 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	backendmanager "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -56,6 +55,7 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -92,12 +92,19 @@ var wireBasicSet = wire.NewSet(
 	hooks.ProvideService,
 	kvstore.ProvideService,
 	localcache.ProvideService,
+	updatechecker.ProvideService,
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	manager.ProvideService,
-	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
-	backendmanager.ProvideService,
-	wire.Bind(new(backendplugin.Manager), new(*backendmanager.Manager)),
+	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.CoreBackendRegistrar), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.PluginDashboardManager), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
+	loader.ProvideService,
+	wire.Bind(new(plugins.Loader), new(*loader.Loader)),
+	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	cloudwatch.ProvideService,
 	cloudwatch.ProvideLogsService,
 	cloudmonitoring.ProvideService,

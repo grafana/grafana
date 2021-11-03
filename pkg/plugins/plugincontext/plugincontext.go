@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,13 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginManager plugins.Manager,
+func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginStore plugins.Store,
 	dataSourceCache datasources.CacheService, encryptionService encryption.Service,
 	pluginSettingsService *pluginsettings.Service) *Provider {
 	return &Provider{
 		Bus:                   bus,
 		CacheService:          cacheService,
-		PluginManager:         pluginManager,
+		pluginStore:           pluginStore,
 		DataSourceCache:       dataSourceCache,
 		EncryptionService:     encryptionService,
 		PluginSettingsService: pluginSettingsService,
@@ -37,7 +38,7 @@ func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginMa
 type Provider struct {
 	Bus                   bus.Bus
 	CacheService          *localcache.CacheService
-	PluginManager         plugins.Manager
+	pluginStore           plugins.Store
 	DataSourceCache       datasources.CacheService
 	EncryptionService     encryption.Service
 	PluginSettingsService *pluginsettings.Service
@@ -47,9 +48,9 @@ type Provider struct {
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
-func (p *Provider) Get(pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
+func (p *Provider) Get(ctx context.Context, pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
 	pc := backend.PluginContext{}
-	plugin := p.PluginManager.GetPlugin(pluginID)
+	plugin := p.pluginStore.Plugin(pluginID)
 	if plugin == nil {
 		return pc, false, nil
 	}
@@ -58,7 +59,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 	decryptedSecureJSONData := map[string]string{}
 	var updated time.Time
 
-	ps, err := p.getCachedPluginSettings(pluginID, user)
+	ps, err := p.getCachedPluginSettings(ctx, pluginID, user)
 	if err != nil {
 		// models.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
@@ -76,7 +77,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 
 	pCtx := backend.PluginContext{
 		OrgID:    user.OrgId,
-		PluginID: plugin.Id,
+		PluginID: plugin.ID,
 		User:     adapters.BackendUserFromSignedInUser(user),
 		AppInstanceSettings: &backend.AppInstanceSettings{
 			JSONData:                jsonData,
@@ -103,7 +104,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 const pluginSettingsCacheTTL = 5 * time.Second
 const pluginSettingsCachePrefix = "plugin-setting-"
 
-func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedInUser) (*models.PluginSetting, error) {
+func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string, user *models.SignedInUser) (*models.PluginSetting, error) {
 	cacheKey := pluginSettingsCachePrefix + pluginID
 
 	if cached, found := p.CacheService.Get(cacheKey); found {
@@ -114,7 +115,7 @@ func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedI
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: user.OrgId}
-	if err := p.Bus.Dispatch(&query); err != nil {
+	if err := p.Bus.DispatchCtx(ctx, &query); err != nil {
 		return nil, err
 	}
 

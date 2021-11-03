@@ -33,7 +33,7 @@ type Installer struct {
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
 	grafanaVersion      string
-	log                 plugins.PluginInstallerLogger
+	log                 Logger
 }
 
 const (
@@ -80,7 +80,7 @@ func (e ErrVersionNotFound) Error() string {
 	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
 }
 
-func New(skipTLSVerify bool, grafanaVersion string, logger plugins.PluginInstallerLogger) *Installer {
+func New(skipTLSVerify bool, grafanaVersion string, logger Logger) plugins.Installer {
 	return &Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
@@ -410,7 +410,7 @@ func normalizeVersion(version string) string {
 	return normalized
 }
 
-func (i *Installer) GetUpdateInfo(pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
+func (i *Installer) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
 	plugin, err := i.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
 	if err != nil {
 		return plugins.UpdateInfo{}, err

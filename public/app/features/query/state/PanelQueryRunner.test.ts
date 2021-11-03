@@ -108,6 +108,7 @@ function describeQueryRunnerScenario(
 
       const datasource: any = {
         name: 'TestDB',
+        uid: 'TestDB-uid',
         interval: ctx.dsInterval,
         query: (options: grafanaData.DataQueryRequest) => {
           ctx.queryCalledWith = options;
@@ -156,8 +157,8 @@ describe('PanelQueryRunner', () => {
       expect(ctx.queryCalledWith?.requestId).toBe('Q100');
     });
 
-    it('should set datasource name on request', async () => {
-      expect(ctx.queryCalledWith?.targets[0].datasource).toBe('TestDB');
+    it('should set datasource uid on request', async () => {
+      expect(ctx.queryCalledWith?.targets[0].datasource?.uid).toBe('TestDB-uid');
     });
 
     it('should pass scopedVars to datasource with interval props', async () => {

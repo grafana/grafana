@@ -36,7 +36,7 @@ interface LogsContainerProps extends PropsFromRedux {
   onStopScanning: () => void;
 }
 
-export class LogsContainer extends PureComponent<LogsContainerProps> {
+class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
