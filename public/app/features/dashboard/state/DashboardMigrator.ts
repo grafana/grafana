@@ -705,25 +705,19 @@ export class DashboardMigrator {
         if (variable.type !== 'query') {
           continue;
         }
-        if (variable.datasource != null) {
-          variable.datasource = migrateDatasourceNameToRef(variable.datasource);
-        }
+        variable.datasource = migrateDatasourceNameToRef(variable.datasource);
       }
 
       // Mutate panel models
       for (const panel of this.dashboard.panels) {
-        if (panel.datasource != null) {
-          panel.datasource = migrateDatasourceNameToRef(panel.datasource);
-        }
+        panel.datasource = migrateDatasourceNameToRef(panel.datasource);
 
         if (!panel.targets) {
           panel.targets = [];
         }
 
         for (const target of panel.targets) {
-          if (target.datasource != null) {
-            target.datasource = migrateDatasourceNameToRef(target.datasource);
-          }
+          target.datasource = migrateDatasourceNameToRef(target.datasource);
         }
       }
     }
@@ -1042,7 +1036,7 @@ function migrateSinglestat(panel: PanelModel) {
   return panel;
 }
 
-export function migrateDatasourceNameToRef(nameOrRef: string | DataSourceRef | null): DataSourceRef | null {
+export function migrateDatasourceNameToRef(nameOrRef?: string | DataSourceRef | null): DataSourceRef | null {
   if (nameOrRef == null || nameOrRef === 'default') {
     return null;
   }
