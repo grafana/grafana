@@ -8,8 +8,10 @@ import (
 //
 // Fetch settings.
 //
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `settings:read` and scopes: `settings:*`, `settings:auth.saml:` and `settings:auth.saml:enabled` (property level).
+//
+// Security:
+// - basic:
 //
 // Responses:
 // 200: getSettingsResponse
@@ -33,7 +35,8 @@ import (
 //
 // Pause/unpause all (legacy) alerts.
 //
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
+// Security:
+// - basic:
 //
 // Responses:
 // 200: pauseAlertsResponse

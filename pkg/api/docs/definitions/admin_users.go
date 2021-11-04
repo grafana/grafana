@@ -10,10 +10,12 @@ import (
 //
 // Create new user.
 //
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:create`.
-//
 // Note that OrgId is an optional parameter that can be used to assign a new user to a different organization when `auto_assign_org` is set to `true`.
+//
+// Security:
+// - basic:
+//
 // Responses:
 // 200: createUserResponse
 // 400: badRequestError
@@ -26,8 +28,10 @@ import (
 //
 // Set password for user.
 //
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global:users:*`.
+//
+// Security:
+// - basic:
 //
 // Responses:
 // 200: okResponse
@@ -54,8 +58,10 @@ import (
 //
 // Delete global User.
 //
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global:users:*`.
+//
+// Security:
+// - basic:
 //
 // Responses:
 // 200: okResponse
@@ -68,8 +74,10 @@ import (
 //
 // Disable user.
 //
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global:users:1` (userIDScope).
+//
+// Security:
+// - basic:
 //
 // Responses:
 // 200: okResponse
@@ -82,8 +90,10 @@ import (
 //
 // Enable user.
 //
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global:users:1` (userIDScope).
+//
+// Security:
+// - basic:
 //
 // Responses:
 // 200: okResponse
@@ -110,8 +120,10 @@ import (
 //
 // Update user quota.
 //
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global:users:1` (userIDScope).
+//
+// Security:
+// - basic:
 //
 // Responses:
 // 200: okResponse
@@ -123,8 +135,10 @@ import (
 // swagger:route GET /admin/users/{user_id}/auth-tokens admin_users getAuthTokens
 //
 // Return a list of all auth tokens (devices) that the user currently have logged in from.
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global:users:*`.
+//
+// Security:
+// - basic:
 //
 // Responses:
 // 200: getAuthTokensResponse
@@ -137,8 +151,10 @@ import (
 // Revoke auth token for user.
 //
 // Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global:users:*`.
+//
+// Security:
+// - basic:
 //
 // Responses:
 // 200: okResponse
@@ -151,8 +167,10 @@ import (
 // swagger:route POST /admin/users/{user_id}/logout admin_users logoutUser
 //
 // Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity.
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global:users:*`.
+//
+// Security:
+// - basic:
 //
 // Responses:
 // 200: okResponse

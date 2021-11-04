@@ -19,8 +19,8 @@
       "email": "hello@grafana.com"
     },
     "license": {
-      "name": "Apache 2.0",
-      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+      "name": "GNU Affero General Public License v3.0",
+      "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
     },
     "version": "0.0.1"
   },
@@ -29,7 +29,12 @@
   "paths": {
     "/admin/ldap/reload": {
       "post": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.",
         "tags": [
           "admin_ldap"
         ],
@@ -53,7 +58,12 @@
     },
     "/admin/ldap/status": {
       "get": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.status:read`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.status:read`.",
         "tags": [
           "admin_ldap"
         ],
@@ -77,7 +87,12 @@
     },
     "/admin/ldap/sync/{user_id}": {
       "post": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:sync`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:sync`.",
         "tags": [
           "admin_ldap"
         ],
@@ -111,7 +126,12 @@
     },
     "/admin/ldap/{user_name}": {
       "get": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:read`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:read`.",
         "tags": [
           "admin_ldap"
         ],
@@ -144,7 +164,11 @@
     },
     "/admin/pause-all-alerts": {
       "post": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
         "tags": [
           "admin"
         ],
@@ -179,7 +203,12 @@
     },
     "/admin/provisioning/accesscontrol/reload": {
       "post": {
-        "description": "Reloads the provisioning config files for access control again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:accesscontrol`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "Reloads the provisioning config files for access control again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:accesscontrol`.",
         "tags": [
           "admin_provisioning"
         ],
@@ -203,7 +232,12 @@
     },
     "/admin/provisioning/dashboards/reload": {
       "post": {
-        "description": "Reloads the provisioning config files for dashboards again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:dashboards`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "Reloads the provisioning config files for dashboards again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:dashboards`.",
         "tags": [
           "admin_provisioning"
         ],
@@ -227,7 +261,12 @@
     },
     "/admin/provisioning/datasources/reload": {
       "post": {
-        "description": "Reloads the provisioning config files for datasources again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:datasources`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "Reloads the provisioning config files for datasources again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:datasources`.",
         "tags": [
           "admin_provisioning"
         ],
@@ -251,7 +290,12 @@
     },
     "/admin/provisioning/notifications/reload": {
       "post": {
-        "description": "Reloads the provisioning config files for legacy alert notifiers again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:notifications`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "Reloads the provisioning config files for legacy alert notifiers again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:notifications`.",
         "tags": [
           "admin_provisioning"
         ],
@@ -275,7 +319,12 @@
     },
     "/admin/provisioning/plugins/reload": {
       "post": {
-        "description": "Reloads the provisioning config files for plugins again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:plugin`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "Reloads the provisioning config files for plugins again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:plugin`.",
         "tags": [
           "admin_provisioning"
         ],
@@ -299,7 +348,12 @@
     },
     "/admin/settings": {
       "get": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `settings:read` and scopes: `settings:*`, `settings:auth.saml:` and `settings:auth.saml:enabled` (property level).",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `settings:read` and scopes: `settings:*`, `settings:auth.saml:` and `settings:auth.saml:enabled` (property level).",
         "tags": [
           "admin"
         ],
@@ -344,7 +398,12 @@
     },
     "/admin/users": {
       "post": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:create`.\n\nNote that OrgId is an optional parameter that can be used to assign a new user to a different organization when `auto_assign_org` is set to `true`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:create`.\nNote that OrgId is an optional parameter that can be used to assign a new user to a different organization when `auto_assign_org` is set to `true`.",
         "tags": [
           "admin_users"
         ],
@@ -385,7 +444,12 @@
     },
     "/admin/users/{user_id}": {
       "delete": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global:users:*`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global:users:*`.",
         "tags": [
           "admin_users"
         ],
@@ -422,7 +486,12 @@
     },
     "/admin/users/{user_id}/auth-tokens": {
       "get": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global:users:*`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global:users:*`.",
         "tags": [
           "admin_users"
         ],
@@ -456,7 +525,12 @@
     },
     "/admin/users/{user_id}/disable": {
       "post": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global:users:1` (userIDScope).",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global:users:1` (userIDScope).",
         "tags": [
           "admin_users"
         ],
@@ -493,7 +567,12 @@
     },
     "/admin/users/{user_id}/enable": {
       "post": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global:users:1` (userIDScope).",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global:users:1` (userIDScope).",
         "tags": [
           "admin_users"
         ],
@@ -530,7 +609,12 @@
     },
     "/admin/users/{user_id}/logout": {
       "post": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global:users:*`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global:users:*`.",
         "tags": [
           "admin_users"
         ],
@@ -570,7 +654,12 @@
     },
     "/admin/users/{user_id}/password": {
       "put": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global:users:*`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global:users:*`.",
         "tags": [
           "admin_users"
         ],
@@ -699,7 +788,12 @@
     },
     "/admin/users/{user_id}/quotas/{quota_target}": {
       "put": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global:users:1` (userIDScope).",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global:users:1` (userIDScope).",
         "tags": [
           "admin_users"
         ],
@@ -752,7 +846,12 @@
     },
     "/admin/users/{user_id}/revoke-auth-token": {
       "post": {
-        "description": "Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.\nOnly works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global:users:*`.",
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global:users:*`.",
         "tags": [
           "admin_users"
         ],
