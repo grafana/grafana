@@ -19,7 +19,7 @@ var (
 		Version:     2,
 		Name:        datasourcesQuerier,
 		DisplayName: "Data sources querier",
-		Description: "Query data sources using the Explore feature in Grafana. Data source permissions still apply to users with this role, so they will only be able to query datasources for which they have query permissions.",
+		Description: "Query data sources using the Explore feature in Grafana. Users will only be able to query datasources for which they also have data source query permissions.",
 		Permissions: []Permission{
 			{
 				Action: ActionDatasourcesExplore,
