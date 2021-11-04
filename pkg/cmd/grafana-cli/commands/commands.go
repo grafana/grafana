@@ -172,6 +172,11 @@ var adminCommands = []*cli.Command{
 				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
 				Action: runDbCommand(datamigrations.EncryptDatasourcePasswords),
 			},
+			{
+				Name:   "migrate-secrets",
+				Usage:  "Migrates secrets from simple symmetric encryption to envelope encryption. Return ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(datamigrations.MigrateSecrets),
+			},
 		},
 	},
 }

@@ -3,7 +3,7 @@ package secrets
 import (
 	"context"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type Service interface {
@@ -18,7 +18,7 @@ type Store interface {
 	GetDataKey(ctx context.Context, name string) (*DataKey, error)
 	GetAllDataKeys(ctx context.Context) ([]*DataKey, error)
 	CreateDataKey(ctx context.Context, dataKey DataKey) error
-	CreateDataKeyWithDBSession(ctx context.Context, dataKey DataKey, sess *xorm.Session) error
+	CreateDataKeyWithDBSession(ctx context.Context, dataKey DataKey, sess *sqlstore.DBSession) error
 	DeleteDataKey(ctx context.Context, name string) error
 }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	grafana "github.com/grafana/grafana/pkg/services/secrets/defaultprovider"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -52,13 +53,17 @@ type dataKeyCacheItem struct {
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
+	return s.EncryptWithDBSession(ctx, payload, opt, nil)
+}
+
+func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *sqlstore.DBSession) ([]byte, error) {
 	scope := opt()
 	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.defaultProvider)
 
 	dataKey, err := s.dataKey(ctx, keyName)
 	if err != nil {
 		if errors.Is(err, secrets.ErrDataKeyNotFound) {
-			dataKey, err = s.newDataKey(ctx, keyName, scope)
+			dataKey, err = s.newDataKey(ctx, keyName, scope, sess)
 			if err != nil {
 				return nil, err
 			}
@@ -166,7 +171,7 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 // newDataKey creates a new random DEK, caches it and returns its value
-func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string) ([]byte, error) {
+func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string, sess *sqlstore.DBSession) ([]byte, error) {
 	// 1. Create new DEK
 	dataKey, err := newRandomDataKey()
 	if err != nil {
@@ -184,13 +189,20 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 3. Store its encrypted value in db
-	err = s.store.CreateDataKey(ctx, secrets.DataKey{
+	dek := secrets.DataKey{
 		Active:        true, // TODO: right now we never mark a key as deactivated
 		Name:          name,
 		Provider:      s.defaultProvider,
 		EncryptedData: encrypted,
 		Scope:         scope,
-	})
+	}
+
+	if sess == nil {
+		err = s.store.CreateDataKey(ctx, dek)
+	} else {
+		err = s.store.CreateDataKeyWithDBSession(ctx, dek, sess)
+	}
+
 	if err != nil {
 		return nil, err
 	}
