@@ -30,7 +30,7 @@ export const ExpressionDatasourceRef = Object.freeze({
 /**
  * @internal
  */
-export function isExpressionReference(ref?: DataSourceRef | string): boolean {
+export function isExpressionReference(ref?: DataSourceRef | string | null): boolean {
   if (!ref) {
     return false;
   }

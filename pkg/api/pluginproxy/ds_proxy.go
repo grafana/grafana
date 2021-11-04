@@ -251,7 +251,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	secureJsonData, err := proxy.dataSourcesService.EncryptionService.DecryptJsonData(req.Context(), proxy.ds.SecureJsonData, setting.SecretKey)
+	secureJsonData, err := proxy.dataSourcesService.SecretsService.DecryptJsonData(req.Context(), proxy.ds.SecureJsonData)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return

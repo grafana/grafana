@@ -34,7 +34,7 @@ type rawNode struct {
 }
 
 func (rn *rawNode) IsExpressionQuery() bool {
-	if rn.DatasourceUID == DatasourceUID || rn.DatasourceUID == OldDatasourceUID {
+	if IsDataSource(rn.DatasourceUID) {
 		return true
 	}
 	if v, ok := rn.Query["datasourceId"]; ok {

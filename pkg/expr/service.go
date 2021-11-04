@@ -28,6 +28,7 @@ const DatasourceID = -100
 // should be used instead and should be set to "__expr__".
 const OldDatasourceUID = "-100"
 
+// IsDataSource checks if the uid points to an expression query
 func IsDataSource(uid string) bool {
 	return uid == DatasourceUID || uid == OldDatasourceUID
 }
