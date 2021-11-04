@@ -40,7 +40,7 @@ export const UpdateDBClusterModal: FC<UpdateDBClusterModalProps> = ({
   return (
     <div className={styles.modalWrapper}>
       <Modal title={title} isVisible={isVisible} onClose={onClose}>
-        <h4 data-qa="update-dbcluster-message" className={styles.updateModalContent}>
+        <h4 data-testid="update-dbcluster-message" className={styles.updateModalContent}>
           {buildUpdateDatabaseMessage(
             databaseType,
             <span className={styles.highlight}>{formatDBClusterVersionWithBuild(installedImage)}</span>,
@@ -49,10 +49,10 @@ export const UpdateDBClusterModal: FC<UpdateDBClusterModalProps> = ({
           )}
         </h4>
         <HorizontalGroup justify="space-between" spacing="md">
-          <Button variant="secondary" size="md" onClick={onClose} data-qa="cancel-update-dbcluster-button">
+          <Button variant="secondary" size="md" onClick={onClose} data-testid="cancel-update-dbcluster-button">
             {cancel}
           </Button>
-          <Button size="md" onClick={update} data-qa="confirm-update-dbcluster-button">
+          <Button size="md" onClick={update} data-testid="confirm-update-dbcluster-button">
             {confirm}
           </Button>
         </HorizontalGroup>

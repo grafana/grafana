@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 
@@ -21,7 +21,7 @@ describe('UpdateDBClusterModal::', () => {
     );
     const message = 'MySQL 5.6 to version 8.0 in dbcluster1';
 
-    expect(container.querySelector(dataQa('update-dbcluster-message'))?.textContent).toContain(message);
+    expect(container.querySelector(dataTestId('update-dbcluster-message'))?.textContent).toContain(message);
   });
 
   it('should call onUpdateFinished after update', async () => {
@@ -36,7 +36,7 @@ describe('UpdateDBClusterModal::', () => {
       />
     );
 
-    const button = container.querySelector(dataQa('confirm-update-dbcluster-button'));
+    const button = container.querySelector(dataTestId('confirm-update-dbcluster-button'));
 
     fireEvent.click(button!);
 
