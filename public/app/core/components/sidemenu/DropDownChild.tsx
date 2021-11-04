@@ -48,7 +48,7 @@ const DropDownChild: FC<Props> = (props) => {
 
   const renderChildren = !!children.length;
   return (
-    <li className={cx(listItemClassName, linkClass)}>
+    <li className={cx(listItemClassName, linkClass)} data-testid={`sidemenu-item-${child.id}`}>
       <a href={child.url || '#'} onMouseDown={onLinkMouseDown}>
         {child.icon && <Icon name={child.icon as IconName} className={iconClassName} />}
         {child.text}

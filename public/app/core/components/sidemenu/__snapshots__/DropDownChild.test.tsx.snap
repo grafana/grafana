@@ -3,6 +3,7 @@
 exports[`Render should render component 1`] = `
 <li
   className="divider css-1djiy5s"
+  data-testid="sidemenu-item-undefined"
 >
   <a
     href="#"
@@ -22,6 +23,7 @@ exports[`Render should render component 1`] = `
 exports[`Render should render icon if exists 1`] = `
 <li
   className="css-1djiy5s"
+  data-testid="sidemenu-item-undefined"
 >
   <a
     href="#"
@@ -45,6 +47,7 @@ exports[`Render should render icon if exists 1`] = `
 exports[`Render should render nested submenu items 1`] = `
 <li
   className="css-1djiy5s"
+  data-testid="sidemenu-item-undefined"
 >
   <a
     href="#"

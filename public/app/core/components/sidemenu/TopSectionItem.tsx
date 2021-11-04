@@ -10,7 +10,7 @@ export interface Props {
 
 const TopSectionItem: FC<Props> = ({ link, onClick }) => {
   return (
-    <div className="sidemenu-item dropdown">
+    <div className="sidemenu-item dropdown" data-testid={`sidemenu-item-${link.id}`}>
       <a className="sidemenu-link" href={link.url} target={link.target} onClick={onClick}>
         <span className="icon-circle sidemenu-icon">
           {link.icon && <Icon name={link.icon as any} size="xl" />}

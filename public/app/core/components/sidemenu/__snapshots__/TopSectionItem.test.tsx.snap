@@ -12,6 +12,7 @@ exports[`Render should render component 1`] = `
 >
   <div
     className="sidemenu-item dropdown"
+    data-testid="sidemenu-item-undefined"
   >
     <a
       className="sidemenu-link"
@@ -64,6 +65,7 @@ exports[`Render should render component 1`] = `
       >
         <li
           className="side-menu-header"
+          data-testid="sidemenu-header-undefined"
         >
           <a
             className="side-menu-header-link"

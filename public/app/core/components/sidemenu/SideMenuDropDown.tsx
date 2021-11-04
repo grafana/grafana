@@ -16,7 +16,7 @@ const SideMenuDropDown: FC<Props> = (props) => {
   }
   return (
     <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">
-      <li className="side-menu-header">
+      <li className="side-menu-header" data-testid={`sidemenu-header-${link.id}`}>
         <a className="side-menu-header-link" href={link.url} onClick={onHeaderClick}>
           <span className="sidemenu-item-text">{link.text}</span>
         </a>

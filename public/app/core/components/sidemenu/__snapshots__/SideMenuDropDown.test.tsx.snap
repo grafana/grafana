@@ -7,6 +7,7 @@ exports[`Render should not render hideFromMenu children 1`] = `
 >
   <li
     className="side-menu-header"
+    data-testid="sidemenu-header-undefined"
   >
     <a
       className="side-menu-header-link"
@@ -46,6 +47,7 @@ exports[`Render should render children 1`] = `
 >
   <li
     className="side-menu-header"
+    data-testid="sidemenu-header-undefined"
   >
     <a
       className="side-menu-header-link"
@@ -91,6 +93,7 @@ exports[`Render should render component 1`] = `
 >
   <li
     className="side-menu-header"
+    data-testid="sidemenu-header-undefined"
   >
     <a
       className="side-menu-header-link"
