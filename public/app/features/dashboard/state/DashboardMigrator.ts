@@ -713,11 +713,14 @@ export class DashboardMigrator {
         panel.datasource = migrateDatasourceNameToRef(panel.datasource);
 
         if (!panel.targets) {
-          panel.targets = [];
+          continue;
         }
 
         for (const target of panel.targets) {
-          target.datasource = migrateDatasourceNameToRef(target.datasource);
+          const targetRef = migrateDatasourceNameToRef(target.datasource);
+          if (targetRef != null) {
+            target.datasource = targetRef;
+          }
         }
       }
     }
