@@ -27,7 +27,7 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
 
   return (
     <FocusScope contain restoreFocus autoFocus>
-      <div className={styles.container} ref={ref} {...overlayProps}>
+      <div data-testid="navbarmenu" className={styles.container} ref={ref} {...overlayProps}>
         <div className={styles.header}>
           <Icon name="bars" size="xl" />
           <IconButton aria-label="Close navigation menu" name="times" onClick={onClose} size="xl" variant="secondary" />
