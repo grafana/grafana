@@ -1,6 +1,7 @@
 export enum SuggestionName {
   LineChart = 'Line chart',
   LineChartSmooth = 'Line chart smooth',
+  LineChartGradientColoredLine = 'Line chart with gradient color scheme',
   AreaChart = 'Area chart',
   AreaChartStacked = 'Area chart stacked',
   AreaChartStackedPercent = 'Area chart 100% stacked',
@@ -19,7 +20,8 @@ export enum SuggestionName {
   BarGaugeBasic = 'Bar gauge basic',
   BarGaugeLCD = 'Bar gauge LCD',
   Table = 'Table',
-  StateTimeline = 'StateTimeline',
+  StateTimeline = 'State timeline',
+  StatusHistory = 'Status history',
   TextPanel = 'Text panel',
   DashboardList = 'Dashboard list',
 }
