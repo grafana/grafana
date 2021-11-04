@@ -20,10 +20,10 @@ import (
 const (
 	NoDataAlertName = "DatasourceNoData"
 
-	OriginalAlertName = "original_alertname"
+	Rulename = "rulename"
 )
 
-// stateToPostableAlert converts an state to a model that is accepted by Alertmanager. Annotations and Labels are copied from the state.
+// stateToPostableAlert converts a state to a model that is accepted by Alertmanager. Annotations and Labels are copied from the state.
 // - if state has at least one result, a new label '__value_string__' is added to the label set
 // - the alert's GeneratorURL is constructed to point to the alert edit page
 // - if evaluation state is either NoData or Error, the resulting set of labels is changed:
@@ -49,10 +49,7 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 	}
 
 	if alertState.State == eval.NoData {
-		if name, ok := nL[model.AlertNameLabel]; ok {
-			nL[OriginalAlertName] = name
-		}
-		nL[model.AlertNameLabel] = NoDataAlertName
+		return noDataAlert(nL, nA, alertState, urlStr)
 	}
 
 	return &models.PostableAlert{
@@ -61,6 +58,27 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 		EndsAt:      strfmt.DateTime(alertState.EndsAt),
 		Alert: models.Alert{
 			Labels:       models.LabelSet(nL),
+			GeneratorURL: strfmt.URI(urlStr),
+		},
+	}
+}
+
+// NoDataAlert is a special alert sent by Grafana to the Alertmanager, that indicates we received no data from the datasource.
+// It effectively replaces the legacy behavior of "Keep Last State" by separating the regular alerting flow from the no data scenario into a separate alerts.
+// The Alert is defined as:
+// {  alertname=DatasourceNoData rulename=original_alertname } + { rule labelset } + { rule annotations }
+func noDataAlert(labels data.Labels, annotations data.Labels, alertState *state.State, urlStr string) *models.PostableAlert {
+	if name, ok := labels[model.AlertNameLabel]; ok {
+		labels[Rulename] = name
+	}
+	labels[model.AlertNameLabel] = NoDataAlertName
+
+	return &models.PostableAlert{
+		Annotations: models.LabelSet(annotations),
+		StartsAt:    strfmt.DateTime(alertState.StartsAt),
+		EndsAt:      strfmt.DateTime(alertState.EndsAt),
+		Alert: models.Alert{
+			Labels:       models.LabelSet(labels),
 			GeneratorURL: strfmt.URI(urlStr),
 		},
 	}

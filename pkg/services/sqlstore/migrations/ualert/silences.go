@@ -19,6 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+const (
+	// Should be the same as 'NoDataAlertName' in pkg/services/schedule/compat.go.
+	NoDataAlertName = "DatasourceNoData"
+)
+
 func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 	if da.State != "paused" {
 		return nil
@@ -73,7 +78,7 @@ func (m *migration) addNoDataSilence(da dashAlert, rule *alertRule) error {
 				{
 					Type:    pb.Matcher_EQUAL,
 					Name:    model.AlertNameLabel,
-					Pattern: "DatasourceNoData",
+					Pattern: NoDataAlertName,
 				},
 				{
 					Type:    pb.Matcher_EQUAL,
@@ -84,7 +89,7 @@ func (m *migration) addNoDataSilence(da dashAlert, rule *alertRule) error {
 			StartsAt:  time.Now(),
 			EndsAt:    time.Now().AddDate(1, 0, 0), // 1 year.
 			CreatedBy: "Grafana Migration",
-			Comment:   fmt.Sprintf("Created during migration to unified alerting to silence NoData state for alert rule '%s' because the option 'Keep Last State' was selected for NoData state", rule.Title),
+			Comment:   fmt.Sprintf("Created during migration to unified alerting to silence NoData state for alert rule ID '%s' and Title '%s' because the option 'Keep Last State' was selected for NoData state", rule.UID, rule.Title),
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year.
 	}
