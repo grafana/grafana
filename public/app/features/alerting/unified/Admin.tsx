@@ -6,8 +6,8 @@ import { ExternalAlertmanagers } from './components/admin/ExternalAlertmanagers'
 export default function Admin(): JSX.Element {
   return (
     <AlertingPageWrapper pageId="alerting-admin">
-      <AlertmanagerConfig />
-      <ExternalAlertmanagers />
+      <AlertmanagerConfig test-id="admin-alertmanagerconfig" />
+      <ExternalAlertmanagers test-id="admin-externalalertmanagers" />
     </AlertingPageWrapper>
   );
 }
