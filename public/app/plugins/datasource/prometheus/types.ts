@@ -1,5 +1,4 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
 
 export interface PromQuery extends DataQuery {
   expr: string;
@@ -112,10 +111,6 @@ export type PromValue = [number, any];
 export interface PromMetric {
   __name__?: string;
   [index: string]: any;
-}
-
-export function isFetchErrorResponse(response: any): response is FetchError {
-  return 'cancelled' in response;
 }
 
 export function isMatrixData(result: MatrixOrVectorResult): result is PromMatrixData['result'][0] {

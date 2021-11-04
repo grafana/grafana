@@ -87,6 +87,8 @@ describe('BarChart utils', () => {
         placement: 'bottom',
         calcs: [],
       },
+      valueRotation: 0,
+      valueMaxLength: 20,
       stacking: StackingMode.None,
       tooltip: {
         mode: TooltipDisplayMode.None,
