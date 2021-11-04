@@ -200,7 +200,7 @@ Given a query result of two time series:
 - Series 1: labels Server=Server A, Datacenter=EU
 - Series 2: labels Server=Server B, Datacenter=EU
 
-In "Columns" mode, the result will look like this:
+In "Columns" mode, the result looks like this:
 
 | Time                | Server   | Datacenter | Value |
 | ------------------- | -------- | ---------- | ----- |
