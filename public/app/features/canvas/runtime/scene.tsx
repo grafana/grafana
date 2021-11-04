@@ -23,6 +23,7 @@ import {
 } from 'app/features/dimensions/utils';
 import { ElementState } from './element';
 import { RootElement } from './root';
+import { GroupState } from './group';
 
 export class Scene {
   styles = getStyles(config.theme2);
@@ -142,8 +143,14 @@ export class Scene {
 
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements: HTMLDivElement[] = [];
-    this.root.elements.forEach((element: ElementState) => {
-      targetElements.push(element.div!);
+    this.root.elements.forEach((element: any) => {
+      if (element instanceof ElementState && !(element instanceof GroupState)) {
+        targetElements.push(element.div!);
+      } else if (element instanceof GroupState) {
+        element.elements.forEach((element: ElementState) => {
+          targetElements.push(element.div!);
+        });
+      }
     });
 
     if (destroySelecto) {

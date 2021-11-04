@@ -12,6 +12,7 @@ import { CanvasElementOptions, canvasElementRegistry } from 'app/features/canvas
 import appEvents from 'app/core/app_events';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
+import { GroupState } from 'app/features/canvas/runtime/group';
 
 type Props = StandardEditorProps<any, InstanceState, PanelOptions>;
 
@@ -42,7 +43,16 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     if (settings?.scene && settings?.scene?.selecto) {
       try {
-        settings.scene.selecto.clickTarget(item, item?.div);
+        if (item instanceof ElementState && !(item instanceof GroupState)) {
+          let event: MouseEvent = new MouseEvent('click');
+          settings.scene.selecto.clickTarget(event, item?.div);
+        } else if (item instanceof GroupState) {
+          const targetElements: HTMLDivElement[] = [];
+          item.elements.forEach((element: ElementState) => {
+            targetElements.push(element.div!);
+          });
+          settings.scene.selecto.setSelectedTargets(targetElements);
+        }
       } catch (error) {
         appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
       }
