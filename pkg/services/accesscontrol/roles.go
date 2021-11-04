@@ -57,31 +57,6 @@ var (
 		}),
 	}
 
-	statsReaderRole = RoleDTO{
-		Version:     2,
-		Name:        statsReader,
-		DisplayName: "Stats reader",
-		Description: "Read server stats.",
-		Permissions: []Permission{
-			{
-				Action: ActionServerStatsRead,
-			},
-		},
-	}
-
-	settingsReaderRole = RoleDTO{
-		Version:     3,
-		DisplayName: "Settings reader",
-		Description: "Read settings.",
-		Name:        settingsReader,
-		Permissions: []Permission{
-			{
-				Action: ActionSettingsRead,
-				Scope:  ScopeSettingsAll,
-			},
-		},
-	}
-
 	orgUsersReaderRole = RoleDTO{
 		Name:        orgUsersReader,
 		DisplayName: "Organization users reader",
@@ -114,6 +89,31 @@ var (
 				Scope:  ScopeUsersAll,
 			},
 		}),
+	}
+
+	settingsReaderRole = RoleDTO{
+		Version:     3,
+		DisplayName: "Settings reader",
+		Description: "Read settings.",
+		Name:        settingsReader,
+		Permissions: []Permission{
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsAll,
+			},
+		},
+	}
+
+	statsReaderRole = RoleDTO{
+		Version:     2,
+		Name:        statsReader,
+		DisplayName: "Stats reader",
+		Description: "Read server stats.",
+		Permissions: []Permission{
+			{
+				Action: ActionServerStatsRead,
+			},
+		},
 	}
 
 	usersReaderRole = RoleDTO{
@@ -193,14 +193,14 @@ var (
 // Role names definitions
 const (
 	datasourcesQuerier = "fixed:datasources:querier"
-	statsReader        = "fixed:stats:reader"
-	settingsReader     = "fixed:settings:reader"
-	usersWriter        = "fixed:users:writer"
-	usersReader        = "fixed:users:reader"
-	orgUsersWriter     = "fixed:org:users:writer"
-	orgUsersReader     = "fixed:org:users:reader"
-	ldapWriter         = "fixed:ldap:writer"
 	ldapReader         = "fixed:ldap:reader"
+	ldapWriter         = "fixed:ldap:writer"
+	orgUsersReader     = "fixed:org:users:reader"
+	orgUsersWriter     = "fixed:org:users:writer"
+	settingsReader     = "fixed:settings:reader"
+	statsReader        = "fixed:stats:reader"
+	usersReader        = "fixed:users:reader"
+	usersWriter        = "fixed:users:writer"
 )
 
 var (
@@ -212,32 +212,32 @@ var (
 	// assigned which fixed roles in this list.
 	FixedRoles = map[string]RoleDTO{
 		datasourcesQuerier: datasourcesQuerierRole,
-		usersWriter:        usersWriterRole,
-		usersReader:        usersReaderRole,
-		orgUsersWriter:     orgUsersWriterRole,
-		orgUsersReader:     orgUsersReaderRole,
-		ldapWriter:         ldapWriterRole,
 		ldapReader:         ldapReaderRole,
-		statsReader:        statsReaderRole,
+		ldapWriter:         ldapWriterRole,
+		orgUsersReader:     orgUsersReaderRole,
+		orgUsersWriter:     orgUsersWriterRole,
 		settingsReader:     settingsReaderRole,
+		statsReader:        statsReaderRole,
+		usersReader:        usersReaderRole,
+		usersWriter:        usersWriterRole,
 	}
 
 	// FixedRoleGrants specifies which built-in roles are assigned
 	// to which set of FixedRoles by default. Alphabetically sorted.
 	FixedRoleGrants = map[string][]string{
 		RoleGrafanaAdmin: {
-			ldapWriter,
 			ldapReader,
-			statsReader,
-			settingsReader,
-			usersWriter,
-			usersReader,
-			orgUsersWriter,
+			ldapWriter,
 			orgUsersReader,
+			orgUsersWriter,
+			settingsReader,
+			statsReader,
+			usersReader,
+			usersWriter,
 		},
 		string(models.ROLE_ADMIN): {
-			orgUsersWriter,
 			orgUsersReader,
+			orgUsersWriter,
 		},
 		string(models.ROLE_EDITOR): {
 			datasourcesQuerier,
