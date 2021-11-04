@@ -132,6 +132,13 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 			seriesLabels["metric.name"] = d.Key
 			defaultMetricName := d.Key
 
+			// If more than 1 pointdescriptor was returned, three aggregations are returned per time series - min, mean and max.
+			// This is a because the period used in the graph_period MQL function is less than half the duration (time range). See https://cloud.google.com/monitoring/mql/reference#graph_period-tabop
+			// When this is the case, we'll just ignore the min and max and use the mean value in the frame
+			if len(response.TimeSeriesDescriptor.PointDescriptors) > 1 && !strings.HasSuffix(d.Key, ".mean") {
+				continue
+			}
+
 			// process non-distribution series
 			if d.ValueType != "DISTRIBUTION" {
 				// reverse the order to be ascending
