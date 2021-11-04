@@ -12,7 +12,6 @@ load(
     'test_frontend_step',
     'package_step',
     'e2e_tests_server_step',
-    'e2e_tests_step',
     'build_storybook_step',
     'build_frontend_docs_step',
     'build_docs_website_step',
@@ -77,7 +76,6 @@ def pr_pipelines(edition):
     steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=variants),
         e2e_tests_server_step(edition=edition),
-        e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step_pr(edition=edition),
         build_frontend_docs_step(edition=edition),
@@ -91,8 +89,6 @@ def pr_pipelines(edition):
             redis_integration_tests_step(),
             memcached_integration_tests_step(),
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
-            e2e_tests_server_step(edition=edition2, port=3002),
-            e2e_tests_step(edition=edition2, port=3002),
         ])
 
     trigger = {

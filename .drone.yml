@@ -194,15 +194,6 @@ steps:
   image: grafana/build-container:1.4.4
   name: end-to-end-tests-server
 - commands:
-  - yarn run cypress install
-  - ./bin/grabpl e2e-tests --port 3001
-  depends_on:
-  - end-to-end-tests-server
-  environment:
-    HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests
-- commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
@@ -587,7 +578,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -982,7 +973,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -1406,7 +1397,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -1468,7 +1459,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -1906,7 +1897,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2319,7 +2310,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2381,7 +2372,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2822,7 +2813,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -3214,7 +3205,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -3276,7 +3267,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -3441,6 +3432,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 746a9f310520cd57b0a464b91049565aa99138fbec92568cadd99d51871e8e56
+hmac: 2d70883e5d972ddd42476437242c74823c41d283ac560416d38b442893549e96
 
 ...

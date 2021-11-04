@@ -244,7 +244,7 @@ def upload_cdn_step(edition):
         'name': 'upload-cdn-assets' + enterprise2_suffix(edition),
         'image': publish_image,
         'depends_on': [
-            'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'package',
         ],
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
