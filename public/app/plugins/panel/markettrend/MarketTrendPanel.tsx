@@ -52,7 +52,11 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
+  const { frames, warn } = useMemo(
+    () => prepareGraphableFields(data?.series, config.theme2),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, options]
+  );
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
     const { mode, priceStyle, fieldMap, colorStrategy } = options;
@@ -62,12 +66,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
     let tweakScale = (opts: ScaleProps) => opts;
     let tweakAxis = (opts: AxisProps) => opts;
 
-    if (
-      open == null ||
-      close == null ||
-      findField(data?.series, open) == null ||
-      findField(data?.series, close) == null
-    ) {
+    if (open == null || close == null || findField(frames, open) == null || findField(frames, close) == null) {
       return {
         renderers: [],
         tweakScale,
@@ -79,14 +78,14 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
 
     let volumeIdx = -1;
 
-    let canRenderVolume = false;
+    let shouldRenderVolume = false;
 
     // find volume field and set overrides
-    if (frames && volume != null) {
-      let volumeField = findField(data?.series, volume);
+    if (volume != null && mode !== MarketTrendMode.Price) {
+      let volumeField = findField(frames, volume);
 
       if (volumeField != null) {
-        canRenderVolume = true;
+        shouldRenderVolume = true;
 
         let { fillOpacity } = volumeField.config.custom;
 
@@ -96,6 +95,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
 
         // we only want to put volume on own shorter axis when rendered with price
         if (mode !== MarketTrendMode.Volume) {
+          volumeField.config = { ...volumeField.config };
           volumeField.config.unit = 'short';
           volumeField.display = getDisplayProcessor({
             field: volumeField,
@@ -138,19 +138,29 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       }
     }
 
-    let canRenderPrice =
-      high != null && low != null && findField(data?.series, high) != null && findField(data?.series, low) != null;
+    let shouldRenderPrice =
+      mode !== MarketTrendMode.Volume &&
+      high != null &&
+      low != null &&
+      findField(frames, high) != null &&
+      findField(frames, low) != null;
 
     let fields = {};
     let indicesOnly = [];
 
-    if (canRenderPrice) {
+    if (shouldRenderPrice) {
       fields = { open, high, low, close };
 
       // hide series from legend that are rendered as composite markers
       for (let key in fields) {
-        let field = findField(data?.series, fields[key]);
-        field!.config.custom.hideFrom = { legend: true, tooltip: false, viz: false };
+        let field = findField(frames, fields[key])!;
+        field.config = {
+          ...field.config,
+          custom: {
+            ...field.config.custom,
+            hideFrom: { legend: true, tooltip: false, viz: false },
+          },
+        };
       }
     } else {
       // these fields should not be omitted from normal rendering if they arent rendered
@@ -159,7 +169,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       indicesOnly.push(open, close);
     }
 
-    if (canRenderVolume) {
+    if (shouldRenderVolume) {
       fields.volume = volume;
       fields.open = open;
       fields.close = close;
