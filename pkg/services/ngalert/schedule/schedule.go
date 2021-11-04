@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"go.uber.org/atomic"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -638,35 +636,30 @@ type alertRuleInfo struct {
 	evalCh  chan *evalContext
 	stopCh  chan struct{}
 	mtx     sync.Mutex
-	stopped *atomic.Bool // indicates that the stopCh was closed and therefore the rule evaluation routine should exit
+	stopped bool // indicates that the stopCh was closed and therefore the rule evaluation routine should exit
 }
 
 func newAlertRuleInfo() *alertRuleInfo {
-	return &alertRuleInfo{evalCh: make(chan *evalContext), stopCh: make(chan struct{}), stopped: atomic.NewBool(false)}
+	return &alertRuleInfo{evalCh: make(chan *evalContext), stopCh: make(chan struct{}), stopped: false}
 }
 
 // Stop signals the rule evaluation routine to stop via stopCh and sets flag stopped to true. Does nothing If the loop is stopped
 func (a *alertRuleInfo) Stop() bool {
-	if a.stopped.Load() {
-		return false
-	}
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
-	if a.stopped.Swap(true) {
+	if a.stopped {
 		return false
 	}
 	close(a.stopCh)
+	a.stopped = true
 	return true
 }
 
 // Eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
 func (a *alertRuleInfo) Eval(t time.Time, version int64) bool {
-	if a.stopped.Load() {
-		return false
-	}
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
-	if a.stopped.Load() {
+	if a.stopped {
 		return false
 	}
 	a.evalCh <- &evalContext{

@@ -594,7 +594,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 		t.Run("Stop should close stopCh and set stopped", func(t *testing.T) {
 			r := newAlertRuleInfo()
 			require.True(t, r.Stop())
-			require.True(t, r.stopped.Load())
+			require.True(t, r.stopped)
 			_, ok := <-r.stopCh
 			require.False(t, ok)
 		})
