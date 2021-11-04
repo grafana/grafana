@@ -82,10 +82,8 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   onChange = (item: SelectableValue<string>, actionMeta: ActionMeta) => {
-    if (actionMeta.action === 'clear') {
-      if (typeof this.props.onClear === 'function') {
-        this.props.onClear();
-      }
+    if (actionMeta.action === 'clear' && this.props.onClear) {
+      this.props.onClear();
       return;
     }
 

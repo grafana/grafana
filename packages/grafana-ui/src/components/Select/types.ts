@@ -3,7 +3,7 @@ import React from 'react';
 import { ActionMeta as SelectActionMeta } from 'react-select';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
-export type ActionMeta<T = any> = SelectActionMeta<SelectValue<T>>;
+export type ActionMeta = SelectActionMeta<{}>;
 export type InputActionMeta = {
   action: 'set-value' | 'input-change' | 'input-blur' | 'menu-close';
 };
