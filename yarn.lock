@@ -2779,7 +2779,7 @@ __metadata:
     papaparse: 5.3.0
     postcss-loader: 6.1.1
     pretty-format: 25.1.0
-    prismjs: 1.24.0
+    prismjs: 1.25.0
     raw-loader: 4.0.2
     rc-cascader: 1.5.0
     rc-drawer: 4.4.0
@@ -10011,7 +10011,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ansi-regex@npm:^4.0.0, ansi-regex@npm:^4.1.0":
+"ansi-regex@npm:^4.1.0":
   version: 4.1.0
   resolution: "ansi-regex@npm:4.1.0"
   checksum: 97aa4659538d53e5e441f5ef2949a3cffcb838e57aeaad42c4194e9d7ddb37246a6526c4ca85d3940a9d1e19b11cc2e114530b54c9d700c8baf163c31779baf8
@@ -18007,7 +18007,7 @@ __metadata:
     jest: 26.6.3
     jest-canvas-mock: 2.3.0
     jest-date-mock: 1.0.8
-    jest-junit: ^6.4.0
+    jest-junit: 13.0.0
     jest-matcher-utils: 26.0.0
     jquery: 3.5.1
     json-source-map: 0.6.1
@@ -20656,13 +20656,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-get-type@npm:^24.9.0":
-  version: 24.9.0
-  resolution: "jest-get-type@npm:24.9.0"
-  checksum: 821e6cd46434c917370cd362fbc4ce564c6e22780351f3ca468b230fbbc657ae19905ed5cdcc5e112d81a2c79cbd3fbcbe0dd44dc62860414b60ea223009958c
-  languageName: node
-  linkType: hard
-
 "jest-get-type@npm:^26.0.0, jest-get-type@npm:^26.3.0":
   version: 26.3.0
   resolution: "jest-get-type@npm:26.3.0"
@@ -20751,7 +20744,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-junit@npm:^13.0.0":
+"jest-junit@npm:13.0.0, jest-junit@npm:^13.0.0":
   version: 13.0.0
   resolution: "jest-junit@npm:13.0.0"
   dependencies:
@@ -20760,18 +20753,6 @@ __metadata:
     uuid: ^8.3.2
     xml: ^1.0.1
   checksum: d3a1bf6e98250837d1a9939cd54f29a7bd4fb835af30e92d0d544300fbe634eb86d2b018c79a7a35b123d933bf3e6c96ba13c0161cdefbf66fc3ab771707572e
-  languageName: node
-  linkType: hard
-
-"jest-junit@npm:^6.4.0":
-  version: 6.4.0
-  resolution: "jest-junit@npm:6.4.0"
-  dependencies:
-    jest-validate: ^24.0.0
-    mkdirp: ^0.5.1
-    strip-ansi: ^4.0.0
-    xml: ^1.0.1
-  checksum: b0ba9f9f087ff38ca92605181a7634b72edc6baa314a26eeb2c1e8763b2c0eb790604c29bc47c9b395851fac4a8fa3a03a931b0940ea0ea47beac6c74504cdce
   languageName: node
   linkType: hard
 
@@ -21051,20 +21032,6 @@ __metadata:
     is-ci: ^2.0.0
     micromatch: ^4.0.2
   checksum: 3c6a5fba05c4c6892cd3a9f66196ea8867087b77a5aa1a3f6cd349c785c3f1ca24abfd454664983aed1a165cab7846688e44fe8630652d666ba326b08625bc3d
-  languageName: node
-  linkType: hard
-
-"jest-validate@npm:^24.0.0":
-  version: 24.9.0
-  resolution: "jest-validate@npm:24.9.0"
-  dependencies:
-    "@jest/types": ^24.9.0
-    camelcase: ^5.3.1
-    chalk: ^2.0.1
-    jest-get-type: ^24.9.0
-    leven: ^3.1.0
-    pretty-format: ^24.9.0
-  checksum: 8e9abc2b605a10e9872bd7cc9cd676641b781b16f22028b7ed59cb3243e942065229e804bf5aa3c9e2d62a1444dd492193155bb7e02d9e6e330faa0afbb6dd9f
   languageName: node
   linkType: hard
 
@@ -26941,18 +26908,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pretty-format@npm:^24.9.0":
-  version: 24.9.0
-  resolution: "pretty-format@npm:24.9.0"
-  dependencies:
-    "@jest/types": ^24.9.0
-    ansi-regex: ^4.0.0
-    ansi-styles: ^3.2.0
-    react-is: ^16.8.4
-  checksum: ba9291c8dafd50d2fea1fbad5d2863a6f94e0c8835cce9778ec03bc11bb0f52b9ed0e4ee56aaa331d022ccae2fe52b92f73465a0af58fd0edb59deb6391c6847
-  languageName: node
-  linkType: hard
-
 "pretty-format@npm:^26.0.0, pretty-format@npm:^26.6.2":
   version: 26.6.2
   resolution: "pretty-format@npm:26.6.2"
@@ -26981,13 +26936,6 @@ __metadata:
   version: 1.0.3
   resolution: "pretty-hrtime@npm:1.0.3"
   checksum: bae0e6832fe13c3de43d1a3d43df52bf6090499d74dc65a17f5552cb1a94f1f8019a23284ddf988c3c408a09678d743901e1d8f5b7a71bec31eeeac445bef371
-  languageName: node
-  linkType: hard
-
-"prismjs@npm:1.24.0":
-  version: 1.24.0
-  resolution: "prismjs@npm:1.24.0"
-  checksum: 8456d08274c78bb4ce48ab9b3cbc5a82837fd683afe2bda7554526d9234f8ac48c9922c92a39bd3230e0bc8b0bf2cce18c9b563678b1c08f88f5f2a78a5fd174
   languageName: node
   linkType: hard
 
@@ -28170,7 +28118,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is@npm:^16.12.0, react-is@npm:^16.13.1, react-is@npm:^16.6.0, react-is@npm:^16.7.0, react-is@npm:^16.8.1, react-is@npm:^16.8.4":
+"react-is@npm:^16.12.0, react-is@npm:^16.13.1, react-is@npm:^16.6.0, react-is@npm:^16.7.0, react-is@npm:^16.8.1":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
   checksum: f7a19ac3496de32ca9ae12aa030f00f14a3d45374f1ceca0af707c831b2a6098ef0d6bdae51bd437b0a306d7f01d4677fcc8de7c0d331eb47ad0f46130e53c5f
