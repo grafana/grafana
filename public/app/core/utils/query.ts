@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceInstanceSettings } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, DataSourceRef, getDataSourceRef } from '@grafana/data';
 
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
@@ -9,7 +9,7 @@ export const getNextRefIdChar = (queries: DataQuery[]): string => {
   }
 };
 
-export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datasource?: string): DataQuery[] {
+export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datasource?: DataSourceRef): DataQuery[] {
   const q = query || {};
   q.refId = getNextRefIdChar(queries);
   q.hide = false;
@@ -27,16 +27,18 @@ export function updateQueries(
   extensionID: string, // pass this in because importing it creates a circular dependency
   dsSettings?: DataSourceInstanceSettings
 ): DataQuery[] {
+  const datasource = getDataSourceRef(newSettings);
+
   if (!newSettings.meta.mixed && dsSettings?.meta.mixed) {
     return queries.map((q) => {
       if (q.datasource !== extensionID) {
-        q.datasource = newSettings.name;
+        q.datasource = datasource;
       }
       return q;
     });
   } else if (!newSettings.meta.mixed && dsSettings?.meta.id !== newSettings.meta.id) {
     // we are changing data source type, clear queries
-    return [{ refId: 'A', datasource: newSettings.name }];
+    return [{ refId: 'A', datasource }];
   }
 
   return queries;

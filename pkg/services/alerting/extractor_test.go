@@ -18,10 +18,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	// mock data
-	defaultDs := &models.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true}
-	graphite2Ds := &models.DataSource{Id: 15, OrgId: 1, Name: "graphite2"}
-	influxDBDs := &models.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB"}
-	prom := &models.DataSource{Id: 17, OrgId: 1, Name: "Prometheus"}
+	defaultDs := &models.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
+	graphite2Ds := &models.DataSource{Id: 15, OrgId: 1, Name: "graphite2", Uid: "graphite2-uid"}
+	influxDBDs := &models.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB", Uid: "InfluxDB-uid"}
+	prom := &models.DataSource{Id: 17, OrgId: 1, Name: "Prometheus", Uid: "Prometheus-uid"}
 
 	bus.AddHandler("test", func(query *models.GetDefaultDataSourceQuery) error {
 		query.Result = defaultDs
@@ -29,16 +29,16 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
-		if query.Name == defaultDs.Name {
+		if query.Name == defaultDs.Name || query.Uid == defaultDs.Uid {
 			query.Result = defaultDs
 		}
-		if query.Name == graphite2Ds.Name {
+		if query.Name == graphite2Ds.Name || query.Uid == graphite2Ds.Uid {
 			query.Result = graphite2Ds
 		}
-		if query.Name == influxDBDs.Name {
+		if query.Name == influxDBDs.Name || query.Uid == influxDBDs.Uid {
 			query.Result = influxDBDs
 		}
-		if query.Name == prom.Name {
+		if query.Name == prom.Name || query.Uid == prom.Uid {
 			query.Result = prom
 		}
 
@@ -245,5 +245,26 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		_, err = extractor.GetAlerts()
 		require.Equal(t, err.Error(), "alert validation error: Panel id is not correct, alertName=Influxdb, panelId=1")
+	})
+
+	t.Run("Extract data source given new DataSourceRef object model", func(t *testing.T) {
+		json, err := ioutil.ReadFile("./testdata/panel-with-datasource-ref.json")
+		require.Nil(t, err)
+
+		dashJSON, err := simplejson.NewJson(json)
+		require.Nil(t, err)
+		dash := models.NewDashboardFromJson(dashJSON)
+		extractor := NewDashAlertExtractor(dash, 1, nil)
+
+		err = extractor.ValidateAlerts()
+
+		require.Nil(t, err)
+
+		alerts, err := extractor.GetAlerts()
+		require.Nil(t, err)
+
+		condition := simplejson.NewFromAny(alerts[0].Settings.Get("conditions").MustArray()[0])
+		query := condition.Get("query")
+		require.EqualValues(t, 15, query.Get("datasourceId").MustInt64())
 	})
 }

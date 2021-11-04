@@ -52,11 +52,15 @@ func GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) erro
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("alert") + `) AS alerts,`)
 
-	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
+	now := time.Now()
+	activeUserDeadlineDate := now.Add(-activeUserTimeLimit)
 	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
 
-	dailyActiveUserDeadlineDate := time.Now().Add(-dailyActiveUserTimeLimit)
+	dailyActiveUserDeadlineDate := now.Add(-dailyActiveUserTimeLimit)
 	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS daily_active_users,`, dailyActiveUserDeadlineDate)
+
+	monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
 
 	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
 	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
@@ -137,8 +141,10 @@ func viewersPermissionsCounterSQL(statName string, isFolder bool, permission mod
 }
 
 func GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
-	activeEndDate := time.Now().Add(-activeUserTimeLimit)
-	dailyActiveEndDate := time.Now().Add(-dailyActiveUserTimeLimit)
+	now := time.Now()
+	activeEndDate := now.Add(-activeUserTimeLimit)
+	dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)
+	monthlyActiveEndDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 
 	var rawSQL = `SELECT
 		(
@@ -185,6 +191,10 @@ func GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error 
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
 		) AS daily_active_users,
+		(
+			SELECT COUNT(*)
+			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
+		) AS monthly_active_users,
 		` + roleCounterSQL(ctx) + `,
 		(
 			SELECT COUNT(*)
@@ -196,7 +206,7 @@ func GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error 
 		) AS daily_active_sessions`
 
 	var stats models.AdminStats
-	_, err := x.SQL(rawSQL, activeEndDate, dailyActiveEndDate, activeEndDate.Unix(), dailyActiveEndDate.Unix()).Get(&stats)
+	_, err := x.SQL(rawSQL, activeEndDate, dailyActiveEndDate, monthlyActiveEndDate, activeEndDate.Unix(), dailyActiveEndDate.Unix()).Get(&stats)
 	if err != nil {
 		return err
 	}

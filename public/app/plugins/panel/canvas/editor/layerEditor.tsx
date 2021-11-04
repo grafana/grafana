@@ -30,8 +30,6 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<Instance
 
     // Dynamically fill the selected element
     build: (builder, context) => {
-      console.log('MAKE layer editor', layer.UID);
-
       builder.addCustomEditor({
         id: 'content',
         path: 'root',

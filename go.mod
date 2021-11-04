@@ -13,10 +13,6 @@ replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
 replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/goxmldsig v1.1.1
 
-// For now we are using a Grafana fork of alertmanager until the ability to bypass label name/key validation
-// is merged into upstream (2021-10-01).
-replace github.com/prometheus/alertmanager => github.com/grafana/alertmanager v0.21.1-0.20210929114340-613e5cc2a4ee
-
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.4.0
@@ -82,7 +78,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210904010418-6d279e18f982 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.23.1-0.20210914172521-e35efbddb66a
+	github.com/prometheus/alertmanager v0.23.1-0.20211021072955-1b8afe7cb5aa
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.31.1
@@ -90,7 +86,6 @@ require (
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.1
-	github.com/smartystreets/goconvey v1.6.4
 	github.com/spyzhov/ajson v0.4.2
 	github.com/stretchr/testify v1.7.0
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf

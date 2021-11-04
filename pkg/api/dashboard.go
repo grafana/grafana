@@ -330,7 +330,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	dashSvc := dashboards.NewService(hs.SQLStore)
-	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
+	dashboard, err := dashSvc.SaveDashboard(ctx, dashItem, allowUiUpdate)
 
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed
@@ -410,7 +410,7 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 	if ok := errors.As(err, &pluginErr); ok {
 		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name
-		if pluginDef := hs.PluginManager.GetPlugin(pluginErr.PluginId); pluginDef != nil {
+		if pluginDef := hs.pluginStore.Plugin(pluginErr.PluginId); pluginDef != nil {
 			message = fmt.Sprintf("The dashboard belongs to plugin %s.", pluginDef.Name)
 		}
 		return response.JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})

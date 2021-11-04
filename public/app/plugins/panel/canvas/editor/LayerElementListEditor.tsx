@@ -44,7 +44,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
       try {
         settings.scene.selecto.clickTarget(item, item?.div);
       } catch (error) {
-        appEvents.emit(AppEvents.alertError, ['Unable to select element with inline editing disabled']);
+        appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
       }
     }
   };

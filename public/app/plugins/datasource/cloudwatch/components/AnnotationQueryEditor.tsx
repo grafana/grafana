@@ -2,7 +2,7 @@ import React, { ChangeEvent } from 'react';
 import { LegacyForms } from '@grafana/ui';
 const { Switch } = LegacyForms;
 import { PanelData } from '@grafana/data';
-import { CloudWatchAnnotationQuery } from '../types';
+import { CloudWatchAnnotationQuery, CloudWatchQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { QueryField, PanelQueryEditor } from './';
 
@@ -20,7 +20,7 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
     <>
       <PanelQueryEditor
         {...props}
-        onChange={(editorQuery: CloudWatchAnnotationQuery) => onChange({ ...query, ...editorQuery })}
+        onChange={(editorQuery: CloudWatchQuery) => onChange({ ...query, ...editorQuery })}
         onRunQuery={() => {}}
         history={[]}
       ></PanelQueryEditor>

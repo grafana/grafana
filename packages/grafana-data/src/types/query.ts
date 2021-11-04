@@ -8,11 +8,15 @@ export enum DataTopic {
 }
 
 /**
- * In 8.2, this will become an interface
- *
  * @public
  */
-export type DatasourceRef = string;
+export interface DataSourceRef {
+  /** The plugin type-id */
+  type?: string;
+
+  /** Specific datasource instance */
+  uid?: string;
+}
 
 /**
  * These are the common properties available to all queries in all datasources
@@ -46,5 +50,5 @@ export interface DataQuery {
    * For mixed data sources the selected datasource is on the query level.
    * For non mixed scenarios this is undefined.
    */
-  datasource?: DatasourceRef;
+  datasource?: DataSourceRef;
 }
