@@ -13,7 +13,7 @@ export function useExternalAmSelector(): AlertmanagerConfig[] | undefined {
   );
 
   if (!discoveredAlertmanagers || !alertmanagerConfig) {
-    return;
+    return [];
   }
 
   const enabledAlertmanagers: AlertmanagerConfig[] = [];
