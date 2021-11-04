@@ -73,7 +73,7 @@ var (
 	orgUsersWriterRole = RoleDTO{
 		Name:        orgUsersWriter,
 		DisplayName: "Organization users writer",
-		Description: "Read, add, remove and update role for users in organization",
+		Description: "Read, add, remove, or update a role for users in organization",
 		Version:     2,
 		Permissions: ConcatPermissions(orgUsersReaderRole.Permissions, []Permission{
 			{
