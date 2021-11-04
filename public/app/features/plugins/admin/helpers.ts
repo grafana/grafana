@@ -130,12 +130,12 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
 export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
   const installedVersion = local?.info.version;
   const id = remote?.slug || local?.id || '';
+  const type = local?.type || remote?.typeCode;
   const isDisabled = !!error;
 
-  // TODO: replace these with the local svg:s that we have witin the project.
   let logos = {
-    small: 'https://grafana.com/api/plugins/404notfound/versions/none/logos/small',
-    large: 'https://grafana.com/api/plugins/404notfound/versions/none/logos/large',
+    small: `/public/img/icn-${type}.svg`,
+    large: `/public/img/icn-${type}.svg`,
   };
 
   if (remote) {
