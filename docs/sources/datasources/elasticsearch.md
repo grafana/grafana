@@ -215,8 +215,6 @@ Once the result is returned, the log panel shows a list of log rows and a bar ch
 
 Note that the fields used for log message and level is based on an [optional data source configuration](#logs).
 
-Log volume panel above the log panel shows accumulated log distribution over time for all log queries. Results are split by level when level field is configured.
-
 ### Filter Log Messages
 
 Optionally enter a lucene query into the query field to filter the log messages. For example, using a default Filebeat setup you should be able to use `fields.level:error` to only show error log messages.
