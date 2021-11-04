@@ -15,7 +15,7 @@ import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPl
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { drawMarkers } from './utils';
-import { defaultColors } from './types';
+import { defaultColors, MarketTrendMode } from './types';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 
@@ -94,44 +94,47 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
           volumeAlpha = fillOpacity / 100;
         }
 
-        volumeField.config.unit = 'short';
-        volumeField.display = getDisplayProcessor({
-          field: volumeField,
-          theme: config.theme2,
-        });
+        // we only want to put volume on own shorter axis when rendered with price
+        if (mode !== MarketTrendMode.Volume) {
+          volumeField.config.unit = 'short';
+          volumeField.display = getDisplayProcessor({
+            field: volumeField,
+            theme: config.theme2,
+          });
 
-        tweakAxis = (opts: AxisProps) => {
-          if (opts.scaleKey === 'short') {
-            let filter = (u: uPlot, splits: number[]) => {
-              let _splits = [];
-              let max = u.series[volumeIdx].max as number;
+          tweakAxis = (opts: AxisProps) => {
+            if (opts.scaleKey === 'short') {
+              let filter = (u: uPlot, splits: number[]) => {
+                let _splits = [];
+                let max = u.series[volumeIdx].max as number;
 
-              for (let i = 0; i < splits.length; i++) {
-                _splits.push(splits[i]);
+                for (let i = 0; i < splits.length; i++) {
+                  _splits.push(splits[i]);
 
-                if (splits[i] > max) {
-                  break;
+                  if (splits[i] > max) {
+                    break;
+                  }
                 }
-              }
 
-              return _splits;
-            };
+                return _splits;
+              };
 
-            opts.space = 20; // reduce tick spacing
-            opts.filter = filter; // hide tick labels
-            opts.ticks = { ...opts.ticks, filter }; // hide tick marks
-          }
+              opts.space = 20; // reduce tick spacing
+              opts.filter = filter; // hide tick labels
+              opts.ticks = { ...opts.ticks, filter }; // hide tick marks
+            }
 
-          return opts;
-        };
+            return opts;
+          };
 
-        tweakScale = (opts: ScaleProps) => {
-          if (opts.scaleKey === 'short') {
-            opts.range = (u: uPlot, min: number, max: number) => [0, max * 7];
-          }
+          tweakScale = (opts: ScaleProps) => {
+            if (opts.scaleKey === 'short') {
+              opts.range = (u: uPlot, min: number, max: number) => [0, max * 7];
+            }
 
-          return opts;
-        };
+            return opts;
+          };
+        }
       }
     }
 
@@ -142,12 +145,21 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
 
     if (canRenderPrice) {
       fields = { open, high, low, close };
+
+      // hide series from legend that are rendered as composite markers
+      for (let key in fields) {
+        let field = findField(data?.series, fields[key]);
+        field!.config.custom.hideFrom = { legend: true, tooltip: false, viz: false };
+      }
     }
 
     if (canRenderVolume) {
+      fields.volume = volume;
+
+      // TODO: these fields should not be omitted from rendering if they arent rendered as part of price markers
+      // they're only here so we can get back their indicies in the init callback below
       fields.open = open;
       fields.close = close;
-      fields.volume = volume;
     }
 
     return {
