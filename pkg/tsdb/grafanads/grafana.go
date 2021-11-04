@@ -8,17 +8,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
@@ -44,11 +41,11 @@ var (
 	logger                            = log.New("tsdb.grafana")
 )
 
-func ProvideService(cfg *setting.Cfg, backendPM backendplugin.Manager) *Service {
-	return newService(cfg.StaticRootPath, backendPM)
+func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar) *Service {
+	return newService(cfg.StaticRootPath, registrar)
 }
 
-func newService(staticRootPath string, backendPM backendplugin.Manager) *Service {
+func newService(staticRootPath string, registrar plugins.CoreBackendRegistrar) *Service {
 	s := &Service{
 		staticRootPath: staticRootPath,
 		roots: []string{
@@ -60,7 +57,7 @@ func newService(staticRootPath string, backendPM backendplugin.Manager) *Service
 		},
 	}
 
-	if err := backendPM.Register("grafana", coreplugin.New(backend.ServeOpts{
+	if err := registrar.LoadAndRegister("grafana", coreplugin.New(backend.ServeOpts{
 		CheckHealthHandler: s,
 		QueryDataHandler:   s,
 	})); err != nil {

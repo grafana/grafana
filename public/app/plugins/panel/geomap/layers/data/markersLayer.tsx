@@ -165,66 +165,67 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         const vectorSource = new source.Vector({ features });
         vectorLayer.setSource(vectorSource);
       },
+
+      // Marker overlay options
+      registerOptionsUI: (builder) => {
+        builder
+          .addCustomEditor({
+            id: 'config.size',
+            path: 'config.size',
+            name: 'Marker Size',
+            editor: ScaleDimensionEditor,
+            settings: {
+              min: 1,
+              max: 100, // possible in the UI
+            },
+            defaultValue: {
+              // Configured values
+              fixed: DEFAULT_SIZE,
+              min: 1,
+              max: 20,
+            },
+          })
+          .addCustomEditor({
+            id: 'config.markerSymbol',
+            path: 'config.markerSymbol',
+            name: 'Marker Symbol',
+            editor: ResourceDimensionEditor,
+            defaultValue: defaultOptions.markerSymbol,
+            settings: {
+              resourceType: 'icon',
+              showSourceRadio: false,
+              folderName: ResourceFolderName.Marker,
+            },
+          })
+          .addCustomEditor({
+            id: 'config.color',
+            path: 'config.color',
+            name: 'Marker Color',
+            editor: ColorDimensionEditor,
+            settings: {},
+            defaultValue: {
+              // Configured values
+              fixed: 'grey',
+            },
+          })
+          .addSliderInput({
+            path: 'config.fillOpacity',
+            name: 'Fill opacity',
+            defaultValue: defaultOptions.fillOpacity,
+            settings: {
+              min: 0,
+              max: 1,
+              step: 0.1,
+            },
+          })
+          .addBooleanSwitch({
+            path: 'config.showLegend',
+            name: 'Show legend',
+            description: 'Show legend',
+            defaultValue: defaultOptions.showLegend,
+          });
+      },
     };
-  },
-  // Marker overlay options
-  registerOptionsUI: (builder) => {
-    builder
-      .addCustomEditor({
-        id: 'config.size',
-        path: 'config.size',
-        name: 'Marker Size',
-        editor: ScaleDimensionEditor,
-        settings: {
-          min: 1,
-          max: 100, // possible in the UI
-        },
-        defaultValue: {
-          // Configured values
-          fixed: DEFAULT_SIZE,
-          min: 1,
-          max: 20,
-        },
-      })
-      .addCustomEditor({
-        id: 'config.markerSymbol',
-        path: 'config.markerSymbol',
-        name: 'Marker Symbol',
-        editor: ResourceDimensionEditor,
-        defaultValue: defaultOptions.markerSymbol,
-        settings: {
-          resourceType: 'icon',
-          showSourceRadio: false,
-          folderName: ResourceFolderName.Marker,
-        },
-      })
-      .addCustomEditor({
-        id: 'config.color',
-        path: 'config.color',
-        name: 'Marker Color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {
-          // Configured values
-          fixed: 'grey',
-        },
-      })
-      .addSliderInput({
-        path: 'config.fillOpacity',
-        name: 'Fill opacity',
-        defaultValue: defaultOptions.fillOpacity,
-        settings: {
-          min: 0,
-          max: 1,
-          step: 0.1,
-        },
-      })
-      .addBooleanSwitch({
-        path: 'config.showLegend',
-        name: 'Show legend',
-        description: 'Show legend',
-        defaultValue: defaultOptions.showLegend,
-      });
   },
 
   // fill in the default values

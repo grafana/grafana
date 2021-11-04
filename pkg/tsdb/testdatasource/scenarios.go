@@ -54,197 +54,197 @@ type Scenario struct {
 	handler     backend.QueryDataHandlerFunc
 }
 
-func (p *TestDataPlugin) registerScenario(scenario *Scenario) {
-	p.scenarios[scenario.ID] = scenario
-	p.queryMux.HandleFunc(scenario.ID, scenario.handler)
-}
-
-func (p *TestDataPlugin) registerScenarios() {
-	p.registerScenario(&Scenario{
+func (s *Service) registerScenarios() {
+	s.registerScenario(&Scenario{
 		ID:      string(exponentialHeatmapBucketDataQuery),
 		Name:    "Exponential heatmap bucket data",
-		handler: p.handleExponentialHeatmapBucketDataScenario,
+		handler: s.handleExponentialHeatmapBucketDataScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(linearHeatmapBucketDataQuery),
 		Name:    "Linear heatmap bucket data",
-		handler: p.handleLinearHeatmapBucketDataScenario,
+		handler: s.handleLinearHeatmapBucketDataScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(randomWalkQuery),
 		Name:    "Random Walk",
-		handler: p.handleRandomWalkScenario,
+		handler: s.handleRandomWalkScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(predictablePulseQuery),
 		Name:    "Predictable Pulse",
-		handler: p.handlePredictablePulseScenario,
+		handler: s.handlePredictablePulseScenario,
 		Description: `Predictable Pulse returns a pulse wave where there is a datapoint every timeStepSeconds.
 The wave cycles at timeStepSeconds*(onCount+offCount).
 The cycle of the wave is based off of absolute time (from the epoch) which makes it predictable.
 Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means times will all end in :00 seconds).`,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(predictableCSVWaveQuery),
 		Name:    "Predictable CSV Wave",
-		handler: p.handlePredictableCSVWaveScenario,
+		handler: s.handlePredictableCSVWaveScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(randomWalkTableQuery),
 		Name:    "Random Walk Table",
-		handler: p.handleRandomWalkTableScenario,
+		handler: s.handleRandomWalkTableScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:          string(randomWalkSlowQuery),
 		Name:        "Slow Query",
 		StringInput: "5s",
-		handler:     p.handleRandomWalkSlowScenario,
+		handler:     s.handleRandomWalkSlowScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(noDataPointsQuery),
 		Name:    "No Data Points",
-		handler: p.handleClientSideScenario,
+		handler: s.handleClientSideScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(datapointsOutsideRangeQuery),
 		Name:    "Datapoints Outside Range",
-		handler: p.handleDatapointsOutsideRangeScenario,
+		handler: s.handleDatapointsOutsideRangeScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:          string(csvMetricValuesQuery),
 		Name:        "CSV Metric Values",
 		StringInput: "1,20,90,30,5,0",
-		handler:     p.handleCSVMetricValuesScenario,
+		handler:     s.handleCSVMetricValuesScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(streamingClientQuery),
 		Name:    "Streaming Client",
-		handler: p.handleClientSideScenario,
+		handler: s.handleClientSideScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(liveQuery),
 		Name:    "Grafana Live",
-		handler: p.handleClientSideScenario,
+		handler: s.handleClientSideScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(flightPath),
 		Name:    "Flight path",
-		handler: p.handleFlightPathScenario,
+		handler: s.handleFlightPathScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(usaQueryKey),
 		Name:    "USA generated data",
-		handler: p.handleUSAScenario,
+		handler: s.handleUSAScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(grafanaAPIQuery),
 		Name:    "Grafana API",
-		handler: p.handleClientSideScenario,
+		handler: s.handleClientSideScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(arrowQuery),
 		Name:    "Load Apache Arrow Data",
-		handler: p.handleArrowScenario,
+		handler: s.handleArrowScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(annotationsQuery),
 		Name:    "Annotations",
-		handler: p.handleClientSideScenario,
+		handler: s.handleClientSideScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(tableStaticQuery),
 		Name:    "Table Static",
-		handler: p.handleTableStaticScenario,
+		handler: s.handleTableStaticScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(randomWalkWithErrorQuery),
 		Name:    "Random Walk (with error)",
-		handler: p.handleRandomWalkWithErrorScenario,
+		handler: s.handleRandomWalkWithErrorScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(serverError500Query),
 		Name:    "Server Error (500)",
-		handler: p.handleServerError500Scenario,
+		handler: s.handleServerError500Scenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(logsQuery),
 		Name:    "Logs",
-		handler: p.handleLogsScenario,
+		handler: s.handleLogsScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:   string(nodeGraphQuery),
 		Name: "Node Graph",
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(csvFileQueryType),
 		Name:    "CSV File",
-		handler: p.handleCsvFileScenario,
+		handler: s.handleCsvFileScenario,
 	})
 
-	p.registerScenario(&Scenario{
+	s.registerScenario(&Scenario{
 		ID:      string(csvContentQueryType),
 		Name:    "CSV Content",
-		handler: p.handleCsvContentScenario,
+		handler: s.handleCsvContentScenario,
 	})
 
-	p.queryMux.HandleFunc("", p.handleFallbackScenario)
+	s.queryMux.HandleFunc("", s.handleFallbackScenario)
+}
+
+func (s *Service) registerScenario(scenario *Scenario) {
+	s.scenarios[scenario.ID] = scenario
+	s.queryMux.HandleFunc(scenario.ID, scenario.handler)
 }
 
 // handleFallbackScenario handles the scenario where queryType is not set and fallbacks to scenarioId.
-func (p *TestDataPlugin) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	scenarioQueries := map[string][]backend.DataQuery{}
 
 	for _, q := range req.Queries {
 		model, err := simplejson.NewJson(q.JSON)
 		if err != nil {
-			p.logger.Error("Failed to unmarshal query model to JSON", "error", err)
+			s.logger.Error("Failed to unmarshal query model to JSON", "error", err)
 			continue
 		}
 
 		scenarioID := model.Get("scenarioId").MustString(string(randomWalkQuery))
-		if _, exist := p.scenarios[scenarioID]; exist {
+		if _, exist := s.scenarios[scenarioID]; exist {
 			if _, ok := scenarioQueries[scenarioID]; !ok {
 				scenarioQueries[scenarioID] = []backend.DataQuery{}
 			}
 
 			scenarioQueries[scenarioID] = append(scenarioQueries[scenarioID], q)
 		} else {
-			p.logger.Error("Scenario not found", "scenarioId", scenarioID)
+			s.logger.Error("Scenario not found", "scenarioId", scenarioID)
 		}
 	}
 
 	resp := backend.NewQueryDataResponse()
 	for scenarioID, queries := range scenarioQueries {
-		if scenario, exist := p.scenarios[scenarioID]; exist {
+		if scenario, exist := s.scenarios[scenarioID]; exist {
 			sReq := &backend.QueryDataRequest{
 				PluginContext: req.PluginContext,
 				Headers:       req.Headers,
 				Queries:       queries,
 			}
 			if sResp, err := scenario.handler(ctx, sReq); err != nil {
-				p.logger.Error("Failed to handle scenario", "scenarioId", scenarioID, "error", err)
+				s.logger.Error("Failed to handle scenario", "scenarioId", scenarioID, "error", err)
 			} else {
 				for refID, dr := range sResp.Responses {
 					resp.Responses[refID] = dr
@@ -256,7 +256,7 @@ func (p *TestDataPlugin) handleFallbackScenario(ctx context.Context, req *backen
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleRandomWalkScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleRandomWalkScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -276,7 +276,7 @@ func (p *TestDataPlugin) handleRandomWalkScenario(ctx context.Context, req *back
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleDatapointsOutsideRangeScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -300,7 +300,7 @@ func (p *TestDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Contex
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -344,7 +344,7 @@ func (p *TestDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleRandomWalkWithErrorScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -362,7 +362,7 @@ func (p *TestDataPlugin) handleRandomWalkWithErrorScenario(ctx context.Context, 
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleRandomWalkSlowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleRandomWalkSlowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -383,7 +383,7 @@ func (p *TestDataPlugin) handleRandomWalkSlowScenario(ctx context.Context, req *
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -400,7 +400,7 @@ func (p *TestDataPlugin) handleRandomWalkTableScenario(ctx context.Context, req 
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handlePredictableCSVWaveScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handlePredictableCSVWaveScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -421,7 +421,7 @@ func (p *TestDataPlugin) handlePredictableCSVWaveScenario(ctx context.Context, r
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handlePredictablePulseScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handlePredictablePulseScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -442,15 +442,15 @@ func (p *TestDataPlugin) handlePredictablePulseScenario(ctx context.Context, req
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleServerError500Scenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleServerError500Scenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	panic("Test Data Panic!")
 }
 
-func (p *TestDataPlugin) handleClientSideScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleClientSideScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	return backend.NewQueryDataResponse(), nil
 }
 
-func (p *TestDataPlugin) handleArrowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleArrowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -474,7 +474,7 @@ func (p *TestDataPlugin) handleArrowScenario(ctx context.Context, req *backend.Q
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleExponentialHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -489,7 +489,7 @@ func (p *TestDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleLinearHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleLinearHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -504,7 +504,7 @@ func (p *TestDataPlugin) handleLinearHeatmapBucketDataScenario(ctx context.Conte
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleTableStaticScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleTableStaticScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -533,7 +533,7 @@ func (p *TestDataPlugin) handleTableStaticScenario(ctx context.Context, req *bac
 	return resp, nil
 }
 
-func (p *TestDataPlugin) handleLogsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {

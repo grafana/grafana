@@ -41,14 +41,7 @@ module.exports = {
       // we want to have same Prism object in core and in grafana/ui
       prismjs: require.resolve('prismjs'),
     },
-    modules: [
-      'node_modules',
-      // we need full path to root node_modules for grafana-enterprise symlink to work
-      path.resolve('node_modules'),
-      '.yarn',
-      path.resolve('.yarn'),
-      path.resolve('public'),
-    ],
+    modules: ['node_modules', path.resolve('public')],
     fallback: {
       buffer: false,
       fs: false,
@@ -57,6 +50,7 @@ module.exports = {
       https: false,
       string_decoder: false,
     },
+    symlinks: false,
   },
   ignoreWarnings: [/export .* was not found in/],
   stats: {

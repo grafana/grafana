@@ -26,7 +26,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     // Remove any invalid queries
     const queries = request.targets.filter((t) => {
-      return t.datasource !== MIXED_DATASOURCE_NAME;
+      return t.datasource?.type !== MIXED_DATASOURCE_NAME;
     });
 
     if (!queries.length) {
@@ -34,17 +34,21 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     }
 
     // Build groups of queries to run in parallel
-    const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource');
+    const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
     const mixed: BatchedQueries[] = [];
 
     for (const key in sets) {
       const targets = sets[key];
-      const dsName = targets[0].datasource;
 
       mixed.push({
-        datasource: getDataSourceSrv().get(dsName, request.scopedVars),
+        datasource: getDataSourceSrv().get(targets[0].datasource, request.scopedVars),
         targets,
       });
+    }
+
+    // Missing UIDs?
+    if (!mixed.length) {
+      return of({ data: [] } as DataQueryResponse); // nothing
     }
 
     return this.batchQueries(mixed, request);

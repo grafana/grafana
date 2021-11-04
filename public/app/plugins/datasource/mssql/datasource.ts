@@ -61,7 +61,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
       expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
-          datasource: this.name,
+          datasource: this.getRef(),
           rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
           rawQuery: true,
         };

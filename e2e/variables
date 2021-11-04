@@ -2,6 +2,7 @@
 
 DEFAULT_RUNDIR=e2e/tmp
 RUNDIR=${RUNDIR:-$DEFAULT_RUNDIR}
+HOME_PATH=$PWD/$RUNDIR
 PIDFILE=$RUNDIR/pid
 DEFAULT_PACKAGE_FILE=dist/grafana-*linux-amd64.tar.gz
 PROV_DIR=$RUNDIR/conf/provisioning
