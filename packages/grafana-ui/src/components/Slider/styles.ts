@@ -23,6 +23,16 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
         flex-grow: 1;
         margin-left: 7px; // half the size of the handle to align handle to the left on 0 value
       }
+      .rc-slider-mark {
+        top: ${theme.spacing(1.75)};
+      }
+      .rc-slider-mark-text {
+        color: ${theme.colors.text.disabled};
+        font-size: ${theme.typography.bodySmall.fontSize};
+      }
+      .rc-slider-mark-text-active {
+        color: ${theme.colors.text.primary};
+      }
       .rc-slider-vertical .rc-slider-handle {
         margin-top: -10px;
       }

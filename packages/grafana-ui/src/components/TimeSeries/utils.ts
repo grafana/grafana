@@ -82,6 +82,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       scaleKey: xScaleKey,
       isTime: true,
       placement: AxisPlacement.Bottom,
+      label: xField.config.custom?.axisLabel,
       timeZone,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
@@ -101,6 +102,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     builder.addAxis({
       scaleKey: xScaleKey,
       placement: AxisPlacement.Bottom,
+      label: xField.config.custom?.axisLabel,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
     });
@@ -424,6 +426,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
             payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
+            payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
             eventBus.publish(hoverEvent);
             hoverEvent.payload.down = undefined;
           }
