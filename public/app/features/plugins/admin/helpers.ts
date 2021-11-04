@@ -246,6 +246,7 @@ export const updatePanels = () =>
       config.panels = settings.panels;
     });
 
+// TODO: implement a logic that tries to find the latest compatible version
 export function getLatestCompatibleVersion(versions: Version[] | undefined): string | undefined {
   if (!versions) {
     return;
