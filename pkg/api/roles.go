@@ -71,7 +71,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				Version:     2,
 				Name:        "fixed:datasources:writer",
 				DisplayName: "Data sources writer",
-				Description: "Create, read, update, delete and query datasources",
+				Description: "Create, read, update, delete, or query data sources",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionDatasourcesRead,
