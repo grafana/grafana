@@ -207,7 +207,7 @@ In "Columns" mode, the result looks like this:
 | 2020-07-07 11:34:20 | Server A | EU         | 1     |
 | 2020-07-07 11:34:20 | Server B | EU         | 2     |
 
-In "Rows" mode, the result will contain a table for each series and show each label value like this:
+In "Rows" mode, the result has a table for each series and show each label value like this:
 
 | label      | value    |
 | ---------- | -------- |
