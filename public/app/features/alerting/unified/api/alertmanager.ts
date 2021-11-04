@@ -225,6 +225,7 @@ export async function fetchExternalAlertmanagerConfig(): Promise<{ alertmanagers
     getBackendSrv().fetch<{ alertmanagers: string[] }>({
       method: 'GET',
       url: '/api/v1/ngalert/admin_config',
+      showErrorAlert: false,
     })
   );
 
