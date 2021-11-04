@@ -45,7 +45,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		}
 
 		datasources[ds.Uid] = ds
-		if ds.Uid == expr.DatasourceUID {
+		if expr.IsDataSource(ds.Uid) {
 			hasExpression = true
 		}
 
