@@ -140,6 +140,10 @@ describe('situation', () => {
       otherLabels: [{ name: 'job', value: 'j1', op: '=' }],
     });
 
+    assertSituation('something{job="j1"^}', null);
+    assertSituation('something{job="j1" ^ }', null);
+    assertSituation('something{job="j1" ^   ,   }', null);
+
     assertSituation('{job=^,host="h1"}', {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       labelName: 'job',
