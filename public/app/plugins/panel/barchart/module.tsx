@@ -84,6 +84,8 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           min: -90,
           max: 90,
           step: 15,
+          marks: { '-90': '-90°', '-45': '-45°', 0: '0°', 45: '45°', 90: '90°' },
+          included: false,
         },
         showIf: (opts) => {
           return opts.orientation === VizOrientation.Auto || opts.orientation === VizOrientation.Vertical;
