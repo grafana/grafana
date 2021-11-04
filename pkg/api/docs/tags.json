@@ -27,6 +27,10 @@
 		{
 			"name": "annotations",
 			"description": "Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be global annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel."
+		},
+		{
+			"name": "library_elements",
+			"description": "The identifier (ID) of a library element is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a library element uniquely identifies library elements between multiple Grafana installs. It’s automatically generated unless you specify it during library element creation. The UID provides consistent URLs for accessing library elements and when syncing library elements between multiple Grafana installs.\nThe maximum length of a UID is 40 characters."
 		}
 	]
 }
