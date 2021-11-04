@@ -23,7 +23,7 @@ export interface Props {
 
 export class RefreshPicker extends PureComponent<Props> {
   static offOption = { label: 'Off', value: '', ariaLabel: 'Turn off auto refresh' };
-  static liveOption = { label: 'Live', value: 'LIVE', ariaLabel: 'Live' };
+  static liveOption = { label: 'Live', value: 'LIVE', ariaLabel: 'Turn on live streaming' };
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
 
   constructor(props: Props) {
