@@ -153,7 +153,9 @@ func (out *RemoteWriteFrameOutput) flush(timeSeries []prompb.TimeSeries) error {
 	req.Header.Set("Content-Type", "application/x-protobuf")
 	req.Header.Set("Content-Encoding", "snappy")
 	req.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
-	req.SetBasicAuth(out.User, out.Password)
+	if out.User != "" {
+		req.SetBasicAuth(out.User, out.Password)
+	}
 
 	started := time.Now()
 	resp, err := out.httpClient.Do(req)

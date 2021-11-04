@@ -216,6 +216,9 @@ type RemoteWriteSettings struct {
 	Endpoint string `json:"endpoint"`
 	// User is a user for remote write request.
 	User string `json:"user"`
+	// Password is a plain text non-encrypted password.
+	// TODO: remove after integrating with the database.
+	Password string `json:"password,omitempty"`
 }
 
 type RemoteWriteBackends struct {
@@ -476,14 +479,24 @@ func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig,
 		if !ok {
 			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
-		password, err := f.EncryptionService.Decrypt(context.Background(), remoteWriteBackend.SecureSettings["password"], setting.SecretKey)
-		if err != nil {
-			return nil, fmt.Errorf("password can't be decrypted: %w", err)
+
+		var password string
+		hasSecurePassword := len(remoteWriteBackend.SecureSettings["password"]) > 0
+		if hasSecurePassword {
+			passwordBytes, err := f.EncryptionService.Decrypt(context.Background(), remoteWriteBackend.SecureSettings["password"], setting.SecretKey)
+			if err != nil {
+				return nil, fmt.Errorf("password can't be decrypted: %w", err)
+			}
+			password = string(passwordBytes)
+		} else {
+			// Use plain text password (should be removed upon database integration).
+			password = remoteWriteBackend.Settings.Password
 		}
+
 		return NewRemoteWriteFrameOutput(
 			remoteWriteBackend.Settings.Endpoint,
 			remoteWriteBackend.Settings.User,
-			string(password),
+			password,
 			config.RemoteWriteOutputConfig.SampleMilliseconds,
 		), nil
 	case FrameOutputTypeChangeLog:
