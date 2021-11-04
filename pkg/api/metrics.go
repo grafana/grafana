@@ -115,7 +115,7 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 	if expr.IsDataSource(uid) {
 		return expr.DataSourceModel(), nil
 	}
-	
+
 	switch uid {
 	case grafanads.DatasourceUID:
 		return grafanads.DataSourceModel(c.OrgId), nil
