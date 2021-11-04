@@ -158,8 +158,8 @@ func (hs *HTTPServer) registerRoutes() {
 			// For dev purpose
 			userRoute.Get("/helpflags/clear", routing.Wrap(ClearHelpFlags))
 
-			userRoute.Get("/preferences", routing.Wrap(GetUserPreferences))
-			userRoute.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), routing.Wrap(UpdateUserPreferences))
+			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
+			userRoute.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), routing.Wrap(hs.UpdateUserPreferences))
 
 			userRoute.Get("/auth-tokens", routing.Wrap(hs.GetUserAuthTokens))
 			userRoute.Post("/revoke-auth-token", bind(models.RevokeAuthTokenCmd{}), routing.Wrap(hs.RevokeUserAuthToken))
@@ -221,8 +221,8 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(RevokeInvite))
 
 			// prefs
-			orgRoute.Get("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesRead, ScopeOrgCurrentID)), routing.Wrap(GetOrgPreferences))
-			orgRoute.Put("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesWrite, ScopeOrgCurrentID)), bind(dtos.UpdatePrefsCmd{}), routing.Wrap(UpdateOrgPreferences))
+			orgRoute.Get("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesRead, ScopeOrgCurrentID)), routing.Wrap(hs.GetOrgPreferences))
+			orgRoute.Put("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesWrite, ScopeOrgCurrentID)), bind(dtos.UpdatePrefsCmd{}), routing.Wrap(hs.UpdateOrgPreferences))
 		})
 
 		// current org without requirement of user to be org admin

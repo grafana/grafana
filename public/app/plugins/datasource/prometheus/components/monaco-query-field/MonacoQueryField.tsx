@@ -6,6 +6,7 @@ import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
 import { getCompletionProvider } from './monaco-completion-provider';
 import { Props } from './MonacoQueryFieldProps';
+import { getOverrideServices } from './getOverrideServices';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -15,23 +16,37 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   fixedOverflowWidgets: true,
   folding: false,
   fontSize: 14,
-  lineDecorationsWidth: 8,
+  lineDecorationsWidth: 8, // used as "padding-left"
   lineNumbers: 'off',
   minimap: { enabled: false },
   overviewRulerBorder: false,
   overviewRulerLanes: 0,
   padding: {
+    // these numbers were picked so that visually this matches the previous version
+    // of the query-editor the best
     top: 4,
-    bottom: 4,
+    bottom: 5,
   },
   renderLineHighlight: 'none',
   scrollbar: {
     vertical: 'hidden',
+    verticalScrollbarSize: 8, // used as "padding-right"
+    horizontal: 'hidden',
+    horizontalScrollbarSize: 0,
   },
   scrollBeyondLastLine: false,
   suggestFontSize: 12,
-  wordWrap: 'off',
+  wordWrap: 'on',
 };
+
+// this number was chosen by testing various values. it might be necessary
+// because of the width of the border, not sure.
+//it needs to do 2 things:
+// 1. when the editor is single-line, it should make the editor height be visually correct
+// 2. when the editor is multi-line, the editor should not be "scrollable" (meaning,
+//    you do a scroll-movement in the editor, and it will scroll the content by a couple pixels
+//    up & down. this we want to avoid)
+const EDITOR_HEIGHT_OFFSET = 2;
 
 const PROMQL_LANG_ID = promLanguageDefinition.id;
 
@@ -61,6 +76,8 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 const MonacoQueryField = (props: Props) => {
+  // we need only one instance of `overrideServices` during the lifetime of the react component
+  const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
   const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
 
@@ -88,6 +105,7 @@ const MonacoQueryField = (props: Props) => {
       ref={containerRef}
     >
       <ReactMonacoEditor
+        overrideServices={overrideServicesRef.current}
         options={options}
         language="promql"
         value={initialValue}
@@ -120,7 +138,11 @@ const MonacoQueryField = (props: Props) => {
             return Promise.resolve(result);
           };
 
-          const dataProvider = { getSeries, getHistory, getAllMetricNames };
+          const getAllLabelNames = () => Promise.resolve(lpRef.current.getLabelKeys());
+
+          const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
+
+          const dataProvider = { getSeries, getHistory, getAllMetricNames, getAllLabelNames, getLabelValues };
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,
@@ -157,7 +179,7 @@ const MonacoQueryField = (props: Props) => {
             const containerDiv = containerRef.current;
             if (containerDiv !== null) {
               const pixelHeight = editor.getContentHeight();
-              containerDiv.style.height = `${pixelHeight}px`;
+              containerDiv.style.height = `${pixelHeight + EDITOR_HEIGHT_OFFSET}px`;
               containerDiv.style.width = '100%';
               const pixelWidth = containerDiv.clientWidth;
               editor.layout({ width: pixelWidth, height: pixelHeight });
