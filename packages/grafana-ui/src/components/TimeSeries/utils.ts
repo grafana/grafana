@@ -130,7 +130,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     }
 
     if (foundCount === Object.entries(r.fields).length) {
-      customRenderedFields.push(...Object.values(r.fields));
+      for (let k in r.fields) {
+        let name = r.fields[k];
+        if (r.indicesOnly.indexOf(name) === -1) {
+          customRenderedFields.push(name);
+        }
+      }
       return true;
     }
 

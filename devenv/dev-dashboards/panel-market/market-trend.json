@@ -21,8 +21,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "gnetId": null,
-  "graphTooltip": 2,
-  "id": 308,
+  "graphTooltip": 0,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -87,6 +86,35 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "sma"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    0,
+                    10
+                  ],
+                  "fill": "dot"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "bolup"
             },
             "properties": [
@@ -96,69 +124,57 @@
               },
               {
                 "id": "custom.fillOpacity",
-                "value": 18
+                "value": 4
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "sma"
+              "options": "boldn"
             },
             "properties": [
               {
-                "id": "custom.pointSize",
-                "value": 9
-              },
-              {
-                "id": "custom.lineStyle",
+                "id": "color",
                 "value": {
-                  "dash": [
-                    0,
-                    20
-                  ],
-                  "fill": "dot"
+                  "fixedColor": "blue",
+                  "mode": "fixed"
                 }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 4
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 15,
+        "h": 20,
         "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 4,
+      "id": 2,
       "options": {
-        "downColor": "red",
-        "drawStyle": "candles",
+        "colorStrategy": "intra",
+        "colors": {
+          "down": "red",
+          "up": "green"
+        },
         "fieldMap": {
           "close": "close",
           "high": "high",
           "low": "low",
-          "open": "open"
+          "open": "open",
+          "volume": "volume"
         },
-        "fillMode": "inter-period",
-        "flatColor": "text",
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
-        "markerStyle": "candles",
-        "mode": "Price",
+        "mode": "pricevolume",
         "priceStyle": "candles",
-        "strokeMode": "inter-period",
         "tooltip": {
           "mode": "multi"
-        },
-        "upColor": "green"
+        }
       },
       "targets": [
         {
@@ -167,185 +183,25 @@
           "scenarioId": "csv_file"
         }
       ],
-      "title": "K-line",
-      "transformations": [
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "time",
-                "open",
-                "high",
-                "low",
-                "close",
-                "sma",
-                "bolup",
-                "boldn"
-              ]
-            }
-          }
-        }
-      ],
-      "type": "markettrend"
-    },
-    {
-      "datasource": "-- Dashboard --",
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "open"
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": true,
-                  "tooltip": true,
-                  "viz": true
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "close"
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": true,
-                  "tooltip": true,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 15
-      },
-      "id": 8,
-      "options": {
-        "downColor": "red",
-        "drawStyle": "candles",
-        "fieldMap": {
-          "close": "close",
-          "open": "open",
-          "volume": "volume"
-        },
-        "fillMode": "intra-period",
-        "flatColor": "text",
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "mode": "volume",
-        "strokeMode": "intra-period",
-        "tooltip": {
-          "mode": "single"
-        },
-        "upColor": "green"
-      },
-      "targets": [
-        {
-          "datasource": "-- Dashboard --",
-          "panelId": 4,
-          "refId": "A"
-        }
-      ],
-      "title": "Volume",
-      "transformations": [
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "time",
-                "open",
-                "volume",
-                "close"
-              ]
-            }
-          }
-        }
-      ],
+      "title": "Market Trend",
       "type": "markettrend"
     }
   ],
   "refresh": false,
-  "schemaVersion": 31,
+  "schemaVersion": 33,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "2021-07-13T19:57:04.266Z",
-    "to": "2021-07-13T21:17:49.854Z"
+    "from": "2021-07-14T02:20:41.770Z",
+    "to": "2021-07-14T04:49:55.511Z"
   },
   "timepicker": {},
-  "timezone": "utc",
+  "timezone": "",
   "title": "Market Trend",
-  "uid": "-_w683dnk",
-  "version": 21,
+  "uid": "addoT8F7z",
+  "version": 2,
   "weekStart": ""
 }

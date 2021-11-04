@@ -142,6 +142,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       high != null && low != null && findField(data?.series, high) != null && findField(data?.series, low) != null;
 
     let fields = {};
+    let indicesOnly = [];
 
     if (canRenderPrice) {
       fields = { open, high, low, close };
@@ -151,13 +152,15 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
         let field = findField(data?.series, fields[key]);
         field!.config.custom.hideFrom = { legend: true, tooltip: false, viz: false };
       }
+    } else {
+      // these fields should not be omitted from normal rendering if they arent rendered
+      // as part of price markers. they're only here so we can get back their indicies in the
+      // init callback below. TODO: remove this when field mapping happens in the panel instead of deep
+      indicesOnly.push(open, close);
     }
 
     if (canRenderVolume) {
       fields.volume = volume;
-
-      // TODO: these fields should not be omitted from rendering if they arent rendered as part of price markers
-      // they're only here so we can get back their indicies in the init callback below
       fields.open = open;
       fields.close = close;
     }
@@ -166,6 +169,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       renderers: [
         {
           fields,
+          indicesOnly,
           init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
             volumeIdx = fieldIndices.volume;
 
