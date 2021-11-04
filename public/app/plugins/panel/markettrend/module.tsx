@@ -87,7 +87,7 @@ export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTre
         showIf: (opts) => opts.mode !== MarketTrendMode.Price,
       });
 
-    commonOptionsBuilder.addTooltipOptions(builder);
+    // commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true });

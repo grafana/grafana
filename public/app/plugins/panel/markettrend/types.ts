@@ -1,23 +1,23 @@
-import { OptionsWithLegend, OptionsWithTooltip } from '@grafana/schema';
+import { TimeSeriesOptions } from '../timeseries/types';
 
 export enum MarketTrendMode {
-  'Price' = 'price',
-  'Volume' = 'volume',
-  'PriceVolume' = 'pricevolume',
+  Price = 'price',
+  Volume = 'volume',
+  PriceVolume = 'pricevolume',
 }
 
 export enum PriceStyle {
-  'Candles' = 'candles',
-  'OHLCBars' = 'ohlcbars',
+  Candles = 'candles',
+  OHLCBars = 'ohlcbars',
 }
 
 export enum ColorStrategy {
   // up/down color depends on current close vs current open
   // filled always
-  'Intra' = 'intra',
+  Intra = 'intra',
   // up/down color depends on current close vs prior close
   // filled/hollow depends on current close vs current open
-  'Inter' = 'inter',
+  Inter = 'inter',
 }
 
 interface SemanticFieldMap {
@@ -36,10 +36,10 @@ export const defaultColors: MarketTrendColors = {
   flat: 'gray',
 };
 
-export interface MarketOptions extends OptionsWithLegend, OptionsWithTooltip {
+export interface MarketOptions extends TimeSeriesOptions {
   mode: MarketTrendMode;
   priceStyle: PriceStyle;
   colorStrategy: ColorStrategy;
-  fields: SemanticFieldMap;
+  fieldMap: SemanticFieldMap;
   colors: MarketTrendColors;
 }

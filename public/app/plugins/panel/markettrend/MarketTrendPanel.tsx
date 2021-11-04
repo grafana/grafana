@@ -2,40 +2,42 @@
 // with some extra renderers passed to the <TimeSeries> component
 
 import React, { useMemo } from 'react';
-import { DataFrame, Field, getDisplayProcessor, getFieldDisplayName, PanelProps } from '@grafana/data';
+import { DataFrame, Field, getDisplayProcessor, PanelProps } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, UPlotConfigBuilder } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
-import { TimeSeriesOptions } from '../timeseries/types';
 import { prepareGraphableFields } from '../timeseries/utils';
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { drawMarkers } from './utils';
-import { defaultColors, MarketTrendMode } from './types';
+import { defaultColors, MarketOptions, MarketTrendMode } from './types';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { findField } from 'app/features/dimensions';
 
 interface FieldIndices {
   [fieldKey: string]: number;
 }
 
-interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
+interface MarketPanelProps extends PanelProps<MarketOptions> {}
 
-function findField(frames: DataFrame[], name: string) {
-  for (const frame of frames) {
-    for (const field of frame.fields) {
-      if (getFieldDisplayName(field, frame, frames) === name) {
-        return field;
+function findFieldInFrames(frames?: DataFrame[], name?: string): Field | undefined {
+  if (frames?.length) {
+    for (const frame of frames) {
+      const f = findField(frame, name);
+      if (f) {
+        return f;
       }
     }
   }
+  return undefined;
 }
 
-export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
+export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
   data,
   timeRange,
   timeZone,
@@ -66,7 +68,12 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
     let tweakScale = (opts: ScaleProps) => opts;
     let tweakAxis = (opts: AxisProps) => opts;
 
-    if (open == null || close == null || findField(frames, open) == null || findField(frames, close) == null) {
+    if (
+      open == null ||
+      close == null ||
+      findFieldInFrames(frames, open) == null ||
+      findFieldInFrames(frames, close) == null
+    ) {
       return {
         renderers: [],
         tweakScale,
@@ -82,7 +89,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
 
     // find volume field and set overrides
     if (volume != null && mode !== MarketTrendMode.Price) {
-      let volumeField = findField(frames, volume);
+      let volumeField = findFieldInFrames(frames, volume);
 
       if (volumeField != null) {
         shouldRenderVolume = true;
@@ -142,10 +149,10 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       mode !== MarketTrendMode.Volume &&
       high != null &&
       low != null &&
-      findField(frames, high) != null &&
-      findField(frames, low) != null;
+      findFieldInFrames(frames, high) != null &&
+      findFieldInFrames(frames, low) != null;
 
-    let fields = {};
+    let fields: Record<string, string> = {};
     let indicesOnly = [];
 
     if (shouldRenderPrice) {
@@ -153,7 +160,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
 
       // hide series from legend that are rendered as composite markers
       for (let key in fields) {
-        let field = findField(frames, fields[key])!;
+        let field = findFieldInFrames(frames, fields[key])!;
         field.config = {
           ...field.config,
           custom: {
@@ -225,24 +232,21 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
-      renderers={renderers}
+      renderers={renderers as any}
       tweakAxis={tweakAxis}
       tweakScale={tweakScale}
-      options={options}
     >
       {(config, alignedDataFrame) => {
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            {options.tooltip.mode === TooltipDisplayMode.None || (
-              <TooltipPlugin
-                data={alignedDataFrame}
-                config={config}
-                mode={options.tooltip.mode}
-                sync={sync}
-                timeZone={timeZone}
-              />
-            )}
+            <TooltipPlugin
+              data={alignedDataFrame}
+              config={config}
+              mode={TooltipDisplayMode.Multi}
+              sync={sync}
+              timeZone={timeZone}
+            />
             {/* Renders annotation markers*/}
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
