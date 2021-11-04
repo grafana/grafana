@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -1053,7 +1053,7 @@ type PostableGrafanaReceivers struct {
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
 
-type EncryptFn func(ctx context.Context, payload []byte, secret string) ([]byte, error)
+type EncryptFn func(ctx context.Context, payload []byte, scope secrets.EncryptionOptions) ([]byte, error)
 
 func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 	seenUIDs := make(map[string]struct{})
@@ -1063,7 +1063,7 @@ func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 		case GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				for k, v := range gr.SecureSettings {
-					encryptedData, err := encrypt(context.Background(), []byte(v), setting.SecretKey)
+					encryptedData, err := encrypt(context.Background(), []byte(v), secrets.WithoutScope())
 					if err != nil {
 						return fmt.Errorf("failed to encrypt secure settings: %w", err)
 					}
