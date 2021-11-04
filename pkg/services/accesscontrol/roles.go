@@ -108,7 +108,7 @@ var (
 		Version:     2,
 		Name:        statsReader,
 		DisplayName: "Stats reader",
-		Description: "Read server stats.",
+		Description: "Read server statistics.",
 		Permissions: []Permission{
 			{
 				Action: ActionServerStatsRead,
