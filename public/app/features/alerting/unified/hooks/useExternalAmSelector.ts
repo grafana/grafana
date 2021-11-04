@@ -28,7 +28,7 @@ export function useExternalAmSelector(): AlertmanagerConfig[] | undefined {
       enabledAlertmanagers.push({
         url: url,
         status: 'pending',
-        actualUrl: `${url}/api/v2/alerts`,
+        actualUrl: '',
       });
     } else {
       let found = false;

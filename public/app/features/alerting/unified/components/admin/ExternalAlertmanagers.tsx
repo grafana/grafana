@@ -121,9 +121,11 @@ export const ExternalAlertmanagers = () => {
                 <tr key={index}>
                   <td>
                     <span className={styles.url}>{am.url}</span>
-                    <Tooltip content={am.actualUrl} theme="info">
-                      <Icon name="info-circle" />
-                    </Tooltip>
+                    {am.actualUrl ? (
+                      <Tooltip content={`Discovered ${am.actualUrl} from ${am.url}`} theme="info">
+                        <Icon name="info-circle" />
+                      </Tooltip>
+                    ) : null}
                   </td>
                   <td>
                     <Icon name="heart" style={{ color: getStatusColor(am.status) }} title={am.status} />

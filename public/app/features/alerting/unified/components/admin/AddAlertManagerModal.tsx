@@ -44,7 +44,10 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
               {({ fields, append, remove }) => (
                 <div className={styles.fieldArray}>
                   <div className={styles.bold}>Source url</div>
-                  <div className={styles.muted}>Auth can be done via URL, eg. user:password@url</div>
+                  <div className={styles.muted}>
+                    Authentication can be done via URL (e.g. user:password@myalertmanager.com) and only the Alertmanager
+                    v2 API is supported. The suffix is added internally, there is no need to specify it.
+                  </div>
                   {fields.map((field, index) => {
                     return (
                       <Field
@@ -56,7 +59,7 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
                           className={styles.input}
                           defaultValue={field.url}
                           {...register(`alertmanagers.${index}.url`, { required: true })}
-                          placeholder="admin:admin@some.url.dev"
+                          placeholder="http://localhost:9093"
                           addonAfter={
                             <Button
                               aria-label="Remove alertmanager"
