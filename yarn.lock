@@ -2764,7 +2764,7 @@ __metadata:
     css-minimizer-webpack-plugin: ^3.1.1
     csstype: 3.0.9
     d3: 5.15.0
-    emotion: 10.0.27
+    emotion: 11.0.0
     enzyme: 3.11.0
     expose-loader: 3.0.0
     hoist-non-react-statics: 3.3.2
@@ -15213,7 +15213,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"emotion@npm:10.0.27, emotion@npm:^10.0.14":
+"emotion@npm:11.0.0":
+  version: 11.0.0
+  resolution: "emotion@npm:11.0.0"
+  checksum: ab160e73785c49216652ba85e33db6d4426fd7cb28bd5341fea42542e4e24dd671e508226bf4f8dbd99b946fff2e1f1441c58169356659e60f89dc2276f97993
+  languageName: node
+  linkType: hard
+
+"emotion@npm:^10.0.14":
   version: 10.0.27
   resolution: "emotion@npm:10.0.27"
   dependencies:
@@ -18040,7 +18047,7 @@ __metadata:
     dangerously-set-html-content: 1.0.9
     date-fns: 2.25.0
     debounce-promise: 3.1.2
-    emotion: 10.0.27
+    emotion: 11.0.0
     enzyme: 3.11.0
     enzyme-to-json: 3.4.4
     es-abstract: 1.18.0-next.1
