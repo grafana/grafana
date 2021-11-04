@@ -22,6 +22,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
 // SetupTestEnv initializes a store to used by the tests.
 func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
 	t.Helper()
@@ -93,7 +97,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 	require.NotEmpty(t, q.Result)
 
 	rule := q.Result[0]
-	t.Logf("alert definition: %v with interval: %d created", rule.GetKey(), rule.IntervalSeconds)
+	t.Logf("alert definition: %v with title: %q interval: %d created", rule.GetKey(), rule.Title, rule.IntervalSeconds)
 	return rule
 }
 
@@ -128,6 +132,6 @@ func UpdateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, ex
 	require.NotEmpty(t, q.Result)
 
 	rule := q.Result[0]
-	t.Logf("alert definition: %v with interval: %d created", rule.GetKey(), rule.IntervalSeconds)
+	t.Logf("alert definition: %v with title: %s and interval: %d created", rule.GetKey(), rule.Title, rule.IntervalSeconds)
 	return rule
 }
