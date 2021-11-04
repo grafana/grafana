@@ -50,7 +50,7 @@ const NavBarDropdown = ({
       <li>{header}</li>
       {filteredItems.map((child, index) => (
         <NavBarMenuItem
-          key={`${child.url}-${index}`}
+          key={index}
           isDivider={child.divider}
           icon={child.icon as IconName}
           onClick={child.onClick}
