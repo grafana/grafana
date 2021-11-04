@@ -1,6 +1,6 @@
 import { toOption } from '@grafana/data';
 import { Select, Switch } from '@grafana/ui';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
@@ -31,8 +31,14 @@ const AGGREGATIONS = STATISTICS.map(toOption);
 const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, query, onQueryChange }) => {
   const sql = query.sql ?? {};
 
-  const metricName = getMetricNameFromExpression(sql.select);
   const aggregation = sql.select?.name;
+  useEffect(() => {
+    if (!aggregation) {
+      onQueryChange(setAggregation(query, STATISTICS[0]));
+    }
+  }, [aggregation, onQueryChange, query]);
+
+  const metricName = getMetricNameFromExpression(sql.select);
   const namespace = getNamespaceFromExpression(sql.from);
   const schemaLabels = getSchemaLabels(sql.from);
   const withSchemaEnabled = isUsingWithSchema(sql.from);

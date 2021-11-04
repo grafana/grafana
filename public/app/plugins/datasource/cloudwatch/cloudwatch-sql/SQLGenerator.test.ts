@@ -26,12 +26,22 @@ describe('SQLGenerator', () => {
     orderByDirection: 'DESC',
   };
 
-  it('should return null if mandatory fields are empty', () => {
-    expect(
-      new SQLGenerator().expressionToSqlQuery({
-        from: createFunctionWithParameter('SCHEMA', ['AWS/EC2']),
-      })
-    ).toBeUndefined();
+  describe('mandatory fields check', () => {
+    it('should return undefined if metric and aggregation is missing', () => {
+      expect(
+        new SQLGenerator().expressionToSqlQuery({
+          from: createFunctionWithParameter('SCHEMA', ['AWS/EC2']),
+        })
+      ).toBeUndefined();
+    });
+
+    it('should return undefined if aggregation is missing', () => {
+      expect(
+        new SQLGenerator().expressionToSqlQuery({
+          from: createFunctionWithParameter('SCHEMA', []),
+        })
+      ).toBeUndefined();
+    });
   });
 
   it('should return query if mandatory fields are provided', () => {

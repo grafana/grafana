@@ -17,8 +17,8 @@ interface SQLBuilderSelectRowProps {
 }
 
 const orderByDirections: Array<SelectableValue<string>> = [
-  { label: DESC, value: DESC },
   { label: ASC, value: ASC },
+  { label: DESC, value: DESC },
 ];
 
 const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryChange, datasource }) => {

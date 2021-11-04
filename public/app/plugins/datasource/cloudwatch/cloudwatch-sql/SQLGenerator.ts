@@ -21,7 +21,7 @@ export default class SQLGenerator {
     orderByDirection,
     limit,
   }: SQLExpression): string | undefined {
-    if (!from || !select) {
+    if (!from || !select?.name || !select?.parameters?.length) {
       return undefined;
     }
 
@@ -113,7 +113,7 @@ export default class SQLGenerator {
     if (orderBy) {
       parts.push('ORDER BY');
       this.appendFunction(orderBy, parts);
-      parts.push(orderByDirection ?? 'DESC');
+      parts.push(orderByDirection ?? 'ASC');
     }
   }
 

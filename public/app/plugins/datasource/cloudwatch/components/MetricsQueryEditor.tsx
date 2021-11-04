@@ -1,8 +1,7 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { LegacyForms, ValidationEvents, EventsWithValidation } from '@grafana/ui';
-const { Input: LegacyInput } = LegacyForms;
+import { Input } from '@grafana/ui';
 import {
   CloudWatchQuery,
   CloudWatchMetricsQuery,
@@ -24,15 +23,6 @@ export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, Clou
 interface State {
   sqlCodeEditorIsDirty: boolean;
 }
-
-const idValidationEvents: ValidationEvents = {
-  [EventsWithValidation.onBlur]: [
-    {
-      rule: (value) => new RegExp(/^$|^[a-z][a-zA-Z0-9_]*$/).test(value),
-      errorMessage: 'Invalid format. Only alphanumeric characters and underscores are allowed',
-    },
-  ],
-};
 
 export const normalizeQuery = ({
   namespace,
@@ -157,18 +147,19 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
             optional
             tooltip="ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter."
           >
-            <LegacyInput
+            <Input
               onBlur={onRunQuery}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 this.onChange({ ...metricsQuery, id: event.target.value })
               }
-              validationEvents={idValidationEvents}
+              type="text"
+              invalid={!!query.id && !/^$|^[a-z][a-zA-Z0-9_]*$/.test(query.id)}
               value={query.id}
             />
           </EditorField>
 
-          <EditorField label="Period" width={26} tooltip="Minimum interval between points in seconds">
-            <LegacyInput
+          <EditorField label="Period" width={26} tooltip="Minimum interval between points in seconds.">
+            <Input
               value={query.period || ''}
               placeholder="auto"
               onBlur={onRunQuery}

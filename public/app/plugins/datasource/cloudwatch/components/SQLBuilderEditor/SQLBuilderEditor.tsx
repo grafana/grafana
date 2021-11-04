@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { CloudWatchMetricsQuery } from '../../types';
 import { CloudWatchDatasource } from '../../datasource';
 import EditorRow from '../ui/EditorRow';
@@ -22,17 +22,29 @@ export type Props = {
 export function SQLBuilderEditor({ query, datasource, onChange, onRunQuery }: React.PropsWithChildren<Props>) {
   const sql = query.sql ?? {};
 
-  const onQueryChange = (query: CloudWatchMetricsQuery) => {
+  const onQueryChange = useCallback(
+    (query: CloudWatchMetricsQuery) => {
+      const sqlGenerator = new SQLGenerator();
+      const sqlString = sqlGenerator.expressionToSqlQuery(query.sql ?? {});
+      const fullQuery = {
+        ...query,
+        sqlExpression: sqlString,
+      };
+
+      onChange(fullQuery);
+      onRunQuery();
+    },
+    [onChange, onRunQuery]
+  );
+
+  const [sqlPreview, setSQLPreview] = useState<string | undefined>();
+  useEffect(() => {
     const sqlGenerator = new SQLGenerator();
     const sqlString = sqlGenerator.expressionToSqlQuery(query.sql ?? {});
-    const fullQuery = {
-      ...query,
-      sqlExpression: sqlString,
-    };
-
-    onChange(fullQuery);
-    onRunQuery();
-  };
+    if (sqlPreview !== sqlString) {
+      setSQLPreview(sqlString);
+    }
+  }, [query, sqlPreview, setSQLPreview]);
 
   return (
     <EditorRows>
@@ -66,10 +78,12 @@ export function SQLBuilderEditor({ query, datasource, onChange, onRunQuery }: Re
         </EditorField>
       </EditorRow>
 
-      <EditorRow>
-        {process.env.NODE_ENV === 'development' && <pre>{JSON.stringify(query.sql ?? {}, null, 2)}</pre>}
-        <pre>{query.sqlExpression ?? ''}</pre>
-      </EditorRow>
+      {sqlPreview && (
+        <EditorRow>
+          {process.env.NODE_ENV === 'development' && <pre>{JSON.stringify(query.sql ?? {}, null, 2)}</pre>}
+          <pre>{sqlPreview ?? ''}</pre>
+        </EditorRow>
+      )}
     </EditorRows>
   );
 }
