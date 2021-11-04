@@ -116,12 +116,11 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 		return expr.DataSourceModel(), nil
 	}
 
-	switch uid {
-	case grafanads.DatasourceUID:
+	if uid == grafanads.DatasourceUID {
 		return grafanads.DataSourceModel(c.OrgId), nil
-	case "": // empty or mssing UID (old or invalid)
-		break
-	default:
+	}
+
+	if uid != "" {
 		ds, err = hs.DataSourceCache.GetDatasourceByUID(uid, c.SignedInUser, c.SkipCache)
 		if err != nil {
 			return nil, hs.handleGetDataSourceError(err, uid)
