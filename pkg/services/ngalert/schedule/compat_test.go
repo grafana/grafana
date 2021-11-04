@@ -137,7 +137,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 						expected[k] = v
 					}
 					expected[model.AlertNameLabel] = NoDataAlertName
-					expected[OriginalAlertName] = alertName
+					expected[Rulename] = alertName
 
 					require.Equal(t, expected, result.Labels)
 
@@ -149,7 +149,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 						result := stateToPostableAlert(alertState, appURL)
 
 						require.Equal(t, NoDataAlertName, result.Labels[model.AlertNameLabel])
-						require.NotContains(t, result.Labels[model.AlertNameLabel], OriginalAlertName)
+						require.NotContains(t, result.Labels[model.AlertNameLabel], Rulename)
 					})
 				})
 			default:
