@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -315,12 +316,12 @@ func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return "", false
 	}
 
-	decryptedError, err := hs.EncryptionService.Decrypt(ctx.Req.Context(), decoded, setting.SecretKey)
+	decryptedError, err := hs.SecretsService.Decrypt(ctx.Req.Context(), decoded)
 	return string(decryptedError), err == nil
 }
 
 func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
-	encryptedError, err := hs.EncryptionService.Encrypt(ctx.Req.Context(), []byte(value), setting.SecretKey)
+	encryptedError, err := hs.SecretsService.Encrypt(ctx.Req.Context(), []byte(value), secrets.WithoutScope())
 	if err != nil {
 		return err
 	}

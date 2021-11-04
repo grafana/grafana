@@ -2236,7 +2236,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/eslintrc@npm:^0.4.0":
+"@eslint/eslintrc@npm:^0.4.0, @eslint/eslintrc@npm:^0.4.2":
   version: 0.4.3
   resolution: "@eslint/eslintrc@npm:0.4.3"
   dependencies:
@@ -2620,7 +2620,7 @@ __metadata:
     concurrently: 6.3.0
     copy-webpack-plugin: 5.1.2
     css-loader: 3.4.2
-    eslint: 7.21.0
+    eslint: 7.28.0
     execa: ^5.1.1
     file-loader: 6.2.0
     fork-ts-checker-webpack-plugin: 6.4.0
@@ -15736,6 +15736,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-prettier@npm:4.0.0":
+  version: 4.0.0
+  resolution: "eslint-plugin-prettier@npm:4.0.0"
+  dependencies:
+    prettier-linter-helpers: ^1.0.0
+  peerDependencies:
+    eslint: ">=7.28.0"
+    prettier: ">=2.0.0"
+  peerDependenciesMeta:
+    eslint-config-prettier:
+      optional: true
+  checksum: 03d69177a3c21fa2229c7e427ce604429f0b20ab7f411e2e824912f572a207c7f5a41fd1f0a95b9b8afe121e291c1b1f1dc1d44c7aad4b0837487f9c19f5210d
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-react-hooks@npm:4.2.0":
   version: 4.2.0
   resolution: "eslint-plugin-react-hooks@npm:4.2.0"
@@ -15880,6 +15895,55 @@ __metadata:
   bin:
     eslint: bin/eslint.js
   checksum: 2ac78e255ff27c6462420adff9b6c6bf8d785ce121d5d2a41d9eddd4e9584027f70cfca1f4c30eaa144c7980cbf7017be1c2c6778b9569cb265fcd37b821146c
+  languageName: node
+  linkType: hard
+
+"eslint@npm:7.28.0":
+  version: 7.28.0
+  resolution: "eslint@npm:7.28.0"
+  dependencies:
+    "@babel/code-frame": 7.12.11
+    "@eslint/eslintrc": ^0.4.2
+    ajv: ^6.10.0
+    chalk: ^4.0.0
+    cross-spawn: ^7.0.2
+    debug: ^4.0.1
+    doctrine: ^3.0.0
+    enquirer: ^2.3.5
+    escape-string-regexp: ^4.0.0
+    eslint-scope: ^5.1.1
+    eslint-utils: ^2.1.0
+    eslint-visitor-keys: ^2.0.0
+    espree: ^7.3.1
+    esquery: ^1.4.0
+    esutils: ^2.0.2
+    fast-deep-equal: ^3.1.3
+    file-entry-cache: ^6.0.1
+    functional-red-black-tree: ^1.0.1
+    glob-parent: ^5.1.2
+    globals: ^13.6.0
+    ignore: ^4.0.6
+    import-fresh: ^3.0.0
+    imurmurhash: ^0.1.4
+    is-glob: ^4.0.0
+    js-yaml: ^3.13.1
+    json-stable-stringify-without-jsonify: ^1.0.1
+    levn: ^0.4.1
+    lodash.merge: ^4.6.2
+    minimatch: ^3.0.4
+    natural-compare: ^1.4.0
+    optionator: ^0.9.1
+    progress: ^2.0.0
+    regexpp: ^3.1.0
+    semver: ^7.2.1
+    strip-ansi: ^6.0.0
+    strip-json-comments: ^3.1.0
+    table: ^6.0.9
+    text-table: ^0.2.0
+    v8-compile-cache: ^2.0.3
+  bin:
+    eslint: bin/eslint.js
+  checksum: 624ed594c909a8e54129b8e659c521de9e31f1f363c5f96f95af674c83887e0b27bf3e8b50ce4b57e6691658f6053be6d62849ab515fd62a54a3a2a85a0f1dfb
   languageName: node
   linkType: hard
 
@@ -17643,6 +17707,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"globals@npm:^13.6.0":
+  version: 13.12.0
+  resolution: "globals@npm:13.12.0"
+  dependencies:
+    type-fest: ^0.20.2
+  checksum: 1f959abb11117916468a1afcba527eead152900cad652c8383c4e8976daea7ec55e1ee30c086f48d1b8655719f214e9d92eca083c3a43b5543bc4056e7e5fccf
+  languageName: node
+  linkType: hard
+
 "globals@npm:^13.9.0":
   version: 13.11.0
   resolution: "globals@npm:13.11.0"
@@ -17973,12 +18046,12 @@ __metadata:
     es-abstract: 1.18.0-next.1
     es6-promise: 4.2.8
     es6-shim: 0.35.5
-    eslint: 7.21.0
+    eslint: 7.28.0
     eslint-config-prettier: 8.3.0
     eslint-plugin-jsdoc: 37.0.3
     eslint-plugin-lodash: ^7.2.0
     eslint-plugin-no-only-tests: 2.4.0
-    eslint-plugin-prettier: 3.3.1
+    eslint-plugin-prettier: 4.0.0
     eslint-plugin-react: 7.22.0
     eslint-plugin-react-hooks: 4.2.0
     eslint-webpack-plugin: 3.0.1
@@ -31853,7 +31926,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"table@npm:^6.0.4, table@npm:^6.6.0":
+"table@npm:^6.0.4, table@npm:^6.0.9, table@npm:^6.6.0":
   version: 6.7.2
   resolution: "table@npm:6.7.2"
   dependencies:
