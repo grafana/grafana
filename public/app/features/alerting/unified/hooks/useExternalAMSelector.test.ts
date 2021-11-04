@@ -40,7 +40,7 @@ describe('useExternalAmSelector', () => {
       {
         url: 'some/url/to/am',
         status: 'pending',
-        actualUrl: 'some/url/to/am/api/v2/alerts',
+        actualUrl: '',
       },
     ]);
   });
@@ -62,7 +62,7 @@ describe('useExternalAmSelector', () => {
       },
       {
         url: 'some/url/to/am1',
-        actualUrl: 'some/url/to/am1/api/v2/alerts',
+        actualUrl: '',
         status: 'pending',
       },
     ]);
@@ -116,7 +116,7 @@ describe('useExternalAmSelector', () => {
       },
       {
         url: 'some/url/to/am1',
-        actualUrl: 'some/url/to/am1/api/v2/alerts',
+        actualUrl: '',
         status: 'pending',
       },
       {
