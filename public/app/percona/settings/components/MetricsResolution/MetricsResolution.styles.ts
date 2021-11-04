@@ -18,5 +18,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   numericFieldWrapper: css`
     width: 100px;
+    white-space: nowrap;
   `,
 }));
