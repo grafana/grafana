@@ -101,7 +101,7 @@ export class DatasourceSrv implements DataSourceService {
         return undefined;
       }
 
-      // The return an instance with name and uid with the original variable string
+      // Return an instance with un-interpolated values for name and uid
       return {
         ...dsSettings,
         isDefault: false,
