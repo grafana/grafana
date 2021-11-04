@@ -35,7 +35,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
-	fakeInstanceStore := &fakeInstanceStore{}
+	fakeInstanceStore := &FakeInstanceStore{}
 	fakeAdminConfigStore := newFakeAdminConfigStore(t)
 
 	// create alert rule with one second interval
@@ -100,7 +100,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
-	fakeInstanceStore := &fakeInstanceStore{}
+	fakeInstanceStore := &FakeInstanceStore{}
 	fakeAdminConfigStore := newFakeAdminConfigStore(t)
 
 	// First, let's create an admin configuration that holds an alertmanager.
@@ -240,9 +240,9 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-	) (*schedule, *fakeRuleStore, *fakeInstanceStore, *fakeAdminConfigStore, prometheus.Gatherer) {
+	) (*schedule, *fakeRuleStore, *FakeInstanceStore, *fakeAdminConfigStore, prometheus.Gatherer) {
 		ruleStore := newFakeRuleStore(t)
-		instanceStore := &fakeInstanceStore{}
+		instanceStore := &FakeInstanceStore{}
 		adminConfigStore := newFakeAdminConfigStore(t)
 
 		registry := prometheus.NewPedanticRegistry()
