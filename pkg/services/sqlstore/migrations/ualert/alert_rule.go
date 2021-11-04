@@ -205,7 +205,7 @@ func transNoData(s string) (string, error) {
 	case "alerting":
 		return "Alerting", nil
 	case "keep_state":
-		return "NoData", nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert. 
+		return "NoData", nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
 	}
 	return "", fmt.Errorf("unrecognized No Data setting %v", s)
 }
