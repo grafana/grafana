@@ -5007,7 +5007,7 @@
           "x-go-name": "FolderID"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1: library panels\n2: library variables",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
           "format": "int64",
           "enum": [
@@ -6632,7 +6632,7 @@
           "x-go-name": "FolderID"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1: library panels\n2: library variables",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
           "format": "int64",
           "enum": [
