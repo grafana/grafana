@@ -2,7 +2,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { PanelPlugin } from '@grafana/data';
 import { ThunkResult } from 'app/types';
 import { config } from 'app/core/config';
-import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import {
   loadPanelPlugin as loadPanelPluginNew,
   loadPluginDashboards as loadPluginDashboardsNew,

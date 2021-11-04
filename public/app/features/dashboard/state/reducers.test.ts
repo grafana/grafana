@@ -51,11 +51,6 @@ describe('dashboard reducer', () => {
     it('should set reset isInitSlow', async () => {
       expect(state.isInitSlow).toBe(false);
     });
-
-    it('should create panel state', async () => {
-      expect(state.panels['1']).toBeDefined();
-      expect(state.panels['2']).toBeDefined();
-    });
   });
 
   describe('dashboardInitFailed', () => {

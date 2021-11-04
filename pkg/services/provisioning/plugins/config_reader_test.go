@@ -32,10 +32,10 @@ func TestConfigReader(t *testing.T) {
 	})
 
 	t.Run("Unknown app plugin should return error", func(t *testing.T) {
-		cfgProvider := newConfigReader(log.New("test logger"), fakePluginManager{})
+		cfgProvider := newConfigReader(log.New("test logger"), fakePluginStore{})
 		_, err := cfgProvider.readConfig(unknownApp)
 		require.Error(t, err)
-		require.Equal(t, "app plugin not installed: \"nonexisting\"", err.Error())
+		require.Equal(t, "plugin not installed: \"nonexisting\"", err.Error())
 	})
 
 	t.Run("Read incorrect properties", func(t *testing.T) {
@@ -46,8 +46,8 @@ func TestConfigReader(t *testing.T) {
 	})
 
 	t.Run("Can read correct properties", func(t *testing.T) {
-		pm := fakePluginManager{
-			apps: map[string]*plugins.AppPlugin{
+		pm := fakePluginStore{
+			apps: map[string]*plugins.Plugin{
 				"test-plugin":   {},
 				"test-plugin-2": {},
 			},
@@ -87,13 +87,12 @@ func TestConfigReader(t *testing.T) {
 	})
 }
 
-type fakePluginManager struct {
-	plugins.Manager
+type fakePluginStore struct {
+	plugins.Store
 
-	apps map[string]*plugins.AppPlugin
+	apps map[string]*plugins.Plugin
 }
 
-func (pm fakePluginManager) IsAppInstalled(id string) bool {
-	_, exists := pm.apps[id]
-	return exists
+func (pr fakePluginStore) Plugin(pluginID string) *plugins.Plugin {
+	return pr.apps[pluginID]
 }

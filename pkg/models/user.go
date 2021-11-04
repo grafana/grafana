@@ -56,18 +56,19 @@ func (u *User) NameOrFallback() string {
 // COMMANDS
 
 type CreateUserCommand struct {
-	Email          string
-	Login          string
-	Name           string
-	Company        string
-	OrgId          int64
-	OrgName        string
-	Password       string
-	EmailVerified  bool
-	IsAdmin        bool
-	IsDisabled     bool
-	SkipOrgSetup   bool
-	DefaultOrgRole string
+	Email            string
+	Login            string
+	Name             string
+	Company          string
+	OrgId            int64
+	OrgName          string
+	Password         string
+	EmailVerified    bool
+	IsAdmin          bool
+	IsDisabled       bool
+	SkipOrgSetup     bool
+	DefaultOrgRole   string
+	IsServiceAccount bool
 
 	Result User
 }

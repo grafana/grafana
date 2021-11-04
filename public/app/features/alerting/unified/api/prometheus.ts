@@ -3,14 +3,32 @@ import { getBackendSrv } from '@grafana/runtime';
 
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromRulesResponse } from 'app/types/unified-alerting-dto';
-import { getDatasourceAPIId } from '../utils/datasource';
+import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[]> {
+export interface FetchPromRulesFilter {
+  dashboardUID: string;
+  panelId?: number;
+}
+
+export async function fetchRules(dataSourceName: string, filter?: FetchPromRulesFilter): Promise<RuleNamespace[]> {
+  if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+    throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
+  }
+
+  const params: Record<string, string> = {};
+  if (filter?.dashboardUID) {
+    params['dashboard_uid'] = filter.dashboardUID;
+    if (filter.panelId) {
+      params['panel_id'] = String(filter.panelId);
+    }
+  }
+
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromRulesResponse>({
       url: `/api/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
       showErrorAlert: false,
       showSuccessAlert: false,
+      params,
     })
   ).catch((e) => {
     if ('status' in e && e.status === 404) {

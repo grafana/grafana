@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var client = &http.Client{
@@ -146,7 +146,7 @@ func CreateDashboardSnapshot(c *models.ReqContext, cmd models.CreateDashboardSna
 
 // GET /api/snapshots/:key
 func GetDashboardSnapshot(c *models.ReqContext) response.Response {
-	key := macaron.Params(c.Req)[":key"]
+	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
 		return response.Error(404, "Snapshot not found", nil)
 	}
@@ -214,7 +214,7 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 
 // GET /api/snapshots-delete/:deleteKey
 func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response {
-	key := macaron.Params(c.Req)[":deleteKey"]
+	key := web.Params(c.Req)[":deleteKey"]
 	if len(key) == 0 {
 		return response.Error(404, "Snapshot not found", nil)
 	}
@@ -247,7 +247,7 @@ func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response 
 
 // DELETE /api/snapshots/:key
 func DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
-	key := macaron.Params(c.Req)[":key"]
+	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
 		return response.Error(404, "Snapshot not found", nil)
 	}

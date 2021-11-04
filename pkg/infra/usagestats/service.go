@@ -15,7 +15,7 @@ type Report struct {
 	UsageStatsId    string                 `json:"usageStatsId"`
 }
 
-type MetricsFunc func() (map[string]interface{}, error)
+type MetricsFunc func(context.Context) (map[string]interface{}, error)
 
 type SendReportCallbackFunc func()
 

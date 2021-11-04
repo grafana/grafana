@@ -8,6 +8,7 @@ import {
   GrafanaTheme2,
   NavModel,
   NavModelItem,
+  PanelPluginMeta,
   PluginDependencies,
   PluginInclude,
   PluginIncludeType,
@@ -17,14 +18,14 @@ import {
   PluginSignatureType,
   PluginType,
   UrlQueryMap,
-  PanelPluginMeta,
 } from '@grafana/data';
 import { AppNotificationSeverity } from 'app/types';
-import { Alert, LinkButton, PluginSignatureBadge, Tooltip, Badge, useStyles2, Icon } from '@grafana/ui';
+import { Alert, Badge, Icon, LinkButton, PluginSignatureBadge, Tooltip, useStyles2 } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
-import { importAppPlugin, importDataSourcePlugin, importPanelPluginFromMeta } from './plugin_loader';
+import { importAppPlugin, importDataSourcePlugin } from './plugin_loader';
+import { importPanelPluginFromMeta } from './importPanelPlugin';
 import { getNotFoundNav } from 'app/core/nav_model_srv';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
@@ -489,22 +490,29 @@ export function getLoadingNav(): NavModel {
   };
 }
 
-export function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
-  return getPluginSettings(pluginId).then((info) => {
-    if (info.type === PluginType.app) {
-      return importAppPlugin(info);
-    }
-    if (info.type === PluginType.datasource) {
-      return importDataSourcePlugin(info);
-    }
-    if (info.type === PluginType.panel) {
-      return importPanelPluginFromMeta(info as PanelPluginMeta);
-    }
-    if (info.type === PluginType.renderer) {
-      return Promise.resolve({ meta: info } as GrafanaPlugin);
-    }
-    return Promise.reject('Unknown Plugin type: ' + info.type);
-  });
+export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
+  const info = await getPluginSettings(pluginId);
+  let result: GrafanaPlugin | undefined;
+
+  if (info.type === PluginType.app) {
+    result = await importAppPlugin(info);
+  }
+  if (info.type === PluginType.datasource) {
+    result = await importDataSourcePlugin(info);
+  }
+  if (info.type === PluginType.panel) {
+    const panelPlugin = await importPanelPluginFromMeta(info as PanelPluginMeta);
+    result = (panelPlugin as unknown) as GrafanaPlugin;
+  }
+  if (info.type === PluginType.renderer) {
+    result = { meta: info } as GrafanaPlugin;
+  }
+
+  if (!result) {
+    throw new Error('Unknown Plugin type: ' + info.type);
+  }
+
+  return result;
 }
 
 type PluginSignatureDetailsBadgeProps = {

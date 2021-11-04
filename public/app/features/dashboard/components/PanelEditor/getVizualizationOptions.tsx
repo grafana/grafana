@@ -1,7 +1,7 @@
 import React from 'react';
 import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet } from 'lodash';
-import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import { getDataLinksVariableSuggestions } from 'app/angular/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue, setOptionImmutably } from './utils';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
@@ -98,7 +98,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
             );
           };
 
-          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} />;
+          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={fieldOption.id} />;
         },
       })
     );
@@ -136,12 +136,16 @@ export function fillOptionsPaneItems(
 
     // Nested options get passed up one level
     if (isNestedPanelOptions(pluginOption)) {
-      const sub = access.getValue(pluginOption.path);
+      const subAccess = pluginOption.getNestedValueAccess(access);
+      const subContext = subAccess.getContext
+        ? subAccess.getContext(context)
+        : { ...context, options: access.getValue(pluginOption.path) };
+
       fillOptionsPaneItems(
         pluginOption.getBuilder(),
-        pluginOption.getNestedValueAccess(access),
+        subAccess,
         getOptionsPaneCategory,
-        { ...context, options: sub },
+        subContext,
         category // parent category
       );
       continue;
@@ -161,6 +165,7 @@ export function fillOptionsPaneItems(
               }}
               item={pluginOption}
               context={context}
+              id={pluginOption.id}
             />
           );
         },

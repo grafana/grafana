@@ -10,7 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/validations"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 func presenceComparerInt(a, b int64) bool {
@@ -23,140 +24,138 @@ func presenceComparerInt(a, b int64) bool {
 	return a == b
 }
 func TestVictoropsNotifier(t *testing.T) {
-	Convey("Victorops notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
-				json := `{ }`
+	t.Run("Parsing alert notification from settings", func(t *testing.T) {
+		t.Run("empty settings should return error", func(t *testing.T) {
+			json := `{ }`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &models.AlertNotification{
-					Name:     "victorops_testing",
-					Type:     "victorops",
-					Settings: settingsJSON,
-				}
+			settingsJSON, _ := simplejson.NewJson([]byte(json))
+			model := &models.AlertNotification{
+				Name:     "victorops_testing",
+				Type:     "victorops",
+				Settings: settingsJSON,
+			}
 
-				_, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-				So(err, ShouldNotBeNil)
-			})
+			_, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			require.Error(t, err)
+		})
 
-			Convey("from settings", func() {
-				json := `
+		t.Run("from settings", func(t *testing.T) {
+			json := `
 				{
           "url": "http://google.com"
 				}`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &models.AlertNotification{
-					Name:     "victorops_testing",
-					Type:     "victorops",
-					Settings: settingsJSON,
-				}
+			settingsJSON, _ := simplejson.NewJson([]byte(json))
+			model := &models.AlertNotification{
+				Name:     "victorops_testing",
+				Type:     "victorops",
+				Settings: settingsJSON,
+			}
 
-				not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-				victoropsNotifier := not.(*VictoropsNotifier)
+			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			victoropsNotifier := not.(*VictoropsNotifier)
 
-				So(err, ShouldBeNil)
-				So(victoropsNotifier.Name, ShouldEqual, "victorops_testing")
-				So(victoropsNotifier.Type, ShouldEqual, "victorops")
-				So(victoropsNotifier.URL, ShouldEqual, "http://google.com")
-			})
+			require.Nil(t, err)
+			require.Equal(t, "victorops_testing", victoropsNotifier.Name)
+			require.Equal(t, "victorops", victoropsNotifier.Type)
+			require.Equal(t, "http://google.com", victoropsNotifier.URL)
+		})
 
-			Convey("should return properly formatted event payload when using severity override tag", func() {
-				json := `
+		t.Run("should return properly formatted event payload when using severity override tag", func(t *testing.T) {
+			json := `
 				{
 					"url": "http://google.com"
 				}`
 
-				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+			settingsJSON, err := simplejson.NewJson([]byte(json))
+			require.Nil(t, err)
 
-				model := &models.AlertNotification{
-					Name:     "victorops_testing",
-					Type:     "victorops",
-					Settings: settingsJSON,
-				}
+			model := &models.AlertNotification{
+				Name:     "victorops_testing",
+				Type:     "victorops",
+				Settings: settingsJSON,
+			}
 
-				not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-				So(err, ShouldBeNil)
+			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			require.Nil(t, err)
 
-				victoropsNotifier := not.(*VictoropsNotifier)
+			victoropsNotifier := not.(*VictoropsNotifier)
 
-				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
-					ID:      0,
-					Name:    "someRule",
-					Message: "someMessage",
-					State:   models.AlertStateAlerting,
-					AlertRuleTags: []*models.Tag{
-						{Key: "keyOnly"},
-						{Key: "severity", Value: "warning"},
-					},
-				}, &validations.OSSPluginRequestValidator{})
-				evalContext.IsTestRun = true
+			evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+				ID:      0,
+				Name:    "someRule",
+				Message: "someMessage",
+				State:   models.AlertStateAlerting,
+				AlertRuleTags: []*models.Tag{
+					{Key: "keyOnly"},
+					{Key: "severity", Value: "warning"},
+				},
+			}, &validations.OSSPluginRequestValidator{})
+			evalContext.IsTestRun = true
 
-				payload, err := victoropsNotifier.buildEventPayload(evalContext)
-				So(err, ShouldBeNil)
+			payload, err := victoropsNotifier.buildEventPayload(evalContext)
+			require.Nil(t, err)
 
-				diff := cmp.Diff(map[string]interface{}{
-					"alert_url":           "",
-					"entity_display_name": "[Alerting] someRule",
-					"entity_id":           "someRule",
-					"message_type":        "WARNING",
-					"metrics":             map[string]interface{}{},
-					"monitoring_tool":     "Grafana v",
-					"state_message":       "someMessage",
-					"state_start_time":    int64(-1),
-					"timestamp":           int64(-1),
-				}, payload.Interface(), cmp.Comparer(presenceComparerInt))
-				So(diff, ShouldBeEmpty)
-			})
-			Convey("resolving with severity works properly", func() {
-				json := `
+			diff := cmp.Diff(map[string]interface{}{
+				"alert_url":           "",
+				"entity_display_name": "[Alerting] someRule",
+				"entity_id":           "someRule",
+				"message_type":        "WARNING",
+				"metrics":             map[string]interface{}{},
+				"monitoring_tool":     "Grafana v",
+				"state_message":       "someMessage",
+				"state_start_time":    int64(-1),
+				"timestamp":           int64(-1),
+			}, payload.Interface(), cmp.Comparer(presenceComparerInt))
+			require.Empty(t, diff)
+		})
+		t.Run("resolving with severity works properly", func(t *testing.T) {
+			json := `
 				{
 					"url": "http://google.com"
 				}`
 
-				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+			settingsJSON, err := simplejson.NewJson([]byte(json))
+			require.Nil(t, err)
 
-				model := &models.AlertNotification{
-					Name:     "victorops_testing",
-					Type:     "victorops",
-					Settings: settingsJSON,
-				}
+			model := &models.AlertNotification{
+				Name:     "victorops_testing",
+				Type:     "victorops",
+				Settings: settingsJSON,
+			}
 
-				not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-				So(err, ShouldBeNil)
+			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			require.Nil(t, err)
 
-				victoropsNotifier := not.(*VictoropsNotifier)
+			victoropsNotifier := not.(*VictoropsNotifier)
 
-				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
-					ID:      0,
-					Name:    "someRule",
-					Message: "someMessage",
-					State:   models.AlertStateOK,
-					AlertRuleTags: []*models.Tag{
-						{Key: "keyOnly"},
-						{Key: "severity", Value: "warning"},
-					},
-				}, &validations.OSSPluginRequestValidator{})
-				evalContext.IsTestRun = true
+			evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+				ID:      0,
+				Name:    "someRule",
+				Message: "someMessage",
+				State:   models.AlertStateOK,
+				AlertRuleTags: []*models.Tag{
+					{Key: "keyOnly"},
+					{Key: "severity", Value: "warning"},
+				},
+			}, &validations.OSSPluginRequestValidator{})
+			evalContext.IsTestRun = true
 
-				payload, err := victoropsNotifier.buildEventPayload(evalContext)
-				So(err, ShouldBeNil)
+			payload, err := victoropsNotifier.buildEventPayload(evalContext)
+			require.Nil(t, err)
 
-				diff := cmp.Diff(map[string]interface{}{
-					"alert_url":           "",
-					"entity_display_name": "[OK] someRule",
-					"entity_id":           "someRule",
-					"message_type":        "RECOVERY",
-					"metrics":             map[string]interface{}{},
-					"monitoring_tool":     "Grafana v",
-					"state_message":       "someMessage",
-					"state_start_time":    int64(-1),
-					"timestamp":           int64(-1),
-				}, payload.Interface(), cmp.Comparer(presenceComparerInt))
-				So(diff, ShouldBeEmpty)
-			})
+			diff := cmp.Diff(map[string]interface{}{
+				"alert_url":           "",
+				"entity_display_name": "[OK] someRule",
+				"entity_id":           "someRule",
+				"message_type":        "RECOVERY",
+				"metrics":             map[string]interface{}{},
+				"monitoring_tool":     "Grafana v",
+				"state_message":       "someMessage",
+				"state_start_time":    int64(-1),
+				"timestamp":           int64(-1),
+			}, payload.Interface(), cmp.Comparer(presenceComparerInt))
+			require.Empty(t, diff)
 		})
 	})
 }

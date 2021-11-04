@@ -2,6 +2,7 @@ import { ComponentType } from 'react';
 import {
   DataQuery,
   DataSourceJsonData,
+  DataSourceRef,
   LoadingState,
   QueryEditorProps,
   VariableModel as BaseVariableModel,
@@ -48,7 +49,7 @@ export interface AdHocVariableFilter {
 }
 
 export interface AdHocVariableModel extends VariableModel {
-  datasource: string | null;
+  datasource: DataSourceRef | null;
   filters: AdHocVariableFilter[];
 }
 
@@ -67,7 +68,7 @@ export interface DataSourceVariableModel extends VariableWithMultiSupport {
 }
 
 export interface QueryVariableModel extends DataSourceVariableModel {
-  datasource: string | null;
+  datasource: DataSourceRef | null;
   definition: string;
   sort: VariableSort;
   queryValue?: string;

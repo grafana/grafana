@@ -11,11 +11,7 @@ describe('Trace view', () => {
 
     e2e.pages.Explore.visit();
 
-    e2e.components.DataSourcePicker.container()
-      .should('be.visible')
-      .within(() => {
-        e2e.components.DataSourcePicker.input().should('be.visible').click();
-      });
+    e2e.components.DataSourcePicker.inputV2().should('be.visible').click();
 
     e2e().contains('gdev-jaeger').scrollIntoView().should('be.visible').click();
 

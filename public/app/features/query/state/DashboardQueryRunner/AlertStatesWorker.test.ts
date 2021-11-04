@@ -12,7 +12,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function getDefaultOptions(): DashboardQueryRunnerOptions {
-  const dashboard: any = { id: 'an id' };
+  const dashboard: any = { id: 'an id', panels: [{ alert: {} }] };
   const range = getDefaultTimeRange();
 
   return { dashboard, range };
@@ -57,6 +57,14 @@ describe('AlertStatesWorker', () => {
     });
   });
 
+  describe('when canWork is called for dashboard with no alert panels', () => {
+    it('then it should return false', () => {
+      const options = getDefaultOptions();
+      options.dashboard.panels.forEach((panel) => delete panel.alert);
+      expect(worker.canWork(options)).toBe(false);
+    });
+  });
+
   describe('when run is called with incorrect props', () => {
     it('then it should return the correct results', async () => {
       const { getMock, options } = getTestContext();
@@ -74,8 +82,8 @@ describe('AlertStatesWorker', () => {
   describe('when run is called with correct props and request is successful', () => {
     it('then it should return the correct results', async () => {
       const getResults: AlertStateInfo[] = [
-        { id: 1, state: AlertState.Alerting, newStateDate: '2021-01-01', dashboardId: 1, panelId: 1 },
-        { id: 2, state: AlertState.Alerting, newStateDate: '2021-02-01', dashboardId: 1, panelId: 2 },
+        { id: 1, state: AlertState.Alerting, dashboardId: 1, panelId: 1 },
+        { id: 2, state: AlertState.Alerting, dashboardId: 1, panelId: 2 },
       ];
       const { getMock, options } = getTestContext();
       getMock.mockResolvedValue(getResults);

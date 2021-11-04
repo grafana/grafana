@@ -21,7 +21,7 @@ import (
 
 // DashboardService is a service for operating on dashboards.
 type DashboardService interface {
-	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
+	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	DeleteDashboard(dashboardId int64, orgId int64) error
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
@@ -29,8 +29,8 @@ type DashboardService interface {
 
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
 type DashboardProvisioningService interface {
-	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
-	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
+	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
+	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
 	UnprovisionDashboard(dashboardID int64) error
@@ -205,17 +205,17 @@ func validateDashboardRefreshInterval(dash *models.Dashboard) error {
 // UpdateAlerting updates alerting.
 //
 // Stubbable by tests.
-var UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+var UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 	extractor := alerting.NewDashAlertExtractor(dashboard, orgID, user)
 	alerts, err := extractor.GetAlerts()
 	if err != nil {
 		return err
 	}
 
-	return store.SaveAlerts(dashboard.Id, alerts)
+	return store.SaveAlerts(ctx, dashboard.Id, alerts)
 }
 
-func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO,
+func (dr *dashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO,
 	provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	if err := validateDashboardRefreshInterval(dto.Dashboard); err != nil {
 		dr.log.Warn("Changing refresh interval for provisioned dashboard to minimum refresh interval", "dashboardUid",
@@ -241,14 +241,14 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO,
 	}
 
 	// alerts
-	if err := UpdateAlerting(dr.dashboardStore, dto.OrgId, dash, dto.User); err != nil {
+	if err := UpdateAlerting(ctx, dr.dashboardStore, dto.OrgId, dash, dto.User); err != nil {
 		return nil, err
 	}
 
 	return dash, nil
 }
 
-func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
@@ -263,14 +263,15 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 		return nil, err
 	}
 
-	if err := UpdateAlerting(dr.dashboardStore, dto.OrgId, dash, dto.User); err != nil {
+	if err := UpdateAlerting(ctx, dr.dashboardStore, dto.OrgId, dash, dto.User); err != nil {
 		return nil, err
 	}
 
 	return dash, nil
 }
 
-func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
+func (dr *dashboardServiceImpl) SaveDashboard(ctx context.Context, dto *SaveDashboardDTO,
+	allowUiUpdate bool) (*models.Dashboard, error) {
 	if err := validateDashboardRefreshInterval(dto.Dashboard); err != nil {
 		dr.log.Warn("Changing refresh interval for imported dashboard to minimum refresh interval",
 			"dashboardUid", dto.Dashboard.Uid, "dashboardTitle", dto.Dashboard.Title, "minRefreshInterval",
@@ -288,7 +289,7 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO, allowUiUpda
 		return nil, fmt.Errorf("saving dashboard failed: %w", err)
 	}
 
-	if err := UpdateAlerting(dr.dashboardStore, dto.OrgId, dash, dto.User); err != nil {
+	if err := UpdateAlerting(ctx, dr.dashboardStore, dto.OrgId, dash, dto.User); err != nil {
 		return nil, err
 	}
 
@@ -359,7 +360,7 @@ type FakeDashboardService struct {
 	ProvisionedDashData *models.DashboardProvisioning
 }
 
-func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
+func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
 	s.SavedDashboards = append(s.SavedDashboards, dto)
 
 	if s.SaveDashboardResult == nil && s.SaveDashboardError == nil {
@@ -370,7 +371,7 @@ func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO, allowUiUpdat
 }
 
 func (s *FakeDashboardService) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
-	return s.SaveDashboard(dto, true)
+	return s.SaveDashboard(context.Background(), dto, true)
 }
 
 func (s *FakeDashboardService) DeleteDashboard(dashboardId int64, orgId int64) error {

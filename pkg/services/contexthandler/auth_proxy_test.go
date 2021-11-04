@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
-	macaron "gopkg.in/macaron.v1"
 )
 
 // Test initContextWithAuthProxy with a cached user ID that is no longer valid.
@@ -58,7 +58,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
 	ctx := &models.ReqContext{
-		Context: &macaron.Context{Req: req},
+		Context: &web.Context{Req: req},
 		Logger:  log.New("Test"),
 	}
 	req.Header.Set(svc.Cfg.AuthProxyHeaderName, name)

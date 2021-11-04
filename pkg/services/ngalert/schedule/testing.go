@@ -21,15 +21,52 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// waitForTimeChannel blocks the execution until either the channel ch has some data or a timeout of 10 second expires.
+// Timeout will cause the test to fail.
+// Returns the data from the channel.
+func waitForTimeChannel(t *testing.T, ch chan time.Time) time.Time {
+	select {
+	case result := <-ch:
+		return result
+	case <-time.After(time.Duration(10) * time.Second):
+		t.Fatalf("Timeout waiting for data in the time channel")
+		return time.Time{}
+	}
+}
+
+// waitForErrChannel blocks the execution until either the channel ch has some data or a timeout of 10 second expires.
+// Timeout will cause the test to fail.
+// Returns the data from the channel.
+func waitForErrChannel(t *testing.T, ch chan error) error {
+	timeout := time.Duration(10) * time.Second
+	select {
+	case result := <-ch:
+		return result
+	case <-time.After(timeout):
+		t.Fatal("Timeout waiting for data in the error channel")
+		return nil
+	}
+}
+
 func newFakeRuleStore(t *testing.T) *fakeRuleStore {
 	return &fakeRuleStore{t: t, rules: map[int64]map[string]map[string][]*models.AlertRule{}}
 }
 
 // FakeRuleStore mocks the RuleStore of the scheduler.
 type fakeRuleStore struct {
-	t     *testing.T
-	mtx   sync.Mutex
-	rules map[int64]map[string]map[string][]*models.AlertRule
+	t           *testing.T
+	mtx         sync.Mutex
+	rules       map[int64]map[string]map[string][]*models.AlertRule
+	recordedOps []interface{}
+}
+
+// putRule puts the rule in the rules map. If there are existing rule in the same namespace, they will be overwritten
+func (f *fakeRuleStore) putRule(r *models.AlertRule) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{
+		r,
+	}
 }
 
 func (f *fakeRuleStore) DeleteAlertRuleByUID(_ int64, _ string) error { return nil }
@@ -43,7 +80,7 @@ func (f *fakeRuleStore) DeleteAlertInstancesByRuleUID(_ int64, _ string) error {
 func (f *fakeRuleStore) GetAlertRuleByUID(q *models.GetAlertRuleByUIDQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-
+	f.recordedOps = append(f.recordedOps, *q)
 	rgs, ok := f.rules[q.OrgID]
 	if !ok {
 		return nil
@@ -67,7 +104,7 @@ func (f *fakeRuleStore) GetAlertRuleByUID(q *models.GetAlertRuleByUIDQuery) erro
 func (f *fakeRuleStore) GetAlertRulesForScheduling(q *models.ListAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-
+	f.recordedOps = append(f.recordedOps, *q)
 	for _, rg := range f.rules {
 		for _, n := range rg {
 			for _, r := range n {
@@ -78,13 +115,22 @@ func (f *fakeRuleStore) GetAlertRulesForScheduling(q *models.ListAlertRulesQuery
 
 	return nil
 }
-func (f *fakeRuleStore) GetOrgAlertRules(_ *models.ListAlertRulesQuery) error { return nil }
-func (f *fakeRuleStore) GetNamespaceAlertRules(_ *models.ListNamespaceAlertRulesQuery) error {
+func (f *fakeRuleStore) GetOrgAlertRules(q *models.ListAlertRulesQuery) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.recordedOps = append(f.recordedOps, *q)
+	return nil
+}
+func (f *fakeRuleStore) GetNamespaceAlertRules(q *models.ListNamespaceAlertRulesQuery) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.recordedOps = append(f.recordedOps, *q)
 	return nil
 }
 func (f *fakeRuleStore) GetRuleGroupAlertRules(q *models.ListRuleGroupAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
+	f.recordedOps = append(f.recordedOps, *q)
 	rgs, ok := f.rules[q.OrgID]
 	if !ok {
 		return nil
@@ -116,11 +162,23 @@ func (f *fakeRuleStore) GetNamespaces(_ context.Context, _ int64, _ *models2.Sig
 func (f *fakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
 	return nil, nil
 }
-func (f *fakeRuleStore) GetOrgRuleGroups(_ *models.ListOrgRuleGroupsQuery) error { return nil }
-func (f *fakeRuleStore) UpsertAlertRules(_ []store.UpsertRule) error             { return nil }
+func (f *fakeRuleStore) GetOrgRuleGroups(q *models.ListOrgRuleGroupsQuery) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.recordedOps = append(f.recordedOps, *q)
+	return nil
+}
+
+func (f *fakeRuleStore) UpsertAlertRules(q []store.UpsertRule) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.recordedOps = append(f.recordedOps, q)
+	return nil
+}
 func (f *fakeRuleStore) UpdateRuleGroup(cmd store.UpdateRuleGroupCmd) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
+	f.recordedOps = append(f.recordedOps, cmd)
 	rgs, ok := f.rules[cmd.OrgID]
 	if !ok {
 		f.rules[cmd.OrgID] = map[string]map[string][]*models.AlertRule{}
@@ -138,7 +196,7 @@ func (f *fakeRuleStore) UpdateRuleGroup(cmd store.UpdateRuleGroupCmd) error {
 
 	rules := []*models.AlertRule{}
 	for _, r := range cmd.RuleGroupConfig.Rules {
-		//TODO: Not sure why this is not being set properly, where is the code that sets this?
+		// TODO: Not sure why this is not being set properly, where is the code that sets this?
 		for i := range r.GrafanaManagedAlert.Data {
 			r.GrafanaManagedAlert.Data[i].DatasourceUID = "-100"
 		}
@@ -181,13 +239,32 @@ func (f *fakeRuleStore) UpdateRuleGroup(cmd store.UpdateRuleGroupCmd) error {
 	return nil
 }
 
-type fakeInstanceStore struct{}
+type fakeInstanceStore struct {
+	mtx         sync.Mutex
+	recordedOps []interface{}
+}
 
-func (f *fakeInstanceStore) GetAlertInstance(_ *models.GetAlertInstanceQuery) error     { return nil }
-func (f *fakeInstanceStore) ListAlertInstances(_ *models.ListAlertInstancesQuery) error { return nil }
-func (f *fakeInstanceStore) SaveAlertInstance(_ *models.SaveAlertInstanceCommand) error { return nil }
-func (f *fakeInstanceStore) FetchOrgIds() ([]int64, error)                              { return []int64{}, nil }
-func (f *fakeInstanceStore) DeleteAlertInstance(_ int64, _, _ string) error             { return nil }
+func (f *fakeInstanceStore) GetAlertInstance(q *models.GetAlertInstanceQuery) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.recordedOps = append(f.recordedOps, *q)
+	return nil
+}
+func (f *fakeInstanceStore) ListAlertInstances(q *models.ListAlertInstancesQuery) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.recordedOps = append(f.recordedOps, *q)
+	return nil
+}
+func (f *fakeInstanceStore) SaveAlertInstance(q *models.SaveAlertInstanceCommand) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.recordedOps = append(f.recordedOps, *q)
+	return nil
+}
+
+func (f *fakeInstanceStore) FetchOrgIds() ([]int64, error)                  { return []int64{}, nil }
+func (f *fakeInstanceStore) DeleteAlertInstance(_ int64, _, _ string) error { return nil }
 
 func newFakeAdminConfigStore(t *testing.T) *fakeAdminConfigStore {
 	t.Helper()

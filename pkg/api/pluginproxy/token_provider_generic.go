@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -27,9 +26,9 @@ type tokenCacheType struct {
 
 type genericAccessTokenProvider struct {
 	datasourceId      int64
-	datasourceVersion int
-	route             *plugins.AppPluginRoute
-	authParams        *plugins.JwtTokenAuth
+	datasourceUpdated time.Time
+	route             *plugins.Route
+	authParams        *plugins.JWTTokenAuth
 }
 
 type jwtToken struct {
@@ -68,11 +67,11 @@ func (token *jwtToken) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func newGenericAccessTokenProvider(ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
-	authParams *plugins.JwtTokenAuth) *genericAccessTokenProvider {
+func newGenericAccessTokenProvider(ds DSInfo, pluginRoute *plugins.Route,
+	authParams *plugins.JWTTokenAuth) *genericAccessTokenProvider {
 	return &genericAccessTokenProvider{
-		datasourceId:      ds.Id,
-		datasourceVersion: ds.Version,
+		datasourceId:      ds.ID,
+		datasourceUpdated: ds.Updated,
 		route:             pluginRoute,
 		authParams:        authParams,
 	}
@@ -124,5 +123,5 @@ func (provider *genericAccessTokenProvider) GetAccessToken() (string, error) {
 }
 
 func (provider *genericAccessTokenProvider) getAccessTokenCacheKey() string {
-	return fmt.Sprintf("%v_%v_%v_%v", provider.datasourceId, provider.datasourceVersion, provider.route.Path, provider.route.Method)
+	return fmt.Sprintf("%v_%v_%v_%v", provider.datasourceId, provider.datasourceUpdated.Unix(), provider.route.Path, provider.route.Method)
 }

@@ -95,6 +95,9 @@ func (r RoleDTO) GetDisplayName() string {
 	if r.IsFixed() && r.DisplayName == "" {
 		r.DisplayName = fallbackDisplayName(r.Name)
 	}
+	if r.DisplayName == "" {
+		return r.Name
+	}
 	return r.DisplayName
 }
 

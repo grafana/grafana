@@ -1,5 +1,6 @@
-import { FieldConfigSource, PanelTypeChangedHandler, Threshold, ThresholdsMode } from '@grafana/data';
+import { FieldConfigSource, PanelModel, PanelTypeChangedHandler, Threshold, ThresholdsMode } from '@grafana/data';
 import { GeomapPanelOptions } from './types';
+import { markerMakers } from './utils/regularShapes';
 import { MapCenterID } from './view';
 
 /**
@@ -97,3 +98,27 @@ function asNumber(v: any): number | undefined {
   const num = +v;
   return isNaN(num) ? undefined : num;
 }
+
+export const mapMigrationHandler = (panel: PanelModel): Partial<GeomapPanelOptions> => {
+  const pluginVersion = panel?.pluginVersion;
+  if (pluginVersion?.startsWith('8.1') || pluginVersion?.startsWith('8.2') || pluginVersion?.startsWith('8.3')) {
+    if (panel.options?.layers?.length > 0) {
+      const layer = panel.options.layers[0];
+      if (layer?.type === 'markers') {
+        const shape = layer?.config?.shape;
+        if (shape) {
+          const marker = markerMakers.getIfExists(shape);
+          if (marker?.aliasIds && marker.aliasIds?.length > 0) {
+            layer.config.markerSymbol = {
+              fixed: marker.aliasIds[0],
+              mode: 'fixed',
+            };
+            delete layer.config.shape;
+          }
+          return { ...panel.options, layers: Object.assign([], ...panel.options.layers, { 0: layer }) };
+        }
+      }
+    }
+  }
+  return panel.options;
+};

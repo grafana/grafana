@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
-	macaron "gopkg.in/macaron.v1"
 )
 
 func TestMiddlewareQuota(t *testing.T) {
@@ -266,7 +266,7 @@ func TestMiddlewareQuota(t *testing.T) {
 	})
 }
 
-func getQuotaHandler(sc *scenarioContext, target string) macaron.Handler {
+func getQuotaHandler(sc *scenarioContext, target string) web.Handler {
 	fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 	qs := &quota.QuotaService{
 		AuthTokenService: fakeAuthTokenService,

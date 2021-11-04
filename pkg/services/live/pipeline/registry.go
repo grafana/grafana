@@ -58,7 +58,9 @@ var ConvertersRegistry = []EntityInfo{
 	{
 		Type:        ConverterTypeInfluxAuto,
 		Description: "accept influx line protocol",
-		Example:     AutoInfluxConverterConfig{},
+		Example: AutoInfluxConverterConfig{
+			FrameFormat: "labels_column",
+		},
 	},
 	{
 		Type:        ConverterTypeJsonFrame,

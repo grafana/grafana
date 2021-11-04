@@ -25,6 +25,7 @@ export const bundlePlugin = async ({ watch, production, preserveConsole }: Plugi
       console.log('Started watching plugin for changes...');
       compiler.watch({}, (err, stats) => {});
 
+      // @ts-ignore
       compiler.hooks.invalid.tap('invalid', () => {
         clearConsole();
         console.log('Compiling...');

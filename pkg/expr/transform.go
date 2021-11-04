@@ -178,7 +178,7 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 		Uid:   datasourceUID,
 	}
 
-	if err := bus.Dispatch(getDsInfo); err != nil {
+	if err := bus.DispatchCtx(ctx, getDsInfo); err != nil {
 		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 

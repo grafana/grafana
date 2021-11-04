@@ -18,12 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginManager plugifaces.Manager,
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugifaces.Store,
 	encryptionService encryption.Service) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
 		SQLStore:                sqlStore,
-		PluginManager:           pluginManager,
+		pluginStore:             pluginStore,
 		EncryptionService:       encryptionService,
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: dashboards.New,
@@ -36,10 +36,10 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginManager
 
 type ProvisioningService interface {
 	registry.BackgroundService
-	RunInitProvisioners() error
-	ProvisionDatasources() error
+	RunInitProvisioners(ctx context.Context) error
+	ProvisionDatasources(ctx context.Context) error
 	ProvisionPlugins() error
-	ProvisionNotifications() error
+	ProvisionNotifications(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
@@ -59,9 +59,9 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
-	provisionNotifiers func(string, encryption.Service) error,
-	provisionDatasources func(string) error,
-	provisionPlugins func(string, plugifaces.Manager) error,
+	provisionNotifiers func(context.Context, string, encryption.Service) error,
+	provisionDatasources func(context.Context, string) error,
+	provisionPlugins func(string, plugifaces.Store) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -75,20 +75,20 @@ func newProvisioningServiceImpl(
 type ProvisioningServiceImpl struct {
 	Cfg                     *setting.Cfg
 	SQLStore                *sqlstore.SQLStore
-	PluginManager           plugifaces.Manager
+	pluginStore             plugifaces.Store
 	EncryptionService       encryption.Service
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
 	dashboardProvisioner    dashboards.DashboardProvisioner
-	provisionNotifiers      func(string, encryption.Service) error
-	provisionDatasources    func(string) error
-	provisionPlugins        func(string, plugifaces.Manager) error
+	provisionNotifiers      func(context.Context, string, encryption.Service) error
+	provisionDatasources    func(context.Context, string) error
+	provisionPlugins        func(string, plugifaces.Store) error
 	mutex                   sync.Mutex
 }
 
-func (ps *ProvisioningServiceImpl) RunInitProvisioners() error {
-	err := ps.ProvisionDatasources()
+func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
+	err := ps.ProvisionDatasources(ctx)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners() error {
 		return err
 	}
 
-	err = ps.ProvisionNotifications()
+	err = ps.ProvisionNotifications(ctx)
 	if err != nil {
 		return err
 	}
@@ -135,27 +135,27 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	}
 }
 
-func (ps *ProvisioningServiceImpl) ProvisionDatasources() error {
+func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) error {
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
-	err := ps.provisionDatasources(datasourcePath)
+	err := ps.provisionDatasources(ctx, datasourcePath)
 	return errutil.Wrap("Datasource provisioning error", err)
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins() error {
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
-	err := ps.provisionPlugins(appPath, ps.PluginManager)
+	err := ps.provisionPlugins(appPath, ps.pluginStore)
 	return errutil.Wrap("app provisioning error", err)
 }
 
-func (ps *ProvisioningServiceImpl) ProvisionNotifications() error {
+func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) error {
 	alertNotificationsPath := filepath.Join(ps.Cfg.ProvisioningPath, "notifiers")
-	err := ps.provisionNotifiers(alertNotificationsPath, ps.EncryptionService)
+	err := ps.provisionNotifiers(ctx, alertNotificationsPath, ps.EncryptionService)
 	return errutil.Wrap("Alert notification provisioning error", err)
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath, ps.SQLStore)
+	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.SQLStore)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}

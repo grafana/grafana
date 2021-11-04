@@ -10,8 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/validations"
-	. "github.com/smartystreets/goconvey/convey"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestReplaceIllegalCharswithUnderscore(t *testing.T) {
@@ -80,57 +81,55 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 
 //nolint:goconst
 func TestAlertmanagerNotifier(t *testing.T) {
-	Convey("Alertmanager notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
-				json := `{ }`
+	t.Run("Parsing alert notification from settings", func(t *testing.T) {
+		t.Run("empty settings should return error", func(t *testing.T) {
+			json := `{ }`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &models.AlertNotification{
-					Name:     "alertmanager",
-					Type:     "alertmanager",
-					Settings: settingsJSON,
-				}
+			settingsJSON, _ := simplejson.NewJson([]byte(json))
+			model := &models.AlertNotification{
+				Name:     "alertmanager",
+				Type:     "alertmanager",
+				Settings: settingsJSON,
+			}
 
-				_, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-				So(err, ShouldNotBeNil)
-			})
+			_, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			require.Error(t, err)
+		})
 
-			Convey("from settings", func() {
-				json := `{ "url": "http://127.0.0.1:9093/", "basicAuthUser": "user", "basicAuthPassword": "password" }`
+		t.Run("from settings", func(t *testing.T) {
+			json := `{ "url": "http://127.0.0.1:9093/", "basicAuthUser": "user", "basicAuthPassword": "password" }`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &models.AlertNotification{
-					Name:     "alertmanager",
-					Type:     "alertmanager",
-					Settings: settingsJSON,
-				}
+			settingsJSON, _ := simplejson.NewJson([]byte(json))
+			model := &models.AlertNotification{
+				Name:     "alertmanager",
+				Type:     "alertmanager",
+				Settings: settingsJSON,
+			}
 
-				not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-				alertmanagerNotifier := not.(*AlertmanagerNotifier)
+			not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
-				So(err, ShouldBeNil)
-				So(alertmanagerNotifier.BasicAuthUser, ShouldEqual, "user")
-				So(alertmanagerNotifier.BasicAuthPassword, ShouldEqual, "password")
-				So(alertmanagerNotifier.URL, ShouldResemble, []string{"http://127.0.0.1:9093/"})
-			})
+			require.NoError(t, err)
+			require.Equal(t, alertmanagerNotifier.BasicAuthUser, "user")
+			require.Equal(t, alertmanagerNotifier.BasicAuthPassword, "password")
+			require.Equal(t, alertmanagerNotifier.URL, []string{"http://127.0.0.1:9093/"})
+		})
 
-			Convey("from settings with multiple alertmanager", func() {
-				json := `{ "url": "http://alertmanager1:9093,http://alertmanager2:9093" }`
+		t.Run("from settings with multiple alertmanager", func(t *testing.T) {
+			json := `{ "url": "http://alertmanager1:9093,http://alertmanager2:9093" }`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &models.AlertNotification{
-					Name:     "alertmanager",
-					Type:     "alertmanager",
-					Settings: settingsJSON,
-				}
+			settingsJSON, _ := simplejson.NewJson([]byte(json))
+			model := &models.AlertNotification{
+				Name:     "alertmanager",
+				Type:     "alertmanager",
+				Settings: settingsJSON,
+			}
 
-				not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
-				alertmanagerNotifier := not.(*AlertmanagerNotifier)
+			not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
-				So(err, ShouldBeNil)
-				So(alertmanagerNotifier.URL, ShouldResemble, []string{"http://alertmanager1:9093", "http://alertmanager2:9093"})
-			})
+			require.NoError(t, err)
+			require.Equal(t, alertmanagerNotifier.URL, []string{"http://alertmanager1:9093", "http://alertmanager2:9093"})
 		})
 	})
 }

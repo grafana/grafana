@@ -8,6 +8,7 @@ import {
   PanelTypeChangedHandler,
   FieldConfigProperty,
   PanelPluginDataSupport,
+  VisualizationSuggestionsSupplier,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
@@ -104,6 +105,7 @@ export class PanelPlugin<
   };
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
+  private suggestionsSupplier?: VisualizationSuggestionsSupplier;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -353,5 +355,22 @@ export class PanelPlugin<
     this._initConfigRegistry = () => createFieldConfigRegistry(config, this.meta.name);
 
     return this;
+  }
+
+  /**
+   * Sets function that can return visualization examples and suggestions.
+   * @alpha
+   */
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier) {
+    this.suggestionsSupplier = supplier;
+    return this;
+  }
+
+  /**
+   * Returns the suggestions supplier
+   * @alpha
+   */
+  getSuggestionsSupplier(): VisualizationSuggestionsSupplier | undefined {
+    return this.suggestionsSupplier;
   }
 }

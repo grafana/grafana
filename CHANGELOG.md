@@ -1,3 +1,53 @@
+<!-- 8.2.3 START -->
+
+# 8.2.3 (2021-11-03)
+
+- **Security**: Fixes CVE-2021-41174. For more information, see our [blog](https://grafana.com/blog/2021/11/03/grafana-8.2.3-released-with-medium-severity-security-fix-cve-2021-41174-grafana-xss/)
+
+<!-- 8.2.3 END -->
+
+<!-- 8.2.2 START -->
+
+# 8.2.2 (2021-10-21)
+
+### Features and enhancements
+
+- **Annotations:** We have improved tag search performance. [#40567](https://github.com/grafana/grafana/pull/40567), [@ashharrison90](https://github.com/ashharrison90)
+- **Application:** You can now configure an error-template title. [#40310](https://github.com/grafana/grafana/pull/40310), [@benrubson](https://github.com/benrubson)
+- **AzureMonitor:** We removed a restriction from the resource filter query. [#40690](https://github.com/grafana/grafana/pull/40690), [@andresmgot](https://github.com/andresmgot)
+- **Caching:** Make cache size metric collection optional. (Enterprise)
+- **Packaging:** We removed the ProcSubset option in systemd. This option prevented Grafana from starting in LXC environments. [#40339](https://github.com/grafana/grafana/pull/40339), [@kminehart](https://github.com/kminehart)
+- **Prometheus:** We removed the autocomplete limit for metrics. [#39363](https://github.com/grafana/grafana/pull/39363), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Request interceptor:** Allow MSSQL's named instances. (Enterprise)
+- **Table:** We improved the styling of the type icons to make them more distinct from column / field name. [#40596](https://github.com/grafana/grafana/pull/40596), [@torkelo](https://github.com/torkelo)
+- **ValueMappings:** You can now use value mapping in stat, gauge, bar gauge, and pie chart visualizations. [#40612](https://github.com/grafana/grafana/pull/40612), [@torkelo](https://github.com/torkelo)
+
+### Bug fixes
+
+- **Alerting:** Fix panic when Slack's API sends unexpected response. [#40721](https://github.com/grafana/grafana/pull/40721), [@santihernandezc](https://github.com/santihernandezc)
+- **Alerting:** The Create Alert button now appears on the dashboard panel when you are working with a default datasource. [#40334](https://github.com/grafana/grafana/pull/40334), [@domasx2](https://github.com/domasx2)
+- **Explore:** We fixed the problem where the Explore log panel disappears when an Elasticsearch logs query returns no results. [#40217](https://github.com/grafana/grafana/pull/40217), [@Elfo404](https://github.com/Elfo404)
+- **Graph:** You can now see annotation descriptions on hover. [#40581](https://github.com/grafana/grafana/pull/40581), [@axelavargas](https://github.com/axelavargas)
+- **Logs:** The system now uses the JSON parser only if the line is parsed to an object. [#40507](https://github.com/grafana/grafana/pull/40507), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Prometheus:** We fixed the issue where the system did not reuse TCP connections when querying from Grafana alerting. [#40349](https://github.com/grafana/grafana/pull/40349), [@kminehart](https://github.com/kminehart)
+- **Prometheus:** We fixed the problem that resulted in an error when a user created a query with a $\_\_interval min step. [#40525](https://github.com/grafana/grafana/pull/40525), [@ivanahuckova](https://github.com/ivanahuckova)
+- **RowsToFields:** We fixed the issue where the system was not properly interpreting number values. [#40580](https://github.com/grafana/grafana/pull/40580), [@torkelo](https://github.com/torkelo)
+- **Scale:** We fixed how the system handles NaN percent when data min = data max. [#40622](https://github.com/grafana/grafana/pull/40622), [@torkelo](https://github.com/torkelo)
+- **Table panel:** You can now create a filter that includes special characters. [#40458](https://github.com/grafana/grafana/pull/40458), [@dprokop](https://github.com/dprokop)
+
+<!-- 8.2.2 END -->
+<!-- 8.2.1 START -->
+
+# 8.2.1 (2021-10-11)
+
+### Bug fixes
+
+- **Dashboard:** Fix rendering of repeating panels. [#39991](https://github.com/grafana/grafana/pull/39991), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Datasources:** Fix deletion of data source if plugin is not found. [#40095](https://github.com/grafana/grafana/pull/40095), [@jackw](https://github.com/jackw)
+- **Packaging:** Remove systemcallfilters sections from systemd unit files. [#40176](https://github.com/grafana/grafana/pull/40176), [@kminehart](https://github.com/kminehart)
+- **Prometheus:** Add Headers to HTTP client options. [#40214](https://github.com/grafana/grafana/pull/40214), [@dsotirakis](https://github.com/dsotirakis)
+
+<!-- 8.2.1 END -->
 <!-- 8.2.0 START -->
 
 # 8.2.0 (2021-10-07)
@@ -11,12 +61,19 @@
 - **Annotations:** Improved rendering performance of event markers. [#39984](https://github.com/grafana/grafana/pull/39984), [@torkelo](https://github.com/torkelo)
 - **CloudWatch Logs:** Skip caching for log queries. [#39860](https://github.com/grafana/grafana/pull/39860), [@aocenas](https://github.com/aocenas)
 - **Explore:** Added an opt-in configuration for Node Graph in Jaeger, Zipkin, and Tempo. [#39958](https://github.com/grafana/grafana/pull/39958), [@connorlindsey](https://github.com/connorlindsey)
+- **Packaging:** Add stricter systemd unit options. [#38109](https://github.com/grafana/grafana/pull/38109), [@erdnaxe](https://github.com/erdnaxe)
 - **Prometheus:** Metrics browser can now handle label values with special characters. [#39713](https://github.com/grafana/grafana/pull/39713), [@gabor](https://github.com/gabor)
 
 ### Bug fixes
 
 - **CodeEditor:** Ensure that we trigger the latest onSave callback provided to the component. [#39835](https://github.com/grafana/grafana/pull/39835), [@mckn](https://github.com/mckn)
 - **DashboardList/AlertList:** Fix for missing All folder value. [#39772](https://github.com/grafana/grafana/pull/39772), [@hugohaggmark](https://github.com/hugohaggmark)
+
+### Breaking changes
+
+#### Potential failure to start in Ubuntu 18.04 / Debian 9 / CentOS
+
+- In Grafana v8.2.0, this change can prevent the `grafana-server` service from starting on older versions of systemd, present on Ubuntu 18.04 and slightly older versions of Debian. If running one of those versions, please wait until v8.2.1 is released before upgrading. If you still want to upgrade or have already ugpraded, a simple fix is available here: https://github.com/grafana/grafana/issues/40162#issuecomment-938060240 Issue [#38109](https://github.com/grafana/grafana/issues/38109)
 
 ### Plugin development fixes & changes
 
@@ -239,6 +296,8 @@ Panel queries and/or annotation queries that used more than one statistic will b
 - **Plugins:** Track signed files + add warn log for plugin assets which are not signed. [#38938](https://github.com/grafana/grafana/pull/38938), [@wbrowne](https://github.com/wbrowne)
 - **Postgres/MySQL/MSSQL:** Fix region annotations not displayed correctly. [#38936](https://github.com/grafana/grafana/pull/38936), [@marefr](https://github.com/marefr)
 - **Prometheus:** Fix validate selector in metrics browser. [#38921](https://github.com/grafana/grafana/pull/38921), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Security:** Fix stylesheet injection vulnerability [#38432](https://github.com/grafana/grafana/pull/38432), [@idafurjes](https://github.com/idafurjes). Big thanks to Tobias Hamann and Lauritz Holtmann of usd AG for reporting this issue.
+- **Security:** Fix short URL vulnerability [#38436](https://github.com/grafana/grafana/pull/38436), [@idafurjes](https://github.com/idafurjes). Big thanks to Tobias Hamann and Lauritz Holtmann of usd AG for reporting this issue.
 
 <!-- 8.1.3 END -->
 <!-- 8.1.2 START -->

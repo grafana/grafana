@@ -160,7 +160,7 @@ export const Table: FC<Props> = memo((props: Props) => {
       stateReducer: stateReducer,
       initialState: getInitialState(initialSortBy, memoizedColumns),
       sortTypes: {
-        number: sortNumber, // should be replace with the builtin number when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
+        number: sortNumber, // the builtin number type on react-table does not handle NaN values
         'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
       },
     }),

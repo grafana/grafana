@@ -3,7 +3,8 @@ package httpclientprovider
 import (
 	"net/http"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -56,8 +57,8 @@ const DataSourceMetricsMiddlewareName = "metrics"
 
 var executeMiddlewareFunc = executeMiddleware
 
-func DataSourceMetricsMiddleware() httpclient.Middleware {
-	return httpclient.NamedMiddlewareFunc(DataSourceMetricsMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
+func DataSourceMetricsMiddleware() sdkhttpclient.Middleware {
+	return sdkhttpclient.NamedMiddlewareFunc(DataSourceMetricsMiddlewareName, func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		if opts.Labels == nil {
 			return next
 		}
@@ -81,7 +82,7 @@ func DataSourceMetricsMiddleware() httpclient.Middleware {
 }
 
 func executeMiddleware(next http.RoundTripper, datasourceLabel prometheus.Labels) http.RoundTripper {
-	return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
+	return sdkhttpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 		requestCounter := datasourceRequestCounter.MustCurryWith(datasourceLabel)
 		requestSummary := datasourceRequestSummary.MustCurryWith(datasourceLabel)
 		requestInFlight := datasourceRequestsInFlight.With(datasourceLabel)
@@ -94,10 +95,11 @@ func executeMiddleware(next http.RoundTripper, datasourceLabel prometheus.Labels
 		if err != nil {
 			return nil, err
 		}
-		// we avoid measuring contentlength less than zero because it indicates
-		// that the content size is unknown. https://godoc.org/github.com/badu/http#Response
-		if res != nil && res.ContentLength > 0 {
-			responseSizeSummary.Observe(float64(res.ContentLength))
+
+		if res != nil {
+			res.Body = httpclient.CountBytesReader(res.Body, func(bytesRead int64) {
+				responseSizeSummary.Observe(float64(bytesRead))
+			})
 		}
 
 		return res, nil

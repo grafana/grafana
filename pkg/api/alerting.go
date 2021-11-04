@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func ValidateOrgAlert(c *models.ReqContext) {
@@ -89,7 +89,7 @@ func GetAlerts(c *models.ReqContext) response.Response {
 			Permission:   models.PERMISSION_VIEW,
 		}
 
-		err := bus.Dispatch(&searchQuery)
+		err := bus.DispatchCtx(c.Req.Context(), &searchQuery)
 		if err != nil {
 			return response.Error(500, "List alerts failed", err)
 		}
@@ -258,7 +258,7 @@ func GetAlertNotificationByID(c *models.ReqContext) response.Response {
 func GetAlertNotificationByUID(c *models.ReqContext) response.Response {
 	query := &models.GetAlertNotificationsWithUidQuery{
 		OrgId: c.OrgId,
-		Uid:   macaron.Params(c.Req)[":uid"],
+		Uid:   web.Params(c.Req)[":uid"],
 	}
 
 	if query.Uid == "" {
@@ -283,6 +283,10 @@ func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotific
 		if errors.Is(err, models.ErrAlertNotificationWithSameNameExists) || errors.Is(err, models.ErrAlertNotificationWithSameUIDExists) {
 			return response.Error(409, "Failed to create alert notification", err)
 		}
+		var alertingErr alerting.ValidationError
+		if errors.As(err, &alertingErr) {
+			return response.Error(400, err.Error(), err)
+		}
 		return response.Error(500, "Failed to create alert notification", err)
 	}
 
@@ -301,6 +305,10 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext, cmd models.U
 		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), err)
 		}
+		var alertingErr alerting.ValidationError
+		if errors.As(err, &alertingErr) {
+			return response.Error(400, err.Error(), err)
+		}
 		return response.Error(500, "Failed to update alert notification", err)
 	}
 
@@ -318,7 +326,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext, cmd models.U
 
 func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNotificationWithUidCommand) response.Response {
 	cmd.OrgId = c.OrgId
-	cmd.Uid = macaron.Params(c.Req)[":uid"]
+	cmd.Uid = web.Params(c.Req)[":uid"]
 
 	err := hs.fillWithSecureSettingsDataByUID(c.Req.Context(), &cmd)
 	if err != nil {
@@ -419,7 +427,7 @@ func DeleteAlertNotification(c *models.ReqContext) response.Response {
 func DeleteAlertNotificationByUID(c *models.ReqContext) response.Response {
 	cmd := models.DeleteAlertNotificationWithUidCommand{
 		OrgId: c.OrgId,
-		Uid:   macaron.Params(c.Req)[":uid"],
+		Uid:   web.Params(c.Req)[":uid"],
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {

@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { SpanKind, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
-import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { createGraphFrames } from './graphTransform';
 
 export function createTableFrame(
@@ -161,7 +161,7 @@ function resourceToProcess(resource: collectorTypes.opentelemetryProto.resource.
   }
 
   for (const attribute of resource.attributes) {
-    if (attribute.key === ResourceAttributes.SERVICE_NAME) {
+    if (attribute.key === SemanticResourceAttributes.SERVICE_NAME) {
       serviceName = attribute.value.stringValue || serviceName;
     }
     serviceTags.push({ key: attribute.key, value: getAttributeValue(attribute.value) });

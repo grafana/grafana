@@ -25,14 +25,14 @@ func TestAccountDataAccess(t *testing.T) {
 
 			for i := 1; i < 4; i++ {
 				cmd = &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err = CreateOrg(cmd)
+				err = CreateOrg(context.Background(), cmd)
 				require.NoError(t, err)
 
 				ids = append(ids, cmd.Result.Id)
 			}
 
 			query := &models.SearchOrgsQuery{Ids: ids}
-			err = SearchOrgs(query)
+			err = SearchOrgs(context.Background(), query)
 
 			require.NoError(t, err)
 			require.Equal(t, len(query.Result), 3)
@@ -42,13 +42,13 @@ func TestAccountDataAccess(t *testing.T) {
 			sqlStore = InitTestDB(t)
 			for i := 1; i < 4; i++ {
 				cmd := &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err := CreateOrg(cmd)
+				err := CreateOrg(context.Background(), cmd)
 				require.NoError(t, err)
 			}
 
 			t.Run("Should be able to search with defaults", func(t *testing.T) {
 				query := &models.SearchOrgsQuery{}
-				err := SearchOrgs(query)
+				err := SearchOrgs(context.Background(), query)
 
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 3)
@@ -56,7 +56,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Should be able to limit search", func(t *testing.T) {
 				query := &models.SearchOrgsQuery{Limit: 1}
-				err := SearchOrgs(query)
+				err := SearchOrgs(context.Background(), query)
 
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
@@ -64,7 +64,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Should be able to limit and paginate search", func(t *testing.T) {
 				query := &models.SearchOrgsQuery{Limit: 2, Page: 1}
-				err := SearchOrgs(query)
+				err := SearchOrgs(context.Background(), query)
 
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
@@ -278,7 +278,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				t.Run("Removing user from org should delete user completely if in no other org", func(t *testing.T) {
 					// make sure ac2 has no org
-					err := DeleteOrg(&models.DeleteOrgCommand{Id: ac2.OrgId})
+					err := DeleteOrg(context.Background(), &models.DeleteOrgCommand{Id: ac2.OrgId})
 					require.NoError(t, err)
 
 					// remove ac2 user from ac1 org
@@ -320,7 +320,6 @@ func TestAccountDataAccess(t *testing.T) {
 					query := models.GetOrgUsersQuery{OrgId: ac1.OrgId}
 					err = sqlStore.GetOrgUsers(context.Background(), &query)
 					require.NoError(t, err)
-					fmt.Println(query.Result)
 					// require.Equal(t, len(query.Result), 3)
 
 					dash1 := insertTestDashboard(t, sqlStore, "1 test dash", ac1.OrgId, 0, false, "prod", "webapp")

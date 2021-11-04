@@ -19,6 +19,7 @@ import {
   monacoLanguageRegistry,
   setLocale,
   setTimeZoneResolver,
+  setWeekStart,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
@@ -41,7 +42,7 @@ import { configureStore } from './store/configureStore';
 import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { AngularApp } from './angular/AngularApp';
-import { PanelRenderer } from './features/panel/PanelRenderer';
+import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
@@ -77,6 +78,7 @@ export class GrafanaApp {
     initEchoSrv();
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
+    setWeekStart(config.bootData.user.weekStart);
     setPanelRenderer(PanelRenderer);
     setTimeZoneResolver(() => config.bootData.user.timezone);
     // Important that extensions are initialized before store

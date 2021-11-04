@@ -5,18 +5,15 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 type (
 	cloudMonitoringQueryExecutor interface {
-		//nolint: staticcheck // plugins.DataPlugin deprecated
-		run(ctx context.Context, tsdbQuery plugins.DataQuery, e *Executor) (
-			plugins.DataQueryResult, cloudMonitoringResponse, string, error)
-		//nolint: staticcheck // plugins.DataPlugin deprecated
-		parseResponse(queryRes *plugins.DataQueryResult, data cloudMonitoringResponse, executedQueryString string) error
-		//nolint: staticcheck // plugins.DataPlugin deprecated
-		parseToAnnotations(queryRes *plugins.DataQueryResult, data cloudMonitoringResponse, title string, text string, tags string) error
+		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo) (
+			*backend.DataResponse, cloudMonitoringResponse, string, error)
+		parseResponse(dr *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
+		parseToAnnotations(dr *backend.DataResponse, data cloudMonitoringResponse, title, text, tags string) error
 		buildDeepLink() string
 		getRefID() string
 	}
@@ -41,7 +38,7 @@ type (
 		Query       string
 		IntervalMS  int64
 		AliasBy     string
-		timeRange   plugins.DataTimeRange
+		timeRange   backend.TimeRange
 	}
 
 	metricQuery struct {

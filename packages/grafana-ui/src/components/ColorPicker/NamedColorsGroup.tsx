@@ -1,12 +1,12 @@
 import React, { FunctionComponent } from 'react';
 import { ThemeVizHue } from '@grafana/data';
-import { Color } from 'csstype';
+import { Property } from 'csstype';
 import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
 import { upperFirst } from 'lodash';
 
 interface NamedColorsGroupProps {
   hue: ThemeVizHue;
-  selectedColor?: Color;
+  selectedColor?: Property.Color;
   onColorSelect: (colorName: string) => void;
   key?: string;
 }

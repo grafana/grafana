@@ -24,6 +24,7 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
 
     for (const frame of data) {
       const newFields: Field[] = [];
+      const uniqueLabels: Record<string, Set<string>> = {};
 
       for (const field of frame.fields) {
         if (!field.labels) {
@@ -50,9 +51,16 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
             continue;
           }
 
-          const values = new Array(frame.length).fill(field.labels[labelName]);
+          const uniqueValues = (uniqueLabels[labelName] ||= new Set());
+          uniqueValues.add(field.labels[labelName]);
+        }
+      }
+
+      for (const name in uniqueLabels) {
+        for (const value of uniqueLabels[name]) {
+          const values = new Array(frame.length).fill(value);
           newFields.push({
-            name: labelName,
+            name: name,
             type: FieldType.string,
             values: new ArrayVector(values),
             config: {},

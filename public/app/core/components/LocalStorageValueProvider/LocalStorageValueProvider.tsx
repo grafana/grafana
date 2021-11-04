@@ -3,8 +3,8 @@ import store from '../../store';
 
 export interface Props<T> {
   storageKey: string;
-  defaultValue?: T;
-  children: (value: T, onSaveToStore: (value: T) => void) => React.ReactNode;
+  defaultValue: T;
+  children: (value: T, onSaveToStore: (value: T) => void, onDeleteFromStore: () => void) => React.ReactNode;
 }
 
 interface State<T> {
@@ -32,10 +32,20 @@ export class LocalStorageValueProvider<T> extends PureComponent<Props<T>, State<
     this.setState({ value });
   };
 
+  onDeleteFromStore = () => {
+    const { storageKey, defaultValue } = this.props;
+    try {
+      store.delete(storageKey);
+    } catch (error) {
+      console.log(error);
+    }
+    this.setState({ value: defaultValue });
+  };
+
   render() {
     const { children } = this.props;
     const { value } = this.state;
 
-    return <>{children(value, this.onSaveToStore)}</>;
+    return <>{children(value, this.onSaveToStore, this.onDeleteFromStore)}</>;
   }
 }

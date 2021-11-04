@@ -26,6 +26,8 @@ func TestWebhookNotifier(t *testing.T) {
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
 
+	orgID := int64(1)
+
 	cases := []struct {
 		name          string
 		settings      string
@@ -88,6 +90,7 @@ func TestWebhookNotifier(t *testing.T) {
 				Title:    "[FIRING:1]  (val1)",
 				State:    "alerting",
 				Message:  "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				OrgID:    orgID,
 			},
 			expMsgError: nil,
 		}, {
@@ -165,6 +168,7 @@ func TestWebhookNotifier(t *testing.T) {
 				Title:           "[FIRING:2]  ",
 				State:           "alerting",
 				Message:         "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2\n",
+				OrgID:           orgID,
 			},
 			expMsgError: nil,
 		}, {
@@ -183,6 +187,7 @@ func TestWebhookNotifier(t *testing.T) {
 				Name:     "webhook_testing",
 				Type:     "webhook",
 				Settings: settingsJSON,
+				OrgID:    orgID,
 			}
 
 			decryptFn := ossencryption.ProvideService().GetDecryptedValue

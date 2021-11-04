@@ -129,7 +129,10 @@ describe('Alerting Admin', () => {
     const input = await ui.configInput.find();
     expect(input.value).toEqual(JSON.stringify(defaultConfig, null, 2));
     userEvent.clear(input);
-    await userEvent.type(input, JSON.stringify(newConfig, null, 2));
+    // What is this regex replace doing? in userEvent v13, '{' and '[' are special characters.
+    // To get the literal character, you have to escape them by typing '{{' or '[['.
+    // See https://github.com/testing-library/user-event/issues/584.
+    userEvent.type(input, JSON.stringify(newConfig, null, 2).replace(/[{[]/g, '$&$&'));
     userEvent.click(ui.saveButton.get());
     await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
     await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(3));
