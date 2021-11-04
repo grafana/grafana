@@ -61,7 +61,7 @@ var (
 		Version:     2,
 		Name:        statsReader,
 		DisplayName: "Stats reader",
-		Description: "Read [server stats](https://grafana.com/docs/grafana/latest/administration/view-server/view-server-stats/).",
+		Description: "Read server stats.",
 		Permissions: []Permission{
 			{
 				Action: ActionServerStatsRead,
@@ -72,7 +72,7 @@ var (
 	settingsReaderRole = RoleDTO{
 		Version:     3,
 		DisplayName: "Settings reader",
-		Description: "Read settings, as on the /admin/settings page in Grafana.",
+		Description: "Read settings.",
 		Name:        settingsReader,
 		Permissions: []Permission{
 			{
@@ -85,7 +85,7 @@ var (
 	orgUsersReaderRole = RoleDTO{
 		Name:        orgUsersReader,
 		DisplayName: "Organization users reader",
-		Description: "Read users in organization",
+		Description: "Read users in organization.",
 		Version:     2,
 		Permissions: []Permission{
 			{
