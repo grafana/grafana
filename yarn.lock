@@ -2386,7 +2386,7 @@ __metadata:
     date-fns: 2.21.3
     eventemitter3: 4.0.7
     lodash: 4.17.21
-    marked: 2.0.1
+    marked: 4.0.0
     moment: 2.29.1
     moment-timezone: 0.5.33
     ol: 6.7.0
@@ -22635,12 +22635,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:2.0.1":
-  version: 2.0.1
-  resolution: "marked@npm:2.0.1"
+"marked@npm:4.0.0":
+  version: 4.0.0
+  resolution: "marked@npm:4.0.0"
   bin:
-    marked: bin/marked
-  checksum: 2144b5f0c5f9446aa1ef15350ff8c5b2e27ef32f64f31047fc06cb68afad52b9d4b8587353c24f9150ec181061866c2e2a93f458963999af487887f9a1ef4e32
+    marked: bin/marked.js
+  checksum: 1889c1b58cba6ea764435ef2fefef037733899dcb1d54300453b355ac70ada0109132631b0a2c3ee0ce633b930a1bc6d6ee1bd1dea38cf901dd30099fa68e143
   languageName: node
   linkType: hard
 
