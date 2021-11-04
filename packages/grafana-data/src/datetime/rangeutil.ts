@@ -138,27 +138,6 @@ export function describeTextRange(expr: any) {
   return opt;
 }
 
-export const describeIntervalsLabels = (item: string) => {
-  const parts = /^(\d+).*(s|m|h|d)$/gim.exec(item);
-  const label: { [key: string]: string } = {}
-
-  if (parts) {
-    const unit = parts[2];
-    const amount = parseInt(parts[1], 10);
-    const span = spans[unit];
-    if (span) {
-      label.display += amount + ' ' + span.display;
-      if (amount > 1) {
-        label.display += 's';
-      }
-    }
-    return label.display;
-  } else {
-    return item
-  }
-  
-};
-
 /**
  * Use this function to get a properly formatted string representation of a {@link @grafana/data:RawTimeRange | range}.
  *

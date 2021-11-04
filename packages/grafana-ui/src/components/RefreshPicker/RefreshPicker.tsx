@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, parseDuration } from '@grafana/data';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { ButtonGroup, ToolbarButton, ToolbarButtonVariant } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
-import { describeIntervalsLabels } from '@grafana/data/src/datetime/rangeutil';
 
 // Default intervals used in the refresh picker component
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
@@ -90,16 +89,20 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 }
 
-
 export function intervalsToOptions({ intervals = defaultIntervals }: { intervals?: string[] } = {}): Array<
   SelectableValue<string>
 > {
   const intervalsOrDefault = intervals || defaultIntervals;
-  const options = intervalsOrDefault.map((interval) => ({
-    label: interval,
-    value: interval,
-    ariaLabel: describeIntervalsLabels(interval),
-  }));
+  const options = intervalsOrDefault.map((interval) => {
+    const label: { [key: string]: string | number } = parseDuration(interval);
+    const unit = Object.keys(label);
+    const amount = label[unit[0]];
+    return {
+      label: interval,
+      value: interval,
+      ariaLabel: amount + ' ' + unit,
+    };
+  });
 
   options.unshift(RefreshPicker.offOption);
   return options;
