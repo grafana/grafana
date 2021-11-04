@@ -193,7 +193,7 @@ In the example below, I added two fields together and named them Sum.
 ## Labels to fields
 
 This transformation changes time series results that include labels or tags into to a table structure where each label keys and values
-are included in the table result. The labels can be displayed either as columns or as row values
+are included in the table result. The labels can be displayed either as columns or as row values.
 
 Given a query result of two time series:
 
