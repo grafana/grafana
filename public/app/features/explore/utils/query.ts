@@ -30,11 +30,13 @@ export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
   return {
     refId: labelBasedQuery.refId,
     expr: expr ? `{${expr}}` : '',
+    range: true,
   };
 }
 
 export interface PromLikeQuery extends DataQuery {
   expr: string;
+  range: boolean;
 }
 
 export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLabelMatcher[] {

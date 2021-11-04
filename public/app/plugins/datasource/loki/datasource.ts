@@ -61,7 +61,6 @@ import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContext
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { queryLogsVolume } from 'app/core/logs_model';
-import { extractLabelMatchers, toPromLikeQuery } from 'app/features/explore/utils/query';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -366,19 +365,11 @@ export class LokiDatasource
   }
 
   importAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
-    return toPromLikeQuery(labelBasedQuery);
+    return this.languageProvider.importAbstractQuery(labelBasedQuery);
   }
 
   exportToAbstractQuery(query: LokiQuery): AbstractQuery {
-    const lokiQuery = query.expr;
-    if (!lokiQuery || lokiQuery.length === 0) {
-      return { refId: query.refId, labelMatchers: [] };
-    }
-    const tokens = Prism.tokenize(lokiQuery, syntax);
-    return {
-      refId: query.refId,
-      labelMatchers: extractLabelMatchers(tokens),
-    };
+    return this.languageProvider.exportToAbstractQuery(query);
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {

@@ -1,8 +1,16 @@
 import { once, chain, difference } from 'lodash';
 import LRU from 'lru-cache';
 import { Value } from 'slate';
+import Prism from 'prismjs';
 
-import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
+import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  AbstractQuery,
+  dateTime,
+  HistoryItem,
+  LanguageProvider,
+} from '@grafana/data';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 import {
@@ -17,6 +25,8 @@ import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
 import { PromMetricsMetadata, PromQuery } from './types';
+import { LokiQuery } from '../loki/types';
+import { extractLabelMatchers, toPromLikeQuery } from '../../../features/explore/utils/query';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -404,6 +414,32 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   };
 
+  importAbstractQuery(labelBasedQuery: AbstractQuery): PromQuery {
+    return toPromLikeQuery(labelBasedQuery);
+  }
+
+  exportToAbstractQuery(query: LokiQuery): AbstractQuery {
+    const promQuery = query.expr;
+    if (!promQuery || promQuery.length === 0) {
+      return { refId: query.refId, labelMatchers: [] };
+    }
+    const tokens = Prism.tokenize(promQuery, PromqlSyntax);
+    const labelMatchers: AbstractLabelMatcher[] = extractLabelMatchers(tokens);
+    const nameLabelValue = getNameLabelValue(promQuery, tokens);
+    if (nameLabelValue && nameLabelValue.length > 0) {
+      labelMatchers.push({
+        name: '__name__',
+        operator: AbstractLabelOperator.Equal,
+        value: nameLabelValue,
+      });
+    }
+
+    return {
+      refId: query.refId,
+      labelMatchers,
+    };
+  }
+
   async getSeries(selector: string, withName?: boolean): Promise<Record<string, string[]>> {
     if (this.datasource.lookupsDisabled) {
       return {};
@@ -502,4 +538,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const values = await Promise.all(DEFAULT_KEYS.map((key) => this.fetchLabelValues(key)));
     return DEFAULT_KEYS.reduce((acc, key, i) => ({ ...acc, [key]: values[i] }), {});
   });
+}
+
+function getNameLabelValue(promQuery: string, tokens: any): string {
+  let nameLabelValue = '';
+  for (let prop in tokens) {
+    if (typeof tokens[prop] === 'string') {
+      nameLabelValue = tokens[prop] as string;
+      break;
+    }
+  }
+  return nameLabelValue;
 }

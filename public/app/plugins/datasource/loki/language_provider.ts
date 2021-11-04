@@ -8,11 +8,12 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
 import { LokiQuery } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
-import { Grammar } from 'prismjs';
+import Prism, { Grammar } from 'prismjs';
+import { extractLabelMatchers, toPromLikeQuery } from '../../../features/explore/utils/query';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -324,6 +325,22 @@ export default class LokiLanguageProvider extends LanguageProvider {
     }
 
     return { context, suggestions };
+  }
+
+  importAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
+    return toPromLikeQuery(labelBasedQuery);
+  }
+
+  exportToAbstractQuery(query: LokiQuery): AbstractQuery {
+    const lokiQuery = query.expr;
+    if (!lokiQuery || lokiQuery.length === 0) {
+      return { refId: query.refId, labelMatchers: [] };
+    }
+    const tokens = Prism.tokenize(lokiQuery, syntax);
+    return {
+      refId: query.refId,
+      labelMatchers: extractLabelMatchers(tokens),
+    };
   }
 
   async getSeriesLabels(selector: string) {
