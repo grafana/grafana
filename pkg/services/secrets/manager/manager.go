@@ -36,14 +36,15 @@ func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Serv
 	providers := map[string]secrets.Provider{
 		defaultProvider: grafana.New(settings, enc),
 	}
+	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(defaultProvider)
 
 	s := &SecretsService{
 		store:           store,
 		bus:             bus,
 		enc:             enc,
 		settings:        settings,
-		currentProvider: defaultProvider,
 		providers:       providers,
+		currentProvider: currentProvider,
 		dataKeyCache:    make(map[string]dataKeyCacheItem),
 	}
 
@@ -256,4 +257,16 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	return decrypted, nil
+}
+
+func (s *SecretsService) RegisterProvider(providerID string, provider secrets.Provider) {
+	s.providers[providerID] = provider
+}
+
+func (s *SecretsService) CurrentProviderID() string {
+	return s.currentProvider
+}
+
+func (s *SecretsService) GetProviders() map[string]secrets.Provider {
+	return s.providers
 }
