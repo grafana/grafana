@@ -1,27 +1,18 @@
-import { MarketTrendMode, MovementMode, PriceDrawStyle } from './types';
+import { MarketTrendMode, ColorStrategy, PriceStyle } from './types';
 import uPlot from 'uplot';
 import { colorManipulator } from '@grafana/data';
 
 const { alpha } = colorManipulator;
 
 export function drawMarkers(opts) {
-  let {
-    mode,
-    priceStyle,
-    fields,
-    movementMode,
-    upColor = '#73BF69',
-    downColor = '#F2495C',
-    flatColor,
-    volumeAlpha,
-  } = opts;
+  let { mode, priceStyle, fields, colorStrategy, upColor, downColor, flatColor, volumeAlpha, flatAsUp = true } = opts;
 
   let drawPrice = mode !== MarketTrendMode.Volume && fields.high != null && fields.low != null;
-  let asCandles = drawPrice && priceStyle === PriceDrawStyle.Candles;
+  let asCandles = drawPrice && priceStyle === PriceStyle.Candles;
   let drawVolume = mode !== MarketTrendMode.Price && fields.volume != null;
 
-  function selectPath(priceDir: number, flatPath: Path2D, upPath: Path2D, downPath: Path2D) {
-    return priceDir > 0 ? upPath : priceDir < 0 ? downPath : flatPath;
+  function selectPath(priceDir: number, flatPath: Path2D, upPath: Path2D, downPath: Path2D, flatAsUp: boolean) {
+    return priceDir > 0 ? upPath : priceDir < 0 ? downPath : flatAsUp ? upPath : flatPath;
   }
 
   let tIdx = 0,
@@ -72,7 +63,7 @@ export function drawMarkers(opts) {
     let stickWidth = 2;
     let outlineWidth = 2;
 
-    if (barWidth < 8) {
+    if (barWidth <= 12) {
       stickWidth = outlineWidth = 1;
     }
 
@@ -82,17 +73,18 @@ export function drawMarkers(opts) {
       let tPx = Math.round(u.valToPos(tData[i]!, 'x', true));
 
       // current close vs prior close
-      let interDir = i === 0 ? 0 : Math.sign(cData[i]! - cData[i - 1]!);
+      let interDir = i === idx0 ? 0 : Math.sign(cData[i]! - cData[i - 1]!);
       // current close vs current open
       let intraDir = Math.sign(cData[i]! - oData[i]!);
 
       // volume
       if (drawVolume) {
         let outerPath = selectPath(
-          asCandles && movementMode === MovementMode.Hollow ? interDir : intraDir,
+          colorStrategy === ColorStrategy.Inter ? interDir : intraDir,
           flatPathVol,
           upPathVol,
-          downPathVol
+          downPathVol,
+          i === idx0 && ColorStrategy.Inter ? false : flatAsUp
         );
 
         let vPx = Math.round(u.valToPos(vData![i]!, u.series[vIdx!].scale!, true));
@@ -101,10 +93,11 @@ export function drawMarkers(opts) {
 
       if (drawPrice) {
         let outerPath = selectPath(
-          asCandles && movementMode === MovementMode.Hollow ? interDir : intraDir,
+          colorStrategy === ColorStrategy.Inter ? interDir : intraDir,
           flatPath,
           upPath,
-          downPath
+          downPath,
+          i === idx0 && ColorStrategy.Inter ? false : flatAsUp
         );
 
         // stick
@@ -119,11 +112,11 @@ export function drawMarkers(opts) {
           // rect
           let top = Math.min(oPx, cPx);
           let btm = Math.max(oPx, cPx);
-          let hgt = btm - top;
+          let hgt = Math.max(1, btm - top);
           outerPath.rect(tPx - halfWidth, top, barWidth, hgt);
 
-          if (movementMode === MovementMode.Hollow) {
-            if (intraDir >= 0) {
+          if (colorStrategy === ColorStrategy.Inter) {
+            if (intraDir >= 0 && hgt > outlineWidth * 2) {
               hollowPath.rect(
                 tPx - halfWidth + outlineWidth,
                 top + outlineWidth,
@@ -134,13 +127,15 @@ export function drawMarkers(opts) {
           }
         } else {
           outerPath.rect(tPx - halfWidth, oPx, halfWidth, stickWidth);
-          // prettier-ignore
-          outerPath.rect(tPx,                cPx, halfWidth, stickWidth);
+          outerPath.rect(tPx, cPx, halfWidth, stickWidth);
         }
       }
     }
 
     ctx.save();
+
+    ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+    ctx.clip();
 
     if (drawVolume) {
       ctx.fillStyle = alpha(upColor, volumeAlpha);

@@ -6,14 +6,18 @@ export enum MarketTrendMode {
   'PriceVolume' = 'pricevolume',
 }
 
-export enum PriceDrawStyle {
+export enum PriceStyle {
   'Candles' = 'candles',
-  'Bars' = 'bars',
+  'OHLCBars' = 'ohlcbars',
 }
 
-export enum MovementMode {
-  'Solid' = 'solid',
-  'Hollow' = 'hollow',
+export enum ColorStrategy {
+  // up/down color depends on current close vs current open
+  // filled always
+  'Intra' = 'intra',
+  // up/down color depends on current close vs prior close
+  // filled/hollow depends on current close vs current open
+  'Inter' = 'inter',
 }
 
 interface SemanticFieldMap {
@@ -34,8 +38,8 @@ export const defaultColors: MarketTrendColors = {
 
 export interface MarketOptions extends OptionsWithLegend, OptionsWithTooltip {
   mode: MarketTrendMode;
-  priceStyle: PriceDrawStyle;
-  movementMode: MovementMode;
+  priceStyle: PriceStyle;
+  colorStrategy: ColorStrategy;
   fields: SemanticFieldMap;
   colors: MarketTrendColors;
 }

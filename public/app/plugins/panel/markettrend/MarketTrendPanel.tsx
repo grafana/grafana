@@ -55,24 +55,39 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
   const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
-    const { mode, priceStyle, fieldMap, movementMode } = options;
+    const { mode, priceStyle, fieldMap, colorStrategy } = options;
     const colors = { ...defaultColors, ...options.colors };
     let { open, high, low, close, volume } = fieldMap;
-
-    if (open == null || close == null) {
-      return [];
-    }
 
     let tweakScale = (opts: ScaleProps) => opts;
     let tweakAxis = (opts: AxisProps) => opts;
 
+    if (
+      open == null ||
+      close == null ||
+      findField(data?.series, open) == null ||
+      findField(data?.series, close) == null
+    ) {
+      return {
+        renderers: [],
+        tweakScale,
+        tweakAxis,
+      };
+    }
+
     let volumeAlpha = 0.5;
+
+    let volumeIdx = -1;
+
+    let canRenderVolume = false;
 
     // find volume field and set overrides
     if (frames && volume != null) {
       let volumeField = findField(data?.series, volume);
 
-      if (volumeField) {
+      if (volumeField != null) {
+        canRenderVolume = true;
+
         let { fillOpacity } = volumeField.config.custom;
 
         if (fillOpacity) {
@@ -89,7 +104,7 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
           if (opts.scaleKey === 'short') {
             let filter = (u: uPlot, splits: number[]) => {
               let _splits = [];
-              let max = u.series[5].max as number;
+              let max = u.series[volumeIdx].max as number;
 
               for (let i = 0; i < splits.length; i++) {
                 _splits.push(splits[i]);
@@ -120,11 +135,28 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
       }
     }
 
+    let canRenderPrice =
+      high != null && low != null && findField(data?.series, high) != null && findField(data?.series, low) != null;
+
+    let fields = {};
+
+    if (canRenderPrice) {
+      fields = { open, high, low, close };
+    }
+
+    if (canRenderVolume) {
+      fields.open = open;
+      fields.close = close;
+      fields.volume = volume;
+    }
+
     return {
       renderers: [
         {
-          fields: { open, high, low, close, volume },
+          fields,
           init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
+            volumeIdx = fieldIndices.volume;
+
             builder.addHook(
               'drawAxes',
               drawMarkers({
@@ -134,8 +166,9 @@ export const MarketTrendPanel: React.FC<TimeSeriesPanelProps> = ({
                 downColor: config.theme2.visualization.getColorByName(colors.down),
                 flatColor: config.theme2.visualization.getColorByName(colors.flat),
                 volumeAlpha,
-                movementMode,
+                colorStrategy,
                 priceStyle,
+                flatAsUp: true,
               })
             );
           },

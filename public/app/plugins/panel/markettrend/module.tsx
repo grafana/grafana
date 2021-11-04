@@ -2,28 +2,24 @@ import { GraphFieldConfig } from '@grafana/schema';
 import { PanelPlugin, SelectableValue } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { MarketTrendPanel } from './MarketTrendPanel';
-import { defaultColors, MarketOptions, MarketTrendMode, MovementMode, PriceDrawStyle } from './types';
+import { defaultColors, MarketOptions, MarketTrendMode, ColorStrategy, PriceStyle } from './types';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 const modeOptions = [
+  { label: 'Price & Volume', value: MarketTrendMode.PriceVolume },
   { label: 'Price', value: MarketTrendMode.Price },
   { label: 'Volume', value: MarketTrendMode.Volume },
-  { label: 'Both', value: MarketTrendMode.PriceVolume },
 ] as Array<SelectableValue<MarketTrendMode>>;
 
 const priceStyle = [
-  { label: 'Candles', value: PriceDrawStyle.Candles },
-  { label: 'Bars', value: PriceDrawStyle.Bars },
-] as Array<SelectableValue<PriceDrawStyle>>;
+  { label: 'Candles', value: PriceStyle.Candles },
+  { label: 'OHLC Bars', value: PriceStyle.OHLCBars },
+] as Array<SelectableValue<PriceStyle>>;
 
-const movementMode = [
-  // up/down color depends on current close vs prior close
-  // filled/hollow depends on current close vs current open
-  { label: 'Hollow', value: 'hollow' },
-  // up/down color depends on current close vs current open
-  // filled always
-  { label: 'Solid', value: 'solid' },
-] as Array<SelectableValue<MovementMode>>;
+const colorStrategy = [
+  { label: 'Since Open', value: 'intra' },
+  { label: 'Since Prior Close', value: 'inter' },
+] as Array<SelectableValue<ColorStrategy>>;
 
 export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTrendPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
@@ -42,21 +38,20 @@ export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTre
         path: 'priceStyle',
         name: 'Price style',
         description: '',
-        defaultValue: PriceDrawStyle.Candles,
+        defaultValue: PriceStyle.Candles,
         settings: {
           options: priceStyle,
         },
         showIf: (opts) => opts.mode !== MarketTrendMode.Volume,
       })
       .addRadio({
-        path: 'movementMode',
-        name: 'Movement mode',
+        path: 'colorStrategy',
+        name: 'Color strategy',
         description: '',
-        defaultValue: MovementMode.Hollow,
+        defaultValue: ColorStrategy.Intra,
         settings: {
-          options: movementMode,
+          options: colorStrategy,
         },
-        showIf: (opts) => opts.mode !== MarketTrendMode.Volume && opts.priceStyle === PriceDrawStyle.Candles,
       })
       .addColorPicker({
         path: 'colors.up',
@@ -67,11 +62,6 @@ export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTre
         path: 'colors.down',
         name: 'Down color',
         defaultValue: defaultColors.down,
-      })
-      .addColorPicker({
-        path: 'colors.flat',
-        name: 'Flat color',
-        defaultValue: defaultColors.flat,
       })
       .addFieldNamePicker({
         path: 'fieldMap.open',
