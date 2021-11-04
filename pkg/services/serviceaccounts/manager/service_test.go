@@ -30,14 +30,13 @@ type TestUser struct {
 }
 
 var (
-	testOrgID                 = 1
-	testUserServiceAccount    = TestUser{Email: "testuser1@grafana.com", Login: "testuser1", IsServiceAccount: true}
-	testUserNotServiceAccount = TestUser{Email: "testuser2@grafana.com", Login: "testuser2", IsServiceAccount: false}
+	testOrgID              = 1
+	testUserServiceAccount = TestUser{Email: "testuser1@grafana.com", Login: "testuser1", IsServiceAccount: true}
 )
 
 func setupUserForTests(sqlStore *sqlstore.SQLStore) (user *models.User, err error) {
 	setting.AutoAssignOrg = true
-	setting.AutoAssignOrgId = int(testOrgID)
+	setting.AutoAssignOrgId = testOrgID
 	u1, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{
 		Email:            testUserServiceAccount.Email,
 		Login:            testUserServiceAccount.Login,
@@ -58,7 +57,7 @@ func TestService_DeleteServiceAccount(t *testing.T) {
 	}
 	routerRegister := routing.NewRouteRegister()
 	svc, acmock := setupTestService(t, db, routerRegister, false)
-	server := setupServer(t, svc, routerRegister, acmock)
+	server := setupTestServer(t, svc, routerRegister, acmock)
 
 	var getResponse = func(server *macaron.Macaron) *httptest.ResponseRecorder {
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf(deletePermissionPath, fmt.Sprint(u.Id)), nil)
@@ -91,7 +90,7 @@ func setupTestService(t *testing.T, sqlstore *sqlstore.SQLStore, routerRegister 
 	return svc, acmock
 }
 
-func setupServer(t *testing.T, svc *ServiceAccountsService, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock) *macaron.Macaron {
+func setupTestServer(t *testing.T, svc *ServiceAccountsService, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock) *macaron.Macaron {
 	a := api.NewServiceAccountsAPI(
 		svc,
 		acmock,
