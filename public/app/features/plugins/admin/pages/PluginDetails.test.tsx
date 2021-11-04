@@ -8,7 +8,14 @@ import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPerm
 import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { CatalogPlugin, CatalogPluginDetails, PluginTabIds, ReducerState, RequestStatus } from '../types';
+import {
+  CatalogPlugin,
+  CatalogPluginDetails,
+  PluginTabIds,
+  PluginTabLabels,
+  ReducerState,
+  RequestStatus,
+} from '../types';
 import * as api from '../api';
 import { fetchRemotePlugins } from '../state/actions';
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
@@ -344,7 +351,7 @@ describe('Plugin details page', () => {
       // @ts-ignore
       api.uninstallPlugin = jest.fn();
 
-      const { queryByText, queryByRole, getByRole } = renderPluginDetails({
+      const { queryByText, getByRole } = renderPluginDetails({
         id,
         name: 'Akumuli',
         isInstalled: true,
@@ -352,11 +359,17 @@ describe('Plugin details page', () => {
           pluginDependencies: [],
           grafanaDependency: '>=8.0.0',
           links: [],
+          versions: [
+            {
+              version: '1.0.0',
+              createdAt: '',
+            },
+          ],
         },
       });
 
       // Wait for the install controls to be loaded
-      await waitFor(() => expect(queryByRole('button', { name: /install/i })).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       // Open the confirmation modal
       userEvent.click(getByRole('button', { name: /uninstall/i }));
@@ -472,7 +485,7 @@ describe('Plugin details page', () => {
     it("should not display an install button for a plugin that isn't installed", async () => {
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: false });
 
-      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       expect(queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
     });
@@ -480,7 +493,7 @@ describe('Plugin details page', () => {
     it('should not display an uninstall button for an already installed plugin', async () => {
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true });
 
-      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
@@ -488,7 +501,7 @@ describe('Plugin details page', () => {
     it('should not display update or uninstall buttons for a plugin with update', async () => {
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
 
-      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
@@ -498,7 +511,7 @@ describe('Plugin details page', () => {
       config.licenseInfo.hasValidLicense = true;
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
-      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       expect(queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
     });
