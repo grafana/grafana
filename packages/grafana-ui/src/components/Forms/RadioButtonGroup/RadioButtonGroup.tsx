@@ -52,6 +52,7 @@ export function RadioButtonGroup<T>({
             disabled={isItemDisabled || disabled}
             active={value === o.value}
             key={`o.label-${i}`}
+            aria-label={o.ariaLabel}
             onChange={handleOnChange(o)}
             id={`option-${o.value}-${id}`}
             name={groupName.current}

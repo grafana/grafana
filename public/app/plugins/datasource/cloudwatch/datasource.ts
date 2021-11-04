@@ -1,21 +1,9 @@
 import React from 'react';
 import angular from 'angular';
-import { find, isEmpty, isString, set } from 'lodash';
-import { merge, Observable, of, throwError, zip } from 'rxjs';
-import {
-  catchError,
-  concatMap,
-  filter,
-  finalize,
-  map,
-  mergeMap,
-  repeat,
-  scan,
-  share,
-  takeWhile,
-  tap,
-} from 'rxjs/operators';
-import { getBackendSrv, getGrafanaLiveSrv, toDataQueryResponse, DataSourceWithBackend } from '@grafana/runtime';
+import { find, findLast, isEmpty, isString, set } from 'lodash';
+import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
+import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
+import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
@@ -23,10 +11,8 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  DataSourceWithLogsContextSupport,
   dateMath,
-  LiveChannelEvent,
-  LiveChannelMessageEvent,
-  LiveChannelScope,
   LoadingState,
   LogRowModel,
   rangeUtil,
@@ -58,14 +44,14 @@ import {
   LogAction,
   MetricQuery,
   MetricRequest,
+  StartQueryRequest,
   TSDBResponse,
 } from './types';
 import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
-import config from 'app/core/config';
+import { addDataLinksToLogsResponse } from './utils/datalinks';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -89,11 +75,14 @@ const displayCustomError = (title: string, message: string) =>
 
 export const MAX_ATTEMPTS = 5;
 
-export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData> {
+export class CloudWatchDatasource
+  extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
+  implements DataSourceWithLogsContextSupport {
   proxyUrl: any;
   defaultRegion: any;
   datasourceName: string;
   languageProvider: CloudWatchLanguageProvider;
+  tracingDataSourceUid?: string;
 
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
@@ -116,8 +105,8 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.datasourceName = instanceSettings.name;
-
     this.languageProvider = new CloudWatchLanguageProvider(this);
+    this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
@@ -128,11 +117,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
-      if (config.liveEnabled) {
-        dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
-      } else {
-        dataQueryResponses.push(this.handleLogQueries(logQueries, options));
-      }
+      dataQueryResponses.push(this.handleLogQueries(logQueries, options));
     }
 
     if (metricsQueries.length > 0) {
@@ -150,75 +135,12 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return merge(...dataQueryResponses);
   }
 
-  handleLiveLogQueries = (
-    logQueries: CloudWatchLogsQuery[],
-    options: DataQueryRequest<CloudWatchQuery>
-  ): Observable<DataQueryResponse> => {
-    const validLogQueries = logQueries.filter((item) => item.logGroupNames?.length);
-    if (logQueries.length > validLogQueries.length) {
-      return of({ data: [], error: { message: 'Log group is required' } });
-    }
-
-    // No valid targets, return the empty result to save a round trip.
-    if (isEmpty(validLogQueries)) {
-      return of({ data: [], state: LoadingState.Done });
-    }
-
-    const queryParams = validLogQueries.map((target: CloudWatchLogsQuery) => ({
-      intervalMs: 1, // dummy
-      maxDataPoints: 1, // dummy
-      datasourceId: this.id,
-      queryString: this.replace(target.expression, options.scopedVars, true),
-      refId: target.refId,
-      logGroupNames: target.logGroupNames?.map((logGroup) =>
-        this.replace(logGroup, options.scopedVars, true, 'log groups')
-      ),
-      statsGroups: target.statsGroups,
-      region: this.getActualRegion(this.replace(target.region, options.scopedVars, true, 'region')),
-      type: 'liveLogAction',
-    }));
-
-    const range = this.timeSrv.timeRange();
-
-    const requestParams = {
-      from: range.from.valueOf().toString(),
-      to: range.to.valueOf().toString(),
-      queries: queryParams,
-    };
-
-    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
-      mergeMap((response: TSDBResponse) => {
-        const dataQueryResponse = toDataQueryResponse({ data: response }, options.targets);
-        const channelName: string = dataQueryResponse.data[0].meta.custom.channelName;
-        return getGrafanaLiveSrv().getStream({
-          scope: LiveChannelScope.Plugin,
-          namespace: 'cloudwatch',
-          path: channelName,
-        });
-      }),
-      filter((e: LiveChannelEvent<any>) => e.type === 'message'),
-      map(({ message }: LiveChannelMessageEvent<TSDBResponse>) => {
-        const dataQueryResponse = toDataQueryResponse({
-          data: message,
-        });
-        dataQueryResponse.state = dataQueryResponse.data.every((dataFrame) =>
-          statusIsTerminated(dataFrame.meta?.custom?.['Status'])
-        )
-          ? LoadingState.Done
-          : LoadingState.Loading;
-        dataQueryResponse.key = message.results[Object.keys(message.results)[0]].refId;
-        return this.addDataLinksToLogsResponse(dataQueryResponse, options);
-      }),
-      catchError((err) => {
-        if (err.data?.error) {
-          throw err.data.error;
-        }
-
-        throw err;
-      })
-    );
-  };
-
+  /**
+   * Handle log query. The log query works by starting the query on the CloudWatch and then periodically polling for
+   * results.
+   * @param logQueries
+   * @param options
+   */
   handleLogQueries = (
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
@@ -233,15 +155,21 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       return of({ data: [], state: LoadingState.Done });
     }
 
-    const queryParams = validLogQueries.map((target: CloudWatchLogsQuery) => ({
+    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
       queryString: target.expression,
       refId: target.refId,
       logGroupNames: target.logGroupNames,
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
-    return this.makeLogActionRequest('StartQuery', queryParams, options.scopedVars).pipe(
+    // This first starts the query which returns queryId which can be used to retrieve results.
+    return this.makeLogActionRequest('StartQuery', queryParams, {
+      makeReplacements: true,
+      scopedVars: options.scopedVars,
+      skipCache: true,
+    }).pipe(
       mergeMap((dataFrames) =>
+        // This queries for the results
         this.logsQuery(
           dataFrames.map((dataFrame) => ({
             queryId: dataFrame.fields[0].values.get(0),
@@ -252,7 +180,22 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
           }))
         )
       ),
-      map((response) => this.addDataLinksToLogsResponse(response, options))
+      mergeMap((dataQueryResponse) => {
+        return from(
+          (async () => {
+            await addDataLinksToLogsResponse(
+              dataQueryResponse,
+              options,
+              this.timeSrv.timeRange(),
+              this.replace.bind(this),
+              this.getActualRegion.bind(this),
+              this.tracingDataSourceUid
+            );
+
+            return dataQueryResponse;
+          })()
+        );
+      })
     );
   };
 
@@ -263,8 +206,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     const validMetricsQueries = metricQueries
       .filter(
         (item) =>
-          (!!item.region && !!item.namespace && !!item.metricName && !isEmpty(item.statistics)) ||
-          item.expression?.length > 0
+          (!!item.region && !!item.namespace && !!item.metricName && !!item.statistic) || item.expression?.length > 0
       )
       .map(
         (item: CloudWatchMetricsQuery): MetricQuery => {
@@ -272,24 +214,10 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
           item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
           item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
           item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
-          item.statistics = item.statistics.map((stat) => this.replace(stat, options.scopedVars, true, 'statistics'));
+          item.statistic = this.templateSrv.replace(item.statistic, options.scopedVars);
           item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
           item.id = this.templateSrv.replace(item.id, options.scopedVars);
           item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
-
-          // valid ExtendedStatistics is like p90.00, check the pattern
-          const hasInvalidStatistics = item.statistics.some((s) => {
-            if (s.indexOf('p') === 0) {
-              const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
-              return !matches || matches[0] !== s;
-            }
-
-            return false;
-          });
-
-          if (hasInvalidStatistics) {
-            throw { message: 'Invalid extended statistics' };
-          }
 
           return {
             intervalMs: options.intervalMs,
@@ -315,6 +243,10 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return this.performTimeSeriesQuery(request, options.range);
   };
 
+  /**
+   * Checks progress and polls data of a started logs query with some retry logic.
+   * @param queryParams
+   */
   logsQuery(
     queryParams: Array<{
       queryId: string;
@@ -334,7 +266,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     });
 
     const dataFrames = increasingInterval({ startPeriod: 100, endPeriod: 1000, step: 300 }).pipe(
-      concatMap((_) => this.makeLogActionRequest('GetQueryResults', queryParams)),
+      concatMap((_) => this.makeLogActionRequest('GetQueryResults', queryParams, { skipCache: true })),
       repeat(),
       share()
     );
@@ -408,53 +340,15 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return withTeardown(queryResponse, () => this.stopQueries());
   }
 
-  private addDataLinksToLogsResponse(response: DataQueryResponse, options: DataQueryRequest<CloudWatchQuery>) {
-    for (const dataFrame of response.data as DataFrame[]) {
-      const range = this.timeSrv.timeRange();
-      const start = range.from.toISOString();
-      const end = range.to.toISOString();
-
-      const curTarget = options.targets.find((target) => target.refId === dataFrame.refId) as CloudWatchLogsQuery;
-      const interpolatedGroups =
-        curTarget.logGroupNames?.map((logGroup: string) =>
-          this.replace(logGroup, options.scopedVars, true, 'log groups')
-        ) ?? [];
-      const urlProps: AwsUrl = {
-        end,
-        start,
-        timeType: 'ABSOLUTE',
-        tz: 'UTC',
-        editorString: curTarget.expression ? this.replace(curTarget.expression, options.scopedVars, true) : '',
-        isLiveTail: false,
-        source: interpolatedGroups,
-      };
-
-      const encodedUrl = encodeUrl(
-        urlProps,
-        this.getActualRegion(this.replace(curTarget.region, options.scopedVars, true, 'region'))
-      );
-
-      for (const field of dataFrame.fields) {
-        field.config.links = [
-          {
-            url: encodedUrl,
-            title: 'View in CloudWatch console',
-            targetBlank: true,
-          },
-        ];
-      }
-    }
-
-    return response;
-  }
-
   stopQueries() {
     if (Object.keys(this.logQueries).length > 0) {
       this.makeLogActionRequest(
         'StopQuery',
         Object.values(this.logQueries).map((logQuery) => ({ queryId: logQuery.id, region: logQuery.region })),
-        undefined,
-        false
+        {
+          makeReplacements: false,
+          skipCache: true,
+        }
       ).pipe(
         finalize(() => {
           this.logQueries = {};
@@ -464,14 +358,14 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
   }
 
   async describeLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
-    const dataFrames = await this.makeLogActionRequest('DescribeLogGroups', [params]).toPromise();
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeLogGroups', [params]));
 
     const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
     return logGroupNames;
   }
 
   async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
-    const dataFrames = await this.makeLogActionRequest('GetLogGroupFields', [params]).toPromise();
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));
 
     const fieldNames = dataFrames[0].fields[0].values.toArray();
     const fieldPercentages = dataFrames[0].fields[1].values.toArray();
@@ -516,7 +410,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       requestParams.startTime = row.timeEpochMs;
     }
 
-    const dataFrames = await this.makeLogActionRequest('GetLogEvents', [requestParams]).toPromise();
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogEvents', [requestParams]));
 
     return {
       data: dataFrames,
@@ -552,28 +446,40 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
           return { data: [] };
         }
 
+        const lastError = findLast(res.results, (v) => !!v.error);
+
         return {
           data: dataframes,
-          error: Object.values(res.results).reduce((acc, curr) => (curr.error ? { message: curr.error } : acc), null),
+          error: lastError ? { message: lastError.error } : null,
         };
       }),
       catchError((err) => {
-        if (/^Throttling:.*/.test(err.data.message)) {
+        const isFrameError = err.data.results;
+
+        // Error is not frame specific
+        if (!isFrameError && err.data && err.data.message === 'Metric request error' && err.data.error) {
+          err.message = err.data.error;
+          return throwError(() => err);
+        }
+
+        // The error is either for a specific frame or for all the frames
+        const results: Array<{ error?: string }> = Object.values(err.data.results);
+        const firstErrorResult = results.find((r) => r.error);
+        if (firstErrorResult) {
+          err.message = firstErrorResult.error;
+        }
+
+        if (results.some((r) => r.error && /^Throttling:.*/.test(r.error))) {
           const failedRedIds = Object.keys(err.data.results);
           const regionsAffected = Object.values(request.queries).reduce(
             (res: string[], { refId, region }) =>
               (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
             []
           ) as string[];
-
           regionsAffected.forEach((region) => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
         }
 
-        if (err.data && err.data.message === 'Metric request error' && err.data.error) {
-          err.data.message = err.data.error;
-        }
-
-        return throwError(err);
+        return throwError(() => err);
       })
     );
   }
@@ -591,34 +497,40 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
 
   doMetricQueryRequest(subtype: string, parameters: any): Promise<Array<{ text: any; label: any; value: any }>> {
     const range = this.timeSrv.timeRange();
-    return this.awsRequest(DS_QUERY_ENDPOINT, {
-      from: range.from.valueOf().toString(),
-      to: range.to.valueOf().toString(),
-      queries: [
-        {
-          refId: 'metricFindQuery',
-          intervalMs: 1, // dummy
-          maxDataPoints: 1, // dummy
-          datasourceId: this.id,
-          type: 'metricFindQuery',
-          subtype: subtype,
-          ...parameters,
-        },
-      ],
-    })
-      .pipe(
+    return lastValueFrom(
+      this.awsRequest(DS_QUERY_ENDPOINT, {
+        from: range.from.valueOf().toString(),
+        to: range.to.valueOf().toString(),
+        queries: [
+          {
+            refId: 'metricFindQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.id,
+            type: 'metricFindQuery',
+            subtype: subtype,
+            ...parameters,
+          },
+        ],
+      }).pipe(
         map((r) => {
           return this.transformSuggestDataFromDataframes(r);
         })
       )
-      .toPromise();
+    );
   }
 
   makeLogActionRequest(
     subtype: LogAction,
-    queryParams: any[],
-    scopedVars?: ScopedVars,
-    makeReplacements = true
+    queryParams: Array<GetLogEventsRequest | StartQueryRequest | DescribeLogGroupsRequest | GetLogGroupFieldsRequest>,
+    options: {
+      scopedVars?: ScopedVars;
+      makeReplacements?: boolean;
+      skipCache?: boolean;
+    } = {
+      makeReplacements: true,
+      skipCache: false,
+    }
   ): Observable<DataFrame[]> {
     const range = this.timeSrv.timeRange();
 
@@ -636,30 +548,44 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       })),
     };
 
-    if (makeReplacements) {
+    if (options.makeReplacements) {
       requestParams.queries.forEach((query) => {
-        if (query.hasOwnProperty('queryString')) {
-          query.queryString = this.replace(query.queryString, scopedVars, true);
-        }
-        query.region = this.replace(query.region, scopedVars, true, 'region');
-        query.region = this.getActualRegion(query.region);
+        const fieldsToReplace: Array<
+          keyof (GetLogEventsRequest & StartQueryRequest & DescribeLogGroupsRequest & GetLogGroupFieldsRequest)
+        > = ['queryString', 'logGroupNames', 'logGroupName', 'logGroupNamePrefix'];
 
-        // interpolate log groups
-        if (query.logGroupNames) {
-          query.logGroupNames = query.logGroupNames.map((logGroup: string) =>
-            this.replace(logGroup, scopedVars, true, 'log groups')
-          );
+        for (const fieldName of fieldsToReplace) {
+          if (query.hasOwnProperty(fieldName)) {
+            if (Array.isArray(query[fieldName])) {
+              query[fieldName] = query[fieldName].map((val: string) =>
+                this.replace(val, options.scopedVars, true, fieldName)
+              );
+            } else {
+              query[fieldName] = this.replace(query[fieldName], options.scopedVars, true, fieldName);
+            }
+          }
         }
+        query.region = this.replace(query.region, options.scopedVars, true, 'region');
+        query.region = this.getActualRegion(query.region);
       });
     }
 
     const resultsToDataFrames = (val: any): DataFrame[] => toDataQueryResponse(val).data || [];
+    let headers = {};
+    if (options.skipCache) {
+      headers = {
+        'X-Cache-Skip': true,
+      };
+    }
 
-    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
+    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams, headers).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err) => {
         if (err.data?.error) {
           throw err.data.error;
+        } else if (err.data?.message) {
+          // In PROD we do not supply .error
+          throw err.data.message;
         }
 
         throw err;
@@ -824,7 +750,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
 
   annotationQuery(options: any) {
     const annotation = options.annotation;
-    const statistics = annotation.statistics.map((s: any) => this.templateSrv.replace(s));
+    const statistic = this.templateSrv.replace(annotation.statistic);
     const defaultPeriod = annotation.prefixMatching ? '' : '300';
     let period = annotation.period || defaultPeriod;
     period = parseInt(period, 10);
@@ -834,25 +760,25 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       namespace: this.templateSrv.replace(annotation.namespace),
       metricName: this.templateSrv.replace(annotation.metricName),
       dimensions: this.convertDimensionFormat(annotation.dimensions, {}),
-      statistics: statistics,
+      statistic: statistic,
       period: period,
       actionPrefix: annotation.actionPrefix || '',
       alarmNamePrefix: annotation.alarmNamePrefix || '',
     };
 
-    return this.awsRequest(DS_QUERY_ENDPOINT, {
-      from: options.range.from.valueOf().toString(),
-      to: options.range.to.valueOf().toString(),
-      queries: [
-        {
-          refId: 'annotationQuery',
-          datasourceId: this.id,
-          type: 'annotationQuery',
-          ...parameters,
-        },
-      ],
-    })
-      .pipe(
+    return lastValueFrom(
+      this.awsRequest(DS_QUERY_ENDPOINT, {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: [
+          {
+            refId: 'annotationQuery',
+            datasourceId: this.id,
+            type: 'annotationQuery',
+            ...parameters,
+          },
+        ],
+      }).pipe(
         map((r) => {
           const frames = toDataQueryResponse({ data: r }).data as DataFrame[];
           const table = toLegacyResponseData(frames[0]) as TableData;
@@ -865,7 +791,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
           }));
         })
       )
-      .toPromise();
+    );
   }
 
   targetContainsTemplate(target: any) {
@@ -897,11 +823,12 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     }
   }
 
-  awsRequest(url: string, data: MetricRequest): Observable<TSDBResponse> {
+  awsRequest(url: string, data: MetricRequest, headers: Record<string, any> = {}): Observable<TSDBResponse> {
     const options = {
       method: 'POST',
       url,
       data,
+      headers,
     };
 
     return getBackendSrv()
@@ -1054,13 +981,4 @@ function withTeardown<T = any>(observable: Observable<T>, onUnsubscribe: () => v
 function parseLogGroupName(logIdentifier: string): string {
   const colonIndex = logIdentifier.lastIndexOf(':');
   return logIdentifier.substr(colonIndex + 1);
-}
-
-function statusIsTerminated(status: string | CloudWatchLogsQueryStatus) {
-  return [
-    CloudWatchLogsQueryStatus.Complete,
-    CloudWatchLogsQueryStatus.Cancelled,
-    CloudWatchLogsQueryStatus.Failed,
-    CloudWatchLogsQueryStatus.Timeout,
-  ].includes(status as CloudWatchLogsQueryStatus);
 }

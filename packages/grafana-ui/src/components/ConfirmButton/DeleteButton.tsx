@@ -10,9 +10,10 @@ export interface Props {
   size?: ComponentSize;
   /** Disable button click action */
   disabled?: boolean;
+  'aria-label'?: string;
 }
 
-export const DeleteButton: FC<Props> = ({ size, disabled, onConfirm }) => {
+export const DeleteButton: FC<Props> = ({ size, disabled, onConfirm, 'aria-label': ariaLabel }) => {
   return (
     <ConfirmButton
       confirmText="Delete"
@@ -21,7 +22,7 @@ export const DeleteButton: FC<Props> = ({ size, disabled, onConfirm }) => {
       disabled={disabled}
       onConfirm={onConfirm}
     >
-      <Button variant="destructive" icon="times" size={size || 'sm'} />
+      <Button aria-label={ariaLabel} variant="destructive" icon="times" size={size || 'sm'} />
     </ConfirmButton>
   );
 };

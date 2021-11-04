@@ -4,6 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { getPropertiesForButtonSize } from '../commonStyles';
 import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
+import { StringSelector } from '@grafana/e2e-selectors';
 
 export type RadioButtonSize = 'sm' | 'md';
 
@@ -16,6 +17,7 @@ export interface RadioButtonProps {
   id: string;
   onChange: () => void;
   fullWidth?: boolean;
+  'aria-label'?: StringSelector;
 }
 
 export const RadioButton: React.FC<RadioButtonProps> = ({
@@ -28,6 +30,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   name = undefined,
   description,
   fullWidth,
+  'aria-label': ariaLabel,
 }) => {
   const theme = useTheme2();
   const styles = getRadioButtonStyles(theme, size, fullWidth);
@@ -42,6 +45,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
         id={id}
         checked={active}
         name={name}
+        aria-label={ariaLabel}
       />
       <label className={styles.radioLabel} htmlFor={id} title={description}>
         {children}

@@ -15,13 +15,12 @@ import (
 	"strconv"
 	"strings"
 
-	gomail "gopkg.in/mail.v2"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	gomail "gopkg.in/mail.v2"
 )
 
 var (
@@ -185,7 +184,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		data = make(map[string]interface{}, 10)
 	}
 
-	setDefaultTemplateData(data, nil)
+	setDefaultTemplateData(ns.Cfg, data, nil)
 
 	body := make(map[string]string)
 	for _, contentType := range ns.Cfg.Smtp.ContentTypes {

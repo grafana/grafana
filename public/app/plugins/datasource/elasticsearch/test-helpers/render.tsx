@@ -4,20 +4,28 @@ import { getDefaultTimeRange } from '@grafana/data';
 import { ElasticDatasource } from '../datasource';
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
 
+const defaultProviderProps = {
+  datasource: {} as ElasticDatasource,
+  query: { refId: 'A' },
+  onChange: () => void 0,
+  onRunQuery: () => void 0,
+  range: getDefaultTimeRange(),
+};
+
 export const renderWithESProvider = (
   ui: ReactNode,
   {
     providerProps: {
-      datasource = {} as ElasticDatasource,
-      query = { refId: 'A' },
-      onChange = () => void 0,
-      onRunQuery = () => void 0,
-      range = getDefaultTimeRange(),
-    } = {},
+      datasource = defaultProviderProps.datasource,
+      query = defaultProviderProps.query,
+      onChange = defaultProviderProps.onChange,
+      onRunQuery = defaultProviderProps.onRunQuery,
+      range = defaultProviderProps.range,
+    } = defaultProviderProps,
     ...renderOptions
   }: { providerProps?: Partial<Omit<ComponentProps<typeof ElasticsearchProvider>, 'children'>> } & Parameters<
     typeof render
-  >[1]
+  >[1] = { providerProps: defaultProviderProps }
 ) => {
   return render(
     <ElasticsearchProvider

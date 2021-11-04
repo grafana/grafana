@@ -1,10 +1,10 @@
-import { HideableFieldConfig, BarValueVisibility, OptionsWithTooltip, OptionsWithLegend } from '@grafana/ui';
+import { HideableFieldConfig, VisibilityMode, OptionsWithTooltip, OptionsWithLegend } from '@grafana/schema';
 
 /**
  * @alpha
  */
 export interface StatusPanelOptions extends OptionsWithTooltip, OptionsWithLegend {
-  showValue: BarValueVisibility;
+  showValue: VisibilityMode;
   rowHeight: number;
   colWidth?: number;
 }

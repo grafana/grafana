@@ -38,6 +38,7 @@ type CurrentUser struct {
 	IsGrafanaAdmin             bool               `json:"isGrafanaAdmin"`
 	GravatarUrl                string             `json:"gravatarUrl"`
 	Timezone                   string             `json:"timezone"`
+	WeekStart                  string             `json:"weekStart"`
 	Locale                     string             `json:"locale"`
 	HelpFlags1                 models.HelpFlags1  `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
@@ -64,7 +65,7 @@ func GetGravatarUrl(text string) string {
 
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
-		log.Warnf("Failed to hash text: %s", err)
+		log.Warn("Failed to hash text", "err", err)
 	}
 	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
 }

@@ -66,9 +66,12 @@ import * as debugPanel from 'app/plugins/panel/debug/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
 import * as histogramPanel from 'app/plugins/panel/histogram/module';
+import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 
 // Async loaded panels
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
+const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
+const iconPanel = async () => await import(/* webpackChunkName: "iconPanel" */ 'app/plugins/panel/icon/module');
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -99,6 +102,8 @@ const builtInPlugins: any = {
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/xychart/module': xyChartPanel,
   'app/plugins/panel/geomap/module': geomapPanel,
+  'app/plugins/panel/canvas/module': canvasPanel,
+  'app/plugins/panel/icon/module': iconPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/pluginlist/module': pluginsListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,
@@ -119,6 +124,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/welcome/module': welcomeBanner,
   'app/plugins/panel/nodeGraph/module': nodeGraph,
   'app/plugins/panel/histogram/module': histogramPanel,
+  'app/plugins/panel/alertGroups/module': alertGroupsPanel,
 };
 
 export default builtInPlugins;

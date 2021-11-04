@@ -11,7 +11,11 @@ export interface CloudWatchMetricsQuery extends DataQuery {
 
   metricName: string;
   dimensions: { [key: string]: string | string[] };
-  statistics: string[];
+  statistic: string;
+  /**
+   * @deprecated use statistic
+   */
+  statistics?: string[];
   period: string;
   alias: string;
   matchExact: boolean;
@@ -49,11 +53,18 @@ export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
 export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
   (cloudwatchQuery as CloudWatchLogsQuery).queryMode === 'Logs';
 
-export interface AnnotationQuery extends CloudWatchMetricsQuery {
+interface AnnotationProperties {
+  enable: boolean;
+  name: string;
+  iconColor: string;
   prefixMatching: boolean;
   actionPrefix: string;
   alarmNamePrefix: string;
 }
+
+export type CloudWatchLogsAnnotationQuery = CloudWatchLogsQuery & AnnotationProperties;
+export type CloudWatchMetricsAnnotationQuery = CloudWatchMetricsQuery & AnnotationProperties;
+export type CloudWatchAnnotationQuery = CloudWatchLogsAnnotationQuery | CloudWatchMetricsAnnotationQuery;
 
 export type SelectableStrings = Array<SelectableValue<string>>;
 
@@ -62,11 +73,14 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   database?: string;
   customMetricsNamespaces?: string;
   endpoint?: string;
+
+  // Used to create links if logs contain traceId.
+  tracingDatasourceUid?: string;
 }
 
 export interface CloudWatchSecureJsonData extends AwsAuthDataSourceSecureJsonData {
-  accessKey: string;
-  secretKey: string;
+  accessKey?: string;
+  secretKey?: string;
 }
 
 export interface GetQueryResultsRequest {
@@ -320,17 +334,8 @@ export interface MetricQuery {
 // 	IntervalMs    int64
 // }
 
-export interface CloudWatchMetricsAnnotation {
-  namespace: string;
-  metricName: string;
-  expression: string;
-  dimensions: {};
-  region: string;
+export interface ExecutedQueryPreview {
   id: string;
-  alias: string;
-  statistics: string[];
-  matchExact: true;
-  prefixMatching: false;
-  actionPrefix: string;
-  alarmNamePrefix: string;
+  executedQuery: string;
+  period: string;
 }

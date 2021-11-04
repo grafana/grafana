@@ -15,6 +15,7 @@ import {
   fixSelectedInconsistency,
   initDashboardTemplating,
   initVariablesTransaction,
+  isVariableUrlValueDifferentFromCurrent,
   processVariables,
   validateVariableSelectionState,
 } from './actions';
@@ -771,6 +772,66 @@ describe('shared actions', () => {
             { text: 'Y', value: 'Y', selected: false },
             { text: 'Z', value: 'Z', selected: false },
           ]);
+        });
+      });
+    });
+  });
+
+  describe('isVariableUrlValueDifferentFromCurrent', () => {
+    describe('when called with a single valued variable', () => {
+      describe('and values are equal', () => {
+        it('then it should return false', () => {
+          const variable = queryBuilder().withMulti(false).withCurrent('A', 'A').build();
+          const urlValue = 'A';
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+        });
+      });
+
+      describe('and values are different', () => {
+        it('then it should return true', () => {
+          const variable = queryBuilder().withMulti(false).withCurrent('A', 'A').build();
+          const urlValue = 'B';
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+        });
+      });
+    });
+
+    describe('when called with a multi valued variable', () => {
+      describe('and values are equal', () => {
+        it('then it should return false', () => {
+          const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+          const urlValue = ['A'];
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+        });
+
+        describe('but urlValue is not an array', () => {
+          it('then it should return false', () => {
+            const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+            const urlValue = 'A';
+
+            expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+          });
+        });
+      });
+
+      describe('and values are different', () => {
+        it('then it should return true', () => {
+          const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+          const urlValue = ['C'];
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+        });
+
+        describe('but urlValue is not an array', () => {
+          it('then it should return true', () => {
+            const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+            const urlValue = 'C';
+
+            expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+          });
         });
       });
     });

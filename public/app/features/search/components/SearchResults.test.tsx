@@ -53,4 +53,13 @@ describe('SearchResults', () => {
     expect(mockOnToggleSection).toHaveBeenCalledTimes(1);
     expect(mockOnToggleSection).toHaveBeenCalledWith(generalFolder);
   });
+
+  it('should not throw an error if the search results have an empty title', () => {
+    const mockOnToggleSection = jest.fn();
+    const searchResultsEmptyTitle = searchResults.slice();
+    searchResultsEmptyTitle[0].title = '';
+    expect(() => {
+      setup({ results: searchResultsEmptyTitle, onToggleSection: mockOnToggleSection });
+    }).not.toThrowError();
+  });
 });

@@ -6,7 +6,7 @@ import { Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 import { getValueMappingResult } from '../utils/valueMappings';
-import { dateTime } from '../datetime';
+import { dateTime, dateTimeParse } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
@@ -45,10 +45,23 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
+  let showMs = false;
 
   if (field.type === FieldType.time && !hasDateUnit) {
     unit = `dateTimeAsSystem`;
     hasDateUnit = true;
+    if (field.values && field.values.length > 1) {
+      let start = field.values.get(0);
+      let end = field.values.get(field.values.length - 1);
+      if (typeof start === 'string') {
+        start = dateTimeParse(start).unix();
+        end = dateTimeParse(end).unix();
+      } else {
+        start /= 1e3;
+        end /= 1e3;
+      }
+      showMs = end - start < 60; //show ms when minute or less
+    }
   } else if (field.type === FieldType.boolean) {
     if (!isBooleanUnit(unit)) {
       unit = 'bool';
@@ -66,14 +79,12 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       value = dateTime(value).valueOf();
     }
 
-    let text = toString(value);
     let numeric = isStringUnit ? NaN : anyToNumber(value);
-    let prefix: string | undefined = undefined;
-    let suffix: string | undefined = undefined;
-    let color: string | undefined = undefined;
-    let percent: number | undefined = undefined;
-
-    let shouldFormat = true;
+    let text: string | undefined;
+    let prefix: string | undefined;
+    let suffix: string | undefined;
+    let color: string | undefined;
+    let percent: number | undefined;
 
     if (mappings && mappings.length > 0) {
       const mappingResult = getValueMappingResult(mappings, value);
@@ -86,32 +97,33 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         if (mappingResult.color != null) {
           color = options.theme.visualization.getColorByName(mappingResult.color);
         }
-
-        shouldFormat = false;
       }
     }
 
     if (!isNaN(numeric)) {
-      if (shouldFormat && !isBoolean(value)) {
-        const v = formatFunc(numeric, config.decimals, null, options.timeZone);
+      if (text == null && !isBoolean(value)) {
+        const v = formatFunc(numeric, config.decimals, null, options.timeZone, showMs);
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;
       }
 
       // Return the value along with scale info
-      if (color === undefined) {
+      if (color == null) {
         const scaleResult = scaleFunc(numeric);
         color = scaleResult.color;
         percent = scaleResult.percent;
       }
     }
 
-    if (!text) {
-      if (config.noValue) {
-        text = config.noValue;
-      } else {
-        text = ''; // No data?
+    if (text == null) {
+      text = toString(value);
+      if (!text) {
+        if (config.noValue) {
+          text = config.noValue;
+        } else {
+          text = ''; // No data?
+        }
       }
     }
 

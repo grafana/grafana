@@ -62,7 +62,6 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
                 <MenuItem
                   key={`${item.value}`}
                   label={(item.label || item.value) as string}
-                  ariaLabel={(item.label || item.value) as string}
                   onClick={() => onChangeInternal(item)}
                   active={item.value === value?.value}
                 />

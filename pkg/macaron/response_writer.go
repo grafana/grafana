@@ -27,7 +27,6 @@ import (
 type ResponseWriter interface {
 	http.ResponseWriter
 	http.Flusher
-	http.Pusher
 	// Status returns the status code of the response or 0 if the response has not been written.
 	Status() int
 	// Written returns whether or not the ResponseWriter has been written.
@@ -97,11 +96,6 @@ func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return hijacker.Hijack()
 }
 
-//nolint
-func (rw *responseWriter) CloseNotify() <-chan bool {
-	return rw.ResponseWriter.(http.CloseNotifier).CloseNotify()
-}
-
 func (rw *responseWriter) callBefore() {
 	for i := len(rw.beforeFuncs) - 1; i >= 0; i-- {
 		rw.beforeFuncs[i](rw)
@@ -113,12 +107,4 @@ func (rw *responseWriter) Flush() {
 	if ok {
 		flusher.Flush()
 	}
-}
-
-func (rw *responseWriter) Push(target string, opts *http.PushOptions) error {
-	pusher, ok := rw.ResponseWriter.(http.Pusher)
-	if !ok {
-		return errors.New("the ResponseWriter doesn't support the Pusher interface")
-	}
-	return pusher.Push(target, opts)
 }

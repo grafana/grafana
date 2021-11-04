@@ -30,6 +30,7 @@ export interface LokiQuery extends DataQuery {
   legendFormat?: string;
   valueWithRefId?: boolean;
   maxLines?: number;
+  resolution?: number;
   range?: boolean;
   instant?: boolean;
 }
@@ -37,6 +38,7 @@ export interface LokiQuery extends DataQuery {
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
   derivedFields?: DerivedFieldConfig[];
+  alertmanager?: string;
 }
 
 export interface LokiStats {
@@ -112,6 +114,7 @@ export type DerivedFieldConfig = {
   matcherRegex: string;
   name: string;
   url?: string;
+  urlDisplayLabel?: string;
   datasourceUid?: string;
 };
 

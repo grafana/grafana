@@ -144,14 +144,19 @@ func (db *PostgresDialect) CleanDB() error {
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *PostgresDialect) TruncateDBTables() error {
+	tables, err := db.engine.DBMetas()
+	if err != nil {
+		return err
+	}
 	sess := db.engine.NewSession()
 	defer sess.Close()
 
-	for _, table := range db.engine.Tables {
+	for _, table := range tables {
 		switch table.Name {
 		case "":
 			continue
 		case "migration_log":
+			continue
 		case "dashboard_acl":
 			// keep default dashboard permissions
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", db.Quote(table.Name))); err != nil {

@@ -3,6 +3,7 @@ import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
 import { SystemDateFormatSettings } from '../datetime';
 import { GrafanaTheme2 } from '../themes';
+import { MapLayerOptions } from '../geo/layer';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -44,9 +45,15 @@ export enum GrafanaEdition {
 export interface FeatureToggles {
   [name: string]: boolean;
 
-  ngalert: boolean;
   trimDefaults: boolean;
   accesscontrol: boolean;
+  tempoServiceGraph: boolean;
+  tempoSearch: boolean;
+  recordedQueries: boolean;
+  prometheusMonaco: boolean;
+  newNavigation: boolean;
+  fullRangeLogsVolume: boolean;
+  autoLoadFullRangeLogsVolume: boolean;
 }
 
 /**
@@ -125,4 +132,7 @@ export interface GrafanaConfig {
   dateFormats?: SystemDateFormatSettings;
   sentry: SentryConfig;
   customTheme?: any;
+  geomapDefaultBaseLayer?: MapLayerOptions;
+  geomapDisableCustomBaseLayer?: boolean;
+  unifiedAlertingEnabled: boolean;
 }

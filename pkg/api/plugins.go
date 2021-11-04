@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,11 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
@@ -32,48 +35,48 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		coreFilter = "1"
 	}
 
-	pluginSettingsMap, err := hs.PluginManager.GetPluginSettings(c.OrgId)
+	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return response.Error(500, "Failed to get list of plugins", err)
 	}
 
 	result := make(dtos.PluginList, 0)
-	for _, pluginDef := range hs.PluginManager.Plugins() {
+	for _, pluginDef := range hs.pluginStore.Plugins() {
 		// filter out app sub plugins
-		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" {
+		if embeddedFilter == "0" && pluginDef.IncludedInAppID != "" {
 			continue
 		}
 
 		// filter out core plugins
-		if (coreFilter == "0" && pluginDef.IsCorePlugin) || (coreFilter == "1" && !pluginDef.IsCorePlugin) {
+		if (coreFilter == "0" && pluginDef.IsCorePlugin()) || (coreFilter == "1" && !pluginDef.IsCorePlugin()) {
 			continue
 		}
 
 		// filter on type
-		if typeFilter != "" && typeFilter != pluginDef.Type {
+		if typeFilter != "" && typeFilter != string(pluginDef.Type) {
 			continue
 		}
 
-		if pluginDef.State == plugins.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+		if pluginDef.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
 		listItem := dtos.PluginListItem{
-			Id:            pluginDef.Id,
+			Id:            pluginDef.ID,
 			Name:          pluginDef.Name,
-			Type:          pluginDef.Type,
+			Type:          string(pluginDef.Type),
 			Category:      pluginDef.Category,
 			Info:          &pluginDef.Info,
-			LatestVersion: pluginDef.GrafanaNetVersion,
-			HasUpdate:     pluginDef.GrafanaNetHasUpdate,
-			DefaultNavUrl: pluginDef.DefaultNavUrl,
+			LatestVersion: pluginDef.GrafanaComVersion,
+			HasUpdate:     pluginDef.GrafanaComHasUpdate,
+			DefaultNavUrl: pluginDef.DefaultNavURL,
 			State:         pluginDef.State,
 			Signature:     pluginDef.Signature,
 			SignatureType: pluginDef.SignatureType,
 			SignatureOrg:  pluginDef.SignatureOrg,
 		}
 
-		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
+		if pluginSetting, exists := pluginSettingsMap[pluginDef.ID]; exists {
 			listItem.Enabled = pluginSetting.Enabled
 			listItem.Pinned = pluginSetting.Pinned
 		}
@@ -87,11 +90,9 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
-		// filter out built in data sources
-		if ds := hs.PluginManager.GetDataSource(pluginDef.Id); ds != nil {
-			if ds.BuiltIn {
-				continue
-			}
+		// filter out built in plugins
+		if pluginDef.BuiltIn {
+			continue
 		}
 
 		result = append(result, listItem)
@@ -102,38 +103,38 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Response {
-	pluginID := c.Params(":pluginId")
+	pluginID := web.Params(c.Req)[":pluginId"]
 
-	def := hs.PluginManager.GetPlugin(pluginID)
+	def := hs.pluginStore.Plugin(pluginID)
 	if def == nil {
 		return response.Error(404, "Plugin not found, no installed plugin with that id", nil)
 	}
 
 	dto := &dtos.PluginSetting{
-		Type:          def.Type,
-		Id:            def.Id,
+		Type:          string(def.Type),
+		Id:            def.ID,
 		Name:          def.Name,
 		Info:          &def.Info,
 		Dependencies:  &def.Dependencies,
 		Includes:      def.Includes,
-		BaseUrl:       def.BaseUrl,
+		BaseUrl:       def.BaseURL,
 		Module:        def.Module,
-		DefaultNavUrl: def.DefaultNavUrl,
-		LatestVersion: def.GrafanaNetVersion,
-		HasUpdate:     def.GrafanaNetHasUpdate,
+		DefaultNavUrl: def.DefaultNavURL,
+		LatestVersion: def.GrafanaComVersion,
+		HasUpdate:     def.GrafanaComHasUpdate,
 		State:         def.State,
 		Signature:     def.Signature,
 		SignatureType: def.SignatureType,
 		SignatureOrg:  def.SignatureOrg,
 	}
 
-	if app := hs.PluginManager.GetApp(def.Id); app != nil {
-		dto.Enabled = app.AutoEnabled
-		dto.Pinned = app.AutoEnabled
+	if def.IsApp() {
+		dto.Enabled = def.AutoEnabled
+		dto.Pinned = def.AutoEnabled
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
 			return response.Error(500, "Failed to get login settings", nil)
 		}
@@ -147,15 +148,15 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) response.Response {
-	pluginID := c.Params(":pluginId")
+	pluginID := web.Params(c.Req)[":pluginId"]
 
-	if app := hs.PluginManager.GetApp(pluginID); app == nil {
+	if app := hs.pluginStore.Plugin(pluginID); app == nil {
 		return response.Error(404, "Plugin not installed", nil)
 	}
 
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
 
@@ -163,11 +164,11 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.Updat
 }
 
 func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Response {
-	pluginID := c.Params(":pluginId")
+	pluginID := web.Params(c.Req)[":pluginId"]
 
-	list, err := hs.PluginManager.GetPluginDashboards(c.OrgId, pluginID)
+	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.OrgId, pluginID)
 	if err != nil {
-		var notFound plugins.PluginNotFoundError
+		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
 			return response.Error(404, notFound.Error(), nil)
 		}
@@ -179,12 +180,12 @@ func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response {
-	pluginID := c.Params(":pluginId")
-	name := c.Params(":name")
+	pluginID := web.Params(c.Req)[":pluginId"]
+	name := web.Params(c.Req)[":name"]
 
-	content, err := hs.PluginManager.GetPluginMarkdown(pluginID, name)
+	content, err := hs.pluginMarkdown(pluginID, name)
 	if err != nil {
-		var notFound plugins.PluginNotFoundError
+		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
 			return response.Error(404, notFound.Error(), nil)
 		}
@@ -194,7 +195,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 
 	// fallback try readme
 	if len(content) == 0 {
-		content, err = hs.PluginManager.GetPluginMarkdown(pluginID, "readme")
+		content, err = hs.pluginMarkdown(pluginID, "readme")
 		if err != nil {
 			return response.Error(501, "Could not get markdown file", err)
 		}
@@ -219,13 +220,18 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 		}
 	}
 
-	dashInfo, dash, err := hs.PluginManager.ImportDashboard(apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
-		apiCmd.Dashboard, apiCmd.Overwrite, apiCmd.Inputs, c.SignedInUser, hs.DataService)
+	dashInfo, dash, err := hs.pluginDashboardManager.ImportDashboard(apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
+		apiCmd.Dashboard, apiCmd.Overwrite, apiCmd.Inputs, c.SignedInUser)
 	if err != nil {
 		return hs.dashboardSaveErrorToApiResponse(err)
 	}
 
-	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dash)
+	err = hs.LibraryPanelService.ImportLibraryPanelsForDashboard(c.Req.Context(), c.SignedInUser, dash, apiCmd.FolderId)
+	if err != nil {
+		return response.Error(500, "Error while importing library panels", err)
+	}
+
+	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c.Req.Context(), c.SignedInUser, dash)
 	if err != nil {
 		return response.Error(500, "Error while connecting library panels", err)
 	}
@@ -237,13 +243,13 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 //
 // /api/plugins/:pluginId/metrics
 func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Response {
-	pluginID := c.Params("pluginId")
-	plugin := hs.PluginManager.GetPlugin(pluginID)
+	pluginID := web.Params(c.Req)[":pluginId"]
+	plugin := hs.pluginStore.Plugin(pluginID)
 	if plugin == nil {
 		return response.Error(404, "Plugin not found", nil)
 	}
 
-	resp, err := hs.BackendPluginManager.CollectMetrics(c.Req.Context(), plugin.Id)
+	resp, err := hs.pluginClient.CollectMetrics(c.Req.Context(), plugin.ID)
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}
@@ -254,19 +260,24 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
 }
 
-// GetPluginAssets returns public plugin assets (images, JS, etc.)
+// getPluginAssets returns public plugin assets (images, JS, etc.)
 //
 // /public/plugins/:pluginId/*
-func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
-	pluginID := c.Params("pluginId")
-	plugin := hs.PluginManager.GetPlugin(pluginID)
+func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
+	pluginID := web.Params(c.Req)[":pluginId"]
+	plugin := hs.pluginStore.Plugin(pluginID)
 	if plugin == nil {
 		c.JsonApiErr(404, "Plugin not found", nil)
 		return
 	}
 
-	requestedFile := filepath.Clean(c.Params("*"))
+	requestedFile := filepath.Clean(web.Params(c.Req)["*"])
 	pluginFilePath := filepath.Join(plugin.PluginDir, requestedFile)
+
+	if !plugin.IncludedInSignature(requestedFile) {
+		hs.log.Warn("Access to requested plugin file will be forbidden in upcoming Grafana versions as the file "+
+			"is not included in the plugin signature", "file", requestedFile)
+	}
 
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
@@ -292,27 +303,21 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if shouldExclude(fi) {
-		c.JsonApiErr(403, "Plugin file access forbidden",
-			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
-		return
-	}
-
 	if hs.Cfg.Env == setting.Dev {
 		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 	} else {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
+	http.ServeContent(c.Resp, c.Req, pluginFilePath, fi.ModTime(), f)
 }
 
 // CheckHealth returns the health of a plugin.
 // /api/plugins/:pluginId/health
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
-	pluginID := c.Params("pluginId")
+	pluginID := web.Params(c.Req)[":pluginId"]
 
-	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser, false)
+	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, "", c.SignedInUser, false)
 	if err != nil {
 		return response.Error(500, "Failed to get plugin settings", err)
 	}
@@ -320,7 +325,9 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 		return response.Error(404, "Plugin not found", nil)
 	}
 
-	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
+	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
+		PluginContext: pCtx,
+	})
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}
@@ -352,9 +359,9 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 //
 // /api/plugins/:pluginId/resources/*
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
-	pluginID := c.Params("pluginId")
+	pluginID := web.Params(c.Req)[":pluginId"]
 
-	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser, false)
+	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, "", c.SignedInUser, false)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return
@@ -363,19 +370,19 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 		c.JsonApiErr(404, "Plugin not found", nil)
 		return
 	}
-	hs.BackendPluginManager.CallResource(pCtx, c, c.Params("*"))
+	hs.pluginClient.CallResource(pCtx, c, web.Params(c.Req)["*"])
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
-	return response.JSON(200, hs.PluginManager.ScanningErrors())
+	return response.JSON(200, hs.pluginErrorResolver.PluginErrors())
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
-	pluginID := c.Params("pluginId")
+	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.PluginManager.Install(c.Req.Context(), pluginID, dto.Version)
+	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version, plugins.AddOpts{})
 	if err != nil {
-		var dupeErr plugins.DuplicatePluginError
+		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
@@ -402,9 +409,9 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 }
 
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
-	pluginID := c.Params("pluginId")
+	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.PluginManager.Uninstall(c.Req.Context(), pluginID)
+	err := hs.pluginStore.Remove(c.Req.Context(), pluginID)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return response.Error(http.StatusNotFound, "Plugin not installed", err)
@@ -441,12 +448,38 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func shouldExclude(fi os.FileInfo) bool {
-	normalizedFilename := strings.ToLower(fi.Name())
+func (hs *HTTPServer) pluginMarkdown(pluginId string, name string) ([]byte, error) {
+	plug := hs.pluginStore.Plugin(pluginId)
+	if plug == nil {
+		return nil, plugins.NotFoundError{PluginID: pluginId}
+	}
 
-	isUnixExecutable := fi.Mode()&0111 == 0111
-	isWindowsExecutable := strings.HasSuffix(normalizedFilename, ".exe")
-	isScript := strings.HasSuffix(normalizedFilename, ".sh")
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
+	// on plugin the folder structure on disk and not user input.
+	path := filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
+	exists, err := fs.Exists(path)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		path = filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToLower(name)))
+	}
 
-	return isUnixExecutable || isWindowsExecutable || isScript
+	exists, err = fs.Exists(path)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return make([]byte, 0), nil
+	}
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
+	// on plugin the folder structure on disk and not user input.
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }

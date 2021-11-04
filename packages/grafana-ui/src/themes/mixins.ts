@@ -2,36 +2,36 @@ import { CSSObject } from '@emotion/css';
 import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 
-export function cardChrome(theme: GrafanaTheme): string {
+export function cardChrome(theme: GrafanaTheme2): string {
   return `
-    background: ${theme.colors.bg2};
+    background: ${theme.colors.background.secondary};
     &:hover {
-      background: ${hoverColor(theme.colors.bg2, theme)};
+      background: ${hoverColor(theme.colors.background.secondary, theme)};
     }
-    box-shadow: ${theme.shadows.listItem};
-    border-radius: ${theme.border.radius.md};
+    box-shadow: ${theme.components.panel.boxShadow};
+    border-radius: ${theme.shape.borderRadius(2)};
 `;
 }
 
-export function hoverColor(color: string, theme: GrafanaTheme): string {
+export function hoverColor(color: string, theme: GrafanaTheme2): string {
   return theme.isDark ? tinycolor(color).brighten(2).toString() : tinycolor(color).darken(2).toString();
 }
 
-export function listItem(theme: GrafanaTheme): string {
+export function listItem(theme: GrafanaTheme2): string {
   return `
-  background: ${theme.colors.bg2};
+  background: ${theme.colors.background.secondary};
   &:hover {
-    background: ${hoverColor(theme.colors.bg2, theme)};
+    background: ${hoverColor(theme.colors.background.secondary, theme)};
   }
-  box-shadow: ${theme.shadows.listItem};
-  border-radius: ${theme.border.radius.md};
+  box-shadow: ${theme.components.panel.boxShadow};
+  border-radius: ${theme.shape.borderRadius(2)};
 `;
 }
 
-export function listItemSelected(theme: GrafanaTheme): string {
+export function listItemSelected(theme: GrafanaTheme2): string {
   return `
-    background: ${hoverColor(theme.colors.bg2, theme)};
-    color: ${theme.colors.textStrong};
+    background: ${hoverColor(theme.colors.background.secondary, theme)};
+    color: ${theme.colors.text.maxContrast};
 `;
 }
 

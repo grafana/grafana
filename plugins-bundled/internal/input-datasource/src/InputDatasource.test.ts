@@ -19,6 +19,7 @@ describe('InputDatasource', () => {
     type: 'x',
     name: 'xxx',
     meta: {} as PluginMeta,
+    access: 'proxy',
     jsonData: {
       data,
     },

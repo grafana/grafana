@@ -1,6 +1,5 @@
 import execa = require('execa');
 import { promises as fs } from 'fs';
-// @ts-ignore
 import * as path from 'path';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';

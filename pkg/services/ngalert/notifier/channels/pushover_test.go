@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -141,7 +143,8 @@ func TestPushoverNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewPushoverNotifier(m, tmpl)
+			decryptFn := ossencryption.ProvideService().GetDecryptedValue
+			pn, err := NewPushoverNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

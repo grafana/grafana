@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
-import { Segment, Icon } from '@grafana/ui';
+import { Segment, Icon, SegmentSection } from '@grafana/ui';
 
 const AddButton = (
   <a className="gf-form-label query-part">
@@ -17,13 +17,10 @@ const groupedOptions = [
 
 const SegmentFrame = ({ options, children }: any) => (
   <>
-    <div className="gf-form-inline">
-      <div className="gf-form">
-        <span className="gf-form-label width-8 query-keyword">Segment Name</span>
-      </div>
+    <SegmentSection label="Segment Name">
       {children}
       <Segment Component={AddButton} onChange={({ value }) => action('New value added')(value)} options={options} />
-    </div>
+    </SegmentSection>
   </>
 );
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Checkbox, CollapsableSection, ColorValueEditor, Field, HorizontalGroup, Input } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
 import { AnnotationQuery, DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
+import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { useAsync } from 'react-use';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { AngularEditorLoader } from './AngularEditorLoader';
@@ -78,12 +78,21 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
           width={50}
         />
       </Field>
-      <Field label="Data source">
-        <DataSourcePicker width={50} annotations current={annotation.datasource} onChange={onDataSourceChange} />
+      <Field label="Data source" htmlFor="data-source-picker">
+        <DataSourcePicker
+          width={50}
+          annotations
+          variables
+          current={annotation.datasource}
+          onChange={onDataSourceChange}
+        />
+      </Field>
+      <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
+        <Checkbox name="enable" id="enable" value={annotation.enable} onChange={onChange} />
       </Field>
       <Field
         label="Hidden"
-        description="Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden."
+        description="Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden."
       >
         <Checkbox name="hide" id="hide" value={annotation.hide} onChange={onChange} />
       </Field>

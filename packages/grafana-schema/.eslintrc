@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "no-restricted-imports": ["error", { "patterns": ["@grafana/*"] }]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
+}

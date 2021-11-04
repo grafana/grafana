@@ -260,6 +260,7 @@ describe('enhanceDataFrame', () => {
           name: 'trace2',
           url: 'test',
           datasourceUid: 'uid2',
+          urlDisplayLabel: 'Custom Label',
         },
       ],
     });
@@ -279,7 +280,7 @@ describe('enhanceDataFrame', () => {
       url: '',
     });
     expect(fc.getFieldByName('trace2')!.config.links![1]).toEqual({
-      title: '',
+      title: 'Custom Label',
       internal: { datasourceName: 'Loki1', datasourceUid: 'uid2', query: { query: 'test' } },
       url: '',
     });

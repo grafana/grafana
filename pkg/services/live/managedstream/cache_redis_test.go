@@ -1,3 +1,4 @@
+//go:build redis
 // +build redis
 
 package managedstream
@@ -5,8 +6,8 @@ package managedstream
 import (
 	"testing"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/redis.v5"
 )
 
 func TestRedisCacheStorage(t *testing.T) {

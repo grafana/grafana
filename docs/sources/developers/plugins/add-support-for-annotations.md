@@ -29,5 +29,6 @@ To enable annotation support for your data source, add the following two lines o
    **datasource.ts**
 
    ```ts
-   annotations: {};
+   annotations: {
+   }
    ```

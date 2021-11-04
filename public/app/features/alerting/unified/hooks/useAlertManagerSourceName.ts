@@ -40,7 +40,7 @@ export function useAlertManagerSourceName(): [string | undefined, (alertManagerS
     if (isAlertManagerSource(querySource)) {
       return [querySource, update];
     } else {
-      // non existing alert manager
+      // non existing alertmanager
       return [undefined, update];
     }
   }

@@ -1,4 +1,4 @@
-# Table Panel -  Native Plugin
+# Table Panel - Native Plugin
 
 The Table Panel is **included** with Grafana.
 

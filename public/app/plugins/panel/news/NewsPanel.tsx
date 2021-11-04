@@ -83,6 +83,7 @@ export class NewsPanel extends PureComponent<Props, State> {
             <article key={index} className={cx(styles.item, useWideLayout && styles.itemWide)}>
               {showImage && item.ogImage && (
                 <a
+                  tabIndex={-1}
                   href={textUtil.sanitizeUrl(item.link)}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -132,7 +133,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   itemWide: css`
     flex-direction: row;
   `,
-  body: css``,
+  body: css`
+    display: flex;
+    flex-direction: column;
+  `,
   socialImage: css`
     display: flex;
     align-items: center;
@@ -152,6 +156,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   `,
   link: css`
     color: ${theme.colors.text.link};
+    display: inline-block;
 
     &:hover {
       color: ${theme.colors.text.link};
@@ -159,7 +164,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     }
   `,
   title: css`
-    max-width: calc(100% - 70px);
     font-size: 16px;
     margin-bottom: ${theme.spacing(0.5)};
   `,

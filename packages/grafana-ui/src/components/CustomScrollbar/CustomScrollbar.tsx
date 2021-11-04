@@ -2,7 +2,7 @@ import React, { FC, useCallback, useEffect, useRef } from 'react';
 import { isNil } from 'lodash';
 import classNames from 'classnames';
 import { css } from '@emotion/css';
-import Scrollbars, { positionValues } from 'react-custom-scrollbars';
+import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 import { useStyles2 } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
 

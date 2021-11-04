@@ -1,4 +1,4 @@
-import { DataQuery } from './datasource';
+import { DataQuery } from './query';
 import { InterpolateFunction } from './panel';
 
 /**

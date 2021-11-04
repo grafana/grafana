@@ -71,6 +71,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
     <FieldSet className={styles.container}>
       <Field label="Filter by">
         <Select
+          menuShouldPortal
           inputId="grafana-annotations__filter-by"
           options={annotationTypes}
           value={type}
@@ -79,6 +80,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
       </Field>
       <Field label="Max limit">
         <Select
+          menuShouldPortal
           inputId="grafana-annotations__limit"
           width={16}
           options={limitOptions}

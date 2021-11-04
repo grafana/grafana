@@ -18,14 +18,18 @@ export function getPageStyles(theme: GrafanaTheme2) {
 
     .main-view {
       position: relative;
+      display: flex;
+      flex-direction: column;
       flex-grow: 1;
+      height: 100%;
+      flex: 1 1 0;
     }
 
     .page-scrollbar-wrapper {
-      position: absolute;
-      top: 0;
-      bottom: 0;
       width: 100%;
+      flex-grow: 1;
+      width: 100%;
+      min-height: 0;
     }
 
     .page-scrollbar-content {

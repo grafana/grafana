@@ -7,12 +7,11 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -30,16 +29,17 @@ func TestDataSourceCacheManager(t *testing.T) {
 		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
 		dataPath:        cfg.DataPath,
 	}
-
-	jsonData := simplejson.NewFromAny(map[string]interface{}{
-		"sslmode":                "verify-full",
-		"tlsConfigurationMethod": "file-content",
-	})
-	secureJSONData := securejsondata.GetEncryptedJsonData(map[string]string{
+	jsonData := sqleng.JsonData{
+		Mode:                "verify-full",
+		ConfigurationMethod: "file-content",
+	}
+	secureJSONData := map[string]string{
 		"tlsClientCert": "I am client certification",
 		"tlsClientKey":  "I am client key",
 		"tlsCACert":     "I am CA certification",
-	})
+	}
+
+	updateTime := time.Now().Add(-5 * time.Minute)
 
 	mockValidateCertFilePaths()
 	t.Cleanup(resetValidateCertFilePaths)
@@ -49,13 +49,13 @@ func TestDataSourceCacheManager(t *testing.T) {
 		wg.Add(10)
 		for id := int64(1); id <= 10; id++ {
 			go func(id int64) {
-				ds := &models.DataSource{
-					Id:             id,
-					Version:        1,
-					Database:       "database",
-					JsonData:       jsonData,
-					SecureJsonData: secureJSONData,
-					Uid:            "testData",
+				ds := sqleng.DataSourceInfo{
+					ID:                      id,
+					Updated:                 updateTime,
+					Database:                "database",
+					JsonData:                jsonData,
+					DecryptedSecureJSONData: secureJSONData,
+					UID:                     "testData",
 				}
 				s := tlsSettings{}
 				err := mng.writeCertFiles(ds, &s)
@@ -67,9 +67,9 @@ func TestDataSourceCacheManager(t *testing.T) {
 
 		t.Run("check cache creation is succeed", func(t *testing.T) {
 			for id := int64(1); id <= 10; id++ {
-				version, ok := mng.dsCacheInstance.cache.Load(strconv.Itoa(int(id)))
+				updated, ok := mng.dsCacheInstance.cache.Load(strconv.Itoa(int(id)))
 				require.True(t, ok)
-				require.Equal(t, int(1), version)
+				require.Equal(t, updateTime, updated)
 			}
 		})
 	})
@@ -82,13 +82,13 @@ func TestDataSourceCacheManager(t *testing.T) {
 			wg1.Add(5)
 			for id := int64(1); id <= 5; id++ {
 				go func(id int64) {
-					ds := &models.DataSource{
-						Id:             1,
-						Version:        2,
-						Database:       "database",
-						JsonData:       jsonData,
-						SecureJsonData: secureJSONData,
-						Uid:            "testData",
+					ds := sqleng.DataSourceInfo{
+						ID:                      1,
+						Updated:                 updateTime,
+						Database:                "database",
+						JsonData:                jsonData,
+						DecryptedSecureJSONData: secureJSONData,
+						UID:                     "testData",
 					}
 					s := tlsSettings{}
 					err := mng.writeCertFiles(ds, &s)
@@ -97,25 +97,25 @@ func TestDataSourceCacheManager(t *testing.T) {
 				}(id)
 			}
 			wg1.Wait()
-			assert.Equal(t, writeCertFileCallNum, 3)
+			assert.Equal(t, writeCertFileCallNum, 0)
 		})
 
 		t.Run("cache is updated with the last datasource version", func(t *testing.T) {
-			dsV2 := &models.DataSource{
-				Id:             1,
-				Version:        2,
-				Database:       "database",
-				JsonData:       jsonData,
-				SecureJsonData: secureJSONData,
-				Uid:            "testData",
+			dsV2 := sqleng.DataSourceInfo{
+				ID:                      1,
+				Updated:                 updateTime.Add(time.Minute),
+				Database:                "database",
+				JsonData:                jsonData,
+				DecryptedSecureJSONData: secureJSONData,
+				UID:                     "testData",
 			}
-			dsV3 := &models.DataSource{
-				Id:             1,
-				Version:        3,
-				Database:       "database",
-				JsonData:       jsonData,
-				SecureJsonData: secureJSONData,
-				Uid:            "testData",
+			dsV3 := sqleng.DataSourceInfo{
+				ID:                      1,
+				Updated:                 updateTime.Add(2 * time.Minute),
+				Database:                "database",
+				JsonData:                jsonData,
+				DecryptedSecureJSONData: secureJSONData,
+				UID:                     "testData",
 			}
 			s := tlsSettings{}
 			err := mng.writeCertFiles(dsV2, &s)
@@ -124,7 +124,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 			require.NoError(t, err)
 			version, ok := mng.dsCacheInstance.cache.Load("1")
 			require.True(t, ok)
-			require.Equal(t, int(3), version)
+			require.Equal(t, updateTime.Add(2*time.Minute), version)
 		})
 	})
 }
@@ -173,36 +173,39 @@ func TestGetTLSSettings(t *testing.T) {
 
 	mockValidateCertFilePaths()
 	t.Cleanup(resetValidateCertFilePaths)
+
+	updatedTime := time.Now()
+
 	testCases := []struct {
 		desc           string
 		expErr         string
-		jsonData       map[string]interface{}
+		jsonData       sqleng.JsonData
 		secureJSONData map[string]string
 		uid            string
 		tlsSettings    tlsSettings
-		version        int
+		updated        time.Time
 	}{
 		{
 			desc:    "Custom TLS authentication disabled",
-			version: 1,
-			jsonData: map[string]interface{}{
-				"sslmode":                "disable",
-				"sslRootCertFile":        "i/am/coding/ca.crt",
-				"sslCertFile":            "i/am/coding/client.crt",
-				"sslKeyFile":             "i/am/coding/client.key",
-				"tlsConfigurationMethod": "file-path",
+			updated: updatedTime,
+			jsonData: sqleng.JsonData{
+				Mode:                "disable",
+				RootCertFile:        "i/am/coding/ca.crt",
+				CertFile:            "i/am/coding/client.crt",
+				CertKeyFile:         "i/am/coding/client.key",
+				ConfigurationMethod: "file-path",
 			},
 			tlsSettings: tlsSettings{Mode: "disable"},
 		},
 		{
 			desc:    "Custom TLS authentication with file path",
-			version: 2,
-			jsonData: map[string]interface{}{
-				"sslmode":                "verify-full",
-				"sslRootCertFile":        "i/am/coding/ca.crt",
-				"sslCertFile":            "i/am/coding/client.crt",
-				"sslKeyFile":             "i/am/coding/client.key",
-				"tlsConfigurationMethod": "file-path",
+			updated: updatedTime.Add(time.Minute),
+			jsonData: sqleng.JsonData{
+				Mode:                "verify-full",
+				ConfigurationMethod: "file-path",
+				RootCertFile:        "i/am/coding/ca.crt",
+				CertFile:            "i/am/coding/client.crt",
+				CertKeyFile:         "i/am/coding/client.key",
 			},
 			tlsSettings: tlsSettings{
 				Mode:                "verify-full",
@@ -214,11 +217,11 @@ func TestGetTLSSettings(t *testing.T) {
 		},
 		{
 			desc:    "Custom TLS mode verify-full with certificate files content",
-			version: 3,
+			updated: updatedTime.Add(2 * time.Minute),
 			uid:     "xxx",
-			jsonData: map[string]interface{}{
-				"sslmode":                "verify-full",
-				"tlsConfigurationMethod": "file-content",
+			jsonData: sqleng.JsonData{
+				Mode:                "verify-full",
+				ConfigurationMethod: "file-content",
 			},
 			secureJSONData: map[string]string{
 				"tlsCACert":     "I am CA certification",
@@ -244,12 +247,11 @@ func TestGetTLSSettings(t *testing.T) {
 				dataPath:        cfg.DataPath,
 			}
 
-			jsonData := simplejson.NewFromAny(tt.jsonData)
-			ds := &models.DataSource{
-				JsonData:       jsonData,
-				SecureJsonData: securejsondata.GetEncryptedJsonData(tt.secureJSONData),
-				Uid:            tt.uid,
-				Version:        tt.version,
+			ds := sqleng.DataSourceInfo{
+				JsonData:                tt.jsonData,
+				DecryptedSecureJSONData: tt.secureJSONData,
+				UID:                     tt.uid,
+				Updated:                 tt.updated,
 			}
 
 			settings, err = mng.getTLSSettings(ds)
@@ -278,7 +280,7 @@ func resetValidateCertFilePaths() {
 
 func mockWriteCertFile() {
 	writeCertFileCallNum = 0
-	writeCertFileFunc = func(ds *models.DataSource, logger log.Logger, fileContent string, generatedFilePath string) error {
+	writeCertFileFunc = func(logger log.Logger, fileContent string, generatedFilePath string) error {
 		writeCertFileCallNum++
 		return nil
 	}

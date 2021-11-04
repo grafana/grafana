@@ -8,13 +8,15 @@ weight = 250
 # JWT authentication
 
 You can configure Grafana to accept a JWT token provided in the HTTP header. The token is verified using any of the following:
+
 - PEM-encoded key file
-- JSON Web Key Set (JWKS) in a local file 
+- JSON Web Key Set (JWKS) in a local file
 - JWKS provided by the configured JWKS endpoint
 
 ## Enable JWT
 
 To use JWT authentication:
+
 1. Enable JWT in the [main config file]({{< relref "../administration/configuration.md" >}}).
 1. Specify the header name that contains a token.
 

@@ -1,7 +1,7 @@
 import { TimeSrv } from './TimeSrv';
 import { ContextSrvStub } from 'test/specs/helpers';
 import { isDateTime, dateTime } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
 
 jest.mock('app/core/core', () => ({
   appEvents: {
@@ -12,6 +12,7 @@ jest.mock('app/core/core', () => ({
 describe('timeSrv', () => {
   let timeSrv: TimeSrv;
   let _dashboard: any;
+  const pushSpy = jest.fn();
 
   beforeEach(() => {
     _dashboard = {
@@ -22,6 +23,17 @@ describe('timeSrv', () => {
     };
     timeSrv = new TimeSrv(new ContextSrvStub() as any);
     timeSrv.init(_dashboard);
+
+    beforeEach(() => {
+      pushSpy.mockClear();
+
+      setLocationService(new HistoryWrapper());
+      const origPush = locationService.push;
+      locationService.push = (args: any) => {
+        pushSpy();
+        origPush(args);
+      };
+    });
   });
 
   describe('timeRange', () => {
@@ -218,6 +230,13 @@ describe('timeSrv', () => {
       _dashboard.refresh = '10s';
       timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
       expect(_dashboard.refresh).toBe('10s');
+    });
+
+    it('should update location only once for consecutive calls with the same range', () => {
+      timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
+      timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
+
+      expect(pushSpy).toHaveBeenCalledTimes(1);
     });
   });
 

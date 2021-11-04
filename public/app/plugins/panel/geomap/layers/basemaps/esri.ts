@@ -57,46 +57,45 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   name: 'ArcGIS MapServer',
   isBaseMap: true,
 
-  create: (map: Map, options: MapLayerOptions<ESRIXYZConfig>, theme: GrafanaTheme2) => ({
-    init: () => {
-      const cfg = { ...options.config };
-      const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
-      if (svc.id !== CUSTOM_SERVICE) {
-        const base = 'https://services.arcgisonline.com/ArcGIS/rest/services/';
-        cfg.url = `${base}${svc.slug}/MapServer/tile/{z}/{y}/{x}`;
-        cfg.attribution = `Tiles © <a href="${base}${svc.slug}/MapServer">ArcGIS</a>`;
-      }
-      // reuse the standard XYZ tile logic
-      return xyzTiles.create(map, { ...options, config: cfg as XYZConfig }, theme).init();
-    },
-  }),
-
-  registerOptionsUI: (builder) => {
-    builder
-      .addSelect({
-        path: 'config.server',
-        name: 'Server instance',
-        settings: {
-          options: publicServiceRegistry.selectOptions().options,
-        },
-      })
-      .addTextInput({
-        path: 'config.url',
-        name: 'URL template',
-        description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
-        settings: {
-          placeholder: defaultXYZConfig.url,
-        },
-        showIf: (cfg) => cfg.server === CUSTOM_SERVICE,
-      })
-      .addTextInput({
-        path: 'config.attribution',
-        name: 'Attribution',
-        settings: {
-          placeholder: defaultXYZConfig.attribution,
-        },
-        showIf: (cfg) => cfg.server === CUSTOM_SERVICE,
-      });
+  create: async (map: Map, options: MapLayerOptions<ESRIXYZConfig>, theme: GrafanaTheme2) => {
+    const cfg = { ...options.config };
+    const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
+    if (svc.id !== CUSTOM_SERVICE) {
+      const base = 'https://services.arcgisonline.com/ArcGIS/rest/services/';
+      cfg.url = `${base}${svc.slug}/MapServer/tile/{z}/{y}/{x}`;
+      cfg.attribution = `Tiles © <a href="${base}${svc.slug}/MapServer">ArcGIS</a>`;
+    }
+    const opts = { ...options, config: cfg as XYZConfig };
+    return xyzTiles.create(map, opts, theme).then((xyz) => {
+      xyz.registerOptionsUI = (builder) => {
+        builder
+          .addSelect({
+            path: 'config.server',
+            name: 'Server instance',
+            settings: {
+              options: publicServiceRegistry.selectOptions().options,
+            },
+          })
+          .addTextInput({
+            path: 'config.url',
+            name: 'URL template',
+            description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
+            settings: {
+              placeholder: defaultXYZConfig.url,
+            },
+            showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
+          })
+          .addTextInput({
+            path: 'config.attribution',
+            name: 'Attribution',
+            settings: {
+              placeholder: defaultXYZConfig.attribution,
+            },
+            showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
+          });
+      };
+      return xyz;
+    });
   },
 
   defaultOptions: {

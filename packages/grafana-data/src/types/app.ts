@@ -3,11 +3,17 @@ import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 
+/**
+ * @public
+ * The app container that is loading another plugin (panel or query editor)
+ * */
 export enum CoreApp {
+  CloudAlerting = 'cloud-alerting',
   Dashboard = 'dashboard',
   Explore = 'explore',
   Unknown = 'unknown',
-  CloudAlerting = 'cloud-alerting',
+  PanelEditor = 'panel-editor',
+  PanelViewer = 'panel-viewer',
 }
 
 export interface AppRootProps<T = KeyValue> {

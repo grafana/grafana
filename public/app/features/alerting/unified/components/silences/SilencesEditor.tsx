@@ -1,15 +1,15 @@
-import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, useMemo, useState } from 'react';
-import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles } from '@grafana/ui';
+import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
 import {
   DefaultTimeZone,
-  GrafanaTheme,
   parseDuration,
   intervalToAbbreviatedDurationString,
   addDurationToDate,
   dateTime,
   isValidDate,
   UrlQueryMap,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { useDebounce } from 'react-use';
 import { config } from '@grafana/runtime';
@@ -26,6 +26,7 @@ import { makeAMLink } from '../../utils/misc';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { parseQueryParamMatchers } from '../../utils/matchers';
+import { matcherToMatcherField, matcherFieldToMatcher } from '../../utils/alertmanager';
 
 interface Props {
   silence?: Silence;
@@ -40,7 +41,7 @@ const defaultsFromQuery = (queryParams: UrlQueryMap): Partial<SilenceFormFields>
   if (typeof matchers === 'string') {
     const formMatchers = parseQueryParamMatchers(matchers);
     if (formMatchers.length) {
-      defaults.matchers = formMatchers;
+      defaults.matchers = formMatchers.map(matcherToMatcherField);
     }
   }
 
@@ -69,7 +70,7 @@ const getDefaultFormValues = (queryParams: UrlQueryMap, silence?: Silence): Sile
       createdBy: silence.createdBy,
       duration: intervalToAbbreviatedDurationString(interval),
       isRegex: false,
-      matchers: silence.matchers || [],
+      matchers: silence.matchers?.map(matcherToMatcherField) || [],
       matcherName: '',
       matcherValue: '',
       timeZone: DefaultTimeZone,
@@ -84,7 +85,7 @@ const getDefaultFormValues = (queryParams: UrlQueryMap, silence?: Silence): Sile
       createdBy: config.bootData.user.name,
       duration: '2h',
       isRegex: false,
-      matchers: [{ name: '', value: '', isRegex: false, isEqual: true }],
+      matchers: [{ name: '', value: '', operator: MatcherOperator.equal }],
       matcherName: '',
       matcherValue: '',
       timeZone: DefaultTimeZone,
@@ -98,7 +99,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   const defaultValues = useMemo(() => getDefaultFormValues(queryParams, silence), [silence, queryParams]);
   const formAPI = useForm({ defaultValues });
   const dispatch = useDispatch();
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const { loading } = useUnifiedAlertingSelector((state) => state.updateSilence);
 
@@ -107,7 +108,8 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
 
   const onSubmit = (data: SilenceFormFields) => {
-    const { id, startsAt, endsAt, comment, createdBy, matchers } = data;
+    const { id, startsAt, endsAt, comment, createdBy, matchers: matchersFields } = data;
+    const matchers = matchersFields.map(matcherFieldToMatcher);
     const payload = pickBy(
       {
         id,
@@ -194,7 +196,10 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
             error={formState.errors.comment?.message}
             invalid={!!formState.errors.comment}
           >
-            <TextArea {...register('comment', { required: { value: true, message: 'Required.' } })} />
+            <TextArea
+              {...register('comment', { required: { value: true, message: 'Required.' } })}
+              placeholder="Details about the silence"
+            />
           </Field>
           <Field
             className={cx(styles.field, styles.createdBy)}
@@ -203,7 +208,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
             error={formState.errors.createdBy?.message}
             invalid={!!formState.errors.createdBy}
           >
-            <Input {...register('createdBy', { required: { value: true, message: 'Required.' } })} />
+            <Input {...register('createdBy', { required: { value: true, message: 'Required.' } })} placeholder="User" />
           </Field>
         </FieldSet>
         <div className={styles.flexRow}>
@@ -226,9 +231,9 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   field: css`
-    margin: ${theme.spacing.sm} 0;
+    margin: ${theme.spacing(1, 0)};
   `,
   textArea: css`
     width: 600px;
@@ -242,7 +247,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     justify-content: flex-start;
 
     & > * {
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(1)};
     }
   `,
 });

@@ -20,7 +20,10 @@
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
+    <link
+      rel="stylesheet"
+      href="[[.ContentDeliveryURL]]public/build/grafana.[[ .Theme ]].<%= compilation.hash %>.css"
+    />
 
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_css_time_seconds');
@@ -248,8 +251,8 @@
           settings: [[.Settings]],
           navTree: [[.NavTree]],
           themePaths: {
-            light: '[[.ContentDeliveryURL]]public/build/grafana.light.<%= webpack.hash %>.css',
-            dark: '[[.ContentDeliveryURL]]public/build/grafana.dark.<%= webpack.hash %>.css'
+            light: '[[.ContentDeliveryURL]]public/build/grafana.light.<%= compilation.hash %>.css',
+            dark: '[[.ContentDeliveryURL]]public/build/grafana.dark.<%= compilation.hash %>.css'
           }
         };
 
@@ -303,18 +306,18 @@
       })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
     </script>
     <!-- End Google Tag Manager -->
-    [[end]] <% for (key in htmlWebpackPlugin.files.chunks) { %> <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
+    [[end]] <% for (index in htmlWebpackPlugin.files.js) { %> <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
     <script
       nonce="[[.Nonce]]"
-      src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+      src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.js[index] %>"
       type="text/javascript"
-      integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
+      integrity="<%= htmlWebpackPlugin.files.jsIntegrity[index] %>"
       crossorigin="<%= webpackConfig.output.crossOriginLoading %>"
     ></script>
     <% } else { %>
     <script
       nonce="[[.Nonce]]"
-      src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+      src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.js[index] %>"
       type="text/javascript"
     ></script>
     <% } %> <% } %>

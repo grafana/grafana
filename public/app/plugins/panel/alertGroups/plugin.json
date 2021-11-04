@@ -1,0 +1,15 @@
+{
+  "type": "panel",
+  "name": "Alert groups",
+  "id": "alertGroups",
+  "state": "alpha",
+
+  "skipDataQuery": true,
+  "info": {
+    "description": "Shows alertmanager alerts grouped by labels",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

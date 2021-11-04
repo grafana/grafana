@@ -41,11 +41,12 @@ export const AlertManagerPicker: FC<Props> = ({ onChange, current, disabled = fa
   return (
     <Field
       className={styles.field}
-      label={disabled ? 'Alert manager' : 'Choose alert manager'}
+      label={disabled ? 'Alertmanager' : 'Choose Alertmanager'}
       disabled={disabled}
       data-testid="alertmanager-picker"
     >
       <Select
+        menuShouldPortal
         width={29}
         className="ds-picker select-container"
         backspaceRemovesValue={false}

@@ -27,14 +27,11 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       jsonData: {
         cloudName: '',
         subscriptionId: '',
-        logAnalyticsDefaultWorkspace: '',
       },
       version: 1,
       readOnly: false,
     },
     updateOptions: jest.fn(),
-    getSubscriptions: jest.fn(),
-    getWorkspaces: jest.fn(),
   };
 
   if (propsFunc) {
@@ -45,14 +42,8 @@ const setup = (propsFunc?: (props: Props) => Props) => {
 };
 
 describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = setup();
-
-    expect(wrapper.baseElement).toMatchSnapshot();
-  });
-
   it('should disable log analytics credentials form', () => {
-    const wrapper = setup((props) => ({
+    setup((props) => ({
       ...props,
       options: {
         ...props.options,
@@ -62,26 +53,7 @@ describe('Render', () => {
         },
       },
     }));
-    expect(wrapper.baseElement).toMatchSnapshot();
-  });
-
-  it('should enable azure log analytics load workspaces button', () => {
-    const wrapper = setup((props) => ({
-      ...props,
-      options: {
-        ...props.options,
-        jsonData: {
-          ...props.options.jsonData,
-          azureLogAnalyticsSameAs: false,
-          logAnalyticsDefaultWorkspace: '',
-          tenantId: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
-          clientId: '44693801-6ee6-49de-9b2d-9106972f9572',
-          subscriptionId: 'e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2',
-          clientSecret: 'cddcc020-2c94-460a-a3d0-df3147ffa792',
-        },
-      },
-    }));
-    expect(wrapper.baseElement).toMatchSnapshot();
+    expect(screen.queryByText('Azure Monitor Logs')).not.toBeInTheDocument();
   });
 
   it('should not render the Switch to use different creds for log analytics by default', () => {
@@ -122,16 +94,5 @@ describe('Render', () => {
     expect(onUpdate).toHaveBeenCalled();
     const newOpts = onUpdate.mock.calls[0][0]({});
     expect(newOpts).toEqual({ jsonData: { azureLogAnalyticsSameAs: true } });
-  });
-
-  it('should disable inputs', () => {
-    setup((props) => ({
-      ...props,
-      options: {
-        ...props.options,
-        readOnly: true,
-      },
-    }));
-    expect(screen.queryByText('Load Workspaces')?.closest('button')).toBeDisabled();
   });
 });

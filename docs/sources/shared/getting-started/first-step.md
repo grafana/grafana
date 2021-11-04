@@ -9,5 +9,3 @@ Use the instructions in [Getting started with Grafana]({{< relref "../../getting
 - Install Grafana.
 - Log in to Grafana.
 - Create your first dashboard.
-
-You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself.

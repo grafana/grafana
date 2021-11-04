@@ -1,6 +1,6 @@
 import React, { ComponentProps } from 'react';
 import { render, screen } from '@testing-library/react';
-import { LoadingState, MutableDataFrame, FieldType } from '@grafana/data';
+import { LoadingState, MutableDataFrame, FieldType, LogsSortOrder } from '@grafana/data';
 import { LogsPanel } from './LogsPanel';
 
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;
@@ -37,6 +37,22 @@ describe('LogsPanel', () => {
       expect(screen.getByText(/common labels:/i)).toBeInTheDocument();
       expect(screen.getByText(/common_app/i)).toBeInTheDocument();
       expect(screen.getByText(/common_job/i)).toBeInTheDocument();
+    });
+    it('shows common labels on top when descending sort order', () => {
+      const { container } = setup({
+        data: { series: seriesWithCommonLabels },
+        options: { showCommonLabels: true, sortOrder: LogsSortOrder.Descending },
+      });
+
+      expect(container.firstChild?.childNodes[0].textContent).toMatch(/^Common labels:common_appcommon_job/);
+    });
+    it('shows common labels on bottom when ascending sort order', () => {
+      const { container } = setup({
+        data: { series: seriesWithCommonLabels },
+        options: { showCommonLabels: true, sortOrder: LogsSortOrder.Ascending },
+      });
+
+      expect(container.firstChild?.childNodes[0].textContent).toMatch(/Common labels:common_appcommon_job$/);
     });
     it('does not show common labels when showCommonLabels is set to false', () => {
       setup({ data: { series: seriesWithCommonLabels }, options: { showCommonLabels: false } });

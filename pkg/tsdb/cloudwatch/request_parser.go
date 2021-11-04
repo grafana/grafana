@@ -10,15 +10,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-// Parses the json queries and returns a requestQuery. The requestQuery has a 1 to 1 mapping to a query editor row
-func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time) (map[string][]*requestQuery, error) {
-	requestQueries := make(map[string][]*requestQuery)
-	for _, query := range queries {
+// parseQueries parses the json queries and returns a map of cloudWatchQueries by region. The cloudWatchQuery has a 1 to 1 mapping to a query editor row
+func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time) (map[string][]*cloudWatchQuery, error) {
+	requestQueries := make(map[string][]*cloudWatchQuery)
+	migratedQueries, err := migrateLegacyQuery(queries, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, query := range migratedQueries {
 		model, err := simplejson.NewJson(query.JSON)
 		if err != nil {
 			return nil, &queryError{err: err, RefID: query.RefID}
@@ -36,7 +40,7 @@ func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime
 		}
 
 		if _, exist := requestQueries[query.Region]; !exist {
-			requestQueries[query.Region] = make([]*requestQuery, 0)
+			requestQueries[query.Region] = []*cloudWatchQuery{}
 		}
 		requestQueries[query.Region] = append(requestQueries[query.Region], query)
 	}
@@ -44,7 +48,41 @@ func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime
 	return requestQueries, nil
 }
 
-func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time, endTime time.Time) (*requestQuery, error) {
+// migrateLegacyQuery migrates queries that has a `statistics` field to use the `statistic` field instead.
+// This migration is also done in the frontend, so this should only ever be needed for alerting queries
+// In case the query used more than one stat, the first stat in the slice will be used in the statistic field
+// Read more here https://github.com/grafana/grafana/issues/30629
+func migrateLegacyQuery(queries []backend.DataQuery, startTime time.Time, endTime time.Time) ([]*backend.DataQuery, error) {
+	migratedQueries := []*backend.DataQuery{}
+	for _, q := range queries {
+		query := q
+		model, err := simplejson.NewJson(query.JSON)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = model.Get("statistic").String()
+		// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
+		if err != nil {
+			stats, err := model.Get("statistics").StringArray()
+			if err != nil {
+				return nil, fmt.Errorf("query must have either statistic or statistics field")
+			}
+			model.Del("statistics")
+			model.Set("statistic", stats[0])
+			query.JSON, err = model.MarshalJSON()
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		migratedQueries = append(migratedQueries, &query)
+	}
+
+	return migratedQueries, nil
+}
+
+func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time, endTime time.Time) (*cloudWatchQuery, error) {
 	plog.Debug("Parsing request query", "query", model)
 	reNumber := regexp.MustCompile(`^\d+$`)
 	region, err := model.Get("region").String()
@@ -63,13 +101,17 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse dimensions: %v", err)
 	}
-	statistics := parseStatistics(model)
+
+	statistic, err := model.Get("statistic").String()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse statistic: %v", err)
+	}
 
 	p := model.Get("period").MustString("")
 	var period int
 	if strings.ToLower(p) == "auto" || p == "" {
 		deltaInSeconds := endTime.Sub(startTime).Seconds()
-		periods := []int{60, 300, 900, 3600, 21600, 86400}
+		periods := getRetainedPeriods(time.Since(startTime))
 		datapoints := int(math.Ceil(deltaInSeconds / 2000))
 		period = periods[len(periods)-1]
 		for _, value := range periods {
@@ -94,6 +136,12 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}
 
 	id := model.Get("id").MustString("")
+	if id == "" {
+		// Why not just use refId if id is not specified in the frontend? When specifying an id in the editor,
+		// and alphabetical must be used. The id must be unique, so if an id like for example a, b or c would be used,
+		// it would likely collide with some ref id. That's why the `query` prefix is used.
+		id = fmt.Sprintf("query%s", refId)
+	}
 	expression := model.Get("expression").MustString("")
 	alias := model.Get("alias").MustString()
 	returnData := !model.Get("hide").MustBool(false)
@@ -107,29 +155,34 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 
 	matchExact := model.Get("matchExact").MustBool(true)
 
-	return &requestQuery{
-		RefId:      refId,
-		Region:     region,
-		Namespace:  namespace,
-		MetricName: metricName,
-		Dimensions: dimensions,
-		Statistics: aws.StringSlice(statistics),
-		Period:     period,
-		Alias:      alias,
-		Id:         id,
-		Expression: expression,
-		ReturnData: returnData,
-		MatchExact: matchExact,
+	return &cloudWatchQuery{
+		RefId:          refId,
+		Region:         region,
+		Id:             id,
+		Namespace:      namespace,
+		MetricName:     metricName,
+		Statistic:      statistic,
+		Expression:     expression,
+		ReturnData:     returnData,
+		Dimensions:     dimensions,
+		Period:         period,
+		Alias:          alias,
+		MatchExact:     matchExact,
+		UsedExpression: "",
 	}, nil
 }
 
-func parseStatistics(model *simplejson.Json) []string {
-	var statistics []string
-	for _, s := range model.Get("statistics").MustArray() {
-		statistics = append(statistics, s.(string))
+func getRetainedPeriods(timeSince time.Duration) []int {
+	// See https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/
+	if timeSince > time.Duration(455)*24*time.Hour {
+		return []int{21600, 86400}
+	} else if timeSince > time.Duration(63)*24*time.Hour {
+		return []int{3600, 21600, 86400}
+	} else if timeSince > time.Duration(15)*24*time.Hour {
+		return []int{300, 900, 3600, 21600, 86400}
+	} else {
+		return []int{60, 300, 900, 3600, 21600, 86400}
 	}
-
-	return statistics
 }
 
 func parseDimensions(model *simplejson.Json) (map[string][]string, error) {

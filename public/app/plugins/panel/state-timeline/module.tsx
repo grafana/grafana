@@ -1,8 +1,10 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimelineFieldConfig } from './types';
-import { BarValueVisibility, commonOptionsBuilder } from '@grafana/ui';
+import { VisibilityMode } from '@grafana/schema';
+import { commonOptionsBuilder } from '@grafana/ui';
 import { timelinePanelChangedHandler } from './migrations';
+import { StatTimelineSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
@@ -53,9 +55,9 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
         name: 'Show values',
         settings: {
           options: [
-            { value: BarValueVisibility.Auto, label: 'Auto' },
-            { value: BarValueVisibility.Always, label: 'Always' },
-            { value: BarValueVisibility.Never, label: 'Never' },
+            { value: VisibilityMode.Auto, label: 'Auto' },
+            { value: VisibilityMode.Always, label: 'Always' },
+            { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
         defaultValue: defaultPanelOptions.showValue,
@@ -85,4 +87,5 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
 
     commonOptionsBuilder.addLegendOptions(builder, false);
     commonOptionsBuilder.addTooltipOptions(builder, true);
-  });
+  })
+  .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier());

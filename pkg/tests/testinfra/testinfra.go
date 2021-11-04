@@ -10,14 +10,14 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -25,47 +25,28 @@ import (
 
 // StartGrafana starts a Grafana server.
 // The server address is returned.
-func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLStore) string {
+func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, *sqlstore.SQLStore) {
 	t.Helper()
 	ctx := context.Background()
-	// Prevent duplicate registration errors between tests by replacing
-	// the registry used.
-	metrics.GlobalMetrics.SwapRegisterer(prometheus.NewRegistry())
-
-	origSQLStore := registry.GetService(sqlstore.ServiceName)
-	t.Cleanup(func() {
-		registry.Register(origSQLStore)
-	})
-	registry.Register(&registry.Descriptor{
-		Name:         sqlstore.ServiceName,
-		Instance:     sqlStore,
-		InitPriority: sqlstore.InitPriority,
-	})
-
-	t.Logf("Registered SQL store %p", sqlStore)
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	server, err := server.New(server.Config{
-		ConfigFile: cfgPath,
-		HomePath:   grafDir,
-		Listener:   listener,
-	})
-	require.NoError(t, err)
+	cmdLineArgs := setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir}
+	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
+	apiServerOpts := api.ServerOptions{Listener: listener}
 
-	t.Cleanup(func() {
-		// Have to reset the route register between tests, since it doesn't get re-created
-		server.HTTPServer.RouteRegister.Reset()
-	})
+	env, err := server.InitializeForTest(cmdLineArgs, serverOpts, apiServerOpts)
+	require.NoError(t, err)
+	require.NoError(t, env.SQLStore.Sync())
 
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
-		if err := server.Run(); err != nil {
+		if err := env.Server.Run(); err != nil {
 			t.Log("Server exited uncleanly", "error", err)
 		}
 	}()
 	t.Cleanup(func() {
-		if err := server.Shutdown(ctx, "test cleanup"); err != nil {
+		if err := env.Server.Shutdown(ctx, "test cleanup"); err != nil {
 			t.Error("Timed out waiting on server to shut down")
 		}
 	})
@@ -83,7 +64,7 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 
 	t.Logf("Grafana is listening on %s", addr)
 
-	return addr
+	return addr, env.SQLStore
 }
 
 // SetUpDatabase sets up the Grafana database.
@@ -176,6 +157,9 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	provDashboardsDir := filepath.Join(provDir, "dashboards")
 	err = os.MkdirAll(provDashboardsDir, 0750)
 	require.NoError(t, err)
+	corePluginsDir := filepath.Join(publicDir, "app/plugins")
+	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "app/plugins"), corePluginsDir)
+	require.NoError(t, err)
 
 	cfg := ini.Empty()
 	dfltSect := cfg.Section("")
@@ -210,6 +194,16 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = alertingSect.NewKey("notification_timeout_seconds", "1")
 	require.NoError(t, err)
+	_, err = alertingSect.NewKey("max_attempts", "3")
+	require.NoError(t, err)
+
+	getOrCreateSection := func(name string) (*ini.Section, error) {
+		section, err := cfg.GetSection(name)
+		if err != nil {
+			return cfg.NewSection(name)
+		}
+		return section, err
+	}
 
 	for _, o := range opts {
 		if o.EnableCSP {
@@ -222,6 +216,18 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			featureSection, err := cfg.NewSection("feature_toggles")
 			require.NoError(t, err)
 			_, err = featureSection.NewKey("enable", strings.Join(o.EnableFeatureToggles, " "))
+			require.NoError(t, err)
+		}
+		if o.NGAlertAdminConfigPollInterval != 0 {
+			ngalertingSection, err := cfg.NewSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = ngalertingSection.NewKey("admin_config_poll_interval", o.NGAlertAdminConfigPollInterval.String())
+			require.NoError(t, err)
+		}
+		if o.NGAlertAlertmanagerConfigPollInterval != 0 {
+			ngalertingSection, err := getOrCreateSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = ngalertingSection.NewKey("alertmanager_config_poll_interval", o.NGAlertAlertmanagerConfigPollInterval.String())
 			require.NoError(t, err)
 		}
 		if o.AnonymousUserRole != "" {
@@ -252,6 +258,25 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = usersSection.NewKey("viewers_can_edit", "true")
 			require.NoError(t, err)
 		}
+		if o.DisableLegacyAlerting {
+			alertingSection, err := cfg.GetSection("alerting")
+			require.NoError(t, err)
+			_, err = alertingSection.NewKey("enabled", "false")
+			require.NoError(t, err)
+		}
+		if o.EnableUnifiedAlerting {
+			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = unifiedAlertingSection.NewKey("enabled", "true")
+			require.NoError(t, err)
+		}
+		if len(o.UnifiedAlertingDisabledOrgs) > 0 {
+			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+			require.NoError(t, err)
+			disableOrgStr := strings.Join(strings.Split(strings.Trim(fmt.Sprint(o.UnifiedAlertingDisabledOrgs), "[]"), " "), ",")
+			_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -265,12 +290,17 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 }
 
 type GrafanaOpts struct {
-	EnableCSP            bool
-	EnableFeatureToggles []string
-	AnonymousUserRole    models.RoleType
-	EnableQuota          bool
-	DisableAnonymous     bool
-	CatalogAppEnabled    bool
-	ViewersCanEdit       bool
-	PluginAdminEnabled   bool
+	EnableCSP                             bool
+	EnableFeatureToggles                  []string
+	NGAlertAdminConfigPollInterval        time.Duration
+	NGAlertAlertmanagerConfigPollInterval time.Duration
+	AnonymousUserRole                     models.RoleType
+	EnableQuota                           bool
+	DisableAnonymous                      bool
+	CatalogAppEnabled                     bool
+	ViewersCanEdit                        bool
+	PluginAdminEnabled                    bool
+	DisableLegacyAlerting                 bool
+	EnableUnifiedAlerting                 bool
+	UnifiedAlertingDisabledOrgs           []int64
 }

@@ -12,6 +12,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "x",
       "show": true,
       "side": 2,
@@ -37,6 +38,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "__fixed",
       "show": true,
       "side": 3,
@@ -69,6 +71,7 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
     },
@@ -97,6 +100,8 @@ Object {
     },
   },
   "hooks": Object {},
+  "mode": 1,
+  "padding": undefined,
   "scales": Object {
     "__fixed": Object {
       "auto": true,
@@ -117,12 +122,15 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
+    Object {
+      "value": [Function],
+    },
     Object {
       "dash": Array [
         1,
         2,
       ],
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -137,6 +145,7 @@ Object {
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
+      "value": [Function],
       "width": 2,
     },
     Object {
@@ -144,6 +153,7 @@ Object {
         1,
         2,
       ],
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -158,6 +168,7 @@ Object {
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
+      "value": [Function],
       "width": 2,
     },
     Object {
@@ -165,6 +176,7 @@ Object {
         1,
         2,
       ],
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -179,6 +191,7 @@ Object {
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
+      "value": [Function],
       "width": 2,
     },
     Object {
@@ -186,6 +199,7 @@ Object {
         1,
         2,
       ],
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -200,6 +214,7 @@ Object {
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
+      "value": [Function],
       "width": 2,
     },
     Object {
@@ -207,6 +222,7 @@ Object {
         1,
         2,
       ],
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -221,6 +237,7 @@ Object {
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
+      "value": [Function],
       "width": 2,
     },
   ],

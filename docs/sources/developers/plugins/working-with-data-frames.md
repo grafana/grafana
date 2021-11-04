@@ -23,11 +23,11 @@ const numberValues = [12.3, 28.6];
 
 // Create data frame from values.
 const frame = toDataFrame({
-    name: "http_requests_total",
-    fields: [
-        { name: "Time", type: FieldType.time, values: timeValues },
-        { name: "Value", type: FieldType.number, values: numberValues }
-    ]
+  name: 'http_requests_total',
+  fields: [
+    { name: 'Time', type: FieldType.time, values: timeValues },
+    { name: 'Value', type: FieldType.number, values: numberValues },
+  ],
 });
 ```
 
@@ -37,12 +37,12 @@ As you can see from the example, creating data frames like this requires that yo
 
 ```ts
 const series = [
-    { Time: 1599471973065, Value: 12.3 },
-    { Time: 1599471975729, Value: 28.6 }
+  { Time: 1599471973065, Value: 12.3 },
+  { Time: 1599471975729, Value: 28.6 },
 ];
 
 const frame = toDataFrame(series);
-frame.name = 'http_requests_total'
+frame.name = 'http_requests_total';
 ```
 
 ## Read values from a data frame
@@ -54,22 +54,22 @@ const SimplePanel: React.FC<Props> = ({ data }) => {
   const frame = data.series[0];
 
   // ...
-}
+};
 ```
 
 Before you start reading the data, think about what data you expect. For example, to visualize a time series we'd need at least one time field, and one number field.
 
 ```ts
-const timeField = frame.fields.find(field => field.type === FieldType.time);
-const valueField = frame.fields.find(field => field.type === FieldType.number);
+const timeField = frame.fields.find((field) => field.type === FieldType.time);
+const valueField = frame.fields.find((field) => field.type === FieldType.number);
 ```
 
 Other types of visualizations might need multiple dimensions. For example, a bubble chart that uses three numeric fields: the X-axis, Y-axis, and one for the radius of each bubble. In this case, instead of hard coding the field names, we recommend that you let the user choose the field to use for each dimension.
 
 ```ts
-const x = frame.fields.find(field => field.name === xField);
-const y = frame.fields.find(field => field.name === yField);
-const size = frame.fields.find(field => field.name === sizeField);
+const x = frame.fields.find((field) => field.name === xField);
+const y = frame.fields.find((field) => field.name === yField);
+const size = frame.fields.find((field) => field.name === sizeField);
 
 for (let i = 0; i < frame.length; i++) {
   const row = [x?.values.get(i), y?.values.get(i), size?.values.get(i)];
@@ -83,9 +83,9 @@ Alternatively, you can use the [DataFrameView]({{< relref "../../packages_api/da
 ```ts
 const view = new DataFrameView(frame);
 
-view.forEach(row => {
+view.forEach((row) => {
   console.log(row[options.xField], row[options.yField], row[options.sizeField]);
-})
+});
 ```
 
 ## Display values from a data frame
@@ -95,12 +95,12 @@ Field options let the user control how Grafana displays the data in a data frame
 To apply the field options to a value, use the `display` method on the corresponding field. The result contains information such as the color and suffix to use when display the value.
 
 ```ts
-const valueField = frame.fields.find(field => field.type === FieldType.number);
+const valueField = frame.fields.find((field) => field.type === FieldType.number);
 
 return (
   <div>
     {valueField
-      ? valueField.values.toArray().map(value => {
+      ? valueField.values.toArray().map((value) => {
           const displayValue = valueField.display!(value);
           return (
             <p style={{ color: displayValue.color }}>
@@ -116,7 +116,6 @@ return (
 To apply field options to the name of a field, use [getFieldDisplayName]({{< relref "../../packages_api/data/getfielddisplayname.md" >}}).
 
 ```ts
-const valueField = frame.fields.find(field => field.type === FieldType.number);
+const valueField = frame.fields.find((field) => field.type === FieldType.number);
 const valueFieldName = getFieldDisplayName(valueField, frame);
 ```
-

@@ -68,6 +68,7 @@ With a Grafana Enterprise license, you get access to premium data sources, inclu
 - [MongoDB](https://grafana.com/grafana/plugins/grafana-mongodb-datasource)
 - [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
 - [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
+- [Salesforce](https://grafana.com/grafana/plugins/grafana-salesforce-datasource/)
 - [SAP HANA®](https://grafana.com/grafana/plugins/grafana-saphana-datasource/)
 - [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
 - [Snowflake](https://grafana.com/grafana/plugins/grafana-snowflake-datasource)

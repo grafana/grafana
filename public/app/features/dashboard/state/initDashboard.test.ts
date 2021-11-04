@@ -287,9 +287,4 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
     expect(getTimeSrv().init).toBeCalled();
     expect(getDashboardQueryRunner().run).toBeCalled();
   });
-
-  it('Should not initialize other services', () => {
-    expect(getDashboardSrv().setCurrent).not.toBeCalled();
-    expect(keybindingSrv.setupDashboardBindings).not.toBeCalled();
-  });
 });

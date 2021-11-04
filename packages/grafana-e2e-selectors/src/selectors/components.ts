@@ -4,13 +4,23 @@
 // but you still might need to select it for testing,
 // in that case please add the attribute data-test-id={selector} in the component and
 // prefix your selector string with 'data-test-id' so that when create the selectors we know to search for it on the right attribute
+/**
+ * Selectors grouped/defined in Components
+ *
+ * @alpha
+ */
 export const Components = {
   TimePicker: {
-    openButton: 'TimePicker Open Button',
-    fromField: 'TimePicker from field',
-    toField: 'TimePicker to field',
-    applyTimeRange: 'TimePicker submit button',
-    calendar: 'TimePicker calendar',
+    openButton: 'data-testid TimePicker Open Button',
+    fromField: 'Time Range from field',
+    toField: 'Time Range to field',
+    applyTimeRange: 'data-testid TimePicker submit button',
+    calendar: {
+      label: 'Time Range calendar',
+      openButton: 'Open time range calendar',
+      closeButton: 'Close time range Calendar',
+    },
+    absoluteTimeRangeTitle: 'data-testid-absolute-time-range-narrow',
   },
   DataSource: {
     TestData: {
@@ -43,7 +53,7 @@ export const Components = {
   },
   Panels: {
     Panel: {
-      title: (title: string) => `Panel header ${title}`,
+      title: (title: string) => `data-testid Panel header ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
@@ -72,6 +82,7 @@ export const Components = {
       },
       Table: {
         header: 'table header',
+        footer: 'table-footer',
       },
     },
   },
@@ -192,12 +203,24 @@ export const Components = {
   },
   FolderPicker: {
     container: 'Folder picker select container',
+    input: 'Select a folder',
+  },
+  ReadonlyFolderPicker: {
+    container: 'data-testid Readonly folder picker select container',
   },
   DataSourcePicker: {
     container: 'Data source picker select container',
+    /**
+     * @deprecated use inputV2 instead
+     */
+    input: () => 'input[id="data-source-picker"]',
+    inputV2: 'Select a data source',
   },
   TimeZonePicker: {
     container: 'Time zone picker select container',
+  },
+  WeekStartPicker: {
+    container: 'Choose starting day of the week',
   },
   TraceViewer: {
     spanBar: () => '[data-test-id="SpanBar--wrapper"]',
@@ -212,9 +235,9 @@ export const Components = {
     items: 'Search items',
   },
   DashboardLinks: {
-    container: 'Dashboard link container',
-    dropDown: 'Dashboard link dropdown',
-    link: 'Dashboard link',
+    container: 'data-testid Dashboard link container',
+    dropDown: 'data-testid Dashboard link dropdown',
+    link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
     icon: 'Loading indicator',
@@ -235,5 +258,11 @@ export const Components = {
   ImportDashboardForm: {
     name: 'data-testid-import-dashboard-title',
     submit: 'data-testid-import-dashboard-submit',
+  },
+  PanelAlertTabContent: {
+    content: 'Unified alert editor tab content',
+  },
+  VisualizationPreview: {
+    card: (name: string) => `data-testid suggestion-${name}`,
   },
 };

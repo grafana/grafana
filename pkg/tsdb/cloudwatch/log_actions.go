@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,36 +36,12 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 				return err
 			}
 
-			// When a query of the form "stats ... by ..." is made, we want to return
-			// one series per group defined in the query, but due to the format
-			// the query response is in, there does not seem to be a way to tell
-			// by the response alone if/how the results should be grouped.
-			// Because of this, if the frontend sees that a "stats ... by ..." query is being made
-			// the "statsGroups" parameter is sent along with the query to the backend so that we
-			// can correctly group the CloudWatch logs response.
-			statsGroups := model.Get("statsGroups").MustStringArray()
-			if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
-				groupedFrames, err := groupResults(dataframe, statsGroups)
-				if err != nil {
-					return err
-				}
-
-				resultChan <- backend.Responses{
-					query.RefID: backend.DataResponse{Frames: groupedFrames},
-				}
-				return nil
+			groupedFrames, err := groupResponseFrame(dataframe, model.Get("statsGroups").MustStringArray())
+			if err != nil {
+				return err
 			}
-
-			if dataframe.Meta != nil {
-				dataframe.Meta.PreferredVisualization = "logs"
-			} else {
-				dataframe.Meta = &data.FrameMeta{
-					PreferredVisualization: "logs",
-				}
-			}
-
 			resultChan <- backend.Responses{
-				query.RefID: backend.DataResponse{Frames: data.Frames{dataframe}},
+				query.RefID: backend.DataResponse{Frames: groupedFrames},
 			}
 			return nil
 		})
@@ -225,8 +202,13 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
-		StartTime:     aws.Int64(startTime.Unix()),
-		EndTime:       aws.Int64(endTime.Unix()),
+		StartTime: aws.Int64(startTime.Unix()),
+		// Usually grafana time range allows only second precision, but you can create ranges with milliseconds
+		// for example when going from trace to logs for that trace and trace length is sub second. In that case
+		// StartTime is effectively floored while here EndTime is ceiled and so we should get the logs user wants
+		// and also a little bit more but as CW logs accept only seconds as integers there is not much to do about
+		// that.
+		EndTime:       aws.Int64(int64(math.Ceil(float64(endTime.UnixNano()) / 1e9))),
 		LogGroupNames: aws.StringSlice(parameters.Get("logGroupNames").MustStringArray()),
 		QueryString:   aws.String(modifiedQueryString),
 	}

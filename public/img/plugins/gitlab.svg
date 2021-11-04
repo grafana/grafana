@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 24.2.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 586 559" style="enable-background:new 0 0 586 559;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#FAFAFA;}
+	.st1{fill:#F0F0F0;}
+	.st2{fill:#FFFFFF;}
+	.st3{fill:#E24329;}
+	.st4{fill:#FCA326;}
+	.st5{fill:#FC6D26;}
+	.st6{fill:#8C929D;}
+	.st7{fill:#2E2E2E;}
+	.st8{fill:none;stroke:#FCA326;stroke-width:16;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st9{fill:none;stroke:#FC6D26;stroke-width:16;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st10{fill:none;stroke:#E24329;stroke-width:16;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st11{fill:none;stroke:#F0F0F0;stroke-miterlimit:10;}
+	.st12{fill:#231F20;}
+	.st13{fill:none;stroke:#231F20;stroke-width:16;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st14{display:none;}
+	.st15{display:inline;opacity:0.1;fill:#E828E3;}
+	.st16{display:inline;}
+	.st17{opacity:0.1;fill:#E828E3;}
+	.st18{font-family:'SourceSansPro-Semibold';}
+	.st19{font-size:24px;}
+	.st20{display:inline;fill:#DB3B21;}
+	.st21{display:inline;fill:#FC6D26;}
+	.st22{display:inline;fill:#2E2E2E;}
+	.st23{display:inline;fill:#6E49CB;}
+	.st24{display:inline;fill:#380D75;}
+	.st25{display:inline;fill:#FCA121;}
+	.st26{opacity:0.6;fill:none;stroke:#231F20;stroke-width:2;stroke-miterlimit:10;stroke-dasharray:12,6;}
+	.st27{fill:none;stroke:#444444;stroke-width:1.5339;stroke-miterlimit:10;}
+</style>
+<g id="logo_art">
+	<g>
+		<path id="path50_2_" class="st3" d="M293.026,434.983L293.026,434.983l62.199-191.322H230.918L293.026,434.983L293.026,434.983z"
+			/>
+		<path id="path66_6_" class="st4" d="M143.798,243.662L143.798,243.662l-18.941,58.126c-1.714,5.278,0.137,11.104,4.661,14.394
+			l163.509,118.801L143.798,243.662L143.798,243.662z"/>
+		<path id="path74_2_" class="st3" d="M143.798,243.662h87.12l-37.494-115.224c-1.919-5.895-10.282-5.895-12.27,0L143.798,243.662
+			L143.798,243.662z"/>
+		<path id="path82_6_" class="st4" d="M442.346,243.662L442.346,243.662l18.873,58.126c1.714,5.278-0.137,11.104-4.661,14.394
+			L293.026,434.983L442.346,243.662L442.346,243.662z"/>
+		<path id="path86_2_" class="st3" d="M442.346,243.662h-87.12l37.425-115.224c1.919-5.895,10.282-5.895,12.27,0L442.346,243.662
+			L442.346,243.662z"/>
+		<polygon class="st5" points="293.026,434.983 355.225,243.662 442.346,243.662 		"/>
+		<polygon class="st5" points="293.026,434.983 143.798,243.662 230.918,243.662 		"/>
+	</g>
+</g>
+<g id="spacing_guides" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" class="st14">
+	<path id="path40_18_" sketch:type="MSShapeGroup" class="st15" d="M0,0.5v124h586V0.5H0L0,0.5z"/>
+	<path id="path40_16_" sketch:type="MSShapeGroup" class="st15" d="M0,435.5v124h586v-124H0L0,435.5z"/>
+	<path id="path40_15_" sketch:type="MSShapeGroup" class="st15" d="M462.2,560h124V0h-124V560L462.2,560z"/>
+	<g class="st16">
+		<text transform="matrix(1 0 0 1 511.2881 283.3319)" class="st18 st19">1x</text>
+	</g>
+	<g class="st16">
+		<text transform="matrix(1 0 0 1 281.2881 500.9978)" class="st18 st19">1x</text>
+	</g>
+	<g class="st16">
+		<text transform="matrix(1 0 0 1 281.2881 65.998)" class="st18 st19">1x</text>
+	</g>
+	<path id="path40_5_" sketch:type="MSShapeGroup" class="st15" d="M0,560h124V0H0V560L0,560z"/>
+	<g class="st16">
+		<text transform="matrix(1 0 0 1 51.2881 283.3319)" class="st18 st19">1x</text>
+	</g>
+</g>
+</svg>

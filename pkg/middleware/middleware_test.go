@@ -7,30 +7,28 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func fakeGetTime() func() time.Time {
@@ -110,7 +108,7 @@ func TestMiddlewareContext(t *testing.T) {
 				Settings: map[string]interface{}{},
 				NavTree:  []*dtos.NavLink{},
 			}
-			t.Log("Calling HTML", "data", data, "render", c.Render)
+			t.Log("Calling HTML", "data", data)
 			c.HTML(200, "index-template", data)
 			t.Log("Returned HTML with code 200")
 		}
@@ -349,6 +347,8 @@ func TestMiddlewareContext(t *testing.T) {
 	t.Run("auth_proxy", func(t *testing.T) {
 		const userID int64 = 33
 		const orgID int64 = 4
+		const defaultOrgId int64 = 1
+		const orgRole = "Admin"
 
 		configure := func(cfg *setting.Cfg) {
 			cfg.AuthProxyEnabled = true
@@ -356,7 +356,7 @@ func TestMiddlewareContext(t *testing.T) {
 			cfg.LDAPEnabled = true
 			cfg.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			cfg.AuthProxyHeaderProperty = "username"
-			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
+			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS", "Role": "X-WEBAUTH-ROLE"}
 		}
 
 		const hdrName = "markelog"
@@ -426,6 +426,71 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, userID, sc.context.UserId)
 			assert.Equal(t, orgID, sc.context.OrgId)
+		}, func(cfg *setting.Cfg) {
+			configure(cfg)
+			cfg.LDAPEnabled = false
+			cfg.AuthProxyAutoSignUp = true
+		})
+
+		middlewareScenario(t, "Should assign role from header to default org", func(t *testing.T, sc *scenarioContext) {
+			var storedRoleInfo map[int64]models.RoleType = nil
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+				if query.UserId > 0 {
+					query.Result = &models.SignedInUser{OrgId: defaultOrgId, UserId: userID, OrgRole: storedRoleInfo[defaultOrgId]}
+					return nil
+				}
+				return models.ErrUserNotFound
+			})
+
+			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+				cmd.Result = &models.User{Id: userID}
+				storedRoleInfo = cmd.ExternalUser.OrgRoles
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
+			sc.req.Header.Set("X-WEBAUTH-ROLE", orgRole)
+			sc.exec()
+
+			assert.True(t, sc.context.IsSignedIn)
+			assert.Equal(t, userID, sc.context.UserId)
+			assert.Equal(t, defaultOrgId, sc.context.OrgId)
+			assert.Equal(t, orgRole, string(sc.context.OrgRole))
+		}, func(cfg *setting.Cfg) {
+			configure(cfg)
+			cfg.LDAPEnabled = false
+			cfg.AuthProxyAutoSignUp = true
+		})
+
+		middlewareScenario(t, "Should NOT assign role from header to non-default org", func(t *testing.T, sc *scenarioContext) {
+			var storedRoleInfo map[int64]models.RoleType = nil
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+				if query.UserId > 0 {
+					query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID, OrgRole: storedRoleInfo[orgID]}
+					return nil
+				}
+				return models.ErrUserNotFound
+			})
+
+			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+				cmd.Result = &models.User{Id: userID}
+				storedRoleInfo = cmd.ExternalUser.OrgRoles
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
+			sc.req.Header.Set("X-WEBAUTH-ROLE", "Admin")
+			sc.req.Header.Set("X-Grafana-Org-Id", strconv.FormatInt(orgID, 10))
+			sc.exec()
+
+			assert.True(t, sc.context.IsSignedIn)
+			assert.Equal(t, userID, sc.context.UserId)
+			assert.Equal(t, orgID, sc.context.OrgId)
+
+			// For non-default org, the user role should be empty
+			assert.Equal(t, "", string(sc.context.OrgRole))
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.LDAPEnabled = false
@@ -562,13 +627,10 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		require.NoError(t, err)
 		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
 
-		sc.m = macaron.New()
+		sc.m = web.New()
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
-		sc.m.Use(AddCSPHeader(cfg, logger))
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
+		sc.m.UseMiddleware(AddCSPHeader(cfg, logger))
+		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
 		ctxHdlr := getContextHandler(t, cfg)
 		sc.sqlStore = ctxHdlr.SQLStore
@@ -604,47 +666,18 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	t.Helper()
 
 	sqlStore := sqlstore.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
 		Name: "database",
 	}
+	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
+	require.NoError(t, err)
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	ctxHdlr := &contexthandler.ContextHandler{}
-
-	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
-		{
-			Name:     sqlstore.ServiceName,
-			Instance: sqlStore,
-		},
-		{
-			Name:     remotecache.ServiceName,
-			Instance: remoteCacheSvc,
-		},
-		{
-			Name:     auth.ServiceName,
-			Instance: userAuthTokenSvc,
-		},
-		{
-			Name:     rendering.ServiceName,
-			Instance: renderSvc,
-		},
-		{
-			Name:     jwt.ServiceName,
-			Instance: authJWTSvc,
-		},
-		{
-			Name:     contexthandler.ServiceName,
-			Instance: ctxHdlr,
-		},
-	})
-	require.NoError(t, err)
-
-	return ctxHdlr
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
 }
 
 type fakeRenderService struct {

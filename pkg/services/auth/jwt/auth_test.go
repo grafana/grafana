@@ -3,18 +3,18 @@ package jwt
 import (
 	"context"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,9 +37,9 @@ type configureFunc func(*testing.T, *setting.Cfg)
 type scenarioFunc func(*testing.T, scenarioContext)
 type cachingScenarioFunc func(*testing.T, cachingScenarioContext)
 
-func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
-	subject := "foo-subj"
+const subject = "foo-subj"
 
+func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
 	key := rsaKeys[0]
 	unknownKey := rsaKeys[1]
 
@@ -79,8 +79,6 @@ func TestVerifyUsingJWKSetFile(t *testing.T) {
 		cfg.JWTAuthJWKSetFile = file.Name()
 	}
 
-	subject := "foo-subj"
-
 	scenario(t, "verifies a token signed with a key from the set", func(t *testing.T, sc scenarioContext) {
 		token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
 		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
@@ -103,8 +101,6 @@ func TestVerifyUsingJWKSetFile(t *testing.T) {
 }
 
 func TestVerifyUsingJWKSetURL(t *testing.T) {
-	subject := "foo-subj"
-
 	t.Run("should refuse to start with non-https URL", func(t *testing.T) {
 		var err error
 
@@ -141,8 +137,6 @@ func TestVerifyUsingJWKSetURL(t *testing.T) {
 }
 
 func TestCachingJWKHTTPResponse(t *testing.T) {
-	subject := "foo-subj"
-
 	jwkCachingScenario(t, "caches the jwk response", func(t *testing.T, sc cachingScenarioContext) {
 		for i := 0; i < 5; i++ {
 			token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
@@ -361,6 +355,25 @@ func jwkCachingScenario(t *testing.T, desc string, fn cachingScenarioFunc, cbs .
 	})
 }
 
+func TestBase64Paddings(t *testing.T) {
+	key := rsaKeys[0]
+
+	scenario(t, "verifies a token with base64 padding (non compliant rfc7515#section-2 but accepted)", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, key, jwt.Claims{
+			Subject: subject,
+		})
+		var tokenParts []string
+		for i, part := range strings.Split(token, ".") {
+			// Create parts with different padding numbers to test multiple cases.
+			tokenParts = append(tokenParts, part+strings.Repeat(string(base64.StdPadding), i))
+		}
+		token = strings.Join(tokenParts, ".")
+		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.NoError(t, err)
+		assert.Equal(t, verifiedClaims["sub"], subject)
+	}, configurePKIXPublicKeyFile)
+}
+
 func scenario(t *testing.T, desc string, fn scenarioFunc, cbs ...configureFunc) {
 	t.Helper()
 
@@ -368,33 +381,18 @@ func scenario(t *testing.T, desc string, fn scenarioFunc, cbs ...configureFunc) 
 }
 
 func initAuthService(t *testing.T, cbs ...configureFunc) (*AuthService, error) {
-	sqlStore := sqlstore.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
+	t.Helper()
+
 	cfg := setting.NewCfg()
 	cfg.JWTAuthEnabled = true
 	cfg.JWTAuthExpectClaims = "{}"
-	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{Name: "database"}
+
 	for _, cb := range cbs {
 		cb(t, cfg)
 	}
 
-	service := &AuthService{}
-
-	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
-		{
-			Name:     sqlstore.ServiceName,
-			Instance: sqlStore,
-		},
-		{
-			Name:     remotecache.ServiceName,
-			Instance: remoteCacheSvc,
-		},
-		{
-			Name:     ServiceName,
-			Instance: service,
-		},
-	})
-
+	service := newService(cfg, remotecache.NewFakeStore(t))
+	err := service.init()
 	return service, err
 }
 

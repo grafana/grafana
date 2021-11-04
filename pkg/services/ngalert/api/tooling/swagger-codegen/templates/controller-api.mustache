@@ -17,7 +17,7 @@ type {{classname}}Service interface { {{#operation}}
 	{{nickname}}(*models.ReqContext{{#bodyParams}}, apimodels.{{dataType}}{{/bodyParams}}) response.Response{{/operation}}
 }
 
-func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service, m *metrics.Metrics) {
+func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 	group.{{httpMethod}}(
 		toMacaronPath("{{{path}}}"){{#bodyParams}},

@@ -81,5 +81,5 @@ func TestBroadcastRunner_OnPublish(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, backend.PublishStreamStatusOK, status)
-	require.Nil(t, reply.Data)
+	require.Equal(t, data, reply.Data)
 }

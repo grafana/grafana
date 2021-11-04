@@ -1,23 +1,24 @@
 package state_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-var nilMetrics = metrics.NewMetrics(nil)
+var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
 
 func TestProcessEvalResults(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
@@ -150,7 +151,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime,
-					EndsAt:             evaluationTime.Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime,
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -272,7 +273,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(1 * time.Minute),
-					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(time.Duration(20) * time.Second),
+					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -348,7 +349,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(80 * time.Second),
-					EndsAt:             evaluationTime.Add(80 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(80 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(80 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -411,7 +412,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -474,7 +475,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime,
-					EndsAt:             evaluationTime.Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -537,7 +538,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -600,7 +601,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -663,7 +664,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -727,7 +728,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -791,7 +792,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -851,10 +852,10 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"), nilMetrics, nil, nil)
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, nil)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
-				_ = st.ProcessEvalResults(tc.alertRule, res)
+				_ = st.ProcessEvalResults(context.Background(), tc.alertRule, res)
 			}
 			for _, s := range tc.expectedStates {
 				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
@@ -862,5 +863,108 @@ func TestProcessEvalResults(t *testing.T) {
 				assert.Equal(t, s, cachedState)
 			}
 		})
+	}
+}
+
+func TestStaleResultsHandler(t *testing.T) {
+	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
+	if err != nil {
+		t.Fatalf("error parsing date format: %s", err.Error())
+	}
+
+	_, dbstore := tests.SetupTestEnv(t, 1)
+
+	const mainOrgID int64 = 1
+	rule := tests.CreateTestAlertRule(t, dbstore, 600, mainOrgID)
+
+	saveCmd1 := &models.SaveAlertInstanceCommand{
+		RuleOrgID:         rule.OrgID,
+		RuleUID:           rule.UID,
+		Labels:            models.InstanceLabels{"test1": "testValue1"},
+		State:             models.InstanceStateNormal,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+	}
+
+	_ = dbstore.SaveAlertInstance(saveCmd1)
+
+	saveCmd2 := &models.SaveAlertInstanceCommand{
+		RuleOrgID:         rule.OrgID,
+		RuleUID:           rule.UID,
+		Labels:            models.InstanceLabels{"test2": "testValue2"},
+		State:             models.InstanceStateFiring,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+	}
+	_ = dbstore.SaveAlertInstance(saveCmd2)
+
+	testCases := []struct {
+		desc               string
+		evalResults        []eval.Results
+		expectedStates     map[string]*state.State
+		startingStateCount int
+		finalStateCount    int
+	}{
+		{
+			desc: "stale cache entries are removed",
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"test1": "testValue1"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime.Add(3 * time.Minute),
+					},
+				},
+			},
+			expectedStates: map[string]*state.State{
+				`[["__alert_rule_namespace_uid__","namespace"],["__alert_rule_uid__","` + rule.UID + `"],["alertname","` + rule.Title + `"],["test1","testValue1"]]`: {
+					AlertRuleUID: rule.UID,
+					OrgID:        1,
+					CacheId:      `[["__alert_rule_namespace_uid__","namespace"],["__alert_rule_uid__","` + rule.UID + `"],["alertname","` + rule.Title + `"],["test1","testValue1"]]`,
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "namespace",
+						"__alert_rule_uid__":           rule.UID,
+						"alertname":                    rule.Title,
+						"test1":                        "testValue1",
+					},
+					State: eval.Normal,
+					Results: []state.Evaluation{
+						{
+							EvaluationTime:  evaluationTime.Add(3 * time.Minute),
+							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
+						},
+					},
+					LastEvaluationTime: evaluationTime.Add(3 * time.Minute),
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+			},
+			startingStateCount: 2,
+			finalStateCount:    1,
+		},
+	}
+
+	for _, tc := range testCases {
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore)
+		st.Warm()
+		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+
+		// We have loaded the expected number of entries from the db
+		assert.Equal(t, tc.startingStateCount, len(existingStatesForRule))
+		for _, res := range tc.evalResults {
+			st.ProcessEvalResults(context.Background(), rule, res)
+			for _, s := range tc.expectedStates {
+				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
+				require.NoError(t, err)
+				assert.Equal(t, s, cachedState)
+			}
+		}
+		existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+
+		// The expected number of state entries remains after results are processed
+		assert.Equal(t, tc.finalStateCount, len(existingStatesForRule))
 	}
 }

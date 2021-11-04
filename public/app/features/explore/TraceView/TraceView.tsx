@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
+import { DataFrame, DataFrameView, SplitOpen, TraceSpanRow } from '@grafana/data';
 import { colors, useTheme } from '@grafana/ui';
 import {
   ThemeOptions,
@@ -15,8 +15,9 @@ import {
 } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
-import { ExploreId, SplitOpen } from 'app/types/explore';
+import { ExploreId } from 'app/types/explore';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -62,11 +63,14 @@ export function TraceView(props: Props) {
    */
   const [slim, setSlim] = useState(false);
 
-  const traceProp = useMemo(() => transformDataFrames(props.dataFrames), [props.dataFrames]);
+  // At this point we only show single trace.
+  const frame = props.dataFrames[0];
+  const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
+  const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
 
   const theme = useTheme();
   const traceTheme = useMemo(
@@ -95,10 +99,10 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
 
-  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, traceToLogsOptions), [
-    props.splitOpenFn,
-    traceToLogsOptions,
-  ]);
+  const createSpanLink = useMemo(
+    () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn, traceToLogsOptions, dataFrame: frame }),
+    [props.splitOpenFn, traceToLogsOptions, frame]
+  );
   const scrollElement = document.getElementsByClassName('scrollbar-view')[0];
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
 
@@ -130,6 +134,7 @@ export function TraceView(props: Props) {
           searchValue={search}
           onSearchValueChange={setSearch}
           hideSearchButtons={true}
+          timeZone={timeZone}
         />
         <TraceTimelineViewer
           registerAccessors={noop}
@@ -170,9 +175,7 @@ export function TraceView(props: Props) {
   );
 }
 
-function transformDataFrames(frames: DataFrame[]): Trace | null {
-  // At this point we only show single trace.
-  const frame = frames[0];
+function transformDataFrames(frame?: DataFrame): Trace | null {
   if (!frame) {
     return null;
   }
@@ -200,7 +203,7 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
   return {
     traceID: view.get(0).traceID,
     processes,
-    spans: view.toArray().map((s) => {
+    spans: view.toArray().map((s, index) => {
       return {
         ...s,
         duration: s.duration * 1000,
@@ -209,6 +212,7 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
         flags: 0,
         references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
         logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
+        dataFrameRowIndex: index,
       };
     }),
   };

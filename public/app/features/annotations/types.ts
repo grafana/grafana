@@ -25,7 +25,7 @@ export interface AnnotationTag {
    */
   tag: string;
   /**
-   * The number of occurences of that tag
+   * The number of occurrences of that tag
    */
   count: number;
 }

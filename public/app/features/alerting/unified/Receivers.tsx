@@ -57,7 +57,7 @@ const Receivers: FC = () => {
         onChange={setAlertManagerSourceName}
       />
       {error && !loading && (
-        <Alert severity="error" title="Error loading alert manager config">
+        <Alert severity="error" title="Error loading Alertmanager config">
           {error.message || 'Unknown error.'}
         </Alert>
       )}

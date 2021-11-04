@@ -31,6 +31,7 @@ import {
   DateTimeInput,
   EventBusExtended,
   EventBusSrv,
+  PanelModel as IPanelModel,
   TimeRange,
   TimeZone,
   UrlQueryValue,
@@ -41,8 +42,11 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
-import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
+import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
+import { isOnTheSameGridRow } from './utils';
+import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -75,9 +79,11 @@ export class DashboardModel {
   tags: any;
   style: any;
   timezone: any;
+  weekStart: any;
   editable: any;
   graphTooltip: DashboardCursorSync;
   time: any;
+  liveNow: boolean;
   private originalTime: any;
   timepicker: any;
   templating: { list: any[] };
@@ -93,6 +99,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
+  fiscalYearStartMonth?: number;
   private hasChangesThatAffectsAllPanels: boolean;
 
   // ------------------
@@ -128,25 +135,28 @@ export class DashboardModel {
     this.id = data.id || null;
     this.uid = data.uid || null;
     this.revision = data.revision;
-    this.title = data.title || 'No Title';
+    this.title = data.title ?? 'No Title';
     this.autoUpdate = data.autoUpdate;
     this.description = data.description;
-    this.tags = data.tags || [];
-    this.style = data.style || 'dark';
-    this.timezone = data.timezone || '';
+    this.tags = data.tags ?? [];
+    this.style = data.style ?? 'dark';
+    this.timezone = data.timezone ?? '';
+    this.weekStart = data.weekStart ?? '';
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
-    this.time = data.time || { from: 'now-6h', to: 'now' };
-    this.timepicker = data.timepicker || {};
+    this.time = data.time ?? { from: 'now-6h', to: 'now' };
+    this.timepicker = data.timepicker ?? {};
+    this.liveNow = Boolean(data.liveNow);
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;
     this.snapshot = data.snapshot;
-    this.schemaVersion = data.schemaVersion || 0;
-    this.version = data.version || 0;
-    this.links = data.links || [];
+    this.schemaVersion = data.schemaVersion ?? 0;
+    this.fiscalYearStartMonth = data.fiscalYearStartMonth ?? 0;
+    this.version = data.version ?? 0;
+    this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
-    this.panels = map(data.panels || [], (panelData: any) => new PanelModel(panelData));
+    this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
     this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
@@ -239,9 +249,32 @@ export class DashboardModel {
     return copy;
   }
 
+  /**
+   * This will load a new dashboard, but keep existing panels unchanged
+   *
+   * This function can be used to implement:
+   * 1. potentially faster loading dashboard loading
+   * 2. dynamic dashboard behavior
+   * 3. "live" dashboard editing
+   *
+   * @internal and experimental
+   */
+  updatePanels(panels: IPanelModel[]): PanelMergeInfo {
+    const info = mergePanels(this.panels, panels ?? []);
+    if (info.changed) {
+      this.panels = info.panels ?? [];
+      this.sortPanelsByGridPos();
+      this.events.publish(new DashboardPanelsChangedEvent());
+    }
+    return info;
+  }
+
   private getPanelSaveModels() {
     return this.panels
       .filter((panel: PanelModel) => {
+        if (this.isSnapshotTruthy()) {
+          return true;
+        }
         if (panel.type === 'add-panel') {
           return false;
         }
@@ -258,16 +291,16 @@ export class DashboardModel {
       .map((panel: PanelModel) => {
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel
-        if (this.panelInEdit && this.panelInEdit.editSourceId === panel.id) {
-          const saveModel = this.panelInEdit.getSaveModel();
-          // while editing a panel we modify its id, need to restore it here
-          saveModel.id = this.panelInEdit.editSourceId;
-          return saveModel;
+        if (this.panelInEdit && this.panelInEdit.id === panel.id) {
+          return this.panelInEdit.getSaveModel();
         }
 
         return panel.getSaveModel();
       })
       .map((model: any) => {
+        if (this.isSnapshotTruthy()) {
+          return model;
+        }
         // Clear any scopedVars from persisted mode. This cannot be part of getSaveModel as we need to be able to copy
         // panel models with preserved scopedVars, for example when going into edit mode.
         delete model.scopedVars;
@@ -446,7 +479,7 @@ export class DashboardModel {
   }
 
   canEditPanel(panel?: PanelModel | null): boolean | undefined | null {
-    return this.meta.canEdit && panel && !panel.repeatPanelId;
+    return Boolean(this.meta.canEdit && panel && !panel.repeatPanelId && panel.type !== 'row');
   }
 
   canEditPanelById(id: number): boolean | undefined | null {
@@ -471,6 +504,22 @@ export class DashboardModel {
         return panelA.gridPos.y - panelB.gridPos.y;
       }
     });
+  }
+
+  clearUnsavedChanges() {
+    for (const panel of this.panels) {
+      panel.configRev = 0;
+    }
+  }
+
+  hasUnsavedChanges() {
+    for (const panel of this.panels) {
+      if (panel.hasChanged) {
+        console.log('Panel has changed', panel);
+        return true;
+      }
+    }
+    return false;
   }
 
   cleanUpRepeats() {
@@ -560,9 +609,9 @@ export class DashboardModel {
       return sourcePanel;
     }
 
-    const clone = new PanelModel(sourcePanel.getSaveModel());
-
-    clone.id = this.getNextPanelId();
+    const m = sourcePanel.getSaveModel();
+    m.id = this.getNextPanelId();
+    const clone = new PanelModel(m);
 
     // insert after source panel + value index
     this.panels.splice(sourcePanelIndex + valueIndex, 0, clone);
@@ -661,6 +710,10 @@ export class DashboardModel {
     if (yOffset > 0) {
       const panelBelowIndex = panelIndex + selectedOptions.length;
       for (let i = panelBelowIndex; i < this.panels.length; i++) {
+        if (isOnTheSameGridRow(panel, this.panels[i])) {
+          continue;
+        }
+
         this.panels[i].gridPos.y += yOffset;
       }
     }
@@ -714,9 +767,11 @@ export class DashboardModel {
         panelBelowIndex = insertPos + rowPanels.length;
       }
 
-      // Update gridPos for panels below
-      for (let i = panelBelowIndex; i < this.panels.length; i++) {
-        this.panels[i].gridPos.y += yPos;
+      // Update gridPos for panels below if we inserted more than 1 repeated row panel
+      if (selectedOptions.length > 1) {
+        for (let i = panelBelowIndex; i < this.panels.length; i++) {
+          this.panels[i].gridPos.y += yPos;
+        }
       }
     }
   }
@@ -724,6 +779,7 @@ export class DashboardModel {
   updateRepeatedPanelIds(panel: PanelModel, repeatedByRow?: boolean) {
     panel.repeatPanelId = panel.id;
     panel.id = this.getNextPanelId();
+    panel.key = `${panel.id}`;
     panel.repeatIteration = this.iteration;
     if (repeatedByRow) {
       panel.repeatedByRow = true;

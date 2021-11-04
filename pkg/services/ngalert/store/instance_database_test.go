@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package store_test
@@ -6,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
@@ -26,19 +26,20 @@ func mockTimeNow() {
 }
 
 func TestAlertInstanceOperations(t *testing.T) {
-	dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
-	t.Cleanup(registry.ClearOverrides)
+	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
-	alertRule1 := tests.CreateTestAlertRule(t, dbstore, 60)
+	const mainOrgID int64 = 1
+
+	alertRule1 := tests.CreateTestAlertRule(t, dbstore, 60, mainOrgID)
 	orgID := alertRule1.OrgID
 
-	alertRule2 := tests.CreateTestAlertRule(t, dbstore, 60)
+	alertRule2 := tests.CreateTestAlertRule(t, dbstore, 60, mainOrgID)
 	require.Equal(t, orgID, alertRule2.OrgID)
 
-	alertRule3 := tests.CreateTestAlertRule(t, dbstore, 60)
+	alertRule3 := tests.CreateTestAlertRule(t, dbstore, 60, mainOrgID)
 	require.Equal(t, orgID, alertRule3.OrgID)
 
-	alertRule4 := tests.CreateTestAlertRule(t, dbstore, 60)
+	alertRule4 := tests.CreateTestAlertRule(t, dbstore, 60, mainOrgID)
 	require.Equal(t, orgID, alertRule4.OrgID)
 
 	t.Run("can save and read new alert instance", func(t *testing.T) {

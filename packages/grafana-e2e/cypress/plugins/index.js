@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 const compareScreenshots = require('./compareScreenshots');
 const extendConfig = require('./extendConfig');
 const readProvisions = require('./readProvisions');
@@ -10,6 +13,18 @@ module.exports = (on, config) => {
     log({ message, optional }) {
       optional ? console.log(message, optional) : console.log(message);
       return null;
+    },
+  });
+  on('task', {
+    getJSONFilesFromDir: async ({ projectPath, relativePath }) => {
+      const directoryPath = path.join(projectPath, relativePath);
+      const jsonFiles = fs.readdirSync(directoryPath);
+      return jsonFiles
+        .filter((fileName) => /.json$/i.test(fileName))
+        .map((fileName) => {
+          const fileBuffer = fs.readFileSync(path.join(directoryPath, fileName));
+          return JSON.parse(fileBuffer);
+        });
     },
   });
 

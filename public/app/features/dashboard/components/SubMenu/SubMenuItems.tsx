@@ -9,6 +9,7 @@ interface Props {
 
 export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
+
   useEffect(() => {
     setVisibleVariables(variables.filter((state) => state.hide !== VariableHide.hideVariable));
   }, [variables]);
@@ -24,7 +25,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
           <div
             key={variable.id}
             className="submenu-item gf-form-inline"
-            aria-label={selectors.pages.Dashboard.SubMenu.submenuItem}
+            data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
           >
             <PickerRenderer variable={variable} />
           </div>

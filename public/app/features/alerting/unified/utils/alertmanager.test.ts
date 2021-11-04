@@ -1,5 +1,6 @@
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { parseMatcher, stringifyMatcher } from './alertmanager';
+import { Labels } from 'app/types/unified-alerting-dto';
+import { parseMatcher, parseMatchers, stringifyMatcher, labelsMatchMatchers } from './alertmanager';
 
 describe('Alertmanager utils', () => {
   describe('parseMatcher', () => {
@@ -64,6 +65,58 @@ describe('Alertmanager utils', () => {
           isEqual: false,
         })
       ).toEqual('foo!~"boo=\\"bar\\""');
+    });
+  });
+
+  describe('parseMatchers', () => {
+    it('should parse all operators', () => {
+      expect(parseMatchers('foo=bar, bar=~ba.+, severity!=warning, email!~@grafana.com')).toEqual<Matcher[]>([
+        { name: 'foo', value: 'bar', isRegex: false, isEqual: true },
+        { name: 'bar', value: 'ba.+', isEqual: true, isRegex: true },
+        { name: 'severity', value: 'warning', isRegex: false, isEqual: false },
+        { name: 'email', value: '@grafana.com', isRegex: true, isEqual: false },
+      ]);
+    });
+
+    it('should return nothing for invalid operator', () => {
+      expect(parseMatchers('foo=!bar')).toEqual([]);
+    });
+
+    it('should parse matchers with or without quotes', () => {
+      expect(parseMatchers('foo="bar",bar=bazz')).toEqual<Matcher[]>([
+        { name: 'foo', value: 'bar', isRegex: false, isEqual: true },
+        { name: 'bar', value: 'bazz', isEqual: true, isRegex: false },
+      ]);
+    });
+  });
+
+  describe('labelsMatchMatchers', () => {
+    it('should return true for matching labels', () => {
+      const labels: Labels = {
+        foo: 'bar',
+        bar: 'bazz',
+        bazz: 'buzz',
+      };
+
+      const matchers = parseMatchers('foo=bar,bar=bazz');
+      expect(labelsMatchMatchers(labels, matchers)).toBe(true);
+    });
+    it('should return false for no matching labels', () => {
+      const labels: Labels = {
+        foo: 'bar',
+        bar: 'bazz',
+      };
+      const matchers = parseMatchers('foo=buzz');
+      expect(labelsMatchMatchers(labels, matchers)).toBe(false);
+    });
+    it('should match with different operators', () => {
+      const labels: Labels = {
+        foo: 'bar',
+        bar: 'bazz',
+        email: 'admin@grafana.com',
+      };
+      const matchers = parseMatchers('foo!=bazz,bar=~ba.+');
+      expect(labelsMatchMatchers(labels, matchers)).toBe(true);
     });
   });
 });

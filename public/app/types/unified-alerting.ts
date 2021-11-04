@@ -85,6 +85,7 @@ export interface CombinedRule {
 
 export interface CombinedRuleGroup {
   name: string;
+  interval?: string;
   rules: CombinedRule[];
 }
 
@@ -127,8 +128,15 @@ export interface PrometheusRuleIdentifier {
 }
 
 export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier | PrometheusRuleIdentifier;
-export interface RuleFilterState {
+export interface FilterState {
   queryString?: string;
   dataSource?: string;
   alertState?: string;
+  groupBy?: string[];
+  ruleType?: string;
+}
+
+export interface SilenceFilterState {
+  queryString?: string;
+  silenceState?: string;
 }

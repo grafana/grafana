@@ -45,7 +45,7 @@ var isLDAPEnabled = func(cfg *setting.Cfg) bool {
 var newLDAP = multildap.New
 
 // supportedHeaders states the supported headers configuration fields
-var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups"}
+var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups", "Role"}
 
 // AuthProxy struct
 type AuthProxy struct {
@@ -152,7 +152,7 @@ func HashCacheKey(key string) (string, error) {
 
 // getKey forms a key for the cache based on the headers received as part of the authentication flow.
 // Our configuration supports multiple headers. The main header contains the email or username.
-// And the additional ones that allow us to specify extra attributes: Name, Email or Groups.
+// And the additional ones that allow us to specify extra attributes: Name, Email, Role, or Groups.
 func (auth *AuthProxy) getKey() (string, error) {
 	key := strings.TrimSpace(auth.header) // start the key with the main header
 
@@ -278,9 +278,23 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 	}
 
 	auth.headersIterator(func(field string, header string) {
-		if field == "Groups" {
+		switch field {
+		case "Groups":
 			extUser.Groups = util.SplitString(header)
-		} else {
+		case "Role":
+			// If Role header is specified, we update the user role of the default org
+			if header != "" {
+				rt := models.RoleType(header)
+				if rt.IsValid() {
+					extUser.OrgRoles = map[int64]models.RoleType{}
+					orgID := int64(1)
+					if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+						orgID = int64(setting.AutoAssignOrgId)
+					}
+					extUser.OrgRoles[orgID] = rt
+				}
+			}
+		default:
 			reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(header)
 		}
 	})

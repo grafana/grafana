@@ -12,37 +12,43 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func init() {
-	registry.RegisterService(&DatasourceProxyService{})
+func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
+	pluginStore plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
+	oauthTokenService *oauthtoken.Service, dsService *datasources.Service) *DataSourceProxyService {
+	return &DataSourceProxyService{
+		DataSourceCache:        dataSourceCache,
+		PluginRequestValidator: plugReqValidator,
+		pluginStore:            pluginStore,
+		Cfg:                    cfg,
+		HTTPClientProvider:     httpClientProvider,
+		OAuthTokenService:      oauthTokenService,
+		DataSourcesService:     dsService,
+	}
 }
 
-type DatasourceProxyService struct {
-	DatasourceCache        datasources.CacheService      `inject:""`
-	PluginRequestValidator models.PluginRequestValidator `inject:""`
-	PluginManager          plugins.Manager               `inject:""`
-	Cfg                    *setting.Cfg                  `inject:""`
-	HTTPClientProvider     httpclient.Provider           `inject:""`
-	OAuthTokenService      *oauthtoken.Service           `inject:""`
+type DataSourceProxyService struct {
+	DataSourceCache        datasources.CacheService
+	PluginRequestValidator models.PluginRequestValidator
+	pluginStore            plugins.Store
+	Cfg                    *setting.Cfg
+	HTTPClientProvider     httpclient.Provider
+	OAuthTokenService      *oauthtoken.Service
+	DataSourcesService     *datasources.Service
 }
 
-func (p *DatasourceProxyService) Init() error {
-	return nil
-}
-
-func (p *DatasourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
+func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 	p.ProxyDatasourceRequestWithID(c, c.ParamsInt64(":id"))
 }
 
-func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqContext, dsID int64) {
+func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	ds, err := p.DatasourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
+	ds, err := p.DataSourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
@@ -56,21 +62,22 @@ func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 		return
 	}
 
-	err = p.PluginRequestValidator.Validate(ds.Url, c.Req.Request)
+	err = p.PluginRequestValidator.Validate(ds.Url, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
 	}
 
 	// find plugin
-	plugin := p.PluginManager.GetDataSource(ds.Type)
+	plugin := p.pluginStore.Plugin(ds.Type)
 	if plugin == nil {
 		c.JsonApiErr(http.StatusNotFound, "Unable to find datasource plugin", err)
 		return
 	}
 
 	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, p.Cfg, p.HTTPClientProvider, p.OAuthTokenService)
+	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
+		p.OAuthTokenService, p.DataSourcesService)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)

@@ -3,7 +3,7 @@ import Map from 'ol/Map';
 import OSM from 'ol/source/OSM';
 import TileLayer from 'ol/layer/Tile';
 
-const standard: MapLayerRegistryItem = {
+export const standard: MapLayerRegistryItem = {
   id: 'osm-standard',
   name: 'Open Street Map',
   isBaseMap: true,
@@ -12,7 +12,7 @@ const standard: MapLayerRegistryItem = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions) => ({
+  create: async (map: Map, options: MapLayerOptions) => ({
     init: () => {
       return new TileLayer({
         source: new OSM(),

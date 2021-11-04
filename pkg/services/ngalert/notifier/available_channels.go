@@ -380,7 +380,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Label:        "Recipient",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
-					Description:  "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID - required unless you provide a webhook",
+					Description:  "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
 					PropertyName: "recipient",
 				},
 				// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
@@ -693,6 +693,12 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
 					PropertyName: "avatar_url",
+				},
+				{
+					Label:        "Use Discord's Webhook Username",
+					Description:  "Use the username configured in Discord's webhook settings. Otherwise, the username will be 'Grafana'",
+					Element:      alerting.ElementTypeCheckbox,
+					PropertyName: "use_discord_username",
 				},
 			},
 		},

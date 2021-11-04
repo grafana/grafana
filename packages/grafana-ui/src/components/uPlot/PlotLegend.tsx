@@ -9,8 +9,7 @@ import {
 } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { VizLegendItem } from '../VizLegend/types';
-import { VizLegendOptions } from '../VizLegend/models.gen';
-import { AxisPlacement } from './config';
+import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { useTheme2 } from '../../themes';
@@ -53,7 +52,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
       const seriesColor = scaleColor.color;
 
       return {
-        disabled: !seriesConfig.show ?? false,
+        disabled: !(seriesConfig.show ?? true),
         fieldIndex,
         color: seriesColor,
         label,
@@ -86,7 +85,13 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
 
   return (
     <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
-      <VizLegend placement={placement} items={legendItems} displayMode={displayMode} />
+      <VizLegend
+        placement={placement}
+        items={legendItems}
+        displayMode={displayMode}
+        sortBy={vizLayoutLegendProps.sortBy}
+        sortDesc={vizLayoutLegendProps.sortDesc}
+      />
     </VizLayout.Legend>
   );
 };

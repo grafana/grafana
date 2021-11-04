@@ -35,8 +35,8 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
     avatar = <img className={styles.avatar} src={annotation.avatarUrl} />;
   }
 
-  if (annotation.alertId) {
-    const stateModel = alertDef.getStateDisplayModel(annotation.newState!);
+  if (annotation.alertId !== undefined && annotation.newState) {
+    const stateModel = alertDef.getStateDisplayModel(annotation.newState);
     state = (
       <div className={styles.alertState}>
         <i className={stateModel.stateClass}>{stateModel.text}</i>
@@ -130,6 +130,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     body: css`
       padding: ${theme.spacing(1)};
+
+      a {
+        color: ${theme.colors.text.link};
+        &:hover {
+          text-decoration: underline;
+        }
+      }
     `,
   };
 };

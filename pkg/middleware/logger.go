@@ -19,26 +19,24 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
-	cw "github.com/weaveworks/common/middleware"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
+	cw "github.com/weaveworks/common/tracing"
 )
 
-func Logger(cfg *setting.Cfg) macaron.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
+func Logger(cfg *setting.Cfg) web.Handler {
+	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		start := time.Now()
-		c.Data["perfmon.start"] = start
 
-		rw := res.(macaron.ResponseWriter)
+		rw := res.(web.ResponseWriter)
 		c.Next()
 
 		timeTaken := time.Since(start) / time.Millisecond
 
-		if timer, ok := c.Data["perfmon.timer"]; ok {
-			timerTyped := timer.(prometheus.Summary)
-			timerTyped.Observe(float64(timeTaken))
+		ctx := contexthandler.FromContext(c.Req.Context())
+		if ctx != nil && ctx.PerfmonTimer != nil {
+			ctx.PerfmonTimer.Observe(float64(timeTaken))
 		}
 
 		status := rw.Status()
@@ -48,9 +46,7 @@ func Logger(cfg *setting.Cfg) macaron.Handler {
 			}
 		}
 
-		if ctx, ok := c.Data["ctx"]; ok {
-			ctxTyped := ctx.(*models.ReqContext)
-
+		if ctx != nil {
 			logParams := []interface{}{
 				"method", req.Method,
 				"path", req.URL.Path,
@@ -61,15 +57,15 @@ func Logger(cfg *setting.Cfg) macaron.Handler {
 				"referer", req.Referer(),
 			}
 
-			traceID, exist := cw.ExtractTraceID(ctxTyped.Req.Request.Context())
+			traceID, exist := cw.ExtractTraceID(ctx.Req.Context())
 			if exist {
 				logParams = append(logParams, "traceID", traceID)
 			}
 
 			if status >= 500 {
-				ctxTyped.Logger.Error("Request Completed", logParams...)
+				ctx.Logger.Error("Request Completed", logParams...)
 			} else {
-				ctxTyped.Logger.Info("Request Completed", logParams...)
+				ctx.Logger.Info("Request Completed", logParams...)
 			}
 		}
 	}

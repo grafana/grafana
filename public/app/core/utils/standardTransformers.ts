@@ -17,6 +17,8 @@ import { histogramTransformRegistryItem } from '../components/TransformersUI/His
 import { rowsToFieldsTransformRegistryItem } from '../components/TransformersUI/rowsToFields/RowsToFieldsTransformerEditor';
 import { configFromQueryTransformRegistryItem } from '../components/TransformersUI/configFromQuery/ConfigFromQueryTransformerEditor';
 import { prepareTimeseriesTransformerRegistryItem } from '../components/TransformersUI/prepareTimeSeries/PrepareTimeSeriesEditor';
+import { convertFieldTypeTransformRegistryItem } from '../components/TransformersUI/ConvertFieldTypeTransformerEditor';
+import { fieldLookupTransformRegistryItem } from '../components/TransformersUI/lookupGazetteer/FieldLookupTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
@@ -38,5 +40,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     rowsToFieldsTransformRegistryItem,
     configFromQueryTransformRegistryItem,
     prepareTimeseriesTransformerRegistryItem,
+    convertFieldTypeTransformRegistryItem,
+    fieldLookupTransformRegistryItem,
   ];
 };

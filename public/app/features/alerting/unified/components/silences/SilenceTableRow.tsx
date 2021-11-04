@@ -40,7 +40,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
 
   return (
     <Fragment>
-      <tr className={className}>
+      <tr className={className} data-testid="silence-table-row">
         <td>
           <CollapseToggle isCollapsed={isCollapsed} onToggle={(value) => setIsCollapsed(value)} />
         </td>
@@ -50,7 +50,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
         <td className={styles.matchersCell}>
           <Matchers matchers={matchers} />
         </td>
-        <td>{silencedAlerts.length}</td>
+        <td data-testid="silenced-alerts">{silencedAlerts.length}</td>
         <td>
           {startsAtDate?.format(dateDisplayFormat)} {'-'}
           <br />

@@ -9,7 +9,7 @@ import {
   LinkModel,
   TimeRange,
 } from '@grafana/data';
-import { setLinkSrv } from '../../panel/panellinks/link_srv';
+import { setLinkSrv } from '../../../angular/panel/panellinks/link_srv';
 import { setContextSrv } from '../../../core/services/context_srv';
 
 describe('getFieldLinksForExplore', () => {
@@ -49,7 +49,9 @@ describe('getFieldLinksForExplore', () => {
     const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: splitfn, range });
 
     expect(links[0].href).toBe(
-      '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}]}'
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}]}'
+      )}`
     );
     expect(links[0].title).toBe('test_ds');
 

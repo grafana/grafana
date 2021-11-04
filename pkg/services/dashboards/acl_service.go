@@ -1,12 +1,13 @@
 package dashboards
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (dr *dashboardServiceImpl) MakeUserAdmin(orgID int64, userID int64, dashboardID int64, setViewAndEditPermissions bool) error {
+func (dr *dashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, userID int64, dashboardID int64, setViewAndEditPermissions bool) error {
 	rtEditor := models.ROLE_EDITOR
 	rtViewer := models.ROLE_VIEWER
 
@@ -42,7 +43,7 @@ func (dr *dashboardServiceImpl) MakeUserAdmin(orgID int64, userID int64, dashboa
 		)
 	}
 
-	if err := dr.dashboardStore.UpdateDashboardACL(dashboardID, items); err != nil {
+	if err := dr.dashboardStore.UpdateDashboardACLCtx(ctx, dashboardID, items); err != nil {
 		return err
 	}
 

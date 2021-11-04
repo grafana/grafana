@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
@@ -61,10 +62,27 @@ func (ccc *ConditionsCmd) NeedsVars() []string {
 }
 
 // EvalMatch represents the series violating the threshold.
+// It goes into the metadata of data frames so it can be extracted.
 type EvalMatch struct {
 	Value  *float64    `json:"value"`
 	Metric string      `json:"metric"`
 	Labels data.Labels `json:"labels"`
+}
+
+func (em EvalMatch) MarshalJSON() ([]byte, error) {
+	fs := ""
+	if em.Value != nil {
+		fs = strconv.FormatFloat(*em.Value, 'f', -1, 64)
+	}
+	return json.Marshal(struct {
+		Value  string      `json:"value"`
+		Metric string      `json:"metric"`
+		Labels data.Labels `json:"labels"`
+	}{
+		fs,
+		em.Metric,
+		em.Labels,
+	})
 }
 
 // Execute runs the command and returns the results or an error if the command

@@ -8,14 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securedata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
@@ -249,47 +246,6 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				id := dashboard.Get("id")
 
 				assert.Equal(t, int64(100), id.MustInt64())
-			})
-
-		loggedInUserScenarioWithRole(t, "Should be able to read a snapshot's encrypted data When calling GET on",
-			"GET", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				origSecret := setting.SecretKey
-				setting.SecretKey = "dashboard_snapshot_api_test"
-				t.Cleanup(func() {
-					setting.SecretKey = origSecret
-				})
-
-				const dashboardID int64 = 123
-				jsonModel, err := simplejson.NewJson([]byte(fmt.Sprintf(`{"id":%d}`, dashboardID)))
-				require.NoError(t, err)
-
-				jsonModelEncoded, err := jsonModel.Encode()
-				require.NoError(t, err)
-
-				encrypted, err := securedata.Encrypt(jsonModelEncoded)
-				require.NoError(t, err)
-
-				// mock snapshot with encrypted dashboard info
-				mockSnapshotResult := &models.DashboardSnapshot{
-					Key:                "12345",
-					DashboardEncrypted: encrypted,
-					Expires:            time.Now().Add(time.Duration(1000) * time.Second),
-				}
-
-				setUpSnapshotTest(t)
-
-				bus.AddHandler("test", func(query *models.GetDashboardSnapshotQuery) error {
-					query.Result = mockSnapshotResult
-					return nil
-				})
-
-				sc.handlerFunc = GetDashboardSnapshot
-				sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
-
-				assert.Equal(t, 200, sc.resp.Code)
-				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				require.NoError(t, err)
-				assert.Equal(t, dashboardID, respJSON.Get("dashboard").Get("id").MustInt64())
 			})
 	})
 }

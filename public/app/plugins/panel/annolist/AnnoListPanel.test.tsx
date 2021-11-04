@@ -56,7 +56,10 @@ async function setupTestContext({
     data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
     eventBus: {
       subscribe: jest.fn(),
-      getStream: jest.fn(),
+      getStream: () =>
+        ({
+          subscribe: jest.fn(),
+        } as any),
       publish: jest.fn(),
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),

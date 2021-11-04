@@ -1,5 +1,5 @@
 import { CompletionItem, SearchFunction } from '../types';
-import { fuzzyMatch } from '../slate-plugins/fuzzy';
+import { fuzzyMatch } from './fuzzy';
 
 /**
  * List of auto-complete search function used by SuggestionsPlugin.handleTypeahead()

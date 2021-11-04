@@ -7,16 +7,15 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 )
 
 const (
@@ -32,7 +31,7 @@ var (
 
 // OpsgenieNotifier is responsible for sending alert notifications to Opsgenie.
 type OpsgenieNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	APIKey           string
 	APIUrl           string
 	AutoClose        bool
@@ -43,10 +42,10 @@ type OpsgenieNotifier struct {
 }
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
-func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template) (*OpsgenieNotifier, error) {
+func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*OpsgenieNotifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
-	apiKey := model.DecryptedValue("apiKey", model.Settings.Get("apiKey").MustString())
+	apiKey := fn(context.Background(), model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString(), setting.SecretKey)
 	apiURL := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find api key property in settings"}
@@ -63,7 +62,7 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template)
 	}
 
 	return &OpsgenieNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,

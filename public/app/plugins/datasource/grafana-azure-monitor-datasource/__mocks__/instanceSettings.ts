@@ -6,6 +6,7 @@ export const createMockInstanceSetttings = (): AzureDataSourceInstanceSettings =
   id: 1,
   uid: 'abc',
   type: 'azuremonitor',
+  access: 'proxy',
   meta: {} as DataSourcePluginMeta,
   name: 'azure',
 

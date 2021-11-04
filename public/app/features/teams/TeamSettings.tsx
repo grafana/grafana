@@ -1,15 +1,21 @@
 import React, { FC } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
 
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';
 import { Team } from 'app/types';
 
-export interface Props {
+const mapDispatchToProps = {
+  updateTeam,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+interface OwnProps {
   team: Team;
-  updateTeam: typeof updateTeam;
 }
+export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   return (
@@ -24,14 +30,14 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           {({ register }) => (
             <>
               <Field label="Name">
-                <Input {...register('name', { required: true })} />
+                <Input {...register('name', { required: true })} id="name-input" />
               </Field>
 
               <Field
                 label="Email"
                 description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
               >
-                <Input {...register('email')} placeholder="team@email.com" type="email" />
+                <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
               </Field>
               <Button type="submit">Update</Button>
             </>
@@ -43,8 +49,4 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   );
 };
 
-const mapDispatchToProps = {
-  updateTeam,
-};
-
-export default connect(null, mapDispatchToProps)(TeamSettings);
+export default connector(TeamSettings);

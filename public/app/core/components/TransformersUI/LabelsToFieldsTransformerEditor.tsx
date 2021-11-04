@@ -42,6 +42,7 @@ export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<Labels
       <div className="gf-form">
         <div className="gf-form-label width-8">Value field name</div>
         <Select
+          menuShouldPortal
           isClearable={true}
           allowCustomValue={false}
           placeholder="(Optional) Select label"

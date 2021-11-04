@@ -16,6 +16,7 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
           }
         }
         queryType="range"
+        resolution={1}
         runOnBlur={true}
       />
       <div
@@ -56,6 +57,12 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
       "refId": "A",
     }
   }
+  range={
+    Object {
+      "from": "2020-01-01T00:00:00.000Z",
+      "to": "2020-01-02T00:00:00.000Z",
+    }
+  }
 />
 `;
 
@@ -75,6 +82,7 @@ exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
           }
         }
         queryType="range"
+        resolution={1}
         runOnBlur={true}
       />
       <div
@@ -113,6 +121,12 @@ exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
       "expr": "",
       "legendFormat": "My Legend",
       "refId": "A",
+    }
+  }
+  range={
+    Object {
+      "from": "2019-01-01T00:00:00.000Z",
+      "to": "2020-01-02T00:00:00.000Z",
     }
   }
 />

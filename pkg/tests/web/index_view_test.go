@@ -18,8 +18,7 @@ func TestIndexView(t *testing.T) {
 		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			EnableCSP: true,
 		})
-		sqlStore := testinfra.SetUpDatabase(t, grafDir)
-		addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose
 		resp, html := makeRequest(t, addr)
@@ -29,8 +28,7 @@ func TestIndexView(t *testing.T) {
 
 	t.Run("CSP disabled", func(t *testing.T) {
 		grafDir, cfgPath := testinfra.CreateGrafDir(t)
-		sqlStore := testinfra.SetUpDatabase(t, grafDir)
-		addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose
 		resp, html := makeRequest(t, addr)

@@ -29,7 +29,6 @@ export const zipkinResponse: ZipkinSpan[] = [
     },
     kind: 'CLIENT',
   },
-
   {
     traceId: 'trace_id',
     parentId: 'span 1 id',
@@ -71,9 +70,16 @@ export const traceFrameFields = [
       [
         { key: 'ipv4', value: '1.0.0.1' },
         { key: 'port', value: 42 },
+        { key: 'endpointType', value: 'local' },
       ],
-      [{ key: 'ipv4', value: '1.0.0.1' }],
-      [{ key: 'ipv6', value: '127.0.0.1' }],
+      [
+        { key: 'ipv4', value: '1.0.0.1' },
+        { key: 'endpointType', value: 'local' },
+      ],
+      [
+        { key: 'ipv6', value: '127.0.0.1' },
+        { key: 'endpointType', value: 'remote' },
+      ],
     ],
   },
   { name: 'startTime', values: [0.001, 0.004, 0.006] },

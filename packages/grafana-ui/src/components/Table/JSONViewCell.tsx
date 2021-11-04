@@ -58,7 +58,7 @@ function getStyles(theme: GrafanaTheme2) {
       padding: ${theme.spacing(0.5)};
     `,
     json: css`
-      max-width: fit-content;
+      width: fit-content;
       max-height: 70vh;
       overflow-y: auto;
     `,

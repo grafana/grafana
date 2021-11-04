@@ -7,18 +7,23 @@ import {
   GrafanaTheme2,
   isBooleanUnit,
 } from '@grafana/data';
-import { GraphFieldConfig, LineInterpolation } from '@grafana/ui';
+import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/schema';
+
+export interface GraphableFieldsResult {
+  frames?: DataFrame[];
+  warn?: string;
+  noTimeField?: boolean;
+}
 
 // This will return a set of frames with only graphable values included
-export function prepareGraphableFields(
-  series: DataFrame[] | undefined,
-  theme: GrafanaTheme2
-): { frames?: DataFrame[]; warn?: string } {
+export function prepareGraphableFields(series: DataFrame[] | undefined, theme: GrafanaTheme2): GraphableFieldsResult {
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+
   let copy: Field;
   let hasTimeseries = false;
+
   const frames: DataFrame[] = [];
 
   for (let frame of series) {
@@ -46,6 +51,12 @@ export function prepareGraphableFields(
               })
             ),
           };
+
+          if (copy.config.custom?.stacking?.mode === StackingMode.Percent) {
+            copy.config.unit = 'percentunit';
+            copy.display = getDisplayProcessor({ field: copy, theme });
+          }
+
           fields.push(copy);
           break; // ok
         case FieldType.boolean:
@@ -57,10 +68,12 @@ export function prepareGraphableFields(
             min: 0,
             custom,
           };
+
           // smooth and linear do not make sense
           if (custom.lineInterpolation !== LineInterpolation.StepBefore) {
             custom.lineInterpolation = LineInterpolation.StepAfter;
           }
+
           copy = {
             ...field,
             config,
@@ -74,10 +87,12 @@ export function prepareGraphableFields(
               })
             ),
           };
+
           if (!isBooleanUnit(config.unit)) {
             config.unit = 'bool';
             copy.display = getDisplayProcessor({ field: copy, theme });
           }
+
           fields.push(copy);
           break;
         default:
@@ -99,10 +114,12 @@ export function prepareGraphableFields(
   }
 
   if (!hasTimeseries) {
-    return { warn: 'Data does not have a time field' };
+    return { warn: 'Data does not have a time field', noTimeField: true };
   }
+
   if (!frames.length) {
     return { warn: 'No graphable fields' };
   }
+
   return { frames };
 }

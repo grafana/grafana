@@ -1,18 +1,9 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import { optionsPickerReducer, OptionsPickerState } from '../pickers/OptionsPicker/reducer';
-import { variableEditorReducer, VariableEditorState } from '../editor/reducer';
+import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
+import { variableEditorReducer } from '../editor/reducer';
 import { variablesReducer } from './variablesReducer';
-import { VariableModel } from '../types';
-import { transactionReducer, TransactionState } from './transactionReducer';
-import { variableInspectReducer, VariableInspectState } from '../inspect/reducer';
-
-export interface TemplatingState {
-  variables: Record<string, VariableModel>;
-  optionsPicker: OptionsPickerState;
-  editor: VariableEditorState;
-  transaction: TransactionState;
-  inspect: VariableInspectState;
-}
+import { transactionReducer } from './transactionReducer';
+import { variableInspectReducer } from '../inspect/reducer';
 
 export const templatingReducers = combineReducers({
   editor: variableEditorReducer,
@@ -21,6 +12,8 @@ export const templatingReducers = combineReducers({
   transaction: transactionReducer,
   inspect: variableInspectReducer,
 });
+
+export type TemplatingState = ReturnType<typeof templatingReducers>;
 
 export default {
   templating: templatingReducers,

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -12,14 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folders, err := s.GetFolders(c.QueryInt64("limit"))
+	folders, err := s.GetFolders(c.Req.Context(), c.QueryInt64("limit"), c.QueryInt64("page"))
 
 	if err != nil {
-		return ToFolderErrorResponse(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	result := make([]dtos.FolderSearchHit, 0)
@@ -37,68 +39,68 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.GetFolderByUID(c.Params(":uid"))
+	folder, err := s.GetFolderByUID(c.Req.Context(), web.Params(c.Req)[":uid"])
 	if err != nil {
-		return ToFolderErrorResponse(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.GetFolderByID(c.ParamsInt64(":id"))
+	folder, err := s.GetFolderByID(c.Req.Context(), c.ParamsInt64(":id"))
 	if err != nil {
-		return ToFolderErrorResponse(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.CreateFolder(cmd.Title, cmd.Uid)
+	folder, err := s.CreateFolder(c.Req.Context(), cmd.Title, cmd.Uid)
 	if err != nil {
-		return ToFolderErrorResponse(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	if hs.Cfg.EditorsCanAdmin {
-		if err := s.MakeUserAdmin(c.OrgId, c.SignedInUser.UserId, folder.Id, true); err != nil {
+		if err := s.MakeUserAdmin(c.Req.Context(), c.OrgId, c.SignedInUser.UserId, folder.Id, true); err != nil {
 			hs.log.Error("Could not make user admin", "folder", folder.Title, "user",
 				c.SignedInUser.UserId, "error", err)
 		}
 	}
 
-	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	err := s.UpdateFolder(c.Params(":uid"), &cmd)
+	err := s.UpdateFolder(c.Req.Context(), web.Params(c.Req)[":uid"], &cmd)
 	if err != nil {
-		return ToFolderErrorResponse(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, cmd.Result))
 }
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c, c.Params(":uid"))
+	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
 			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
 		}
-		return ToFolderErrorResponse(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	f, err := s.DeleteFolder(c.Params(":uid"))
+	f, err := s.DeleteFolder(c.Req.Context(), web.Params(c.Req)[":uid"], c.QueryBool("forceDeleteRules"))
 	if err != nil {
-		return ToFolderErrorResponse(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	return response.JSON(200, util.DynMap{
@@ -137,38 +139,4 @@ func toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *mode
 		Updated:   folder.Updated,
 		Version:   folder.Version,
 	}
-}
-
-// ToFolderErrorResponse returns a different response status according to the folder error type
-func ToFolderErrorResponse(err error) response.Response {
-	var dashboardErr models.DashboardErr
-	if ok := errors.As(err, &dashboardErr); ok {
-		return response.Error(dashboardErr.StatusCode, err.Error(), err)
-	}
-
-	if errors.Is(err, models.ErrFolderTitleEmpty) ||
-		errors.Is(err, models.ErrDashboardTypeMismatch) ||
-		errors.Is(err, models.ErrDashboardInvalidUid) ||
-		errors.Is(err, models.ErrDashboardUidTooLong) {
-		return response.Error(400, err.Error(), nil)
-	}
-
-	if errors.Is(err, models.ErrFolderAccessDenied) {
-		return response.Error(403, "Access denied", err)
-	}
-
-	if errors.Is(err, models.ErrFolderNotFound) {
-		return response.JSON(404, util.DynMap{"status": "not-found", "message": models.ErrFolderNotFound.Error()})
-	}
-
-	if errors.Is(err, models.ErrFolderSameNameExists) ||
-		errors.Is(err, models.ErrFolderWithSameUIDExists) {
-		return response.Error(409, err.Error(), nil)
-	}
-
-	if errors.Is(err, models.ErrFolderVersionMismatch) {
-		return response.JSON(412, util.DynMap{"status": "version-mismatch", "message": models.ErrFolderVersionMismatch.Error()})
-	}
-
-	return response.Error(500, "Folder API error", err)
 }

@@ -133,7 +133,7 @@ func SearchPlaylists(query *models.GetPlaylistsQuery) error {
 	sess := x.Limit(query.Limit)
 
 	if query.Name != "" {
-		sess.Where("name LIKE ?", query.Name)
+		sess.Where("name LIKE ?", "%"+query.Name+"%")
 	}
 
 	sess.Where("org_id = ?", query.OrgId)

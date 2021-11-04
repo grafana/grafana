@@ -50,8 +50,11 @@ e2e.scenario({
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('p2').should('be.visible').click();
 
     e2e.components.PageToolbar.container().click();
-
-    e2e.components.DashboardLinks.dropDown().should('be.visible').click().wait('@tagsTemplatingSearch');
+    e2e.components.DashboardLinks.dropDown()
+      .scrollIntoView()
+      .should('be.visible')
+      .click()
+      .wait('@tagsTemplatingSearch');
 
     // verify all links, should have p2 value
     verifyLinks('p2');

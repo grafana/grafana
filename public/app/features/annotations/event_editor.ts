@@ -1,7 +1,7 @@
 import { cloneDeep, isNumber } from 'lodash';
 import { coreModule } from 'app/core/core';
 import { AnnotationEvent, dateTime } from '@grafana/data';
-import { MetricsPanelCtrl } from '../panel/metrics_panel_ctrl';
+import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from './api';
 import { getDashboardQueryRunner } from '../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
@@ -19,7 +19,7 @@ export class EventEditorCtrl {
   constructor() {}
 
   $onInit() {
-    this.event.panelId = this.panelCtrl.panel.editSourceId ?? this.panelCtrl.panel.id; // set correct id if in panel edit
+    this.event.panelId = this.panelCtrl.panel.id; // set correct id if in panel edit
     this.event.dashboardId = this.panelCtrl.dashboard.id;
 
     // Annotations query returns time as Unix timestamp in milliseconds

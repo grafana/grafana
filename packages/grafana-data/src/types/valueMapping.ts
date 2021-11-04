@@ -4,6 +4,7 @@
 export enum MappingType {
   ValueToText = 'value', // was 1
   RangeToText = 'range', // was 2
+  RegexToText = 'regex',
   SpecialValue = 'special',
 }
 
@@ -50,6 +51,21 @@ export interface RangeMap extends BaseValueMap<RangeMapOptions> {
 /**
  * @alpha
  */
+export interface RegexMapOptions {
+  pattern: string;
+  result: ValueMappingResult;
+}
+
+/**
+ * @alpha
+ */
+export interface RegexMap extends BaseValueMap<RegexMapOptions> {
+  type: MappingType.RegexToText;
+}
+
+/**
+ * @alpha
+ */
 export interface SpecialValueOptions {
   match: SpecialValueMatch;
   result: ValueMappingResult;
@@ -77,4 +93,4 @@ export interface SpecialValueMap extends BaseValueMap<SpecialValueOptions> {
 /**
  * @alpha
  */
-export type ValueMapping = ValueMap | RangeMap | SpecialValueMap;
+export type ValueMapping = ValueMap | RangeMap | RegexMap | SpecialValueMap;

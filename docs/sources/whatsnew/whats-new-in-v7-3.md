@@ -53,7 +53,7 @@ Another thing to highlight is that all these new color schemes are theme aware a
 
 {{< figure src="/static/img/docs/v73/table_color_scheme_mono_light.png" max-width="900px" caption="table color monochrome scheme" >}}
 
-As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../panels/visualizations/bar-gauge-panel.md" >}}) panel.
+As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../visualizations/bar-gauge-panel.md" >}}) panel.
 
 {{< figure src="/static/img/docs/v73/bar_gauge_gradient_color_scheme.png" max-width="900px" caption="bar gauge color scheme" >}}
 

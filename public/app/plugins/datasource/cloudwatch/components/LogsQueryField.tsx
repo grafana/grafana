@@ -19,7 +19,7 @@ import { Editor, Node, Plugin } from 'slate';
 import syntax from '../syntax';
 
 // Types
-import { AbsoluteTimeRange, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { AbsoluteTimeRange, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
@@ -33,7 +33,7 @@ import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
 export interface CloudWatchLogsQueryFieldProps
-  extends ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
+  extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
@@ -119,7 +119,15 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         label: logGroup,
       }));
     } catch (err) {
-      dispatch(notifyApp(createErrorNotification(err)));
+      let errMessage = 'unknown error';
+      if (typeof err !== 'string') {
+        try {
+          errMessage = JSON.stringify(err);
+        } catch (e) {}
+      } else {
+        errMessage = err;
+      }
+      dispatch(notifyApp(createErrorNotification(errMessage)));
       return [];
     }
   };
@@ -317,6 +325,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             labelWidth={4}
             inputEl={
               <Select
+                menuShouldPortal
                 options={regions}
                 value={selectedRegion}
                 onChange={(v) => this.setSelectedRegion(v)}
@@ -333,6 +342,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             className="flex-grow-1"
             inputEl={
               <MultiSelect
+                menuShouldPortal
                 allowCustomValue={allowCustomValue}
                 options={unionBy(availableLogGroups, selectedLogGroups, 'value')}
                 value={selectedLogGroups}

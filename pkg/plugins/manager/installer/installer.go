@@ -33,7 +33,7 @@ type Installer struct {
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
 	grafanaVersion      string
-	log                 plugins.PluginInstallerLogger
+	log                 Logger
 }
 
 const (
@@ -80,7 +80,7 @@ func (e ErrVersionNotFound) Error() string {
 	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
 }
 
-func New(skipTLSVerify bool, grafanaVersion string, logger plugins.PluginInstallerLogger) *Installer {
+func New(skipTLSVerify bool, grafanaVersion string, logger Logger) plugins.Installer {
 	return &Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
@@ -410,9 +410,28 @@ func normalizeVersion(version string) string {
 	return normalized
 }
 
-// selectVersion returns latest version if none is specified or the specified version. If the version string is not
-// matched to existing version it errors out. It also errors out if version that is matched is not available for current
-// os and platform. It expects plugin.Versions to be sorted so the newest version is first.
+func (i *Installer) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
+	plugin, err := i.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
+	if err != nil {
+		return plugins.UpdateInfo{}, err
+	}
+
+	v, err := i.selectVersion(&plugin, version)
+	if err != nil {
+		return plugins.UpdateInfo{}, err
+	}
+
+	return plugins.UpdateInfo{
+		PluginZipURL: fmt.Sprintf("%s/%s/versions/%s/download", pluginRepoURL, pluginID, v.Version),
+	}, nil
+}
+
+// selectVersion selects the most appropriate plugin version
+// returns the specified version if supported.
+// returns latest version if no specific version is specified.
+// returns error if the supplied version does not exist.
+// returns error if supplied version exists but is not supported.
+// NOTE: It expects plugin.Versions to be sorted so the newest version is first.
 func (i *Installer) selectVersion(plugin *Plugin, version string) (*Version, error) {
 	var ver Version
 

@@ -25,9 +25,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,33 +55,30 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "CloudWatchService",
-		InitPriority: registry.Low,
-		Instance:     &CloudWatchService{},
+func ProvideService(cfg *setting.Cfg, logsService *LogsService, registrar plugins.CoreBackendRegistrar) (*CloudWatchService, error) {
+	plog.Debug("initing")
+
+	executor := newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings()), cfg, awsds.NewSessionCache())
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: executor,
 	})
+
+	if err := registrar.LoadAndRegister("cloudwatch", factory); err != nil {
+		plog.Error("Failed to register plugin", "error", err)
+		return nil, err
+	}
+
+	return &CloudWatchService{
+		LogsService: logsService,
+		Cfg:         cfg,
+		Executor:    executor,
+	}, nil
 }
 
 type CloudWatchService struct {
-	LogsService          *LogsService          `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-}
-
-func (s *CloudWatchService) Init() error {
-	plog.Debug("initing")
-
-	im := datasource.NewInstanceManager(NewInstanceSettings())
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache()),
-	})
-
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "cloudwatch", factory); err != nil {
-		plog.Error("Failed to register plugin", "error", err)
-	}
-	return nil
+	LogsService *LogsService
+	Cfg         *setting.Cfg
+	Executor    *cloudWatchExecutor
 }
 
 type SessionCache interface {

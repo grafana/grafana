@@ -40,7 +40,12 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
   constructor(props: PromQueryEditorProps) {
     super(props);
     // Use default query to prevent undefined input values
-    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '', exemplar: true };
+    const defaultQuery: Partial<PromQuery> = {
+      expr: '',
+      legendFormat: '',
+      interval: '',
+      exemplar: true,
+    };
     const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
     // Query target properties that are fully controlled inputs
@@ -105,7 +110,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
   render() {
     const { datasource, query, range, data } = this.props;
-    const { formatOption, instant, interval, intervalFactorOption, legendFormat, exemplar } = this.state;
+    const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
 
     return (
       <PromQueryField
@@ -163,6 +168,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
             <div className="gf-form">
               <div className="gf-form-label">Resolution</div>
               <Select
+                menuShouldPortal
                 isSearchable={false}
                 options={INTERVAL_FACTOR_OPTIONS}
                 onChange={this.onIntervalFactorChange}
@@ -173,6 +179,8 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
             <div className="gf-form">
               <div className="gf-form-label width-7">Format</div>
               <Select
+                menuShouldPortal
+                className="select-container"
                 width={16}
                 isSearchable={false}
                 options={FORMAT_OPTIONS}
@@ -189,8 +197,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 />
               </InlineFormLabel>
             </div>
-
-            <PromExemplarField isEnabled={exemplar} onChange={this.onExemplarChange} datasource={datasource} />
+            <PromExemplarField onChange={this.onExemplarChange} datasource={datasource} query={this.query} />
           </div>
         }
       />

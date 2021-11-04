@@ -66,6 +66,11 @@ export const PIPE_PARSERS: CompletionItem[] = [
     insertText: 'logfmt',
     documentation: 'Extracting labels from the log line using logfmt parser. Only available in Loki 2.0+.',
   },
+  {
+    label: 'pattern',
+    insertText: 'pattern',
+    documentation: 'Extracting labels from the log line using pattern parser. Only available in Loki 2.3+.',
+  },
 ];
 
 export const PIPE_OPERATORS: CompletionItem[] = [

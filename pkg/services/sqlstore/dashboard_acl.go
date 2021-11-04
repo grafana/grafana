@@ -8,12 +8,16 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func init() {
-	bus.AddHandler("sql", GetDashboardAclInfoList)
+func (ss *SQLStore) addDashboardACLQueryAndCommandHandlers() {
+	bus.AddHandlerCtx("sql", ss.GetDashboardAclInfoList)
 }
 
 func (ss *SQLStore) UpdateDashboardACL(dashboardID int64, items []*models.DashboardAcl) error {
-	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+	return ss.UpdateDashboardACLCtx(context.TODO(), dashboardID, items)
+}
+
+func (ss *SQLStore) UpdateDashboardACLCtx(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// delete existing items
 		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
 		if err != nil {
@@ -47,13 +51,13 @@ func (ss *SQLStore) UpdateDashboardACL(dashboardID int64, items []*models.Dashbo
 // 1) Permissions for the dashboard
 // 2) permissions for its parent folder
 // 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
-func GetDashboardAclInfoList(query *models.GetDashboardAclInfoListQuery) error {
-	var err error
+func (ss *SQLStore) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+	outerErr := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		query.Result = make([]*models.DashboardAclInfoDTO, 0)
+		falseStr := dialect.BooleanStr(false)
 
-	falseStr := dialect.BooleanStr(false)
-
-	if query.DashboardID == 0 {
-		sql := `SELECT
+		if query.DashboardID == 0 {
+			sql := `SELECT
 		da.id,
 		da.org_id,
 		da.dashboard_id,
@@ -69,13 +73,13 @@ func GetDashboardAclInfoList(query *models.GetDashboardAclInfoListQuery) error {
 		'' as title,
 		'' as slug,
 		'' as uid,` +
-			falseStr + ` AS is_folder,` +
-			falseStr + ` AS inherited
+				falseStr + ` AS is_folder,` +
+				falseStr + ` AS inherited
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
-		query.Result = make([]*models.DashboardAclInfoDTO, 0)
-		err = x.SQL(sql).Find(&query.Result)
-	} else {
+			return dbSession.SQL(sql).Find(&query.Result)
+		}
+
 		rawSQL := `
 			-- get permissions for the dashboard and its parent folder
 			SELECT
@@ -115,13 +119,16 @@ func GetDashboardAclInfoList(query *models.GetDashboardAclInfoListQuery) error {
 			ORDER BY da.id ASC
 			`
 
-		query.Result = make([]*models.DashboardAclInfoDTO, 0)
-		err = x.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&query.Result)
+		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&query.Result)
+	})
+
+	if outerErr != nil {
+		return outerErr
 	}
 
 	for _, p := range query.Result {
 		p.PermissionName = p.Permission.String()
 	}
 
-	return err
+	return nil
 }

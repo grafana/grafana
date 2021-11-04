@@ -24,6 +24,7 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-direction: row;
       flex-wrap: wrap;
       align-content: flex-start;
+      row-gap: ${theme.spacing.xs};
     `,
   };
 };

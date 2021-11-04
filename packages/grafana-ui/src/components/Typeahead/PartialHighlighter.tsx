@@ -29,7 +29,7 @@ function getStartIndices(parts: HighlightPart[], length: number): number[] {
 export const PartialHighlighter: React.FC<Props> = (props: Props) => {
   let { highlightParts, text, highlightClassName } = props;
 
-  if (!highlightParts) {
+  if (!highlightParts?.length) {
     return null;
   }
 

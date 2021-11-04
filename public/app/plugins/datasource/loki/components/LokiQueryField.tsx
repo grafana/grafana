@@ -1,6 +1,4 @@
-// Libraries
 import React, { ReactNode } from 'react';
-
 import {
   SlatePrism,
   TypeaheadOutput,
@@ -11,18 +9,17 @@ import {
   DOMUtil,
   Icon,
 } from '@grafana/ui';
-
-// Utils & Services
-// dom also includes Element polyfills
 import { Plugin, Node } from 'slate';
 import { LokiLabelBrowser } from './LokiLabelBrowser';
-
-// Types
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 import { LokiQuery, LokiOptions } from '../types';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
-import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
+import LokiLanguageProvider from '../language_provider';
+import { shouldRefreshLabels } from '../language_utils';
 import LokiDatasource from '../datasource';
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+
+const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
   if (!hasSyntax) {
@@ -61,8 +58,7 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
   return suggestion;
 }
 
-export interface LokiQueryFieldProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
-  history: LokiHistoryItem[];
+export interface LokiQueryFieldProps extends QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions> {
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
   'data-testid'?: string;
@@ -96,6 +92,18 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   async componentDidMount() {
     await this.props.datasource.languageProvider.start();
     this.setState({ labelsLoaded: true });
+  }
+
+  componentDidUpdate(prevProps: LokiQueryFieldProps) {
+    const {
+      range,
+      datasource: { languageProvider },
+    } = this.props;
+    const refreshLabels = shouldRefreshLabels(range, prevProps.range);
+    // We want to refresh labels when range changes (we round up intervals to a minute)
+    if (refreshLabels) {
+      languageProvider.fetchLabels();
+    }
   }
 
   onChangeLabelBrowser = (selector: string) => {
@@ -154,42 +162,54 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
     const buttonDisabled = !(labelsLoaded && hasLogLabels);
 
     return (
-      <>
-        <div
-          className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
-          data-testid={this.props['data-testid']}
-        >
-          <button
-            className="gf-form-label query-keyword pointer"
-            onClick={this.onClickChooserButton}
-            disabled={buttonDisabled}
-          >
-            {chooserText}
-            <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
-          </button>
-          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
-            <QueryField
-              additionalPlugins={this.plugins}
-              cleanText={cleanText}
-              query={query.expr}
-              onTypeahead={this.onTypeahead}
-              onWillApplySuggestion={willApplySuggestion}
-              onChange={this.onChangeQuery}
-              onBlur={this.props.onBlur}
-              onRunQuery={this.props.onRunQuery}
-              placeholder={placeholder}
-              portalOrigin="loki"
-            />
-          </div>
-        </div>
-        {labelBrowserVisible && (
-          <div className="gf-form">
-            <LokiLabelBrowser languageProvider={lokiLanguageProvider} onChange={this.onChangeLabelBrowser} />
-          </div>
-        )}
+      <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
+        {(lastUsedLabels, onLastUsedLabelsSave, onLastUsedLabelsDelete) => {
+          return (
+            <>
+              <div
+                className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+                data-testid={this.props['data-testid']}
+              >
+                <button
+                  className="gf-form-label query-keyword pointer"
+                  onClick={this.onClickChooserButton}
+                  disabled={buttonDisabled}
+                >
+                  {chooserText}
+                  <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
+                </button>
+                <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
+                  <QueryField
+                    additionalPlugins={this.plugins}
+                    cleanText={cleanText}
+                    query={query.expr}
+                    onTypeahead={this.onTypeahead}
+                    onWillApplySuggestion={willApplySuggestion}
+                    onChange={this.onChangeQuery}
+                    onBlur={this.props.onBlur}
+                    onRunQuery={this.props.onRunQuery}
+                    placeholder={placeholder}
+                    portalOrigin="loki"
+                  />
+                </div>
+              </div>
+              {labelBrowserVisible && (
+                <div className="gf-form">
+                  <LokiLabelBrowser
+                    languageProvider={lokiLanguageProvider}
+                    onChange={this.onChangeLabelBrowser}
+                    lastUsedLabels={lastUsedLabels || []}
+                    storeLastUsedLabels={onLastUsedLabelsSave}
+                    deleteLastUsedLabels={onLastUsedLabelsDelete}
+                  />
+                </div>
+              )}
 
-        {ExtraFieldElement}
-      </>
+              {ExtraFieldElement}
+            </>
+          );
+        }}
+      </LocalStorageValueProvider>
     );
   }
 }

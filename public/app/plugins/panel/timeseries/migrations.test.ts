@@ -632,7 +632,7 @@ const stepedColordLine = {
       $$hashKey: 'object:39',
       format: 'short',
       label: null,
-      logBase: 1,
+      logBase: 10,
       max: null,
       min: null,
       show: true,

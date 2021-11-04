@@ -8,19 +8,15 @@ weight = 150
 
 # Configuration
 
-Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
+Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "view-server/view-server-settings.md" >}}).
 
-> **Note:** You must restart Grafana for any configuration changes to take effect.
+> **Note:** After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file. Restart Grafana for your changes to take effect.
 
-To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server/view-server-settings.md" >}}).
+## Configuration file location
 
-## Config file locations
+The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change the location in this file.
 
-_Do not_ change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
-
-- Default configuration from `$WORKING_DIR/conf/defaults.ini`
-- Custom configuration from `$WORKING_DIR/conf/custom.ini`
-- The custom configuration file path can be overridden using the `--config` parameter
+Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/defaults.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
 
 ### Linux
 
@@ -32,28 +28,28 @@ Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}
 
 ### Windows
 
-`sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
+On Windows, the `sample.ini` file is located in the same directory as `defaults.ini` file. It contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
 ### macOS
 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override the settings defined in `conf/defaults.ini`.
 
-## Comments in .ini Files
+## Remove comments in the .ini files
 
-Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file. If you want to change a setting, you must delete the semicolon (`;`) in front of the setting before it will work.
+Grafana uses semicolons (the `;` char) to comment out lines in a `.ini` file. You must uncomment each line in the `custom.ini` or the `grafana.ini` file that you are modify by removing `;` from the beginning of that line. Otherwise your changes will be ignored.
 
-**Example**
+For example:
 
 ```
 # The HTTP port  to use
 ;http_port = 3000
 ```
 
-A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
+## Override configuration with environment variables
 
-## Configure with environment variables
+Do not use environment variables to _add_ new configuration settings. Instead, use environmental variables to _override_ existing options.
 
-All options in the configuration file can be overridden using environment variables using the syntax:
+To override an option:
 
 ```bash
 GF_<SectionName>_<KeyName>
@@ -205,7 +201,6 @@ $ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 300
 Another way is to put a web server like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
 
 ### domain
-
 
 ### enforce_domain
 
@@ -423,6 +418,7 @@ For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/ne
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
 
 ### max_idle_connections_per_host
+
 [Deprecated - use max_idle_connections instead]
 
 The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
@@ -434,6 +430,14 @@ The length of time that Grafana maintains idle connections before closing them. 
 ### send_user_header
 
 If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
+
+### response_limit
+
+Limits the amount of bytes that will be read/accepted from responses of outgoing HTTP requests. Default is `0` which means disabled.
+
+### row_limit
+
+Limits the number of rows that Grafana will process from SQL (relational) data sources. Default is `1000000`.
 
 <hr />
 
@@ -459,6 +463,14 @@ Analytics ID here. By default this feature is disabled.
 ### google_tag_manager_id
 
 Google Tag Manager ID, only enabled if you enter an ID here.
+
+### application_insights_connection_string
+
+If you want to track Grafana usage via Azure Application Insights, then specify _your_ Application Insights connection string. Since the connection string contains semicolons, you need to wrap it in backticks (`). By default, tracking usage is disabled.
+
+### application_insights_endpoint_url
+
+    	Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
 <hr />
 
@@ -509,7 +521,7 @@ Sets the `SameSite` cookie attribute and prevents the browser from sending this 
 
 When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTTP responses which will instruct
 browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
-mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
+mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clickjacking). Default is `false`.
 
 ### strict_transport_security
 
@@ -588,7 +600,7 @@ As of Grafana v7.3, this also limits the refresh interval options in Explore.
 
 Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
 
->**Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
+> **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 <hr />
 
@@ -828,7 +840,7 @@ Azure cloud environment where Grafana is hosted:
 
 | Azure Cloud                                      | Value                  |
 | ------------------------------------------------ | ---------------------- |
-| Microsoft Azure public cloud                     | AzureCloud (*default*) |
+| Microsoft Azure public cloud                     | AzureCloud (_default_) |
 | Microsoft Chinese national cloud                 | AzureChinaCloud        |
 | US Government cloud                              | AzureUSGovernment      |
 | Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
@@ -1099,13 +1111,97 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 <hr>
 
+## [unified_alerting]
+
+For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+
+### enabled
+
+Enable the Unified Alerting sub-system and interface. When enabled we'll migrate all of your alert rules and notification channels to the new system. New alert rules will be created and your notification channels will be converted into an Alertmanager configuration. Previous data is preserved to enable backwards compatibility but new data is removed. The default value is `false`.
+
+Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
+
+### disabled_orgs
+
+Comma-separated list of organization IDs for which to disable Grafana 8 Unified Alerting.
+
+### admin_config_poll_interval
+
+Specify the frequency of polling for admin config changes. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### alertmanager_config_poll_interval
+
+Specify the frequency of polling for Alertmanager config changes. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_listen_address
+
+Listen address/hostname and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
+
+### ha_advertise_address
+
+Explicit address/hostname and port to advertise other Grafana instances. The port is used for both TCP and UDP.
+
+### ha_peers
+
+Comma-separated list of initial instances (in a format of host:port) that will form the HA cluster. Configuring this setting will enable High Availability mode for alerting.
+
+### ha_peer_timeout
+
+Time to wait for an instance to send a notification via the Alertmanager. In HA, each Grafana instance will
+be assigned a position (e.g. 0, 1). We then multiply this position with the timeout to indicate how long should
+each instance wait before sending the notification to take into account replication lag. The default value is `15s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_gossip_interval
+
+The interval between sending gossip messages. By lowering this value (more frequent) gossip messages are propagated
+across cluster more quickly at the expense of increased bandwidth usage. The default value is `200ms`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_push_pull_interval
+
+The interval between gossip full state syncs. Setting this interval lower (more frequent) will increase convergence speeds
+across larger clusters at the expense of increased bandwidth usage. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### execute_alerts
+
+Enable or disable alerting rule execution. The default value is `true`. The alerting UI remains visible. This option has a [legacy version in the alerting section]({{< relref "#execute_alerts-1">}}) that takes precedence.
+
+### evaluation_timeout
+
+Sets the alert evaluation timeout when fetching data from the datasource. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds">}}) that takes precedence.
+
+The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### max_attempts
+
+Sets a maximum number of times we'll attempt to evaluate an alert rule before giving up on that evaluation. The default value is `3`. This option has a [legacy version in the alerting section]({{< relref "#max_attempts-1">}}) that takes precedence.
+
+### min_interval
+
+Sets the minimum interval to enforce between rule evaluations. The default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time. This option has [a legacy version in the alerting section]({{< relref "#min_interval_seconds">}}) that takes precedence.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+> **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
+
+<hr>
+
 ## [alerting]
 
 For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 
-Set to `false` to disable alerting engine and hide Alerting in the Grafana UI. Default is `true`.
+Set to `false` to [enable Grafana 8 alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. Default is `true`.
 
 ### execute_alerts
 
@@ -1416,7 +1512,7 @@ Optional extra path inside bucket.
 
 ### enable_signed_urls
 
-If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls] for
+If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls) for
 the image uploaded to Google Cloud Storage.
 
 ### signed_url_expiration
@@ -1486,7 +1582,7 @@ We do _not_ recommend using this option. For more information, refer to [Plugin 
 
 ### plugin_admin_enabled
 
-Available to Grafana administrators only, the plugin admin app is set to `false` by default. Set it to `true` to enable the app.
+Available to Grafana administrators only, the plugin admin app is set to `true` by default. Set it to `false` to disable the app.
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
 
@@ -1520,7 +1616,7 @@ The `allowed_origins` option is a comma-separated list of additional origins (`O
 
 If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
 
-Origin patterns support wildcard symbol "*".
+Origin patterns support wildcard symbol "\*".
 
 For example:
 
@@ -1529,11 +1625,35 @@ For example:
 allowed_origins = "https://*.example.com"
 ```
 
+### ha_engine
+
+> **Note**: Available in Grafana v8.1 and later versions.
+
+**Experimental**
+
+The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is "redis".
+
+For more information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+
+### ha_engine_address
+
+> **Note**: Available in Grafana v8.1 and later versions.
+
+**Experimental**
+
+Address string of selected the high availability (HA) Live engine. For Redis, it's a `host:port` string. Example:
+
+```ini
+[live]
+ha_engine = redis
+ha_engine_address = 127.0.0.1:6379
+```
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
 
-For more information, refer to [Image rendering]({{< relref "image_rendering.md" >}}).
+For more information, refer to [Image rendering]({{< relref "../image-rendering/" >}}).
 
 ### rendering_timezone
 
@@ -1569,7 +1689,7 @@ It can be useful to set this to `true` when troubleshooting.
 
 ### rendering_args
 
-Additional arguments to pass to the headless browser instance. Default is --no-sandbox. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.
+Additional arguments to pass to the headless browser instance. Defaults are `--no-sandbox,--disable-gpu`. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.
 
 ### rendering_chrome_bin
 
@@ -1627,7 +1747,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `ngalert`
+Keys of alpha features to enable, separated by space.
 
 ## [date_formats]
 
@@ -1665,6 +1785,10 @@ Set this to `true` to have date formats automatically derived from your browser 
 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
 
+### default_week_start
+
+Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
+
 ## [expressions]
 
 > **Note:** This feature is available in Grafana v7.4 and later versions.
@@ -1672,3 +1796,26 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 ### enabled
 
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.
+
+## [geomap]
+
+This section controls the defaults settings for Geomap Plugin.
+
+### default_baselayer_config
+
+The json config used to define the default base map. Four base map options to choose from are `carto`, `esriXYZTiles`, `xyzTiles`, `standard`.
+For example, to set cartoDB light as the default base layer:
+
+```ini
+default_baselayer_config = `{
+  "type": "xyz",
+  "config": {
+    "attribution": "Open street map",
+    "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+  }
+}`
+```
+
+### enable_custom_baselayers
+
+Set this to `true` to disable loading other custom base maps and hide them in the Grafana UI. Default is `false`.

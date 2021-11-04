@@ -16,7 +16,7 @@ export const DocsCard: FC<Props> = ({ card }) => {
   return (
     <div className={styles.card}>
       <div className={cardContent}>
-        <a href={`${card.href}?utm_source=grafana_gettingstarted`}>
+        <a href={`${card.href}?utm_source=grafana_gettingstarted`} className={styles.url}>
           <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
           <h4 className={styles.title}>{card.title}</h4>
           <div>
@@ -26,7 +26,7 @@ export const DocsCard: FC<Props> = ({ card }) => {
       </div>
       <a
         href={`${card.learnHref}?utm_source=grafana_gettingstarted`}
-        className={styles.url}
+        className={styles.learnUrl}
         target="_blank"
         rel="noreferrer"
       >
@@ -56,6 +56,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
       margin-bottom: ${theme.spacing.md};
     `,
     url: css`
+      display: inline-block;
+    `,
+    learnUrl: css`
       border-top: 1px solid ${theme.colors.border1};
       position: absolute;
       bottom: 0;

@@ -1,3 +1,4 @@
+import { lastValueFrom } from 'rxjs';
 import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
@@ -32,6 +33,7 @@ export interface DataSourceTypesLoadedPayload {
 
 export interface InitDataSourceSettingDependencies {
   loadDataSource: typeof loadDataSource;
+  loadDataSourceMeta: typeof loadDataSourceMeta;
   getDataSource: typeof getDataSource;
   getDataSourceMeta: typeof getDataSourceMeta;
   importDataSourcePlugin: typeof importDataSourcePlugin;
@@ -46,6 +48,7 @@ export const initDataSourceSettings = (
   pageId: string,
   dependencies: InitDataSourceSettingDependencies = {
     loadDataSource,
+    loadDataSourceMeta,
     getDataSource,
     getDataSourceMeta,
     importDataSourcePlugin,
@@ -58,7 +61,8 @@ export const initDataSourceSettings = (
     }
 
     try {
-      await dispatch(dependencies.loadDataSource(pageId));
+      const loadedDataSource = await dispatch(dependencies.loadDataSource(pageId));
+      await dispatch(dependencies.loadDataSourceMeta(loadedDataSource));
 
       // have we already loaded the plugin then we can skip the steps below?
       if (getState().dataSourceSettings.plugin) {
@@ -71,7 +75,6 @@ export const initDataSourceSettings = (
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
-      console.error('Failed to import plugin module', err);
       dispatch(initDataSourceSettingsFailed(err));
     }
   };
@@ -116,9 +119,17 @@ export function loadDataSources(): ThunkResult<void> {
   };
 }
 
-export function loadDataSource(uid: string): ThunkResult<void> {
+export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSettings>> {
   return async (dispatch) => {
     const dataSource = await getDataSourceUsingUidOrId(uid);
+
+    dispatch(dataSourceLoaded(dataSource));
+    return dataSource;
+  };
+}
+
+export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<void> {
+  return async (dispatch) => {
     const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
     const plugin = await importDataSourcePlugin(pluginInfo);
     const isBackend = plugin.DataSourceClass.prototype instanceof DataSourceWithBackend;
@@ -126,7 +137,7 @@ export function loadDataSource(uid: string): ThunkResult<void> {
       ...pluginInfo,
       isBackend: isBackend,
     };
-    dispatch(dataSourceLoaded(dataSource));
+
     dispatch(dataSourceMetaLoaded(meta));
 
     plugin.meta = meta;
@@ -137,16 +148,16 @@ export function loadDataSource(uid: string): ThunkResult<void> {
 /**
  * Get data source by uid or id, if old id detected handles redirect
  */
-async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSettings> {
+export async function getDataSourceUsingUidOrId(uid: string | number): Promise<DataSourceSettings> {
   // Try first with uid api
   try {
-    const byUid = await getBackendSrv()
-      .fetch<DataSourceSettings>({
+    const byUid = await lastValueFrom(
+      getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
         url: `/api/datasources/uid/${uid}`,
         showErrorAlert: false,
       })
-      .toPromise();
+    );
 
     if (byUid.ok) {
       return byUid.data;
@@ -156,15 +167,21 @@ async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSetting
   }
 
   // try lookup by old db id
-  const id = parseInt(uid, 10);
+  const id = typeof uid === 'string' ? parseInt(uid, 10) : uid;
   if (!Number.isNaN(id)) {
-    const response = await getBackendSrv()
-      .fetch<DataSourceSettings>({
+    const response = await lastValueFrom(
+      getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
         url: `/api/datasources/${id}`,
         showErrorAlert: false,
       })
-      .toPromise();
+    );
+
+    // If the uid is a number, then this is a refresh on one of the settings tabs
+    // and we can return the response data
+    if (response.ok && typeof uid === 'number' && response.data.id === uid) {
+      return response.data;
+    }
 
     // Not ideal to do a full page reload here but so tricky to handle this
     // otherwise We can update the location using react router, but need to
@@ -198,6 +215,7 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
     }
 
     const result = await getBackendSrv().post('/api/datasources', newInstance);
+    await updateFrontendSettings();
     locationService.push(`/datasources/edit/${result.datasource.uid}`);
   };
 }

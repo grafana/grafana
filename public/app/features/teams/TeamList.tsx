@@ -1,14 +1,12 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
-import { DeleteButton, LinkButton } from '@grafana/ui';
+import { DeleteButton, LinkButton, FilterInput } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { OrgRole, StoreState, Team } from 'app/types';
 import { deleteTeam, loadTeams } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
@@ -54,20 +52,27 @@ export class TeamList extends PureComponent<Props, any> {
       <tr key={team.id}>
         <td className="width-4 text-center link-td">
           <a href={teamUrl}>
-            <img className="filter-table__avatar" src={team.avatarUrl} />
+            <img className="filter-table__avatar" src={team.avatarUrl} alt="Team avatar" />
           </a>
         </td>
         <td className="link-td">
           <a href={teamUrl}>{team.name}</a>
         </td>
         <td className="link-td">
-          <a href={teamUrl}>{team.email}</a>
+          <a href={teamUrl} aria-label={team.email?.length > 0 ? undefined : 'Empty email cell'}>
+            {team.email}
+          </a>
         </td>
         <td className="link-td">
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <DeleteButton size="sm" disabled={!canDelete} onConfirm={() => this.deleteTeam(team)} />
+          <DeleteButton
+            aria-label="Delete team"
+            size="sm"
+            disabled={!canDelete}
+            onConfirm={() => this.deleteTeam(team)}
+          />
         </td>
       </tr>
     );
@@ -167,4 +172,4 @@ const mapDispatchToProps = {
   setSearchQuery,
 };
 
-export default hot(module)(connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.teams)(TeamList));
+export default connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.teams)(TeamList);

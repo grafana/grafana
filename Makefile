@@ -2,7 +2,10 @@
 ##
 ## For more information, refer to https://suva.sh/posts/well-documented-makefiles/
 
+WIRE_TAGS = "oss"
+
 -include local/Makefile
+include .bingo/Variables.mk
 
 .PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go golangci-lint test-go test-js test run run-frontend clean devenv devenv-down protobuf drone help
 
@@ -11,6 +14,9 @@ GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 
 all: deps build
+
+drone-version:
+    DRONE_VERSION := $(shell drone -v | cut -d' ' -f3)
 
 ##@ Dependencies
 
@@ -23,11 +29,15 @@ deps: deps-js ## Install all dependencies.
 
 node_modules: package.json yarn.lock ## Install node modules.
 	@echo "install frontend dependencies"
-	yarn install --pure-lockfile --no-progress
+	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
 
 ##@ Building
 
-build-go: ## Build all Go binaries.
+gen-go: $(WIRE)
+	@echo "generate go files"
+	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
+
+build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go build
 
@@ -36,7 +46,7 @@ build-server: ## Build Grafana server.
 	$(GO) run build.go build-server
 
 build-cli: ## Build Grafana CLI application.
-	@echo "build in CI environment"
+	@echo "build grafana-cli"
 	$(GO) run build.go build-cli
 
 build-js: ## Build frontend assets.
@@ -79,7 +89,7 @@ golangci-lint: scripts/go/bin/golangci-lint
 		--config ./scripts/go/configs/.golangci.toml \
 		$(GO_FILES)
 
-lint-go: golangci-lint # Run all code checks for backend.
+lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
@@ -91,7 +101,7 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 build-docker-dev: ## Build Docker image for development (fast).
 	@echo "build development container"
 	@echo "\033[92mInfo:\033[0m the frontend code is expected to be built already."
-	$(GO) run build.go -goos linux -pkg-arch amd64 ${OPT} build pkg-archive latest
+	$(GO) run build.go -goos linux -pkg-arch amd64 ${OPT} build latest
 	cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
 	cd packaging/docker && docker build --tag grafana/grafana:dev .
 
@@ -141,12 +151,15 @@ clean: ## Clean up intermediate build artifacts.
 	rm -rf public/build
 
 # This repository's configuration is protected (https://readme.drone.io/signature/).
-# Use this make target to regenerate the configuration YAML files when 
+# Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
-drone:
-	drone starlark
-	drone lint
-	drone --server https://drone.grafana.net sign --save grafana/grafana
+drone: $(DRONE)
+	@if [ "$(DRONE_VERSION)" != "1.4.0" ]; then\
+		echo "WARN: You are using drone-cli ${DRONE_VERSION}. Please update your LOCAL version to 1.4.0. Using latest bingo version...";\
+	fi
+	$(DRONE) starlark --format
+	$(DRONE) lint .drone.yml
+	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
 
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

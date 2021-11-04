@@ -14,68 +14,66 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
-	macaron "gopkg.in/macaron.v1"
 )
 
 func TestDataSourceProxy_routeRule(t *testing.T) {
 	httpClientProvider := httpclient.NewProvider()
 
 	t.Run("Plugin with routes", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{
-			Routes: []*plugins.AppPluginRoute{
-				{
-					Path:    "api/v4/",
-					URL:     "https://www.google.com",
-					ReqRole: models.ROLE_EDITOR,
-					Headers: []plugins.AppPluginRouteHeader{
-						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
-					},
+		routes := []*plugins.Route{
+			{
+				Path:    "api/v4/",
+				URL:     "https://www.google.com",
+				ReqRole: models.ROLE_EDITOR,
+				Headers: []plugins.Header{
+					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
-				{
-					Path:    "api/admin",
-					URL:     "https://www.google.com",
-					ReqRole: models.ROLE_ADMIN,
-					Headers: []plugins.AppPluginRouteHeader{
-						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
-					},
+			},
+			{
+				Path:    "api/admin",
+				URL:     "https://www.google.com",
+				ReqRole: models.ROLE_ADMIN,
+				Headers: []plugins.Header{
+					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
-				{
-					Path: "api/anon",
-					URL:  "https://www.google.com",
-					Headers: []plugins.AppPluginRouteHeader{
-						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
-					},
+			},
+			{
+				Path: "api/anon",
+				URL:  "https://www.google.com",
+				Headers: []plugins.Header{
+					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
-				{
-					Path: "api/common",
-					URL:  "{{.JsonData.dynamicUrl}}",
-					URLParams: []plugins.AppPluginRouteURLParam{
-						{Name: "{{.JsonData.queryParam}}", Content: "{{.SecureJsonData.key}}"},
-					},
-					Headers: []plugins.AppPluginRouteHeader{
-						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
-					},
+			},
+			{
+				Path: "api/common",
+				URL:  "{{.JsonData.dynamicUrl}}",
+				URLParams: []plugins.URLParam{
+					{Name: "{{.JsonData.queryParam}}", Content: "{{.SecureJsonData.key}}"},
 				},
-				{
-					Path:    "api/restricted",
-					ReqRole: models.ROLE_ADMIN,
+				Headers: []plugins.Header{
+					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
-				{
-					Path: "api/body",
-					URL:  "http://www.test.com",
-					Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
-				},
+			},
+			{
+				Path:    "api/restricted",
+				ReqRole: models.ROLE_ADMIN,
+			},
+			{
+				Path: "api/body",
+				URL:  "http://www.test.com",
+				Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
 			},
 		}
 
@@ -85,7 +83,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password" //nolint:goconst
 
-		key, err := util.Encrypt([]byte("123"), "password")
+		key, err := ossencryption.ProvideService().Encrypt(context.Background(), []byte("123"), "password")
 		require.NoError(t, err)
 
 		ds := &models.DataSource{
@@ -99,13 +97,22 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			},
 		}
 
+		jd, err := ds.JsonData.Map()
+		require.NoError(t, err)
+		dsInfo := DSInfo{
+			ID:       ds.Id,
+			Updated:  ds.Updated,
+			JSONData: jd,
+			DecryptedSecureJSONData: map[string]string{
+				"key": "123",
+			},
+		}
+
 		setUp := func() (*models.ReqContext, *http.Request) {
 			req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 			require.NoError(t, err)
 			ctx := &models.ReqContext{
-				Context: &macaron.Context{
-					Req: macaron.Request{Request: req},
-				},
+				Context:      &web.Context{Req: req},
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 			}
 			return ctx, req
@@ -115,10 +122,12 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method", cfg, httpClientProvider, &oauthtoken.Service{})
+			dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/v4/some/method", cfg, httpClientProvider,
+				&oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
-			proxy.route = plugin.Routes[0]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, cfg)
+			proxy.matchedRoute = routes[0]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, cfg)
 
 			assert.Equal(t, "https://www.google.com/some/method", req.URL.String())
 			assert.Equal(t, "my secret 123", req.Header.Get("x-header"))
@@ -126,10 +135,11 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path and has dynamic url", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/common/some/method", cfg, httpClientProvider, &oauthtoken.Service{})
+			dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/common/some/method", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
-			proxy.route = plugin.Routes[3]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, cfg)
+			proxy.matchedRoute = routes[3]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, cfg)
 
 			assert.Equal(t, "https://dynamic.grafana.com/some/method?apiKey=123", req.URL.String())
 			assert.Equal(t, "my secret 123", req.Header.Get("x-header"))
@@ -137,20 +147,22 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path with no url", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", cfg, httpClientProvider, &oauthtoken.Service{})
+			dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+			proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
-			proxy.route = plugin.Routes[4]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, cfg)
+			proxy.matchedRoute = routes[4]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, cfg)
 
 			assert.Equal(t, "http://localhost/asd", req.URL.String())
 		})
 
 		t.Run("When matching route path and has dynamic body", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/body", cfg, httpClientProvider, &oauthtoken.Service{})
+			dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/body", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
-			proxy.route = plugin.Routes[5]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, cfg)
+			proxy.matchedRoute = routes[5]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, cfg)
 
 			content, err := ioutil.ReadAll(req.Body)
 			require.NoError(t, err)
@@ -160,7 +172,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("Validating request", func(t *testing.T) {
 			t.Run("plugin route with valid role", func(t *testing.T) {
 				ctx, _ := setUp()
-				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method", cfg, httpClientProvider, &oauthtoken.Service{})
+				dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+				proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/v4/some/method", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 				require.NoError(t, err)
 				err = proxy.validateRequest()
 				require.NoError(t, err)
@@ -168,7 +181,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 			t.Run("plugin route with admin role and user is editor", func(t *testing.T) {
 				ctx, _ := setUp()
-				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/admin", cfg, httpClientProvider, &oauthtoken.Service{})
+				dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+				proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/admin", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 				require.NoError(t, err)
 				err = proxy.validateRequest()
 				require.Error(t, err)
@@ -177,7 +191,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			t.Run("plugin route with admin role and user is admin", func(t *testing.T) {
 				ctx, _ := setUp()
 				ctx.SignedInUser.OrgRole = models.ROLE_ADMIN
-				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/admin", cfg, httpClientProvider, &oauthtoken.Service{})
+				dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+				proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/admin", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 				require.NoError(t, err)
 				err = proxy.validateRequest()
 				require.NoError(t, err)
@@ -186,32 +201,30 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("Plugin with multiple routes for token auth", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{
-			Routes: []*plugins.AppPluginRoute{
-				{
-					Path: "pathwithtoken1",
-					URL:  "https://api.nr1.io/some/path",
-					TokenAuth: &plugins.JwtTokenAuth{
-						Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
-						Params: map[string]string{
-							"grant_type":    "client_credentials",
-							"client_id":     "{{.JsonData.clientId}}",
-							"client_secret": "{{.SecureJsonData.clientSecret}}",
-							"resource":      "https://api.nr1.io",
-						},
+		routes := []*plugins.Route{
+			{
+				Path: "pathwithtoken1",
+				URL:  "https://api.nr1.io/some/path",
+				TokenAuth: &plugins.JWTTokenAuth{
+					Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
+					Params: map[string]string{
+						"grant_type":    "client_credentials",
+						"client_id":     "{{.JsonData.clientId}}",
+						"client_secret": "{{.SecureJsonData.clientSecret}}",
+						"resource":      "https://api.nr1.io",
 					},
 				},
-				{
-					Path: "pathwithtoken2",
-					URL:  "https://api.nr2.io/some/path",
-					TokenAuth: &plugins.JwtTokenAuth{
-						Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
-						Params: map[string]string{
-							"grant_type":    "client_credentials",
-							"client_id":     "{{.JsonData.clientId}}",
-							"client_secret": "{{.SecureJsonData.clientSecret}}",
-							"resource":      "https://api.nr2.io",
-						},
+			},
+			{
+				Path: "pathwithtoken2",
+				URL:  "https://api.nr2.io/some/path",
+				TokenAuth: &plugins.JWTTokenAuth{
+					Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
+					Params: map[string]string{
+						"grant_type":    "client_credentials",
+						"client_id":     "{{.JsonData.clientId}}",
+						"client_secret": "{{.SecureJsonData.clientSecret}}",
+						"resource":      "https://api.nr2.io",
 					},
 				},
 			},
@@ -223,7 +236,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password"
 
-		key, err := util.Encrypt([]byte("123"), "password")
+		key, err := ossencryption.ProvideService().Encrypt(context.Background(), []byte("123"), "password")
 		require.NoError(t, err)
 
 		ds := &models.DataSource{
@@ -239,9 +252,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 		require.NoError(t, err)
 		ctx := &models.ReqContext{
-			Context: &macaron.Context{
-				Req: macaron.Request{Request: req},
-			},
+			Context:      &web.Context{Req: req},
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 		}
 
@@ -259,9 +270,21 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 				cfg := &setting.Cfg{}
 
-				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1", cfg, httpClientProvider, &oauthtoken.Service{})
+				jd, err := ds.JsonData.Map()
 				require.NoError(t, err)
-				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, plugin.Routes[0], proxy.ds, cfg)
+				dsInfo := DSInfo{
+					ID:       ds.Id,
+					Updated:  ds.Updated,
+					JSONData: jd,
+					DecryptedSecureJSONData: map[string]string{
+						"clientSecret": "123",
+					},
+				}
+
+				dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+				proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken1", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
+				require.NoError(t, err)
+				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[0], dsInfo, cfg)
 
 				authorizationHeaderCall1 = req.Header.Get("Authorization")
 				assert.Equal(t, "https://api.nr1.io/some/path", req.URL.String())
@@ -274,9 +297,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 					require.NoError(t, err)
 					client = newFakeHTTPClient(t, json2)
-					proxy, err := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken2", cfg, httpClientProvider, &oauthtoken.Service{})
+					dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+					proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken2", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 					require.NoError(t, err)
-					ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, plugin.Routes[1], proxy.ds, cfg)
+					ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[1], dsInfo, cfg)
 
 					authorizationHeaderCall2 = req.Header.Get("Authorization")
 
@@ -290,9 +314,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 						require.NoError(t, err)
 
 						client = newFakeHTTPClient(t, []byte{})
-						proxy, err := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1", cfg, httpClientProvider, &oauthtoken.Service{})
+						dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+						proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken1", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 						require.NoError(t, err)
-						ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, plugin.Routes[0], proxy.ds, cfg)
+						ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[0], dsInfo, cfg)
 
 						authorizationHeaderCall3 := req.Header.Get("Authorization")
 						assert.Equal(t, "https://api.nr1.io/some/path", req.URL.String())
@@ -306,11 +331,12 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying graphite", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{}
+		var routes []*plugins.Route
 		ds := &models.DataSource{Url: "htttp://graphite:8080", Type: models.DS_GRAPHITE}
 		ctx := &models.ReqContext{}
 
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{BuildVersion: "5.3.0"}, httpClientProvider, &oauthtoken.Service{})
+		dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{BuildVersion: "5.3.0"}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 		require.NoError(t, err)
@@ -324,8 +350,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying InfluxDB", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{}
-
 		ds := &models.DataSource{
 			Type:     models.DS_INFLUXDB_08,
 			Url:      "http://influxdb:8083",
@@ -335,7 +359,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		ctx := &models.ReqContext{}
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{})
+		var routes []*plugins.Route
+		dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
 
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -346,8 +372,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying a data source with no keepCookies specified", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{}
-
 		json, err := simplejson.NewJson([]byte(`{"keepCookies": []}`))
 		require.NoError(t, err)
 
@@ -358,7 +382,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		ctx := &models.ReqContext{}
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{})
+		var routes []*plugins.Route
+		dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
 
 		requestURL, err := url.Parse("http://grafana.com/sub")
@@ -373,8 +399,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying a data source with keep cookies specified", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{}
-
 		json, err := simplejson.NewJson([]byte(`{"keepCookies": ["JSESSION_ID"]}`))
 		require.NoError(t, err)
 
@@ -385,7 +409,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		ctx := &models.ReqContext{}
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{})
+		var pluginRoutes []*plugins.Route
+		dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		proxy, err := NewDataSourceProxy(ds, pluginRoutes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
 
 		requestURL, err := url.Parse("http://grafana.com/sub")
@@ -400,13 +426,14 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying a custom datasource", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{}
 		ds := &models.DataSource{
 			Type: "custom-datasource",
 			Url:  "http://host/root/",
 		}
 		ctx := &models.ReqContext{}
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{})
+		var routes []*plugins.Route
+		dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 		req.Header.Set("Origin", "grafana.com")
@@ -437,7 +464,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			return nil
 		})
 
-		plugin := &plugins.DataSourcePlugin{}
 		ds := &models.DataSource{
 			Type: "custom-datasource",
 			Url:  "http://host/root/",
@@ -450,9 +476,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		require.NoError(t, err)
 		ctx := &models.ReqContext{
 			SignedInUser: &models.SignedInUser{UserId: 1},
-			Context: &macaron.Context{
-				Req: macaron.Request{Request: req},
-			},
+			Context:      &web.Context{Req: req},
 		}
 		mockAuthToken := mockOAuthTokenService{
 			token: &oauth2.Token{
@@ -463,7 +487,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			},
 			oAuthEnabled: true,
 		}
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &mockAuthToken)
+		var routes []*plugins.Route
+		dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &mockAuthToken, dsService)
 		require.NoError(t, err)
 		req, err = http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 		require.NoError(t, err)
@@ -528,7 +554,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			createAuthTest(t, models.DS_ES, authTypeBasic, authCheckHeader, true),
 		}
 		for _, test := range tests {
-			models.ClearDSDecryptionCache()
 			runDatasourceAuthTest(t, test)
 		}
 	})
@@ -538,8 +563,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 func TestDataSourceProxy_requestHandling(t *testing.T) {
 	httpClientProvider := httpclient.NewProvider()
 	var writeErr error
-
-	plugin := &plugins.DataSourcePlugin{}
 
 	type setUpCfg struct {
 		headers map[string]string
@@ -569,12 +592,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE}
 
-		responseRecorder := &closeNotifierResponseRecorder{
-			ResponseRecorder: httptest.NewRecorder(),
-		}
-		t.Cleanup(responseRecorder.Close)
-
-		responseWriter := macaron.NewResponseWriter("GET", responseRecorder)
+		responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
 
 		// XXX: Really unsure why, but setting headers within the HTTP handler function doesn't stick,
 		// so doing it here instead
@@ -586,10 +604,8 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		return &models.ReqContext{
 			SignedInUser: &models.SignedInUser{},
-			Context: &macaron.Context{
-				Req: macaron.Request{
-					Request: httptest.NewRequest("GET", "/render", nil),
-				},
+			Context: &web.Context{
+				Req:  httptest.NewRequest("GET", "/render", nil),
 				Resp: responseWriter,
 			},
 		}, ds
@@ -597,7 +613,10 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 	t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
 		ctx, ds := setUp(t)
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{})
+
+		var routes []*plugins.Route
+		dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
@@ -612,7 +631,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 				"Set-Cookie": "important_cookie=important_value",
 			},
 		})
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{})
+		var routes []*plugins.Route
+		dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
@@ -631,7 +652,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 				t.Log("Wrote 401 response")
 			},
 		})
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{})
+		var routes []*plugins.Route
+		dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
@@ -652,8 +675,10 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 			},
 		})
 
-		ctx.Req.Request = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{})
+		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
+		var routes []*plugins.Route
+		dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
@@ -666,9 +691,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	ctx := models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{},
-		},
+		Context:      &web.Context{},
 		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 	}
 	ds := models.DataSource{
@@ -676,17 +699,16 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 		Url:  "://host/root",
 	}
 	cfg := setting.Cfg{}
-	plugin := plugins.DataSourcePlugin{}
-	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{})
+	var routes []*plugins.Route
+	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+	_, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 	require.Error(t, err)
 	assert.True(t, strings.HasPrefix(err.Error(), `validation of data source URL "://host/root" failed`))
 }
 
 func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 	ctx := models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{},
-		},
+		Context:      &web.Context{},
 		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 	}
 	ds := models.DataSource{
@@ -694,9 +716,10 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 		Url:  "127.0.01:5432",
 	}
 	cfg := setting.Cfg{}
-	plugin := plugins.DataSourcePlugin{}
 
-	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{})
+	var routes []*plugins.Route
+	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+	_, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 
 	require.NoError(t, err)
 }
@@ -704,9 +727,7 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 // Test wth MSSQL type data sources.
 func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 	ctx := models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{},
-		},
+		Context:      &web.Context{},
 		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 	}
 	tcs := []struct {
@@ -730,13 +751,14 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := setting.Cfg{}
-			plugin := plugins.DataSourcePlugin{}
 			ds := models.DataSource{
 				Type: "mssql",
 				Url:  tc.url,
 			}
 
-			p, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{})
+			var routes []*plugins.Route
+			dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+			p, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 			if tc.err == nil {
 				require.NoError(t, err)
 				assert.Equal(t, &url.URL{
@@ -751,30 +773,16 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 	}
 }
 
-type closeNotifierResponseRecorder struct {
-	*httptest.ResponseRecorder
-	closeChan chan bool
-}
-
-func (r *closeNotifierResponseRecorder) CloseNotify() <-chan bool {
-	r.closeChan = make(chan bool)
-	return r.closeChan
-}
-
-func (r *closeNotifierResponseRecorder) Close() {
-	close(r.closeChan)
-}
-
 // getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
 func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.Cfg) *http.Request {
-	plugin := &plugins.DataSourcePlugin{}
-
 	ds := &models.DataSource{
 		Type: "custom",
 		Url:  "http://host/root/",
 	}
 
-	proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", cfg, httpclient.NewProvider(), &oauthtoken.Service{})
+	var routes []*plugins.Route
+	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+	proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	require.NoError(t, err)
@@ -827,6 +835,8 @@ const (
 )
 
 func createAuthTest(t *testing.T, dsType string, authType string, authCheck string, useSecureJsonData bool) *testCase {
+	ctx := context.Background()
+
 	// Basic user:password
 	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
@@ -838,13 +848,16 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 		},
 	}
 	var message string
+	var err error
 	if authType == authTypePassword {
 		message = fmt.Sprintf("%v should add username and password", dsType)
 		test.datasource.User = "user"
 		if useSecureJsonData {
-			test.datasource.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
-				"password": "password",
-			})
+			test.datasource.SecureJsonData, err = ossencryption.ProvideService().EncryptJsonData(
+				ctx,
+				map[string]string{
+					"password": "password",
+				}, setting.SecretKey)
 		} else {
 			test.datasource.Password = "password"
 		}
@@ -853,13 +866,16 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 		test.datasource.BasicAuth = true
 		test.datasource.BasicAuthUser = "user"
 		if useSecureJsonData {
-			test.datasource.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
-				"basicAuthPassword": "password",
-			})
+			test.datasource.SecureJsonData, err = ossencryption.ProvideService().EncryptJsonData(
+				ctx,
+				map[string]string{
+					"basicAuthPassword": "password",
+				}, setting.SecretKey)
 		} else {
 			test.datasource.BasicAuthPassword = "password"
 		}
 	}
+	require.NoError(t, err)
 
 	if useSecureJsonData {
 		message += " from securejsondata"
@@ -883,9 +899,10 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 }
 
 func runDatasourceAuthTest(t *testing.T, test *testCase) {
-	plugin := &plugins.DataSourcePlugin{}
 	ctx := &models.ReqContext{}
-	proxy, err := NewDataSourceProxy(test.datasource, plugin, ctx, "", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{})
+	var routes []*plugins.Route
+	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -898,39 +915,37 @@ func runDatasourceAuthTest(t *testing.T, test *testCase) {
 
 func Test_PathCheck(t *testing.T) {
 	// Ensure that we test routes appropriately. This test reproduces a historical bug where two routes were defined with different role requirements but the same method and the more privileged route was tested first. Here we ensure auth checks are applied based on the correct route, not just the method.
-	plugin := &plugins.DataSourcePlugin{
-		Routes: []*plugins.AppPluginRoute{
-			{
-				Path:    "a",
-				URL:     "https://www.google.com",
-				ReqRole: models.ROLE_EDITOR,
-				Method:  http.MethodGet,
-			},
-			{
-				Path:    "b",
-				URL:     "https://www.google.com",
-				ReqRole: models.ROLE_VIEWER,
-				Method:  http.MethodGet,
-			},
+	routes := []*plugins.Route{
+		{
+			Path:    "a",
+			URL:     "https://www.google.com",
+			ReqRole: models.ROLE_EDITOR,
+			Method:  http.MethodGet,
+		},
+		{
+			Path:    "b",
+			URL:     "https://www.google.com",
+			ReqRole: models.ROLE_VIEWER,
+			Method:  http.MethodGet,
 		},
 	}
+
 	setUp := func() (*models.ReqContext, *http.Request) {
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 		require.NoError(t, err)
 		ctx := &models.ReqContext{
-			Context: &macaron.Context{
-				Req: macaron.Request{Request: req},
-			},
+			Context:      &web.Context{Req: req},
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_VIEWER},
 		}
 		return ctx, req
 	}
 	ctx, _ := setUp()
-	proxy, err := NewDataSourceProxy(&models.DataSource{}, plugin, ctx, "b", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{})
+	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+	proxy, err := NewDataSourceProxy(&models.DataSource{}, routes, ctx, "b", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 	require.NoError(t, err)
 
 	require.Nil(t, proxy.validateRequest())
-	require.Equal(t, plugin.Routes[1], proxy.route)
+	require.Equal(t, routes[1], proxy.matchedRoute)
 }
 
 type mockOAuthTokenService struct {

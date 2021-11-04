@@ -33,4 +33,39 @@ describe('ErrorBoundary', () => {
     expect(context.contexts.react).toHaveProperty('componentStack');
     expect(context.contexts.react.componentStack).toMatch(/^\s+at ErrorThrower (.*)\s+at ErrorBoundary (.*)\s*$/);
   });
+
+  it('should recover when when recover props change', async () => {
+    const problem = new Error('things went terribly wrong');
+    let renderCount = 0;
+
+    const { rerender } = render(
+      <ErrorBoundary dependencies={[1, 2]}>
+        {({ error }) => {
+          if (!error) {
+            renderCount += 1;
+            return <ErrorThrower error={problem} />;
+          } else {
+            return <p>{error.message}</p>;
+          }
+        }}
+      </ErrorBoundary>
+    );
+
+    await screen.findByText(problem.message);
+
+    rerender(
+      <ErrorBoundary dependencies={[1, 3]}>
+        {({ error }) => {
+          if (!error) {
+            renderCount += 1;
+            return <ErrorThrower error={problem} />;
+          } else {
+            return <p>{error.message}</p>;
+          }
+        }}
+      </ErrorBoundary>
+    );
+
+    expect(renderCount).toBe(2);
+  });
 });

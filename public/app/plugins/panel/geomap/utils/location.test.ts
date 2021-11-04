@@ -8,7 +8,7 @@ const geohash = ['9q94r', 'dr5rs'];
 const names = ['A', 'B'];
 
 describe('handle location parsing', () => {
-  it('auto should find geohash field', () => {
+  it('auto should find geohash field', async () => {
     const frame = toDataFrame({
       name: 'simple',
       fields: [
@@ -17,7 +17,7 @@ describe('handle location parsing', () => {
       ],
     });
 
-    const matchers = getLocationMatchers();
+    const matchers = await getLocationMatchers();
     const fields = getLocationFields(frame, matchers);
     expect(fields.mode).toEqual(FrameGeometrySourceMode.Geohash);
     expect(fields.geohash).toBeDefined();
@@ -38,7 +38,7 @@ describe('handle location parsing', () => {
       `);
   });
 
-  it('auto should find coordinate fields', () => {
+  it('auto should find coordinate fields', async () => {
     const frame = toDataFrame({
       name: 'simple',
       fields: [
@@ -48,7 +48,7 @@ describe('handle location parsing', () => {
       ],
     });
 
-    const matchers = getLocationMatchers();
+    const matchers = await getLocationMatchers();
     const info = dataFrameToPoints(frame, matchers);
     expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
       Array [

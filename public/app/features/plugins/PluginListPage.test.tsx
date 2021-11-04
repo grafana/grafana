@@ -11,14 +11,21 @@ import { afterEach } from '../../../test/lib/common';
 
 let errorsReturnMock: any = [];
 
-jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as object),
-  getBackendSrv: () => ({
-    get: () => {
-      return errorsReturnMock as any;
-    },
-  }),
-}));
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  const mockedRuntime = {
+    ...original,
+    getBackendSrv: () => ({
+      get: () => {
+        return errorsReturnMock as any;
+      },
+    }),
+  };
+
+  mockedRuntime.config.pluginAdminEnabled = false;
+
+  return mockedRuntime;
+});
 
 const setup = (propOverrides?: object) => {
   const store = configureStore();

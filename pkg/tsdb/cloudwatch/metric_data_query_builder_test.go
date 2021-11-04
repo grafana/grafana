@@ -4,9 +4,32 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMetricDataQueryBuilder_buildSearchExpression(t *testing.T) {
+	t.Run("buildMetricDataQuery", func(t *testing.T) {
+		t.Run("should set period in user defined expression", func(t *testing.T) {
+			executor := newExecutor(nil, nil, newTestConfig(), fakeSessionCache{})
+			query := &cloudWatchQuery{
+				Namespace:  "AWS/EC2",
+				MetricName: "CPUUtilization",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb1"},
+				},
+				Period:     300,
+				Expression: "SUM([a,b])",
+				MatchExact: true,
+			}
+			query.MatchExact = false
+			mdq, err := executor.buildMetricDataQuery(query)
+			require.NoError(t, err)
+			require.Nil(t, mdq.MetricStat)
+			assert.Equal(t, int64(300), *mdq.Period)
+			assert.Equal(t, `SUM([a,b])`, *mdq.Expression)
+		})
+	})
+
 	t.Run("Query should be matched exact", func(t *testing.T) {
 		const matchExact = true
 

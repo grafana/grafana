@@ -6,13 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
 var (
-	defaultRes         int64 = 1500
+	DefaultRes         int64 = 1500
 	defaultMinInterval       = time.Millisecond * 1
 	year                     = time.Hour * 24 * 365
 	day                      = time.Hour * 24
@@ -28,7 +29,8 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timeRange plugins.DataTimeRange, minInterval time.Duration) Interval
+	Calculate(timeRange plugins.DataTimeRange, interval time.Duration) Interval
+	CalculateSafeInterval(timeRange plugins.DataTimeRange, resolution int64) Interval
 }
 
 type CalculatorOptions struct {
@@ -56,13 +58,22 @@ func (i *Interval) Milliseconds() int64 {
 func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInterval time.Duration) Interval {
 	to := timerange.MustGetTo().UnixNano()
 	from := timerange.MustGetFrom().UnixNano()
-	interval := time.Duration((to - from) / defaultRes)
+	calculatedInterval := time.Duration((to - from) / DefaultRes)
 
-	if interval < minInterval {
+	if calculatedInterval < minInterval {
 		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
 	}
 
-	rounded := roundInterval(interval)
+	rounded := roundInterval(calculatedInterval)
+	return Interval{Text: FormatDuration(rounded), Value: rounded}
+}
+
+func (ic *intervalCalculator) CalculateSafeInterval(timerange plugins.DataTimeRange, safeRes int64) Interval {
+	to := timerange.MustGetTo().UnixNano()
+	from := timerange.MustGetFrom().UnixNano()
+	safeInterval := time.Duration((to - from) / safeRes)
+
+	rounded := roundInterval(safeInterval)
 	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
 
@@ -97,7 +108,7 @@ func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, def
 	if isPureNum {
 		interval += "s"
 	}
-	parsedInterval, err := time.ParseDuration(interval)
+	parsedInterval, err := gtime.ParseDuration(interval)
 	if err != nil {
 		return time.Duration(0), err
 	}

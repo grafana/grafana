@@ -33,8 +33,8 @@ export interface FrameGeometrySource {
   wkt?: string;
   lookup?: string;
 
-  // Path to a mappings file
-  lookupSrc?: string;
+  // Path to Gazetteer
+  gazetteer?: string;
 }
 
 /**
@@ -66,10 +66,15 @@ export interface MapLayerOptions<TConfig = any> {
 /**
  * @alpha
  */
-export interface MapLayerHandler {
+export interface MapLayerHandler<TConfig = any> {
   init: () => BaseLayer;
-  legend?: () => ReactNode;
   update?: (data: PanelData) => void;
+  legend?: ReactNode;
+
+  /**
+   * Show custom elements in the panel edit UI
+   */
+  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<MapLayerOptions<TConfig>>) => void;
 }
 
 /**
@@ -97,10 +102,5 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => MapLayerHandler;
-
-  /**
-   * Show custom elements in the panel edit UI
-   */
-  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<TConfig>) => void;
+  create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
 }

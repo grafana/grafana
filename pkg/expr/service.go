@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // DatasourceName is the string constant used as the datasource name in requests
@@ -23,7 +23,7 @@ const DatasourceUID = "-100"
 // Service is service representation for expression handling.
 type Service struct {
 	Cfg         *setting.Cfg
-	DataService *tsdb.Service
+	DataService plugins.DataRequestHandler
 }
 
 func (s *Service) isDisabled() bool {

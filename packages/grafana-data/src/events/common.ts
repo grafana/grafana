@@ -1,5 +1,5 @@
-import { DataFrame } from '../types';
-import { BusEventWithPayload } from './types';
+import { AnnotationEvent, DataFrame } from '../types';
+import { BusEventBase, BusEventWithPayload } from './types';
 
 /**
  * When hovering over an element this will identify
@@ -26,11 +26,16 @@ export class DataHoverEvent extends BusEventWithPayload<DataHoverPayload> {
 }
 
 /** @alpha */
-export class DataHoverClearEvent extends BusEventWithPayload<DataHoverPayload> {
+export class DataHoverClearEvent extends BusEventBase {
   static type = 'data-hover-clear';
 }
 
 /** @alpha */
 export class DataSelectEvent extends BusEventWithPayload<DataHoverPayload> {
   static type = 'data-select';
+}
+
+/** @alpha */
+export class AnnotationChangeEvent extends BusEventWithPayload<Partial<AnnotationEvent>> {
+  static type = 'annotation-event';
 }

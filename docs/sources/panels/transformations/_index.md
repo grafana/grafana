@@ -10,7 +10,7 @@ Transformations process the result set of a query before it’s passed on for vi
 The transformations feature is accessible from the **Transform** tab of the Grafana panel editor.
 
 Transformations sometimes result in data that cannot be graphed. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand
-the final result of your transformations. 
+the final result of your transformations.
 
 ## Order of transformations
 
@@ -24,7 +24,7 @@ Before you can configure and apply transformations:
 
 - You must have entered a query that return data. For more information on queries, refer to [Queries]({{< relref "../queries.md" >}}).
 
-## List of transformations 
+## List of transformations
 
 - [Add field from calculation]({{< relref "./types-options.md#add-field-from-calculation" >}})
 - [Concatenate fields]({{< relref "./types-options.md#concatenate-fields" >}})

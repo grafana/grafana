@@ -12,12 +12,11 @@ import {
   DataSourceHttpSettings,
   GraphContextMenu,
   Icon,
-  Spinner,
   LegacyForms,
   SeriesColorPickerPopoverWithTheme,
+  Spinner,
   UnitPicker,
 } from '@grafana/ui';
-import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
@@ -38,7 +37,6 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('spinner', Spinner, ['inline']);
   react2AngularDirective('helpModal', HelpModal, []);
-  react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
   react2AngularDirective('emptyListCta', EmptyListCTA, [
     'title',
@@ -167,6 +165,7 @@ export function registerAngularDirectives() {
     'defaultUrl',
     'showAccessOptions',
     'dataSourceConfig',
+    'showForwardOAuthIdentityOption',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
   react2AngularDirective('folderPicker', FolderPicker, [

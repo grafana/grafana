@@ -572,6 +572,61 @@ describe('DashboardModel', () => {
       const savedModelWithCollapsedRows: any = model.getSaveModelClone();
       expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(1);
     });
+
+    it('getSaveModelClone should not remove repeated panels and scopedVars during snapshot', () => {
+      const dashboardJSON = {
+        panels: [
+          { id: 1, type: 'row', repeat: 'dc', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+          { id: 2, repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+        ],
+        templating: {
+          list: [
+            {
+              name: 'dc',
+              type: 'custom',
+              current: {
+                text: 'dc1 + dc2',
+                value: ['dc1', 'dc2'],
+              },
+              options: [
+                { text: 'dc1', value: 'dc1', selected: true },
+                { text: 'dc2', value: 'dc2', selected: true },
+              ],
+            },
+            {
+              name: 'app',
+              type: 'custom',
+              current: {
+                text: 'se1 + se2',
+                value: ['se1', 'se2'],
+              },
+              options: [
+                { text: 'se1', value: 'se1', selected: true },
+                { text: 'se2', value: 'se2', selected: true },
+              ],
+            },
+          ],
+        },
+      };
+
+      const model = getDashboardModel(dashboardJSON);
+      model.processRepeats();
+      expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      model.snapshot = { timestamp: new Date() };
+      const saveModel = model.getSaveModelClone();
+      expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      model.collapseRows();
+      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(2);
+    });
   });
 
   describe('Given model with template variable of type query', () => {
@@ -765,6 +820,64 @@ describe('DashboardModel', () => {
         expect(result).toBe(expected);
       }
     );
+  });
+
+  describe('canEditPanel', () => {
+    it('returns false if the dashboard cannot be edited', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      dashboard.meta.canEdit = false;
+      const panel = dashboard.getPanelById(2);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns false if no panel is passed in', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      expect(dashboard.canEditPanel()).toBe(false);
+    });
+
+    it('returns false if the panel is a repeat', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+          { id: 3, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 }, repeatPanelId: 2 },
+        ],
+      });
+      const panel = dashboard.getPanelById(3);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns false if the panel is a row', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      const panel = dashboard.getPanelById(1);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns true otherwise', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      const panel = dashboard.getPanelById(2);
+      expect(dashboard.canEditPanel(panel)).toBe(true);
+    });
   });
 });
 

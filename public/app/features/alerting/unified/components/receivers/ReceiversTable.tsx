@@ -12,6 +12,7 @@ import { css } from '@emotion/css';
 import { isReceiverUsed } from '../../utils/alertmanager';
 import { useDispatch } from 'react-redux';
 import { deleteReceiverAction } from '../../state/actions';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -22,7 +23,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const dispatch = useDispatch();
   const tableStyles = useStyles2(getAlertTableStyles);
   const styles = useStyles2(getStyles);
-
+  const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
@@ -65,6 +66,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
       className={styles.section}
       title="Contact points"
       description="Define where the notifications will be sent to, for example email or Slack."
+      showButton={!isVanillaAM}
       addButtonLabel="New contact point"
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
@@ -92,20 +94,35 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
               <td>{receiver.name}</td>
               <td>{receiver.types.join(', ')}</td>
               <td className={tableStyles.actionsCell}>
-                <ActionIcon
-                  data-testid="edit"
-                  to={makeAMLink(
-                    `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
-                    alertManagerName
-                  )}
-                  tooltip="Edit contact point"
-                  icon="pen"
-                />
-                <ActionIcon
-                  onClick={() => onClickDeleteReceiver(receiver.name)}
-                  tooltip="Delete contact point"
-                  icon="trash-alt"
-                />
+                {!isVanillaAM && (
+                  <>
+                    <ActionIcon
+                      data-testid="edit"
+                      to={makeAMLink(
+                        `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
+                        alertManagerName
+                      )}
+                      tooltip="Edit contact point"
+                      icon="pen"
+                    />
+                    <ActionIcon
+                      onClick={() => onClickDeleteReceiver(receiver.name)}
+                      tooltip="Delete contact point"
+                      icon="trash-alt"
+                    />
+                  </>
+                )}
+                {isVanillaAM && (
+                  <ActionIcon
+                    data-testid="view"
+                    to={makeAMLink(
+                      `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
+                      alertManagerName
+                    )}
+                    tooltip="View contact point"
+                    icon="file-alt"
+                  />
+                )}
               </td>
             </tr>
           ))}

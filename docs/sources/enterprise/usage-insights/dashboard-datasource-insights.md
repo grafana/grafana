@@ -36,6 +36,7 @@ Data source insights give you information about how a data source has been used 
 - Query load time per day (averaged in ms)
 
 To find data source insights:
+
 1. Go to the Data source list view.
 1. Click on a data source.
 1. Click the **Insights** tab.

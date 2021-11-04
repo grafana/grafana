@@ -11,7 +11,7 @@ export interface Props {
   onUpdateSecureJsonDataOption: (
     key: keyof AzureDataSourceSecureJsonData
   ) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  onResetOptionKey: (key: string) => void;
+  onResetOptionKey: (key: keyof AzureDataSourceSecureJsonData) => void;
 }
 export class InsightsConfig extends PureComponent<Props> {
   onAppInsightsResetApiKey = () => {

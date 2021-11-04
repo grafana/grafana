@@ -6,7 +6,7 @@ weight = 120
 +++
 
 # Provisioning
- 
+
 You can create, change or remove [Custom roles]({{< relref "./roles.md#custom-roles" >}}) and create or remove [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}), by adding one or more YAML configuration files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory.
 Refer to [Grafana provisioning]({{< relref "../../administration/configuration/#provisioning" >}}) to learn more about provisioning.
 
@@ -38,16 +38,16 @@ apiVersion: 1
 # Roles to insert into the database, or roles to update in the database
 roles:
   - name: custom:users:editor
-    description: "This role allows users to list, create, or update other users within the organization."
+    description: 'This role allows users to list, create, or update other users within the organization.'
     version: 1
     orgId: 1
     permissions:
-      - action: "users:read"
-        scope: "users:*"
-      - action: "users:write"
-        scope: "users:*"
-      - action: "users:create"
-        scope: "users:*"
+      - action: 'users:read'
+        scope: 'users:*'
+      - action: 'users:write'
+        scope: 'users:*'
+      - action: 'users:create'
+        scope: 'users:*'
 ```
 
 Here is an example YAML file to create a global role with a set of permissions, where the `global:true` option makes a role global:
@@ -59,26 +59,28 @@ apiVersion: 1
 # Roles to insert into the database, or roles to update in the database
 roles:
   - name: custom:users:editor
-    description: "This role allows users to list, create, or update other users within the organization."
+    description: 'This role allows users to list, create, or update other users within the organization.'
     version: 1
     global: true
     permissions:
-      - action: "users:read"
-        scope: "users:*"
-      - action: "users:write"
-        scope: "users:*"
-      - action: "users:create"
-        scope: "users:*"
+      - action: 'users:read'
+        scope: 'users:*'
+      - action: 'users:write'
+        scope: 'users:*'
+      - action: 'users:create'
+        scope: 'users:*'
 ```
+
 The `orgId` is lost when the role is set to global.
 
-### Delete roles 
+### Delete roles
 
-To delete a role, add a list of roles under the `deleteRoles` section in the configuration file. 
+To delete a role, add a list of roles under the `deleteRoles` section in the configuration file.
 
 > **Note:** Any role in the `deleteRoles` section is deleted before any role in the `roles` section is saved.
 
 Here is an example YAML file to delete a role:
+
 ```yaml
 # config file version
 apiVersion: 1
@@ -105,19 +107,19 @@ apiVersion: 1
 # Roles to insert/update in the database
 roles:
   - name: custom:users:editor
-    description: "This role allows users to list/create/update other users in the organization"
+    description: 'This role allows users to list/create/update other users in the organization'
     version: 1
     orgId: 1
     permissions:
-      - action: "users:read"
-        scope: "users:*"
-      - action: "users:write"
-        scope: "users:*"
-      - action: "users:create"
-        scope: "users:*"
+      - action: 'users:read'
+        scope: 'users:*'
+      - action: 'users:write'
+        scope: 'users:*'
+      - action: 'users:create'
+        scope: 'users:*'
     builtInRoles:
-      - name: "Editor"
-      - name: "Admin"
+      - name: 'Editor'
+      - name: 'Admin'
 ```
 
 ## Manage default built-in role assignments
@@ -129,15 +131,15 @@ During startup, Grafana creates [default built-in role assignments]({{< relref "
 To remove default built-in role assignments, use the `removeDefaultAssignments` element in the configuration file. You need to provide the built-in role name and fixed role name.
 
 Here is an example:
+
 ```yaml
 # config file version
 apiVersion: 1
 
 # list of default built-in role assignments that should be removed
 removeDefaultAssignments:
-  - builtInRole: "Grafana Admin"
-    fixedRole: "fixed:permissions:admin"
-
+  - builtInRole: 'Grafana Admin'
+    fixedRole: 'fixed:permissions:admin'
 ```
 
 ### Restore default assignment
@@ -145,14 +147,15 @@ removeDefaultAssignments:
 To restore the default built-in role assignment, use the `addDefaultAssignments` element in the configuration file. You need to provide the built-in role name and the fixed-role name.
 
 Here is an example:
+
 ```yaml
 # config file version
 apiVersion: 1
 
 # list of default built-in role assignments that should be added back
 addDefaultAssignments:
-  - builtInRole: "Admin"
-    fixedRole: "fixed:reporting:admin:read"
+  - builtInRole: 'Admin'
+    fixedRole: 'fixed:reporting:admin:read'
 ```
 
 ## Full example of a role configuration file
@@ -164,29 +167,29 @@ apiVersion: 1
 # list of default built-in role assignments that should be removed
 removeDefaultAssignments:
   # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
-  - builtInRole: "Grafana Admin"
+  - builtInRole: 'Grafana Admin'
     # <string>, must be one of the existing fixed roles
-    fixedRole: "fixed:permissions:admin"
+    fixedRole: 'fixed:permissions:admin'
 
 # list of default built-in role assignments that should be added back
 addDefaultAssignments:
   # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
-  - builtInRole: "Admin"
+  - builtInRole: 'Admin'
     # <string>, must be one of the existing fixed roles
-    fixedRole: "fixed:reporting:admin:read"
-    
+    fixedRole: 'fixed:reporting:admin:read'
+
 # list of roles that should be deleted
 deleteRoles:
   # <string> name of the role you want to create. Required if no uid is set
-  - name: "custom:reports:editor"
+  - name: 'custom:reports:editor'
     # <string> uid of the role. Required if no name
-    uid: "customreportseditor1"
+    uid: 'customreportseditor1'
     # <int> org id. will default to Grafana's default if not specified
     orgId: 1
     # <bool> force deletion revoking all grants of the role
     force: true
-  - name: "custom:global:reports:reader"
-    uid: "customglobalreportsreader1"
+  - name: 'custom:global:reports:reader'
+    uid: 'customglobalreportsreader1'
     # <bool> overwrite org id and removes a global role
     global: true
     force: true
@@ -194,44 +197,44 @@ deleteRoles:
 # list of roles to insert/update depending on what is available in the database
 roles:
   # <string, required> name of the role you want to create. Required
-  - name: "custom:users:editor"
+  - name: 'custom:users:editor'
     # <string> uid of the role. Has to be unique for all orgs.
     uid: customuserseditor1
     # <string> description of the role, informative purpose only.
-    description: "Role for our custom user editors"
+    description: 'Role for our custom user editors'
     # <int> version of the role, Grafana will update the role when increased
     version: 2
     # <int> org id. will default to Grafana's default if not specified
-    orgId: 1    
+    orgId: 1
     # <list> list of the permissions granted by this role
     permissions:
       # <string, required> action allowed
-      - action: "users:read"
+      - action: 'users:read'
         #<string> scope it applies to
-        scope: "users:*"
-      - action: "users:write"
-        scope: "users:*"
-      - action: "users:create"
-        scope: "users:*"
+        scope: 'users:*'
+      - action: 'users:write'
+        scope: 'users:*'
+      - action: 'users:create'
+        scope: 'users:*'
     # <list> list of builtIn roles the role should be assigned to
     builtInRoles:
       # <string, required> name of the builtin role you want to assign the role to
-      - name: "Editor"
+      - name: 'Editor'
         # <int> org id. will default to the role org id
-        orgId: 1        
-  - name: "custom:global:users:reader"
-    uid: "customglobalusersreader1"
-    description: "Global Role for custom user readers"
+        orgId: 1
+  - name: 'custom:global:users:reader'
+    uid: 'customglobalusersreader1'
+    description: 'Global Role for custom user readers'
     version: 1
     # <bool> overwrite org id and creates a global role
     global: true
     permissions:
-      - action: "users:read"
-        scope: "users:*"
+      - action: 'users:read'
+        scope: 'users:*'
     builtInRoles:
-      - name: "Viewer"
-        orgId: 1        
-      - name: "Editor"
+      - name: 'Viewer'
+        orgId: 1
+      - name: 'Editor'
         # <bool> overwrite org id and assign role globally
         global: true
 ```
@@ -251,7 +254,7 @@ A basic set of validation rules are applied to the input `yaml` files.
 ### Roles
 
 - `name` must not be empty
-- `name` must not have `fixed:` prefix. 
+- `name` must not have `fixed:` prefix.
 
 ### Permissions
 
@@ -259,9 +262,9 @@ A basic set of validation rules are applied to the input `yaml` files.
 
 ### Built-in role assignments
 
-- `name` must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`. 
+- `name` must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`.
 - When `orgId` is not specified, it inherits the `orgId` from `role`. For global roles the default `orgId` is used.
-- `orgId` in the `role` and in the assignment must be the same for none global roles. 
+- `orgId` in the `role` and in the assignment must be the same for none global roles.
 
 ### Role deletion
 

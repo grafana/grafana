@@ -7,7 +7,7 @@ weight = 120
 
 # Configure Grafana Live
 
-Grafana Live is enabled by default. In Grafana v8.0, it has a strict default for a maximum number of connections per Grafana server instance. 
+Grafana Live is enabled by default. In Grafana v8.0, it has a strict default for a maximum number of connections per Grafana server instance.
 
 ## Max number of connections
 
@@ -50,7 +50,6 @@ cat /proc/<PROCESS_PID>/limits
 ```
 
 The open files limit shows approximately how many user connections your server can currently handle.
-		
 
 To increase this limit, refer to [these instructions](https://docs.riak.com/riak/kv/2.2.3/using/performance/open-files-limit.1.html)for popular operating systems.
 
@@ -83,11 +82,11 @@ http {
         default upgrade;
         '' close;
     }
- 
+
     upstream grafana {
         server 127.0.0.1:3000;
     }
- 
+
     server {
         listen 8000;
 

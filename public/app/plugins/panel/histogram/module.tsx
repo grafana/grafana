@@ -52,7 +52,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
-          byValueSupport: false,
+          byValueSupport: true,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,

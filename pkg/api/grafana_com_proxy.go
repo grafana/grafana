@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var grafanaComProxyTransport = &http.Transport{
@@ -41,9 +42,9 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 }
 
 func ProxyGnetRequest(c *models.ReqContext) {
-	proxyPath := c.Params("*")
+	proxyPath := web.Params(c.Req)["*"]
 	proxy := ReverseProxyGnetReq(proxyPath)
 	proxy.Transport = grafanaComProxyTransport
-	proxy.ServeHTTP(c.Resp, c.Req.Request)
+	proxy.ServeHTTP(c.Resp, c.Req)
 	c.Resp.Header().Del("Set-Cookie")
 }

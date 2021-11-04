@@ -1,6 +1,6 @@
 import { dateTime } from '@grafana/data';
 
-import { inputToValue } from './TimePickerCalendar';
+import { inputToValue } from './CalendarBody';
 
 describe('inputToValue', () => {
   describe('when called with valid dates', () => {

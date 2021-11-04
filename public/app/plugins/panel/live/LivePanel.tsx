@@ -15,7 +15,6 @@ import {
   applyFieldOverrides,
   StreamingDataFrame,
   LiveChannelAddress,
-  LiveChannelConfig,
 } from '@grafana/data';
 import { TablePanel } from '../table/TablePanel';
 import { LivePanelOptions, MessageDisplayMode } from './types';
@@ -28,7 +27,6 @@ interface Props extends PanelProps<LivePanelOptions> {}
 interface State {
   error?: any;
   addr?: LiveChannelAddress;
-  info?: LiveChannelConfig;
   status?: LiveChannelStatusEvent;
   message?: any;
   changed: number;
@@ -88,7 +86,6 @@ export class LivePanel extends PureComponent<Props, State> {
       this.unsubscribe();
       this.setState({
         addr: undefined,
-        info: undefined,
       });
       return;
     }
@@ -104,7 +101,6 @@ export class LivePanel extends PureComponent<Props, State> {
       this.unsubscribe();
       this.setState({
         addr: undefined,
-        info: undefined,
       });
       return;
     }
@@ -146,9 +142,9 @@ export class LivePanel extends PureComponent<Props, State> {
   };
 
   onPublishClicked = async () => {
-    const { addr, info } = this.state;
-    if (!info?.canPublish || !addr) {
-      console.log('channel does not support publishing');
+    const { addr } = this.state;
+    if (!addr) {
+      console.log('invalid address');
       return;
     }
 
@@ -205,16 +201,7 @@ export class LivePanel extends PureComponent<Props, State> {
   }
 
   renderPublish(height: number) {
-    const { info } = this.state;
-    if (!info) {
-      return <div>No info</div>;
-    }
-    if (!info.canPublish) {
-      return <div>This channel does not support publishing</div>;
-    }
-
     const { options } = this.props;
-
     return (
       <>
         <CodeEditor

@@ -1,8 +1,24 @@
-import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta, ScopedVars } from '@grafana/data';
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import {
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  DataSourcePluginMeta,
+  DataSourceRef,
+  ScopedVars,
+} from '@grafana/data';
+import {
+  GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
+  PromAlertingRuleState,
+  PromRuleType,
+  RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -10,14 +26,16 @@ import {
   AlertmanagerStatus,
   AlertState,
   GrafanaManagedReceiverConfig,
+  Silence,
+  SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 
 let nextDataSourceId = 1;
 
-export const mockDataSource = (
-  partial: Partial<DataSourceInstanceSettings> = {},
+export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData>(
+  partial: Partial<DataSourceInstanceSettings<T>> = {},
   meta: Partial<DataSourcePluginMeta> = {}
-): DataSourceInstanceSettings => {
+): DataSourceInstanceSettings<T> {
   const id = partial.id ?? nextDataSourceId++;
 
   return {
@@ -25,7 +43,8 @@ export const mockDataSource = (
     uid: `mock-ds-${nextDataSourceId}`,
     type: 'prometheus',
     name: `Prometheus-${id}`,
-    jsonData: {},
+    access: 'proxy',
+    jsonData: {} as T,
     meta: ({
       info: {
         logos: {
@@ -37,7 +56,7 @@ export const mockDataSource = (
     } as any) as DataSourcePluginMeta,
     ...partial,
   };
-};
+}
 
 export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   activeAt: '2021-03-18T13:47:05.04938691Z',
@@ -50,6 +69,57 @@ export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   },
   state: PromAlertingRuleState.Firing,
   value: '1e+00',
+  ...partial,
+});
+
+export const mockRulerGrafanaRule = (
+  partial: Partial<RulerGrafanaRuleDTO> = {},
+  partialDef: Partial<GrafanaRuleDefinition> = {}
+): RulerGrafanaRuleDTO => {
+  return {
+    for: '1m',
+    grafana_alert: {
+      uid: '123',
+      title: 'myalert',
+      namespace_uid: '123',
+      namespace_id: 1,
+      condition: 'A',
+      no_data_state: GrafanaAlertStateDecision.Alerting,
+      exec_err_state: GrafanaAlertStateDecision.Alerting,
+      data: [
+        {
+          datasourceUid: '123',
+          refId: 'A',
+          queryType: 'huh',
+          model: {} as any,
+        },
+      ],
+      ...partialDef,
+    },
+    annotations: {
+      message: 'alert with severity "{{.warning}}}"',
+    },
+    labels: {
+      severity: 'warning',
+    },
+    ...partial,
+  };
+};
+
+export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {}): RulerAlertingRuleDTO => ({
+  alert: 'alert1',
+  expr: 'up = 1',
+  labels: {
+    severity: 'warning',
+  },
+  annotations: {
+    summary: 'test alert',
+  },
+});
+
+export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): RulerRuleGroupDTO => ({
+  name: 'group1',
+  rules: [mockRulerAlertingRule()],
   ...partial,
 });
 
@@ -136,9 +206,25 @@ export const mockAlertGroup = (partial: Partial<AlertmanagerGroup> = {}): Alertm
       mockAlertmanagerAlert(),
       mockAlertmanagerAlert({
         status: { state: AlertState.Suppressed, silencedBy: ['123456abcdef'], inhibitedBy: [] },
-        labels: { severity: 'warning', region: 'US-Central', foo: 'bar' },
+        labels: { severity: 'warning', region: 'US-Central', foo: 'bar', ...partial.labels },
       }),
     ],
+    ...partial,
+  };
+};
+
+export const mockSilence = (partial: Partial<Silence> = {}): Silence => {
+  return {
+    id: '1a2b3c4d5e6f',
+    matchers: [{ name: 'foo', value: 'bar', isEqual: true, isRegex: false }],
+    startsAt: new Date().toISOString(),
+    endsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+    createdBy: config.bootData.user.name || 'admin',
+    comment: 'Silence noisy alerts',
+    status: {
+      state: SilenceState.Active,
+    },
     ...partial,
   };
 };
@@ -154,6 +240,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
     getVariables: () => [],
     replace: (name: any) => name,
   };
+
   defaultName = '';
 
   constructor(datasources: Record<string, DataSourceInstanceSettings>) {
@@ -165,6 +252,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
       },
       {}
     );
+
     for (const dsSettings of Object.values(this.settingsMapByName)) {
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
       this.settingsMapById[dsSettings.id] = dsSettings;
@@ -174,7 +262,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
     }
   }
 
-  get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+  get(name?: string | null | DataSourceRef, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     return DatasourceSrv.prototype.get.call(this, name, scopedVars);
     //return Promise.reject(new Error('not implemented'));
   }
@@ -273,6 +361,14 @@ export const someCloudAlertManagerConfig: AlertManagerCortexConfig = {
   alertmanager_config: {
     route: {
       receiver: 'cloud-receiver',
+      routes: [
+        {
+          receiver: 'foo-receiver',
+        },
+        {
+          receiver: 'bar-receiver',
+        },
+      ],
     },
     receivers: [
       {
@@ -308,4 +404,27 @@ export const someCloudAlertManagerConfig: AlertManagerCortexConfig = {
       },
     ],
   },
+};
+
+export const somePromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] => [
+  {
+    dataSourceName,
+    name: 'namespace1',
+    groups: [
+      mockPromRuleGroup({ name: 'group1', rules: [mockPromAlertingRule({ name: 'alert1' })] }),
+      mockPromRuleGroup({ name: 'group2', rules: [mockPromAlertingRule({ name: 'alert2' })] }),
+    ],
+  },
+  {
+    dataSourceName,
+    name: 'namespace2',
+    groups: [mockPromRuleGroup({ name: 'group3', rules: [mockPromAlertingRule({ name: 'alert3' })] })],
+  },
+];
+export const someRulerRules: RulerRulesConfigDTO = {
+  namespace1: [
+    mockRulerRuleGroup({ name: 'group1', rules: [mockRulerAlertingRule({ alert: 'alert1' })] }),
+    mockRulerRuleGroup({ name: 'group2', rules: [mockRulerAlertingRule({ alert: 'alert2' })] }),
+  ],
+  namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
 };

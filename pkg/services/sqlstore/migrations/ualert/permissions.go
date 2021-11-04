@@ -61,6 +61,25 @@ func (m *migration) getOrCreateGeneralFolder(orgID int64) (*dashboard, error) {
 	return &dashboard, nil
 }
 
+// returns the folder of the given dashboard (if exists)
+func (m *migration) getFolder(dash dashboard, da dashAlert) (dashboard, error) {
+	// get folder if exists
+	folder := dashboard{}
+	if dash.FolderId > 0 {
+		exists, err := m.sess.Where("id=?", dash.FolderId).Get(&folder)
+		if err != nil {
+			return folder, fmt.Errorf("failed to get folder %d: %w", dash.FolderId, err)
+		}
+		if !exists {
+			return folder, fmt.Errorf("folder with id %v not found", dash.FolderId)
+		}
+		if !folder.IsFolder {
+			return folder, fmt.Errorf("id %v is a dashboard not a folder", dash.FolderId)
+		}
+	}
+	return folder, nil
+}
+
 // based on sqlstore.saveDashboard()
 // it should be called from inside a transaction
 func (m *migration) createFolder(orgID int64, title string) (*dashboard, error) {

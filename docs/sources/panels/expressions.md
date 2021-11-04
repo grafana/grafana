@@ -44,10 +44,10 @@ Data source queries, when used with expressions, are executed by the expression 
 
 Currently, the only non-time series format (number) is supported when using data frames are you have a table response that returns a data frame with no time, string columns, and one number column:
 
-Loc | Host | Avg_CPU |
-----|------| ------- |
-MIA | A    | 1
-NYC | B    | 2
+| Loc | Host | Avg_CPU |
+| --- | ---- | ------- |
+| MIA | A    | 1       |
+| NYC | B    | 2       |
 
 will produce a number that works with expressions. The string columns become labels and the number column the corresponding value. For example `{"Loc": "MIA", "Host": "A"}` with a value of 1.
 

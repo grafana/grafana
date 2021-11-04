@@ -21,6 +21,7 @@ export const CSVFileEditor = ({ onChange, query }: EditorProps) => {
     <InlineFieldRow>
       <InlineField label="File" labelWidth={14}>
         <Select
+          menuShouldPortal
           width={32}
           onChange={onChangeFileName}
           placeholder="Select csv file"

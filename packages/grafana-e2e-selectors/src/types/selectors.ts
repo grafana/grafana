@@ -1,5 +1,23 @@
+/**
+ * A string selector
+ *
+ * @alpha
+ */
+
 export type StringSelector = string;
+
+/**
+ * A function selector with an argument
+ *
+ * @alpha
+ */
 export type FunctionSelector = (id: string) => string;
+
+/**
+ * A function selector without argument
+ *
+ * @alpha
+ */
 export type CssSelector = () => string;
 
 /**

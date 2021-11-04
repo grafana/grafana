@@ -48,24 +48,49 @@ func GetAgeString(t time.Time) string {
 	months := int(math.Floor(minutes / 43800))
 	days := int(math.Floor(minutes / 1440))
 	hours := int(math.Floor(minutes / 60))
-
+	var amount string
 	if years > 0 {
-		return fmt.Sprintf("%dy", years)
+		if years == 1 {
+			amount = "year"
+		} else {
+			amount = "years"
+		}
+		return fmt.Sprintf("%d %s", years, amount)
 	}
 	if months > 0 {
-		return fmt.Sprintf("%dM", months)
+		if months == 1 {
+			amount = "month"
+		} else {
+			amount = "months"
+		}
+		return fmt.Sprintf("%d %s", months, amount)
 	}
 	if days > 0 {
-		return fmt.Sprintf("%dd", days)
+		if days == 1 {
+			amount = "day"
+		} else {
+			amount = "days"
+		}
+		return fmt.Sprintf("%d %s", days, amount)
 	}
 	if hours > 0 {
-		return fmt.Sprintf("%dh", hours)
+		if hours == 1 {
+			amount = "hour"
+		} else {
+			amount = "hours"
+		}
+		return fmt.Sprintf("%d %s", hours, amount)
 	}
 	if int(minutes) > 0 {
-		return fmt.Sprintf("%dm", int(minutes))
+		if int(minutes) == 1 {
+			amount = "minute"
+		} else {
+			amount = "minutes"
+		}
+		return fmt.Sprintf("%d %s", int(minutes), amount)
 	}
 
-	return "< 1m"
+	return "< 1 minute"
 }
 
 // ToCamelCase changes kebab case, snake case or mixed strings to camel case. See unit test for examples.

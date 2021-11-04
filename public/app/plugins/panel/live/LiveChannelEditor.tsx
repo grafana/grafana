@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 
 import { LivePanelOptions } from './types';
-import { getGrafanaLiveCentrifugeSrv } from 'app/features/live/live';
+import { getGrafanaLiveScopes } from 'app/features/live';
 import { config } from 'app/core/config';
 
 type Props = StandardEditorProps<LiveChannelAddress, any, LivePanelOptions>;
@@ -44,12 +44,27 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
     }
   }
 
+  async getScopeDetails() {
+    const { scope, namespace } = this.props.value;
+    const srv = getGrafanaLiveScopes();
+
+    if (!srv.doesScopeExist(scope)) {
+      return {
+        namespaces: [],
+        support: undefined,
+      };
+    }
+
+    const namespaces = await srv.getNamespaces(scope);
+    const support = namespace ? await srv.getChannelSupport(scope, namespace) : undefined;
+    return {
+      namespaces,
+      support,
+    };
+  }
+
   async updateSelectOptions() {
-    const { value } = this.props;
-    const { scope, namespace } = value;
-    const srv = getGrafanaLiveCentrifugeSrv();
-    const namespaces = await srv.scopes[scope].listNamespaces();
-    const support = namespace ? await srv.scopes[scope].getChannelSupport(namespace) : undefined;
+    const { namespaces, support } = await this.getScopeDetails();
 
     this.setState({
       namespaces,
@@ -107,13 +122,19 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
         <div>
           <div className={style.dropWrap}>
             <Label>Scope</Label>
-            <Select options={scopes} value={scopes.find((s) => s.value === scope)} onChange={this.onScopeChanged} />
+            <Select
+              menuShouldPortal
+              options={scopes}
+              value={scopes.find((s) => s.value === scope)}
+              onChange={this.onScopeChanged}
+            />
           </div>
 
           {scope && (
             <div className={style.dropWrap}>
               <Label>Namespace</Label>
               <Select
+                menuShouldPortal
                 options={namespaces}
                 value={
                   namespaces.find((s) => s.value === namespace) ??
@@ -130,6 +151,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
             <div className={style.dropWrap}>
               <Label>Path</Label>
               <Select
+                menuShouldPortal
                 options={paths}
                 value={findPathOption(paths, path)}
                 onChange={this.onPathChanged}

@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -20,28 +19,26 @@ import (
 
 const ServiceName = "UserAuthTokenService"
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     &UserAuthTokenService{},
-		InitPriority: registry.Medium,
-	})
-}
-
 var getTime = time.Now
 
 const urgentRotateTime = 1 * time.Minute
 
-type UserAuthTokenService struct {
-	SQLStore          *sqlstore.SQLStore            `inject:""`
-	ServerLockService *serverlock.ServerLockService `inject:""`
-	Cfg               *setting.Cfg                  `inject:""`
-	log               log.Logger
+func ProvideUserAuthTokenService(sqlStore *sqlstore.SQLStore, serverLockService *serverlock.ServerLockService,
+	cfg *setting.Cfg) *UserAuthTokenService {
+	s := &UserAuthTokenService{
+		SQLStore:          sqlStore,
+		ServerLockService: serverLockService,
+		Cfg:               cfg,
+		log:               log.New("auth"),
+	}
+	return s
 }
 
-func (s *UserAuthTokenService) Init() error {
-	s.log = log.New("auth")
-	return nil
+type UserAuthTokenService struct {
+	SQLStore          *sqlstore.SQLStore
+	ServerLockService *serverlock.ServerLockService
+	Cfg               *setting.Cfg
+	log               log.Logger
 }
 
 func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, error) {

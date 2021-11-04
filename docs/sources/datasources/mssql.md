@@ -168,122 +168,96 @@ The resulting table panel:
 
 ## Time series queries
 
-If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you omit the `metric` column, the name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric.
-If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
+If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-Result sets of time series queries need to be sorted by time.
+A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
-**Example database table:**
+> For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-```sql
-CREATE TABLE [event] (
-  time_sec bigint,
-  description nvarchar(100),
-  tags nvarchar(100),
-)
-```
+You can optionally customize the default series name formatting using instructions in [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}).
 
-```sql
-CREATE TABLE metric_values (
-  time datetime,
-  measurement nvarchar(100),
-  valueOne int,
-  valueTwo int,
-)
-
-INSERT metric_values (time, measurement, valueOne, valueTwo) VALUES('2018-03-15 12:30:00', 'Metric A', 62, 6)
-INSERT metric_values (time, measurement, valueOne, valueTwo) VALUES('2018-03-15 12:30:00', 'Metric B', 49, 11)
-...
-INSERT metric_values (time, measurement, valueOne, valueTwo) VALUES('2018-03-15 13:55:00', 'Metric A', 14, 25)
-INSERT metric_values (time, measurement, valueOne, valueTwo) VALUES('2018-03-15 13:55:00', 'Metric B', 48, 10)
-
-```
-
-{{< figure src="/static/img/docs/v51/mssql_time_series_one.png" class="docs-image--no-shadow docs-image--right" >}}
-
-**Example with one `value` and one `metric` column.**
+**Example with `metric` column:**
 
 ```sql
 SELECT
-  time,
-  valueOne,
-  measurement as metric
-FROM
-  metric_values
-WHERE
-  $__timeFilter(time)
+  $__timeGroup(time_date_time, '5m') as time,
+  min("value_double"),
+  'min' as metric
+FROM test_data
+WHERE $__timeFilter(time_date_time)
+GROUP BY $__timeGroup(time_date_time, '5m')
 ORDER BY 1
 ```
 
-When the above query is used in a graph panel, it will produce two series named `Metric A` and `Metric B` with the values `valueOne` and `valueTwo` plotted over `time`.
+Data frame result:
 
-<div class="clearfix"></div>
-
-{{< figure src="/static/img/docs/v51/mssql_time_series_two.png" class="docs-image--no-shadow docs-image--right" >}}
-
-**Example with multiple `value` columns:**
-
-```sql
-SELECT
-  time,
-  valueOne,
-  valueTwo
-FROM
-  metric_values
-WHERE
-  $__timeFilter(time)
-ORDER BY 1
+```text
++---------------------+-----------------+
+| Name: time          | Name: min       |
+| Labels:             | Labels:         |
+| Type: []time.Time   | Type: []float64 |
++---------------------+-----------------+
+| 2020-01-02 03:05:00 | 3               |
+| 2020-01-02 03:10:00 | 6               |
++---------------------+-----------------+
 ```
 
-When the above query is used in a graph panel, it will produce two series named `Metric A` and `Metric B` with the values `valueOne` and `valueTwo` plotted over `time`.
-
-<div class="clearfix"></div>
-
-{{< figure src="/static/img/docs/v51/mssql_time_series_three.png" class="docs-image--no-shadow docs-image--right" >}}
-
-**Example using the \$\_\_timeGroup macro:**
+**Example using the fill parameter in the $\_\_timeGroup macro to convert null values to be zero instead:**
 
 ```sql
 SELECT
-  $__timeGroup(time, '3m') as time,
-  measurement as metric,
-  avg(valueOne)
-FROM
-  metric_values
+  $__timeGroup(createdAt, '5m', 0) as time,
+  sum(value) as value,
+  hostname
+FROM test_data
 WHERE
-  $__timeFilter(time)
+  $__timeFilter(createdAt)
 GROUP BY
-  $__timeGroup(time, '3m'),
-  measurement
+  $__timeGroup(createdAt, '5m', 0),
+  hostname
 ORDER BY 1
 ```
 
-When the above query is used in a graph panel, it will produce two series named `Metric A` and `Metric B` with the values `valueOne` and `valueTwo` plotted over `time`.
-Any two series lacking a value in a three-minute window will render a line between those two lines. You'll notice that the graph to the right never goes down to zero.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) value of `${__field.labels.hostname}`.
 
-<div class="clearfix"></div>
+Data frame result:
 
-{{< figure src="/static/img/docs/v51/mssql_time_series_four.png" class="docs-image--no-shadow docs-image--right" >}}
+```text
++---------------------+---------------------------+---------------------------+
+| Name: time          | Name: value               | Name: value               |
+| Labels:             | Labels: hostname=10.0.1.1 | Labels: hostname=10.0.1.2 |
+| Type: []time.Time   | Type: []float64           | Type: []float64           |
++---------------------+---------------------------+---------------------------+
+| 2020-01-02 03:05:00 | 3                         | 4                         |
+| 2020-01-02 03:10:00 | 6                         | 7                         |
++---------------------+---------------------------+---------------------------+
+```
 
-**Example using the \$\_\_timeGroup macro with fill parameter set to zero:**
+**Example with multiple columns:**
 
 ```sql
 SELECT
-  $__timeGroup(time, '3m', 0) as time,
-  measurement as metric,
-  sum(valueTwo)
-FROM
-  metric_values
-WHERE
-  $__timeFilter(time)
-GROUP BY
-  $__timeGroup(time, '3m'),
-  measurement
+  $__timeGroup(time_date_time, '5m'),
+  min(value_double) as min_value,
+  max(value_double) as max_value
+FROM test_data
+WHERE $__timeFilter(time_date_time)
+GROUP BY $__timeGroup(time_date_time, '5m')
 ORDER BY 1
 ```
 
-When the above query is used in a graph panel, the result is two series named `Metric A` and `Metric B` with a sum of `valueTwo` plotted over `time`.
-Any series lacking a value in a 3 minute window will have a value of zero which you'll see rendered in the graph to the right.
+Data frame result:
+
+```text
++---------------------+-----------------+-----------------+
+| Name: time          | Name: min_value | Name: max_value |
+| Labels:             | Labels:         | Labels:         |
+| Type: []time.Time   | Type: []float64 | Type: []float64 |
++---------------------+-----------------+-----------------+
+| 2020-01-02 03:04:00 | 3               | 4               |
+| 2020-01-02 03:05:00 | 6               | 7               |
++---------------------+-----------------+-----------------+
+```
 
 ## Templating
 

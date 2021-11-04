@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-func (p *testDataPlugin) handleCsvContentScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleCsvContentScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -30,7 +30,7 @@ func (p *testDataPlugin) handleCsvContentScenario(ctx context.Context, req *back
 		csvContent := model.Get("csvContent").MustString()
 		alias := model.Get("alias").MustString("")
 
-		frame, err := p.loadCsvContent(strings.NewReader(csvContent), alias)
+		frame, err := LoadCsvContent(strings.NewReader(csvContent), alias)
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +43,7 @@ func (p *testDataPlugin) handleCsvContentScenario(ctx context.Context, req *back
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleCsvFileScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -58,7 +58,7 @@ func (p *testDataPlugin) handleCsvFileScenario(ctx context.Context, req *backend
 			continue
 		}
 
-		frame, err := p.loadCsvFile(fileName)
+		frame, err := s.loadCsvFile(fileName)
 
 		if err != nil {
 			return nil, err
@@ -72,14 +72,14 @@ func (p *testDataPlugin) handleCsvFileScenario(ctx context.Context, req *backend
 	return resp, nil
 }
 
-func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
+func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
 	validFileName := regexp.MustCompile(`([\w_]+)\.csv`)
 
 	if !validFileName.MatchString(fileName) {
 		return nil, fmt.Errorf("invalid csv file name: %q", fileName)
 	}
 
-	filePath := filepath.Join(p.Cfg.StaticRootPath, "testdata", fileName)
+	filePath := filepath.Join(s.cfg.StaticRootPath, "testdata", fileName)
 
 	// Can ignore gosec G304 here, because we check the file pattern above
 	// nolint:gosec
@@ -90,14 +90,15 @@ func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 
 	defer func() {
 		if err := fileReader.Close(); err != nil {
-			p.logger.Warn("Failed to close file", "err", err, "path", fileName)
+			s.logger.Warn("Failed to close file", "err", err, "path", fileName)
 		}
 	}()
 
-	return p.loadCsvContent(fileReader, fileName)
+	return LoadCsvContent(fileReader, fileName)
 }
 
-func (p *testDataPlugin) loadCsvContent(ioReader io.Reader, name string) (*data.Frame, error) {
+// LoadCsvContent should be moved to the SDK
+func LoadCsvContent(ioReader io.Reader, name string) (*data.Frame, error) {
 	reader := csv.NewReader(ioReader)
 
 	// Read the header records

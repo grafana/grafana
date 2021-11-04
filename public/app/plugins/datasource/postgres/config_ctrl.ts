@@ -87,6 +87,6 @@ export class PostgresConfigCtrl {
     { name: '9.6', value: 906 },
     { name: '10', value: 1000 },
     { name: '11', value: 1100 },
-    { name: '12', value: 1200 },
+    { name: '12+', value: 1200 },
   ];
 }

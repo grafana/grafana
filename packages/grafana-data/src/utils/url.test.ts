@@ -22,6 +22,14 @@ describe('toUrlParams', () => {
     });
     expect(url).toBe('server=:@');
   });
+
+  it('should keep booleans', () => {
+    const url = urlUtil.toUrlParams({
+      bool1: true,
+      bool2: false,
+    });
+    expect(url).toBe('bool1&bool2=false');
+  });
 });
 
 describe('parseKeyValue', () => {

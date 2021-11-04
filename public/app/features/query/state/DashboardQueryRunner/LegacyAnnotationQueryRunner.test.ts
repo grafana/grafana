@@ -20,7 +20,7 @@ function getTestContext(annotationQuery?: jest.Mock) {
   jest.clearAllMocks();
   const dispatchMock = jest.spyOn(store, 'dispatch');
   const options = getDefaultOptions(annotationQuery);
-  const annotationQueryMock = options.datasource.annotationQuery;
+  const annotationQueryMock = options.datasource!.annotationQuery;
 
   return { options, dispatchMock, annotationQueryMock };
 }
@@ -35,6 +35,14 @@ describe('LegacyAnnotationQueryRunner', () => {
       };
 
       expect(runner.canRun(datasource)).toBe(true);
+    });
+  });
+
+  describe('when canWork is called without datasource', () => {
+    it('then it should return false', () => {
+      const datasource: any = undefined;
+
+      expect(runner.canRun(datasource)).toBe(false);
     });
   });
 

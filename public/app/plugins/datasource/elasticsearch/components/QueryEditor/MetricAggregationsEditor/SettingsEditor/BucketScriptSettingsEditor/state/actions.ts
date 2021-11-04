@@ -1,34 +1,10 @@
-import {
-  ADD_PIPELINE_VARIABLE,
-  REMOVE_PIPELINE_VARIABLE,
-  PipelineVariablesAction,
-  RENAME_PIPELINE_VARIABLE,
-  CHANGE_PIPELINE_VARIABLE_METRIC,
-} from './types';
+import { createAction } from '@reduxjs/toolkit';
 
-export const addPipelineVariable = (): PipelineVariablesAction => ({
-  type: ADD_PIPELINE_VARIABLE,
-});
+export const addPipelineVariable = createAction('@pipelineVariables/add');
+export const removePipelineVariable = createAction<number>('@pipelineVariables/remove');
 
-export const removePipelineVariable = (index: number): PipelineVariablesAction => ({
-  type: REMOVE_PIPELINE_VARIABLE,
-  payload: {
-    index,
-  },
-});
+export const renamePipelineVariable = createAction<{ index: number; newName: string }>('@pipelineVariables/rename');
 
-export const renamePipelineVariable = (newName: string, index: number): PipelineVariablesAction => ({
-  type: RENAME_PIPELINE_VARIABLE,
-  payload: {
-    index,
-    newName,
-  },
-});
-
-export const changePipelineVariableMetric = (newMetric: string, index: number): PipelineVariablesAction => ({
-  type: CHANGE_PIPELINE_VARIABLE_METRIC,
-  payload: {
-    index,
-    newMetric,
-  },
-});
+export const changePipelineVariableMetric = createAction<{ index: number; newMetric: string }>(
+  '@pipelineVariables/change_metric'
+);

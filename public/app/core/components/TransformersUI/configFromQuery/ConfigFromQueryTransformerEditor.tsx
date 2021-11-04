@@ -51,12 +51,12 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     <>
       <InlineFieldRow>
         <InlineField label="Config query" labelWidth={20}>
-          <Select onChange={onRefIdChange} options={refIds} value={currentRefId} width={30} />
+          <Select menuShouldPortal onChange={onRefIdChange} options={refIds} value={currentRefId} width={30} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Apply to" labelWidth={20}>
-          <Select onChange={onMatcherChange} options={matchers} value={currentMatcher.id} width={30} />
+          <Select menuShouldPortal onChange={onMatcherChange} options={matchers} value={currentMatcher.id} width={30} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -91,10 +91,10 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
   description: configFromDataTransformer.description,
   state: PluginState.beta,
   help: `
-### Use cases 
+### Use cases
 
-This transformation allow you select one query and from it extract standard options like 
-**Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. 
+This transformation allows you select one query and from it extract standard options such as 
+**Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
 This enables dynamic query driven visualization configuration.
 
 ### Options
@@ -130,15 +130,14 @@ Output (Same as Input[0] but now with config on the Value field)
 | 1626178119127 | 10                      |
 | 1626178119129 | 30                      |
 
-As you can see each row in the source data becomes a separate field. Each field now also has a max 
-config option set. Options like min, max, unit and thresholds are all part of field configuration 
-and if set like this will be used by the visualization instead of any options manually configured 
+Each row in the source data becomes a separate field. Each field now also has a maximum
+configuration option set. Options such as **min**, **max**, **unit**, and **thresholds** are all part of field configuration, and if they are set like this, they will be used by the visualization instead of any options that are manually configured.
 in the panel editor options pane.
 
 ## Value mappings
 
-You can also transform a query result into value mappings. This is is a bit different as here every 
-row in the config query result will be used to define a single value mapping row. See example below. 
+You can also transform a query result into value mappings. This is is a bit different because every
+row in the configuration query result is used to define a single value mapping row. See the following example.
 
 Config query result:
 

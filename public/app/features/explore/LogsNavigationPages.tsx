@@ -1,7 +1,7 @@
 import React from 'react';
 import { css, cx } from 'emotion';
-import { dateTimeFormat, systemDateFormats, TimeZone, GrafanaTheme, AbsoluteTimeRange } from '@grafana/data';
-import { useTheme, stylesFactory, CustomScrollbar, Spinner } from '@grafana/ui';
+import { dateTimeFormat, systemDateFormats, TimeZone, AbsoluteTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { CustomScrollbar, Spinner, useTheme2 } from '@grafana/ui';
 import { LogsPage } from './LogsNavigation';
 
 type Props = {
@@ -37,7 +37,7 @@ export function LogsNavigationPages({
     return `${topContent} — ${bottomContent}`;
   };
 
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme, loading);
 
   return (
@@ -63,11 +63,11 @@ export function LogsNavigationPages({
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme, loading: boolean) => {
+const getStyles = (theme: GrafanaTheme2, loading: boolean) => {
   return {
     pagesWrapper: css`
       height: 100%;
-      padding-left: ${theme.spacing.xs};
+      padding-left: ${theme.spacing(0.5)};
       display: flex;
       flex-direction: column;
       overflow-y: scroll;
@@ -76,10 +76,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, loading: boolean) => {
         display: block;
         background: repeating-linear-gradient(
           135deg,
-          ${theme.colors.bg1},
-          ${theme.colors.bg1} 5px,
-          ${theme.colors.bg2} 5px,
-          ${theme.colors.bg2} 15px
+          ${theme.colors.background.primary},
+          ${theme.colors.background.primary} 5px,
+          ${theme.colors.background.secondary} 5px,
+          ${theme.colors.background.secondary} 15px
         );
         width: 3px;
         height: inherit;
@@ -93,29 +93,29 @@ const getStyles = stylesFactory((theme: GrafanaTheme, loading: boolean) => {
     `,
     page: css`
       display: flex;
-      margin: ${theme.spacing.md} 0;
+      margin: ${theme.spacing(2)} 0;
       cursor: ${loading ? 'auto' : 'pointer'};
       white-space: normal;
       .selectedBg {
-        background: ${theme.colors.bgBlue2};
+        background: ${theme.colors.primary.main};
       }
       .selectedText {
-        color: ${theme.colors.bgBlue2};
+        color: ${theme.colors.primary.main};
       }
     `,
     line: css`
       width: 3px;
       height: 100%;
       align-items: center;
-      background: ${theme.colors.textWeak};
+      background: ${theme.colors.text.secondary};
     `,
     time: css`
       width: 60px;
       min-height: 80px;
-      font-size: ${theme.typography.size.sm};
-      padding-left: ${theme.spacing.xs};
+      font-size: ${theme.v1.typography.size.sm};
+      padding-left: ${theme.spacing(0.5)};
       display: flex;
       align-items: center;
     `,
   };
-});
+};

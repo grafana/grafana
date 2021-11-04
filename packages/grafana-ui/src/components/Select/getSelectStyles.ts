@@ -27,6 +27,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
         background: ${theme.colors.action.hover};
       }
     `,
+    optionIcon: css`
+      margin-right: ${theme.spacing(1)};
+    `,
     optionImage: css`
       label: grafana-select-option-image;
       width: 16px;

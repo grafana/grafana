@@ -5,18 +5,19 @@ import (
 	"fmt"
 	"time"
 
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type alertRule struct {
-	OrgId           int64
+	OrgID           int64 `xorm:"org_id"`
 	Title           string
 	Condition       string
 	Data            []alertQuery
 	IntervalSeconds int64
 	Version         int64
-	Uid             string
-	NamespaceUid    string
+	UID             string `xorm:"uid"`
+	NamespaceUID    string `xorm:"namespace_uid"`
 	RuleGroup       string
 	NoDataState     string
 	ExecErrState    string
@@ -51,9 +52,9 @@ type alertRuleVersion struct {
 
 func (a *alertRule) makeVersion() *alertRuleVersion {
 	return &alertRuleVersion{
-		RuleOrgID:        a.OrgId,
-		RuleUID:          a.Uid,
-		RuleNamespaceUID: a.NamespaceUid,
+		RuleOrgID:        a.OrgID,
+		RuleUID:          a.UID,
+		RuleNamespaceUID: a.NamespaceUID,
 		RuleGroup:        a.RuleGroup,
 		ParentVersion:    0,
 		RestoredFrom:     0,
@@ -79,8 +80,8 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	}
 
 	annotations := make(map[string]string, 3)
-	annotations["__dashboardUid__"] = da.DashboardUID
-	annotations["__panelId__"] = fmt.Sprintf("%v", da.PanelId)
+	annotations[ngmodels.DashboardUIDAnnotation] = da.DashboardUID
+	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelId)
 	annotations["__alertId__"] = fmt.Sprintf("%v", da.Id)
 
 	return lbls, annotations
@@ -96,14 +97,14 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	annotations["message"] = da.Message
 
 	ar := &alertRule{
-		OrgId:           da.OrgId,
+		OrgID:           da.OrgId,
 		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
-		Uid:             util.GenerateShortUID(),
+		UID:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
 		Data:            cond.Data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
-		NamespaceUid:    folderUID, // Folder already created, comes from env var.
+		NamespaceUID:    folderUID, // Folder already created, comes from env var.
 		RuleGroup:       da.Name,
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
@@ -123,7 +124,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	}
 
 	// Label for routing and silences.
-	n, v := getLabelForRouteMatching(ar.Uid)
+	n, v := getLabelForRouteMatching(ar.UID)
 	ar.Labels[n] = v
 
 	if err := m.addSilence(da, ar); err != nil {

@@ -2,7 +2,6 @@ import {
   FieldType,
   getFieldColorModeForField,
   GrafanaTheme2,
-  MapLayerHandler,
   MapLayerOptions,
   MapLayerRegistryItem,
   PanelData,
@@ -12,9 +11,8 @@ import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { ScaleDimensionConfig, } from '../../dims/types';
-import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
-import { getScaledDimension } from '../../dims/scale';
+import { ScaleDimensionConfig, getScaledDimension } from 'app/features/dimensions';
+import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
 // Configuration options for Heatmap overlays
 export interface HeatmapConfig {
@@ -26,7 +24,7 @@ export interface HeatmapConfig {
 const defaultOptions: HeatmapConfig = {
   weight: {
     fixed: 1,
-    min: 0, 
+    min: 0,
     max: 1,
   },
   blur: 15,
@@ -47,9 +45,9 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<HeatmapConfig>, theme: GrafanaTheme2): MapLayerHandler => {
+  create: async (map: Map, options: MapLayerOptions<HeatmapConfig>, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
-    const matchers = getLocationMatchers(options.location);
+    const matchers = await getLocationMatchers(options.location);
 
     const vectorSource = new source.Vector();
 
@@ -76,10 +74,13 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
           vectorLayer.getSource().removeFeature(feature);
         });
 
+        if (!frame) {
+          return;
+        }
         // Get data points (latitude and longitude coordinates)
         const info = dataFrameToPoints(frame, matchers);
-        if(info.warning) {
-          console.log( 'WARN', info.warning);
+        if (info.warning) {
+          console.log('WARN', info.warning);
           return; // ???
         }
 
@@ -88,18 +89,18 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         // Map each data value into new points
         for (let i = 0; i < frame.length; i++) {
           const cluster = new Feature({
-              geometry: info.points[i],
-              value: weightDim.get(i),
+            geometry: info.points[i],
+            value: weightDim.get(i),
           });
           vectorSource.addFeature(cluster);
-        };
+        }
         vectorLayer.setSource(vectorSource);
 
         // Set heatmap gradient colors
         let colors = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'];
 
         // Either the configured field or the first numeric field value
-        const field = weightDim.field ?? frame.fields.find(field => field.type === FieldType.number);
+        const field = weightDim.field ?? frame.fields.find((field) => field.type === FieldType.number);
         if (field) {
           const colorMode = getFieldColorModeForField(field);
           if (colorMode.isContinuous && colorMode.getColors) {
@@ -109,50 +110,52 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         }
         vectorLayer.setGradient(colors);
       },
+
+      // Heatmap overlay options
+      registerOptionsUI: (builder) => {
+        builder
+          .addCustomEditor({
+            id: 'config.weight',
+            path: 'config.weight',
+            name: 'Weight values',
+            description: 'Scale the distribution for each row',
+            editor: ScaleDimensionEditor,
+            settings: {
+              min: 0, // no contribution
+              max: 1,
+              hideRange: true, // Don't show the scale factor
+            },
+            defaultValue: {
+              // Configured values
+              fixed: 1,
+              min: 0,
+              max: 1,
+            },
+          })
+          .addSliderInput({
+            path: 'config.radius',
+            description: 'configures the size of clusters',
+            name: 'Radius',
+            defaultValue: defaultOptions.radius,
+            settings: {
+              min: 1,
+              max: 50,
+              step: 1,
+            },
+          })
+          .addSliderInput({
+            path: 'config.blur',
+            description: 'configures the amount of blur of clusters',
+            name: 'Blur',
+            defaultValue: defaultOptions.blur,
+            settings: {
+              min: 1,
+              max: 50,
+              step: 1,
+            },
+          });
+      },
     };
-  },
-  // Heatmap overlay options
-  registerOptionsUI: (builder) => {
-    builder
-      .addCustomEditor({
-        id: 'config.weight',
-        path: 'config.weight',
-        name: 'Weight values',
-        description: 'Scale the distribution for each row',
-        editor: ScaleDimensionEditor,
-        settings: {
-          min: 0, // no contribution
-          max: 1,
-          hideRange: true, // Don't show the scale factor
-        },
-        defaultValue: { // Configured values
-          fixed: 1,
-          min: 0,
-          max: 1,
-        },
-      })
-      .addSliderInput({
-        path: 'config.radius',
-        description: 'configures the size of clusters',
-        name: 'Radius',
-        defaultValue: defaultOptions.radius,
-        settings: {
-            min: 1,
-            max: 50,
-            step: 1,
-        },
-      })
-      .addSliderInput({
-        path: 'config.blur',
-        description: 'configures the amount of blur of clusters',
-        name: 'Blur',
-        defaultValue: defaultOptions.blur,
-        settings: {
-          min: 1,
-          max: 50,
-          step: 1,
-        },
-      });
   },
   // fill in the default values
   defaultOptions,

@@ -1,11 +1,18 @@
 import React from 'react';
-import { DataSourceApi, LoadingState, toUtc, DataQueryError, DataQueryRequest, CoreApp } from '@grafana/data';
+import {
+  DataSourceApi,
+  LoadingState,
+  toUtc,
+  DataQueryError,
+  DataQueryRequest,
+  CoreApp,
+  createTheme,
+} from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
 import { shallow } from 'enzyme';
 import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
 import { SecondaryActions } from './SecondaryActions';
-import { getTheme } from '@grafana/ui';
 
 const dummyProps: Props = {
   logsResult: undefined,
@@ -69,13 +76,17 @@ const dummyProps: Props = {
     },
   },
   addQueryRow: jest.fn(),
-  theme: getTheme(),
+  theme: createTheme(),
   showMetrics: true,
   showLogs: true,
   showTable: true,
   showTrace: true,
   showNodeGraph: true,
   splitOpen: (() => {}) as any,
+  logsVolumeData: undefined,
+  loadLogsVolumeData: () => {},
+  changeGraphStyle: () => {},
+  graphStyle: 'lines',
 };
 
 describe('Explore', () => {

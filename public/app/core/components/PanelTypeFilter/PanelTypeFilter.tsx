@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { getAllPanelPluginMeta } from '../../../features/dashboard/components/VizTypePicker/VizTypePicker';
+import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 import { Icon, resetSelectStyles, MultiSelect, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
@@ -56,7 +56,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
           Clear types
         </span>
       )}
-      <MultiSelect {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
+      <MultiSelect menuShouldPortal {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
     </div>
   );
 };

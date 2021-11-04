@@ -7,8 +7,8 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
-import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder, usePlotContext } from '@grafana/ui';
-import React, { useCallback } from 'react';
+import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder } from '@grafana/ui';
+import React, { useCallback, useLayoutEffect, useRef } from 'react';
 import { ExemplarMarker } from './ExemplarMarker';
 
 interface ExemplarsPluginProps {
@@ -19,42 +19,44 @@ interface ExemplarsPluginProps {
 }
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone, getFieldLinks, config }) => {
-  const plotCtx = usePlotContext();
+  const plotInstance = useRef<uPlot>();
 
-  const mapExemplarToXYCoords = useCallback(
-    (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
-      const plotInstance = plotCtx.plot;
-      const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
-      const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
+  useLayoutEffect(() => {
+    config.addHook('init', (u) => {
+      plotInstance.current = u;
+    });
+  }, [config]);
 
-      if (!time || !value || !plotInstance) {
-        return undefined;
-      }
+  const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+    const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
+    const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
 
-      // Filter x, y scales out
-      const yScale =
-        Object.keys(plotInstance.scales).find((scale) => !['x', 'y'].some((key) => key === scale)) ?? FIXED_UNIT;
+    if (!time || !value || !plotInstance.current) {
+      return undefined;
+    }
 
-      const yMin = plotInstance.scales[yScale].min;
-      const yMax = plotInstance.scales[yScale].max;
+    // Filter x, y scales out
+    const yScale =
+      Object.keys(plotInstance.current.scales).find((scale) => !['x', 'y'].some((key) => key === scale)) ?? FIXED_UNIT;
 
-      let y = value.values.get(dataFrameFieldIndex.fieldIndex);
-      // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
-      if (yMin != null && y < yMin) {
-        y = yMin;
-      }
+    const yMin = plotInstance.current.scales[yScale].min;
+    const yMax = plotInstance.current.scales[yScale].max;
 
-      if (yMax != null && y > yMax) {
-        y = yMax;
-      }
+    let y = value.values.get(dataFrameFieldIndex.fieldIndex);
+    // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
+    if (yMin != null && y < yMin) {
+      y = yMin;
+    }
 
-      return {
-        x: plotInstance.valToPos(time.values.get(dataFrameFieldIndex.fieldIndex), 'x'),
-        y: plotInstance.valToPos(y, yScale),
-      };
-    },
-    [plotCtx]
-  );
+    if (yMax != null && y > yMax) {
+      y = yMax;
+    }
+
+    return {
+      x: plotInstance.current.valToPos(time.values.get(dataFrameFieldIndex.fieldIndex), 'x'),
+      y: plotInstance.current.valToPos(y, yScale),
+    };
+  }, []);
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {

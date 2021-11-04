@@ -86,6 +86,14 @@ type PathRouleGroupConfig struct {
 	Groupname string
 }
 
+// swagger:parameters RouteGetRulesConfig
+type PathGetRulesParams struct {
+	// in: query
+	DashboardUID string
+	// in: query
+	PanelID int64
+}
+
 // swagger:model
 type RuleGroupConfigResponse struct {
 	GettableRuleGroupConfig

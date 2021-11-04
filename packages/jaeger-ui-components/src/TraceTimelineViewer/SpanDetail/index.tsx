@@ -24,14 +24,13 @@ import { formatDuration } from '../utils';
 import CopyIcon from '../../common/CopyIcon';
 import LabeledList from '../../common/LabeledList';
 
-import { TNil } from '../../types';
+import { SpanLinkFunc, TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/trace';
 import AccordianReferences from './AccordianReferences';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
 import { ubFlex, ubFlexAuto, ubItemsCenter, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
 import { DataLinkButton, TextArea } from '@grafana/ui';
-import { CreateSpanLink } from '../types';
 
 const getStyles = createStyle((theme: Theme) => {
   return {
@@ -116,7 +115,7 @@ type SpanDetailProps = {
   stackTracesToggle: (spanID: string) => void;
   referencesToggle: (spanID: string) => void;
   focusSpan: (uiFind: string) => void;
-  createSpanLink?: CreateSpanLink;
+  createSpanLink?: SpanLinkFunc;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -255,7 +254,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             onToggle={() => stackTracesToggle(spanID)}
           />
         )}
-        {references && references.length > 1 && (
+        {references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF') && (
           <AccordianReferences
             data={references}
             isOpen={isReferencesOpen}

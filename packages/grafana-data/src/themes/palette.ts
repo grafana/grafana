@@ -34,11 +34,11 @@ export const palette = {
   orangeDarkText: '#F8D06B',
 
   blueLightMain: '#3871DC',
-  blueLightText: '#0465d7', // '#1F62E0',
+  blueLightText: '#1F62E0',
   redLightMain: '#E0226E',
   redLightText: '#CF0E5B',
-  greenLightMain: '#1A7F4B',
-  greenLightText: '#1A7F4B',
-  orangeLightMain: '#E56F00',
-  orangeLightText: '#BD4B00',
+  greenLightMain: '#1B855E',
+  greenLightText: '#0A764E',
+  orangeLightMain: '#FAD34A',
+  orangeLightText: '#8A6C00',
 };

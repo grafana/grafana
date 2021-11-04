@@ -33,7 +33,9 @@ export const SearchResults: FC<Props> = memo(
           {results.map((section) => {
             return (
               <div aria-label={sectionLabel} className={styles.section} key={section.id || section.title}>
-                <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+                {section.title && (
+                  <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+                )}
                 {section.expanded && (
                   <div aria-label={itemsLabel} className={styles.sectionItems}>
                     {section.items.map((item) => (
@@ -67,9 +69,9 @@ export const SearchResults: FC<Props> = memo(
                   // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
                   // And without this wrapper there is no room for that margin
                   return (
-                    <div style={style}>
+                    <li style={style}>
                       <SearchItem key={item.id} {...itemProps} item={item} />
-                    </div>
+                    </li>
                   );
                 }}
               </FixedSizeList>

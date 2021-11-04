@@ -12,6 +12,7 @@ import {
   AzureDataSourceJsonData,
   AzureGraphResponse,
   AzureMonitorQuery,
+  AzureResourceGraphOptions,
   AzureResourceSummaryItem,
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
@@ -54,9 +55,27 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         | order by subscriptionURI asc
     `;
 
-    const response = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query);
+    let resources: RawAzureResourceGroupItem[] = [];
+    let allFetched = false;
+    let $skipToken = undefined;
+    while (!allFetched) {
+      // The response may include several pages
+      let options: Partial<AzureResourceGraphOptions> = {};
+      if ($skipToken) {
+        options = {
+          $skipToken,
+        };
+      }
+      const resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query, 1, options);
+      if (!resourceResponse.data.length) {
+        throw new Error('unable to fetch resource details');
+      }
+      resources = resources.concat(resourceResponse.data);
+      $skipToken = resourceResponse.$skipToken;
+      allFetched = !$skipToken;
+    }
 
-    return formatResourceGroupData(response.data);
+    return formatResourceGroupData(resources);
   }
 
   async getResourcesForResourceGroup(resourceGroup: ResourceRow) {
@@ -126,12 +145,17 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     return response[0].id;
   }
 
-  async makeResourceGraphRequest<T = unknown>(query: string, maxRetries = 1): Promise<AzureGraphResponse<T>> {
+  async makeResourceGraphRequest<T = unknown>(
+    query: string,
+    maxRetries = 1,
+    reqOptions?: Partial<AzureResourceGraphOptions>
+  ): Promise<AzureGraphResponse<T>> {
     try {
       return await this.postResource(this.resourcePath + RESOURCE_GRAPH_URL, {
         query: query,
         options: {
           resultFormat: 'objectArray',
+          ...reqOptions,
         },
       });
     } catch (error) {

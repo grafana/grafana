@@ -24,11 +24,13 @@ export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker, TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
+export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
 export { DatePicker, DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
 export {
   DatePickerWithInput,
   DatePickerWithInputProps,
 } from './DateTimePickers/DatePickerWithInput/DatePickerWithInput';
+export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
@@ -40,8 +42,18 @@ export { ConfirmModal, ConfirmModalProps } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Code editor
-export { CodeEditor } from './Monaco/CodeEditorLazy';
-export { Monaco, MonacoEditor, CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
+export { CodeEditor } from './Monaco/CodeEditor';
+
+export { ReactMonacoEditorLazy as ReactMonacoEditor } from './Monaco/ReactMonacoEditorLazy';
+
+export {
+  Monaco,
+  monacoTypes,
+  MonacoEditor,
+  MonacoOptions as CodeEditorMonacoOptions,
+  CodeEditorSuggestionItem,
+  CodeEditorSuggestionItemKind,
+} from './Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
 
 // TODO: namespace
@@ -81,8 +93,6 @@ export {
   VizTooltip,
   VizTooltipContainer,
   SeriesTable,
-  VizTooltipOptions,
-  TooltipDisplayMode,
   SeriesTableProps,
   SeriesTableRow,
   SeriesTableRowProps,
@@ -105,7 +115,6 @@ export {
 } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
 export { VizLegendItem, SeriesVisibilityChangeBehavior } from './VizLegend/types';
-export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
 export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
@@ -152,7 +161,7 @@ export { CertificationKey } from './DataSourceSettings/CertificationKey';
 export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
-export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
+export { Segment, SegmentAsync, SegmentInput, SegmentSelect, SegmentSection } from './Segment/';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 export { RangeSlider } from './Slider/RangeSlider';
@@ -194,6 +203,7 @@ export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';
+export { FilterInput } from './FilterInput/FilterInput';
 export { FormInputSize } from './Forms/types';
 
 export { Switch, InlineSwitch } from './Switch/Switch';
@@ -201,6 +211,7 @@ export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
+export * from './FileDropzone';
 export { TimeRangeInput } from './DateTimePickers/TimeRangeInput';
 export { RelativeTimeRangePicker } from './DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
 export { Card, Props as CardProps, getCardStyles } from './Card/Card';
@@ -239,14 +250,15 @@ export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
 export * from './uPlot/config';
-export { ScaleDistribution } from './uPlot/models.gen';
-export { UPlotConfigBuilder, UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
+export { ScaleDistribution } from '@grafana/schema';
+export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
+export { UPLOT_AXIS_FONT_SIZE } from './uPlot/config/UPlotAxisBuilder';
 export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
-export { usePlotContext } from './uPlot/context';
 export { PlotTooltipInterpolator, PlotSelection } from './uPlot/types';
+export { UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
 export { GraphNG, GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
 export { TimeSeries } from './TimeSeries/TimeSeries';
 export { useGraphNGContext } from './GraphNG/hooks';
@@ -254,3 +266,4 @@ export { preparePlotFrame } from './GraphNG/utils';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
+export { Label as BrowserLabel } from './BrowserLabel/Label';

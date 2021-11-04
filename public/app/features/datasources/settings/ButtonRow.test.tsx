@@ -2,12 +2,21 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import ButtonRow, { Props } from './ButtonRow';
 
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+    },
+  };
+});
+
 const setup = (propOverrides?: object) => {
   const props: Props = {
     isReadOnly: true,
     onSubmit: jest.fn(),
     onDelete: jest.fn(),
     onTest: jest.fn(),
+    exploreUrl: '/explore',
   };
 
   Object.assign(props, propOverrides);

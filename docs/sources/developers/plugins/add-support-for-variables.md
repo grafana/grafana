@@ -30,10 +30,10 @@ Add `replaceVariables` to the argument list, and pass it a user-defined template
 
 ```ts
 export const SimplePanel: React.FC<Props> = ({ options, data, width, height, replaceVariables }) => {
-  const query = replaceVariables('Now displaying $service')
+  const query = replaceVariables('Now displaying $service');
 
-  return <div>{ query }</div>
-}
+  return <div>{query}</div>;
+};
 ```
 
 ## Interpolate variables in data source plugins
@@ -67,7 +67,7 @@ A data source can define the default format option when no format is specified b
 Let's change the SQL query to use CSV format by default:
 
 ```ts
-getTemplateSrv().replace('SELECT * FROM services WHERE id IN ($service)', options.scopedVars, "csv");
+getTemplateSrv().replace('SELECT * FROM services WHERE id IN ($service)', options.scopedVars, 'csv');
 ```
 
 Now, when users write `$service`, the query looks like this:
@@ -177,7 +177,13 @@ Let's create a custom query editor to allow the user to edit the query model.
          </div>
          <div className="gf-form">
            <span className="gf-form-label width-10">Query</span>
-           <input name="rawQuery" className="gf-form-input" onBlur={saveQuery} onChange={handleChange} value={state.rawQuery} />
+           <input
+             name="rawQuery"
+             className="gf-form-input"
+             onBlur={saveQuery}
+             onChange={handleChange}
+             value={state.rawQuery}
+           />
          </div>
        </>
      );

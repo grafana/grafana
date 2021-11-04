@@ -44,15 +44,17 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
   const { moduleNameMapper, ...otherOverrides } = jestConfigOverrides;
   const moduleNameMapperConfig = {
     '\\.(css|sass|scss)$': `${__dirname}/styles.mock.js`,
+    'react-inlinesvg': `${__dirname}/react-inlinesvg.tsx`,
     ...moduleNameMapper,
   };
 
   const setupFile = getSetupFile(setupFilePath);
   const shimsFile = getSetupFile(shimsFilePath);
 
-  const setupFiles = [setupFile, shimsFile, 'jest-canvas-mock'].filter((f) => f);
+  const setupFiles = [setupFile, shimsFile, `${__dirname}/matchMedia.js`, require.resolve('jest-canvas-mock')].filter(
+    (f) => f
+  );
   const defaultJestConfig = {
-    preset: 'ts-jest',
     verbose: false,
     moduleDirectories: ['node_modules', 'src'],
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
@@ -60,7 +62,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     globals: {
       'ts-jest': {
         isolatedModules: true,
-        tsConfig: path.resolve(baseDir, 'tsconfig.json'),
+        tsconfig: path.resolve(baseDir, 'tsconfig.json'),
       },
     },
     coverageReporters: ['json-summary', 'text', 'lcov'],
@@ -68,13 +70,13 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     reporters: [
       'default',
       [
-        'jest-junit',
+        require.resolve('jest-junit'),
         {
           outputDirectory: 'coverage',
         },
       ],
     ],
-    testEnvironment: 'jest-environment-jsdom-fifteen',
+    testEnvironment: require.resolve('jest-environment-jsdom-fifteen'),
     testMatch: [
       '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
       '<rootDir>/src/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
@@ -82,6 +84,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     ],
     transform: {
       '^.+\\.js$': 'babel-jest',
+      '^.+\\.tsx?$': require.resolve('ts-jest'),
     },
     transformIgnorePatterns: [
       '[/\\\\\\\\]node_modules[/\\\\\\\\].+\\\\.(js|jsx|ts|tsx)$',

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { take } from 'lodash';
 
 import { InterpolateFunction, PanelProps } from '@grafana/data';
-import { CustomScrollbar, Icon, useStyles } from '@grafana/ui';
+import { CustomScrollbar, Icon, useStyles2 } from '@grafana/ui';
 
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -123,7 +123,7 @@ export function DashList(props: PanelProps<DashListOptions>) {
     },
   ];
 
-  const css = useStyles(getStyles);
+  const css = useStyles2(getStyles);
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       {dashboardGroups.map(

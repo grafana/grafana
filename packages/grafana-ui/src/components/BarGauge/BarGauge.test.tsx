@@ -4,6 +4,7 @@ import {
   DisplayValue,
   VizOrientation,
   ThresholdsMode,
+  FALLBACK_COLOR,
   Field,
   FieldType,
   getDisplayProcessor,
@@ -12,6 +13,7 @@ import {
 import {
   BarGauge,
   Props,
+  getCellColor,
   getValueColor,
   getBasicAndGradientStyles,
   getBarGradient,
@@ -74,6 +76,69 @@ function getValue(value: number, title?: string): DisplayValue {
 }
 
 describe('BarGauge', () => {
+  describe('getCellColor', () => {
+    it('returns a fallback if the positionValue is null', () => {
+      const props = getProps();
+      expect(getCellColor(null, props.value, props.display)).toEqual({
+        background: FALLBACK_COLOR,
+        border: FALLBACK_COLOR,
+      });
+    });
+
+    it('does not show as lit if the value is null (somehow)', () => {
+      const props = getProps();
+      expect(getCellColor(1, (null as unknown) as DisplayValue, props.display)).toEqual(
+        expect.objectContaining({
+          isLit: false,
+        })
+      );
+    });
+
+    it('does not show as lit if the numeric value is NaN', () => {
+      const props = getProps();
+      expect(
+        getCellColor(
+          1,
+          {
+            numeric: NaN,
+            text: '0',
+          },
+          props.display
+        )
+      ).toEqual(
+        expect.objectContaining({
+          isLit: false,
+        })
+      );
+    });
+
+    it('does not show as lit if the positionValue is greater than the numeric value', () => {
+      const props = getProps();
+      expect(getCellColor(75, props.value, props.display)).toEqual(
+        expect.objectContaining({
+          isLit: false,
+        })
+      );
+    });
+
+    it('shows as lit otherwise', () => {
+      const props = getProps();
+      expect(getCellColor(1, props.value, props.display)).toEqual(
+        expect.objectContaining({
+          isLit: true,
+        })
+      );
+    });
+
+    it('returns a fallback if there is no display processor', () => {
+      const props = getProps();
+      expect(getCellColor(null, props.value, undefined)).toEqual({
+        background: FALLBACK_COLOR,
+        border: FALLBACK_COLOR,
+      });
+    });
+  });
+
   describe('Get value color', () => {
     it('should get the threshold color if value is same as a threshold', () => {
       const props = getProps();

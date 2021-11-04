@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { cx, css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { getPanelLinksSupplier } from 'app/angular/panel/panellinks/linkSuppliers';
 import { PanelHeaderNotices } from './PanelHeaderNotices';
 import { PanelHeaderMenuTrigger } from './PanelHeaderMenuTrigger';
 import { PanelHeaderLoadingIndicator } from './PanelHeaderLoadingIndicator';
@@ -35,21 +35,20 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
   return (
     <>
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} />
+      <PanelHeaderCorner
+        panel={panel}
+        title={panel.title}
+        description={panel.description}
+        scopedVars={panel.scopedVars}
+        links={getPanelLinksSupplier(panel)}
+        error={error}
+      />
       <div className={className}>
-        <PanelHeaderCorner
-          panel={panel}
-          title={panel.title}
-          description={panel.description}
-          scopedVars={panel.scopedVars}
-          links={getPanelLinksSupplier(panel)}
-          error={error}
-        />
-        <PanelHeaderMenuTrigger aria-label={selectors.components.Panels.Panel.title(title)}>
+        <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
           {({ closeMenu, panelMenuOpen }) => {
             return (
               <div className="panel-title">
                 <PanelHeaderNotices frames={data.series} panelId={panel.id} />
-                {panel.libraryPanel && <Icon name="library-panel" style={{ marginRight: '4px' }} />}
                 {alertState ? (
                   <Icon
                     name={alertState === 'alerting' ? 'heart-break' : 'heart'}

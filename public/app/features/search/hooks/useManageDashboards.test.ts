@@ -53,12 +53,83 @@ describe('useManageDashboards', () => {
   });
 
   describe('when called and General folder and another folder are selected', () => {
-    it('then canDelete should be true', () => {
+    it('then canDelete should be false', () => {
       const results: DashboardSection[] = [
-        { id: 1, checked: true, items: [], title: 'One', type: DashboardSearchItemType.DashFolder, toggle, url: '/' },
+        {
+          id: 1,
+          checked: true,
+          items: [
+            {
+              id: 11,
+              checked: true,
+              title: 'Eleven',
+              type: DashboardSearchItemType.DashDB,
+              url: '/',
+              isStarred: false,
+              tags: [],
+              uri: '',
+            },
+          ],
+          title: 'One',
+          type: DashboardSearchItemType.DashFolder,
+          toggle,
+          url: '/',
+        },
         {
           id: GENERAL_FOLDER_ID,
           checked: true,
+          items: [
+            {
+              id: 10,
+              checked: true,
+              title: 'Ten',
+              type: DashboardSearchItemType.DashDB,
+              url: '/',
+              isStarred: false,
+              tags: [],
+              uri: '',
+            },
+          ],
+          title: 'General',
+          type: DashboardSearchItemType.DashFolder,
+          toggle,
+          url: '/',
+        },
+        { id: 2, checked: false, items: [], title: 'Two', type: DashboardSearchItemType.DashFolder, toggle, url: '/' },
+      ];
+
+      const { result } = setupTestContext({ results });
+
+      expect(result.current.canDelete).toBe(false);
+    });
+  });
+
+  describe('when called on an empty General folder that is not selected but another folder is selected', () => {
+    it('then canDelete should be true', () => {
+      const results: DashboardSection[] = [
+        {
+          id: 1,
+          checked: true,
+          items: [
+            {
+              id: 11,
+              checked: true,
+              title: 'Eleven',
+              type: DashboardSearchItemType.DashDB,
+              url: '/',
+              isStarred: false,
+              tags: [],
+              uri: '',
+            },
+          ],
+          title: 'One',
+          type: DashboardSearchItemType.DashFolder,
+          toggle,
+          url: '/',
+        },
+        {
+          id: GENERAL_FOLDER_ID,
+          checked: false,
           items: [],
           title: 'General',
           type: DashboardSearchItemType.DashFolder,
@@ -66,6 +137,37 @@ describe('useManageDashboards', () => {
           url: '/',
         },
         { id: 2, checked: false, items: [], title: 'Two', type: DashboardSearchItemType.DashFolder, toggle, url: '/' },
+      ];
+
+      const { result } = setupTestContext({ results });
+
+      expect(result.current.canDelete).toBe(true);
+    });
+  });
+
+  describe('when called on a non empty General folder that is not selected dashboard in General folder is selected', () => {
+    it('then canDelete should be true', () => {
+      const results: DashboardSection[] = [
+        {
+          id: GENERAL_FOLDER_ID,
+          checked: false,
+          items: [
+            {
+              id: 10,
+              checked: true,
+              title: 'Ten',
+              type: DashboardSearchItemType.DashDB,
+              url: '/',
+              isStarred: false,
+              tags: [],
+              uri: '',
+            },
+          ],
+          title: 'General',
+          type: DashboardSearchItemType.DashFolder,
+          toggle,
+          url: '/',
+        },
       ];
 
       const { result } = setupTestContext({ results });

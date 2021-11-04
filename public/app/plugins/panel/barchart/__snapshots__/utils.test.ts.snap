@@ -12,6 +12,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -37,6 +38,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -63,6 +65,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -81,6 +84,8 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -103,8 +108,11 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
     Object {
+      "value": [Function],
+    },
+    Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -113,11 +121,12 @@ Object {
         "size": undefined,
         "stroke": "#808080",
       },
-      "pxAlign": false,
+      "pxAlign": true,
       "scale": "m/s",
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -137,6 +146,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -162,6 +172,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -188,6 +199,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -206,6 +218,8 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -228,8 +242,11 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
     Object {
+      "value": [Function],
+    },
+    Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -238,11 +255,12 @@ Object {
         "size": undefined,
         "stroke": "#808080",
       },
-      "pxAlign": false,
+      "pxAlign": true,
       "scale": "m/s",
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -262,6 +280,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 2,
@@ -287,6 +306,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 3,
@@ -313,6 +333,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -331,6 +352,8 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -353,8 +376,11 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
     Object {
+      "value": [Function],
+    },
+    Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -363,11 +389,12 @@ Object {
         "size": undefined,
         "stroke": "#808080",
       },
-      "pxAlign": false,
+      "pxAlign": true,
       "scale": "m/s",
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -387,6 +414,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -412,6 +440,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -438,6 +467,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -456,6 +486,8 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -478,8 +510,11 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
     Object {
+      "value": [Function],
+    },
+    Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -488,11 +523,12 @@ Object {
         "size": undefined,
         "stroke": "#808080",
       },
-      "pxAlign": false,
+      "pxAlign": true,
       "scale": "m/s",
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -512,6 +548,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -537,6 +574,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -563,6 +601,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -581,6 +620,8 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -603,8 +644,11 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
     Object {
+      "value": [Function],
+    },
+    Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -613,11 +657,12 @@ Object {
         "size": undefined,
         "stroke": "#808080",
       },
-      "pxAlign": false,
+      "pxAlign": true,
       "scale": "m/s",
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -637,6 +682,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -662,6 +708,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -688,6 +735,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -706,6 +754,8 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -728,8 +778,11 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
     Object {
+      "value": [Function],
+    },
+    Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -738,11 +791,12 @@ Object {
         "size": undefined,
         "stroke": "#808080",
       },
-      "pxAlign": false,
+      "pxAlign": true,
       "scale": "m/s",
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -762,6 +816,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -787,6 +842,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -813,6 +869,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -831,6 +888,8 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -853,8 +912,11 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
     Object {
+      "value": [Function],
+    },
+    Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -863,11 +925,12 @@ Object {
         "size": undefined,
         "stroke": "#808080",
       },
-      "pxAlign": false,
+      "pxAlign": true,
       "scale": "m/s",
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -887,6 +950,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -912,6 +976,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -938,6 +1003,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -956,6 +1022,8 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -978,8 +1046,11 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
     Object {
+      "value": [Function],
+    },
+    Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -988,11 +1059,12 @@ Object {
         "size": undefined,
         "stroke": "#808080",
       },
-      "pxAlign": false,
+      "pxAlign": true,
       "scale": "m/s",
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],

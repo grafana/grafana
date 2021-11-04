@@ -9,7 +9,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotation } from '../../utils/constants';
 import { RuleState } from './RuleState';
 import { RuleHealth } from './RuleHealth';
-import { DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 
 type RuleTableColumnProps = DynamicTableColumnProps<CombinedRule>;
@@ -57,9 +57,11 @@ export const RulesTable: FC<Props> = ({
     return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
   }
 
+  const TableComponent = showGuidelines ? DynamicTableWithGuidelines : DynamicTable;
+
   return (
     <div className={wrapperClass} data-testid="rules-table">
-      <DynamicTableWithGuidelines
+      <TableComponent
         cols={columns}
         isExpandable={true}
         items={items}
@@ -82,30 +84,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     width: auto;
     background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius()};
-  `,
-  table: css`
-    width: 100%;
-    border-radius: ${theme.shape.borderRadius()};
-    border: solid 1px ${theme.colors.border.weak};
-    background-color: ${theme.colors.background.secondary};
-
-    th {
-      padding: ${theme.spacing(1)};
-    }
-
-    td + td {
-      padding: ${theme.spacing(0, 1)};
-    }
-
-    tr {
-      height: 38px;
-    }
-  `,
-  evenRow: css`
-    background-color: ${theme.colors.background.primary};
-  `,
-  state: css`
-    width: 110px;
   `,
 });
 

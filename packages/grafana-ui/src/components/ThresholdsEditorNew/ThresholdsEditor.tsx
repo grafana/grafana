@@ -59,7 +59,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
       nextValue = steps[steps.length - 1].value + 10;
     }
 
-    const color = colors.filter((c) => !steps.some((t) => t.color === c))[1];
+    let color = colors.filter((c) => !steps.some((t) => t.color === c))[1];
+    if (!color) {
+      // Default color when all colors are used
+      color = '#CCCCCC';
+    }
 
     const add = {
       value: nextValue,
@@ -147,22 +151,22 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles, idx: number) {
     const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
 
+    const ariaLabel = `Threshold ${idx + 1}`;
     if (!isFinite(threshold.value)) {
       return (
         <Input
           type="text"
           value={'Base'}
+          aria-label={ariaLabel}
           disabled
           prefix={
-            threshold.color && (
-              <div className={styles.colorPicker}>
-                <ColorPicker
-                  color={threshold.color}
-                  onChange={(color) => this.onChangeThresholdColor(threshold, color)}
-                  enableNamedColors={true}
-                />
-              </div>
-            )
+            <div className={styles.colorPicker}>
+              <ColorPicker
+                color={threshold.color}
+                onChange={(color) => this.onChangeThresholdColor(threshold, color)}
+                enableNamedColors={true}
+              />
+            </div>
           }
         />
       );
@@ -175,19 +179,18 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
         value={threshold.value}
+        aria-label={ariaLabel}
         ref={idx === 0 ? this.latestThresholdInputRef : null}
         onBlur={this.onBlur}
         prefix={
           <div className={styles.inputPrefix}>
-            {threshold.color && (
-              <div className={styles.colorPicker}>
-                <ColorPicker
-                  color={threshold.color}
-                  onChange={(color) => this.onChangeThresholdColor(threshold, color)}
-                  enableNamedColors={true}
-                />
-              </div>
-            )}
+            <div className={styles.colorPicker}>
+              <ColorPicker
+                color={threshold.color}
+                onChange={(color) => this.onChangeThresholdColor(threshold, color)}
+                enableNamedColors={true}
+              />
+            </div>
             {isPercent && <div className={styles.percentIcon}>%</div>}
           </div>
         }

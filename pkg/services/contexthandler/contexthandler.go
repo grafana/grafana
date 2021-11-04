@@ -15,17 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	ol "github.com/opentracing/opentracing-go/log"
-	cw "github.com/weaveworks/common/middleware"
-	"gopkg.in/macaron.v1"
+	cw "github.com/weaveworks/common/tracing"
 )
 
 const (
@@ -35,35 +34,44 @@ const (
 
 const ServiceName = "ContextHandler"
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     &ContextHandler{},
-		InitPriority: registry.High,
-	})
+func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
+	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore) *ContextHandler {
+	return &ContextHandler{
+		Cfg:              cfg,
+		AuthTokenService: tokenService,
+		JWTAuthService:   jwtService,
+		RemoteCache:      remoteCache,
+		RenderService:    renderService,
+		SQLStore:         sqlStore,
+	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg              *setting.Cfg             `inject:""`
-	AuthTokenService models.UserTokenService  `inject:""`
-	JWTAuthService   models.JWTService        `inject:""`
-	RemoteCache      *remotecache.RemoteCache `inject:""`
-	RenderService    rendering.Service        `inject:""`
-	SQLStore         *sqlstore.SQLStore       `inject:""`
+	Cfg              *setting.Cfg
+	AuthTokenService models.UserTokenService
+	JWTAuthService   models.JWTService
+	RemoteCache      *remotecache.RemoteCache
+	RenderService    rendering.Service
+	SQLStore         *sqlstore.SQLStore
 
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
 }
 
-// Init initializes the service.
-func (h *ContextHandler) Init() error {
+type reqContextKey struct{}
+
+// FromContext returns the ReqContext value stored in a context.Context, if any.
+func FromContext(c context.Context) *models.ReqContext {
+	if reqCtx, ok := c.Value(reqContextKey{}).(*models.ReqContext); ok {
+		return reqCtx
+	}
 	return nil
 }
 
 // Middleware provides a middleware to initialize the Macaron context.
-func (h *ContextHandler) Middleware(mContext *macaron.Context) {
+func (h *ContextHandler) Middleware(mContext *web.Context) {
 	span, _ := opentracing.StartSpanFromContext(mContext.Req.Context(), "Auth - Middleware")
 	defer span.Finish()
 
@@ -76,7 +84,11 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 		Logger:         log.New("context"),
 	}
 
-	traceID, exists := cw.ExtractTraceID(mContext.Req.Request.Context())
+	// Inject ReqContext into a request context and replace the request instance in the macaron context
+	mContext.Req = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
+	mContext.Map(mContext.Req)
+
+	traceID, exists := cw.ExtractTraceID(mContext.Req.Context())
 	if exists {
 		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 	}
@@ -109,7 +121,6 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	}
 
 	reqContext.Logger = log.New("context", "userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
-	reqContext.Data["ctx"] = reqContext
 
 	span.LogFields(
 		ol.String("uname", reqContext.Login),
@@ -121,7 +132,7 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
 		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
-		if err := bus.Dispatch(&models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
+		if err := bus.DispatchCtx(mContext.Req.Context(), &models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
 			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
@@ -137,7 +148,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 
 	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
 	if err != nil {
-		log.Errorf(3, "Anonymous access organization error: '%s': %s", h.Cfg.AnonymousOrgName, err)
+		log.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
 	}
 
@@ -207,11 +218,33 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
+	if apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
+		//Use the old APIkey method.  This provides backwards compatibility.
+		reqContext.SignedInUser = &models.SignedInUser{}
+		reqContext.OrgRole = apikey.Role
+		reqContext.ApiKeyId = apikey.Id
+		reqContext.OrgId = apikey.OrgId
+		reqContext.IsSignedIn = true
+		return true
+	}
+
+	//There is a service account attached to the API key
+
+	//Use service account linked to API key as the signed in user
+	query := models.GetSignedInUserQuery{UserId: apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	if err := bus.Dispatch(&query); err != nil {
+		reqContext.Logger.Error(
+			"Failed to link API key to service account in",
+			"id", query.UserId,
+			"org", query.OrgId,
+			"err", err,
+		)
+		reqContext.JsonApiErr(500, "Unable to link API key to service account", err)
+		return true
+	}
+
 	reqContext.IsSignedIn = true
-	reqContext.SignedInUser = &models.SignedInUser{}
-	reqContext.OrgRole = apikey.Role
-	reqContext.ApiKeyId = apikey.Id
-	reqContext.OrgId = apikey.OrgId
+	reqContext.SignedInUser = query.Result
 	return true
 }
 
@@ -287,7 +320,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
 		reqContext.Logger.Error("Failed to look up user based on cookie", "error", err)
-		reqContext.Data["lookupTokenErr"] = err
+		reqContext.LookupTokenErr = err
 		return false
 	}
 
@@ -309,8 +342,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 }
 
 func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
-	token *models.UserToken) macaron.BeforeFunc {
-	return func(w macaron.ResponseWriter) {
+	token *models.UserToken) web.BeforeFunc {
+	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
 			return

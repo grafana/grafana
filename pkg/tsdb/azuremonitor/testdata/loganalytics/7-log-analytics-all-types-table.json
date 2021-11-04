@@ -46,6 +46,10 @@
           {
             "name":"XObject",
             "type":"object"
+          },
+          {
+            "name":"XNumber",
+            "type":"number"
           }
         ],
         "rows": [
@@ -60,7 +64,8 @@
             1.7976931348623157e+308,
             "00:00:00.0000001",
             "79228162514264337593543950335",
-            "{\"person\": \"Daniel\", \"cats\": 23, \"diagnosis\": \"cat problem\"}"
+            "{\"person\": \"Daniel\", \"cats\": 23, \"diagnosis\": \"cat problem\"}",
+            "79228162514264337593543950335"
           ]
         ]
       }

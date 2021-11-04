@@ -181,4 +181,9 @@ describe('filterSpans', () => {
   it('should return an empty set if no spans match the filter', () => {
     expect(filterSpans('-processTagKey1', spans)).toEqual(new Set());
   });
+
+  it('should return no spans when logs is null', () => {
+    const nullSpan = { ...span0, logs: null };
+    expect(filterSpans('logFieldKey1', [nullSpan])).toEqual(new Set([]));
+  });
 });

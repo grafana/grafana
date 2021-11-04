@@ -13,6 +13,7 @@ weight = 400
 In the search view, you can sort dashboards by using insights data. Doing so helps you find unused or broken dashboards or discover those that are most viewed.
 
 There are several sort options:
+
 - Errors total
 - Errors 30 days
 - Views total

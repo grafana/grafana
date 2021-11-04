@@ -1,17 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
-<AutoSizer
-  disableHeight={true}
-  disableWidth={false}
-  onResize={[Function]}
+<div
   style={
     Object {
-      "height": "100%",
-      "width": "100%",
+      "flex": "1 1 auto",
     }
   }
 >
-  <Component />
-</AutoSizer>
+  <AutoSizer
+    disableHeight={true}
+    disableWidth={false}
+    onResize={[Function]}
+    style={Object {}}
+  >
+    <Component />
+  </AutoSizer>
+</div>
 `;

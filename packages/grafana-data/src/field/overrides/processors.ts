@@ -1,5 +1,13 @@
 import { ComponentType } from 'react';
-import { DataLink, Field, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
+import {
+  DataLink,
+  Field,
+  FieldOverrideContext,
+  SelectableValue,
+  SliderMarks,
+  ThresholdsConfig,
+  ValueMapping,
+} from '../../types';
 
 export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
   return value;
@@ -39,6 +47,9 @@ export interface SliderFieldConfigSettings {
   min: number;
   max: number;
   step?: number;
+  included?: boolean;
+  marks?: SliderMarks;
+  ariaLabelForHandle?: string;
 }
 
 export interface DataLinksFieldConfigSettings {}
@@ -182,4 +193,14 @@ export interface FieldNamePickerConfigSettings {
    * information, including validation etc
    */
   info?: ComponentType<FieldNamePickerInfoProps> | null;
+
+  /**
+   * Sets the width to a pixel value.
+   */
+  width?: number;
+
+  /**
+   * Placeholder text to display when nothing is selected.
+   */
+  placeholderText?: string;
 }

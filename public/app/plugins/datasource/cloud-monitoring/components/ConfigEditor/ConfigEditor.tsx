@@ -71,6 +71,7 @@ export class ConfigEditor extends PureComponent<Props> {
         <FieldSet>
           <InlineField label="Authentication type" labelWidth={20}>
             <Select
+              menuShouldPortal
               width={40}
               value={authTypes.find((x) => x.value === jsonData.authenticationType) || authTypes[0]}
               options={authTypes}

@@ -1,46 +1,47 @@
+import { Action } from '@reduxjs/toolkit';
 import { PipelineVariable } from '../../../aggregations';
 import { defaultPipelineVariable, generatePipelineVariableName } from '../utils';
 import {
-  PipelineVariablesAction,
-  REMOVE_PIPELINE_VARIABLE,
-  ADD_PIPELINE_VARIABLE,
-  RENAME_PIPELINE_VARIABLE,
-  CHANGE_PIPELINE_VARIABLE_METRIC,
-} from './types';
+  addPipelineVariable,
+  changePipelineVariableMetric,
+  removePipelineVariable,
+  renamePipelineVariable,
+} from './actions';
 
-export const reducer = (state: PipelineVariable[] = [], action: PipelineVariablesAction) => {
-  switch (action.type) {
-    case ADD_PIPELINE_VARIABLE:
-      return [...state, defaultPipelineVariable(generatePipelineVariableName(state))];
-
-    case REMOVE_PIPELINE_VARIABLE:
-      return state.slice(0, action.payload.index).concat(state.slice(action.payload.index + 1));
-
-    case RENAME_PIPELINE_VARIABLE:
-      return state.map((pipelineVariable, index) => {
-        if (index !== action.payload.index) {
-          return pipelineVariable;
-        }
-
-        return {
-          ...pipelineVariable,
-          name: action.payload.newName,
-        };
-      });
-
-    case CHANGE_PIPELINE_VARIABLE_METRIC:
-      return state.map((pipelineVariable, index) => {
-        if (index !== action.payload.index) {
-          return pipelineVariable;
-        }
-
-        return {
-          ...pipelineVariable,
-          pipelineAgg: action.payload.newMetric,
-        };
-      });
-
-    default:
-      return state;
+export const reducer = (state: PipelineVariable[] = [], action: Action) => {
+  if (addPipelineVariable.match(action)) {
+    return [...state, defaultPipelineVariable(generatePipelineVariableName(state))];
   }
+
+  if (removePipelineVariable.match(action)) {
+    return state.slice(0, action.payload).concat(state.slice(action.payload + 1));
+  }
+
+  if (renamePipelineVariable.match(action)) {
+    return state.map((pipelineVariable, index) => {
+      if (index !== action.payload.index) {
+        return pipelineVariable;
+      }
+
+      return {
+        ...pipelineVariable,
+        name: action.payload.newName,
+      };
+    });
+  }
+
+  if (changePipelineVariableMetric.match(action)) {
+    return state.map((pipelineVariable, index) => {
+      if (index !== action.payload.index) {
+        return pipelineVariable;
+      }
+
+      return {
+        ...pipelineVariable,
+        pipelineAgg: action.payload.newMetric,
+      };
+    });
+  }
+
+  return state;
 };

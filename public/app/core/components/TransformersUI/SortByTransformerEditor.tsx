@@ -28,6 +28,7 @@ export const SortByTransformerEditor: React.FC<TransformerUIProps<SortByTransfor
           <InlineFieldRow key={`${s.field}/${index}`}>
             <InlineField label="Field" labelWidth={10} grow={true}>
               <Select
+                menuShouldPortal
                 options={fieldNames}
                 value={s.field}
                 placeholder="Select field"

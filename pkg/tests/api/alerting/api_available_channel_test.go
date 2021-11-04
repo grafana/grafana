@@ -15,16 +15,20 @@ import (
 
 func TestAvailableChannels(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create a user to make authenticated requests
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alert-notifiers", grafanaListedAddr)
 	// nolint:gosec
@@ -786,7 +790,7 @@ var expAvailableChannelJsonOutput = `
         "element": "input",
         "inputType": "text",
         "label": "Recipient",
-        "description": "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID - required unless you provide a webhook",
+        "description": "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
         "placeholder": "",
         "propertyName": "recipient",
         "selectOptions": null,
@@ -1401,7 +1405,23 @@ var expAvailableChannelJsonOutput = `
 		"required": false,
 		"validationRule": "",
 		"secure": false
-	  }
+	  },
+    {
+      "element": "checkbox",
+      "inputType": "",
+      "label": "Use Discord's Webhook Username",
+      "description": "Use the username configured in Discord's webhook settings. Otherwise, the username will be 'Grafana'",
+      "placeholder": "",
+      "propertyName": "use_discord_username",
+      "selectOptions": null,
+      "showWhen": {
+        "field": "",
+        "is": ""
+      },
+      "required": false,
+      "validationRule": "",
+      "secure": false
+    }
 	]
   },
   {

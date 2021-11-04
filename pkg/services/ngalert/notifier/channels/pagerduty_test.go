@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -51,7 +53,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 				Description: "[FIRING:1]  (val1)",
 				EventAction: "trigger",
-				Payload: &pagerDutyPayload{
+				Payload: pagerDutyPayload{
 					Summary:   "[FIRING:1]  (val1)",
 					Source:    hostname,
 					Severity:  "critical",
@@ -97,7 +99,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 				Description: "[FIRING:2]  ",
 				EventAction: "trigger",
-				Payload: &pagerDutyPayload{
+				Payload: pagerDutyPayload{
 					Summary:   "[FIRING:2]  ",
 					Source:    hostname,
 					Severity:  "warning",
@@ -134,7 +136,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewPagerdutyNotifier(m, tmpl)
+			decryptFn := ossencryption.ProvideService().GetDecryptedValue
+			pn, err := NewPagerdutyNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

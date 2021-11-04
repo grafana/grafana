@@ -54,13 +54,13 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 1)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "Count")
 			require.Len(t, frame.Fields, 2)
 
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
 		})
 
 		t.Run("Simple query count & avg aggregation", func(t *testing.T) {
@@ -106,22 +106,22 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 2)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "Count")
 			require.Len(t, frame.Fields, 2)
 
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "Average value")
 			require.Len(t, frame.Fields, 2)
 
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average value")
 		})
 
 		t.Run("Single group by query one metric", func(t *testing.T) {
@@ -173,20 +173,20 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 2)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "server1")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "server2")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2")
 		})
 
 		t.Run("Single group by query two metrics", func(t *testing.T) {
@@ -245,36 +245,36 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 4)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "server1 Count")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Count")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "server1 Average @value")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Average @value")
 
 			frame = dataframes[2]
-			require.Equal(t, frame.Name, "server2 Count")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Count")
 
 			frame = dataframes[3]
-			require.Equal(t, frame.Name, "server2 Average @value")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Average @value")
 		})
 
 		t.Run("With percentiles", func(t *testing.T) {
@@ -320,20 +320,20 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 2)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "p75")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "p75")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "p90")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "p90")
 		})
 
 		t.Run("With extended stats", func(t *testing.T) {
@@ -404,52 +404,52 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 6)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "server1 Max")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Max")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "server1 Std Dev Lower")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Std Dev Lower")
 
 			frame = dataframes[2]
-			require.Equal(t, frame.Name, "server1 Std Dev Upper")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Std Dev Upper")
 
 			frame = dataframes[3]
-			require.Equal(t, frame.Name, "server2 Max")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Max")
 
 			frame = dataframes[4]
-			require.Equal(t, frame.Name, "server2 Std Dev Lower")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Std Dev Lower")
 
 			frame = dataframes[5]
-			require.Equal(t, frame.Name, "server2 Std Dev Upper")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Std Dev Upper")
 		})
 
 		t.Run("Single group by with alias pattern", func(t *testing.T) {
@@ -510,28 +510,28 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 3)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "server1 Count and {{not_exist}} server1")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Count and {{not_exist}} server1")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "server2 Count and {{not_exist}} server2")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Count and {{not_exist}} server2")
 
 			frame = dataframes[2]
-			require.Equal(t, frame.Name, "0 Count and {{not_exist}} 0")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "0 Count and {{not_exist}} 0")
 		})
 
 		t.Run("Histogram response", func(t *testing.T) {
@@ -618,20 +618,20 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 2)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "@metric:cpu")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "@metric:cpu")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "@metric:logins.count")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "@metric:logins.count")
 		})
 
 		t.Run("With dropfirst and last aggregation", func(t *testing.T) {
@@ -689,20 +689,20 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 2)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "Average")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "Count")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
 		})
 
 		t.Run("No group by time", func(t *testing.T) {
@@ -748,7 +748,6 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 1)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "")
 			require.Len(t, frame.Fields, 3)
 			require.Equal(t, frame.Fields[0].Name, "host")
 			require.Equal(t, frame.Fields[0].Len(), 2)
@@ -756,6 +755,7 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			require.Equal(t, frame.Fields[2].Name, "Count")
 			require.Equal(t, frame.Fields[2].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
 		})
 
 		t.Run("Multiple metrics of same type", func(t *testing.T) {
@@ -797,7 +797,6 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 1)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "")
 			require.Len(t, frame.Fields, 3)
 			require.Equal(t, frame.Fields[0].Name, "host")
 			require.Equal(t, frame.Fields[0].Len(), 1)
@@ -805,6 +804,7 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			require.Equal(t, frame.Fields[2].Name, "Average test2")
 			require.Equal(t, frame.Fields[2].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
 		})
 
 		t.Run("With bucket_script", func(t *testing.T) {
@@ -864,28 +864,28 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 3)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "Sum @value")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Sum @value")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "Max @value")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Max @value")
 
 			frame = dataframes[2]
-			require.Equal(t, frame.Name, "Sum @value * Max @value")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Sum @value * Max @value")
 		})
 
 		t.Run("Terms with two bucket_script", func(t *testing.T) {
@@ -954,7 +954,6 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 1)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "")
 			require.Len(t, frame.Fields, 5)
 			require.Equal(t, frame.Fields[0].Name, "@timestamp")
 			require.Equal(t, frame.Fields[0].Len(), 2)
@@ -966,6 +965,7 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[3].Len(), 2)
 			require.Equal(t, frame.Fields[4].Name, "params.var1 * params.var2 * 2")
 			require.Equal(t, frame.Fields[4].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
 		})
 	})
 
@@ -1028,10 +1028,10 @@ func TestResponseParser(t *testing.T) {
 		assert.Len(t, dataframes, 2)
 
 		frame := dataframes[0]
-		assert.Equal(t, frame.Name, "Top Metrics @value")
 		assert.Len(t, frame.Fields, 2)
 		require.Equal(t, frame.Fields[0].Len(), 2)
 		require.Equal(t, frame.Fields[1].Len(), 2)
+		assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Top Metrics @value")
 		v, _ := frame.FloatAt(0, 0)
 		assert.Equal(t, 1609459200000., v)
 		v, _ = frame.FloatAt(1, 0)
@@ -1043,12 +1043,12 @@ func TestResponseParser(t *testing.T) {
 		assert.Equal(t, 1., v)
 
 		frame = dataframes[1]
-		assert.Equal(t, frame.Name, "Top Metrics @anotherValue")
 		l, _ := frame.MarshalJSON()
 		fmt.Println(string(l))
 		assert.Len(t, frame.Fields, 2)
 		require.Equal(t, frame.Fields[0].Len(), 2)
 		require.Equal(t, frame.Fields[1].Len(), 2)
+		assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Top Metrics @anotherValue")
 		v, _ = frame.FloatAt(0, 0)
 		assert.Equal(t, 1609459200000., v)
 		v, _ = frame.FloatAt(1, 0)

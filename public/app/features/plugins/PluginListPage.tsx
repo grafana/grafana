@@ -1,5 +1,4 @@
 import React from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
@@ -65,4 +64,4 @@ export const PluginListPage: React.FC<Props> = ({
   );
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(PluginListPage));
+export default connect(mapStateToProps, mapDispatchToProps)(PluginListPage);

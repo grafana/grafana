@@ -17,6 +17,8 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   tooltip?: string;
   /** For image icons */
   imgSrc?: string;
+  /** Alt text for imgSrc */
+  imgAlt?: string;
   /** if true or false will show angle-down/up */
   isOpen?: boolean;
   /** Controls flex-grow: 1 */
@@ -39,6 +41,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
       className,
       children,
       imgSrc,
+      imgAlt,
       fullWidth,
       isOpen,
       narrow,
@@ -69,9 +72,15 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
     });
 
     const body = (
-      <button ref={ref} className={buttonStyles} aria-label={getButttonAriaLabel(ariaLabel, tooltip)} {...rest}>
+      <button
+        ref={ref}
+        className={buttonStyles}
+        aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
+        aria-expanded={isOpen}
+        {...rest}
+      >
         {renderIcon(icon)}
-        {imgSrc && <img className={styles.img} src={imgSrc} />}
+        {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
         {children && !iconOnly && <div className={contentStyles}>{children}</div>}
         {isOpen === false && <Icon name="angle-down" />}
         {isOpen === true && <Icon name="angle-up" />}
@@ -88,7 +97,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
   }
 );
 
-function getButttonAriaLabel(ariaLabel: string | undefined, tooltip: string | undefined) {
+function getButtonAriaLabel(ariaLabel: string | undefined, tooltip: string | undefined) {
   return ariaLabel ? ariaLabel : tooltip ? selectors.components.PageToolbar.item(tooltip) : undefined;
 }
 

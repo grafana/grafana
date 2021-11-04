@@ -49,6 +49,8 @@ type Provider interface {
 	// RegisterReloadHandler registers a handler for validation and reload
 	// of configuration updates tied to a specific section
 	RegisterReloadHandler(section string, handler ReloadHandler)
+	// IsFeatureToggleEnabled checks if the feature's toggle is enabled
+	IsFeatureToggleEnabled(name string) bool
 }
 
 // Section is a settings section copy
@@ -92,12 +94,14 @@ type ReloadHandler interface {
 type SettingsBag map[string]map[string]string
 type SettingsRemovals map[string][]string
 
-type OSSImpl struct {
-	Cfg *Cfg `inject:""`
+func ProvideProvider(cfg *Cfg) *OSSImpl {
+	return &OSSImpl{
+		Cfg: cfg,
+	}
 }
 
-func (o OSSImpl) Init() error {
-	return nil
+type OSSImpl struct {
+	Cfg *Cfg
 }
 
 func (o OSSImpl) Current() SettingsBag {
@@ -126,6 +130,10 @@ func (o *OSSImpl) Section(section string) Section {
 }
 
 func (OSSImpl) RegisterReloadHandler(string, ReloadHandler) {}
+
+func (o OSSImpl) IsFeatureToggleEnabled(name string) bool {
+	return o.Cfg.FeatureToggles[name]
+}
 
 type keyValImpl struct {
 	key *ini.Key

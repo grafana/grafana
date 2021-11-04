@@ -59,6 +59,7 @@ These instructions assume you have already added Prometheus as a data source in 
       static_configs:
         - targets: ['localhost:3000']
    ```
+
 1. Restart Prometheus. Your new job should appear on the Targets tab.
 1. In Grafana, hover your mouse over the **Configuration** (gear) icon on the left sidebar and then click **Data Sources**.
 1. Select the **Prometheus** data source.
@@ -81,6 +82,7 @@ These instructions assume you have already added Graphite as a data source in Gr
    ```
 
 1. Enable [metrics.graphite] options:
+
    ```
    # Send internal metrics to Graphite
    [metrics.graphite]

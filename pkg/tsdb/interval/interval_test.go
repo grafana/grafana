@@ -33,6 +33,29 @@ func TestIntervalCalculator_Calculate(t *testing.T) {
 	}
 }
 
+func TestIntervalCalculator_CalculateSafeInterval(t *testing.T) {
+	calculator := NewCalculator(CalculatorOptions{})
+
+	testCases := []struct {
+		name           string
+		timeRange      plugins.DataTimeRange
+		safeResolution int64
+		expected       string
+	}{
+		{"from 5m to now", plugins.NewDataTimeRange("5m", "now"), 11000, "20ms"},
+		{"from 15m to now", plugins.NewDataTimeRange("15m", "now"), 11000, "100ms"},
+		{"from 30m to now", plugins.NewDataTimeRange("30m", "now"), 11000, "200ms"},
+		{"from 24h to now", plugins.NewDataTimeRange("24h", "now"), 11000, "10s"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			interval := calculator.CalculateSafeInterval(tc.timeRange, tc.safeResolution)
+			assert.Equal(t, tc.expected, interval.Text)
+		})
+	}
+}
+
 func TestRoundInterval(t *testing.T) {
 	testCases := []struct {
 		name     string

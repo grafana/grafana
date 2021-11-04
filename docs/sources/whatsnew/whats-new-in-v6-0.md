@@ -18,7 +18,7 @@ The main highlights are:
 - [Grafana Loki]({{< relref "#explore-and-grafana-loki" >}}) - Integration with the new open source log aggregation system from Grafana Labs.
 - [Gauge Panel]({{< relref "#gauge-panel" >}}) - A new standalone panel for gauges.
 - [New Panel Editor UX]({{< relref "#new-panel-editor" >}}) improves panel editing
-    and enables easy switching between different visualizations.
+  and enables easy switching between different visualizations.
 - [Google Stackdriver data source]({{< relref "#google-stackdriver-data-source" >}}) is out of beta and is officially released.
 - [Azure Monitor]({{< relref "#azure-monitor-data-source" >}}) plugin is ported from being an external plugin to be a core data source
 - [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
@@ -145,7 +145,7 @@ Besides these changes we have also made security improvements regarding Cross-Si
 - Script tags in text panels are per default [disabled](/administration/configuration/#disable-sanitize-html) to protect against XSS attacks
 
 > **Note:** If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions set up and configured
-but our goal is to remove this requirement in the near future.
+> but our goal is to remove this requirement in the near future.
 
 ## Named Colors
 

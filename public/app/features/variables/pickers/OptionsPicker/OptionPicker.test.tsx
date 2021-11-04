@@ -56,11 +56,11 @@ function setupTestContext({ pickerState = {}, variable = {} }: Args = {}) {
 }
 
 function getSubMenu(text: string) {
-  return screen.getByLabelText(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(text));
+  return screen.getByTestId(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(text));
 }
 
 function getOption(text: string) {
-  return screen.getByLabelText(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A'));
+  return screen.getByTestId(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A'));
 }
 
 describe('OptionPicker', () => {

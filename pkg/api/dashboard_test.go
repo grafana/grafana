@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	dboards "github.com/grafana/grafana/pkg/dashboards"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -23,22 +24,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 )
 
 func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
-	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &macaron.Context{Req: macaron.Request{Request: httpReq}}}
+	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 
 	hs := &HTTPServer{
 		Cfg: cfg, Bus: bus.New(),
-		PluginManager: &fakePluginManager{},
+		pluginStore: &fakePluginStore{},
 	}
 	hs.Bus.AddHandlerCtx(func(_ context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
@@ -86,10 +88,8 @@ type testState struct {
 }
 
 func newTestLive(t *testing.T) *live.GrafanaLive {
-	gLive := live.NewGrafanaLive()
-	gLive.RouteRegister = routing.NewRouteRegister()
-	gLive.Cfg = &setting.Cfg{AppURL: "http://localhost:3000/"}
-	err := gLive.Init()
+	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t), &usagestats.UsageStatsMock{T: t})
 	require.NoError(t, err)
 	return gLive
 }
@@ -972,7 +972,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
-			mock := provisioning.NewProvisioningServiceMock()
+			mock := provisioning.NewProvisioningServiceMock(context.Background())
 			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
 			}
@@ -985,7 +985,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
-			mock := provisioning.NewProvisioningServiceMock()
+			mock := provisioning.NewProvisioningServiceMock(context.Background())
 			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
 			}
@@ -1015,7 +1015,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 func getDashboardShouldReturn200WithConfig(sc *scenarioContext, provisioningService provisioning.ProvisioningService) dtos.
 	DashboardFullWithMeta {
 	if provisioningService == nil {
-		provisioningService = provisioning.NewProvisioningServiceMock()
+		provisioningService = provisioning.NewProvisioningServiceMock(context.Background())
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
@@ -1110,12 +1110,12 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		hs := HTTPServer{
 			Bus:                 bus.GetBus(),
 			Cfg:                 cfg,
-			ProvisioningService: provisioning.NewProvisioningServiceMock(),
+			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                newTestLive(t),
 			QuotaService: &quota.QuotaService{
 				Cfg: cfg,
 			},
-			PluginManager:         &fakePluginManager{},
+			pluginStore:           &fakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 		}
@@ -1179,7 +1179,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		hs := HTTPServer{
 			Cfg:                   cfg,
 			Bus:                   bus.GetBus(),
-			ProvisioningService:   provisioning.NewProvisioningServiceMock(),
+			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t),
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
@@ -1234,7 +1234,7 @@ func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboard
 type mockLibraryPanelService struct {
 }
 
-func (m *mockLibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+func (m *mockLibraryPanelService) LoadLibraryPanelsForDashboard(c context.Context, dash *models.Dashboard) error {
 	return nil
 }
 
@@ -1242,33 +1242,42 @@ func (m *mockLibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Da
 	return nil
 }
 
-func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+	return nil
+}
+
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error {
 	return nil
 }
 
 type mockLibraryElementService struct {
 }
 
-func (l *mockLibraryElementService) CreateElement(c *models.ReqContext, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUser *models.SignedInUser, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
+	return libraryelements.LibraryElementDTO{}, nil
+}
+
+// GetElement gets an element from a UID.
+func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *models.SignedInUser, UID string) (libraryelements.LibraryElementDTO, error) {
 	return libraryelements.LibraryElementDTO{}, nil
 }
 
 // GetElementsForDashboard gets all connected elements for a specific dashboard.
-func (l *mockLibraryElementService) GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]libraryelements.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]libraryelements.LibraryElementDTO, error) {
 	return map[string]libraryelements.LibraryElementDTO{}, nil
 }
 
 // ConnectElementsToDashboard connects elements to a specific dashboard.
-func (l *mockLibraryElementService) ConnectElementsToDashboard(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
+func (l *mockLibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser *models.SignedInUser, elementUIDs []string, dashboardID int64) error {
 	return nil
 }
 
 // DisconnectElementsFromDashboard disconnects elements from a specific dashboard.
-func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c *models.ReqContext, dashboardID int64) error {
+func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error {
 	return nil
 }
 
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
-func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error {
+func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *models.SignedInUser, folderUID string) error {
 	return nil
 }

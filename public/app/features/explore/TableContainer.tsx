@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { ValueLinkConfig } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
@@ -84,4 +83,4 @@ export class TableContainer extends PureComponent<Props> {
   }
 }
 
-export default hot(module)(connector(TableContainer));
+export default connector(TableContainer);

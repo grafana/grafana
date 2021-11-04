@@ -4,7 +4,6 @@ import Page from 'app/core/components/Page/Page';
 import { Button, Input, Field, Form } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { StoreState } from 'app/types';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -76,4 +75,4 @@ const mapStateToProps = (state: StoreState) => {
   return { navModel: getNavModel(state.navIndex, 'global-orgs') };
 };
 
-export default hot(module)(connect(mapStateToProps)(NewOrgPage));
+export default connect(mapStateToProps)(NewOrgPage);

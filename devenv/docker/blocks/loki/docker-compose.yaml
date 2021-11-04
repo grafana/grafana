@@ -1,11 +1,11 @@
   # datasource URL: http://localhost:3100/
   loki:
-    image: grafana/loki:master
+    image: grafana/loki:latest
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
   promtail:
-    image: grafana/promtail:master
+    image: grafana/promtail:latest
     volumes:
       - ./docker/blocks/loki/config.yaml:/etc/promtail/docker-config.yaml
       - /var/log:/var/log

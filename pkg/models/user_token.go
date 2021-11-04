@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net"
+
+	"github.com/grafana/grafana/pkg/registry"
 )
 
 // Typed errors
@@ -72,4 +74,8 @@ type UserTokenService interface {
 	GetUserToken(ctx context.Context, userId, userTokenId int64) (*UserToken, error)
 	GetUserTokens(ctx context.Context, userId int64) ([]*UserToken, error)
 	GetUserRevokedTokens(ctx context.Context, userId int64) ([]*UserToken, error)
+}
+
+type UserTokenBackgroundService interface {
+	registry.BackgroundService
 }

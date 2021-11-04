@@ -12,8 +12,6 @@ export interface DatasourceValidationResult {
   title?: string;
 }
 
-export type AzureResultFormat = 'time_series' | 'table';
-
 /**
  * Azure clouds known to Azure Monitor.
  */
@@ -58,7 +56,6 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   subscriptionId?: string;
 
   // logs
-  logAnalyticsDefaultWorkspace?: string;
   /** @deprecated Azure Logs credentials */
   azureLogAnalyticsSameAs?: boolean;
   /** @deprecated Azure Logs credentials */
@@ -67,6 +64,8 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   logAnalyticsClientId?: string;
   /** @deprecated Azure Logs credentials */
   logAnalyticsSubscriptionId?: string;
+  /** @deprecated Azure Logs credentials */
+  logAnalyticsDefaultWorkspace?: string;
 
   // App Insights
   appInsightsAppId?: string;
@@ -141,6 +140,7 @@ export interface AzureLogsTableColumn {
 export interface AzureMonitorOption<T = string> {
   label: string;
   value: T;
+  options?: AzureMonitorOption[];
 }
 
 export interface AzureQueryEditorFieldProps {
@@ -178,4 +178,15 @@ export interface RawAzureResourceItem {
 
 export interface AzureGraphResponse<T = unknown> {
   data: T;
+  // skipToken is used for pagination, to get the next page
+  $skipToken?: string;
+}
+
+// https://docs.microsoft.com/en-us/rest/api/azureresourcegraph/resourcegraph(2021-03-01)/resources/resources#queryrequestoptions
+export interface AzureResourceGraphOptions {
+  $skip: number;
+  $skipToken: string;
+  $top: number;
+  allowPartialScopes: boolean;
+  resultFormat: 'objectArray' | 'table';
 }

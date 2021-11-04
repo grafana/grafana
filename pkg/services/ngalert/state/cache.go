@@ -1,12 +1,10 @@
 package state
 
 import (
-	"bytes"
 	"fmt"
-	"strconv"
+	"net/url"
 	"strings"
 	"sync"
-	text_template "text/template"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -18,17 +16,19 @@ import (
 )
 
 type cache struct {
-	states    map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
-	mtxStates sync.RWMutex
-	log       log.Logger
-	metrics   *metrics.Metrics
+	states      map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
+	mtxStates   sync.RWMutex
+	log         log.Logger
+	metrics     *metrics.State
+	externalURL *url.URL
 }
 
-func newCache(logger log.Logger, metrics *metrics.Metrics) *cache {
+func newCache(logger log.Logger, metrics *metrics.State, externalURL *url.URL) *cache {
 	return &cache{
-		states:  make(map[int64]map[string]map[string]*State),
-		log:     logger,
-		metrics: metrics,
+		states:      make(map[int64]map[string]map[string]*State),
+		log:         logger,
+		metrics:     metrics,
+		externalURL: externalURL,
 	}
 }
 
@@ -39,7 +39,7 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	// clone the labels so we don't change eval.Result
 	labels := result.Instance.Copy()
 	attachRuleLabels(labels, alertRule)
-	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, labels, result.Values)
+	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, labels, result)
 
 	// if duplicate labels exist, alertRule label will take precedence
 	lbs := mergeLabels(ruleLabels, result.Instance)
@@ -88,11 +88,11 @@ func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
 	m[prometheusModel.AlertNameLabel] = alertRule.Title
 }
 
-func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, labels map[string]string, values map[string]eval.NumberValueCapture) (map[string]string, map[string]string) {
+func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, labels map[string]string, alertInstance eval.Result) (map[string]string, map[string]string) {
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(alertRule.Title, v, labels, values)
+			ev, err := expandTemplate(alertRule.Title, v, labels, alertInstance, c.externalURL)
 			expanded[k] = ev
 			if err != nil {
 				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
@@ -104,63 +104,6 @@ func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, la
 		return expanded
 	}
 	return expand(alertRule.Labels), expand(alertRule.Annotations)
-}
-
-// templateCaptureValue represents each value in .Values in the annotations
-// and labels template.
-type templateCaptureValue struct {
-	Labels map[string]string
-	Value  *float64
-}
-
-// String implements the Stringer interface to print the value of each RefID
-// in the template via {{ $values.A }} rather than {{ $values.A.Value }}.
-func (v templateCaptureValue) String() string {
-	if v.Value != nil {
-		return strconv.FormatFloat(*v.Value, 'f', -1, 64)
-	}
-	return "null"
-}
-
-func expandTemplate(name, text string, labels map[string]string, values map[string]eval.NumberValueCapture) (result string, resultErr error) {
-	name = "__alert_" + name
-	text = "{{- $labels := .Labels -}}{{- $values := .Values -}}" + text
-	// It'd better to have no alert description than to kill the whole process
-	// if there's a bug in the template.
-	defer func() {
-		if r := recover(); r != nil {
-			var ok bool
-			resultErr, ok = r.(error)
-			if !ok {
-				resultErr = fmt.Errorf("panic expanding template %v: %v", name, r)
-			}
-		}
-	}()
-
-	tmpl, err := text_template.New(name).Option("missingkey=error").Parse(text)
-	if err != nil {
-		return "", fmt.Errorf("error parsing template %v: %s", name, err.Error())
-	}
-	var buffer bytes.Buffer
-	if err := tmpl.Execute(&buffer, struct {
-		Labels map[string]string
-		Values map[string]templateCaptureValue
-	}{
-		Labels: labels,
-		Values: func() map[string]templateCaptureValue {
-			m := make(map[string]templateCaptureValue)
-			for k, v := range values {
-				m[k] = templateCaptureValue{
-					Labels: v.Labels,
-					Value:  v.Value,
-				}
-			}
-			return m
-		}(),
-	}); err != nil {
-		return "", fmt.Errorf("error executing template %v: %s", name, err.Error())
-	}
-	return buffer.String(), nil
 }
 
 func (c *cache) set(entry *State) {
@@ -260,4 +203,10 @@ func mergeLabels(a, b data.Labels) data.Labels {
 		}
 	}
 	return newLbs
+}
+
+func (c *cache) deleteEntry(orgID int64, alertRuleUID, cacheID string) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	delete(c.states[orgID][alertRuleUID], cacheID)
 }

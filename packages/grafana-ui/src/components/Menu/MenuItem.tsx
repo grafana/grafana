@@ -10,7 +10,7 @@ export interface MenuItemProps<T = any> {
   /** Label of the menu item */
   label: string;
   /** Aria label for accessibility support */
-  ariaLabel: string;
+  ariaLabel?: string;
   /** Target of the menu item (i.e. new window)  */
   target?: LinkTarget;
   /** Icon of the menu item */
@@ -23,26 +23,30 @@ export interface MenuItemProps<T = any> {
   className?: string;
   /** Active */
   active?: boolean;
+
+  tabIndex?: number;
 }
 
 /** @internal */
-export const MenuItem: React.FC<MenuItemProps> = React.memo(
-  ({ url, icon, label, ariaLabel, target, onClick, className, active }) => {
-    const styles = useStyles2(getStyles);
-    const itemStyle = cx(
-      {
-        [styles.item]: true,
-        [styles.activeItem]: active,
-      },
-      className
-    );
+export const MenuItem = React.memo(
+  React.forwardRef<HTMLAnchorElement & HTMLButtonElement, MenuItemProps>(
+    ({ url, icon, label, ariaLabel, target, onClick, className, active, tabIndex = -1 }, ref) => {
+      const styles = useStyles2(getStyles);
+      const itemStyle = cx(
+        {
+          [styles.item]: true,
+          [styles.activeItem]: active,
+        },
+        className
+      );
 
-    return (
-      <div className={itemStyle} aria-label={ariaLabel}>
-        <a
-          href={url ? url : undefined}
+      const Wrapper = url === undefined ? 'button' : 'a';
+      return (
+        <Wrapper
           target={target}
-          className={styles.link}
+          className={itemStyle}
+          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+          href={url}
           onClick={
             onClick
               ? (event) => {
@@ -53,37 +57,40 @@ export const MenuItem: React.FC<MenuItemProps> = React.memo(
                 }
               : undefined
           }
-          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+          role={url === undefined ? 'menuitem' : undefined}
+          data-role="menuitem" // used to identify menuitem in Menu.tsx
+          ref={ref}
+          aria-label={ariaLabel}
+          tabIndex={tabIndex}
         >
-          {icon && <Icon name={icon} className={styles.icon} />} {label}
-        </a>
-      </div>
-    );
-  }
+          {icon && <Icon name={icon} className={styles.icon} aria-hidden />} {label}
+        </Wrapper>
+      );
+    }
+  )
 );
 MenuItem.displayName = 'MenuItem';
 
 /** @internal */
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    link: css`
-      color: ${theme.colors.text.primary};
-      display: flex;
-      cursor: pointer;
-      padding: 5px 12px 5px 10px;
-
-      &:hover {
-        color: ${theme.colors.text.primary};
-        text-decoration: none;
-      }
-    `,
     item: css`
       background: none;
       cursor: pointer;
       white-space: nowrap;
+      color: ${theme.colors.text.primary};
+      display: flex;
+      padding: 5px 12px 5px 10px;
+      margin: 0;
+      border: none;
+      width: 100%;
 
-      &:hover {
+      &:hover,
+      &:focus,
+      &:focus-visible {
         background: ${theme.colors.action.hover};
+        color: ${theme.colors.text.primary};
+        text-decoration: none;
       }
     `,
     activeItem: css`

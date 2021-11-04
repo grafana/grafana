@@ -18,11 +18,11 @@ import {
 // Types
 import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
-import { DataQuery, locationUtil } from '@grafana/data';
+import { DataQuery, locationUtil, setWeekStart } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 export interface InitDashboardArgs {
@@ -151,9 +151,10 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     const timeSrv: TimeSrv = getTimeSrv();
     const dashboardSrv: DashboardSrv = getDashboardSrv();
 
+    // legacy srv state, we need this value updated for built-in annotations
+    dashboardSrv.setCurrent(dashboard);
+
     timeSrv.init(dashboard);
-    const runner = createDashboardQueryRunner({ dashboard, timeSrv });
-    runner.run({ dashboard, range: timeSrv.timeRange() });
 
     if (storeState.dashboard.modifiedQueries) {
       const { panelId, queries } = storeState.dashboard.modifiedQueries;
@@ -162,6 +163,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // template values service needs to initialize completely before the rest of the dashboard can load
     await dispatch(initVariablesTransaction(args.urlUid!, dashboard));
+
+    // DashboardQueryRunner needs to run after all variables have been resolved so that any annotation query including a variable
+    // will be correctly resolved
+    const runner = createDashboardQueryRunner({ dashboard, timeSrv });
+    runner.run({ dashboard, range: timeSrv.timeRange() });
 
     if (getState().templating.transaction.uid !== args.urlUid) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one
@@ -194,9 +200,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       updateQueriesWhenComingFromExplore(dispatch, dashboard, panelId, queries);
     }
 
-    // legacy srv state
-    dashboardSrv.setCurrent(dashboard);
-
     // send open dashboard event
     if (args.routeName !== DashboardRoutes.New) {
       emitDashboardViewEvent(dashboard);
@@ -205,6 +208,13 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       dashboardWatcher.watch(dashboard.uid);
     } else {
       dashboardWatcher.leave();
+    }
+
+    // set week start
+    if (dashboard.weekStart !== '') {
+      setWeekStart(dashboard.weekStart);
+    } else {
+      setWeekStart(config.bootData.user.weekStart);
     }
 
     // yay we are done

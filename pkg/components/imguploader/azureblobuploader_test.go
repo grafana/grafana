@@ -12,7 +12,8 @@ func TestUploadToAzureBlob(t *testing.T) {
 	t.Run("[Integration test] for external_image_store.azure_blob", func(t *testing.T) {
 		t.Skip("Skipping testing for external_image_store.azure_blob")
 		cfg := setting.NewCfg()
-		err := cfg.Load(&setting.CommandLineArgs{
+
+		err := cfg.Load(setting.CommandLineArgs{
 			HomePath: "../../../",
 		})
 		require.NoError(t, err)

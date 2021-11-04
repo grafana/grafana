@@ -19,6 +19,7 @@ See a complete list of users with accounts in your Grafana organization. If nece
 1. Click **Users**.
 
 Grafana displays all user accounts on the server, listed in alphabetical order by user name. The following information is displayed:
+
 - **Login -** The value in the **Username** field of the account.
 - **Email -** The email associated with the user account.
 - **Name -** The value in the **Name** field of the account.

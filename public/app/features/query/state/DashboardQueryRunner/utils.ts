@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { Observable, of } from 'rxjs';
-import { AnnotationEvent, AnnotationQuery, DataFrame, DataFrameView } from '@grafana/data';
+import { AnnotationEvent, AnnotationQuery, DataFrame, DataFrameView, DataSourceApi } from '@grafana/data';
 import { config, toDataQueryError } from '@grafana/runtime';
 
 import { dispatch } from 'app/store/store';
@@ -15,6 +15,11 @@ export function handleAnnotationQueryRunnerError(err: any): Observable<Annotatio
 
   notifyWithError('AnnotationQueryRunner failed', err);
   return of([]);
+}
+
+export function handleDatasourceSrvError(err: any): Observable<DataSourceApi | undefined> {
+  notifyWithError('Failed to retrieve datasource', err);
+  return of(undefined);
 }
 
 export const emptyResult: () => Observable<DashboardQueryRunnerWorkerResult> = () =>
@@ -59,9 +64,9 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
     item.type = annotation.name;
     item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);
 
-    switch (item.newState) {
+    switch (item.newState?.toLowerCase()) {
       case 'pending':
-        item.color = 'gray';
+        item.color = 'yellow';
         break;
       case 'alerting':
         item.color = 'red';
@@ -69,7 +74,13 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
       case 'ok':
         item.color = 'green';
         break;
+      case 'normal': // ngalert ("normal" instead of "ok")
+        item.color = 'green';
+        break;
       case 'no_data':
+        item.color = 'gray';
+        break;
+      case 'nodata': // ngalert
         item.color = 'gray';
         break;
     }

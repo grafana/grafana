@@ -14,6 +14,12 @@ interface Props {
   editingExistingRule: boolean;
 }
 
+const recordingRuleNameValidationPattern = {
+  message:
+    'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
+  value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
+};
+
 export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const styles = useStyles2(getStyles);
 
@@ -40,8 +46,13 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
     if (contextSrv.isEditor) {
       result.push({
         label: 'Cortex/Loki managed alert',
-        value: RuleFormType.cloud,
+        value: RuleFormType.cloudAlerting,
         description: 'Alert based on a system or application behavior. Based on Prometheus.',
+      });
+      result.push({
+        label: 'Cortex/Loki managed recording rule',
+        value: RuleFormType.cloudRecording,
+        description: 'Recording rule to pre-compute frequently needed or expensive calculations. Based on Prometheus.',
       });
     }
 
@@ -49,23 +60,26 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   }, []);
 
   return (
-    <RuleEditorSection stepNo={1} title="Alert type">
+    <RuleEditorSection stepNo={1} title="Rule type">
       <Field
         className={styles.formInput}
-        label="Alert name"
+        label="Rule name"
         error={errors?.name?.message}
         invalid={!!errors.name?.message}
       >
         <Input
           id="name"
-          {...register('name', { required: { value: true, message: 'Must enter an alert name' } })}
+          {...register('name', {
+            required: { value: true, message: 'Must enter an alert name' },
+            pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
+          })}
           autoFocus={true}
         />
       </Field>
       <div className={styles.flexRow}>
         <Field
           disabled={editingExistingRule}
-          label="Alert type"
+          label="Rule type"
           className={styles.formInput}
           error={errors.type?.message}
           invalid={!!errors.type?.message}
@@ -73,7 +87,13 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         >
           <InputControl
             render={({ field: { onChange, ref, ...field } }) => (
-              <Select {...field} options={alertTypeOptions} onChange={(v: SelectableValue) => onChange(v?.value)} />
+              <Select
+                menuShouldPortal
+                aria-label="Rule type"
+                {...field}
+                options={alertTypeOptions}
+                onChange={(v: SelectableValue) => onChange(v?.value)}
+              />
             )}
             name="type"
             control={control}
@@ -82,7 +102,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             }}
           />
         </Field>
-        {ruleFormType === RuleFormType.cloud && (
+        {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) && (
           <Field
             className={styles.formInput}
             label="Select data source"
@@ -110,9 +130,9 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           </Field>
         )}
       </div>
-      {ruleFormType === RuleFormType.cloud && dataSourceName && (
-        <GroupAndNamespaceFields dataSourceName={dataSourceName} />
-      )}
+      {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) &&
+        dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
+
       {ruleFormType === RuleFormType.grafana && (
         <Field
           label="Folder"

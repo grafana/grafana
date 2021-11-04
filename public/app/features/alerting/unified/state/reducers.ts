@@ -14,11 +14,15 @@ import {
   fetchFolderAction,
   fetchAlertGroupsAction,
   checkIfLotexSupportsEditingRulesAction,
+  deleteAlertManagerConfigAction,
+  testReceiversAction,
+  updateLotexNamespaceAndGroupAction,
 } from './actions';
 
 export const reducer = combineReducers({
-  promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, (dataSourceName) => dataSourceName).reducer,
-  rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, (dataSourceName) => dataSourceName).reducer,
+  promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
+  rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
+    .reducer,
   amConfigs: createAsyncMapSlice(
     'amConfigs',
     fetchAlertManagerConfigAction,
@@ -32,6 +36,7 @@ export const reducer = combineReducers({
   }),
   grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
   saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
+  deleteAMConfig: createAsyncSlice('deleteAMConfig', deleteAlertManagerConfigAction).reducer,
   updateSilence: createAsyncSlice('updateSilence', createOrUpdateSilenceAction).reducer,
   amAlerts: createAsyncMapSlice('amAlerts', fetchAmAlertsAction, (alertManagerSourceName) => alertManagerSourceName)
     .reducer,
@@ -46,6 +51,9 @@ export const reducer = combineReducers({
     checkIfLotexSupportsEditingRulesAction,
     (source) => source
   ).reducer,
+  testReceivers: createAsyncSlice('testReceivers', testReceiversAction).reducer,
+  updateLotexNamespaceAndGroup: createAsyncSlice('updateLotexNamespaceAndGroup', updateLotexNamespaceAndGroupAction)
+    .reducer,
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;

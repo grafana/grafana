@@ -9,6 +9,7 @@ import { Annotations } from './Annotations';
 import { SubMenuItems } from './SubMenuItems';
 import { DashboardLink } from '../../state/DashboardModel';
 import { AnnotationQuery } from '@grafana/data';
+import { css } from '@emotion/css';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -47,7 +48,9 @@ class SubMenuUnConnected extends PureComponent<Props> {
 
     return (
       <div className="submenu-controls">
-        <SubMenuItems variables={variables} />
+        <form aria-label="Template variables" className={styles}>
+          <SubMenuItems variables={variables} />
+        </form>
         <Annotations
           annotations={annotations}
           onAnnotationChanged={this.onAnnotationStateChanged}
@@ -66,6 +69,12 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
     variables: getSubMenuVariables(state.templating.variables),
   };
 };
+
+const styles = css`
+  display: flex;
+  flex-wrap: wrap;
+  display: contents;
+`;
 
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);
 

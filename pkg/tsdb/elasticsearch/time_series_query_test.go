@@ -8,8 +8,8 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -402,6 +402,52 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, hAgg.Field, "@timestamp")
 			require.Equal(t, hAgg.Interval, "$__interval")
 			require.Equal(t, hAgg.MinDocCount, 2)
+
+			t.Run("Should not include time_zone when timeZone is utc", func(t *testing.T) {
+				c := newFakeClient("7.0.0")
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{
+							"id": "2",
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"settings": { 
+								"timeZone": "utc"
+							}
+						}
+					],
+					"metrics": [{"type": "count", "id": "1" }]
+				}`, from, to, 15*time.Second)
+				require.NoError(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				dateHistogram := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+				require.Empty(t, dateHistogram.TimeZone)
+			})
+
+			t.Run("Should include time_zone when timeZone is not utc", func(t *testing.T) {
+				c := newFakeClient("7.0.0")
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{
+							"id": "2",
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"settings": { 
+								"timeZone": "America/Los_Angeles"
+							}
+						}
+					],
+					"metrics": [{"type": "count", "id": "1" }]
+				}`, from, to, 15*time.Second)
+				require.NoError(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				deteHistogram := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+				require.Equal(t, deteHistogram.TimeZone, "America/Los_Angeles")
+			})
 		})
 
 		t.Run("With histogram agg", func(t *testing.T) {
@@ -1150,7 +1196,7 @@ func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval 
 			},
 		},
 	}
-	query := newTimeSeriesQuery(c, dataRequest.Queries, tsdb.NewCalculator(tsdb.CalculatorOptions{MinInterval: minInterval}))
+	query := newTimeSeriesQuery(c, dataRequest.Queries, intervalv2.NewCalculator(intervalv2.CalculatorOptions{MinInterval: minInterval}))
 	return query.execute()
 }
 
@@ -1163,7 +1209,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 				"timeField": "@timestamp",
 				"query": "@metric:cpu",
 				"alias": "{{@hostname}} {{metric}}",
-        "interval": "10m",
+        		"interval": "10m",
 				"metrics": [
 					{
 						"field": "@value",

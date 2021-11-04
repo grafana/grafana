@@ -12,6 +12,7 @@ import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
 import { ValueContainer } from './ValueContainer';
 import { InputControl } from './InputControl';
+import { SelectContainer } from './SelectContainer';
 import { DropdownIndicator } from './DropdownIndicator';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
@@ -20,6 +21,7 @@ import { useTheme2 } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue, findSelectedValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
+import { deprecationWarning } from '@grafana/data';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -86,6 +88,7 @@ const CustomControl = (props: any) => {
 
 export function SelectBase<T>({
   allowCustomValue = false,
+  allowCreateWhileLoading = false,
   'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
@@ -117,6 +120,7 @@ export function SelectBase<T>({
   maxVisibleValues,
   menuPlacement = 'auto',
   menuPosition,
+  menuShouldPortal = false,
   noOptionsMessage = 'No options found',
   onBlur,
   onChange,
@@ -136,6 +140,9 @@ export function SelectBase<T>({
   width,
   isValidNewOption,
 }: SelectBaseProps<T>) {
+  if (menuShouldPortal === false) {
+    deprecationWarning('SelectBase', 'menuShouldPortal={false}', 'menuShouldPortal={true}');
+  }
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const onChangeWithEmpty = useCallback(
@@ -199,9 +206,9 @@ export function SelectBase<T>({
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
-    menuPortalTarget: document.body,
     menuPosition,
     menuShouldBlockScroll: true,
+    menuPortalTarget: menuShouldPortal ? document.body : undefined,
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,
@@ -221,6 +228,7 @@ export function SelectBase<T>({
 
   if (allowCustomValue) {
     ReactSelectComponent = Creatable as any;
+    creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.isValidNewOption = isValidNewOption;
@@ -252,13 +260,18 @@ export function SelectBase<T>({
                   css`
                     display: inline-block;
                     color: ${theme.colors.text.disabled};
-                    position: absolute;
-                    top: 50%;
-                    transform: translateY(-50%);
+
                     box-sizing: border-box;
                     line-height: 1;
                     white-space: nowrap;
-                  `
+                  `,
+                  // When width: auto, the placeholder must take up space in the Select otherwise the width collapses down
+                  width !== 'auto' &&
+                    css`
+                      position: absolute;
+                      top: 50%;
+                      transform: translateY(-50%);
+                    `
                 )}
               >
                 {props.children}
@@ -329,6 +342,7 @@ export function SelectBase<T>({
           },
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
+          SelectContainer,
           ...components,
         }}
         styles={{
@@ -343,10 +357,11 @@ export function SelectBase<T>({
             bottom,
             position,
             minWidth: '100%',
+            zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
-            position: 'relative',
-            width: width ? `${8 * width}px` : '100%',
+            width: width ? theme.spacing(width) : '100%',
+            display: width === 'auto' ? 'inline-flex' : 'flex',
           }),
           option: (provided: any, state: any) => ({
             ...provided,

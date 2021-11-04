@@ -1,15 +1,22 @@
 package ualert
 
 import (
+	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
+
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/util"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 const GENERAL_FOLDER = "General Alerting"
@@ -19,9 +26,13 @@ const DASHBOARD_FOLDER = "Migrated %s"
 // during alert migration cleanup.
 const FOLDER_CREATED_BY = -8
 
+const KV_NAMESPACE = "alertmanager"
+
 var migTitle = "move dashboard alerts to unified alerting"
 
 var rmMigTitle = "remove unified alerting data"
+
+const clearMigrationEntryTitle = "clear migration entry %q"
 
 type MigrationError struct {
 	AlertId int64
@@ -37,35 +48,159 @@ func (e *MigrationError) Unwrap() error { return e.Err }
 func AddDashAlertMigration(mg *migrator.Migrator) {
 	logs, err := mg.GetMigrationLog()
 	if err != nil {
-		mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
 		os.Exit(1)
 	}
 
 	_, migrationRun := logs[migTitle]
 
-	ngEnabled := mg.Cfg.IsNgAlertEnabled()
-
 	switch {
-	case ngEnabled && !migrationRun:
+	case mg.Cfg.UnifiedAlerting.Enabled && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
-		err = mg.ClearMigrationEntry(rmMigTitle)
+		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle), &clearMigrationEntry{
+			migrationID: rmMigTitle,
+		})
 		if err != nil {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
-			seenChannelUIDs:  make(map[string]struct{}),
-			migratedChannels: make(map[*notificationChannel]struct{}),
+			seenChannelUIDs:           make(map[string]struct{}),
+			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
+			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
+			silences:                  make(map[int64][]*pb.MeshSilence),
 		})
-	case !ngEnabled && migrationRun:
+	case !mg.Cfg.UnifiedAlerting.Enabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
-		err = mg.ClearMigrationEntry(migTitle)
+		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
+			migrationID: migTitle,
+		})
 		if err != nil {
 			mg.Logger.Error("alert migration error: could not clear dashboard alert migration", "error", err)
 		}
 		mg.AddMigration(rmMigTitle, &rmMigration{})
 	}
+}
+
+// RerunDashAlertMigration force the dashboard alert migration to run
+// to make sure that the Alertmanager configurations will be created for each organisation
+func RerunDashAlertMigration(mg *migrator.Migrator) {
+	logs, err := mg.GetMigrationLog()
+	if err != nil {
+		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
+		os.Exit(1)
+	}
+
+	cloneMigTitle := fmt.Sprintf("clone %s", migTitle)
+
+	_, migrationRun := logs[cloneMigTitle]
+	ngEnabled := mg.Cfg.UnifiedAlerting.Enabled
+
+	switch {
+	case ngEnabled && !migrationRun:
+		// The only use of this migration is when a user enabled ng-alerting before 8.2.
+		mg.AddMigration(cloneMigTitle, &upgradeNgAlerting{})
+		// if user disables the feature flag and enables it back.
+		// This migration does not need to be run because the original migration AddDashAlertMigration does what's needed
+	}
+}
+
+func AddDashboardUIDPanelIDMigration(mg *migrator.Migrator) {
+	logs, err := mg.GetMigrationLog()
+	if err != nil {
+		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
+		os.Exit(1)
+	}
+
+	migrationID := "update dashboard_uid and panel_id from existing annotations"
+	_, migrationRun := logs[migrationID]
+	ngEnabled := mg.Cfg.UnifiedAlerting.Enabled
+	undoMigrationID := "undo " + migrationID
+
+	if ngEnabled && !migrationRun {
+		// If ngalert is enabled and the migration has not been run then run it.
+		mg.AddMigration(migrationID, &updateDashboardUIDPanelIDMigration{})
+	} else if !ngEnabled && migrationRun {
+		// If ngalert is disabled and the migration has been run then remove it
+		// from the migration log so it will run if ngalert is re-enabled.
+		mg.AddMigration(undoMigrationID, &clearMigrationEntry{
+			migrationID: migrationID,
+		})
+	}
+}
+
+// updateDashboardUIDPanelIDMigration sets the dashboard_uid and panel_id columns
+// from the __dashboardUid__ and __panelId__ annotations.
+type updateDashboardUIDPanelIDMigration struct {
+	migrator.MigrationBase
+}
+
+func (m *updateDashboardUIDPanelIDMigration) SQL(_ migrator.Dialect) string {
+	return "set dashboard_uid and panel_id migration"
+}
+
+func (m *updateDashboardUIDPanelIDMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	var results []struct {
+		ID          int64             `xorm:"id"`
+		Annotations map[string]string `xorm:"annotations"`
+	}
+	if err := sess.SQL(`SELECT id, annotations FROM alert_rule`).Find(&results); err != nil {
+		return fmt.Errorf("failed to get annotations for all alert rules: %w", err)
+	}
+	for _, next := range results {
+		var (
+			dashboardUID *string
+			panelID      *int64
+		)
+		if s, ok := next.Annotations[ngmodels.DashboardUIDAnnotation]; ok {
+			dashboardUID = &s
+		}
+		if s, ok := next.Annotations[ngmodels.PanelIDAnnotation]; ok {
+			i, err := strconv.ParseInt(s, 10, 64)
+			if err != nil {
+				return fmt.Errorf("the %s annotation does not contain a valid Panel ID: %w", ngmodels.PanelIDAnnotation, err)
+			}
+			panelID = &i
+		}
+		// We do not want to set panel_id to a non-nil value when dashboard_uid is nil
+		// as panel_id is not unique and so cannot be queried without its dashboard_uid.
+		// This can happen where users have deleted the dashboard_uid annotation but kept
+		// the panel_id annotation.
+		if dashboardUID != nil {
+			if _, err := sess.Exec(`UPDATE alert_rule SET dashboard_uid = ?, panel_id = ? WHERE id = ?`,
+				dashboardUID,
+				panelID,
+				next.ID); err != nil {
+				return fmt.Errorf("failed to set dashboard_uid and panel_id for alert rule: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+// clearMigrationEntry removes an entry fromt the migration_log table.
+// This migration is not recorded in the migration_log so that it can re-run several times.
+type clearMigrationEntry struct {
+	migrator.MigrationBase
+
+	migrationID string
+}
+
+func (m *clearMigrationEntry) SQL(dialect migrator.Dialect) string {
+	return "clear migration entry code migration"
+}
+
+func (m *clearMigrationEntry) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	_, err := sess.SQL(`DELETE from migration_log where migration_id = ?`, m.migrationID).Query()
+	if err != nil {
+		return fmt.Errorf("failed to clear migration entry %v: %w", m.migrationID, err)
+	}
+	return nil
+}
+
+func (m *clearMigrationEntry) SkipMigrationLog() bool {
+	return true
 }
 
 type migration struct {
@@ -74,15 +209,18 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs  map[string]struct{}
-	migratedChannels map[*notificationChannel]struct{}
-	silences         []*pb.MeshSilence
+	seenChannelUIDs           map[string]struct{}
+	migratedChannelsPerOrg    map[int64]map[*notificationChannel]struct{}
+	silences                  map[int64][]*pb.MeshSilence
+	portedChannelGroupsPerOrg map[int64]map[string]string // Org -> Channel group key -> receiver name.
+	lastReceiverID            int                         // For the auto generated receivers.
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
 	return "code migration"
 }
 
+//nolint: gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
@@ -105,13 +243,16 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	// allChannels: channelUID -> channelConfig
-	allChannels, defaultChannels, err := m.getNotificationChannelMap()
+	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap()
 	if err != nil {
 		return err
 	}
 
-	amConfig := PostableUserConfig{}
-	amConfig.AlertmanagerConfig.Route = &Route{}
+	amConfigPerOrg := make(amConfigsPerOrg, len(allChannelsPerOrg))
+	err = m.addDefaultChannels(amConfigPerOrg, allChannelsPerOrg, defaultChannelsPerOrg)
+	if err != nil {
+		return err
+	}
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -138,26 +279,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 
 		// get folder if exists
-		folder := dashboard{}
-		if dash.FolderId > 0 {
-			exists, err := m.sess.Where("id=?", dash.FolderId).Get(&folder)
-			if err != nil {
-				return MigrationError{
-					Err:     fmt.Errorf("failed to get folder %d: %w", dash.FolderId, err),
-					AlertId: da.Id,
-				}
-			}
-			if !exists {
-				return MigrationError{
-					Err:     fmt.Errorf("folder with id %v not found", dash.FolderId),
-					AlertId: da.Id,
-				}
-			}
-			if !folder.IsFolder {
-				return MigrationError{
-					Err:     fmt.Errorf("id %v is a dashboard not a folder", dash.FolderId),
-					AlertId: da.Id,
-				}
+		folder, err := m.getFolder(dash, da)
+		if err != nil {
+			return MigrationError{
+				Err:     err,
+				AlertId: da.Id,
 			}
 		}
 
@@ -214,8 +340,12 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		if err := m.updateReceiverAndRoute(allChannels, defaultChannels, da, rule, &amConfig); err != nil {
-			return err
+		if _, ok := amConfigPerOrg[rule.OrgID]; !ok {
+			m.mg.Logger.Info("no configuration found", "org", rule.OrgID)
+		} else {
+			if err := m.updateReceiverAndRoute(allChannelsPerOrg, defaultChannelsPerOrg, da, rule, amConfigPerOrg[rule.OrgID]); err != nil {
+				return err
+			}
 		}
 
 		if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
@@ -228,8 +358,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 		if err != nil {
 			// TODO better error handling, if constraint
-			rule.Title += fmt.Sprintf(" %v", rule.Uid)
-			rule.RuleGroup += fmt.Sprintf(" %v", rule.Uid)
+			rule.Title += fmt.Sprintf(" %v", rule.UID)
+			rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
 
 			_, err = m.sess.Insert(rule)
 			if err != nil {
@@ -244,44 +374,55 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 	}
 
-	// Create a separate receiver for all the unmigrated channels.
-	err = m.updateDefaultAndUnmigratedChannels(&amConfig, allChannels, defaultChannels)
-	if err != nil {
-		return err
-	}
+	for orgID, amConfig := range amConfigPerOrg {
+		// Create a separate receiver for all the unmigrated channels.
+		err = m.addUnmigratedChannels(orgID, amConfig, allChannelsPerOrg[orgID], defaultChannelsPerOrg[orgID])
+		if err != nil {
+			return err
+		}
 
-	if err := m.writeAlertmanagerConfig(&amConfig, allChannels); err != nil {
-		return err
-	}
+		// No channels, hence don't require Alertmanager config - skip it.
+		if len(allChannelsPerOrg[orgID]) == 0 {
+			m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
+			continue
+		}
 
-	if err := m.writeSilencesFile(); err != nil {
-		m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
+		// Encrypt the secure settings before we continue.
+		if err := amConfig.EncryptSecureSettings(); err != nil {
+			return err
+		}
+
+		// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
+		// Validation between legacy and unified alerting can be different (e.g. due to bug fixes) so this would fail the migration in that case.
+		if err := m.validateAlertmanagerConfig(orgID, amConfig); err != nil {
+			return err
+		}
+
+		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
+			return err
+		}
+
+		if err := m.writeSilencesFile(orgID); err != nil {
+			m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
+		}
 	}
 
 	return nil
 }
 
-func (m *migration) writeAlertmanagerConfig(amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel) error {
-	if len(allChannels) == 0 {
-		// No channels, hence don't require Alertmanager config.
-		m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
-		return nil
-	}
-
-	if err := amConfig.EncryptSecureSettings(); err != nil {
-		return err
-	}
+func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserConfig) error {
 	rawAmConfig, err := json.Marshal(amConfig)
 	if err != nil {
 		return err
 	}
 
-	// TODO: should we apply the config here? Because Alertmanager can take upto 1 min to pick it up.
+	// We don't need to apply the configuration, given the multi org alertmanager will do an initial sync before the server is ready.
 	_, err = m.sess.Insert(AlertConfiguration{
 		AlertmanagerConfiguration: string(rawAmConfig),
 		// Since we are migration for a snapshot of the code, it is always going to migrate to
 		// the v1 config.
 		ConfigurationVersion: "v1",
+		OrgID:                orgID,
 	})
 	if err != nil {
 		return err
@@ -290,14 +431,105 @@ func (m *migration) writeAlertmanagerConfig(amConfig *PostableUserConfig, allCha
 	return nil
 }
 
+// validateAlertmanagerConfig validates the alertmanager configuration produced by the migration against the receivers.
+func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUserConfig) error {
+	for _, r := range config.AlertmanagerConfig.Receivers {
+		for _, gr := range r.GrafanaManagedReceivers {
+			// First, let's decode the secure settings - given they're stored as base64.
+			secureSettings := make(map[string][]byte, len(gr.SecureSettings))
+			for k, v := range gr.SecureSettings {
+				d, err := base64.StdEncoding.DecodeString(v)
+				if err != nil {
+					return err
+				}
+				secureSettings[k] = d
+			}
+
+			var (
+				cfg = &channels.NotificationChannelConfig{
+					UID:                   gr.UID,
+					OrgID:                 orgID,
+					Name:                  gr.Name,
+					Type:                  gr.Type,
+					DisableResolveMessage: gr.DisableResolveMessage,
+					Settings:              gr.Settings,
+					SecureSettings:        secureSettings,
+				}
+				err error
+			)
+
+			// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
+			// given that the previous alerting will never support it.
+			decryptFunc := func(_ context.Context, sjd map[string][]byte, key string, fallback string, secret string) string {
+				if value, ok := sjd[key]; ok {
+					decryptedData, err := util.Decrypt(value, secret)
+					if err != nil {
+						m.mg.Logger.Warn("unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
+						return fallback
+					}
+					return string(decryptedData)
+				}
+				return fallback
+			}
+
+			switch gr.Type {
+			case "email":
+				_, err = channels.NewEmailNotifier(cfg, nil) // Email notifier already has a default template.
+			case "pagerduty":
+				_, err = channels.NewPagerdutyNotifier(cfg, nil, decryptFunc)
+			case "pushover":
+				_, err = channels.NewPushoverNotifier(cfg, nil, decryptFunc)
+			case "slack":
+				_, err = channels.NewSlackNotifier(cfg, nil, decryptFunc)
+			case "telegram":
+				_, err = channels.NewTelegramNotifier(cfg, nil, decryptFunc)
+			case "victorops":
+				_, err = channels.NewVictoropsNotifier(cfg, nil)
+			case "teams":
+				_, err = channels.NewTeamsNotifier(cfg, nil)
+			case "dingding":
+				_, err = channels.NewDingDingNotifier(cfg, nil)
+			case "kafka":
+				_, err = channels.NewKafkaNotifier(cfg, nil)
+			case "webhook":
+				_, err = channels.NewWebHookNotifier(cfg, nil, decryptFunc)
+			case "sensugo":
+				_, err = channels.NewSensuGoNotifier(cfg, nil, decryptFunc)
+			case "discord":
+				_, err = channels.NewDiscordNotifier(cfg, nil)
+			case "googlechat":
+				_, err = channels.NewGoogleChatNotifier(cfg, nil)
+			case "LINE":
+				_, err = channels.NewLineNotifier(cfg, nil, decryptFunc)
+			case "threema":
+				_, err = channels.NewThreemaNotifier(cfg, nil, decryptFunc)
+			case "opsgenie":
+				_, err = channels.NewOpsgenieNotifier(cfg, nil, decryptFunc)
+			case "prometheus-alertmanager":
+				_, err = channels.NewAlertmanagerNotifier(cfg, nil, decryptFunc)
+			default:
+				return fmt.Errorf("notifier %s is not supported", gr.Type)
+			}
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 type AlertConfiguration struct {
-	ID int64 `xorm:"pk autoincr 'id'"`
+	ID    int64 `xorm:"pk autoincr 'id'"`
+	OrgID int64 `xorm:"org_id"`
 
 	AlertmanagerConfiguration string
 	ConfigurationVersion      string
 	CreatedAt                 int64 `xorm:"created"`
 }
 
+// rmMigration removes Grafana 8 alert data
 type rmMigration struct {
 	migrator.MigrationBase
 }
@@ -332,14 +564,175 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
+	_, err = sess.Exec("delete from ngalert_configuration")
+	if err != nil {
+		return err
+	}
+
 	_, err = sess.Exec("delete from alert_instance")
 	if err != nil {
 		return err
 	}
 
-	if err := os.RemoveAll(silencesFileName(mg)); err != nil {
-		mg.Logger.Error("alert migration error: failed to remove silence file", "err", err)
+	exists, err := sess.IsTableExist("kv_store")
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		_, err = sess.Exec("delete from kv_store where namespace = ?", KV_NAMESPACE)
+		if err != nil {
+			return err
+		}
+	}
+
+	files, err := getSilenceFileNamesForAllOrgs(mg)
+	if err != nil {
+		return err
+	}
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			mg.Logger.Error("alert migration error: failed to remove silence file", "file", f, "err", err)
+		}
 	}
 
 	return nil
+}
+
+// rmMigrationWithoutLogging is similar migration to rmMigration
+// but is not recorded in the migration_log table so that it can rerun in the future
+type rmMigrationWithoutLogging = rmMigration
+
+func (m *rmMigrationWithoutLogging) SkipMigrationLog() bool {
+	return true
+}
+
+type upgradeNgAlerting struct {
+	migrator.MigrationBase
+}
+
+var _ migrator.CodeMigration = &upgradeNgAlerting{}
+
+func (u *upgradeNgAlerting) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	firstOrgId, err := u.updateAlertConfigurations(sess, migrator)
+	if err != nil {
+		return err
+	}
+	u.updateAlertmanagerFiles(firstOrgId, migrator)
+	return nil
+}
+
+func (u *upgradeNgAlerting) updateAlertConfigurations(sess *xorm.Session, migrator *migrator.Migrator) (int64, error) {
+	// if there are records with org_id == 0 then the feature flag was enabled before 8.2 that introduced org separation.
+	// if feature is enabled in 8.2 the migration "AddDashAlertMigration", which is effectively different from what was run in 8.1.x and earlier versions,
+	// will handle organizations correctly, and, therefore, nothing needs to be fixed
+	count, err := sess.Table(&AlertConfiguration{}).Where("org_id = 0").Count()
+	if err != nil {
+		return 0, fmt.Errorf("failed to query table alert_configuration: %w", err)
+	}
+	if count == 0 {
+		return 0, nil // NOTHING TO DO
+	}
+
+	orgs := make([]int64, 0)
+	// get all org IDs sorted in ascending order
+	if err = sess.Table("org").OrderBy("id").Cols("id").Find(&orgs); err != nil {
+		return 0, fmt.Errorf("failed to query table org: %w", err)
+	}
+	if len(orgs) == 0 { // should not really happen
+		migrator.Logger.Info("No organizations are found. Nothing to migrate")
+		return 0, nil
+	}
+
+	firstOrg := orgs[0]
+
+	// assigning all configurations to the first org because 0 does not usually point to any
+	migrator.Logger.Info("Assigning all existing records from alert_configuration to the first organization", "org", firstOrg)
+	_, err = sess.Cols("org_id").Where("org_id = 0").Update(&AlertConfiguration{OrgID: firstOrg})
+	if err != nil {
+		return 0, fmt.Errorf("failed to update org_id for all rows in the table alert_configuration: %w", err)
+	}
+
+	// if there is a single organization it is safe to assume that all configurations belong to it.
+	if len(orgs) == 1 {
+		return firstOrg, nil
+	}
+	// if there are many organizations we cannot safely assume what organization an alert_configuration belongs to.
+	// Therefore, we apply the default configuration to all organizations. The previous version could be restored if needed.
+	migrator.Logger.Warn("Detected many organizations. The current alertmanager configuration will be replaced by the default one")
+	configs := make([]*AlertConfiguration, 0, len(orgs))
+	for _, org := range orgs {
+		configs = append(configs, &AlertConfiguration{
+			AlertmanagerConfiguration: migrator.Cfg.UnifiedAlerting.DefaultConfiguration,
+			// Since we are migration for a snapshot of the code, it is always going to migrate to
+			// the v1 config.
+			ConfigurationVersion: "v1",
+			OrgID:                org,
+		})
+	}
+
+	_, err = sess.InsertMulti(configs)
+	if err != nil {
+		return 0, fmt.Errorf("failed to add default alertmanager configurations to every organization: %w", err)
+	}
+	return 0, nil
+}
+
+// updateAlertmanagerFiles scans the existing alerting directory '<data_dir>/alerting' for known files.
+// If argument 'orgId' is not 0 updateAlertmanagerFiles moves all known files to the directory <data_dir>/alerting/<orgId>.
+// Otherwise, it deletes those files.
+// pre-8.2 version put all configuration files into the root of alerting directory. Since 8.2 configuration files are put in organization specific directory
+func (u *upgradeNgAlerting) updateAlertmanagerFiles(orgId int64, migrator *migrator.Migrator) {
+	knownFiles := map[string]interface{}{"__default__.tmpl": nil, "silences": nil, "notifications": nil}
+	alertingDir := filepath.Join(migrator.Cfg.DataPath, "alerting")
+
+	// do not fail if something goes wrong because these files are not used anymore. the worst that can happen is that we leave some leftovers behind
+	deleteFile := func(fileName string) {
+		path := filepath.Join(alertingDir, fileName)
+		migrator.Logger.Info("Deleting alerting configuration file", "file", fileName)
+		err := os.Remove(path)
+		if err != nil {
+			migrator.Logger.Warn("Failed to delete file", "file", path, "error", err)
+		}
+	}
+
+	moveFile := func(fileName string) {
+		alertingOrgDir := filepath.Join(alertingDir, strconv.FormatInt(orgId, 10))
+		if err := os.MkdirAll(alertingOrgDir, 0750); err != nil {
+			migrator.Logger.Error("Failed to create alerting directory for organization. Skip moving the file and delete it instead", "target_dir", alertingOrgDir, "org_id", orgId, "error", err, "file", fileName)
+			deleteFile(fileName)
+			return
+		}
+		err := os.Rename(filepath.Join(alertingDir, fileName), filepath.Join(alertingOrgDir, fileName))
+		if err != nil {
+			migrator.Logger.Error("Failed to move alertmanager configuration file to organization.", "source_dir", alertingDir, "target_dir", alertingOrgDir, "org_id", orgId, "error", err, "file", fileName)
+			deleteFile(fileName)
+		}
+	}
+
+	entries, err := os.ReadDir(alertingDir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			keys := make([]string, 0, len(knownFiles))
+			for key := range knownFiles {
+				keys = append(keys, key)
+			}
+			migrator.Logger.Warn("Failed to clean up alerting directory. There may be files that are not used anymore.", "path", alertingDir, "files_to_delete", keys, "error", err)
+		}
+	}
+
+	for _, entry := range entries {
+		_, known := knownFiles[entry.Name()]
+		if known {
+			if orgId == 0 {
+				deleteFile(entry.Name())
+			} else {
+				moveFile(entry.Name())
+			}
+		}
+	}
+}
+
+func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
+	return "code migration"
 }

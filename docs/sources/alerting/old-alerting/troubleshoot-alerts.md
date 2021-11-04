@@ -3,6 +3,7 @@ title = "Troubleshoot alerts"
 description = "Troubleshoot alert rules"
 keywords = ["grafana", "alerting", "guide", "rules", "troubleshoot"]
 weight = 500
+aliases = ["/docs/grafana/latest/alerting/troubleshoot-alerts/"]
 +++
 
 # Troubleshoot alerts

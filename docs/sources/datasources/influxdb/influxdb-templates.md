@@ -8,19 +8,19 @@ weight = 300
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
 
-For more information, refer to  [Templates and variables]({{< relref "../../variables/_index.md" >}}).
+For more information, refer to [Templates and variables]({{< relref "../../variables/_index.md" >}}).
 
 ## Using variables in InfluxDB queries
 
 There are two syntaxes:
 
-`$<varname>`  Example:
+`$<varname>` Example:
 
 ```sql
 SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^$host$/ AND $timeFilter GROUP BY time($__interval), "hostname"
 ```
 
-`[[varname]]`  Example:
+`[[varname]]` Example:
 
 ```sql
 SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^[[host]]$/ AND $timeFilter GROUP BY time($__interval), "hostname"
@@ -40,6 +40,7 @@ For example, you can have a variable that contains all values for tag `hostname`
 ```sql
 SHOW TAG VALUES WITH KEY = "hostname"
 ```
+
 ## Chained or nested variables
 
 You can also create nested variables, sometimes called [chained variables]({{< relref "../../variables/variable-types/chained-variables.md" >}}).

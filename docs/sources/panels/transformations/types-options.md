@@ -10,6 +10,7 @@ Grafana comes with the following transformations:
 - [Add field from calculation]({{< relref "./types-options.md#add-field-from-calculation" >}})
 - [Concatenate fields]({{< relref "./types-options.md#concatenate-fields" >}})
 - [Config from query results]({{< relref "./config-from-query.md" >}})
+- [Convert field type]({{< relref "./types-options.md#convert-field-type" >}})
 - [Filter data by name]({{< relref "./types-options.md#filter-data-by-name" >}})
 - [Filter data by query]({{< relref "./types-options.md#filter-data-by-query" >}})
 - [Filter data by value]({{< relref "./types-options.md#filter-data-by-value" >}})
@@ -80,7 +81,7 @@ Query B:
 
 ## Merge
 
-Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
+Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../../visualizations/table/_index.md" >}}).
 
 In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
 
@@ -324,6 +325,36 @@ After you concatenate the fields, the data frame would be:
 | ---- | ------- | --- | ------ |
 | 15.4 | 1230233 | 3.2 | 5      |
 
+## Convert field type
+
+This transformation changes the field type of the specified field.
+
+- **Field -** Select from available fields
+- **as -** Select the FieldType to convert to
+  - **Numeric -** attempts to make the values numbers
+  - **String -** will make the values strings
+  - **Time -** attempts to parse the values as time
+    - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+  - **Boolean -** will make the values booleans
+
+For example the following query could be modified by selecting the time field, as Time, and Date Format as YYYY.
+
+| Time       | Mark  | Value |
+| ---------- | ----- | ----- |
+| 2017-07-01 | above | 25    |
+| 2018-08-02 | below | 22    |
+| 2019-09-02 | below | 29    |
+| 2020-10-04 | above | 22    |
+
+The result:
+
+| Time                | Mark  | Value |
+| ------------------- | ----- | ----- |
+| 2017-01-01 00:00:00 | above | 25    |
+| 2018-01-01 00:00:00 | below | 22    |
+| 2019-01-01 00:00:00 | below | 29    |
+| 2020-01-01 00:00:00 | above | 22    |
+
 ## Series to rows
 
 > **Note:** This transformation is available in Grafana 7.1+.
@@ -398,7 +429,7 @@ Consider the following data set:
 If you **Include** the data points that have a temperature below 30°C, the configuration will look as follows:
 
 - Filter Type: `Include`
-- Condition: Rows where `Temperature` matches `Lower Than` `100`
+- Condition: Rows where `Temperature` matches `Lower Than` `30`
 
 And you will get the following result, where only the temperatures below 30°C are included:
 

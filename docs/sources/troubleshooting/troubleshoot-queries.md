@@ -24,6 +24,7 @@ For more information, refer to [Inspect a panel]({{< relref "../panels/inspect-p
 ## My query is slow
 
 How many data points is your query returning? A query that returns lots of data points will be slow. Try this:
+
 - In **Query options**, limit the **Max data points** returned.
 - In **Query options**, increase the **Min interval** time.
 - In your query, use a `group by` function.

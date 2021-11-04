@@ -1,8 +1,10 @@
+//go:build integration
 // +build integration
 
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -13,6 +15,6 @@ func TestIntegration_GetAdminStats(t *testing.T) {
 	InitTestDB(t)
 
 	query := models.GetAdminStatsQuery{}
-	err := GetAdminStats(&query)
+	err := GetAdminStats(context.Background(), &query)
 	require.NoError(t, err)
 }

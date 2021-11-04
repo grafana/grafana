@@ -1,3 +1,4 @@
+//go:build memcached
 // +build memcached
 
 package remotecache

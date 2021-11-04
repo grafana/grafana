@@ -108,13 +108,17 @@ func (mg *Migrator) Start() error {
 			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
-				if _, err := sess.Insert(&record); err != nil {
-					return err
+				if !m.SkipMigrationLog() {
+					if _, err := sess.Insert(&record); err != nil {
+						return err
+					}
 				}
 				return err
 			}
 			record.Success = true
-			_, err = sess.Insert(&record)
+			if !m.SkipMigrationLog() {
+				_, err = sess.Insert(&record)
+			}
 			if err == nil {
 				migrationsPerformed++
 			}
@@ -168,16 +172,6 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 		return err
 	}
 
-	return nil
-}
-
-func (mg *Migrator) ClearMigrationEntry(id string) error {
-	sess := mg.x.NewSession()
-	defer sess.Close()
-	_, err := sess.SQL(`DELETE from migration_log where migration_id = ?`, id).Query()
-	if err != nil {
-		return fmt.Errorf("failed to clear migration entry %v: %w", id, err)
-	}
 	return nil
 }
 

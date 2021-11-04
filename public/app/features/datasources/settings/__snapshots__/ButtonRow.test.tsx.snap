@@ -4,12 +4,21 @@ exports[`Render should render component 1`] = `
 <div
   className="gf-form-button-row"
 >
-  <LinkButton
-    fill="outline"
-    href="/datasources"
+  <Button
+    fill="solid"
+    onClick={[Function]}
+    type="button"
     variant="secondary"
   >
     Back
+  </Button>
+  <LinkButton
+    disabled={false}
+    fill="solid"
+    href="/explore"
+    variant="secondary"
+  >
+    Explore
   </LinkButton>
   <Button
     aria-label="Data source settings page Delete button"
@@ -34,12 +43,21 @@ exports[`Render should render with buttons enabled 1`] = `
 <div
   className="gf-form-button-row"
 >
-  <LinkButton
-    fill="outline"
-    href="/datasources"
+  <Button
+    fill="solid"
+    onClick={[Function]}
+    type="button"
     variant="secondary"
   >
     Back
+  </Button>
+  <LinkButton
+    disabled={false}
+    fill="solid"
+    href="/explore"
+    variant="secondary"
+  >
+    Explore
   </LinkButton>
   <Button
     aria-label="Data source settings page Delete button"

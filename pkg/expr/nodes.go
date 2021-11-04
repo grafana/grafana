@@ -19,7 +19,7 @@ var (
 	logger = log.New("expr")
 )
 
-// baseNode includes commmon properties used across DPNodes.
+// baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
 	refID string
@@ -33,16 +33,59 @@ type rawNode struct {
 	DatasourceUID string
 }
 
-func (rn *rawNode) GetDatasourceName() (string, error) {
+func (rn *rawNode) GetDatasourceUID() (string, error) {
+	if rn.DatasourceUID != "" {
+		return rn.DatasourceUID, nil
+	}
+
 	rawDs, ok := rn.Query["datasource"]
 	if !ok {
-		return "", nil
+		return "", fmt.Errorf("no datasource property found in query model")
 	}
-	dsName, ok := rawDs.(string)
+
+	// For old queries with string datasource prop representing data source name
+	if dsName, ok := rawDs.(string); ok {
+		return dsName, nil
+	}
+
+	dsRef, ok := rawDs.(map[string]interface{})
 	if !ok {
-		return "", fmt.Errorf("expted datasource identifier to be a string, got %T", rawDs)
+		return "", fmt.Errorf("data source property is not an object nor string, got %T", rawDs)
 	}
-	return dsName, nil
+
+	if dsUid, ok := dsRef["uid"].(string); ok {
+		return dsUid, nil
+	}
+
+	return "", fmt.Errorf("no datasource uid found for query, got %T", rn.Query)
+}
+
+func (rn *rawNode) IsExpressionQuery() (bool, error) {
+	if rn.DatasourceUID != "" {
+		return rn.DatasourceUID == DatasourceUID, nil
+	}
+
+	rawDs, ok := rn.Query["datasource"]
+	if !ok {
+		return false, fmt.Errorf("no datasource property found in query model")
+	}
+
+	// For old queries with string datasource prop representing data source name
+	dsName, ok := rawDs.(string)
+	if ok && dsName == DatasourceName {
+		return true, nil
+	}
+
+	dsRef, ok := rawDs.(map[string]interface{})
+	if !ok {
+		return false, nil
+	}
+
+	if dsRef["uid"].(string) == DatasourceUID {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -171,22 +214,22 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 	}
 
 	rawDsID, ok := rn.Query["datasourceId"]
-	switch ok {
-	case true:
+	if ok {
 		floatDsID, ok := rawDsID.(float64)
 		if !ok {
 			return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
 		}
 		dsNode.datasourceID = int64(floatDsID)
-	default:
-		if rn.DatasourceUID == "" {
+	} else {
+		dsUid, err := rn.GetDatasourceUID()
+		if err != nil {
 			return nil, fmt.Errorf("neither datasourceId or datasourceUid in expression data source request for refId %v", rn.RefID)
 		}
-		dsNode.datasourceUID = rn.DatasourceUID
+		dsNode.datasourceUID = dsUid
 	}
 
 	var floatIntervalMS float64
-	if rawIntervalMS := rn.Query["intervalMs"]; ok {
+	if rawIntervalMS, ok := rn.Query["intervalMs"]; ok {
 		if floatIntervalMS, ok = rawIntervalMS.(float64); !ok {
 			return nil, fmt.Errorf("expected intervalMs to be an float64, got type %T for refId %v", rawIntervalMS, rn.RefID)
 		}
@@ -194,7 +237,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 	}
 
 	var floatMaxDP float64
-	if rawMaxDP := rn.Query["maxDataPoints"]; ok {
+	if rawMaxDP, ok := rn.Query["maxDataPoints"]; ok {
 		if floatMaxDP, ok = rawMaxDP.(float64); !ok {
 			return nil, fmt.Errorf("expected maxDataPoints to be an float64, got type %T for refId %v", rawMaxDP, rn.RefID)
 		}

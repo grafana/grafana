@@ -7,7 +7,9 @@ import { SelectableValue } from '@grafana/data';
 // eslint-disable-next-line lodash/import-scope
 import _, { Cancelable } from 'lodash';
 
-jest.spyOn(_, 'debounce').mockImplementation((func: ((...args: any) => any) & Cancelable, wait: number) => func);
+jest
+  .spyOn(_, 'debounce')
+  .mockImplementation((func: (...args: any) => any, wait?: number) => func as typeof func & Cancelable);
 
 describe('CloudWatchLogsQueryField', () => {
   it('updates upstream query log groups on region change', async () => {

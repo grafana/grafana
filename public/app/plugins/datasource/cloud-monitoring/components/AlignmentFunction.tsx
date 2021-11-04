@@ -20,6 +20,7 @@ export const AlignmentFunction: FC<Props> = ({ query, templateVariableOptions, o
 
   return (
     <Select
+      menuShouldPortal
       width={SELECT_WIDTH}
       onChange={({ value }) => onChange({ ...query, perSeriesAligner: value! })}
       value={[...alignOptions, ...templateVariableOptions].find((s) => s.value === perSeriesAligner)}

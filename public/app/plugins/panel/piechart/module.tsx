@@ -1,9 +1,11 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions, PieChartType, PieChartLabels, PieChartLegendValues } from './types';
-import { LegendDisplayMode, commonOptionsBuilder } from '@grafana/ui';
+import { LegendDisplayMode } from '@grafana/schema';
+import { commonOptionsBuilder } from '@grafana/ui';
 import { PieChartPanelChangedHandler } from './migrations';
 import { addStandardDataReduceOptions } from '../stat/types';
+import { PieChartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .setPanelChangeHandler(PieChartPanelChangedHandler)
@@ -68,4 +70,5 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
       },
       showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
     });
-  });
+  })
+  .setSuggestionsSupplier(new PieChartSuggestionsSupplier());

@@ -33,7 +33,6 @@ Some of those new capabilities can already be seen in this release, like sharing
 - [**Enterprise**: GitLab OAuth Team Sync support]({{< relref "#gitlab-oauth-team-sync-support" >}})
 - [**Enterprise**: Teams and LDAP Improvements]({{< relref "#ldap-teams" >}})
 
-
 ### Go back to dashboard from Explore
 
 To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
@@ -84,7 +83,7 @@ To show a horizontal line through the Y-value of the datapoint across the whole 
 
 ## Share query results between panels
 
-Grafana 6.4 continues the work started in 6.3 of creating a data model and query execution lifecycle that can support robust analytics and streaming.  These changes are mostly structural and lay the foundation for powerful features in future releases.
+Grafana 6.4 continues the work started in 6.3 of creating a data model and query execution lifecycle that can support robust analytics and streaming. These changes are mostly structural and lay the foundation for powerful features in future releases.
 
 The first new feature all these changes have enabled is the ability to share query results between panels. So for example if you have an expensive query you can visualize the same results in a graph, table and singlestat panel. To reuse another panel’s query result select the data source named `-- Dashboard --` and then select the panel.
 

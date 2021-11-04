@@ -1,68 +1,56 @@
 package middleware
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
-	"text/template"
 	"time"
-
-	"github.com/grafana/grafana/pkg/util"
-
-	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, string, ...string) macaron.Handler {
-	return func(fallback macaron.Handler, permission string, scopes ...string) macaron.Handler {
+func Middleware(ac accesscontrol.AccessControl) func(web.Handler, accesscontrol.Evaluator) web.Handler {
+	return func(fallback web.Handler, evaluator accesscontrol.Evaluator) web.Handler {
 		if ac.IsDisabled() {
 			return fallback
 		}
 
 		return func(c *models.ReqContext) {
-			// We need this otherwise templated scopes get initialized only once, during the first call
-			runtimeScope := make([]string, len(scopes))
-			for i, scope := range scopes {
-				var buf bytes.Buffer
-
-				tmpl, err := template.New("scope").Parse(scope)
-				if err != nil {
-					c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
-					return
-				}
-				err = tmpl.Execute(&buf, c.AllParams())
-				if err != nil {
-					c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
-					return
-				}
-				runtimeScope[i] = buf.String()
-			}
-
-			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, permission, runtimeScope...)
+			injected, err := evaluator.Inject(buildScopeParams(c))
 			if err != nil {
-				Deny(c, permission, runtimeScope, err)
+				c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
 				return
 			}
-			if !hasAccess {
-				Deny(c, permission, runtimeScope, nil)
+
+			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, injected)
+			if !hasAccess || err != nil {
+				Deny(c, injected, err)
 				return
 			}
 		}
 	}
 }
 
-func Deny(c *models.ReqContext, permission string, scopes []string, err error) {
+func Deny(c *models.ReqContext, evaluator accesscontrol.Evaluator, err error) {
 	id := newID()
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
 	} else {
-		c.Logger.Info("Access denied",
+		c.Logger.Info(
+			"Access denied",
 			"userID", c.UserId,
-			"permission", permission,
-			"scopes", scopes,
-			"accessErrorID", id)
+			"accessErrorID", id,
+			"permissions", evaluator.String(),
+		)
+	}
+
+	if !c.IsApiRequest() {
+		// TODO(emil): I'd like to show a message after this redirect, not sure how that can be done?
+		c.Redirect(setting.AppSubUrl + "/")
+		return
 	}
 
 	// If the user triggers an error in the access control system, we
@@ -86,4 +74,11 @@ func newID() string {
 		id = fmt.Sprintf("%d", time.Now().UnixNano())
 	}
 	return "ACE" + id
+}
+
+func buildScopeParams(c *models.ReqContext) accesscontrol.ScopeParams {
+	return accesscontrol.ScopeParams{
+		OrgID:     c.OrgId,
+		URLParams: web.Params(c.Req),
+	}
 }

@@ -96,7 +96,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
             </Button>
           </Link>
           <Button
-            variant="secondary"
+            variant="primary"
             type="button"
             onClick={handleSubmit((values) => submit(values, false), onInvalid)}
             disabled={submitState.loading}
@@ -121,7 +121,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               {showStep2 && (
                 <>
                   <QueryStep />
-                  {type === RuleFormType.cloud ? <CloudConditionsStep /> : <GrafanaConditionsStep />}
+                  {type === RuleFormType.grafana ? <GrafanaConditionsStep /> : <CloudConditionsStep />}
                   <DetailsStep />
                 </>
               )}

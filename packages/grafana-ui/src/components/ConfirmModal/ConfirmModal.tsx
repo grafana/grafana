@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Modal } from '../Modal/Modal';
 import { IconName } from '../../types/icon';
@@ -51,9 +51,15 @@ export const ConfirmModal = ({
 }: ConfirmModalProps): JSX.Element => {
   const [disabled, setDisabled] = useState(Boolean(confirmationText));
   const styles = useStyles2(getStyles);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
     setDisabled(confirmationText?.localeCompare(event.currentTarget.value) !== 0);
   };
+
+  useEffect(() => {
+    // for some reason autoFocus property did no work on this button, but this does
+    buttonRef.current?.focus();
+  }, []);
 
   return (
     <Modal className={styles.modal} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
@@ -76,7 +82,7 @@ export const ConfirmModal = ({
           variant="destructive"
           onClick={onConfirm}
           disabled={disabled}
-          autoFocus
+          ref={buttonRef}
           aria-label={selectors.pages.ConfirmModal.delete}
         >
           {confirmText}

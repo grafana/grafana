@@ -18,11 +18,12 @@ export const LibraryPanelInformation: React.FC<Props> = ({ panel, formatDate }) 
   }
 
   return (
-    <>
-      <p className={styles.libraryPanelInfo}>
+    <div className={styles.info}>
+      <div className={styles.libraryPanelInfo}>
         {`Used on ${panel.libraryPanel.meta.connectedDashboards} `}
         {panel.libraryPanel.meta.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}
-        <br />
+      </div>
+      <div className={styles.libraryPanelInfo}>
         Last edited on {formatDate?.(panel.libraryPanel.meta.updated, 'L') ?? panel.libraryPanel.meta.updated} by
         {panel.libraryPanel.meta.updatedBy.avatarUrl && (
           <img
@@ -34,17 +35,19 @@ export const LibraryPanelInformation: React.FC<Props> = ({ panel, formatDate }) 
           />
         )}
         {panel.libraryPanel.meta.updatedBy.name}
-      </p>
-    </>
+      </div>
+    </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
+    info: css`
+      line-height: 1;
+    `,
     libraryPanelInfo: css`
       color: ${theme.colors.textSemiWeak};
       font-size: ${theme.typography.size.sm};
-      margin-left: ${theme.spacing.xxs};
     `,
     userAvatar: css`
       border-radius: 50%;

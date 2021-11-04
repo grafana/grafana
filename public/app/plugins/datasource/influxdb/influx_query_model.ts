@@ -7,7 +7,7 @@ import { TemplateSrv } from '@grafana/runtime';
 
 export default class InfluxQueryModel {
   target: InfluxQuery;
-  selectModels: any[];
+  selectModels: any[] = [];
   queryBuilder: any;
   groupByParts: any;
   templateSrv: any;
@@ -142,6 +142,7 @@ export default class InfluxQueryModel {
   }
 
   private renderTagCondition(tag: InfluxQueryTag, index: number, interpolate?: boolean) {
+    // FIXME: merge this function with query_builder/renderTagCondition
     let str = '';
     let operator = tag.operator;
     let value = tag.value;

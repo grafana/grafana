@@ -32,7 +32,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
       {bucketAgg.type === 'geohash_grid' && (
         <InlineField label="Precision" {...inlineFieldProps}>
           <Input
-            onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'precision', e.target.value!))}
+            onBlur={(e) =>
+              dispatch(
+                changeBucketAggregationSetting({ bucketAgg, settingName: 'precision', newValue: e.target.value })
+              )
+            }
             defaultValue={
               bucketAgg.settings?.precision || bucketAggregationConfig[bucketAgg.type].defaultSettings?.precision
             }
@@ -44,7 +48,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
         <>
           <InlineField label="Interval" {...inlineFieldProps}>
             <Input
-              onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.target.value!))}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: e.target.value })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval
               }
@@ -53,7 +61,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
 
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
-              onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'min_doc_count', newValue: e.target.value })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.min_doc_count ||
                 bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count

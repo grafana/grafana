@@ -1,5 +1,5 @@
 import { DataFrame, FieldConfig, FieldSparkline, IndexVector } from '@grafana/data';
-import { GraphFieldConfig } from '../uPlot/config';
+import { GraphFieldConfig } from '@grafana/schema';
 
 /** @internal
  * Given a sparkline config returns a DataFrame ready to be turned into Plot data set

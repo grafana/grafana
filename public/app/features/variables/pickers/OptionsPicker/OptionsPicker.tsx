@@ -75,7 +75,15 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
       const linkText = formatVariableLabel(variable);
       const loading = variable.state === LoadingState.Loading;
 
-      return <VariableLink text={linkText} onClick={this.onShowOptions} loading={loading} onCancel={this.onCancel} />;
+      return (
+        <VariableLink
+          id={variable.id}
+          text={linkText}
+          onClick={this.onShowOptions}
+          loading={loading}
+          onCancel={this.onCancel}
+        />
+      );
     }
 
     onCancel = () => {
@@ -83,12 +91,16 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     };
 
     renderOptions(picker: OptionsPickerState) {
+      const { id } = this.props.variable;
       return (
         <ClickOutsideWrapper onClick={this.onHideOptions}>
           <VariableInput
+            id={id}
             value={picker.queryValue}
             onChange={this.props.filterOrSearchOptions}
             onNavigate={this.props.navigateOptions}
+            aria-expanded={true}
+            aria-controls={`options-${id}`}
           />
           <VariableOptions
             values={picker.options}
@@ -97,6 +109,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
             highlightIndex={picker.highlightIndex}
             multi={picker.multi}
             selectedValues={picker.selectedValues}
+            id={`options-${id}`}
           />
         </ClickOutsideWrapper>
       );

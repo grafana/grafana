@@ -25,6 +25,7 @@ export const bundlePlugin = async ({ watch, production, preserveConsole }: Plugi
       console.log('Started watching plugin for changes...');
       compiler.watch({}, (err, stats) => {});
 
+      // @ts-ignore
       compiler.hooks.invalid.tap('invalid', () => {
         clearConsole();
         console.log('Compiling...');
@@ -57,17 +58,19 @@ export const bundlePlugin = async ({ watch, production, preserveConsole }: Plugi
     } else {
       compiler.run((err: Error, stats: webpack.Stats) => {
         if (err) {
-          reject(err.message);
-
+          reject(err);
           return;
         }
+
         if (stats.hasErrors()) {
           stats.compilation.errors.forEach((e) => {
             console.log(e.message);
           });
 
           reject('Build failed');
+          return;
         }
+
         console.log('\n', stats.toString({ colors: true }), '\n');
         resolve();
       });

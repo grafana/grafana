@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/graphitebridge"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,20 +19,22 @@ func (lw *logWrapper) Println(v ...interface{}) {
 }
 
 func init() {
-	registry.RegisterService(&InternalMetricsService{})
 	initMetricVars()
 	initFrontendMetrics()
 }
 
+func ProvideService(cfg *setting.Cfg) (*InternalMetricsService, error) {
+	s := &InternalMetricsService{
+		Cfg: cfg,
+	}
+	return s, s.readSettings()
+}
+
 type InternalMetricsService struct {
-	Cfg *setting.Cfg `inject:""`
+	Cfg *setting.Cfg
 
 	intervalSeconds int64
 	graphiteCfg     *graphitebridge.Config
-}
-
-func (im *InternalMetricsService) Init() error {
-	return im.readSettings()
 }
 
 func (im *InternalMetricsService) Run(ctx context.Context) error {

@@ -8,10 +8,10 @@ import {
   ScopedVars,
   DataFrame,
   getFieldDisplayValuesProxy,
+  SplitOpen,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { SplitOpen } from 'app/types/explore';
-import { getLinkSrv } from '../../panel/panellinks/link_srv';
+import { getLinkSrv } from '../../../angular/panel/panellinks/link_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
 /**

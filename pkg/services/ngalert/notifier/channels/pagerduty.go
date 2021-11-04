@@ -6,15 +6,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
 const (
@@ -29,7 +28,7 @@ var (
 // PagerdutyNotifier is responsible for sending
 // alert notifications to pagerduty
 type PagerdutyNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	Key           string
 	Severity      string
 	CustomDetails map[string]string
@@ -42,18 +41,18 @@ type PagerdutyNotifier struct {
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template) (*PagerdutyNotifier, error) {
+func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*PagerdutyNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
-	key := model.DecryptedValue("integrationKey", model.Settings.Get("integrationKey").MustString())
+	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString(), setting.SecretKey)
 	if key == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find integration key property in settings"}
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -145,7 +144,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			Text: "External URL",
 		}},
 		Description: tmpl(`{{ template "default.title" . }}`), // TODO: this can be configurable template.
-		Payload: &pagerDutyPayload{
+		Payload: pagerDutyPayload{
 			Component:     tmpl(pn.Component),
 			Summary:       tmpl(pn.Summary),
 			Severity:      tmpl(pn.Severity),
@@ -177,18 +176,15 @@ func (pn *PagerdutyNotifier) SendResolved() bool {
 }
 
 type pagerDutyMessage struct {
-	RoutingKey  string            `json:"routing_key,omitempty"`
-	ServiceKey  string            `json:"service_key,omitempty"`
-	DedupKey    string            `json:"dedup_key,omitempty"`
-	IncidentKey string            `json:"incident_key,omitempty"`
-	EventType   string            `json:"event_type,omitempty"`
-	Description string            `json:"description,omitempty"`
-	EventAction string            `json:"event_action"`
-	Payload     *pagerDutyPayload `json:"payload"`
-	Client      string            `json:"client,omitempty"`
-	ClientURL   string            `json:"client_url,omitempty"`
-	Details     map[string]string `json:"details,omitempty"`
-	Links       []pagerDutyLink   `json:"links,omitempty"`
+	RoutingKey  string           `json:"routing_key,omitempty"`
+	ServiceKey  string           `json:"service_key,omitempty"`
+	DedupKey    string           `json:"dedup_key,omitempty"`
+	Description string           `json:"description,omitempty"`
+	EventAction string           `json:"event_action"`
+	Payload     pagerDutyPayload `json:"payload"`
+	Client      string           `json:"client,omitempty"`
+	ClientURL   string           `json:"client_url,omitempty"`
+	Links       []pagerDutyLink  `json:"links,omitempty"`
 }
 
 type pagerDutyLink struct {
@@ -200,7 +196,6 @@ type pagerDutyPayload struct {
 	Summary       string            `json:"summary"`
 	Source        string            `json:"source"`
 	Severity      string            `json:"severity"`
-	Timestamp     string            `json:"timestamp,omitempty"`
 	Class         string            `json:"class,omitempty"`
 	Component     string            `json:"component,omitempty"`
 	Group         string            `json:"group,omitempty"`

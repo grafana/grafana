@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 )
 
 type fakeMultiLDAP struct {
@@ -64,11 +64,7 @@ func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, cb fu
 	}
 
 	ctx := &models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{
-				Request: req,
-			},
-		},
+		Context: &web.Context{Req: req},
 	}
 
 	auth := New(cfg, &Options{
@@ -107,8 +103,9 @@ func TestMiddlewareContext(t *testing.T) {
 	t.Run("When the cache key contains additional headers", func(t *testing.T) {
 		const id int64 = 33
 		const group = "grafana-core-team"
+		const role = "Admin"
 
-		h, err := HashCacheKey(hdrName + "-" + group)
+		h, err := HashCacheKey(hdrName + "-" + group + "-" + role)
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
 		err = cache.Set(key, id, 0)
@@ -116,9 +113,10 @@ func TestMiddlewareContext(t *testing.T) {
 
 		auth := prepareMiddleware(t, cache, func(req *http.Request, cfg *setting.Cfg) {
 			req.Header.Set("X-WEBAUTH-GROUPS", group)
-			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
+			req.Header.Set("X-WEBAUTH-ROLE", role)
+			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS", "Role": "X-WEBAUTH-ROLE"}
 		})
-		assert.Equal(t, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0", key)
+		assert.Equal(t, "auth-proxy-sync-ttl:f5acfffd56daac98d502ef8c8b8c5d56", key)
 
 		gotID, err := auth.Login(logger, false)
 		require.NoError(t, err)
