@@ -76,7 +76,7 @@ export const enrichConfigItems = (
 };
 
 export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
-  return itemToCheck === searchItem || itemToCheck.children?.some((child) => child === searchItem);
+  return Boolean(itemToCheck === searchItem || itemToCheck.children?.some((child) => child === searchItem));
 };
 
 const stripQueryParams = (url?: string) => {
