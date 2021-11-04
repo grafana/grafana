@@ -18,5 +18,5 @@ type Store interface {
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
 	UpdateDashboardACLCtx(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	// SaveAlerts saves dashboard alerts.
-	SaveAlerts(dashID int64, alerts []*models.Alert) error
+	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
 }
