@@ -26,7 +26,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, org
 
 func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceAccountID int64) error {
 	user := models.User{}
-	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`, orgID, serviceAccountID, true).Get(&user)
+	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = true`, orgID, serviceAccountID).Get(&user)
 	if err != nil {
 		return err
 	}
