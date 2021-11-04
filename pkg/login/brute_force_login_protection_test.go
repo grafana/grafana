@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -61,7 +62,7 @@ func TestValidateLoginAttempts(t *testing.T) {
 			withLoginAttempts(t, tc.loginAttempts)
 
 			query := &models.LoginUserQuery{Username: "user", Cfg: tc.cfg}
-			err := validateLoginAttempts(query)
+			err := validateLoginAttempts(context.Background(), query)
 			require.Equal(t, tc.expected, err)
 		})
 	}

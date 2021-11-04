@@ -21,7 +21,7 @@ func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.Id}
-	if err := s.Bus.Dispatch(authInfoQuery); err != nil {
+	if err := s.Bus.DispatchCtx(context.TODO(), authInfoQuery); err != nil {
 		return err
 	}
 

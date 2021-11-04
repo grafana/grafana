@@ -31,7 +31,7 @@ func Init() {
 
 // authenticateUser authenticates the user via username & password
 func authenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
-	if err := validateLoginAttempts(query); err != nil {
+	if err := validateLoginAttempts(ctx, query); err != nil {
 		return err
 	}
 

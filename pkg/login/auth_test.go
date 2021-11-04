@@ -184,7 +184,7 @@ func mockLoginUsingLDAP(enabled bool, err error, sc *authScenarioContext) {
 }
 
 func mockLoginAttemptValidation(err error, sc *authScenarioContext) {
-	validateLoginAttempts = func(*models.LoginUserQuery) error {
+	validateLoginAttempts = func(context.Context, *models.LoginUserQuery) error {
 		sc.loginAttemptValidationWasCalled = true
 		return err
 	}
