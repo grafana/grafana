@@ -23,7 +23,7 @@ import (
 )
 
 func init() {
-	rand.Seed(42)
+	rand.Seed(time.Now().UnixNano())
 }
 
 // SetupTestEnv initializes a store to used by the tests.
