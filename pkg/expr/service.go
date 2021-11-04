@@ -28,6 +28,10 @@ const DatasourceID = -100
 // should be used instead and should be set to "__expr__".
 const OldDatasourceUID = "-100"
 
+func IsDataSource(uid string) bool {
+	return uid == DatasourceUID || uid == OldDatasourceUID
+}
+
 // Service is service representation for expression handling.
 type Service struct {
 	Cfg         *setting.Cfg
