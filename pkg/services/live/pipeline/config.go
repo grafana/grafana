@@ -390,6 +390,10 @@ func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig,
 			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
 		return NewRemoteWriteFrameOutput(*remoteWriteConfig), nil
+	case FrameOutputTypeLoki:
+		// TODO: for now we can only output to local Loki.
+		// We should use configured backend after https://github.com/grafana/grafana/pull/40147 merged.
+		return NewLokiFrameOutput(LokiFrameOutputConfig{}), nil
 	case FrameOutputTypeChangeLog:
 		if config.ChangeLogOutputConfig == nil {
 			return nil, missingConfiguration
@@ -411,6 +415,10 @@ func (f *StorageRuleBuilder) extractDataOutputter(config *DataOutputterConfig) (
 			return nil, missingConfiguration
 		}
 		return NewRedirectDataOutput(*config.RedirectDataOutputConfig), nil
+	case DataOutputTypeLoki:
+		// TODO: for now we can only output to local Loki.
+		// We should use configured backend after https://github.com/grafana/grafana/pull/40147 merged.
+		return NewLokiDataOutput(LokiDataOutputConfig{}), nil
 	case DataOutputTypeBuiltin:
 		return NewBuiltinDataOutput(f.ChannelHandlerGetter), nil
 	case DataOutputTypeLocalSubscribers:

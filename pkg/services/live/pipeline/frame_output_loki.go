@@ -7,25 +7,31 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+const lokiFlushInterval = 15 * time.Second
+
 // LokiFrameOutputConfig ...
-type LokiFrameOutputConfig struct{}
+type LokiFrameOutputConfig struct {
+	// TODO: avoid hardcoded endpoint and use basic auth.
+	// after https://github.com/grafana/grafana/pull/40147 merged.
+}
 
 // LokiFrameOutput passes processing control to the rule defined
 // for a configured channel.
 type LokiFrameOutput struct {
 	config     LokiFrameOutputConfig
-	httpClient *http.Client
+	lokiWriter *lokiWriter
 }
 
 func NewLokiFrameOutput(config LokiFrameOutputConfig) *LokiFrameOutput {
 	return &LokiFrameOutput{
 		config:     config,
-		httpClient: &http.Client{Timeout: 2 * time.Second},
+		lokiWriter: newLokiWriter(),
 	}
 }
 
@@ -35,23 +41,87 @@ func (out *LokiFrameOutput) Type() string {
 	return FrameOutputTypeLoki
 }
 
-func outputLoki(httpClient *http.Client, logLine string, labels map[string]string) error {
-	entries := map[string]interface{}{
-		"streams": []interface{}{
-			map[string]interface{}{
-				"stream": labels,
-				"values": []interface{}{
-					[]interface{}{time.Now().UnixNano(), logLine},
-				},
-			},
-		},
-	}
-	payload, err := json.Marshal(entries)
+type LokiStreamsEntry struct {
+	Streams []LokiStream `json:"streams"`
+}
+
+type LokiStream struct {
+	Stream map[string]string `json:"stream"`
+	Values []interface{}     `json:"values"`
+}
+
+func (out *LokiFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
+	//if out.config.Endpoint == "" {
+	//	logger.Debug("Skip sending to Loki: no url")
+	//	return nil, nil
+	//}
+	frameJSON, err := data.FrameToJSON(frame, data.IncludeAll)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	logger.Debug("Sending data to Loki", "bodyLength", len(payload))
-	req, err := http.NewRequest(http.MethodPost, "http://127.0.0.1:3100/loki/api/v1/push", bytes.NewReader(payload))
+	err = out.lokiWriter.write(LokiStream{
+		Stream: map[string]string{"frame": frame.Name, "channel": vars.Channel},
+		Values: []interface{}{
+			[]interface{}{time.Now().UnixNano(), string(frameJSON)},
+		},
+	})
+	return nil, err
+}
+
+type lokiWriter struct {
+	mu         sync.RWMutex
+	httpClient *http.Client
+	buffer     []LokiStream
+}
+
+func newLokiWriter() *lokiWriter {
+	w := &lokiWriter{
+		httpClient: &http.Client{Timeout: 2 * time.Second},
+	}
+	go w.flushPeriodically()
+	return w
+}
+
+func (w *lokiWriter) flushPeriodically() {
+	for range time.NewTicker(lokiFlushInterval).C {
+		w.mu.Lock()
+		if len(w.buffer) == 0 {
+			w.mu.Unlock()
+			continue
+		}
+		tmpBuffer := make([]LokiStream, len(w.buffer))
+		copy(tmpBuffer, w.buffer)
+		w.buffer = nil
+		w.mu.Unlock()
+
+		err := w.flush(tmpBuffer)
+		if err != nil {
+			logger.Error("Error flush to Loki", "error", err)
+			w.mu.Lock()
+			// TODO: drop in case of large buffer size? Make several attempts only?
+			w.buffer = append(tmpBuffer, w.buffer...)
+			w.mu.Unlock()
+		}
+	}
+}
+
+func (w *lokiWriter) write(s LokiStream) error {
+	w.mu.Lock()
+	w.buffer = append(w.buffer, s)
+	w.mu.Unlock()
+	return nil
+}
+
+func (w *lokiWriter) flush(streams []LokiStream) error {
+	logger.Debug("Loki flush", "numStreams", len(streams))
+	writeData, err := json.Marshal(LokiStreamsEntry{
+		Streams: streams,
+	})
+	if err != nil {
+		return fmt.Errorf("error converting Loki stream entry to bytes: %v", err)
+	}
+	//logger.Debug("Sending to Loki endpoint", "url", out.config.Endpoint, "bodyLength", len(writeData))
+	req, err := http.NewRequest(http.MethodPost, "http://127.0.0.1:3100/loki/api/v1/push", bytes.NewReader(writeData))
 	if err != nil {
 		return fmt.Errorf("error constructing loki push request: %w", err)
 	}
@@ -59,24 +129,15 @@ func outputLoki(httpClient *http.Client, logLine string, labels map[string]strin
 	//req.SetBasicAuth(out.config.User, out.config.Password)
 
 	started := time.Now()
-	resp, err := httpClient.Do(req)
+	resp, err := w.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error sending to Loki: %w", err)
 	}
 	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
-		logger.Error("Unexpected response code from remote write endpoint", "code", resp.StatusCode)
-		return errors.New("unexpected response code from remote write endpoint")
+		logger.Error("Unexpected response code from Loki endpoint", "code", resp.StatusCode)
+		return errors.New("unexpected response code Loki endpoint")
 	}
 	logger.Debug("Successfully sent to Loki", "elapsed", time.Since(started))
 	return nil
-}
-
-func (out *LokiFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
-	frameJSON, err := data.FrameToJSON(frame, data.IncludeAll)
-	if err != nil {
-		return nil, err
-	}
-	err = outputLoki(out.httpClient, string(frameJSON), map[string]string{"host": "test"})
-	return nil, err
 }

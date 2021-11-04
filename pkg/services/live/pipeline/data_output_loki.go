@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"net/http"
 	"time"
 )
 
@@ -13,13 +12,13 @@ type LokiDataOutputConfig struct{}
 // for a configured channel.
 type LokiDataOutput struct {
 	config     LokiDataOutputConfig
-	httpClient *http.Client
+	lokiWriter *lokiWriter
 }
 
 func NewLokiDataOutput(config LokiDataOutputConfig) *LokiDataOutput {
 	return &LokiDataOutput{
 		config:     config,
-		httpClient: &http.Client{Timeout: 2 * time.Second},
+		lokiWriter: newLokiWriter(),
 	}
 }
 
@@ -30,5 +29,11 @@ func (out *LokiDataOutput) Type() string {
 }
 
 func (out *LokiDataOutput) OutputData(_ context.Context, vars Vars, data []byte) ([]*ChannelData, error) {
-	return nil, outputLoki(out.httpClient, string(data), map[string]string{"raw": "test"})
+	err := out.lokiWriter.write(LokiStream{
+		Stream: map[string]string{"channel": vars.Channel},
+		Values: []interface{}{
+			[]interface{}{time.Now().UnixNano(), string(data)},
+		},
+	})
+	return nil, err
 }

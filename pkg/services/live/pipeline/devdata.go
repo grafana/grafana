@@ -99,9 +99,9 @@ type DevRuleBuilder struct {
 func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
-			Pattern:        "plugin/testdata/random-20Hz-stream",
+			Pattern: "plugin/testdata/random-20Hz-stream",
 			DataOutputters: []DataOutputter{
-				//NewLokiDataOutput(LokiDataOutputConfig{}),
+				NewLokiDataOutput(LokiDataOutputConfig{}),
 			},
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			FrameOutputters: []FrameOutputter{
