@@ -14,6 +14,7 @@ export interface LokiRangeQueryRequest {
   end?: number;
   step?: number;
   direction?: 'BACKWARD' | 'FORWARD';
+  // extra info passed to Loki API when a log volume query is run to distinguish it from any other query
   hint?: 'logvolhist';
 }
 
@@ -34,7 +35,6 @@ export interface LokiQuery extends DataQuery {
   resolution?: number;
   range?: boolean;
   instant?: boolean;
-  // extra info passed to Loki API when log volume query is run
   volumeQuery?: boolean;
 }
 
