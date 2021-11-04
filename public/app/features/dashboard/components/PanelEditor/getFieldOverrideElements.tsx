@@ -121,6 +121,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
         render: function renderMatcherUI() {
           return (
             <matcherUi.component
+              id={`${matcherUi.matcher.id}-${idx}`}
               matcher={matcherUi.matcher}
               data={props.data?.series ?? []}
               options={override.matcher.options}

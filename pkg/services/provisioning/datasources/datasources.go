@@ -69,7 +69,7 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 }
 
 func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath string) error {
-	configs, err := dc.cfgProvider.readConfig(configPath)
+	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
 	if err != nil {
 		return err
 	}

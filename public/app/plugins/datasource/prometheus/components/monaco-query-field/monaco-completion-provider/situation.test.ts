@@ -1,7 +1,7 @@
-import { getIntent, Intent } from './intent';
+import { getSituation, Situation } from './situation';
 
 // we use the `^` character as the cursor-marker in the string.
-function assertIntent(situation: string, expectedIntent: Intent | null) {
+function assertSituation(situation: string, expectedSituation: Situation | null) {
   // first we find the cursor-position
   const pos = situation.indexOf('^');
   if (pos === -1) {
@@ -16,61 +16,61 @@ function assertIntent(situation: string, expectedIntent: Intent | null) {
     throw new Error('multiple cursors');
   }
 
-  const result = getIntent(text, pos);
+  const result = getSituation(text, pos);
 
-  if (expectedIntent === null) {
+  if (expectedSituation === null) {
     expect(result).toStrictEqual(null);
   } else {
-    expect(result).toMatchObject(expectedIntent);
+    expect(result).toMatchObject(expectedSituation);
   }
 }
 
-describe('intent', () => {
+describe('situation', () => {
   it('handles things', () => {
-    assertIntent('^', {
-      type: 'HISTORY_AND_FUNCTIONS_AND_ALL_METRIC_NAMES',
+    assertSituation('^', {
+      type: 'EMPTY',
     });
 
-    assertIntent('sum(one) / ^', {
-      type: 'FUNCTIONS_AND_ALL_METRIC_NAMES',
+    assertSituation('sum(one) / ^', {
+      type: 'AT_ROOT',
     });
 
-    assertIntent('sum(^)', {
-      type: 'ALL_METRIC_NAMES',
+    assertSituation('sum(^)', {
+      type: 'IN_FUNCTION',
     });
 
-    assertIntent('sum(one) / sum(^)', {
-      type: 'ALL_METRIC_NAMES',
+    assertSituation('sum(one) / sum(^)', {
+      type: 'IN_FUNCTION',
     });
 
-    assertIntent('something{}[^]', {
-      type: 'ALL_DURATIONS',
+    assertSituation('something{}[^]', {
+      type: 'IN_DURATION',
     });
 
-    assertIntent('something{label~^}', null);
+    assertSituation('something{label~^}', null);
   });
 
   it('handles label names', () => {
-    assertIntent('something{^}', {
-      type: 'LABEL_NAMES_FOR_SELECTOR',
+    assertSituation('something{^}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       metricName: 'something',
       otherLabels: [],
     });
 
-    assertIntent('sum(something) by (^)', {
-      type: 'LABEL_NAMES_FOR_BY',
+    assertSituation('sum(something) by (^)', {
+      type: 'IN_GROUPING',
       metricName: 'something',
       otherLabels: [],
     });
 
-    assertIntent('sum by (^) (something)', {
-      type: 'LABEL_NAMES_FOR_BY',
+    assertSituation('sum by (^) (something)', {
+      type: 'IN_GROUPING',
       metricName: 'something',
       otherLabels: [],
     });
 
-    assertIntent('something{one="val1",two!="val2",three=~"val3",four!~"val4",^}', {
-      type: 'LABEL_NAMES_FOR_SELECTOR',
+    assertSituation('something{one="val1",two!="val2",three=~"val3",four!~"val4",^}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       metricName: 'something',
       otherLabels: [
         { name: 'one', value: 'val1', op: '=' },
@@ -80,61 +80,61 @@ describe('intent', () => {
       ],
     });
 
-    assertIntent('{^}', {
-      type: 'LABEL_NAMES_FOR_SELECTOR',
+    assertSituation('{^}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [],
     });
 
-    assertIntent('{one="val1",^}', {
-      type: 'LABEL_NAMES_FOR_SELECTOR',
+    assertSituation('{one="val1",^}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [{ name: 'one', value: 'val1', op: '=' }],
     });
   });
 
   it('handles label values', () => {
-    assertIntent('something{job=^}', {
-      type: 'LABEL_VALUES',
+    assertSituation('something{job=^}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'job',
       otherLabels: [],
     });
 
-    assertIntent('something{job!=^}', {
-      type: 'LABEL_VALUES',
+    assertSituation('something{job!=^}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'job',
       otherLabels: [],
     });
 
-    assertIntent('something{job=~^}', {
-      type: 'LABEL_VALUES',
+    assertSituation('something{job=~^}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'job',
       otherLabels: [],
     });
 
-    assertIntent('something{job!~^}', {
-      type: 'LABEL_VALUES',
+    assertSituation('something{job!~^}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'job',
       otherLabels: [],
     });
 
-    assertIntent('something{job=^,host="h1"}', {
-      type: 'LABEL_VALUES',
+    assertSituation('something{job=^,host="h1"}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'job',
       otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
     });
 
-    assertIntent('{job=^,host="h1"}', {
-      type: 'LABEL_VALUES',
+    assertSituation('{job=^,host="h1"}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       labelName: 'job',
       otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
     });
 
-    assertIntent('something{one="val1",two!="val2",three=^,four=~"val4",five!~"val5"}', {
-      type: 'LABEL_VALUES',
+    assertSituation('something{one="val1",two!="val2",three=^,four=~"val4",five!~"val5"}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'three',
       otherLabels: [

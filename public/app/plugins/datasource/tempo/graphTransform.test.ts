@@ -64,7 +64,7 @@ describe('mapPromMetricsToServiceMap', () => {
       from: dateTime('2000-01-01T00:00:00'),
       to: dateTime('2000-01-01T00:01:00'),
     };
-    const [nodes, edges] = mapPromMetricsToServiceMap(
+    const { nodes, edges } = mapPromMetricsToServiceMap(
       [{ data: [totalsPromMetric, secondsPromMetric, failedPromMetric] }],
       {
         ...range,

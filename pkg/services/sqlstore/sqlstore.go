@@ -117,6 +117,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.addQuotaQueryAndCommandHandlers()
 	ss.addOrgUsersQueryAndCommandHandlers()
 	ss.addStarQueryAndCommandHandlers()
+	ss.addAlertQueryAndCommandHandlers()
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
