@@ -59,8 +59,6 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	span.SetTag("query", timeSeriesQuery.Query)
 	span.SetTag("from", req.Queries[0].TimeRange.From)
 	span.SetTag("until", req.Queries[0].TimeRange.To)
-	span.SetTag("datasource_id", dsInfo.id)
-	span.SetTag("org_id", req.PluginContext.OrgID)
 
 	defer span.Finish()
 
@@ -133,7 +131,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 			defaultMetricName := d.Key
 
 			// If more than 1 pointdescriptor was returned, three aggregations are returned per time series - min, mean and max.
-			// This is a because the period used in the graph_period MQL function is less than half the duration (time range). See https://cloud.google.com/monitoring/mql/reference#graph_period-tabop
+			// This is a because the period for the given table is less than half the duration which is used in the graph_period MQL function.
+			// See https://cloud.google.com/monitoring/mql/reference#graph_period-tabop
 			// When this is the case, we'll just ignore the min and max and use the mean value in the frame
 			if len(response.TimeSeriesDescriptor.PointDescriptors) > 1 && !strings.HasSuffix(d.Key, ".mean") {
 				continue
