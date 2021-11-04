@@ -3,6 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { ButtonGroup, ToolbarButton, ToolbarButtonVariant } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
+import { describeIntervalsLabels } from '@grafana/data/src/datetime/rangeutil';
 
 // Default intervals used in the refresh picker component
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
@@ -89,31 +90,6 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 }
 
-const sanitizedIntervalsLabels = (item: string) => {
-  const timeUnits: { [key: string]: string } = {
-    s: 'second',
-    m: 'minute',
-    h: 'hour',
-    d: 'day',
-  };
-  const isInterval = /^([0-9]).*(s|m|h|d)$/gim.test(item);
-  const newItem = item.split('');
-  const unit = newItem.pop();
-
-  if (isInterval === false) {
-    return item;
-  }
-
-  if (unit !== undefined) {
-    if (Number(newItem.join('')) !== 1) {
-      return `${newItem.join('') + ' ' + timeUnits[unit]}s`;
-    }
-
-    return newItem.join('') + ' ' + timeUnits[unit];
-  } else {
-    return '';
-  }
-};
 
 export function intervalsToOptions({ intervals = defaultIntervals }: { intervals?: string[] } = {}): Array<
   SelectableValue<string>
@@ -122,7 +98,7 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
   const options = intervalsOrDefault.map((interval) => ({
     label: interval,
     value: interval,
-    ariaLabel: sanitizedIntervalsLabels(interval),
+    ariaLabel: describeIntervalsLabels(interval),
   }));
 
   options.unshift(RefreshPicker.offOption);
