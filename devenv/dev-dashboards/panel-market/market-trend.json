@@ -184,7 +184,7 @@
         }
       ],
       "title": "Market Trend",
-      "type": "markettrend"
+      "type": "market-trend"
     }
   ],
   "refresh": false,
