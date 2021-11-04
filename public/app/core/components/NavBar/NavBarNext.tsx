@@ -43,7 +43,7 @@ export const NavBarNext: FC = React.memo(() => {
     toggleSwitcherModal
   );
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   if (kiosk !== null) {
     return null;
@@ -51,13 +51,13 @@ export const NavBarNext: FC = React.memo(() => {
 
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
-      <div className={styles.mobileSidemenuLogo} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} key="hamburger">
+      <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
         <Icon name="bars" size="xl" />
       </div>
 
       <NavBarSection>
         <NavBarItem
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          onClick={() => setMenuOpen(!menuOpen)}
           label="Main menu"
           className={styles.grafanaLogo}
           showMenu={false}
@@ -132,11 +132,11 @@ export const NavBarNext: FC = React.memo(() => {
       </NavBarSection>
 
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
-      {mobileMenuOpen && (
+      {menuOpen && (
         <NavBarMenu
           activeItem={activeItem}
           navItems={[searchItem, ...coreItems, ...pluginItems, ...configItems]}
-          onClose={() => setMobileMenuOpen(false)}
+          onClose={() => setMenuOpen(false)}
         />
       )}
     </nav>
