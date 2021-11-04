@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/null"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
@@ -60,6 +62,11 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 		// and so noDataFound should be true if at least one condition returns no data,
 		// irrespective of the operator.
 		noDataFound = noDataFound || cr.NoDataFound
+
+		// Append an eval match to make sure we keep a record that at this point in time, this query returned no data.
+		if cr.NoDataFound {
+			cr.EvalMatches = append(cr.EvalMatches, &EvalMatch{Metric: "NoData", Value: null.Float{}})
+		}
 
 		if i > 0 {
 			conditionEvals = "[" + conditionEvals + " " + strings.ToUpper(cr.Operator) + " " + strconv.FormatBool(cr.Firing) + "]"

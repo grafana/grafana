@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 
@@ -27,13 +28,15 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	t.Run("Show return triggered with single passing condition", func(t *testing.T) {
 		context := NewEvalContext(context.TODO(), &Rule{
 			Conditions: []Condition{&conditionStub{
-				firing: true,
+				firing:  true,
+				matches: evalMatchesBasedOnState(),
 			}},
 		}, &validations.OSSPluginRequestValidator{})
 
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
 		require.Equal(t, "true = true", context.ConditionEvals)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
 	})
 
 	t.Run("Show return triggered with single passing condition2", func(t *testing.T) {
@@ -44,9 +47,10 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
 		require.Equal(t, "true = true", context.ConditionEvals)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
 	})
 
-	t.Run("Show return false with not passing asdf", func(t *testing.T) {
+	t.Run("Show return false with not passing", func(t *testing.T) {
 		context := NewEvalContext(context.TODO(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{firing: true, operator: "and", matches: []*EvalMatch{{}, {}}},
@@ -57,6 +61,10 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
 		require.Equal(t, "[true AND false] = false", context.ConditionEvals)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{
+			{Value: null.Float{}, Metric: ""},
+			{Value: null.Float{}, Metric: ""},
+		})
 	})
 
 	t.Run("Show return true if any of the condition is passing with OR operator", func(t *testing.T) {
@@ -70,6 +78,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
 		require.Equal(t, "[true OR false] = true", context.ConditionEvals)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
 	})
 
 	t.Run("Show return false if any of the condition is failing with AND operator", func(t *testing.T) {
@@ -83,6 +92,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
 		require.Equal(t, "[true AND false] = false", context.ConditionEvals)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
 	})
 
 	t.Run("Show return true if one condition is failing with nested OR operator", func(t *testing.T) {
@@ -97,6 +107,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
 		require.Equal(t, "[[true AND true] OR false] = true", context.ConditionEvals)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
 	})
 
 	t.Run("Show return false if one condition is passing with nested OR operator", func(t *testing.T) {
@@ -111,6 +122,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
 		require.Equal(t, "[[true AND false] OR false] = false", context.ConditionEvals)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
 	})
 
 	t.Run("Show return false if a condition is failing with nested AND operator", func(t *testing.T) {
@@ -125,6 +137,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
 		require.Equal(t, "[[true AND false] AND true] = false", context.ConditionEvals)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
 	})
 
 	t.Run("Show return true if a condition is passing with nested OR operator", func(t *testing.T) {
@@ -139,6 +152,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
 		require.Equal(t, "[[true OR false] OR true] = true", context.ConditionEvals)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
 	})
 
 	t.Run("Should return false if no condition is firing using OR operator", func(t *testing.T) {
@@ -153,6 +167,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
 		require.Equal(t, "[[false OR false] OR false] = false", context.ConditionEvals)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
 	})
 
 	// FIXME: What should the actual test case name be here?
@@ -167,6 +182,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 
 		handler.Eval(context)
 		require.False(t, context.NoDataFound)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
 	})
 
 	t.Run("Should return NoDataFound if one condition has no data", func(t *testing.T) {
@@ -179,6 +195,9 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
 		require.True(t, context.NoDataFound)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{
+			{Value: null.Float{}, Metric: "NoData"},
+		})
 	})
 
 	t.Run("Should return no data if at least one condition has no data and using AND", func(t *testing.T) {
@@ -191,6 +210,9 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 
 		handler.Eval(context)
 		require.True(t, context.NoDataFound)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{
+			{Value: null.Float{}, Metric: "NoData"},
+		})
 	})
 
 	t.Run("Should return no data if at least one condition has no data and using OR", func(t *testing.T) {
@@ -203,5 +225,17 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 
 		handler.Eval(context)
 		require.True(t, context.NoDataFound)
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{
+			{Value: null.Float{}, Metric: "NoData"},
+		})
+
 	})
+}
+
+//TODO: Create an eval match for cases where we should return data.
+func makeMatchWithValue(v float64) *EvalMatch {
+	return &EvalMatch{
+		Metric: "High value",
+		Value:  null.FloatFrom(v),
+	}
 }
