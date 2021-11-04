@@ -70,7 +70,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Role: accesscontrol.RoleDTO{
 				Version:     2,
 				Name:        "fixed:datasources:writer",
-				DisplayName: "Datasources writer",
+				DisplayName: "Data sources writer",
 				Description: "Create, read, update, delete and query datasources",
 				Permissions: []accesscontrol.Permission{
 					{
