@@ -6,6 +6,8 @@ import (
 	"xorm.io/xorm"
 )
 
+// Service is an envelope encryption service in charge of encrypting/decrypting secrets.
+// It is a replacement for encryption.Service
 type Service interface {
 	Encrypt(ctx context.Context, payload []byte, opt EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
@@ -20,6 +22,7 @@ type ProvidersRegistrar interface {
 	RegisterProvider(providerID string, provider Provider)
 }
 
+// Store defines methods to interact with secrets storage
 type Store interface {
 	GetDataKey(ctx context.Context, name string) (*DataKey, error)
 	GetAllDataKeys(ctx context.Context) ([]*DataKey, error)
@@ -28,6 +31,7 @@ type Store interface {
 	DeleteDataKey(ctx context.Context, name string) error
 }
 
+// Provider is a key encryption key provider for envelope encryption
 type Provider interface {
 	Encrypt(ctx context.Context, blob []byte) ([]byte, error)
 	Decrypt(ctx context.Context, blob []byte) ([]byte, error)

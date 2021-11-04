@@ -6,21 +6,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/ini.v1"
-
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/secrets"
+	"gopkg.in/ini.v1"
 )
 
 func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	svc := setupTestService(t, store)
+	svc := SetupTestService(t, store)
 	ctx := context.Background()
 
 	t.Run("encrypting with no entity_id should create DEK", func(t *testing.T) {
