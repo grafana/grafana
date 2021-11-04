@@ -123,8 +123,8 @@ type GetLibraryElementsParams struct {
 	// in:query
 	// required:false
 	// Description:
-	// * 1: library panels
-	// * 2: library variables
+	// * 1 - library panels
+	// * 2 - library variables
 	// enum: 1,2
 	Kind int `json:"kind"`
 	// Sort order of elements.
@@ -203,8 +203,8 @@ type CreateLibraryElementCommand struct {
 	Model json.RawMessage `json:"model"`
 	// Kind of element to create, Use 1 for library panels or 2 for c.
 	// Description:
-	// * 1: library panels
-	// * 2: library variables
+	// * 1 - library panels
+	// * 2 - library variables
 	// Enum: 1,2
 	Kind int64 `json:"kind" binding:"Required"`
 	// required: false
@@ -223,8 +223,8 @@ type PatchLibraryElementCommand struct {
 	Model json.RawMessage `json:"model"`
 	// Kind of element to create, Use 1 for library panels or 2 for c.
 	// Description:
-	// * 1: library panels
-	// * 2: library variables
+	// * 1 - library panels
+	// * 2 - library variables
 	// Enum: 1,2
 	Kind int64 `json:"kind" binding:"Required"`
 	// Version of the library element you are updating.
