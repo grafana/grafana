@@ -198,6 +198,33 @@ type PluginMetaDTO struct {
 	BaseURL string `json:"baseUrl"`
 }
 
+type DataSourceDTO struct {
+	ID        int64                  `json:"id"`
+	UID       string                 `json:"uid"`
+	Type      string                 `json:"Type"`
+	Name      string                 `json:"name"`
+	URL       string                 `json:"url"`
+	IsDefault bool                   `json:"isDefault"`
+	Access    string                 `json:"access"`
+	Preload   bool                   `json:"preload"`
+	Module    string                 `json:"module"`
+	Meta      *PluginMetaDTO         `json:"meta"`
+	JSONData  map[string]interface{} `json:"jsonData"`
+
+	BasicAuth       string `json:"basicAuth"`
+	WithCredentials bool   `json:"withCredentials"`
+
+	// InfluxDB
+	Username string `json:"username"`
+	Password string `json:"password"`
+
+	// InfluxDB + Elasticsearch
+	Database string `json:"database"`
+
+	// Prometheus
+	DirectURL string `json:"directUrl"`
+}
+
 const (
 	signatureMissing  ErrorCode = "signatureMissing"
 	signatureModified ErrorCode = "signatureModified"
