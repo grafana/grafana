@@ -44,7 +44,7 @@ type PluginManager struct {
 	cfg              *setting.Cfg
 	requestValidator models.PluginRequestValidator
 	sqlStore         *sqlstore.SQLStore
-	plugins          map[string]*plugins.Plugin
+	store            map[string]*plugins.Plugin
 	pluginInstaller  plugins.Installer
 	pluginLoader     plugins.Loader
 	pluginsMu        sync.RWMutex
@@ -67,7 +67,7 @@ func newManager(cfg *setting.Cfg, pluginRequestValidator models.PluginRequestVal
 		requestValidator: pluginRequestValidator,
 		sqlStore:         sqlStore,
 		pluginLoader:     pluginLoader,
-		plugins:          map[string]*plugins.Plugin{},
+		store:            map[string]*plugins.Plugin{},
 		log:              log.New("plugin.manager"),
 		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
@@ -137,8 +137,34 @@ func (m *PluginManager) Run(ctx context.Context) error {
 	}
 
 	<-ctx.Done()
-	m.stop(ctx)
+	m.shutdown(ctx)
 	return ctx.Err()
+}
+
+func (m *PluginManager) plugin(pluginID string) (*plugins.Plugin, bool) {
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+	p, exists := m.store[pluginID]
+
+	if !exists || (p.IsDecommissioned()) {
+		return nil, false
+	}
+
+	return p, true
+}
+
+func (m *PluginManager) plugins() []*plugins.Plugin {
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+
+	res := make([]*plugins.Plugin, 0)
+	for _, p := range m.store {
+		if !p.IsDecommissioned() {
+			res = append(res, p)
+		}
+	}
+
+	return res
 }
 
 func (m *PluginManager) loadPlugins(paths ...string) error {
@@ -170,10 +196,7 @@ func (m *PluginManager) loadPlugins(paths ...string) error {
 
 func (m *PluginManager) registeredPlugins() map[string]struct{} {
 	pluginsByID := make(map[string]struct{})
-
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	for _, p := range m.plugins {
+	for _, p := range m.plugins() {
 		pluginsByID[p.ID] = struct{}{}
 	}
 
@@ -181,7 +204,7 @@ func (m *PluginManager) registeredPlugins() map[string]struct{} {
 }
 
 func (m *PluginManager) Renderer() *plugins.Plugin {
-	for _, p := range m.plugins {
+	for _, p := range m.plugins() {
 		if p.IsRenderer() {
 			return p
 		}
@@ -191,7 +214,7 @@ func (m *PluginManager) Renderer() *plugins.Plugin {
 }
 
 func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	plugin, exists := m.plugins[req.PluginContext.PluginID]
+	plugin, exists := m.plugin(req.PluginContext.PluginID)
 	if !exists {
 		return &backend.QueryDataResponse{}, nil
 	}
@@ -256,7 +279,7 @@ func (m *PluginManager) CallResource(pCtx backend.PluginContext, reqCtx *models.
 }
 
 func (m *PluginManager) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
-	p, exists := m.plugins[pCtx.PluginID]
+	p, exists := m.plugin(pCtx.PluginID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
@@ -384,7 +407,7 @@ func flushStream(plugin backendplugin.Plugin, stream callResourceClientResponseS
 }
 
 func (m *PluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
-	p, exists := m.plugins[pluginID]
+	p, exists := m.plugin(pluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -415,7 +438,7 @@ func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealt
 		}, nil
 	}
 
-	p, exists := m.plugins[req.PluginContext.PluginID]
+	p, exists := m.plugin(req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -442,7 +465,7 @@ func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealt
 }
 
 func (m *PluginManager) isRegistered(pluginID string) bool {
-	p, exists := m.plugins[pluginID]
+	p, exists := m.plugin(pluginID)
 	if !exists {
 		return false
 	}
@@ -476,9 +499,9 @@ func (m *PluginManager) LoadAndRegister(pluginID string, factory backendplugin.P
 }
 
 func (m *PluginManager) Routes() []*plugins.StaticRoute {
-	staticRoutes := []*plugins.StaticRoute{}
+	staticRoutes := make([]*plugins.StaticRoute, 0)
 
-	for _, p := range m.plugins {
+	for _, p := range m.plugins() {
 		if p.StaticRoute() != nil {
 			staticRoutes = append(staticRoutes, p.StaticRoute())
 		}
@@ -500,18 +523,16 @@ func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.Pl
 }
 
 func (m *PluginManager) register(p *plugins.Plugin) error {
-	m.pluginsMu.Lock()
-	defer m.pluginsMu.Unlock()
-
-	pluginID := p.ID
-	if _, exists := m.plugins[pluginID]; exists {
-		return fmt.Errorf("plugin %s already registered", pluginID)
+	if m.isRegistered(p.ID) {
+		return fmt.Errorf("plugin %s is already registered", p.ID)
 	}
 
-	m.plugins[pluginID] = p
+	m.pluginsMu.Lock()
+	m.store[p.ID] = p
+	m.pluginsMu.Unlock()
 
 	if !p.IsCorePlugin() {
-		m.log.Info("Plugin registered", "pluginId", pluginID)
+		m.log.Info("Plugin registered", "pluginId", p.ID)
 	}
 
 	return nil
@@ -519,6 +540,9 @@ func (m *PluginManager) register(p *plugins.Plugin) error {
 
 func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
 	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
+	m.pluginsMu.Lock()
+	defer m.pluginsMu.Unlock()
+
 	if err := p.Decommission(); err != nil {
 		return err
 	}
@@ -527,7 +551,7 @@ func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin
 		return err
 	}
 
-	delete(m.plugins, p.ID)
+	delete(m.store, p.ID)
 
 	m.log.Debug("Plugin unregistered", "pluginId", p.ID)
 	return nil
@@ -598,12 +622,10 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 	}
 }
 
-// stop stops a backend plugin process
-func (m *PluginManager) stop(ctx context.Context) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
+// shutdown stops all backend plugin processes
+func (m *PluginManager) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, p := range m.plugins {
+	for _, p := range m.plugins() {
 		wg.Add(1)
 		go func(p backendplugin.Plugin, ctx context.Context) {
 			defer wg.Done()

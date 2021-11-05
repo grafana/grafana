@@ -9,11 +9,9 @@ import (
 )
 
 func (m *PluginManager) Plugin(pluginID string) (plugins.PluginDTO, bool) {
-	m.pluginsMu.RLock()
-	p, exists := m.plugins[pluginID]
-	m.pluginsMu.RUnlock()
+	p, exists := m.plugin(pluginID)
 
-	if !exists || (p.IsDecommissioned()) {
+	if !exists {
 		return plugins.PluginDTO{}, false
 	}
 
@@ -31,14 +29,12 @@ func (m *PluginManager) Plugins(pluginTypes ...plugins.Type) []plugins.PluginDTO
 		requestedTypes[pt] = struct{}{}
 	}
 
-	m.pluginsMu.RLock()
-	pluginsList := []plugins.PluginDTO{}
-	for _, p := range m.plugins {
+	pluginsList := make([]plugins.PluginDTO, 0)
+	for _, p := range m.plugins() {
 		if _, exists := requestedTypes[p.Type]; exists {
 			pluginsList = append(pluginsList, p.ToDTO())
 		}
 	}
-	m.pluginsMu.RUnlock()
 	return pluginsList
 }
 
@@ -49,7 +45,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 		opts.PluginRepoURL = grafanaComURL
 	}
 
-	if plugin, exists := m.plugins[pluginID]; exists {
+	if plugin, exists := m.plugin(pluginID); exists {
 		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin
 		}
@@ -98,7 +94,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 }
 
 func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
-	plugin, exists := m.plugins[pluginID]
+	plugin, exists := m.plugin(pluginID)
 	if !exists {
 		return plugins.ErrPluginNotInstalled
 	}
