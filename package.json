@@ -112,7 +112,7 @@
     "@types/logfmt": "^1.2.1",
     "@types/lru-cache": "^5.1.0",
     "@types/mousetrap": "1.6.3",
-    "@types/node": "14.17.27",
+    "@types/node": "16.11.6",
     "@types/papaparse": "5.2.0",
     "@types/pluralize": "^0.0.29",
     "@types/prismjs": "1.16.0",
