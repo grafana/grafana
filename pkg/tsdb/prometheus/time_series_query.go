@@ -72,9 +72,8 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 				plog.Error("Range query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
-			} else {
-				response[RangeQueryType] = rangeResponse
 			}
+			response[RangeQueryType] = rangeResponse
 		}
 
 		if query.InstantQuery {
@@ -83,11 +82,12 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 				plog.Error("Instant query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
-			} else {
-				response[InstantQueryType] = instantResponse
 			}
+			response[InstantQueryType] = instantResponse
 		}
 
+		// This is a special case
+		// If exemplar query returns error, we want to only log it and continue with other results processing
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
