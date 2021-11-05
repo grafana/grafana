@@ -4840,7 +4840,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/focus@npm:^3.5.0":
+"@react-aria/focus@npm:3.5.0":
   version: 3.5.0
   resolution: "@react-aria/focus@npm:3.5.0"
   dependencies:
@@ -4884,7 +4884,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/overlays@npm:3.7.2, @react-aria/overlays@npm:^3.7.2":
+"@react-aria/overlays@npm:3.7.2":
   version: 3.7.2
   resolution: "@react-aria/overlays@npm:3.7.2"
   dependencies:
@@ -17881,8 +17881,8 @@ __metadata:
     "@opentelemetry/semantic-conventions": 1.0.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.0-rc.6
     "@popperjs/core": 2.5.4
-    "@react-aria/focus": ^3.5.0
-    "@react-aria/overlays": ^3.7.2
+    "@react-aria/focus": 3.5.0
+    "@react-aria/overlays": 3.7.2
     "@reduxjs/toolkit": 1.6.1
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 5.25.0
