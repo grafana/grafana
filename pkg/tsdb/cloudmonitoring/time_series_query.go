@@ -123,13 +123,6 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 		}
 
 		for n, d := range response.TimeSeriesDescriptor.PointDescriptors {
-			if _, ok := labels["metric.name"]; !ok {
-				labels["metric.name"] = map[string]bool{}
-			}
-			labels["metric.name"][d.Key] = true
-			seriesLabels["metric.name"] = d.Key
-			defaultMetricName := d.Key
-
 			// If more than 1 pointdescriptor was returned, three aggregations are returned per time series - min, mean and max.
 			// This is a because the period for the given table is less than half the duration which is used in the graph_period MQL function.
 			// See https://cloud.google.com/monitoring/mql/reference#graph_period-tabop
@@ -137,6 +130,13 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 			if len(response.TimeSeriesDescriptor.PointDescriptors) > 1 && !strings.HasSuffix(d.Key, ".mean") {
 				continue
 			}
+
+			if _, ok := labels["metric.name"]; !ok {
+				labels["metric.name"] = map[string]bool{}
+			}
+			labels["metric.name"][d.Key] = true
+			seriesLabels["metric.name"] = d.Key
+			defaultMetricName := d.Key
 
 			// process non-distribution series
 			if d.ValueType != "DISTRIBUTION" {
