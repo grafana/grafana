@@ -57,11 +57,9 @@ type PluginDTO struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature     SignatureStatus
-	SignatureType SignatureType
-	SignatureOrg  string
-	//Parent         *Plugin
-	//Children       []*Plugin
+	Signature      SignatureStatus
+	SignatureType  SignatureType
+	SignatureOrg   string
 	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
