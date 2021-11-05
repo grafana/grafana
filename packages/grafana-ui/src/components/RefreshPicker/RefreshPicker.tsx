@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 // Default intervals used in the refresh picker component
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
+const offLabel = 'Auto refresh turned off. Choose refresh time interval';
 
 export interface Props {
   intervals?: string[];
@@ -81,7 +82,12 @@ export class RefreshPicker extends PureComponent<Props> {
             options={options}
             onChange={this.onChangeSelect as any}
             variant={variant}
-            aria-label={selectors.components.RefreshPicker.intervalButtonV2}
+            data-testid={selectors.components.RefreshPicker.intervalButtonV2}
+            aria-label={
+              selectedValue.value === ''
+                ? offLabel
+                : `Choose refresh time interval with current interval ${selectedValue.ariaLabel} selected`
+            }
           />
         )}
       </ButtonGroup>

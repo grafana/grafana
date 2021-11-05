@@ -146,7 +146,7 @@ export const Components = {
      */
     intervalButton: 'RefreshPicker interval button',
     runButtonV2: 'data-testid RefreshPicker run button',
-    intervalButtonV2: 'Choose refresh time interval',
+    intervalButtonV2: 'data-testid RefreshPicker interval button',
   },
   QueryTab: {
     content: 'Query editor tab content',
