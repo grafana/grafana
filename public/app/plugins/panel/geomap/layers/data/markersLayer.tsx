@@ -102,7 +102,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
     const markerPath =
       getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
-
+    // double to match regularshapes using size as radius
     const uri = await getSVGUri(markerPath, config.size.fixed * 2);
 
     return {
@@ -119,6 +119,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               src: uri,
               color: cfg.color,
               opacity: cfg.opacity,
+              // scale based on field value
               scale: (DEFAULT_SIZE + cfg.size) / (DEFAULT_SIZE * 2 + cfg.size),
             }),
           });

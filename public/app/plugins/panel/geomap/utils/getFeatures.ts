@@ -44,8 +44,6 @@ export const getFeatures = (
 
     if (config?.textDim) {
       dot.setStyle(config.styleMaker({ color, fillColor, size, text: label }));
-    } else if (config?.opacity) {
-      dot.setStyle(config.styleMaker({ color, fillColor, size, opacity: config?.opacity }));
     } else {
       dot.setStyle(config.styleMaker({ color, fillColor, size }));
     }
