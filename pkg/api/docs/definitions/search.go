@@ -27,6 +27,8 @@ type SearchParameters struct {
 	// List of tags to search for
 	// in:query
 	// required: false
+	// type: array
+	// collectionFormat: multi
 	Tag []string `json:"tag"`
 	// Type to search for, dash-folder or dash-db
 	// in:query

@@ -219,7 +219,6 @@ type PatchLibraryElementCommand struct {
 	// Name of the library element.
 	Name string `json:"name"`
 	// The JSON model for the library element.
-	// swagger:type object
 	Model json.RawMessage `json:"model"`
 	// Kind of element to create, Use 1 for library panels or 2 for c.
 	// Description:

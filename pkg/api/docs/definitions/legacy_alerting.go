@@ -106,6 +106,8 @@ type GetAlertsParams struct {
 	// Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders
 	// in:query
 	// required:false
+	// type array
+	// collectionFormat: multi
 	FolderID []string `json:"folderId"`
 	// Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.
 	// in:query
@@ -114,6 +116,8 @@ type GetAlertsParams struct {
 	// Limit response to alerts of dashboards with specified tags. To do an “AND” filtering with multiple tags, specify the tags parameter multiple times
 	// in:query
 	// required:false
+	// type: array
+	// collectionFormat: multi
 	DashboardTag []string `json:"dashboardTag"`
 }
 
