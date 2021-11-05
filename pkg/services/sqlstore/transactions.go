@@ -67,7 +67,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	if len(sess.events) > 0 {
 		for _, e := range sess.events {
 			if err = bus.Publish(e); err != nil {
-				log.Errorf(3, "Failed to publish event after commit. error: %v", err)
+				log.Error("Failed to publish event after commit.", "error", err)
 			}
 		}
 	}

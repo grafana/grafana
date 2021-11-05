@@ -342,7 +342,7 @@ export const runQueries = (
 
     const queries = exploreItemState.queries.map((query) => ({
       ...query,
-      datasource: query.datasource || datasourceInstance?.name,
+      datasource: query.datasource || datasourceInstance?.getRef(),
     }));
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);

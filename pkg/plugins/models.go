@@ -1,17 +1,14 @@
 package plugins
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 const (
-	PluginTypeApp       = "app"
-	PluginTypeDashboard = "dashboard"
+	TypeDashboard = "dashboard"
 )
 
 var (
@@ -21,89 +18,70 @@ var (
 	ErrPluginNotInstalled          = errors.New("plugin is not installed")
 )
 
-type PluginNotFoundError struct {
+type NotFoundError struct {
 	PluginID string
 }
 
-func (e PluginNotFoundError) Error() string {
+func (e NotFoundError) Error() string {
 	return fmt.Sprintf("plugin with ID '%s' not found", e.PluginID)
 }
 
-type DuplicatePluginError struct {
+type DuplicateError struct {
 	PluginID          string
 	ExistingPluginDir string
 }
 
-func (e DuplicatePluginError) Error() string {
+func (e DuplicateError) Error() string {
 	return fmt.Sprintf("plugin with ID '%s' already exists in '%s'", e.PluginID, e.ExistingPluginDir)
 }
 
-func (e DuplicatePluginError) Is(err error) bool {
+func (e DuplicateError) Is(err error) bool {
 	// nolint:errorlint
-	_, ok := err.(DuplicatePluginError)
+	_, ok := err.(DuplicateError)
 	return ok
 }
 
-// PluginLoader can load a plugin.
-type PluginLoader interface {
-	// Load loads a plugin and returns it.
-	Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (interface{}, error)
+type SignatureError struct {
+	PluginID        string          `json:"pluginId"`
+	SignatureStatus SignatureStatus `json:"status"`
 }
 
-// PluginBase is the base plugin type.
-type PluginBase struct {
-	Type         string                `json:"type"`
-	Name         string                `json:"name"`
-	Id           string                `json:"id"`
-	Info         PluginInfo            `json:"info"`
-	Dependencies PluginDependencies    `json:"dependencies"`
-	Includes     []*PluginInclude      `json:"includes"`
-	Module       string                `json:"module"`
-	BaseUrl      string                `json:"baseUrl"`
-	Category     string                `json:"category"`
-	HideFromList bool                  `json:"hideFromList,omitempty"`
-	Preload      bool                  `json:"preload"`
-	State        PluginState           `json:"state,omitempty"`
-	Signature    PluginSignatureStatus `json:"signature"`
-	Backend      bool                  `json:"backend"`
-
-	IncludedInAppId string              `json:"-"`
-	PluginDir       string              `json:"-"`
-	DefaultNavUrl   string              `json:"-"`
-	IsCorePlugin    bool                `json:"-"`
-	SignatureType   PluginSignatureType `json:"-"`
-	SignatureOrg    string              `json:"-"`
-	SignedFiles     PluginFiles         `json:"-"`
-
-	GrafanaNetVersion   string `json:"-"`
-	GrafanaNetHasUpdate bool   `json:"-"`
-
-	Root *PluginBase
-}
-
-func (p *PluginBase) IncludedInSignature(file string) bool {
-	// permit Core plugin files
-	if p.IsCorePlugin {
-		return true
+func (e SignatureError) Error() string {
+	switch e.SignatureStatus {
+	case SignatureInvalid:
+		return fmt.Sprintf("plugin '%s' has an invalid signature", e.PluginID)
+	case SignatureModified:
+		return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
+	case SignatureUnsigned:
+		return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
+	case SignatureInternal, SignatureValid:
+		return ""
 	}
 
-	// permit when no signed files (no MANIFEST)
-	if p.SignedFiles == nil {
-		return true
-	}
-
-	if _, exists := p.SignedFiles[file]; !exists {
-		return false
-	}
-	return true
+	return fmt.Sprintf("plugin '%s' has an unknown signature state", e.PluginID)
 }
 
-type PluginDependencies struct {
-	GrafanaVersion string                 `json:"grafanaVersion"`
-	Plugins        []PluginDependencyItem `json:"plugins"`
+func (e SignatureError) AsErrorCode() ErrorCode {
+	switch e.SignatureStatus {
+	case SignatureInvalid:
+		return signatureInvalid
+	case SignatureModified:
+		return signatureModified
+	case SignatureUnsigned:
+		return signatureMissing
+	case SignatureInternal, SignatureValid:
+		return ""
+	}
+
+	return ""
 }
 
-type PluginInclude struct {
+type Dependencies struct {
+	GrafanaVersion string       `json:"grafanaVersion"`
+	Plugins        []Dependency `json:"plugins"`
+}
+
+type Includes struct {
 	Name       string          `json:"name"`
 	Path       string          `json:"path"`
 	Type       string          `json:"type"`
@@ -115,10 +93,10 @@ type PluginInclude struct {
 	Icon       string          `json:"icon"`
 	UID        string          `json:"uid"`
 
-	Id string `json:"-"`
+	ID string `json:"-"`
 }
 
-func (e PluginInclude) GetSlugOrUIDLink() string {
+func (e Includes) GetSlugOrUIDLink() string {
 	if len(e.UID) > 0 {
 		return "/d/" + e.UID
 	} else {
@@ -126,57 +104,109 @@ func (e PluginInclude) GetSlugOrUIDLink() string {
 	}
 }
 
-type PluginDependencyItem struct {
+type Dependency struct {
+	ID      string `json:"id"`
 	Type    string `json:"type"`
-	Id      string `json:"id"`
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }
 
-type PluginBuildInfo struct {
+type BuildInfo struct {
 	Time   int64  `json:"time,omitempty"`
 	Repo   string `json:"repo,omitempty"`
 	Branch string `json:"branch,omitempty"`
 	Hash   string `json:"hash,omitempty"`
 }
 
-type PluginInfo struct {
-	Author      PluginInfoLink      `json:"author"`
-	Description string              `json:"description"`
-	Links       []PluginInfoLink    `json:"links"`
-	Logos       PluginLogos         `json:"logos"`
-	Build       PluginBuildInfo     `json:"build"`
-	Screenshots []PluginScreenshots `json:"screenshots"`
-	Version     string              `json:"version"`
-	Updated     string              `json:"updated"`
+type Info struct {
+	Author      InfoLink      `json:"author"`
+	Description string        `json:"description"`
+	Links       []InfoLink    `json:"links"`
+	Logos       Logos         `json:"logos"`
+	Build       BuildInfo     `json:"build"`
+	Screenshots []Screenshots `json:"screenshots"`
+	Version     string        `json:"version"`
+	Updated     string        `json:"updated"`
 }
 
-type PluginInfoLink struct {
+type InfoLink struct {
 	Name string `json:"name"`
-	Url  string `json:"url"`
+	URL  string `json:"url"`
 }
 
-type PluginLogos struct {
+type Logos struct {
 	Small string `json:"small"`
 	Large string `json:"large"`
 }
 
-type PluginScreenshots struct {
-	Path string `json:"path"`
+type Screenshots struct {
 	Name string `json:"name"`
+	Path string `json:"path"`
 }
 
-type PluginStaticRoute struct {
+type StaticRoute struct {
+	PluginID  string
 	Directory string
-	PluginId  string
 }
 
-type EnabledPlugins struct {
-	Panels      []*PanelPlugin
-	DataSources map[string]*DataSourcePlugin
-	Apps        []*AppPlugin
+type SignatureStatus string
+
+func (ss SignatureStatus) IsValid() bool {
+	return ss == SignatureValid
 }
 
-type UpdateInfo struct {
-	PluginZipURL string
+func (ss SignatureStatus) IsInternal() bool {
+	return ss == SignatureInternal
+}
+
+const (
+	SignatureInternal SignatureStatus = "internal" // core plugin, no signature
+	SignatureValid    SignatureStatus = "valid"    // signed and accurate MANIFEST
+	SignatureInvalid  SignatureStatus = "invalid"  // invalid signature
+	SignatureModified SignatureStatus = "modified" // valid signature, but content mismatch
+	SignatureUnsigned SignatureStatus = "unsigned" // no MANIFEST file
+)
+
+type ReleaseState string
+
+const (
+	AlphaRelease ReleaseState = "alpha"
+)
+
+type SignatureType string
+
+const (
+	GrafanaSignature SignatureType = "grafana"
+	PrivateSignature SignatureType = "private"
+)
+
+type PluginFiles map[string]struct{}
+
+type Signature struct {
+	Status     SignatureStatus
+	Type       SignatureType
+	SigningOrg string
+	Files      PluginFiles
+}
+
+type PluginMetaDTO struct {
+	JSONData
+
+	Signature SignatureStatus `json:"signature"`
+
+	Module  string `json:"module"`
+	BaseURL string `json:"baseUrl"`
+}
+
+const (
+	signatureMissing  ErrorCode = "signatureMissing"
+	signatureModified ErrorCode = "signatureModified"
+	signatureInvalid  ErrorCode = "signatureInvalid"
+)
+
+type ErrorCode string
+
+type Error struct {
+	ErrorCode `json:"errorCode"`
+	PluginID  string `json:"pluginId,omitempty"`
 }

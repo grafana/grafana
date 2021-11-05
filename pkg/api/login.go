@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -130,7 +131,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
-				log.Debugf("Ignored invalid redirect_to cookie value: %v", redirectTo)
+				log.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
 				redirectTo = hs.Cfg.AppSubURL + "/"
 			}
 			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
@@ -151,12 +152,12 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 	}
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
 	if len(oauthInfos) != 1 {
-		log.Warnf("Skipping OAuth auto login because multiple OAuth providers are configured")
+		log.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
 		return false
 	}
 	for key := range oauthInfos {
 		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
-		log.Infof("OAuth auto login enabled. Redirecting to " + redirectUrl)
+		log.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
 	}
@@ -248,7 +249,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			result["redirectUrl"] = redirectTo
 		} else {
-			log.Infof("Ignored invalid redirect_to cookie value: %v", redirectTo)
+			log.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
 		}
 		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}
@@ -315,12 +316,12 @@ func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return "", false
 	}
 
-	decryptedError, err := hs.EncryptionService.Decrypt(ctx.Req.Context(), decoded, setting.SecretKey)
+	decryptedError, err := hs.SecretsService.Decrypt(ctx.Req.Context(), decoded)
 	return string(decryptedError), err == nil
 }
 
 func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
-	encryptedError, err := hs.EncryptionService.Encrypt(ctx.Req.Context(), []byte(value), setting.SecretKey)
+	encryptedError, err := hs.SecretsService.Encrypt(ctx.Req.Context(), []byte(value), secrets.WithoutScope())
 	if err != nil {
 		return err
 	}

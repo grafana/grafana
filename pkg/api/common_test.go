@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -244,4 +246,112 @@ type accessControlTestCase struct {
 	url          string
 	method       string
 	permissions  []*accesscontrol.Permission
+}
+
+// accessControlScenarioContext contains the setups for accesscontrol tests
+type accessControlScenarioContext struct {
+	// server we registered hs routes on.
+	server *web.Mux
+
+	// initCtx is used in a middleware to set the initial context
+	// of the request server side. Can be used to pretend sign in.
+	initCtx *models.ReqContext
+
+	// hs is a minimal HTTPServer for the accesscontrol tests to pass.
+	hs *HTTPServer
+
+	// acmock is an accesscontrol mock used to fake users rights.
+	acmock *accesscontrolmock.Mock
+
+	// db is a test database initialized with InitTestDB
+	db *sqlstore.SQLStore
+
+	// cfg is the setting provider
+	cfg *setting.Cfg
+}
+
+func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission) {
+	acmock.GetUserPermissionsFunc = func(_ context.Context, _ *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+		return perms, nil
+	}
+}
+
+func setInitCtxSignedInViewer(initCtx *models.ReqContext) {
+	initCtx.IsSignedIn = true
+	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_VIEWER, Login: testUserLogin}
+}
+
+func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
+	initCtx.IsSignedIn = true
+	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_ADMIN, Login: testUserLogin}
+}
+
+func setupHTTPServer(t *testing.T, enableAccessControl bool) accessControlScenarioContext {
+	t.Helper()
+
+	// Use a new conf
+	cfg := setting.NewCfg()
+	cfg.FeatureToggles = make(map[string]bool)
+
+	// Use an accesscontrol mock
+	acmock := accesscontrolmock.New()
+
+	// Handle accesscontrol enablement
+	if enableAccessControl {
+		cfg.FeatureToggles["accesscontrol"] = enableAccessControl
+	} else {
+		// Disabling accesscontrol has to be done before registering routes
+		acmock = acmock.WithDisabled()
+	}
+
+	// Use a test DB
+	db := sqlstore.InitTestDB(t)
+	db.Cfg = cfg
+
+	bus := bus.GetBus()
+
+	// Create minimal HTTP Server
+	hs := &HTTPServer{
+		Cfg:                cfg,
+		Bus:                bus,
+		Live:               newTestLive(t),
+		QuotaService:       &quota.QuotaService{Cfg: cfg},
+		RouteRegister:      routing.NewRouteRegister(),
+		AccessControl:      acmock,
+		SQLStore:           db,
+		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
+	}
+
+	// Instantiate a new Server
+	m := web.New()
+
+	// middleware to set the test initial context
+	initCtx := &models.ReqContext{}
+	m.Use(func(c *web.Context) {
+		initCtx.Context = c
+		initCtx.Logger = log.New("api-test")
+		c.Map(initCtx)
+	})
+
+	// Register all routes
+	hs.registerRoutes()
+	hs.RouteRegister.Register(m.Router)
+
+	return accessControlScenarioContext{
+		server:  m,
+		initCtx: initCtx,
+		hs:      hs,
+		acmock:  acmock,
+		db:      db,
+		cfg:     cfg,
+	}
+}
+
+func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T) *httptest.ResponseRecorder {
+	req, err := http.NewRequest(method, path, body)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+	server.ServeHTTP(recorder, req)
+	return recorder
 }

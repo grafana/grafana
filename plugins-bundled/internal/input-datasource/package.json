@@ -15,8 +15,20 @@
   },
   "author": "Grafana Labs",
   "devDependencies": {
+    "@types/jest": "26.0.15",
+    "@types/react": "17.0.30",
+    "ts-loader": "8.0.11",
+    "webpack": "5.58.1"
+  },
+  "dependencies": {
     "@grafana/data": "8.3.0-pre",
     "@grafana/toolkit": "8.3.0-pre",
-    "@grafana/ui": "8.3.0-pre"
+    "@grafana/ui": "8.3.0-pre",
+    "jquery": "3.5.1",
+    "react": "17.0.1",
+    "react-dom": "17.0.1",
+    "react-hook-form": "7.5.3",
+    "react-router-dom": "^5.2.0",
+    "tslib": "2.3.1"
   }
 }

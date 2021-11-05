@@ -21,7 +21,7 @@ import { map } from 'rxjs/operators';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import { getAzureCloud } from './credentials';
 import migrateAnnotation from './utils/migrateAnnotation';
-
+import { VariableSupport } from './variables';
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   annotations = {
     prepareAnnotation: migrateAnnotation,
@@ -71,6 +71,8 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       this.pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
       this.pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
     }
+
+    this.variables = new VariableSupport(this);
   }
 
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
@@ -131,29 +133,6 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   async annotationQuery(options: any) {
     return this.azureLogAnalyticsDatasource.annotationQuery(options);
-  }
-
-  async metricFindQuery(query: string, optionalOptions?: unknown) {
-    if (!query) {
-      return Promise.resolve([]);
-    }
-
-    const aiResult = this.appInsightsDatasource?.metricFindQueryInternal(query);
-    if (aiResult) {
-      return aiResult;
-    }
-
-    const amResult = this.azureMonitorDatasource.metricFindQueryInternal(query);
-    if (amResult) {
-      return amResult;
-    }
-
-    const alaResult = this.azureLogAnalyticsDatasource.metricFindQueryInternal(query, optionalOptions);
-    if (alaResult) {
-      return alaResult;
-    }
-
-    return Promise.resolve([]);
   }
 
   async testDatasource(): Promise<DatasourceValidationResult> {
@@ -306,6 +285,9 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
 
     case AzureQueryType.AzureResourceGraph:
       return !!query.azureResourceGraph;
+
+    case AzureQueryType.GrafanaTemplateVariableFn:
+      return !!query.grafanaTemplateVariableFn;
 
     case AzureQueryType.ApplicationInsights:
       return !!query.appInsights;

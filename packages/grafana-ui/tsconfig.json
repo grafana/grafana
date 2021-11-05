@@ -1,14 +1,9 @@
 {
   "compilerOptions": {
-    "baseUrl": "node_modules/@types",
+    "baseUrl": "./",
     "declarationDir": "dist",
     "outDir": "compiled",
-    "paths": {
-      "@grafana/slate-react": ["slate-react"],
-      "@grafana/ui": ["."]
-    },
-    "rootDirs": [".", "stories"],
-    "typeRoots": ["node_modules/@types"]
+    "rootDirs": [".", "stories"]
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",

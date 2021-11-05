@@ -1,26 +1,27 @@
 package api
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 // GET /api/org
-func GetOrgCurrent(c *models.ReqContext) response.Response {
-	return getOrgHelper(c.OrgId)
+func GetCurrentOrg(c *models.ReqContext) response.Response {
+	return getOrgHelper(c.Req.Context(), c.OrgId)
 }
 
 // GET /api/orgs/:orgId
 func GetOrgByID(c *models.ReqContext) response.Response {
-	return getOrgHelper(c.ParamsInt64(":orgId"))
+	return getOrgHelper(c.Req.Context(), c.ParamsInt64(":orgId"))
 }
 
 // Get /api/orgs/name/:name
@@ -49,14 +50,13 @@ func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 	return response.JSON(200, &result)
 }
 
-func getOrgHelper(orgID int64) response.Response {
+func getOrgHelper(ctx context.Context, orgID int64) response.Response {
 	query := models.GetOrgByIdQuery{Id: orgID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := sqlstore.GetOrgById(ctx, &query); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Organization not found", err)
 		}
-
 		return response.Error(500, "Failed to get organization", err)
 	}
 
@@ -78,13 +78,14 @@ func getOrgHelper(orgID int64) response.Response {
 }
 
 // POST /api/orgs
-func CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) response.Response {
-	if !c.IsSignedIn || (!setting.AllowUserOrgCreate && !c.IsGrafanaAdmin) {
+func (hs *HTTPServer) CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) response.Response {
+	acEnabled := hs.Cfg.FeatureToggles["accesscontrol"]
+	if !acEnabled && !(setting.AllowUserOrgCreate || c.IsGrafanaAdmin) {
 		return response.Error(403, "Access denied", nil)
 	}
 
 	cmd.UserId = c.UserId
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := sqlstore.CreateOrg(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(409, "Organization name taken", err)
 		}
@@ -100,18 +101,18 @@ func CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) response.Respo
 }
 
 // PUT /api/org
-func UpdateOrgCurrent(c *models.ReqContext, form dtos.UpdateOrgForm) response.Response {
-	return updateOrgHelper(form, c.OrgId)
+func UpdateCurrentOrg(c *models.ReqContext, form dtos.UpdateOrgForm) response.Response {
+	return updateOrgHelper(c.Req.Context(), form, c.OrgId)
 }
 
 // PUT /api/orgs/:orgId
 func UpdateOrg(c *models.ReqContext, form dtos.UpdateOrgForm) response.Response {
-	return updateOrgHelper(form, c.ParamsInt64(":orgId"))
+	return updateOrgHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgHelper(form dtos.UpdateOrgForm, orgID int64) response.Response {
+func updateOrgHelper(ctx context.Context, form dtos.UpdateOrgForm, orgID int64) response.Response {
 	cmd := models.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := sqlstore.UpdateOrg(ctx, &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(400, "Organization name taken", err)
 		}
@@ -122,16 +123,16 @@ func updateOrgHelper(form dtos.UpdateOrgForm, orgID int64) response.Response {
 }
 
 // PUT /api/org/address
-func UpdateOrgAddressCurrent(c *models.ReqContext, form dtos.UpdateOrgAddressForm) response.Response {
-	return updateOrgAddressHelper(form, c.OrgId)
+func UpdateCurrentOrgAddress(c *models.ReqContext, form dtos.UpdateOrgAddressForm) response.Response {
+	return updateOrgAddressHelper(c.Req.Context(), form, c.OrgId)
 }
 
 // PUT /api/orgs/:orgId/address
 func UpdateOrgAddress(c *models.ReqContext, form dtos.UpdateOrgAddressForm) response.Response {
-	return updateOrgAddressHelper(form, c.ParamsInt64(":orgId"))
+	return updateOrgAddressHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
+func updateOrgAddressHelper(ctx context.Context, form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
 	cmd := models.UpdateOrgAddressCommand{
 		OrgId: orgID,
 		Address: models.Address{
@@ -144,14 +145,14 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) respons
 		},
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := sqlstore.UpdateOrgAddress(ctx, &cmd); err != nil {
 		return response.Error(500, "Failed to update org address", err)
 	}
 
 	return response.Success("Address updated")
 }
 
-// GET /api/orgs/:orgId
+// DELETE /api/orgs/:orgId
 func DeleteOrgByID(c *models.ReqContext) response.Response {
 	orgID := c.ParamsInt64(":orgId")
 	// before deleting an org, check if user does not belong to the current org
@@ -159,7 +160,7 @@ func DeleteOrgByID(c *models.ReqContext) response.Response {
 		return response.Error(400, "Can not delete org for current user", nil)
 	}
 
-	if err := bus.Dispatch(&models.DeleteOrgCommand{Id: orgID}); err != nil {
+	if err := sqlstore.DeleteOrg(c.Req.Context(), &models.DeleteOrgCommand{Id: orgID}); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Failed to delete organization. ID not found", nil)
 		}
@@ -183,7 +184,7 @@ func SearchOrgs(c *models.ReqContext) response.Response {
 		Limit: perPage,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := sqlstore.SearchOrgs(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to search orgs", err)
 	}
 

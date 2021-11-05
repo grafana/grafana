@@ -14,7 +14,7 @@ import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
-import { changeSize } from './state/explorePane';
+import { changeSize, changeGraphStyle } from './state/explorePane';
 import { updateTimeRange } from './state/time';
 import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -29,6 +29,8 @@ import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsVolumePanel } from './LogsVolumePanel';
+import { ExploreGraphLabel } from './ExploreGraphLabel';
+import { ExploreGraphStyle } from 'app/core/utils/explore';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -162,6 +164,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
+  onChangeGraphStyle = (graphStyle: ExploreGraphStyle) => {
+    const { exploreId, changeGraphStyle } = this.props;
+    changeGraphStyle(exploreId, graphStyle);
+  };
+
   toggleShowRichHistory = () => {
     this.setState((state) => {
       return {
@@ -187,11 +194,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
+    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme, graphStyle } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
+    const label = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={this.onChangeGraphStyle} />;
     return (
-      <Collapse label="Graph" loading={loading} isOpen>
+      <Collapse label={label} loading={loading} isOpen>
         <ExploreGraph
+          graphStyle={graphStyle}
           data={graphResult!}
           height={400}
           width={width - spacing}
@@ -390,6 +399,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryResponse,
     showNodeGraph,
     loading,
+    graphStyle,
   } = item;
 
   return {
@@ -410,11 +420,13 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTrace,
     showNodeGraph,
     loading,
+    graphStyle,
   };
 }
 
 const mapDispatchToProps = {
   changeSize,
+  changeGraphStyle,
   modifyQueries,
   scanStart,
   scanStopAction,

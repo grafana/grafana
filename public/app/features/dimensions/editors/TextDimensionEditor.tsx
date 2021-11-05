@@ -12,7 +12,7 @@ import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/componen
 const textOptions = [
   { label: 'Fixed', value: TextDimensionMode.Fixed, description: 'Fixed value' },
   { label: 'Field', value: TextDimensionMode.Field, description: 'Display field value' },
-  { label: 'Template', value: TextDimensionMode.Template, description: 'use template text' },
+  //  { label: 'Template', value: TextDimensionMode.Template, description: 'use template text' },
 ];
 
 const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
