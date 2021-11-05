@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { IconName, Link, useTheme2 } from '@grafana/ui';
+import { IconName, useTheme2 } from '@grafana/ui';
 import { NavBarMenuItem } from './NavBarMenuItem';
 
 interface Props {
@@ -27,27 +27,15 @@ const NavBarDropdown = ({
   const theme = useTheme2();
   const styles = getStyles(theme, reverseDirection, filteredItems);
 
-  let header = (
-    <button onClick={onHeaderClick} className={styles.header}>
-      {headerText}
-    </button>
-  );
-  if (headerUrl) {
-    header =
-      !headerTarget && headerUrl.startsWith('/') ? (
-        <Link href={headerUrl} onClick={onHeaderClick} className={styles.header}>
-          {headerText}
-        </Link>
-      ) : (
-        <a href={headerUrl} target={headerTarget} onClick={onHeaderClick} className={styles.header}>
-          {headerText}
-        </a>
-      );
-  }
-
   return (
     <ul className={`${styles.menu} dropdown-menu dropdown-menu--sidemenu`} role="menu">
-      <li>{header}</li>
+      <NavBarMenuItem
+        className={styles.header}
+        onClick={onHeaderClick}
+        target={headerTarget}
+        text={headerText}
+        url={headerUrl}
+      />
       {filteredItems.map((child, index) => (
         <NavBarMenuItem
           key={index}
@@ -75,20 +63,12 @@ const getStyles = (
 
   return {
     header: css`
-      align-items: center;
       background-color: ${theme.colors.background.secondary};
-      border: none;
-      color: ${theme.colors.text.primary};
       height: ${theme.components.sidemenu.width - (adjustHeightForBorder ? 2 : 1)}px;
       font-size: ${theme.typography.h4.fontSize};
       font-weight: ${theme.typography.h4.fontWeight};
-      padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(2)} !important;
       white-space: nowrap;
       width: 100%;
-
-      &:hover {
-        background-color: ${theme.colors.action.hover};
-      }
     `,
     menu: css`
       border: 1px solid ${theme.components.panel.borderColor};

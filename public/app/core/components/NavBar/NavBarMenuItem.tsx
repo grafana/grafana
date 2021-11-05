@@ -2,21 +2,22 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import classNames from 'classnames';
 
 export interface Props {
+  className?: string;
   icon?: IconName;
   isActive?: boolean;
   isDivider?: boolean;
-  isSectionHeader?: boolean;
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   text: string;
   url?: string;
 }
 
-export function NavBarMenuItem({ icon, isActive, isDivider, isSectionHeader, onClick, target, text, url }: Props) {
+export function NavBarMenuItem({ className, icon, isActive, isDivider, onClick, target, text, url }: Props) {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive, isSectionHeader);
+  const styles = getStyles(theme, isActive);
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -50,15 +51,15 @@ export function NavBarMenuItem({ icon, isActive, isDivider, isSectionHeader, onC
   }
 
   return isDivider ? (
-    <li data-testid="dropdown-child-divider" className={styles.divider} />
+    <li data-testid="dropdown-child-divider" className={classNames(styles.container, styles.divider, className)} />
   ) : (
-    <li className={styles.container}>{element}</li>
+    <li className={classNames(styles.container, className)}>{element}</li>
   );
 }
 
 NavBarMenuItem.displayName = 'NavBarMenuItem';
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isSectionHeader: Props['isSectionHeader']) => ({
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   container: css`
     display: flex;
   `,
@@ -69,10 +70,12 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isSectionH
     overflow: hidden;
   `,
   element: css`
+    align-items: center;
     background: none;
     border: none;
     color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
-    font-size: ${isSectionHeader ? theme.typography.h5.fontSize : 'unset'};
+    font-size: inherit;
+    height: 100%;
     padding: ${theme.spacing(1)} ${theme.spacing(2)};
     position: relative;
     text-align: left;

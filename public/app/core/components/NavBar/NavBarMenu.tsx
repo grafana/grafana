@@ -38,8 +38,8 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
               {navItems.map((link, index) => (
                 <div className={styles.section} key={index}>
                   <NavBarMenuItem
+                    className={styles.sectionHeader}
                     isActive={activeItem === link}
-                    isSectionHeader
                     onClick={() => {
                       link.onClick?.();
                       onClose();
@@ -108,5 +108,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   section: css`
     border-bottom: 1px solid ${theme.colors.border.weak};
+  `,
+  sectionHeader: css`
+    font-size: ${theme.typography.h5.fontSize};
   `,
 });
