@@ -77,6 +77,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	}
 
 	if len(namespaceMap) == 0 {
+		srv.log.Debug("User has no access to any of namespaces")
 		return response.JSON(http.StatusOK, ruleResponse)
 	}
 
@@ -126,11 +127,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			continue
 		}
 		groupId, namespaceUID, namespace := r[0], r[1], r[2]
-
-		_, ok := namespaceMap[namespaceUID]
-		if !ok {
-			continue
-		}
 
 		newGroup := &apimodels.RuleGroup{
 			Name: groupId,
