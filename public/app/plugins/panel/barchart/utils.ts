@@ -141,7 +141,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
     const scaleKey = field.config.unit || FIXED_UNIT;
     const colorMode = getFieldColorModeForField(field);
-    const scaleColor = getFieldSeriesColor(field, theme);
+    const scaleColor = getFieldSeriesColor(field, theme, frame);
     const seriesColor = scaleColor.color;
 
     builder.addSeries({

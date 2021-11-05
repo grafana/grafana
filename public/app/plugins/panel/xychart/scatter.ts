@@ -86,7 +86,7 @@ function getScatterSeries(
   //----------------
   let seriesColor = dims.pointColorFixed
     ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
-    : getFieldSeriesColor(y, config.theme2).color;
+    : getFieldSeriesColor(y, config.theme2, frame).color;
   let pointColor: DimensionValues<string> = () => seriesColor;
   const fieldConfig: ScatterFieldConfig = { ...defaultScatterConfig, ...y.config.custom };
   let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);

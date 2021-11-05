@@ -47,8 +47,9 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
         return undefined;
       }
 
-      const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
-      const scaleColor = getFieldSeriesColor(field, theme);
+      const frame = data[fieldIndex.frameIndex]!;
+      const label = getFieldDisplayName(field, frame, data);
+      const scaleColor = getFieldSeriesColor(field, theme, frame);
       const seriesColor = scaleColor.color;
 
       return {

@@ -1,4 +1,4 @@
-import { FALLBACK_COLOR, Field, FieldColorModeId, Threshold } from '../types';
+import { FALLBACK_COLOR, Field, DataFrame, FieldColorModeId, Threshold } from '../types';
 import { RegistryItem } from '../utils';
 import { Registry } from '../utils/Registry';
 import { interpolateRgbBasis } from 'd3-interpolate';
@@ -6,13 +6,14 @@ import { fallBackTreshold } from './thresholds';
 import { getScaleCalculator, ColorScaleValue } from './scale';
 import { reduceField } from '../transformations/fieldReducer';
 import { GrafanaTheme2 } from '../themes/types';
+import { FieldMatcherID, fieldMatchers } from '..';
 
 /** @beta */
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
 
 /** @beta */
 export interface FieldColorMode extends RegistryItem {
-  getCalculator: (field: Field, theme: GrafanaTheme2) => FieldValueColorCalculator;
+  getCalculator: (field: Field, theme: GrafanaTheme2, frame?: DataFrame) => FieldValueColorCalculator;
   getColors?: (theme: GrafanaTheme2) => string[];
   isContinuous?: boolean;
   isByValue?: boolean;
@@ -37,6 +38,25 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
           const thresholdSafe = threshold ?? fallBackTreshold;
           return theme.visualization.getColorByName(thresholdSafe.color);
         };
+      },
+    },
+    {
+      id: FieldColorModeId.Field,
+      name: 'From sibling field',
+      isByValue: true,
+      description: 'Derive colors from another field',
+      getCalculator: (_field, theme, frame) => {
+        const name = _field.config.color?.fromField;
+        if (frame && name) {
+          const matcher = fieldMatchers.get(FieldMatcherID.byName).get(name);
+          for (const f of frame.fields) {
+            if (matcher(f, frame, [frame])) {
+              const mode = getFieldColorModeForField(f);
+              return mode.getCalculator(f, theme); // don't pass frame to child so we avoid loops?
+            }
+          }
+        }
+        return () => theme.visualization.getColorByName('gray');
       },
     },
     new FieldColorSchemeMode({
@@ -210,7 +230,7 @@ export function getFieldColorMode(mode?: FieldColorModeId | string): FieldColorM
  * Function that will return a series color for any given color mode. If the color mode is a by value color
  * mode it will use the field.config.color.seriesBy property to figure out which value to use
  */
-export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorScaleValue {
+export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2, frame: DataFrame): ColorScaleValue {
   const mode = getFieldColorModeForField(field);
 
   if (!mode.isByValue) {
@@ -221,7 +241,7 @@ export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorSc
     };
   }
 
-  const scale = getScaleCalculator(field, theme);
+  const scale = getScaleCalculator(field, theme, frame);
   const stat = field.config.color?.seriesBy ?? 'last';
   const calcs = reduceField({ field, reducers: [stat] });
   const value = calcs[stat] ?? 0;

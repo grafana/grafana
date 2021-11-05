@@ -17,12 +17,14 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { css } from '@emotion/css';
 import { Field } from '../Forms/Field';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { FieldNamePicker } from '../MatchersUI/FieldNamePicker';
 
 export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | undefined, FieldColorConfigSettings>> = ({
   value,
   onChange,
   item,
   id,
+  context,
 }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -54,11 +56,19 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
     });
   };
 
-  const onColorChange = (color?: string) => {
+  const onColorChange = (fixedColor?: string) => {
     onChange({
       ...value,
       mode,
-      fixedColor: color,
+      fixedColor,
+    });
+  };
+
+  const onFromFieldChange = (fromField?: string) => {
+    onChange({
+      ...value,
+      mode,
+      fromField,
     });
   };
 
@@ -86,6 +96,31 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
         />
         <ColorValueEditor value={value?.fixedColor} onChange={onColorChange} />
       </div>
+    );
+  }
+
+  if (mode === FieldColorModeId.Field) {
+    return (
+      <>
+        <div style={{ marginBottom: theme.spacing(2) }}>
+          <Select
+            menuShouldPortal
+            minMenuHeight={200}
+            options={options}
+            value={mode}
+            onChange={onModeChange}
+            inputId={id}
+          />
+        </div>
+        <Field label="Field">
+          <FieldNamePicker
+            value={value?.fromField ?? ''}
+            context={context}
+            onChange={onFromFieldChange}
+            item={{} as any} // HACK!
+          />
+        </Field>
+      </>
     );
   }
 

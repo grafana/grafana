@@ -125,7 +125,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     const fmt = field.display ?? defaultFormatter;
     const scaleKey = config.unit || FIXED_UNIT;
     const colorMode = getFieldColorModeForField(field);
-    const scaleColor = getFieldSeriesColor(field, theme);
+    const scaleColor = getFieldSeriesColor(field, theme, frame);
     const seriesColor = scaleColor.color;
 
     // The builder will manage unique scaleKeys and combine where appropriate

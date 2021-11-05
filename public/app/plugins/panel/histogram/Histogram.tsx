@@ -165,7 +165,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
     const scaleKey = 'y';
     const colorMode = getFieldColorModeForField(field);
-    const scaleColor = getFieldSeriesColor(field, theme);
+    const scaleColor = getFieldSeriesColor(field, theme, frame);
     const seriesColor = scaleColor.color;
 
     builder.addSeries({

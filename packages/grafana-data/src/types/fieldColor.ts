@@ -7,6 +7,7 @@ export enum FieldColorModeId {
   PaletteSaturated = 'palette-saturated',
   ContinuousGrYlRd = 'continuous-GrYlRd',
   Fixed = 'fixed',
+  Field = 'field',
 }
 
 /**
@@ -19,6 +20,8 @@ export interface FieldColor {
   fixedColor?: string;
   /** Some visualizations need to know how to assign a series color from by value color schemes */
   seriesBy?: FieldColorSeriesByMode;
+  /** Pick the field color based a sibling field */
+  fromField?: string;
 }
 
 /**
