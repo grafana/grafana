@@ -2,7 +2,7 @@ import { GraphFieldConfig } from '@grafana/schema';
 import { FieldConfigProperty, PanelPlugin, SelectableValue } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { MarketTrendPanel } from './MarketTrendPanel';
-import { defaultColors, MarketOptions, MarketTrendMode, ColorStrategy, PriceStyle } from './types';
+import { defaultColors, MarketOptions, MarketTrendMode, ColorStrategy, PriceStyle } from './models.gen';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 const modeOptions = [
