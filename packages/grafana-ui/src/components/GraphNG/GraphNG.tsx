@@ -18,7 +18,7 @@ import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { Renderers, UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { UPlotChart } from '../uPlot/Plot';
 import { ScaleProps } from '../uPlot/config/UPlotScaleBuilder';
@@ -43,7 +43,7 @@ export interface GraphNGProps extends Themeable2 {
   timeZone: TimeZone;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
-  renderers?: Array<{ fields: string[]; init: (builder: UPlotConfigBuilder) => void }>;
+  renderers?: Renderers;
   tweakScale?: (opts: ScaleProps) => ScaleProps;
   tweakAxis?: (opts: AxisProps) => AxisProps;
   onLegendClick?: (event: GraphNGLegendEvent) => void;

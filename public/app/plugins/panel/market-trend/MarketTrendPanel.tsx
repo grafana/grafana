@@ -13,15 +13,11 @@ import { prepareGraphableFields } from '../timeseries/utils';
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
-import { drawMarkers } from './utils';
+import { drawMarkers, FieldIndices } from './utils';
 import { defaultColors, MarketOptions, MarketTrendMode } from './types';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { findField } from 'app/features/dimensions';
-
-interface FieldIndices {
-  [fieldKey: string]: number;
-}
 
 interface MarketPanelProps extends PanelProps<MarketOptions> {}
 
@@ -188,7 +184,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
           fields,
           indicesOnly,
           init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
-            volumeIdx = fieldIndices.volume;
+            volumeIdx = fieldIndices.volume!;
 
             builder.addHook(
               'drawAxes',

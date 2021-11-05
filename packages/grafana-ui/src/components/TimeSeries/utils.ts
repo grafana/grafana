@@ -114,7 +114,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   renderers = renderers?.filter((r) => {
     let foundCount = 0;
 
-    for (let [key, name] of Object.entries(r.fields)) {
+    for (let [, name] of Object.entries(r.fields)) {
       for (let i = 1; i < frame.fields.length; i++) {
         const field = frame.fields[i];
 
@@ -244,8 +244,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     let { fillOpacity } = customConfig;
 
-    let pathBuilder: uPlot.Series.PathBuilder = null;
-    let pointsBuilder: uPlot.Series.PathBuilder = null;
+    let pathBuilder: uPlot.Series.PathBuilder | null = null;
+    let pointsBuilder: uPlot.Series.Points.Show | null = null;
 
     if (field.state?.origin) {
       if (!indexByName) {
@@ -259,7 +259,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
       // disable default renderers
       if (customRenderedFields.indexOf(dispName) >= 0) {
-        pathBuilder = pointsBuilder = () => null;
+        pathBuilder = () => null;
+        pointsBuilder = () => undefined;
       }
 
       if (customConfig.fillBelowTo) {
@@ -268,7 +269,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         if (isNumber(b) && isNumber(t)) {
           builder.addBand({
             series: [t, b],
-            fill: null as any, // using null will have the band use fill options from `t`
+            fill: undefined, // using null will have the band use fill options from `t`
           });
         }
         if (!fillOpacity) {
@@ -340,14 +341,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   // hook up custom/composite renderers
   renderers?.forEach((r) => {
-    let fieldMap = {};
+    let fieldIndices: Record<string, number> = {};
 
     for (let key in r.fields) {
       let dispName = r.fields[key];
-      fieldMap[key] = indexByName.get(dispName);
+      fieldIndices[key] = indexByName!.get(dispName)!;
     }
 
-    r.init(builder, fieldMap);
+    r.init(builder, fieldIndices);
   });
 
   builder.scaleKeys = [xScaleKey, yScaleKey];

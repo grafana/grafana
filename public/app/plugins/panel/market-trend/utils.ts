@@ -4,7 +4,27 @@ import { colorManipulator } from '@grafana/data';
 
 const { alpha } = colorManipulator;
 
-export function drawMarkers(opts) {
+export interface FieldIndices {
+  open: number;
+  close: number;
+  high?: number;
+  low?: number;
+  volume?: number;
+}
+
+interface RendererOpts {
+  mode: MarketTrendMode;
+  priceStyle: PriceStyle;
+  fields: FieldIndices;
+  colorStrategy: ColorStrategy;
+  upColor: string;
+  downColor: string;
+  flatColor: string;
+  volumeAlpha: number;
+  flatAsUp: boolean;
+}
+
+export function drawMarkers(opts: RendererOpts) {
   let { mode, priceStyle, fields, colorStrategy, upColor, downColor, flatColor, volumeAlpha, flatAsUp = true } = opts;
 
   let drawPrice = mode !== MarketTrendMode.Volume && fields.high != null && fields.low != null;
@@ -81,9 +101,9 @@ export function drawMarkers(opts) {
       if (drawVolume) {
         let outerPath = selectPath(
           colorStrategy === ColorStrategy.Inter ? interDir : intraDir,
-          flatPathVol,
-          upPathVol,
-          downPathVol,
+          flatPathVol as Path2D,
+          upPathVol as Path2D,
+          downPathVol as Path2D,
           i === idx0 && ColorStrategy.Inter ? false : flatAsUp
         );
 
@@ -94,9 +114,9 @@ export function drawMarkers(opts) {
       if (drawPrice) {
         let outerPath = selectPath(
           colorStrategy === ColorStrategy.Inter ? interDir : intraDir,
-          flatPath,
-          upPath,
-          downPath,
+          flatPath as Path2D,
+          upPath as Path2D,
+          downPath as Path2D,
           i === idx0 && ColorStrategy.Inter ? false : flatAsUp
         );
 
@@ -139,24 +159,24 @@ export function drawMarkers(opts) {
 
     if (drawVolume) {
       ctx.fillStyle = alpha(upColor, volumeAlpha);
-      ctx.fill(upPathVol);
+      ctx.fill(upPathVol as Path2D);
 
       ctx.fillStyle = alpha(downColor, volumeAlpha);
-      ctx.fill(downPathVol);
+      ctx.fill(downPathVol as Path2D);
 
       ctx.fillStyle = alpha(flatColor, volumeAlpha);
-      ctx.fill(flatPathVol);
+      ctx.fill(flatPathVol as Path2D);
     }
 
     if (drawPrice) {
       ctx.fillStyle = upColor;
-      ctx.fill(upPath);
+      ctx.fill(upPath as Path2D);
 
       ctx.fillStyle = downColor;
-      ctx.fill(downPath);
+      ctx.fill(downPath as Path2D);
 
       ctx.fillStyle = flatColor;
-      ctx.fill(flatPath);
+      ctx.fill(flatPath as Path2D);
 
       ctx.globalCompositeOperation = 'destination-out';
       ctx.fill(hollowPath);
