@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -161,7 +160,10 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 
 	hs.Live.HandleDatasourceDelete(c.OrgId, ds.Uid)
 
-	return response.Success("Data source deleted")
+	return response.JSON(200, util.DynMap{
+		"message": "Data source deleted",
+		"id":      ds.Id,
+	})
 }
 
 func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Response {
@@ -292,7 +294,7 @@ func (hs *HTTPServer) fillWithSecureJSONData(ctx context.Context, cmd *models.Up
 		return models.ErrDatasourceIsReadOnly
 	}
 
-	secureJSONData, err := hs.EncryptionService.DecryptJsonData(ctx, ds.SecureJsonData, setting.SecretKey)
+	secureJSONData, err := hs.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
 	if err != nil {
 		return err
 	}
@@ -492,7 +494,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 
 func (hs *HTTPServer) decryptSecureJsonDataFn() func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, err := hs.EncryptionService.DecryptJsonData(context.Background(), m, setting.SecretKey)
+		decryptedJsonData, err := hs.SecretsService.DecryptJsonData(context.Background(), m)
 		if err != nil {
 			hs.log.Error("Failed to decrypt secure json data", "error", err)
 		}
