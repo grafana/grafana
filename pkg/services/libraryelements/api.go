@@ -40,7 +40,7 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
 
-	return response.JSON(200, LibraryElementIDResponse{
+	return response.JSON(200, DeleteLibraryElementResponse{
 		Message: "Library element deleted",
 		ID:      id,
 	})

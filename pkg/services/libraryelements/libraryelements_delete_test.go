@@ -24,7 +24,7 @@ func TestDeleteLibraryElement(t *testing.T) {
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
-			var result LibraryElementIDResponse
+			var result DeleteLibraryElementResponse
 			err := json.Unmarshal(resp.Body(), &result)
 
 			require.NoError(t, err)
