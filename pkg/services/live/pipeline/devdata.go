@@ -103,12 +103,12 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
-				NewRemoteWriteFrameOutput(RemoteWriteConfig{
-					Endpoint:           os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:               os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password:           os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-					SampleMilliseconds: 1000,
-				}),
+				NewRemoteWriteFrameOutput(
+					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+					os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					1000,
+				),
 			},
 			Subscribers: []Subscriber{
 				NewBuiltinSubscriber(f.ChannelHandlerGetter),
@@ -289,11 +289,12 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			}),
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
-				NewRemoteWriteFrameOutput(RemoteWriteConfig{
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-				}),
+				NewRemoteWriteFrameOutput(
+					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+					os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					0,
+				),
 				NewChangeLogFrameOutput(f.FrameStorage, ChangeLogOutputConfig{
 					FieldName: "value3",
 					Channel:   "stream/json/exact/value3/changes",
@@ -323,11 +324,12 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			Pattern: "stream/json/exact/value3/changes",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
-				NewRemoteWriteFrameOutput(RemoteWriteConfig{
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-				}),
+				NewRemoteWriteFrameOutput(
+					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+					os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					0,
+				),
 			},
 		},
 		{
