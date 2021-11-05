@@ -273,7 +273,7 @@ export class UPlotConfigBuilder {
 }
 
 export type Renderers = Array<{
-  fields: string[];
+  fieldMap: Record<string, string>;
   indicesOnly: string[];
   init: (config: UPlotConfigBuilder, fieldIndices: Record<string, number>) => void;
 }>;

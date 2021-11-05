@@ -57,12 +57,22 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
   );
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
+    let tweakScale = (opts: ScaleProps) => opts;
+    let tweakAxis = (opts: AxisProps) => opts;
+
+    let doNothing = {
+      renderers: [],
+      tweakScale,
+      tweakAxis,
+    };
+
+    if (options.fieldMap == null) {
+      return doNothing;
+    }
+
     const { mode, priceStyle, fieldMap, colorStrategy } = options;
     const colors = { ...defaultColors, ...options.colors };
     let { open, high, low, close, volume } = fieldMap;
-
-    let tweakScale = (opts: ScaleProps) => opts;
-    let tweakAxis = (opts: AxisProps) => opts;
 
     if (
       open == null ||
@@ -70,11 +80,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
       findFieldInFrames(frames, open) == null ||
       findFieldInFrames(frames, close) == null
     ) {
-      return {
-        renderers: [],
-        tweakScale,
-        tweakAxis,
-      };
+      return doNothing;
     }
 
     let volumeAlpha = 0.5;
@@ -181,7 +187,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
     return {
       renderers: [
         {
-          fields,
+          fieldMap: fields,
           indicesOnly,
           init: (builder: UPlotConfigBuilder, fieldIndices: FieldIndices) => {
             volumeIdx = fieldIndices.volume!;
@@ -228,7 +234,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
-      renderers={renderers as any}
+      renderers={renderers}
       tweakAxis={tweakAxis}
       tweakScale={tweakScale}
     >

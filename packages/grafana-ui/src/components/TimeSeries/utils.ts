@@ -114,7 +114,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   renderers = renderers?.filter((r) => {
     let foundCount = 0;
 
-    for (let [, name] of Object.entries(r.fields)) {
+    for (let [, name] of Object.entries(r.fieldMap)) {
       for (let i = 1; i < frame.fields.length; i++) {
         const field = frame.fields[i];
 
@@ -131,9 +131,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       }
     }
 
-    if (foundCount === Object.entries(r.fields).length) {
-      for (let k in r.fields) {
-        let name = r.fields[k];
+    if (foundCount === Object.entries(r.fieldMap).length) {
+      for (let k in r.fieldMap) {
+        let name = r.fieldMap[k];
         if (r.indicesOnly.indexOf(name) === -1) {
           customRenderedFields.push(name);
         }
@@ -343,8 +343,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   renderers?.forEach((r) => {
     let fieldIndices: Record<string, number> = {};
 
-    for (let key in r.fields) {
-      let dispName = r.fields[key];
+    for (let key in r.fieldMap) {
+      let dispName = r.fieldMap[key];
       fieldIndices[key] = indexByName!.get(dispName)!;
     }
 

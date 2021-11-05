@@ -4,13 +4,7 @@ import { colorManipulator } from '@grafana/data';
 
 const { alpha } = colorManipulator;
 
-export interface FieldIndices {
-  open: number;
-  close: number;
-  high?: number;
-  low?: number;
-  volume?: number;
-}
+export type FieldIndices = Record<string, number>;
 
 interface RendererOpts {
   mode: MarketTrendMode;
