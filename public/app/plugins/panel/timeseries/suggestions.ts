@@ -34,7 +34,7 @@ export class TimeSeriesSuggestionsSupplier {
         s.options!.legend.displayMode = LegendDisplayMode.Hidden;
 
         if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-          s.fieldConfig!.defaults.custom!.lineWidth = (s.fieldConfig!.defaults.custom!.lineWidth ?? 1) + 2;
+          s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
         }
       },
     });
@@ -83,7 +83,7 @@ export class TimeSeriesSuggestionsSupplier {
             custom: {
               gradientMode: GraphGradientMode.Scheme,
               lineInterpolation: LineInterpolation.Smooth,
-              lineWidth: 4,
+              lineWidth: 3,
               fillOpacity: 20,
             },
           },
