@@ -108,41 +108,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     });
   }
 
-  let customRenderedFields: string[] = [];
-
-  // determine which supplied renderers have all mapped fields available
-  renderers = renderers?.filter((r) => {
-    let foundCount = 0;
-
-    for (let [, name] of Object.entries(r.fieldMap)) {
-      for (let i = 1; i < frame.fields.length; i++) {
-        const field = frame.fields[i];
-
-        if (field.state?.origin) {
-          const originFrame = allFrames[field.state.origin.frameIndex];
-          const originField = originFrame.fields[field.state.origin.fieldIndex];
-
-          let dispName = getFieldDisplayName(originField, originFrame, allFrames);
-
-          if (name === dispName) {
-            foundCount++;
-          }
-        }
-      }
-    }
-
-    if (foundCount === Object.entries(r.fieldMap).length) {
-      for (let k in r.fieldMap) {
-        let name = r.fieldMap[k];
-        if (r.indicesOnly.indexOf(name) === -1) {
-          customRenderedFields.push(name);
-        }
-      }
-      return true;
-    }
-
-    return false;
-  });
+  let customRenderedFields =
+    renderers?.flatMap((r) => Object.values(r.fieldMap).filter((name) => r.indicesOnly.indexOf(name) === -1)) ?? [];
 
   const stackingGroups: Map<string, number[]> = new Map();
 
