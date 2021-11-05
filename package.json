@@ -294,7 +294,7 @@
     "lodash": "4.17.21",
     "logfmt": "^1.3.2",
     "lru-cache": "6.0.0",
-    "memoize-one": "5.1.1",
+    "memoize-one": "6.0.0",
     "moment": "2.29.1",
     "moment-timezone": "0.5.33",
     "monaco-editor": "0.27.0",

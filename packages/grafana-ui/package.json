@@ -54,7 +54,7 @@
     "is-hotkey": "0.1.6",
     "jquery": "3.5.1",
     "lodash": "4.17.21",
-    "memoize-one": "5.1.1",
+    "memoize-one": "6.0.0",
     "moment": "2.29.1",
     "monaco-editor": "0.27.0",
     "papaparse": "5.3.0",
