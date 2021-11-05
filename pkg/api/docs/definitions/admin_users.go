@@ -106,8 +106,10 @@ import (
 //
 // Fetch user quota.
 //
-// Only works with Basic Authentication (username and password). See introduction for an explanation.
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global:users:1` (userIDScope).
+//
+// Security:
+// - basic:
 //
 // Responses:
 // 200: getQuotaResponse
@@ -201,11 +203,15 @@ type CreateUserParam struct {
 	Body dtos.AdminCreateUserForm `json:"body"`
 }
 
-// swagger:parameters updateUserQuota
-type UpdateUserQuotaParam struct {
+// swagger:parameters updateUserQuota updateOrgQuota
+type TargeQuotaParam struct {
 	// in:path
 	// required:true
 	QuotaTarget string `json:"quota_target"`
+}
+
+// swagger:parameters updateUserQuota
+type UpdateUserQuotaParam struct {
 	// in:body
 	// required:true
 	Body models.UpdateUserQuotaCmd `json:"body"`

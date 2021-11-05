@@ -108,28 +108,28 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:parameters updateOrgAddress
+// swagger:parameters updateOrgAddress adminUpdateOrgAddress
 type UpdateOrgAddressParam struct {
 	// in:body
 	// required:true
 	Body dtos.UpdateOrgAddressForm `json:"body"`
 }
 
-// swagger:parameters updateOrgUser
+// swagger:parameters updateOrgUser adminUpdateOrgUser
 type UpdateOrgUserParam struct {
 	// in:body
 	// required:true
 	Body models.UpdateOrgUserCommand `json:"body"`
 }
 
-// swagger:parameters updateOrg
+// swagger:parameters updateOrg adminUpdateOrg
 type UpdateOrgParam struct {
 	// in:body
 	// required:true
 	Body dtos.UpdateOrgForm `json:"body"`
 }
 
-// swagger:parameters addOrgUser
+// swagger:parameters addOrgUser adminAddOrgUser
 type AddOrgUserParam struct {
 	// in:body
 	// required:true
