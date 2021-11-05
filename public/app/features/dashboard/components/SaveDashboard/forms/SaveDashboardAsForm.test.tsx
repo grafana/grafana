@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { SaveDashboardAsForm } from './SaveDashboardAsForm';
+import { SaveDashboardAsForm, SaveDashboardAsFormProps } from './SaveDashboardAsForm';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { act } from 'react-dom/test-utils';
 import * as api from 'app/features/manage-dashboards/state/actions';
@@ -26,7 +26,11 @@ const prepareDashboardMock = (panel: any) => {
     getSaveModelClone: () => json,
   };
 };
-const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
+const renderAndSubmitForm = async (
+  dashboard: unknown,
+  submitSpy: jest.Mock,
+  otherProps: Partial<SaveDashboardAsFormProps> = {}
+) => {
   const container = mount(
     <SaveDashboardAsForm
       dashboard={dashboard as DashboardModel}
@@ -36,6 +40,7 @@ const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
         submitSpy(jsonModel);
         return {};
       }}
+      {...otherProps}
     />
   );
 
@@ -51,14 +56,29 @@ describe('SaveDashboardAsForm', () => {
       jest.spyOn(api, 'searchFolders').mockResolvedValue([]);
       const spy = jest.fn();
 
-      await renderAndSubmitForm(prepareDashboardMock({}), spy);
+      await renderAndSubmitForm(prepareDashboardMock({}), spy, {
+        isNew: true,
+      });
 
       expect(spy).toBeCalledTimes(1);
       const savedDashboardModel = spy.mock.calls[0][0];
       expect(savedDashboardModel.id).toBe(null);
-      expect(savedDashboardModel.title).toBe('name Copy');
+      expect(savedDashboardModel.title).toBe('name');
       expect(savedDashboardModel.editable).toBe(true);
       expect(savedDashboardModel.hideControls).toBe(false);
+    });
+
+    it("appends 'Copy' to the name when the dashboard isnt new", async () => {
+      jest.spyOn(api, 'searchFolders').mockResolvedValue([]);
+      const spy = jest.fn();
+
+      await renderAndSubmitForm(prepareDashboardMock({}), spy, {
+        isNew: false,
+      });
+
+      expect(spy).toBeCalledTimes(1);
+      const savedDashboardModel = spy.mock.calls[0][0];
+      expect(savedDashboardModel.title).toBe('name Copy');
     });
   });
 
