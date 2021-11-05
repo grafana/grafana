@@ -20,14 +20,12 @@
     },
     "editable": true,
     "fiscalYearStartMonth": 0,
-    "gnetId": null,
     "graphTooltip": 0,
     "id": 666,
     "links": [],
     "liveNow": false,
     "panels": [
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -73,8 +71,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
