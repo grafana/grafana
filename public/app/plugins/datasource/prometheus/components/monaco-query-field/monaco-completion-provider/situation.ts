@@ -354,9 +354,8 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
   // now we need to find the other names
   const allLabels = getLabels(labelMatchersNode, text);
 
-  const otherLabels = allLabels.filter((label) => label.name !== labelName);
-
   // we need to remove "our" label from all-labels, if it is in there
+  const otherLabels = allLabels.filter((label) => label.name !== labelName);
 
   const metricNameNode = walk(labelMatchersNode, [
     ['parent', 'VectorSelector'],
