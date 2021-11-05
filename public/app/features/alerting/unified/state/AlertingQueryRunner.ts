@@ -11,7 +11,7 @@ import {
   TimeRange,
   withLoadingIndicator,
 } from '@grafana/data';
-import { FetchResponse, toDataQueryError } from '@grafana/runtime';
+import { FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { preProcessPanelData } from 'app/features/query/state/runRequest';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -20,7 +20,6 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export interface AlertingQueryResult {
   frames: DataFrameJSON[];
@@ -34,7 +33,7 @@ export class AlertingQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult: Record<string, PanelData>;
 
-  constructor(private backendSrv = getBackendSrv()) {
+  constructor(private backendSrv = getBackendSrv(), private dataSourceSrv = getDataSourceSrv()) {
     this.subject = new ReplaySubject(1);
     this.lastResult = {};
   }
@@ -53,7 +52,7 @@ export class AlertingQueryRunner {
     // for example not completely configured
     for (const query of queries) {
       if (query.datasourceUid !== ExpressionDatasourceUID) {
-        const ds = await getDatasourceSrv().get(query.datasourceUid);
+        const ds = await this.dataSourceSrv.get(query.datasourceUid);
         if (ds.filterQuery?.(query.model) === false) {
           const empty = initialState(queries, LoadingState.Done);
           return this.subject.next(empty);
