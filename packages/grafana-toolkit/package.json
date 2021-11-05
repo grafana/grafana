@@ -74,7 +74,7 @@
     "jest-environment-jsdom-fifteen": "^1.0.2",
     "jest-junit": "^13.0.0",
     "less": "^3.11.1",
-    "less-loader": "^5.0.0",
+    "less-loader": "^10.0.0",
     "lodash": "4.17.21",
     "md5-file": "^4.0.0",
     "mini-css-extract-plugin": "^0.7.0",
