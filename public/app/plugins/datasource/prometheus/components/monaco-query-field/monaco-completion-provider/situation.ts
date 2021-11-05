@@ -111,6 +111,7 @@ export type Situation =
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME';
       metricName?: string;
       labelName: string;
+      betweenQuotes: boolean;
       otherLabels: Label[];
     };
 
@@ -139,8 +140,12 @@ const RESOLVERS: Resolver[] = [
     fun: resolveInFunction,
   },
   {
+    path: ['StringLiteral', 'LabelMatcher'],
+    fun: resolveLabelMatcher,
+  },
+  {
     path: [ERROR_NODE_NAME, 'LabelMatcher'],
-    fun: resolveLabelMatcherError,
+    fun: resolveLabelMatcher,
   },
   {
     path: [ERROR_NODE_NAME, 'MatrixSelector'],
@@ -290,9 +295,12 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
   };
 }
 
-function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // we are probably in the scenario where the user is before entering the
-  // label-value, like `{job=^}` (^ marks the cursor)
+function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situation | null {
+  // we can arrive here in two situation. `node` is either:
+  // - a StringNode (like in `{job="^"}`)
+  // - or an error node (like in `{job=^}`)
+  const inStringNode = !node.type.isError;
+
   const parent = walk(node, [['parent', 'LabelMatcher']]);
   if (parent === null) {
     return null;
@@ -344,7 +352,10 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
   }
 
   // now we need to find the other names
-  const otherLabels = getLabels(labelMatchersNode, text);
+  const allLabels = getLabels(labelMatchersNode, text);
+
+  // we need to remove "our" label from all-labels, if it is in there
+  const otherLabels = allLabels.filter((label) => label.name !== labelName);
 
   const metricNameNode = walk(labelMatchersNode, [
     ['parent', 'VectorSelector'],
@@ -357,6 +368,7 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
     return {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       labelName,
+      betweenQuotes: inStringNode,
       otherLabels,
     };
   }
@@ -367,6 +379,7 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
     metricName,
     labelName,
+    betweenQuotes: inStringNode,
     otherLabels,
   };
 }
