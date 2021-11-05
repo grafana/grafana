@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -83,7 +85,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	req, err := hs.createRequest(ds, request)
+	req, err := hs.createRequest(c.Req.Context(), ds, request)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Request formation error", err)
 	}
@@ -219,10 +221,21 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 }
 
 // nolint:staticcheck // plugins.DataQueryResponse deprecated
-func (hs *HTTPServer) createRequest(ds *models.DataSource, query legacydata.DataQuery) (*backend.QueryDataRequest, error) {
+func (hs *HTTPServer) createRequest(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (*backend.QueryDataRequest, error) {
 	instanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
 	if err != nil {
 		return nil, err
+	}
+
+	if query.Headers == nil {
+		query.Headers = make(map[string]string)
+	}
+
+	if hs.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
+		if token := hs.OAuthTokenService.GetCurrentOAuthToken(ctx, query.User); token != nil {
+			delete(query.Headers, "Authorization")
+			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+		}
 	}
 
 	req := &backend.QueryDataRequest{
