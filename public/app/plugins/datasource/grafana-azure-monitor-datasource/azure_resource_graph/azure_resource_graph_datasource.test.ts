@@ -112,6 +112,18 @@ describe('AzureResourceGraphDatasource', () => {
       expect(ds.targetContainsTemplate(query)).toEqual(true);
     });
 
+    it('should return true when resource field is using a variable in the subscriptions field', () => {
+      const query = createMockQuery();
+      const templateSrv = new TemplateSrv();
+      templateSrv.init([multiVariable]);
+
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.AzureResourceGraph;
+      query.subscriptions = [multiVariable.name];
+      query.azureResourceGraph = { query: `$${multiVariable.name}` };
+      expect(ds.targetContainsTemplate(query)).toEqual(true);
+    });
+
     it('should return false when a variable is used in a different part of the query', () => {
       const query = createMockQuery();
       const templateSrv = new TemplateSrv();

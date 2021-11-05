@@ -145,7 +145,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       subQuery = JSON.stringify([query.azureResourceGraph, query.subscriptions]);
     }
 
-    return !!(subQuery && this.templateSrv.variableExists(subQuery));
+    return !!subQuery && this.templateSrv.variableExists(subQuery);
   }
 
   async annotationQuery(options: any) {
