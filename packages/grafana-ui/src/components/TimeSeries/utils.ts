@@ -220,9 +220,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       }
 
       const originFrame = allFrames[field.state.origin.frameIndex];
-      const originField = originFrame.fields[field.state.origin.fieldIndex];
+      const originField = originFrame?.fields[field.state.origin.fieldIndex];
 
-      const dispName = getFieldDisplayName(originField, originFrame, allFrames);
+      const dispName = getFieldDisplayName(originField ?? field, originFrame, allFrames);
 
       // disable default renderers
       if (customRenderedFields.indexOf(dispName) >= 0) {
@@ -415,18 +415,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
 export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
   const originNames = new Map<string, number>();
-  for (let i = 0; i < frame.fields.length; i++) {
-    const origin = frame.fields[i].state?.origin;
+  frame.fields.forEach((field, i) => {
+    const origin = field.state?.origin;
     if (origin) {
-      originNames.set(
-        getFieldDisplayName(
-          allFrames[origin.frameIndex].fields[origin.fieldIndex],
-          allFrames[origin.frameIndex],
-          allFrames
-        ),
-        i
-      );
+      const origField = allFrames[origin.frameIndex]?.fields[origin.fieldIndex];
+      if (origField) {
+        originNames.set(getFieldDisplayName(origField, allFrames[origin.frameIndex], allFrames), i);
+      }
     }
-  }
+  });
   return originNames;
 }
