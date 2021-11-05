@@ -154,6 +154,10 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
       findFieldInFrames(frames, high) != null &&
       findFieldInFrames(frames, low) != null;
 
+    if (!shouldRenderPrice && !shouldRenderVolume) {
+      return doNothing;
+    }
+
     let fields: Record<string, string> = {};
     let indicesOnly = [];
 
@@ -237,6 +241,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
       renderers={renderers}
       tweakAxis={tweakAxis}
       tweakScale={tweakScale}
+      options={options} // needed for propsToDiff to re-init the plot & config
     >
       {(config, alignedDataFrame) => {
         return (
