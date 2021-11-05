@@ -3,13 +3,13 @@ import intervalToDuration from 'date-fns/intervalToDuration';
 import add from 'date-fns/add';
 
 const durationMap: { [key in Required<keyof Duration>]: string[] } = {
-  years: ['y', 'Y', 'year', 'years'],
-  months: ['M', 'month', 'months'],
-  weeks: ['w', 'W', 'week', 'weeks'],
-  days: ['d', 'D', 'day', 'days'],
-  hours: ['h', 'H', 'hour', 'hours'],
-  minutes: ['m', 'minute', 'minutes'],
-  seconds: ['s', 'S', 'second', 'seconds'],
+  years: ['y', 'Y', 'years'],
+  months: ['M', 'months'],
+  weeks: ['w', 'W', 'weeks'],
+  days: ['d', 'D', 'days'],
+  hours: ['h', 'H', 'hours'],
+  minutes: ['m', 'minutes'],
+  seconds: ['s', 'S', 'seconds'],
 };
 
 /**
@@ -46,8 +46,7 @@ export function parseDuration(duration: string): Duration {
       return acc;
     }
 
-    const durationMapKey = Object.entries(durationMap).find(([_, abbreviations]) => abbreviations?.includes(match[2]));
-    const key = Number(match[1]) !== 1 ? durationMapKey?.[1][3] : durationMapKey?.[1][2];
+    const key = Object.entries(durationMap).find(([_, abbreviations]) => abbreviations?.includes(match[2]))?.[0];
     return !key ? acc : { ...acc, [key]: match[1] };
   }, {});
 }

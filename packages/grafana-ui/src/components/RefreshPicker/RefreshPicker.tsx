@@ -97,10 +97,11 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
     const label: { [key: string]: string | number } = parseDuration(interval);
     const unit = Object.keys(label);
     const amount = label[unit[0]];
+    const formattedUnit = amount > 1 ? unit : unit[0].slice(0, -1);
     return {
       label: interval,
       value: interval,
-      ariaLabel: amount + ' ' + unit,
+      ariaLabel: amount + ' ' + formattedUnit,
     };
   });
 
