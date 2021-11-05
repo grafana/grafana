@@ -192,7 +192,7 @@ type RemoteWriteBackend struct {
 	OrgId          int64               `json:"-"`
 	UID            string              `json:"uid"`
 	Settings       RemoteWriteSettings `json:"settings"`
-	SecureSettings map[string][]byte   `json:"secureSettings"`
+	SecureSettings map[string][]byte   `json:"secureSettings,omitempty"`
 }
 
 func (r RemoteWriteBackend) Valid() (bool, string) {
@@ -205,7 +205,7 @@ func (r RemoteWriteBackend) Valid() (bool, string) {
 	if r.Settings.User == "" {
 		return false, "user required"
 	}
-	if string(r.SecureSettings["password"]) == "" {
+	if string(r.SecureSettings["password"]) == "" && r.Settings.Password == "" {
 		return false, "password required"
 	}
 	return true, ""
