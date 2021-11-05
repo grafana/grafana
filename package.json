@@ -225,8 +225,7 @@
     "webpack-cleanup-plugin": "0.5.1",
     "webpack-cli": "4.9.0",
     "webpack-dev-server": "4.3.1",
-    "webpack-merge": "5.8.0",
-    "worker-loader": "^3.0.8"
+    "webpack-merge": "5.8.0"
   },
   "dependencies": {
     "@emotion/css": "11.1.3",

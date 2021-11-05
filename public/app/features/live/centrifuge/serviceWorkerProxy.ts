@@ -1,5 +1,5 @@
 import { CentrifugeSrv, CentrifugeSrvDeps } from './service';
-import CentrifugeWorker, { RemoteCentrifugeService } from './service.worker';
+import { RemoteCentrifugeService } from './service.worker';
 import './transferHandlers';
 
 import * as comlink from 'comlink';
@@ -11,7 +11,9 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
   private centrifugeWorker;
 
   constructor(deps: CentrifugeSrvDeps) {
-    this.centrifugeWorker = comlink.wrap<RemoteCentrifugeService>(new CentrifugeWorker() as comlink.Endpoint);
+    this.centrifugeWorker = comlink.wrap<RemoteCentrifugeService>(
+      new Worker(new URL('./service.worker.ts', import.meta.url)) as comlink.Endpoint
+    );
     this.centrifugeWorker.initialize(deps, comlink.proxy(deps.dataStreamSubscriberReadiness));
   }
 
