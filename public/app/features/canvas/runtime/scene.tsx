@@ -135,7 +135,25 @@ export class Scene {
   };
 
   private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
-    return this.root.elements.find((element) => element.div === target);
+    // We will probably want to add memoization to this as we are calling on drag / resize
+
+    const stack = [...this.root.elements];
+
+    while (stack.length > 0) {
+      const currentElement = stack.shift();
+
+      if (currentElement && currentElement.div && currentElement.div === target) {
+        return currentElement;
+      }
+
+      const nestedElements = currentElement instanceof GroupState ? currentElement.elements : [];
+
+      for (const nestedElement of nestedElements) {
+        stack.unshift(nestedElement);
+      }
+    }
+
+    return undefined;
   };
 
   setRef = (sceneContainer: HTMLDivElement) => {
