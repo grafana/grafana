@@ -2,7 +2,6 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -96,27 +95,15 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 }
 
 func fetchUserRole(ctx context.Context, orgID, userID int64) (models.RoleType, error) {
-	var err error
 	query := models.GetSignedInUserQuery{UserId: userID, OrgId: orgID}
 	if err := sqlstore.GetSignedInUser(ctx, &query); err != nil {
 		return "", err
 	}
-
-	userOrgRole := query.Result.OrgRole
-	if userOrgRole == "" {
-		err = fmt.Errorf("user has no role")
-	}
-
-	return userOrgRole, err
+	return query.Result.OrgRole, nil
 }
 
 func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
-	userOrgRole, err := fetchUserRole(context.TODO(), user.OrgId, user.UserId)
-	if err != nil {
-		ac.Log.Debug(fmt.Sprintf("could not fetch user %v role in org %v: %v", user.UserId, user.OrgId, err))
-		return []string{}
-	}
-
+	userOrgRole, _ := fetchUserRole(context.TODO(), user.OrgId, user.UserId)
 	roles := []string{string(userOrgRole)}
 	for _, role := range userOrgRole.Children() {
 		roles = append(roles, string(role))
