@@ -36,8 +36,6 @@ export const MultiSelectionEditor: FC<StandardEditorProps<any, InstanceState, Pa
     currentLayer.elements.push(newLayer);
 
     context.instanceState.scene.save();
-    currentLayer.reinitializeMoveable();
-
     // Update current layer displayed in UI
     // Add conditional rendering button to access parent root level
   };
