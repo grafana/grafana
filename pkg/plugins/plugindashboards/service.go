@@ -47,7 +47,7 @@ func (s *Service) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef, exists := s.pluginStore.Plugin(pluginSetting.PluginId); exists {
+		if pluginDef, exists := s.pluginStore.Plugin(context.Background(), pluginSetting.PluginId); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
 				s.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgId)
 			}
@@ -112,7 +112,7 @@ func (s *Service) handlePluginStateChanged(event *models.PluginStateChangedEvent
 	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {
-		p, exists := s.pluginStore.Plugin(event.PluginId)
+		p, exists := s.pluginStore.Plugin(context.TODO(), event.PluginId)
 		if !exists {
 			return fmt.Errorf("plugin %s not found. Could not sync plugin dashboards", event.PluginId)
 		}

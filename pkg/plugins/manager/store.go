@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func (m *PluginManager) Plugin(pluginID string) (plugins.PluginDTO, bool) {
+func (m *PluginManager) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
 	p, exists := m.plugin(pluginID)
 
 	if !exists {
@@ -18,7 +18,7 @@ func (m *PluginManager) Plugin(pluginID string) (plugins.PluginDTO, bool) {
 	return p.ToDTO(), true
 }
 
-func (m *PluginManager) Plugins(pluginTypes ...plugins.Type) []plugins.PluginDTO {
+func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
 	// if no types passed, assume all
 	if len(pluginTypes) == 0 {
 		pluginTypes = plugins.PluginTypes

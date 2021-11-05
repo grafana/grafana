@@ -19,9 +19,9 @@ type DataRequestHandler interface {
 // Store is the storage for plugins.
 type Store interface {
 	// Plugin finds a plugin by its ID.
-	Plugin(pluginID string) (PluginDTO, bool)
+	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
-	Plugins(pluginTypes ...Type) []PluginDTO
+	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 
 	// Add adds a plugin to the store.
 	Add(ctx context.Context, pluginID, version string, opts AddOpts) error

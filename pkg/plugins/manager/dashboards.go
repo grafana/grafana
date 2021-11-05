@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -12,7 +13,7 @@ import (
 )
 
 func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
-	plugin, exists := m.Plugin(pluginID)
+	plugin, exists := m.Plugin(context.TODO(), pluginID)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: pluginID}
 	}
@@ -72,7 +73,7 @@ func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*pl
 }
 
 func (m *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error) {
-	plugin, exists := m.Plugin(pluginID)
+	plugin, exists := m.Plugin(context.TODO(), pluginID)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: pluginID}
 	}

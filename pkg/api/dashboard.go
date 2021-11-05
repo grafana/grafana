@@ -357,7 +357,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	if err != nil {
-		return hs.dashboardSaveErrorToApiResponse(err)
+		return hs.dashboardSaveErrorToApiResponse(ctx, err)
 	}
 
 	if hs.Cfg.EditorsCanAdmin && newDashboard {
@@ -369,7 +369,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	// connect library panels for this dashboard after the dashboard is stored and has an ID
-	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c.Req.Context(), c.SignedInUser, dashboard)
+	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(ctx, c.SignedInUser, dashboard)
 	if err != nil {
 		return response.Error(500, "Error while connecting library panels", err)
 	}
@@ -385,7 +385,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	})
 }
 
-func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Response {
+func (hs *HTTPServer) dashboardSaveErrorToApiResponse(ctx context.Context, err error) response.Response {
 	var dashboardErr models.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		if body := dashboardErr.Body(); body != nil {
@@ -410,7 +410,7 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 	if ok := errors.As(err, &pluginErr); ok {
 		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name
-		if plugin, exists := hs.pluginStore.Plugin(pluginErr.PluginId); exists {
+		if plugin, exists := hs.pluginStore.Plugin(ctx, pluginErr.PluginId); exists {
 			message = fmt.Sprintf("The dashboard belongs to plugin %s.", plugin.Name)
 		}
 		return response.JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})

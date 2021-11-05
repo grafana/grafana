@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,7 +42,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	}
 
 	result := make(dtos.PluginList, 0)
-	for _, pluginDef := range hs.pluginStore.Plugins() {
+	for _, pluginDef := range hs.pluginStore.Plugins(c.Req.Context()) {
 		// filter out app sub plugins
 		if embeddedFilter == "0" && pluginDef.IncludedInAppID != "" {
 			continue
@@ -105,7 +106,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	plugin, exists := hs.pluginStore.Plugin(pluginID)
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		return response.Error(404, "Plugin not found, no installed plugin with that id", nil)
 	}
@@ -150,7 +151,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	if _, exists := hs.pluginStore.Plugin(pluginID); !exists {
+	if _, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID); !exists {
 		return response.Error(404, "Plugin not installed", nil)
 	}
 
@@ -183,7 +184,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 	pluginID := web.Params(c.Req)[":pluginId"]
 	name := web.Params(c.Req)[":name"]
 
-	content, err := hs.pluginMarkdown(pluginID, name)
+	content, err := hs.pluginMarkdown(c.Req.Context(), pluginID, name)
 	if err != nil {
 		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
@@ -195,7 +196,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 
 	// fallback try readme
 	if len(content) == 0 {
-		content, err = hs.pluginMarkdown(pluginID, "readme")
+		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "readme")
 		if err != nil {
 			return response.Error(501, "Could not get markdown file", err)
 		}
@@ -223,7 +224,7 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 	dashInfo, dash, err := hs.pluginDashboardManager.ImportDashboard(apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
 		apiCmd.Dashboard, apiCmd.Overwrite, apiCmd.Inputs, c.SignedInUser)
 	if err != nil {
-		return hs.dashboardSaveErrorToApiResponse(err)
+		return hs.dashboardSaveErrorToApiResponse(c.Req.Context(), err)
 	}
 
 	err = hs.LibraryPanelService.ImportLibraryPanelsForDashboard(c.Req.Context(), c.SignedInUser, dash, apiCmd.FolderId)
@@ -244,7 +245,7 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 // /api/plugins/:pluginId/metrics
 func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	plugin, exists := hs.pluginStore.Plugin(pluginID)
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		return response.Error(404, "Plugin not found", nil)
 	}
@@ -265,7 +266,7 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 // /public/plugins/:pluginId/*
 func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	plugin, exists := hs.pluginStore.Plugin(pluginID)
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		c.JsonApiErr(404, "Plugin not found", nil)
 		return
@@ -448,8 +449,8 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func (hs *HTTPServer) pluginMarkdown(pluginId string, name string) ([]byte, error) {
-	plugin, exists := hs.pluginStore.Plugin(pluginId)
+func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name string) ([]byte, error) {
+	plugin, exists := hs.pluginStore.Plugin(ctx, pluginId)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}

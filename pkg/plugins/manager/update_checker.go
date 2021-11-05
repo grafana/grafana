@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -52,7 +53,7 @@ func (m *PluginManager) checkForUpdates() {
 		return
 	}
 
-	for _, localP := range m.Plugins() {
+	for _, localP := range m.Plugins(context.TODO()) {
 		for _, gcomP := range gcomPlugins {
 			if gcomP.Slug == localP.ID {
 				localP.GrafanaComVersion = gcomP.Version

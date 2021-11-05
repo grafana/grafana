@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -93,7 +94,7 @@ type fakePluginStore struct {
 	apps map[string]plugins.PluginDTO
 }
 
-func (pr fakePluginStore) Plugin(pluginID string) (plugins.PluginDTO, bool) {
+func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
 	p, exists := pr.apps[pluginID]
 
 	return p, exists

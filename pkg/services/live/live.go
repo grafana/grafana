@@ -399,7 +399,7 @@ type GrafanaLive struct {
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
-	plugin, exists := g.pluginStore.Plugin(pluginID)
+	plugin, exists := g.pluginStore.Plugin(context.TODO(), pluginID)
 	if !exists {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}

@@ -74,10 +74,10 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
 
-		testPlugin, exists := pm.Plugin(testPluginID)
+		testPlugin, exists := pm.Plugin(context.Background(), testPluginID)
 		assert.True(t, exists)
 		assert.Equal(t, p.ToDTO(), testPlugin)
-		assert.Len(t, pm.Plugins(), 1)
+		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		verifyNoPluginErrors(t, pm)
 	})
@@ -100,10 +100,10 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
 
-		testPlugin, exists := pm.Plugin(testPluginID)
+		testPlugin, exists := pm.Plugin(context.Background(), testPluginID)
 		assert.True(t, exists)
 		assert.Equal(t, p.ToDTO(), testPlugin)
-		assert.Len(t, pm.Plugins(), 1)
+		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		verifyNoPluginErrors(t, pm)
 	})
@@ -126,10 +126,10 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
 
-		testPlugin, exists := pm.Plugin(testPluginID)
+		testPlugin, exists := pm.Plugin(context.Background(), testPluginID)
 		assert.True(t, exists)
 		assert.Equal(t, p.ToDTO(), testPlugin)
-		assert.Len(t, pm.Plugins(), 1)
+		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		verifyNoPluginErrors(t, pm)
 	})
@@ -152,10 +152,10 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
 
-		testPlugin, exists := pm.Plugin(testPluginID)
+		testPlugin, exists := pm.Plugin(context.Background(), testPluginID)
 		assert.True(t, exists)
 		assert.Equal(t, p.ToDTO(), testPlugin)
-		assert.Len(t, pm.Plugins(), 1)
+		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		verifyNoPluginErrors(t, pm)
 	})
@@ -192,10 +192,10 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
 
-		testPlugin, exists := pm.Plugin(testPluginID)
+		testPlugin, exists := pm.Plugin(context.Background(), testPluginID)
 		assert.True(t, exists)
 		assert.Equal(t, p.ToDTO(), testPlugin)
-		assert.Len(t, pm.Plugins(), 1)
+		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
 			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.AddOpts{})
@@ -224,10 +224,10 @@ func TestPluginManager_Installer(t *testing.T) {
 			assert.False(t, pc.exited)
 			assert.False(t, pc.decommissioned)
 
-			testPlugin, exists := pm.Plugin(testPluginID)
+			testPlugin, exists := pm.Plugin(context.Background(), testPluginID)
 			assert.True(t, exists)
 			assert.Equal(t, p.ToDTO(), testPlugin)
-			assert.Len(t, pm.Plugins(), 1)
+			assert.Len(t, pm.Plugins(context.Background()), 1)
 		})
 
 		t.Run("Uninstall", func(t *testing.T) {
@@ -237,7 +237,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			assert.Equal(t, 2, i.installCount)
 			assert.Equal(t, 2, i.uninstallCount)
 
-			p, exists := pm.Plugin(p.ID)
+			p, exists := pm.Plugin(context.Background(), p.ID)
 			assert.False(t, exists)
 			assert.Equal(t, plugins.PluginDTO{}, p)
 			assert.Len(t, pm.Routes(), 0)
@@ -267,10 +267,10 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
 
-		testPlugin, exists := pm.Plugin(testPluginID)
+		testPlugin, exists := pm.Plugin(context.Background(), testPluginID)
 		assert.True(t, exists)
 		assert.Equal(t, p.ToDTO(), testPlugin)
-		assert.Len(t, pm.Plugins(), 1)
+		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		verifyNoPluginErrors(t, pm)
 
@@ -301,10 +301,10 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
 
-		testPlugin, exists := pm.Plugin(testPluginID)
+		testPlugin, exists := pm.Plugin(context.Background(), testPluginID)
 		assert.True(t, exists)
 		assert.Equal(t, p.ToDTO(), testPlugin)
-		assert.Len(t, pm.Plugins(), 1)
+		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		verifyNoPluginErrors(t, pm)
 
@@ -327,7 +327,7 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 				require.NotNil(t, ctx.plugin)
 				require.Equal(t, testPluginID, ctx.plugin.ID)
 				require.Equal(t, 1, ctx.pluginClient.startCount)
-				testPlugin, exists := ctx.manager.Plugin(testPluginID)
+				testPlugin, exists := ctx.manager.Plugin(context.Background(), testPluginID)
 				assert.True(t, exists)
 				require.NotNil(t, testPlugin)
 
@@ -592,7 +592,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 }
 
 func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
-	for _, plugin := range pm.Plugins() {
+	for _, plugin := range pm.Plugins(context.Background()) {
 		assert.Nil(t, plugin.SignatureError)
 	}
 }
