@@ -71,6 +71,7 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			if err != nil {
 				plog.Error("Range query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				continue
 			} else {
 				response[RangeQueryType] = rangeResponse
 			}
@@ -81,6 +82,7 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			if err != nil {
 				plog.Error("Instant query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				continue
 			} else {
 				response[InstantQueryType] = instantResponse
 			}
@@ -90,7 +92,6 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
 				plog.Error("Exemplar query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 			} else {
 				response[ExemplarQueryType] = exemplarResponse
 			}
