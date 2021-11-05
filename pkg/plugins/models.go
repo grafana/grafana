@@ -201,7 +201,7 @@ type PluginMetaDTO struct {
 type DataSourceDTO struct {
 	ID        int64                  `json:"id"`
 	UID       string                 `json:"uid"`
-	Type      string                 `json:"Type"`
+	Type      string                 `json:"type"`
 	Name      string                 `json:"name"`
 	URL       string                 `json:"url"`
 	IsDefault bool                   `json:"isDefault"`
@@ -223,6 +223,19 @@ type DataSourceDTO struct {
 
 	// Prometheus
 	DirectURL string `json:"directUrl"`
+}
+
+type PanelDTO struct {
+	ID            string `json:"id"`
+	Name          string `json:"name"`
+	Info          Info   `json:"info"`
+	HideFromList  bool   `json:"hideFromList"`
+	Sort          int    `json:"sort"`
+	SkipDataQuery bool   `json:"skipDataQuery"`
+	ReleaseState  string `json:"state"`
+	BaseURL       string `json:"baseUrl"`
+	Signature     string `json:"signature"`
+	Module        string `json:"module"`
 }
 
 const (

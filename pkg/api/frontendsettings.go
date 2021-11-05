@@ -172,7 +172,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		}
 	}
 
-	panels := map[string]interface{}{}
+	panels := make(map[string]plugins.PanelDTO)
 	for _, panel := range enabledPlugins[plugins.Panel] {
 		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
@@ -182,17 +182,17 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			pluginsToPreload = append(pluginsToPreload, panel.Module)
 		}
 
-		panels[panel.ID] = map[string]interface{}{
-			"id":            panel.ID,
-			"module":        panel.Module,
-			"baseUrl":       panel.BaseURL,
-			"name":          panel.Name,
-			"info":          panel.Info,
-			"hideFromList":  panel.HideFromList,
-			"sort":          getPanelSort(panel.ID),
-			"skipDataQuery": panel.SkipDataQuery,
-			"state":         panel.State,
-			"signature":     panel.Signature,
+		panels[panel.ID] = plugins.PanelDTO{
+			ID:            panel.ID,
+			Name:          panel.Name,
+			Info:          panel.Info,
+			Module:        panel.Module,
+			BaseURL:       panel.BaseURL,
+			SkipDataQuery: panel.SkipDataQuery,
+			HideFromList:  panel.HideFromList,
+			ReleaseState:  string(panel.State),
+			Signature:     string(panel.Signature),
+			Sort:          getPanelSort(panel.ID),
 		}
 	}
 
