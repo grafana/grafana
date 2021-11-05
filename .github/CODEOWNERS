@@ -94,6 +94,7 @@ go.sum @grafana/backend-platform
 /public/app/plugins/panel/barchart @grafana/grafana-bi-squad
 /public/app/plugins/panel/heatmap @grafana/grafana-bi-squad
 /public/app/plugins/panel/histogram @grafana/grafana-bi-squad
+/public/app/plugins/panel/nodeGraph @grafana/observability-squad
 /public/app/plugins/panel/piechart @grafana/grafana-bi-squad
 /public/app/plugins/panel/state-timeline @grafana/grafana-bi-squad
 /public/app/plugins/panel/status-history @grafana/grafana-bi-squad

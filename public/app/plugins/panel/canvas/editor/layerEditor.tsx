@@ -6,7 +6,7 @@ import { InstanceState } from '../CanvasPanel';
 import { LayerElementListEditor } from './LayerElementListEditor';
 
 export function getLayerEditor(opts: InstanceState): NestedPanelOptions<InstanceState> {
-  const { layer, scene } = opts;
+  const { layer } = opts;
   const options = layer.options || { elements: [] };
 
   return {
@@ -24,14 +24,12 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<Instance
           return;
         }
         const c = setOptionImmutably(options, path, value);
-        scene.onChange(layer.UID, c);
+        layer.onChange(c);
       },
     }),
 
     // Dynamically fill the selected element
     build: (builder, context) => {
-      console.log('MAKE layer editor', layer.UID);
-
       builder.addCustomEditor({
         id: 'content',
         path: 'root',

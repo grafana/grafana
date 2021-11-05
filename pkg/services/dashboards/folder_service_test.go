@@ -94,7 +94,7 @@ func TestFolderService(t *testing.T) {
 			t.Cleanup(func() {
 				UpdateAlerting = origUpdateAlerting
 			})
-			UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+			UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard,
 				user *models.SignedInUser) error {
 				return nil
 			}

@@ -64,6 +64,7 @@ const defaultInitialState = {
     [ExploreId.left]: {
       datasourceInstance: {
         query: jest.fn(),
+        getRef: jest.fn(),
         meta: {
           id: 'something',
         },
@@ -160,8 +161,8 @@ describe('importing queries', () => {
         importQueries(
           ExploreId.left,
           [
-            { datasource: 'postgres1', refId: 'refId_A' },
-            { datasource: 'postgres1', refId: 'refId_B' },
+            { datasource: { type: 'postgresql' }, refId: 'refId_A' },
+            { datasource: { type: 'postgresql' }, refId: 'refId_B' },
           ],
           { name: 'Postgres1', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
           { name: 'Postgres2', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>
@@ -342,6 +343,7 @@ describe('reducer', () => {
             ...defaultInitialState.explore[ExploreId.left],
             datasourceInstance: {
               query: jest.fn(),
+              getRef: jest.fn(),
               meta: {
                 id: 'something',
               },

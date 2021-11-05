@@ -360,6 +360,7 @@ describe('UPlotConfigBuilder', () => {
             "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
             "labelGap": 8,
             "labelSize": 20,
+            "rotate": undefined,
             "scale": "scale-x",
             "show": true,
             "side": 2,
