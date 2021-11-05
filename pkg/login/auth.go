@@ -46,7 +46,7 @@ func authenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
 		return err
 	}
 
-	ldapEnabled, ldapErr := loginUsingLDAP(query)
+	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query)
 	if ldapEnabled {
 		query.AuthModule = models.AuthModuleLDAP
 		if ldapErr == nil || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
@@ -59,7 +59,7 @@ func authenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
 	}
 
 	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ldap.ErrInvalidCredentials) {
-		if err := saveInvalidLoginAttempt(query); err != nil {
+		if err := saveInvalidLoginAttempt(ctx, query); err != nil {
 			loginLogger.Error("Failed to save invalid login attempt", "err", err)
 		}
 

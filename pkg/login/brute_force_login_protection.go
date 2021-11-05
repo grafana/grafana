@@ -34,7 +34,7 @@ var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQue
 	return nil
 }
 
-var saveInvalidLoginAttempt = func(query *models.LoginUserQuery) error {
+var saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery) error {
 	if query.Cfg.DisableBruteForceLoginProtection {
 		return nil
 	}
@@ -44,5 +44,5 @@ var saveInvalidLoginAttempt = func(query *models.LoginUserQuery) error {
 		IpAddress: query.IpAddress,
 	}
 
-	return bus.Dispatch(&loginAttemptCommand)
+	return bus.DispatchCtx(ctx, &loginAttemptCommand)
 }

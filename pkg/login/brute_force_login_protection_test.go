@@ -78,7 +78,7 @@ func TestSaveInvalidLoginAttempt(t *testing.T) {
 			return nil
 		})
 
-		err := saveInvalidLoginAttempt(&models.LoginUserQuery{
+		err := saveInvalidLoginAttempt(context.Background(), &models.LoginUserQuery{
 			Username:  "user",
 			Password:  "pwd",
 			IpAddress: "192.168.1.1:56433",
@@ -100,7 +100,7 @@ func TestSaveInvalidLoginAttempt(t *testing.T) {
 			return nil
 		})
 
-		err := saveInvalidLoginAttempt(&models.LoginUserQuery{
+		err := saveInvalidLoginAttempt(context.Background(), &models.LoginUserQuery{
 			Username:  "user",
 			Password:  "pwd",
 			IpAddress: "192.168.1.1:56433",

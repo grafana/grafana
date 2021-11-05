@@ -177,7 +177,7 @@ func mockLoginUsingGrafanaDB(err error, sc *authScenarioContext) {
 }
 
 func mockLoginUsingLDAP(enabled bool, err error, sc *authScenarioContext) {
-	loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
+	loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery) (bool, error) {
 		sc.ldapLoginWasCalled = true
 		return enabled, err
 	}
@@ -191,7 +191,7 @@ func mockLoginAttemptValidation(err error, sc *authScenarioContext) {
 }
 
 func mockSaveInvalidLoginAttempt(sc *authScenarioContext) {
-	saveInvalidLoginAttempt = func(query *models.LoginUserQuery) error {
+	saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery) error {
 		sc.saveInvalidLoginAttemptWasCalled = true
 		return nil
 	}
