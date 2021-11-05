@@ -4,7 +4,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { AzureDataSourceJsonData, AzureQueryType, DatasourceValidationResult } from '../types';
 import createMockQuery from '../__mocks__/query';
-import { CustomVariableModel, initialVariableModelState, VariableHide } from 'app/features/variables/types';
 import { singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 
 const templateSrv = new TemplateSrv();
@@ -489,23 +488,25 @@ describe('AzureMonitorDatasource', () => {
     });
 
     describe('When performing targetContainsTemplate', () => {
-      const query = createMockQuery();
       it('should return false when no variable is being used', () => {
+        const query = createMockQuery();
         query.queryType = AzureQueryType.AzureMonitor;
         expect(ctx.ds.targetContainsTemplate(query)).toEqual(false);
       });
 
       it('should return true when subscriptions field is using a variable', () => {
+        const query = createMockQuery();
         const templateSrv = new TemplateSrv();
         templateSrv.init([subscriptionsVariable]);
 
         const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
         query.queryType = AzureQueryType.AzureMonitor;
-        query.subscription = '$subs';
+        query.subscription = `$${subscriptionsVariable.name}`;
         expect(ds.targetContainsTemplate(query)).toEqual(true);
       });
 
       it('should return false when a variable is used in a different part of the query', () => {
+        const query = createMockQuery();
         const templateSrv = new TemplateSrv();
         templateSrv.init([singleVariable]);
 

@@ -2,6 +2,9 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import AzureResourceGraphDatasource from './azure_resource_graph_datasource';
 import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
+import { AzureQueryType } from '../types';
+import AzureMonitorDatasource from '../datasource';
+import createMockQuery from '../__mocks__/query';
 
 const templateSrv = new TemplateSrv({
   getVariables: () => [subscriptionsVariable, singleVariable, multiVariable],
@@ -30,6 +33,7 @@ describe('AzureResourceGraphDatasource', () => {
   beforeEach(() => {
     ctx.instanceSettings = {
       url: 'http://azureresourcegraphapi',
+      jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f', cloudName: 'azuremonitor' },
     };
 
     ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings);
@@ -86,6 +90,37 @@ describe('AzureResourceGraphDatasource', () => {
       queryType: 'Azure Resource Graph',
       refId: undefined,
       subscriptions: ['sub-foo', 'sub-baz'],
+    });
+  });
+
+  describe('When performing targetContainsTemplate', () => {
+    it('should return false when no variable is being used', () => {
+      const query = createMockQuery();
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.AzureResourceGraph;
+      expect(ds.targetContainsTemplate(query)).toEqual(false);
+    });
+
+    it('should return true when resource field is using a variable', () => {
+      const query = createMockQuery();
+      const templateSrv = new TemplateSrv();
+      templateSrv.init([singleVariable]);
+
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.AzureResourceGraph;
+      query.azureResourceGraph = { query: `$${singleVariable.name}` };
+      expect(ds.targetContainsTemplate(query)).toEqual(true);
+    });
+
+    it('should return false when a variable is used in a different part of the query', () => {
+      const query = createMockQuery();
+      const templateSrv = new TemplateSrv();
+      templateSrv.init([singleVariable]);
+
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.AzureResourceGraph;
+      query.azureMonitor = { metricName: `$${singleVariable.name}` };
+      expect(ds.targetContainsTemplate(query)).toEqual(false);
     });
   });
 });
