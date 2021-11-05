@@ -1,5 +1,5 @@
-import { AbsoluteTimeRange, DataQueryResponse, GrafanaTheme2, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
-import { Alert, Button, Collapse, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
+import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './ExploreGraph';
 import React from 'react';
 import { css } from '@emotion/css';
@@ -59,10 +59,9 @@ export function LogsVolumePanel(props: Props) {
 
   if (zoomRatio !== undefined && zoomRatio < 1) {
     zoomLevelInfo = (
-      <>
-        <span className={styles.zoomInfo}>Reload log volume</span>
-        <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} />
-      </>
+      <InlineField label="Reload log volume" transparent>
+        <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
+      </InlineField>
     );
   }
 
@@ -76,7 +75,7 @@ export function LogsVolumePanel(props: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = () => {
   return {
     zoomInfoContainer: css`
       display: flex;
@@ -84,10 +83,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: absolute;
       right: 5px;
       top: 5px;
-    `,
-    zoomInfo: css`
-      padding: 8px;
-      font-size: ${theme.typography.bodySmall.fontSize};
     `,
     contentContainer: css`
       display: flex;
