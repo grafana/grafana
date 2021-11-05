@@ -110,8 +110,8 @@ export class GrafanaApp {
 
     // Preload selected app plugins
     const promises = [];
-    for (const modulePath of config.pluginsToPreload) {
-      promises.push(importPluginModule(modulePath));
+    for (const plugin of config.pluginsToPreload) {
+      promises.push(importPluginModule(plugin.path, plugin.version));
     }
 
     Promise.all(promises).then(() => {
