@@ -350,15 +350,15 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 }
 
 // EnabledPlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
-// For example ["panel"] -> ["piechart"] -> {pie chart plugin instance}
-type EnabledPlugins map[plugins.Type]map[string]*plugins.Plugin
+// For example ["panel"] -> ["piechart"] -> {pie chart plugin DTO}
+type EnabledPlugins map[plugins.Type]map[string]plugins.PluginDTO
 
-func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (*plugins.Plugin, bool) {
+func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (plugins.PluginDTO, bool) {
 	if _, exists := ep[pluginType][pluginID]; exists {
 		return ep[pluginType][pluginID], true
 	}
 
-	return nil, false
+	return plugins.PluginDTO{}, false
 }
 
 func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledPlugins, error) {
@@ -369,7 +369,7 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 		return ep, err
 	}
 
-	apps := make(map[string]*plugins.Plugin)
+	apps := make(map[string]plugins.PluginDTO)
 	for _, app := range hs.pluginStore.Plugins(plugins.App) {
 		if b, exists := pluginSettingMap[app.ID]; exists {
 			app.Pinned = b.Pinned
@@ -378,7 +378,7 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 	}
 	ep[plugins.App] = apps
 
-	dataSources := make(map[string]*plugins.Plugin)
+	dataSources := make(map[string]plugins.PluginDTO)
 	for _, ds := range hs.pluginStore.Plugins(plugins.DataSource) {
 		if _, exists := pluginSettingMap[ds.ID]; exists {
 			dataSources[ds.ID] = ds
@@ -386,7 +386,7 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 	}
 	ep[plugins.DataSource] = dataSources
 
-	panels := make(map[string]*plugins.Plugin)
+	panels := make(map[string]plugins.PluginDTO)
 	for _, p := range hs.pluginStore.Plugins(plugins.Panel) {
 		if _, exists := pluginSettingMap[p.ID]; exists {
 			panels[p.ID] = p
@@ -422,7 +422,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// apps are disabled by default unless autoEnabled: true
-		if p := hs.pluginStore.Plugin(pluginDef.ID); p != nil && p.IsApp() {
+		if p, exists := hs.pluginStore.Plugin(pluginDef.ID); exists && p.IsApp() {
 			opt.Enabled = p.AutoEnabled
 			opt.Pinned = p.AutoEnabled
 		}

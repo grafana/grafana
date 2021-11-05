@@ -330,8 +330,8 @@ func (uss *UsageStats) updateTotalStats(ctx context.Context) {
 }
 
 func (uss *UsageStats) ShouldBeReported(dsType string) bool {
-	ds := uss.pluginStore.Plugin(dsType)
-	if ds == nil {
+	ds, exists := uss.pluginStore.Plugin(dsType)
+	if !exists {
 		return false
 	}
 

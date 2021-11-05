@@ -47,7 +47,7 @@ func TestConfigReader(t *testing.T) {
 
 	t.Run("Can read correct properties", func(t *testing.T) {
 		pm := fakePluginStore{
-			apps: map[string]*plugins.Plugin{
+			apps: map[string]plugins.PluginDTO{
 				"test-plugin":   {},
 				"test-plugin-2": {},
 			},
@@ -90,9 +90,11 @@ func TestConfigReader(t *testing.T) {
 type fakePluginStore struct {
 	plugins.Store
 
-	apps map[string]*plugins.Plugin
+	apps map[string]plugins.PluginDTO
 }
 
-func (pr fakePluginStore) Plugin(pluginID string) *plugins.Plugin {
-	return pr.apps[pluginID]
+func (pr fakePluginStore) Plugin(pluginID string) (plugins.PluginDTO, bool) {
+	p, exists := pr.apps[pluginID]
+
+	return p, exists
 }

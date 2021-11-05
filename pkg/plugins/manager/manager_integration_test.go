@@ -103,7 +103,9 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	panels := pm.Plugins(plugins.Panel)
 	assert.Equal(t, len(expPanels), len(panels))
 	for _, p := range panels {
-		require.NotNil(t, pm.Plugin(p.ID))
+		p, exists := pm.Plugin(p.ID)
+		require.NotEqual(t, plugins.PluginDTO{}, p)
+		assert.True(t, exists)
 		assert.Contains(t, expPanels, p.ID)
 		assert.Contains(t, pm.registeredPlugins(), p.ID)
 	}
@@ -111,7 +113,9 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	dataSources := pm.Plugins(plugins.DataSource)
 	assert.Equal(t, len(expDataSources), len(dataSources))
 	for _, ds := range dataSources {
-		require.NotNil(t, pm.Plugin(ds.ID))
+		p, exists := pm.Plugin(ds.ID)
+		require.NotEqual(t, plugins.PluginDTO{}, p)
+		assert.True(t, exists)
 		assert.Contains(t, expDataSources, ds.ID)
 		assert.Contains(t, pm.registeredPlugins(), ds.ID)
 	}
@@ -119,8 +123,10 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	apps := pm.Plugins(plugins.App)
 	assert.Equal(t, len(expApps), len(apps))
 	for _, app := range apps {
-		require.NotNil(t, pm.Plugin(app.ID))
-		require.Contains(t, expApps, app.ID)
+		p, exists := pm.Plugin(app.ID)
+		require.NotEqual(t, plugins.PluginDTO{}, p)
+		assert.True(t, exists)
+		assert.Contains(t, expApps, app.ID)
 		assert.Contains(t, pm.registeredPlugins(), app.ID)
 	}
 
@@ -140,26 +146,30 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 		pluginRoutes[r.PluginID] = r
 	}
 
-	assert.NotNil(t, pm.Plugin("input"))
+	inputPlugin, exists := pm.Plugin("input")
+	require.NotEqual(t, plugins.PluginDTO{}, inputPlugin)
+	assert.True(t, exists)
 	assert.NotNil(t, dsPlugins["input"])
 
 	for _, pluginID := range []string{"input"} {
 		assert.Contains(t, pluginRoutes, pluginID)
-		assert.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, pm.Plugin("input").PluginDir))
+		assert.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, inputPlugin.PluginDir))
 	}
 }
 
 func verifyPluginStaticRoutes(t *testing.T, pm *PluginManager) {
-	pluginRoutes := make(map[string]*plugins.StaticRoute)
+	routes := make(map[string]*plugins.StaticRoute)
 	for _, route := range pm.Routes() {
-		pluginRoutes[route.PluginID] = route
+		routes[route.PluginID] = route
 	}
 
-	assert.Len(t, pluginRoutes, 2)
+	assert.Len(t, routes, 2)
 
-	assert.Contains(t, pluginRoutes, "input")
-	assert.Equal(t, pluginRoutes["input"].Directory, pm.Plugin("input").PluginDir)
+	inputPlugin, _ := pm.Plugin("input")
+	assert.NotNil(t, routes["input"])
+	assert.Equal(t, routes["input"].Directory, inputPlugin.PluginDir)
 
-	assert.Contains(t, pluginRoutes, "test-app")
-	assert.Equal(t, pluginRoutes["test-app"].Directory, pm.Plugin("test-app").PluginDir)
+	testAppPlugin, _ := pm.Plugin("test-app")
+	assert.Contains(t, routes, "test-app")
+	assert.Equal(t, routes["test-app"].Directory, testAppPlugin.PluginDir)
 }

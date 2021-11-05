@@ -113,7 +113,7 @@ func (cr *configReaderImpl) validatePluginsConfig(apps []*pluginsAsConfig) error
 		}
 
 		for _, app := range apps[i].Apps {
-			if p := cr.pluginStore.Plugin(app.PluginID); p == nil {
+			if _, exists := cr.pluginStore.Plugin(app.PluginID); !exists {
 				return fmt.Errorf("plugin not installed: %q", app.PluginID)
 			}
 		}

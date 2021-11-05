@@ -10,10 +10,10 @@ import (
 
 func (m *PluginManager) Plugin(pluginID string) (plugins.PluginDTO, bool) {
 	m.pluginsMu.RLock()
-	p, ok := m.plugins[pluginID]
+	p, exists := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
 
-	if ok && (p.IsDecommissioned()) {
+	if !exists || (p.IsDecommissioned()) {
 		return plugins.PluginDTO{}, false
 	}
 
