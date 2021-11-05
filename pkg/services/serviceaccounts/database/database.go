@@ -31,7 +31,7 @@ func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceA
 		return err
 	}
 	if !has {
-		return serviceaccounts.ErrServiceAccountNotFound{OrgID: orgID, ID: serviceAccountID}
+		return serviceaccounts.ErrServiceAccountNotFound
 	}
 	for _, sql := range sqlstore.ServiceAccountDeletions() {
 		_, err := sess.Exec(sql, user.Id)

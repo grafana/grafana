@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type ServiceAccountsAPI struct {
@@ -30,7 +31,12 @@ func NewServiceAccountsAPI(
 	}
 }
 
-func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
+func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
+	cfg *setting.Cfg,
+) {
+	if !cfg.FeatureToggles["service-accounts"] {
+		return
+	}
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))

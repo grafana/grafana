@@ -1,14 +1,7 @@
 package serviceaccounts
 
-import (
-	"fmt"
+import "errors"
+
+var (
+	ErrServiceAccountNotFound = errors.New("Service account not found")
 )
-
-type ErrServiceAccountNotFound struct {
-	ID    int64
-	OrgID int64
-}
-
-func (e ErrServiceAccountNotFound) Error() string {
-	return fmt.Sprintf("Service account with id %d for orgID %d not found", e.ID, e.OrgID)
-}

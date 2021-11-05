@@ -12,6 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var (
+	ServiceAccountFeatureToggleNotFound = "FeatureToggle service-accounts not found, try adding it to your custom.ini"
+)
+
 type ServiceAccountsService struct {
 	store *database.ServiceAccountsStoreImpl
 	cfg   *setting.Cfg
@@ -32,18 +36,14 @@ func ProvideServiceAccountsService(
 	if err := ac.DeclareFixedRoles(role); err != nil {
 		return nil, err
 	}
-	if cfg.FeatureToggles["service-accounts"] {
-		serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister)
-		serviceaccountsAPI.RegisterAPIEndpoints()
-	} else {
-		s.log.Debug("FeatureToggle service-accounts not found")
-	}
+	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister)
+	serviceaccountsAPI.RegisterAPIEndpoints(cfg)
 	return s, nil
 }
 
 func (s *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	if !s.cfg.FeatureToggles["service-accounts"] {
-		s.log.Debug("service accounts feature toggle not present")
+		s.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil
 	}
 	return s.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
