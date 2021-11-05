@@ -2,12 +2,14 @@ package libraryelements
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -35,12 +37,15 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLi
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
 func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Response {
-	err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	id, err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
 
-	return response.Success("Library element deleted")
+	return response.JSON(http.StatusOK, util.DynMap{
+		"message": "Library element deleted",
+		"id":      id,
+	})
 }
 
 // getHandler handles GET  /api/library-elements/:uid.

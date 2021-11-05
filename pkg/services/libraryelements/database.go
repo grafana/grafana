@@ -169,8 +169,9 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 }
 
 // deleteLibraryElement deletes a library element.
-func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser *models.SignedInUser, uid string) error {
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser *models.SignedInUser, uid string) (int64, error) {
+	var element LibraryElementWithMeta
+	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
 		element, err := getLibraryElement(l.SQLStore.Dialect, session, uid, signedInUser.OrgId)
 		if err != nil {
 			return err
@@ -200,6 +201,7 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 
 		return nil
 	})
+	return element.ID, err
 }
 
 // getLibraryElements gets a Library Element where param == value
