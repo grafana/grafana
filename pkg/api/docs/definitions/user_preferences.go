@@ -23,7 +23,7 @@ import "github.com/grafana/grafana/pkg/api/dtos"
 // 401: unauthorisedError
 // 500: internalServerError
 
-// swagger:parameters updateUserPreferences
+// swagger:parameters updateUserPreferences updateOrgPreferences
 type UpdateUserPreferencesParam struct {
 	// in:body
 	// required:true

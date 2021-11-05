@@ -3629,6 +3629,432 @@
         }
       }
     },
+    "/org": {
+      "get": {
+        "description": "Get current Organization",
+        "tags": [
+          "org"
+        ],
+        "operationId": "getOrg",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getOrgResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Update current Organization.",
+        "operationId": "updateOrg",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgForm"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/org/address": {
+      "put": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Update current Organization's address.",
+        "operationId": "updateOrgAddress",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgAddressForm"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/org/invites": {
+      "get": {
+        "tags": [
+          "org_invites"
+        ],
+        "summary": "Get pending invites.",
+        "operationId": "getInvites",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getInvitesResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "org_invites"
+        ],
+        "summary": "Add invite.",
+        "operationId": "addInvite",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddInviteForm"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/addOrgUser"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "412": {
+            "$ref": "#/responses/SMTPNotEnabledError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/org/preferences": {
+      "get": {
+        "tags": [
+          "org_preferences"
+        ],
+        "summary": "Get pending invites.",
+        "operationId": "getOrgPreferences",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPreferencesResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "org_preferences"
+        ],
+        "summary": "Add invite.",
+        "operationId": "updateOrgPreferences",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePrefsCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/addOrgUser"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/org/users": {
+      "get": {
+        "description": "Returns all org users within the current organization. Accessible to users with org admin role.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
+        "tags": [
+          "org"
+        ],
+        "summary": "Get all users within the current organization.",
+        "operationId": "getOrgUsers",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getOrgUsersResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Adds a global user to the current organization.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:add` with scope `users:*`.",
+        "tags": [
+          "org"
+        ],
+        "summary": "Add a new user to the current organization",
+        "operationId": "addOrgUser",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddOrgUserCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/org/users/lookup": {
+      "get": {
+        "description": "Returns all org users within the current organization, but with less detailed information.\nAccessible to users with org admin role, admin in any folder or admin of any team.\nMainly used by Grafana UI for providing list of users when adding team members and when editing folder/dashboard permissions.",
+        "tags": [
+          "org"
+        ],
+        "summary": "Get all users within the current organization (lookup)",
+        "operationId": "lookupOrgUsers",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Query",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Limit",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/lookupOrgUsersResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/org/users/{user_id}": {
+      "delete": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:remove` with scope `users:*`.",
+        "tags": [
+          "org"
+        ],
+        "summary": "Delete user in current organization",
+        "operationId": "deleteOrgUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users.role:update` with scope `users:*`.",
+        "tags": [
+          "org"
+        ],
+        "summary": "Updates the given user",
+        "operationId": "updateOrgUser",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgUserCommand"
+            }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/org/{invitation_code}/invites": {
+      "delete": {
+        "tags": [
+          "org_invites"
+        ],
+        "summary": "Revoke invite.",
+        "operationId": "revokeInvite",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Code",
+            "name": "invitation_code",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/search": {
       "get": {
         "tags": [
@@ -4366,6 +4792,70 @@
         "withCredentials": {
           "type": "boolean",
           "x-go-name": "WithCredentials"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AddInviteForm": {
+      "type": "object",
+      "properties": {
+        "loginOrEmail": {
+          "type": "string",
+          "x-go-name": "LoginOrEmail"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "role": {
+          "$ref": "#/definitions/RoleType"
+        },
+        "sendEmail": {
+          "type": "boolean",
+          "x-go-name": "SendEmail"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "AddOrgUserCommand": {
+      "type": "object",
+      "properties": {
+        "loginOrEmail": {
+          "type": "string",
+          "x-go-name": "LoginOrEmail"
+        },
+        "role": {
+          "$ref": "#/definitions/RoleType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "Address": {
+      "type": "object",
+      "properties": {
+        "address1": {
+          "type": "string",
+          "x-go-name": "Address1"
+        },
+        "address2": {
+          "type": "string",
+          "x-go-name": "Address2"
+        },
+        "city": {
+          "type": "string",
+          "x-go-name": "City"
+        },
+        "country": {
+          "type": "string",
+          "x-go-name": "Country"
+        },
+        "state": {
+          "type": "string",
+          "x-go-name": "State"
+        },
+        "zipCode": {
+          "type": "string",
+          "x-go-name": "ZipCode"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -6593,6 +7083,69 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "OrgDetailsDTO": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "OrgUserDTO": {
+      "type": "object",
+      "properties": {
+        "avatarUrl": {
+          "type": "string",
+          "x-go-name": "AvatarUrl"
+        },
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastSeenAt"
+        },
+        "lastSeenAtAge": {
+          "type": "string",
+          "x-go-name": "LastSeenAtAge"
+        },
+        "login": {
+          "type": "string",
+          "x-go-name": "Login"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgId"
+        },
+        "role": {
+          "type": "string",
+          "x-go-name": "Role"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UserId"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "PatchAnnotationsCmd": {
       "type": "object",
       "properties": {
@@ -6941,6 +7494,74 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "TempUserDTO": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "x-go-name": "Code"
+        },
+        "createdOn": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Created"
+        },
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "emailSent": {
+          "type": "boolean",
+          "x-go-name": "EmailSent"
+        },
+        "emailSentOn": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "EmailSentOn"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "invitedByEmail": {
+          "type": "string",
+          "x-go-name": "InvitedByEmail"
+        },
+        "invitedByLogin": {
+          "type": "string",
+          "x-go-name": "InvitedByLogin"
+        },
+        "invitedByName": {
+          "type": "string",
+          "x-go-name": "InvitedByName"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgId"
+        },
+        "role": {
+          "$ref": "#/definitions/RoleType"
+        },
+        "status": {
+          "$ref": "#/definitions/TempUserStatus"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Url"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "TempUserStatus": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "TrimDashboardCommand": {
       "type": "object",
       "properties": {
@@ -7220,6 +7841,55 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "UpdateOrgAddressForm": {
+      "type": "object",
+      "properties": {
+        "address1": {
+          "type": "string",
+          "x-go-name": "Address1"
+        },
+        "address2": {
+          "type": "string",
+          "x-go-name": "Address2"
+        },
+        "city": {
+          "type": "string",
+          "x-go-name": "City"
+        },
+        "country": {
+          "type": "string",
+          "x-go-name": "Country"
+        },
+        "state": {
+          "type": "string",
+          "x-go-name": "State"
+        },
+        "zipcode": {
+          "type": "string",
+          "x-go-name": "ZipCode"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "UpdateOrgForm": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "UpdateOrgUserCommand": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "$ref": "#/definitions/RoleType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "UpdatePrefsCmd": {
       "description": "UpdatePrefsCmd is same as dtos.UpdatePrefsCmd but with swagger annotations",
       "type": "object",
@@ -7303,6 +7973,25 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "UserLookupDTO": {
+      "type": "object",
+      "properties": {
+        "avatarUrl": {
+          "type": "string",
+          "x-go-name": "AvatarURL"
+        },
+        "login": {
+          "type": "string",
+          "x-go-name": "Login"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UserID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "UserOrgDTO": {
       "type": "object",
@@ -7520,6 +8209,31 @@
   "responses": {
     "SMTPNotEnabledError": {
       "description": ""
+    },
+    "addOrgUser": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the added user.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UsedID",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the added user.",
+            "type": "string",
+            "x-go-name": "Message",
+            "example": "Data source added"
+          }
+        }
+      }
     },
     "badRequestError": {
       "description": "BadRequestError is returned when the request is invalid and it cannot be processed.",
@@ -7937,6 +8651,15 @@
         "$ref": "#/definitions/GetHomeDashboardResponse"
       }
     },
+    "getInvitesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/TempUserDTO"
+        }
+      }
+    },
     "getLibraryElementConnectionsResponse": {
       "description": "",
       "schema": {
@@ -7953,6 +8676,27 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/LibraryElementSearchResponse"
+      }
+    },
+    "getOrgResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/OrgDetailsDTO"
+      }
+    },
+    "getOrgUsersResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/OrgUserDTO"
+        }
+      }
+    },
+    "getPreferencesResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/Prefs"
       }
     },
     "getQuotaResponse": {
@@ -8047,6 +8791,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/AlertNotificationLookup"
+        }
+      }
+    },
+    "lookupOrgUsersResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/UserLookupDTO"
         }
       }
     },
@@ -8312,6 +9065,13 @@
     {
       "description": "The identifier (ID) of a library element is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a library element uniquely identifies library elements between multiple Grafana installs. It’s automatically generated unless you specify it during library element creation. The UID provides consistent URLs for accessing library elements and when syncing library elements between multiple Grafana installs.\nThe maximum length of a UID is 40 characters.",
       "name": "library_elements"
+    },
+    {
+      "name": "orgs"
+    },
+    {
+      "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
+      "name": "org"
     }
   ]
 }
