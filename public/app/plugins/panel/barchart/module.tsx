@@ -78,7 +78,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       })
       .addSliderInput({
         path: 'valueRotation',
-        name: 'Rotate values',
+        name: 'Rotate bar labels',
         defaultValue: 0,
         settings: {
           min: -90,
@@ -94,7 +94,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       .addNumberInput({
         path: 'valueMaxLength',
         name: 'Value max length',
-        description: 'Axis value labels will be truncated to the length provided',
+        description: 'Bar labels will be truncated to the length provided',
         settings: {
           placeholder: 'Auto',
           min: 0,

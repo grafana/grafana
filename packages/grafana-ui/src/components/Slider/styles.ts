@@ -14,7 +14,8 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
   return {
     container: css`
       width: 100%;
-      margin: ${isHorizontal ? 'none' : `${spacing(1, 3, 1, 1)}`};
+      margin: ${isHorizontal ? 'inherit' : `${spacing(1, 3, 1, 1)}`};
+      padding-bottom: ${isHorizontal ? theme.spacing(1) : 'inherit'};
       height: ${isHorizontal ? 'auto' : '100%'};
     `,
     slider: css`
