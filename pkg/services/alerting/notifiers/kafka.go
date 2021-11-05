@@ -71,13 +71,13 @@ func NewKafkaNotifier(model *models.AlertNotification, _ alerting.GetDecryptedVa
 		return nil, alerting.ValidationError{Reason: "Could not find kafka topic property in settings"}
 	}
 
-	basicAuth := model.Settings.Get("basicAuth")
+	basicAuth := model.Settings.Get("basicAuth").MustBool()
 
-	username := model.Settings.Get("basicAuthUser")
+	username := model.Settings.Get("basicAuthUser").MustString()
 	if basicAuth && username == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find user for BasicAuth"}
 	}
-	password := model.Settings.Get("basicAuthPass")
+	password := model.Settings.Get("basicAuthPass").MustString()
 	if basicAuth && password == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find pass for BasicAuth"}
 	}
