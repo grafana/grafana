@@ -16,7 +16,6 @@ import (
 )
 
 func TestTimeSeriesFilter(t *testing.T) {
-
 	t.Run("when data from query aggregated to one time series", func(t *testing.T) {
 		data, err := loadTestFile("./test-data/1-series-response-agg-one-metric.json")
 		require.NoError(t, err)
