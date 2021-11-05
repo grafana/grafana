@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var getTime = time.Now
@@ -161,7 +161,7 @@ func (s *Implementation) DeleteAuthInfo(cmd *models.DeleteAuthInfoCommand) error
 
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it
 func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
-	// Bail out if empty string since it'll cause a segfault in util.Decrypt
+	// Bail out if empty string since it'll cause a segfault in Decrypt
 	if str == "" {
 		return "", nil
 	}
@@ -169,7 +169,7 @@ func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	decrypted, err := s.EncryptionService.Decrypt(context.Background(), decoded, setting.SecretKey)
+	decrypted, err := s.SecretsService.Decrypt(context.Background(), decoded)
 	if err != nil {
 		return "", err
 	}
@@ -179,7 +179,7 @@ func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
 // encryptAndEncode will encrypt a string with grafana's secretKey, and
 // then encode it with the standard bas64 encoder
 func (s *Implementation) encryptAndEncode(str string) (string, error) {
-	encrypted, err := s.EncryptionService.Encrypt(context.Background(), []byte(str), setting.SecretKey)
+	encrypted, err := s.SecretsService.Encrypt(context.Background(), []byte(str), secrets.WithoutScope())
 	if err != nil {
 		return "", err
 	}
