@@ -6,15 +6,15 @@ import { config } from '@grafana/runtime';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 import { PanelOptions } from '../models.gen';
-import { InstanceState } from '../CanvasPanel';
 import { LayerActionID } from '../types';
 import { CanvasElementOptions, canvasElementRegistry } from 'app/features/canvas';
 import appEvents from 'app/core/app_events';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from 'app/features/canvas/runtime/group';
+import { LayerEditorProps } from './layerEditor';
 
-type Props = StandardEditorProps<any, InstanceState, PanelOptions>;
+type Props = StandardEditorProps<any, LayerEditorProps, PanelOptions>;
 
 export class LayerElementListEditor extends PureComponent<Props> {
   style = getLayerDragStyles(config.theme);

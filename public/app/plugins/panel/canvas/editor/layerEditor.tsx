@@ -4,9 +4,35 @@ import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/O
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { InstanceState } from '../CanvasPanel';
 import { LayerElementListEditor } from './LayerElementListEditor';
+import { GroupState } from 'app/features/canvas/runtime/group';
+import { Scene } from 'app/features/canvas/runtime/scene';
+import { ElementState } from 'app/features/canvas/runtime/element';
 
-export function getLayerEditor(opts: InstanceState): NestedPanelOptions<InstanceState> {
-  const { layer } = opts;
+export interface LayerEditorProps {
+  scene: Scene;
+  layer: GroupState;
+  selected: ElementState[];
+}
+
+export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEditorProps> {
+  const { selected, scene } = opts;
+
+  let layer = scene.root as GroupState;
+
+  if (selected) {
+    for (const element of selected) {
+      if (element instanceof GroupState) {
+        layer = element;
+        break;
+      }
+
+      if (layer.parent) {
+        layer = layer.parent;
+        break;
+      }
+    }
+  }
+
   const options = layer.options || { elements: [] };
 
   return {
@@ -35,7 +61,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<Instance
         path: 'root',
         name: 'Elements',
         editor: LayerElementListEditor,
-        settings: opts,
+        settings: { scene, layer, selected },
       });
 
       // // force clean layer configuration
