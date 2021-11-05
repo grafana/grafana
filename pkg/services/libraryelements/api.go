@@ -2,7 +2,6 @@ package libraryelements
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -42,7 +41,7 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
 
-	return response.JSON(http.StatusOK, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"message": "Library element deleted",
 		"id":      id,
 	})
