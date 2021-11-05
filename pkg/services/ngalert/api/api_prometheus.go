@@ -123,6 +123,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		}
 		groupId, namespaceUID, namespace := r[0], r[1], r[2]
 
+		_, ok := namespaceMap[namespaceUID]
+		if !ok {
+			continue
+		}
+
 		newGroup := &apimodels.RuleGroup{
 			Name: groupId,
 			// This doesn't make sense in our architecture
