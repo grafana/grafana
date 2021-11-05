@@ -148,15 +148,14 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (
 
 		ds, ok := datasources[q.DatasourceUID]
 		if !ok {
-			// ??? move old id logic here?
 			if expr.IsDataSource(q.DatasourceUID) {
 				ds = expr.DataSourceModel()
 			} else {
-				return nil, fmt.Errorf("TODO, must lookup datasource: %s", q.DatasourceUID)
+				// TODO: actually lookup here?
 				// ds, err := hs.DataSourceCache.GetDatasourceByUID(q.DatasourceUID, c.SignedInUser, c.SkipCache)
-				// if err != nil {
-				// 	return hs.handleGetDataSourceUIDError(err, newDSUID)
-				// }
+				ds = &m.DataSource{
+					Uid: q.DatasourceUID,
+				}
 			}
 			datasources[q.DatasourceUID] = ds
 		}
