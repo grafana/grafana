@@ -41,17 +41,18 @@ export class LayerElementListEditor extends PureComponent<Props> {
   onSelect = (item: any) => {
     const { settings } = this.props.item;
 
-    if (settings?.scene && settings?.scene?.selecto) {
+    if (settings?.scene) {
       try {
-        if (item instanceof ElementState && !(item instanceof GroupState)) {
-          let event: MouseEvent = new MouseEvent('click');
-          settings.scene.selecto.clickTarget(event, item?.div);
-        } else if (item instanceof GroupState) {
+        if (item instanceof GroupState) {
           const targetElements: HTMLDivElement[] = [];
           item.elements.forEach((element: ElementState) => {
             targetElements.push(element.div!);
           });
-          settings.scene.selecto.setSelectedTargets(targetElements);
+
+          settings.scene.select(targetElements);
+        } else if (item instanceof ElementState) {
+          const targetElement = [item?.div!];
+          settings.scene.select(targetElement);
         }
       } catch (error) {
         appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);

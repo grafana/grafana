@@ -141,15 +141,21 @@ export class Scene {
     this.div = sceneContainer;
   };
 
+  select = (targetElements: HTMLDivElement[]) => {
+    if (this.selecto) {
+      this.selecto.setSelectedTargets(targetElements);
+    }
+  };
+
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: any) => {
-      if (element instanceof ElementState && !(element instanceof GroupState)) {
-        targetElements.push(element.div!);
-      } else if (element instanceof GroupState) {
+      if (element instanceof GroupState) {
         element.elements.forEach((element: ElementState) => {
           targetElements.push(element.div!);
         });
+      } else if (element instanceof ElementState) {
+        targetElements.push(element.div!);
       }
     });
 
