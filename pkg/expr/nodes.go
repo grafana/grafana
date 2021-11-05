@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
@@ -26,23 +27,15 @@ type baseNode struct {
 }
 
 type rawNode struct {
-	RefID         string `json:"refId"`
-	Query         map[string]interface{}
-	QueryType     string
-	TimeRange     TimeRange
-	DatasourceUID string // Gets populated from Either DatasourceUID or Datasource.UID
+	RefID      string `json:"refId"`
+	Query      map[string]interface{}
+	QueryType  string
+	TimeRange  TimeRange
+	DataSource *models.DataSource
 }
 
 func (rn *rawNode) IsExpressionQuery() bool {
-	if IsDataSource(rn.DatasourceUID) {
-		return true
-	}
-	if v, ok := rn.Query["datasourceId"]; ok {
-		if v == OldDatasourceUID {
-			return true
-		}
-	}
-	return false
+	return IsDataSource(rn.DataSource.Uid)
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -133,9 +126,8 @@ const (
 // DSNode is a DPNode that holds a datasource request.
 type DSNode struct {
 	baseNode
-	query         json.RawMessage
-	datasourceID  int64
-	datasourceUID string
+	query      json.RawMessage
+	datasource *models.DataSource
 
 	orgID      int64
 	queryType  string
@@ -168,18 +160,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 		maxDP:      defaultMaxDP,
 		timeRange:  rn.TimeRange,
 		request:    *req,
-	}
-
-	// support old datasourceId property
-	rawDsID, ok := rn.Query["datasourceId"]
-	if ok {
-		floatDsID, ok := rawDsID.(float64)
-		if !ok {
-			return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
-		}
-		dsNode.datasourceID = int64(floatDsID)
-	} else {
-		dsNode.datasourceUID = rn.DatasourceUID
+		datasource: rn.DataSource,
 	}
 
 	var floatIntervalMS float64
@@ -208,8 +189,8 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 	pc := backend.PluginContext{
 		OrgID: dn.orgID,
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			ID:  dn.datasourceID,
-			UID: dn.datasourceUID,
+			ID:  dn.datasource.Id,
+			UID: dn.datasource.Uid,
 		},
 	}
 

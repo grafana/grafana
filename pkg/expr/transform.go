@@ -53,10 +53,7 @@ func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery
 			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			QueryType:     q.QueryType,
-			Datasource: DataSourceRef{
-				Type: q.DataSource.Type,
-				UID:  q.DataSource.Uid,
-			},
+			DataSource:    q.DataSource,
 			TimeRange: TimeRange{
 				From: query.TimeRange.GetFromAsTimeUTC(),
 				To:   query.TimeRange.GetToAsTimeUTC(),
@@ -79,28 +76,15 @@ type Request struct {
 type Query struct {
 	RefID         string
 	TimeRange     TimeRange
-	DatasourceUID string        // deprecated, value -100 when expressions
-	Datasource    DataSourceRef `json:"datasource"`
+	DataSource    *models.DataSource `json:"datasource"`
 	JSON          json.RawMessage
 	Interval      time.Duration
 	QueryType     string
 	MaxDataPoints int64
 }
 
-type DataSourceRef struct {
-	Type string `json:"type"` // value should be __expr__
-	UID  string `json:"uid"`  // value should be __expr__
-}
-
 func (q *Query) GetDatasourceUID() string {
-	if q.DatasourceUID != "" {
-		return q.DatasourceUID // backwards compatibility gets precedence
-	}
-
-	if q.Datasource.UID != "" {
-		return q.Datasource.UID
-	}
-	return ""
+	return q.DataSource.Uid
 }
 
 // TimeRange is a time.Time based TimeRange.

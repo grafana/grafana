@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -127,6 +128,8 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (
 		},
 	}
 
+	datasources := make(map[string]*m.DataSource, len(data))
+
 	for i := range data {
 		q := data[i]
 		model, err := q.GetModel()
@@ -143,12 +146,21 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
 		}
 
+		ds, ok := datasources[q.DatasourceUID]
+		if !ok {
+			// ds, err := hs.DataSourceCache.GetDatasourceByUID(q.DatasourceUID, c.SignedInUser, c.SkipCache)
+			// if err != nil {
+			// 	return hs.handleGetDataSourceUIDError(err, newDSUID)
+			// }
+			datasources[q.DatasourceUID] = ds
+		}
+
 		req.Queries = append(req.Queries, expr.Query{
 			TimeRange: expr.TimeRange{
 				From: q.RelativeTimeRange.ToTimeRange(now).From,
 				To:   q.RelativeTimeRange.ToTimeRange(now).To,
 			},
-			DatasourceUID: q.DatasourceUID,
+			DataSource:    ds,
 			JSON:          model,
 			Interval:      interval,
 			RefID:         q.RefID,
