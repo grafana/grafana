@@ -420,3 +420,17 @@ The default is `"grafana"`.
 A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`.
 
 The default is `"localhost:11211"`.
+
+## [recorded_queries]
+
+### max_queries
+
+The maximum number of recorded queries that can exist on the system. Default `100`
+
+### min_interval
+
+Minimum interval to enforce between query runs. Rules will be adjusted if they are less than this value. Higher values
+can help with resource management as we'll schedule fewer evaluations over time. The interval string is a possibly
+signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+Default `30s`
