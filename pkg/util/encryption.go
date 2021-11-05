@@ -22,8 +22,8 @@ const (
 )
 
 // Decrypt decrypts a payload with a given secret.
-// Deprecated. Do not use it.
-// Use encryption.Service instead.
+// DEPRECATED. Do not use it.
+// Use secrets.Service instead.
 func Decrypt(payload []byte, secret string) ([]byte, error) {
 	alg, payload, err := deriveEncryptionAlgorithm(payload)
 	if err != nil {
@@ -110,8 +110,8 @@ func decryptCFB(block cipher.Block, payload []byte) ([]byte, error) {
 }
 
 // Encrypt encrypts a payload with a given secret.
-// Deprecated. Do not use it.
-// Use encryption.Service instead.
+// DEPRECATED. Do not use it.
+// Use secrets.Service instead.
 func Encrypt(payload []byte, secret string) ([]byte, error) {
 	salt, err := GetRandomString(saltLength)
 	if err != nil {
