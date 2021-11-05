@@ -95,7 +95,7 @@ Object {
       ],
       "scales": Array [
         "x",
-        "__fixed",
+        null,
       ],
     },
   },
