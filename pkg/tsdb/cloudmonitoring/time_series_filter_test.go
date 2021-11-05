@@ -370,7 +370,6 @@ func TestTimeSeriesFilter(t *testing.T) {
 			assert.Equal(t, "test-proj - asia-northeast1-c - 6724404429462225363 - 200", frames[0].Fields[1].Name)
 		})
 	})
-
 }
 
 func loadTestFile(path string) (cloudMonitoringResponse, error) {
