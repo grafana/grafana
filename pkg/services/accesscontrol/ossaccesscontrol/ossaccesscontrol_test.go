@@ -9,18 +9,36 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestEnv(t testing.TB) *OSSAccessControlService {
+func setupTestEnv(t testing.TB) (*OSSAccessControlService, *sqlstore.SQLStore) {
 	t.Helper()
+
+	// This is for GetUserBuiltInRoles to work
+	db := sqlstore.InitTestDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 	ac := ProvideService(cfg, &usageStatsMock{metricsFuncs: make([]usagestats.MetricsFunc, 0)})
-	return ac
+	return ac, db
+}
+
+func setupUserAndOrg(t testing.TB, db *sqlstore.SQLStore, user *models.SignedInUser) {
+	t.Helper()
+
+	_, err := db.CreateUser(context.Background(), models.CreateUserCommand{Email: user.Email, SkipOrgSetup: true, Login: user.Login})
+	require.NoError(t, err)
+
+	// Hack to create a org 'without' an org user (will create an org admin with userId: 0)
+	err = sqlstore.CreateOrg(&models.CreateOrgCommand{Name: user.OrgName})
+	require.NoError(t, err)
+
+	err = sqlstore.AddOrgUser(&models.AddOrgUserCommand{Role: user.OrgRole, OrgId: user.OrgId, UserId: user.UserId})
+	require.NoError(t, err)
 }
 
 func removeRoleHelper(role string) {
@@ -94,8 +112,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 			desc: "should successfully evaluate access to the endpoint",
 			user: userTestCase{
 				name:           "testuser",
-				orgRole:        "Grafana Admin",
-				isGrafanaAdmin: false,
+				orgRole:        models.ROLE_VIEWER,
+				isGrafanaAdmin: true,
 			},
 			endpoints: []endpointTestCase{
 				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersDisable, accesscontrol.ScopeGlobalUsersAll)},
@@ -118,7 +136,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			ac := setupTestEnv(t)
+			ac, db := setupTestEnv(t)
 
 			user := &models.SignedInUser{
 				UserId:         1,
@@ -127,6 +145,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				OrgRole:        tc.user.orgRole,
 				IsGrafanaAdmin: tc.user.isGrafanaAdmin,
 			}
+			setupUserAndOrg(t, db, user)
 
 			for _, endpoint := range tc.endpoints {
 				result, err := ac.Evaluate(context.Background(), user, endpoint.evaluator)
