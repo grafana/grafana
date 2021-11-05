@@ -15,23 +15,15 @@ import (
 
 const lokiFlushInterval = 15 * time.Second
 
-// LokiFrameOutputConfig ...
-type LokiFrameOutputConfig struct {
-	// TODO: avoid hardcoded endpoint and use basic auth.
-	// after https://github.com/grafana/grafana/pull/40147 merged.
-}
-
 // LokiFrameOutput passes processing control to the rule defined
 // for a configured channel.
 type LokiFrameOutput struct {
-	config     LokiFrameOutputConfig
 	lokiWriter *lokiWriter
 }
 
-func NewLokiFrameOutput(config LokiFrameOutputConfig) *LokiFrameOutput {
+func NewLokiFrameOutput(endpoint, user, password string) *LokiFrameOutput {
 	return &LokiFrameOutput{
-		config:     config,
-		lokiWriter: newLokiWriter(),
+		lokiWriter: newLokiWriter(endpoint, user, password),
 	}
 }
 
@@ -51,10 +43,10 @@ type LokiStream struct {
 }
 
 func (out *LokiFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
-	//if out.config.Endpoint == "" {
-	//	logger.Debug("Skip sending to Loki: no url")
-	//	return nil, nil
-	//}
+	if out.lokiWriter.endpoint == "" {
+		logger.Debug("Skip sending to Loki: no url")
+		return nil, nil
+	}
 	frameJSON, err := data.FrameToJSON(frame, data.IncludeAll)
 	if err != nil {
 		return nil, err
@@ -72,11 +64,23 @@ type lokiWriter struct {
 	mu         sync.RWMutex
 	httpClient *http.Client
 	buffer     []LokiStream
+
+	// Endpoint to send streaming frames to.
+	endpoint string
+	// User is a user for remote write request.
+	user string
+	// Password for remote write endpoint.
+	password string
 }
 
-func newLokiWriter() *lokiWriter {
+func newLokiWriter(endpoint, user, password string) *lokiWriter {
 	w := &lokiWriter{
-		httpClient: &http.Client{Timeout: 2 * time.Second},
+		endpoint: endpoint,
+		user:     user,
+		password: password,
+		httpClient: &http.Client{
+			Timeout: 2 * time.Second,
+		},
 	}
 	go w.flushPeriodically()
 	return w
@@ -120,13 +124,15 @@ func (w *lokiWriter) flush(streams []LokiStream) error {
 	if err != nil {
 		return fmt.Errorf("error converting Loki stream entry to bytes: %v", err)
 	}
-	//logger.Debug("Sending to Loki endpoint", "url", out.config.Endpoint, "bodyLength", len(writeData))
-	req, err := http.NewRequest(http.MethodPost, "http://127.0.0.1:3100/loki/api/v1/push", bytes.NewReader(writeData))
+	logger.Debug("Sending to Loki endpoint", "url", w.endpoint, "bodyLength", len(writeData))
+	req, err := http.NewRequest(http.MethodPost, w.endpoint, bytes.NewReader(writeData))
 	if err != nil {
 		return fmt.Errorf("error constructing loki push request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	//req.SetBasicAuth(out.config.User, out.config.Password)
+	if w.user != "" {
+		req.SetBasicAuth(w.user, w.password)
+	}
 
 	started := time.Now()
 	resp, err := w.httpClient.Do(req)

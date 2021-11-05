@@ -5,20 +5,15 @@ import (
 	"time"
 )
 
-// LokiDataOutputConfig ...
-type LokiDataOutputConfig struct{}
-
 // LokiDataOutput passes processing control to the rule defined
 // for a configured channel.
 type LokiDataOutput struct {
-	config     LokiDataOutputConfig
 	lokiWriter *lokiWriter
 }
 
-func NewLokiDataOutput(config LokiDataOutputConfig) *LokiDataOutput {
+func NewLokiDataOutput(endpoint, user, password string) *LokiDataOutput {
 	return &LokiDataOutput{
-		config:     config,
-		lokiWriter: newLokiWriter(),
+		lokiWriter: newLokiWriter(endpoint, user, password),
 	}
 }
 
@@ -29,6 +24,10 @@ func (out *LokiDataOutput) Type() string {
 }
 
 func (out *LokiDataOutput) OutputData(_ context.Context, vars Vars, data []byte) ([]*ChannelData, error) {
+	if out.lokiWriter.endpoint == "" {
+		logger.Debug("Skip sending to Loki: no url")
+		return nil, nil
+	}
 	err := out.lokiWriter.write(LokiStream{
 		Stream: map[string]string{"channel": vars.Channel},
 		Values: []interface{}{

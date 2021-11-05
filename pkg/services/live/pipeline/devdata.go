@@ -101,7 +101,11 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 		{
 			Pattern: "plugin/testdata/random-20Hz-stream",
 			DataOutputters: []DataOutputter{
-				NewLokiDataOutput(LokiDataOutputConfig{}),
+				NewLokiDataOutput(
+					os.Getenv("GF_LIVE_LOKI_ENDPOINT"),
+					os.Getenv("GF_LIVE_LOKI_USER"),
+					os.Getenv("GF_LIVE_LOKI_PASSWORD"),
+				),
 			},
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			FrameOutputters: []FrameOutputter{
