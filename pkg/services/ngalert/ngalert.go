@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -21,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
@@ -39,7 +39,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, encryptionService encryption.Service, m *metrics.NGAlert) (*AlertNG, error) {
+	quotaService *quota.QuotaService, secretsService secrets.Service, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:               cfg,
 		DataSourceCache:   dataSourceCache,
@@ -49,7 +49,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		ExpressionService: expressionService,
 		DataProxy:         dataProxy,
 		QuotaService:      quotaService,
-		EncryptionService: encryptionService,
+		SecretsService:    secretsService,
 		Metrics:           m,
 		Log:               log.New("ngalert"),
 	}
@@ -75,7 +75,7 @@ type AlertNG struct {
 	ExpressionService *expr.Service
 	DataProxy         *datasourceproxy.DataSourceProxyService
 	QuotaService      *quota.QuotaService
-	EncryptionService encryption.Service
+	SecretsService    secrets.Service
 	Metrics           *metrics.NGAlert
 	Log               log.Logger
 	schedule          schedule.ScheduleService
@@ -101,7 +101,7 @@ func (ng *AlertNG) init() error {
 		Logger:          ng.Log,
 	}
 
-	decryptFn := ng.EncryptionService.GetDecryptedValue
+	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
 	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, log.New("ngalert.multiorg.alertmanager"))
 	if err != nil {
@@ -149,7 +149,7 @@ func (ng *AlertNG) init() error {
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
-		EncryptionService:    ng.EncryptionService,
+		SecretsService:       ng.SecretsService,
 		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,

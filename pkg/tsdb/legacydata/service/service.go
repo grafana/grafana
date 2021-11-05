@@ -14,10 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-var dsDecryptedValuesFunc = func(s *datasources.Service, ds *models.DataSource) map[string]string {
-	return s.DecryptedValues(ds)
-}
-
 var oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *models.DataSource) bool {
 	return oAuthTokenService.IsOAuthPassThruEnabled(ds)
 }
@@ -52,7 +48,7 @@ func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 		BasicAuthEnabled:        ds.BasicAuth,
 		BasicAuthUser:           ds.BasicAuthUser,
 		JSONData:                jsonDataBytes,
-		DecryptedSecureJSONData: dsDecryptedValuesFunc(h.dataSourcesService, ds),
+		DecryptedSecureJSONData: h.dataSourcesService.DecryptedValues(ds),
 		Updated:                 ds.Updated,
 		UID:                     ds.Uid,
 	}

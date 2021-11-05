@@ -5,28 +5,26 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHandleRequest(t *testing.T) {
 	t.Run("Should invoke plugin manager QueryData when handling request for query", func(t *testing.T) {
-		origDsDecryptedValuesFunc := dsDecryptedValuesFunc
-		dsDecryptedValuesFunc = func(s *datasources.Service, ds *models.DataSource) map[string]string {
-			return map[string]string{}
-		}
 		origOAuthIsOAuthPassThruEnabledFunc := oAuthIsOAuthPassThruEnabledFunc
 		oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *models.DataSource) bool {
 			return false
 		}
 
 		t.Cleanup(func() {
-			dsDecryptedValuesFunc = origDsDecryptedValuesFunc
 			oAuthIsOAuthPassThruEnabledFunc = origOAuthIsOAuthPassThruEnabledFunc
 		})
 
@@ -36,7 +34,9 @@ func TestHandleRequest(t *testing.T) {
 			actualReq = req
 			return backend.NewQueryDataResponse(), nil
 		}
-		s := ProvideService(client, nil, nil)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
+		s := ProvideService(client, nil, dsService)
 
 		ds := &models.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}
 		req := legacydata.DataQuery{
