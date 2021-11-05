@@ -6,49 +6,61 @@ import (
 )
 
 func (pm *PluginManager) GetPluginSettings(orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
-	pluginSettings, err := pm.SQLStore.GetPluginSettings(orgID)
-	if err != nil {
+	pluginSettings := make(map[string]*models.PluginSettingInfoDTO)
+
+	// fill settings from database
+	if pss, err := pm.SQLStore.GetPluginSettings(orgID); err != nil {
 		return nil, err
+	} else {
+		for _, ps := range pss {
+			pluginSettings[ps.PluginId] = ps
+		}
 	}
 
-	pluginMap := make(map[string]*models.PluginSettingInfoDTO)
-	for _, plug := range pluginSettings {
-		pluginMap[plug.PluginId] = plug
-	}
-
-	for _, pluginDef := range pm.Plugins() {
-		// ignore entries that exists
-		if _, ok := pluginMap[pluginDef.Id]; ok {
+	// fill settings from app plugins
+	for _, plugin := range pm.Apps() {
+		// ignore settings that already exist
+		if _, exists := pluginSettings[plugin.Id]; exists {
 			continue
 		}
 
-		// default to enabled true
-		opt := &models.PluginSettingInfoDTO{
-			PluginId: pluginDef.Id,
+		// add new setting which is enabled depending on if AutoEnabled: true
+		pluginSetting := &models.PluginSettingInfoDTO{
+			PluginId: plugin.Id,
+			OrgId:    orgID,
+			Enabled:  plugin.AutoEnabled,
+			Pinned:   plugin.AutoEnabled,
+		}
+
+		pluginSettings[plugin.Id] = pluginSetting
+	}
+
+	// fill settings from all remaining plugins (including potential app child plugins)
+	for _, plugin := range pm.Plugins() {
+		// ignore settings that already exist
+		if _, exists := pluginSettings[plugin.Id]; exists {
+			continue
+		}
+
+		// add new setting which is enabled by default
+		pluginSetting := &models.PluginSettingInfoDTO{
+			PluginId: plugin.Id,
 			OrgId:    orgID,
 			Enabled:  true,
 		}
 
-		// apps are disabled by default unless autoEnabled: true
-		if app, exists := pm.apps[pluginDef.Id]; exists {
-			opt.Enabled = app.AutoEnabled
-			opt.Pinned = app.AutoEnabled
-		}
-
-		// if it's included in app check app settings
-		if pluginDef.IncludedInAppId != "" {
-			// app components are by default disabled
-			opt.Enabled = false
-
-			if appSettings, ok := pluginMap[pluginDef.IncludedInAppId]; ok {
-				opt.Enabled = appSettings.Enabled
+		// if plugin is included in an app, check app settings
+		if plugin.IncludedInAppId != "" {
+			// app child plugins are disabled unless app is enabled
+			pluginSetting.Enabled = false
+			if p, exists := pluginSettings[plugin.IncludedInAppId]; exists {
+				pluginSetting.Enabled = p.Enabled
 			}
 		}
-
-		pluginMap[pluginDef.Id] = opt
+		pluginSettings[plugin.Id] = pluginSetting
 	}
 
-	return pluginMap, nil
+	return pluginSettings, nil
 }
 
 func (pm *PluginManager) GetEnabledPlugins(orgID int64) (*plugins.EnabledPlugins, error) {
