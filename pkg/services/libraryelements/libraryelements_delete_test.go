@@ -24,9 +24,7 @@ func TestDeleteLibraryElement(t *testing.T) {
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
-			var result struct {
-				ID int64 `json:"id"`
-			}
+			var result LibraryElementIDResponse
 			err := json.Unmarshal(resp.Body(), &result)
 
 			require.NoError(t, err)

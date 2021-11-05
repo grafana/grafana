@@ -207,3 +207,9 @@ type LibraryElementArrayResponse struct {
 type LibraryElementConnectionsResponse struct {
 	Result []LibraryElementConnectionDTO `json:"result"`
 }
+
+// LibraryElementIDResponse is a response struct to return only the ID.
+type LibraryElementIDResponse struct {
+	ID      int64  `json:"id"`
+	Message string `json:"message"`
+}

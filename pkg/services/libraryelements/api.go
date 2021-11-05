@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -41,9 +40,9 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
 
-	return response.JSON(200, util.DynMap{
-		"message": "Library element deleted",
-		"id":      id,
+	return response.JSON(200, LibraryElementIDResponse{
+		Message: "Library element deleted",
+		ID:      id,
 	})
 }
 
