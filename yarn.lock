@@ -2637,7 +2637,7 @@ __metadata:
     less: ^3.11.1
     less-loader: ^5.0.0
     lodash: 4.17.21
-    md5-file: ^4.0.0
+    md5-file: ^5.0.0
     mini-css-extract-plugin: ^0.7.0
     optimize-css-assets-webpack-plugin: ^5.0.3
     ora: ^4.0.3
@@ -22475,12 +22475,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"md5-file@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "md5-file@npm:4.0.0"
+"md5-file@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "md5-file@npm:5.0.0"
   bin:
     md5-file: cli.js
-  checksum: ead6ca260eee366e0298e9a42d8e5b96b71624978362e17dac0992d036dfab2187fbd12236bcb49fce1c3ba8bf01aa27308735ed1e2d82e6e3cad5ff6316000e
+  checksum: c606a00ff58adf5428e8e2f36d86e5d3c7029f9688126faca302cd83b5e92cac183a62e1d1f05fae7c2614e80f993326fd0a8d6a3a913c41ec7ea0eefc25aa76
   languageName: node
   linkType: hard
 
