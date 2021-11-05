@@ -11,10 +11,14 @@ export interface MenuItemProps<T = any> {
   label: string;
   /** Aria label for accessibility support */
   ariaLabel?: string;
+  /** Aria checked for accessibility support */
+  ariaChecked?: boolean;
   /** Target of the menu item (i.e. new window)  */
   target?: LinkTarget;
   /** Icon of the menu item */
   icon?: IconName;
+  /** Role of the menu item */
+  role?: string;
   /** Url of the menu item */
   url?: string;
   /** Handler for the click behaviour */
@@ -30,7 +34,22 @@ export interface MenuItemProps<T = any> {
 /** @internal */
 export const MenuItem = React.memo(
   React.forwardRef<HTMLAnchorElement & HTMLButtonElement, MenuItemProps>(
-    ({ url, icon, label, ariaLabel, target, onClick, className, active, tabIndex = -1 }, ref) => {
+    (
+      {
+        url,
+        icon,
+        label,
+        ariaLabel,
+        ariaChecked,
+        target,
+        onClick,
+        className,
+        active,
+        role = 'menuitem',
+        tabIndex = -1,
+      },
+      ref
+    ) => {
       const styles = useStyles2(getStyles);
       const itemStyle = cx(
         {
@@ -57,10 +76,11 @@ export const MenuItem = React.memo(
                 }
               : undefined
           }
-          role={url === undefined ? 'menuitem' : undefined}
+          role={url === undefined ? role : undefined}
           data-role="menuitem" // used to identify menuitem in Menu.tsx
           ref={ref}
           aria-label={ariaLabel}
+          aria-checked={ariaChecked}
           tabIndex={tabIndex}
         >
           {icon && <Icon name={icon} className={styles.icon} aria-hidden />} {label}

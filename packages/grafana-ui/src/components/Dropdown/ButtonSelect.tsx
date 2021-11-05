@@ -66,7 +66,9 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
                     label={(item.label || item.value) as string}
                     onClick={() => onChangeInternal(item)}
                     active={item.value === value?.value}
+                    ariaChecked={item.value === value?.value}
                     ariaLabel={item.ariaLabel || item.label}
+                    role="menuitemradio"
                   />
                 ))}
               </Menu>
