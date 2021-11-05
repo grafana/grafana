@@ -34,14 +34,19 @@ const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
   return clone;
 };
 
-export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: boolean }> = ({
+export interface SaveDashboardAsFormProps extends SaveDashboardFormProps {
+  isNew?: boolean;
+}
+
+export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
   dashboard,
+  isNew,
   onSubmit,
   onCancel,
   onSuccess,
 }) => {
   const defaultValues: SaveDashboardAsFormDTO = {
-    title: `${dashboard.title} Copy`,
+    title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     $folder: {
       id: dashboard.meta.folderId,
       title: dashboard.meta.folderTitle,
