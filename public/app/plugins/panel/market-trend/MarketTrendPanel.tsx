@@ -14,7 +14,7 @@ import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPl
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { drawMarkers, FieldIndices } from './utils';
-import { defaultColors, MarketOptions, MarketTrendMode } from './types';
+import { defaultColors, MarketOptions, MarketTrendMode } from './models.gen';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { findField } from 'app/features/dimensions';
