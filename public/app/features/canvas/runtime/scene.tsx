@@ -38,6 +38,7 @@ export class Scene {
   style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
+  moveable?: Moveable;
   div?: HTMLDivElement;
 
   constructor(cfg: CanvasGroupOptions, enableEditing: boolean, public onSave: (cfg: CanvasGroupOptions) => void) {
@@ -141,10 +142,18 @@ export class Scene {
     this.div = sceneContainer;
   };
 
-  select = (targetElements: HTMLDivElement[]) => {
+  select = (targetElements: Array<HTMLElement | SVGElement>) => {
     if (this.selecto) {
       this.selecto.setSelectedTargets(targetElements);
+
+      this.updateSelection(targetElements);
     }
+  };
+
+  private updateSelection = (selectedElements: Array<HTMLElement | SVGElement>) => {
+    this.moveable!.target = selectedElements;
+    const s = selectedElements.map((t) => this.findElementByTarget(t)!);
+    this.selection.next(s);
   };
 
   initMoveable = (destroySelecto = false, allowChanges = true) => {
@@ -169,7 +178,7 @@ export class Scene {
       selectByClick: true,
     });
 
-    const moveable = new Moveable(this.div!, {
+    this.moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
       origin: false,
@@ -215,7 +224,7 @@ export class Scene {
       const selectedTarget = event.inputEvent.target;
 
       const isTargetMoveableElement =
-        moveable.isMoveableElement(selectedTarget) ||
+        this.moveable!.isMoveableElement(selectedTarget) ||
         targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
 
       if (isTargetMoveableElement) {
@@ -224,15 +233,12 @@ export class Scene {
       }
     }).on('selectEnd', (event) => {
       targets = event.selected;
-      moveable.target = targets;
-
-      const s = event.selected.map((t) => this.findElementByTarget(t)!);
-      this.selection.next(s);
+      this.updateSelection(targets);
 
       if (event.isDragStart) {
         event.inputEvent.preventDefault();
         setTimeout(() => {
-          moveable.dragStart(event.inputEvent);
+          this.moveable!.dragStart(event.inputEvent);
         });
       }
     });
