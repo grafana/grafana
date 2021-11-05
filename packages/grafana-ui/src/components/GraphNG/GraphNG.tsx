@@ -53,10 +53,12 @@ export interface GraphNGProps extends Themeable2 {
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
 
-  // needed for propsToDiff to re-init the plot & config
-  // this is a generic approach to plot re-init, without having to specify which panel-level options
-  // should cause invalidation. we can drop this in favor of something like panelOptionsRev that gets passed in
-  // similar to structureRev. then we can drop propsToDiff entirely.
+  /**
+   * needed for propsToDiff to re-init the plot & config
+   * this is a generic approach to plot re-init, without having to specify which panel-level options
+   * should cause invalidation. we can drop this in favor of something like panelOptionsRev that gets passed in
+   * similar to structureRev. then we can drop propsToDiff entirely.
+   */
   options?: Record<string, any>;
 }
 
