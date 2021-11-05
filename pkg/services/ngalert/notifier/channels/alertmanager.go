@@ -9,14 +9,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
 
 // GetDecryptedValueFn is a function that returns the decrypted value of
 // the given key. If the key is not present, then it returns the fallback value.
-type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string, secret string) string
+type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
 func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Template, fn GetDecryptedValueFn) (*AlertmanagerNotifier, error) {
@@ -45,7 +44,7 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Templ
 		urls = append(urls, u)
 	}
 	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
-	basicAuthPassword := fn(context.Background(), model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString(), setting.SecretKey)
+	basicAuthPassword := fn(context.Background(), model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString())
 
 	return &AlertmanagerNotifier{
 		Base: NewBase(&models.AlertNotification{

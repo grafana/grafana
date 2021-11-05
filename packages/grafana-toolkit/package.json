@@ -59,7 +59,7 @@
     "concurrently": "6.3.0",
     "copy-webpack-plugin": "5.1.2",
     "css-loader": "3.4.2",
-    "eslint": "7.21.0",
+    "eslint": "7.28.0",
     "execa": "^5.1.1",
     "file-loader": "6.2.0",
     "fork-ts-checker-webpack-plugin": "6.4.0",
