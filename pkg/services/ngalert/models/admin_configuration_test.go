@@ -46,7 +46,6 @@ func TestAdminConfiguration_Validate(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-
 			err := tt.ac.Validate()
 			if tt.err != nil {
 				require.EqualError(t, err, tt.err.Error())
