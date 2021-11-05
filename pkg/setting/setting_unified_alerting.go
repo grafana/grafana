@@ -72,17 +72,10 @@ type UnifiedAlertingSettings struct {
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg := UnifiedAlertingSettings{}
 	ua := iniFile.Section("unified_alerting")
-	uaCfg.Enabled = ua.Key("enabled").MustBool(false)
-
-	// TODO: Deprecate this in v8.4, if the old feature toggle ngalert is set, enable Grafana 8 Unified Alerting anyway.
-	if !uaCfg.Enabled && cfg.FeatureToggles["ngalert"] {
-		cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
-		uaCfg.Enabled = true
-		AlertingEnabled = false
-	}
+	uaCfg.Enabled = ua.Key("enabled").MustBool(true)
 
 	if uaCfg.Enabled && AlertingEnabled {
-		return errors.New("both legacy and Grafana 8 Alerts are enabled")
+		return errors.New("both legacy and Grafana 8 Alerts are enabled. Disable at least one and try again")
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
