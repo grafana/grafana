@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useCallback, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import {
   Button,
@@ -38,10 +38,38 @@ export const RolePickerMenu = ({
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
   const [showSubMenu, setShowSubMenu] = useState(false);
+  const [selectedMenuGroup, setSelectedMenuGroup] = useState('');
+  const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
 
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
+
+  const getOptionGroups = useCallback(() => {
+    const groupsMap: { [key: string]: Role[] } = {};
+    options.forEach((role) => {
+      if (role.name.startsWith('fixed:')) {
+        const groupName = getRoleGroup(role);
+        if (groupsMap[groupName]) {
+          groupsMap[groupName].push(role);
+        } else {
+          groupsMap[groupName] = [role];
+        }
+      }
+    });
+
+    const groups = [];
+    for (const groupName in groupsMap) {
+      if (Object.prototype.hasOwnProperty.call(groupsMap, groupName)) {
+        const groupOptions = groupsMap[groupName];
+        groups.push({
+          name: groupName,
+          options: groupOptions,
+        });
+      }
+    }
+    return groups;
+  }, [options]);
 
   const onSelect = (option: Role) => {
     if (selectedOptions.find((role) => role.uid === option.uid)) {
@@ -51,8 +79,24 @@ export const RolePickerMenu = ({
     }
   };
 
+  const onGroupsSelect = (value: string) => {};
+
   const onMenuGroupClick = (value: string) => {
-    setShowSubMenu(!showSubMenu);
+    if (selectedMenuGroup === value) {
+      setShowSubMenu(false);
+      setSelectedMenuGroup('');
+      setSubMenuOptions([]);
+      return;
+    }
+
+    setSelectedMenuGroup(value);
+    setShowSubMenu(true);
+    const group = optionGroups.find((g) => {
+      return g.name === value;
+    });
+    if (group) {
+      setSubMenuOptions(group.options);
+    }
   };
 
   const onSelectedBuiltinRoleChange = (newRole: OrgRole) => {
@@ -66,6 +110,14 @@ export const RolePickerMenu = ({
     setSelectedOptions([]);
   };
 
+  const onClearSubMenu = () => {
+    const options = selectedOptions.filter((role) => {
+      const groupName = getRoleGroup(role);
+      return groupName !== selectedMenuGroup;
+    });
+    setSelectedOptions(options);
+  };
+
   const onUpdateInternal = () => {
     const selectedCustomRoles: string[] = [];
     for (const key in selectedOptions) {
@@ -76,7 +128,8 @@ export const RolePickerMenu = ({
   };
 
   const customRoles = options.filter(filterCustomRoles);
-  const fixedRoles = options.filter(filterFixedRoles);
+  // const fixedRoles = options.filter(filterFixedRoles);
+  const optionGroups = getOptionGroups();
 
   return (
     <div className={cx(styles.menu, customStyles.menuWrapper)}>
@@ -90,14 +143,7 @@ export const RolePickerMenu = ({
             onChange={onSelectedBuiltinRoleChange}
             fullWidth={true}
           />
-          {[
-            { header: 'Custom roles', roles: customRoles },
-            {
-              header: 'Fixed roles',
-              roles: fixedRoles,
-              hideDescription: true,
-            },
-          ].map(
+          {[{ header: 'Custom roles', roles: customRoles }].map(
             (item) =>
               !!item.roles.length && (
                 <div key={item.header}>
@@ -109,8 +155,31 @@ export const RolePickerMenu = ({
                         key={i}
                         isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                         onSelect={onSelect}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
+          )}
+          {[
+            {
+              header: 'Fixed roles',
+              roles: optionGroups,
+              hideDescription: true,
+            },
+          ].map(
+            (item) =>
+              !!item.roles.length && (
+                <div key={item.header}>
+                  <div className={customStyles.groupHeader}>{item.header}</div>
+                  <div className={styles.optionBody}>
+                    {item.roles.map((option, i) => (
+                      <RoleMenuGroupsOption
+                        data={option}
+                        key={i}
+                        // isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                        onSelect={onGroupsSelect}
                         onClick={onMenuGroupClick}
-                        hideDescription={item.hideDescription}
                       />
                     ))}
                   </div>
@@ -130,7 +199,12 @@ export const RolePickerMenu = ({
         </div>
       </div>
       {showSubMenu ? (
-        <RolePickerSubMenu options={options} appliedRoles={appliedRoles} onClear={onClearInternal} />
+        <RolePickerSubMenu
+          options={subMenuOptions}
+          selectedOptions={selectedOptions}
+          onSelect={onSelect}
+          onClear={onClearSubMenu}
+        />
       ) : (
         <div></div>
       )}
@@ -140,28 +214,45 @@ export const RolePickerMenu = ({
 
 const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:');
 
-const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
+// const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
 
 interface RolePickerSubMenuProps {
   options: Role[];
-  appliedRoles: Role[];
+  selectedOptions: Role[];
+  onSelect: (option: Role) => void;
   onClear?: () => void;
 }
 
-export const RolePickerSubMenu = ({ options, appliedRoles, onClear }: RolePickerSubMenuProps): JSX.Element => {
+export const RolePickerSubMenu = ({
+  options,
+  selectedOptions,
+  onSelect,
+  onClear,
+}: RolePickerSubMenuProps): JSX.Element => {
+  const theme = useTheme2();
+  const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
-  const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
 
   const onClearInternal = async () => {
     if (onClear) {
       onClear();
     }
-    setSelectedOptions([]);
   };
 
   return (
     <div className={customStyles.subMenu} aria-label="Role picker submenu">
-      <CustomScrollbar autoHide={false} autoHeightMax="250px" hideHorizontalTrack></CustomScrollbar>
+      <CustomScrollbar autoHide={false} autoHeightMax="250px" hideHorizontalTrack>
+        <div className={styles.optionBody}>
+          {options.map((option, i) => (
+            <RoleMenuOption
+              data={option}
+              key={i}
+              isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
+      </CustomScrollbar>
       <div className={customStyles.subMenuButtonRow}>
         <HorizontalGroup justify="flex-end">
           <Button size="sm" fill="text" onClick={onClearInternal}>
@@ -176,7 +267,6 @@ export const RolePickerSubMenu = ({ options, appliedRoles, onClear }: RolePicker
 interface RoleMenuOptionProps<T> {
   data: Role;
   onSelect: (value: Role) => void;
-  onClick?: (value: string) => void;
   isSelected?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
@@ -184,7 +274,7 @@ interface RoleMenuOptionProps<T> {
 }
 
 export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps<any>>>(
-  ({ data, isFocused, isSelected, disabled, onSelect, onClick, hideDescription }, ref) => {
+  ({ data, isFocused, isSelected, disabled, onSelect, hideDescription }, ref) => {
     const theme = useTheme2();
     const styles = getSelectStyles(theme);
     const customStyles = useStyles2(getStyles);
@@ -199,20 +289,14 @@ export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithCh
       if (disabled) {
         return;
       }
-      // event.preventDefault();
-      // event.stopPropagation();
+      event.preventDefault();
+      event.stopPropagation();
       onSelect(data);
-    };
-
-    const onClickInternal = (event: FormEvent<HTMLElement>) => {
-      if (onClick) {
-        onClick(data.name);
-      }
     };
 
     return (
       <Tooltip content={data.description}>
-        <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onClickInternal}>
+        <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onChange}>
           <Checkbox
             value={isSelected}
             className={customStyles.menuOptionCheckbox}
@@ -230,6 +314,66 @@ export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithCh
 );
 
 RoleMenuOption.displayName = 'RoleMenuOption';
+
+interface RoleMenuGroupsOptionProps<T> {
+  data: SelectableValue<string>;
+  onSelect: (value: string) => void;
+  onClick?: (value: string) => void;
+  isSelected?: boolean;
+  isFocused?: boolean;
+  disabled?: boolean;
+}
+
+export const RoleMenuGroupsOption = React.forwardRef<
+  HTMLDivElement,
+  React.PropsWithChildren<RoleMenuGroupsOptionProps<any>>
+>(({ data, isFocused, isSelected, disabled, onSelect, onClick }, ref) => {
+  const theme = useTheme2();
+  const styles = getSelectStyles(theme);
+  const customStyles = useStyles2(getStyles);
+
+  const wrapperClassName = cx(
+    styles.option,
+    isFocused && styles.optionFocused,
+    disabled && customStyles.menuOptionDisabled
+  );
+
+  const onChange = (event: FormEvent<HTMLElement>) => {
+    if (disabled) {
+      return;
+    }
+    if (data.value) {
+      onSelect(data.value);
+    }
+  };
+
+  const onClickInternal = (event: FormEvent<HTMLElement>) => {
+    if (onClick) {
+      onClick(data.name);
+    }
+  };
+
+  return (
+    <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onClickInternal}>
+      <Checkbox
+        value={isSelected}
+        className={customStyles.menuOptionCheckbox}
+        onChange={onChange}
+        disabled={disabled}
+      />
+      <div className={styles.optionBody}>
+        <span>{data.displayName || data.name}</span>
+      </div>
+    </div>
+  );
+});
+
+RoleMenuGroupsOption.displayName = 'RoleMenuGroupsOption';
+
+const getRoleGroup = (role: Role) => {
+  let groupName = role.name.substr('fixed:'.length);
+  return groupName.substring(0, groupName.indexOf(':'));
+};
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
