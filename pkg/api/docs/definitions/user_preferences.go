@@ -7,7 +7,7 @@ import "github.com/grafana/grafana/pkg/api/dtos"
 // Get user preferences.
 //
 // Responses:
-// 200: getUserPreferencesResponse
+// 200: getPreferencesResponse
 // 401: unauthorisedError
 // 500: internalServerError
 
@@ -23,15 +23,15 @@ import "github.com/grafana/grafana/pkg/api/dtos"
 // 401: unauthorisedError
 // 500: internalServerError
 
-// swagger:parameters updateUserPreferences updateOrgPreferences
+// swagger:parameters updateUserPreferences updateOrgPreferences updateTeamPreferences
 type UpdateUserPreferencesParam struct {
 	// in:body
 	// required:true
 	Body UpdatePrefsCmd `json:"body"`
 }
 
-// swagger:response getUserPreferencesResponse
-type GetUserPreferencesResponse struct {
+// swagger:response getPreferencesResponse
+type GetPreferencesResponse struct {
 	// in:body
 	Body dtos.Prefs `json:"body"`
 }

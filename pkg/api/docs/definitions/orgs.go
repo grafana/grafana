@@ -185,7 +185,7 @@ import "github.com/grafana/grafana/pkg/models"
 
 // swagger:parameters getOrgByID adminUpdateOrg adminUpdateOrgAddress adminDeleteOrg adminGetOrgUsers
 // swagger:parameters adminAddOrgUser adminUpdateOrgUser adminDeleteOrgUser
-// swagger:parameters getOrgQuota updateOrgQuota
+// swagger:parameters getOrgQuota updateOrgQuota userSetUsingOrg
 type OrgIDParam struct {
 	// in:path
 	// required:true
@@ -206,17 +206,22 @@ type CreateOrgParam struct {
 	Body models.CreateOrgCommand `json:"body"`
 }
 
-// swagger:parameters searchOrg
+// swagger:parameters searchOrg searchTeams
 type SearchOrgParams struct {
 	// in:query
 	// required:false
+	// default: 1
 	Page int `json:"page"`
+	// Number of items per page
+	// The totalCount field in the response can be used for pagination list E.g. if totalCount is equal to 100 teams and the perpage parameter is set to 10 then there are 10 pages of teams.
 	// in:query
 	// required:false
 	// default: 1000
 	PerPage int    `json:"perpage"`
 	Name    string `json:"name"`
-	Query   string `json:"query"`
+	// If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.
+	// required:false
+	Query string `json:"query"`
 }
 
 // swagger:parameters updateOrgQuota

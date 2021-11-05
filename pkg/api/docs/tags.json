@@ -39,6 +39,10 @@
 		{
 			"name": "org",
 			"description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required."
+		},
+		{
+			"name": "teams",
+			"description": "This API can be used to create/update/delete Teams and to add/remove users to Teams. All actions require that the user has the Admin role for the organization."
 		}
 	]
 }

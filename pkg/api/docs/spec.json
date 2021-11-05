@@ -3795,7 +3795,7 @@
         "tags": [
           "org_preferences"
         ],
-        "summary": "Get pending invites.",
+        "summary": "Get Current Org Prefs.",
         "operationId": "getOrgPreferences",
         "responses": {
           "200": {
@@ -3816,7 +3816,7 @@
         "tags": [
           "org_preferences"
         ],
-        "summary": "Add invite.",
+        "summary": "Update Current Org Prefs.",
         "operationId": "updateOrgPreferences",
         "parameters": [
           {
@@ -4076,6 +4076,7 @@
           {
             "type": "integer",
             "format": "int64",
+            "default": 1,
             "x-go-name": "Page",
             "name": "page",
             "in": "query"
@@ -4085,6 +4086,7 @@
             "format": "int64",
             "default": 1000,
             "x-go-name": "PerPage",
+            "description": "Number of items per page\nThe totalCount field in the response can be used for pagination list E.g. if totalCount is equal to 100 teams and the perpage parameter is set to 10 then there are 10 pages of teams.",
             "name": "perpage",
             "in": "query"
           },
@@ -4097,6 +4099,7 @@
           {
             "type": "string",
             "x-go-name": "Query",
+            "description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
             "name": "query",
             "in": "query"
           }
@@ -4924,6 +4927,440 @@
         }
       }
     },
+    "/teams": {
+      "post": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Add Team.",
+        "operationId": "createTeam",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateTeamCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createTeamResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/teams/search": {
+      "get": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Team Search With Paging.",
+        "operationId": "searchTeams",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "x-go-name": "Page",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1000,
+            "x-go-name": "PerPage",
+            "description": "Number of items per page\nThe totalCount field in the response can be used for pagination list E.g. if totalCount is equal to 100 teams and the perpage parameter is set to 10 then there are 10 pages of teams.",
+            "name": "perpage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "name": "name",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Query",
+            "description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
+            "name": "query",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchTeamsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/teams/{team_id}": {
+      "get": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Get Team By ID.",
+        "operationId": "getTeam",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TeamID",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getTeamResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Update Team.",
+        "operationId": "updateTeam",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TeamID",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateTeamCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Delete Team By ID.",
+        "operationId": "deleteTeamByID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TeamID",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/teams/{team_id}/members": {
+      "get": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Get Team Members.",
+        "operationId": "getTeamMembers",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TeamID",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Add Team Member.",
+        "operationId": "addTeamMember",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TeamID",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/teams/{team_id}/members/{user_id}": {
+      "put": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Update Team Member.",
+        "operationId": "updateTeamMember",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TeamID",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateTeamMemberCommand"
+            }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Remove Member From Team.",
+        "operationId": "removeTeamMember",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TeamID",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/teams/{team_id}/preferences": {
+      "get": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Get Team Preferences.",
+        "operationId": "getTeamPreferences",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TeamID",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPreferencesResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Update Team Preferences.",
+        "operationId": "updateTeamPreferences",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TeamID",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePrefsCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/tsdb/query": {
       "post": {
         "description": "Queries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.",
@@ -4964,6 +5401,217 @@
         }
       }
     },
+    "/user": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Get signed in User.",
+        "operationId": "getSignedInUser",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/userResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Update signed in User.",
+        "operationId": "updateSignedInUser",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "description": "To change the email, name, login, theme, provide another one.",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateUserCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/userResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/auth-tokens": {
+      "get": {
+        "description": "Return a list of all auth tokens (devices) that the actual user currently have logged in from.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Auth tokens of the actual User.",
+        "operationId": "getSignedInUserAuthTokens",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAuthTokensResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/helpflags/clear": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Clear user help flag.",
+        "operationId": "clearHelpFlags",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/helpFlagResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/helpflags/{flag_id}": {
+      "put": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Set user help flag.",
+        "operationId": "setHelpFlag",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "FlagID",
+            "name": "flag_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/helpFlagResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/orgs": {
+      "get": {
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "Return a list of all organizations of the current user.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Organizations of the actual User.",
+        "operationId": "getSignedInUserOrgList",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getUserOrgListResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/password": {
+      "put": {
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "Changes the password for the user.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Change Password.",
+        "operationId": "changeUserPassword",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "description": "To change the email, name, login, theme, provide another one.",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ChangeUserPasswordCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/user/preferences": {
       "get": {
         "tags": [
@@ -4973,7 +5621,7 @@
         "operationId": "getUserPreferences",
         "responses": {
           "200": {
-            "$ref": "#/responses/getUserPreferencesResponse"
+            "$ref": "#/responses/getPreferencesResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -5010,6 +5658,201 @@
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/quotas": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Fetch user quota.",
+        "operationId": "getUserQuotas",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQuotaResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/revoke-auth-token": {
+      "post": {
+        "description": "Revokes the given auth token (device) for the actual user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Revoke an auth token of the actual User.",
+        "operationId": "revokeSignedINAuthTokenCmd",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RevokeAuthTokenCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/stars/dashboard/{dashboard_id}": {
+      "post": {
+        "description": "Stars the given Dashboard for the actual user.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Star a dashboard.",
+        "operationId": "starDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DashboardID",
+            "name": "dashboard_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes the starring of the given Dashboard for the actual user.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Unstar a dashboard.",
+        "operationId": "unstarDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DashboardID",
+            "name": "dashboard_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/teams": {
+      "get": {
+        "description": "Return a list of all teams that the current user is member of.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Teams that the actual User is member of.",
+        "operationId": "getSignedInUserTeamList",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getUserOrgListResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/using/{org_id}": {
+      "post": {
+        "description": "Switch user context to the given organization.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Switch user context for signed in user.",
+        "operationId": "userSetUsingOrg",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OrgID",
+            "name": "org_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -5409,6 +6252,17 @@
         },
         "role": {
           "$ref": "#/definitions/RoleType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AddTeamMemberCommand": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UserId"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -5968,6 +6822,20 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "ChangeUserPasswordCommand": {
+      "type": "object",
+      "properties": {
+        "newPassword": {
+          "type": "string",
+          "x-go-name": "NewPassword"
+        },
+        "oldPassword": {
+          "type": "string",
+          "x-go-name": "OldPassword"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "CreateAlertNotificationCommand": {
       "type": "object",
       "properties": {
@@ -6113,6 +6981,20 @@
     "CreateOrgCommand": {
       "type": "object",
       "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "CreateTeamCommand": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
@@ -8002,6 +8884,34 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "SearchTeamQueryResult": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Page"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PerPage"
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TeamDTO"
+          },
+          "x-go-name": "Teams"
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TotalCount"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "SearchUserQueryResult": {
       "type": "object",
       "properties": {
@@ -8098,6 +9008,57 @@
         },
         "permission": {
           "$ref": "#/definitions/PermissionType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "TeamMemberDTO": {
+      "type": "object",
+      "properties": {
+        "auth_module": {
+          "type": "string",
+          "x-go-name": "AuthModule"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "x-go-name": "AvatarUrl"
+        },
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "login": {
+          "type": "string",
+          "x-go-name": "Login"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgId"
+        },
+        "permission": {
+          "$ref": "#/definitions/PermissionType"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TeamId"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UserId"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -8545,6 +9506,31 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
     },
+    "UpdateTeamCommand": {
+      "type": "object",
+      "properties": {
+        "Email": {
+          "type": "string"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Name": {
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "UpdateTeamMemberCommand": {
+      "type": "object",
+      "properties": {
+        "permission": {
+          "$ref": "#/definitions/PermissionType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "UpdateUserCommand": {
       "type": "object",
       "properties": {
@@ -8987,6 +9973,23 @@
         }
       }
     },
+    "createTeamResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          },
+          "teamId": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamId"
+          }
+        }
+      }
+    },
     "createUserResponse": {
       "description": "",
       "schema": {
@@ -9397,6 +10400,21 @@
         "$ref": "#/definitions/AdminStats"
       }
     },
+    "getTeamMembersResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/TeamMemberDTO"
+        }
+      }
+    },
+    "getTeamResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/TeamDTO"
+      }
+    },
     "getUserOrgListResponse": {
       "description": "",
       "schema": {
@@ -9406,18 +10424,29 @@
         }
       }
     },
-    "getUserPreferencesResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/Prefs"
-      }
-    },
     "getUserTeamsResponse": {
       "description": "",
       "schema": {
         "type": "array",
         "items": {
           "$ref": "#/definitions/TeamDTO"
+        }
+      }
+    },
+    "helpFlagResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "helpFlags1": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "HelpFlags1"
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
         }
       }
     },
@@ -9632,6 +10661,12 @@
         }
       }
     },
+    "searchTeamsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SearchTeamQueryResult"
+      }
+    },
     "searchUsersResponse": {
       "description": "",
       "schema": {
@@ -9730,6 +10765,10 @@
     {
       "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
       "name": "org"
+    },
+    {
+      "description": "This API can be used to create/update/delete Teams and to add/remove users to Teams. All actions require that the user has the Admin role for the organization.",
+      "name": "teams"
     }
   ]
 }

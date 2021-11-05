@@ -125,6 +125,7 @@ type SearchUsersWithPagingParams struct {
 // swagger:parameters setPassword setPermissions deleteUser getAuthTokens logoutUser revokeAuthToken
 // swagger:parameters syncLDAPUser disableUser enableUser getUserQuota updateUserQuota
 // swagger:parameters updateOrgUser deleteOrgUser adminUpdateOrgUser adminDeleteOrgUser
+// swagger:parameters updateTeamMember removeTeamMember
 type UserIDParam struct {
 	// in:path
 	// required:true
@@ -139,7 +140,7 @@ type GetUserByLoginOrEmailParam struct {
 	LoginOrEmail string `json:"loginOrEmail"`
 }
 
-// swagger:parameters updateUser
+// swagger:parameters updateUser updateSignedInUser
 type UpdateUserParam struct {
 	// To change the email, name, login, theme, provide another one.
 	// in:body

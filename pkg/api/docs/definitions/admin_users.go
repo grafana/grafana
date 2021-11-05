@@ -189,7 +189,7 @@ type SetPasswordParam struct {
 	Body dtos.AdminUpdateUserPasswordForm `json:"body"`
 }
 
-// swagger:parameters revokeAuthToken
+// swagger:parameters revokeAuthToken revokeSignedINAuthTokenCmd
 type RevokeAuthTokenParam struct {
 	// in:body
 	// required:true
