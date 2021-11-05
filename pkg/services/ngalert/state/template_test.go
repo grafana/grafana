@@ -355,11 +355,19 @@ func TestExpandTemplate(t *testing.T) {
 		text:     "{{ query \"metric{instance='a'}\" | first | label \"instance\" }}",
 		expected: "",
 	}, {
-		name:     "check that graphLink returns an empty string",
+		name:     "graphLink",
+		text:     `{{ graphLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`,
+		expected: `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true}]`,
+	}, {
+		name:     "check that graphLink returns an empty string when the query is not formatted correctly",
 		text:     "{{ graphLink \"up\" }}",
 		expected: "",
 	}, {
-		name:     "check that tableLink returns an empty string",
+		name:     "tableLink",
+		text:     `{{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`,
+		expected: `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false}]`,
+	}, {
+		name:     "check that tableLink returns an empty string  when the query is not formatted correctly",
 		text:     "{{ tableLink \"up\" }}",
 		expected: "",
 	}, {

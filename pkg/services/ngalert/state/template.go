@@ -2,6 +2,8 @@ package state
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"math"
 	"net/url"
 	"strconv"
@@ -56,14 +58,11 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 	)
 
 	expander.Funcs(text_template.FuncMap{
-		// These three functions are no-ops for now.
+		"graphLink": buildExploreLink(true, false),
+		"tableLink": buildExploreLink(false, true),
+
+		// This function is a no-op for now.
 		"strvalue": func(value templateCaptureValue) string {
-			return ""
-		},
-		"graphLink": func() string {
-			return ""
-		},
-		"tableLink": func() string {
 			return ""
 		},
 	})
@@ -86,4 +85,21 @@ func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[str
 		}
 	}
 	return m
+}
+
+func buildExploreLink(showGraph, showTable bool) func(string) string {
+	return func(rawQuery string) string {
+		var query struct {
+			Datasource string `json:"datasource"`
+			Expr       string `json:"expr"`
+		}
+
+		if err := json.Unmarshal([]byte(rawQuery), &query); err != nil {
+			return ""
+		}
+
+		escapedExpression := url.QueryEscape(query.Expr)
+		return fmt.Sprintf(
+			`/explore?left=["now-1h","now",%q,{"datasource":%q,"expr":%q,"instant":%v,"range":%v}]`, query.Datasource, query.Datasource, escapedExpression, showTable, showGraph)
+	}
 }
