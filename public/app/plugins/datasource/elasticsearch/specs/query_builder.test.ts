@@ -841,5 +841,44 @@ describe('ElasticQueryBuilder', () => {
 
       expect(serialDiff.lag).toBe(1);
     });
+
+    describe('date_histogram', () => {
+      describe('field property', () => {
+        it('should use timeField from datasource when not specified', () => {
+          const query = builder.build({
+            refId: 'A',
+            metrics: [{ type: 'count', id: '1' }],
+            timeField: '@timestamp',
+            bucketAggs: [
+              {
+                type: 'date_histogram',
+                id: '2',
+                settings: { min_doc_count: '1' },
+              },
+            ],
+          });
+
+          expect(query.aggs['2'].date_histogram.field).toBe('@timestamp');
+        });
+
+        it('should use field from bucket agg when specified', () => {
+          const query = builder.build({
+            refId: 'A',
+            metrics: [{ type: 'count', id: '1' }],
+            timeField: '@timestamp',
+            bucketAggs: [
+              {
+                type: 'date_histogram',
+                id: '2',
+                field: '@time',
+                settings: { min_doc_count: '1' },
+              },
+            ],
+          });
+
+          expect(query.aggs['2'].date_histogram.field).toBe('@time');
+        });
+      });
+    });
   });
 });
