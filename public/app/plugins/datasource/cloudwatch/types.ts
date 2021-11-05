@@ -1,4 +1,4 @@
-import { DataQuery, SelectableValue } from '@grafana/data';
+import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
 
 export interface CloudWatchMetricsQuery extends DataQuery {
@@ -314,7 +314,7 @@ export interface MetricRequest {
 
 export interface MetricQuery {
   [key: string]: any;
-  datasourceId: number;
+  datasource: DataSourceRef;
   refId?: string;
   maxDataPoints?: number;
   intervalMs?: number;
