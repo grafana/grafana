@@ -263,92 +263,99 @@ func resetOrgUsersDefaultHandlers(t *testing.T) {
 
 func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	var err error
-	// Use real accesscontrol service
-	sc := setupHTTPServer(t, false, true)
-	resetOrgUsersDefaultHandlers(t)
-	setupOrgUsersDBForAccessControlTests(t, *sc.db)
-
 	url := "/api/orgs/%v/users/"
-	t.Run("server admin can get users in his org", func(t *testing.T) {
-		setSignedInUser(sc.initCtx, testServerAdminViewer)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, testServerAdminViewer.OrgId), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+	type testCase struct {
+		name                string
+		enableAccessControl bool
+		expectedCode        int
+		expectedUserCount   int
+		user                models.SignedInUser
+		targetOrg           int64
+	}
 
-		var userList []*models.OrgUserDTO
-		err = json.NewDecoder(response.Body).Decode(&userList)
-		require.NoError(t, err)
+	tests := []testCase{
+		{
+			name:                "server admin can get users in his org (legacy)",
+			enableAccessControl: false,
+			expectedCode:        http.StatusOK,
+			expectedUserCount:   2,
+			user:                testServerAdminViewer,
+			targetOrg:           testServerAdminViewer.OrgId,
+		},
+		{
+			name:                "server admin can get users in another org (legacy)",
+			enableAccessControl: false,
+			expectedCode:        http.StatusOK,
+			expectedUserCount:   2,
+			user:                testServerAdminViewer,
+			targetOrg:           2,
+		},
+		{
+			name:                "org admin cannot get users in his org (legacy)",
+			enableAccessControl: false,
+			expectedCode:        http.StatusForbidden,
+			user:                testAdminOrg2,
+			targetOrg:           testAdminOrg2.OrgId,
+		},
+		{
+			name:                "org admin cannot get users from another org (legacy)",
+			enableAccessControl: false,
+			expectedCode:        http.StatusForbidden,
+			user:                testAdminOrg2,
+			targetOrg:           1,
+		},
+		{
+			name:                "server admin can get users in his org",
+			enableAccessControl: true,
+			expectedCode:        http.StatusOK,
+			expectedUserCount:   2,
+			user:                testServerAdminViewer,
+			targetOrg:           testServerAdminViewer.OrgId,
+		},
+		{
+			name:                "server admin can get users in another org",
+			enableAccessControl: true,
+			expectedCode:        http.StatusOK,
+			expectedUserCount:   2,
+			user:                testServerAdminViewer,
+			targetOrg:           2,
+		},
+		{
+			name:                "org admin can get users in his org",
+			enableAccessControl: true,
+			expectedCode:        http.StatusOK,
+			expectedUserCount:   2,
+			user:                testAdminOrg2,
+			targetOrg:           testAdminOrg2.OrgId,
+		},
+		{
+			name:                "org admin cannot get users from another org",
+			enableAccessControl: true,
+			expectedCode:        http.StatusForbidden,
+			user:                testAdminOrg2,
+			targetOrg:           1,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			sc := setupHTTPServer(t, false, tc.enableAccessControl)
+			resetOrgUsersDefaultHandlers(t)
+			setupOrgUsersDBForAccessControlTests(t, *sc.db)
+			setSignedInUser(sc.initCtx, tc.user)
 
-		assert.Len(t, userList, 2)
-	})
-	t.Run("server admin can get users in another org", func(t *testing.T) {
-		setSignedInUser(sc.initCtx, testServerAdminViewer)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, 2), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+			// Perform test
+			response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, tc.targetOrg), nil, t)
+			require.Equal(t, tc.expectedCode, response.Code)
 
-		var userList []*models.OrgUserDTO
-		err = json.NewDecoder(response.Body).Decode(&userList)
-		require.NoError(t, err)
+			if tc.expectedCode != http.StatusForbidden {
+				var userList []*models.OrgUserDTO
+				err = json.NewDecoder(response.Body).Decode(&userList)
+				require.NoError(t, err)
 
-		assert.Len(t, userList, 2)
-	})
-	t.Run("org admin can get users in his org", func(t *testing.T) {
-		setSignedInUser(sc.initCtx, testAdminOrg2)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, testAdminOrg2.OrgId), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		var userList []*models.OrgUserDTO
-		err = json.NewDecoder(response.Body).Decode(&userList)
-		require.NoError(t, err)
-
-		assert.Len(t, userList, 2)
-	})
-	t.Run("org admin cannot get users from another org", func(t *testing.T) {
-		setSignedInUser(sc.initCtx, testAdminOrg2)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, 1), nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-}
-
-func TestGetOrgUsersAPIEndpoint_LegacyAccessControl(t *testing.T) {
-	var err error
-	// Use legacy accesscontrol
-	sc := setupHTTPServer(t, false, false)
-	resetOrgUsersDefaultHandlers(t)
-	setupOrgUsersDBForAccessControlTests(t, *sc.db)
-
-	url := "/api/orgs/%v/users/"
-	t.Run("server admin can get users in his org", func(t *testing.T) {
-		setSignedInUser(sc.initCtx, testServerAdminViewer)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, testServerAdminViewer.OrgId), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		var userList []*models.OrgUserDTO
-		err = json.NewDecoder(response.Body).Decode(&userList)
-		require.NoError(t, err)
-
-		assert.Len(t, userList, 2)
-	})
-	t.Run("server admin can get users in another org", func(t *testing.T) {
-		setSignedInUser(sc.initCtx, testServerAdminViewer)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, 2), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		var userList []*models.OrgUserDTO
-		err = json.NewDecoder(response.Body).Decode(&userList)
-		require.NoError(t, err)
-
-		assert.Len(t, userList, 2)
-	})
-	t.Run("org admin cannot get users in his org", func(t *testing.T) {
-		setSignedInUser(sc.initCtx, testAdminOrg2)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, testAdminOrg2.OrgId), nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-	t.Run("org admin cannot get users from another org", func(t *testing.T) {
-		setSignedInUser(sc.initCtx, testAdminOrg2)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, 1), nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
+				assert.Len(t, userList, tc.expectedUserCount)
+			}
+		})
+	}
 }
 
 func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
