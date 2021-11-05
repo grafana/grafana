@@ -38,7 +38,7 @@ func init() {
 			},
 			{
 				Label:        "Basic Authentication?",
-				Element:      alerting.ElementTypeCheckBox,
+				Element:      alerting.ElementTypeCheckbox,
 				PropertyName: "basicAuth",
 				Required:     false,
 			},
