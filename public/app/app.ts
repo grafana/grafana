@@ -74,54 +74,59 @@ export class GrafanaApp {
     this.angularApp = new AngularApp();
   }
 
-  init() {
-    initEchoSrv();
-    addClassIfNoOverlayScrollbar();
-    setLocale(config.bootData.user.locale);
-    setWeekStart(config.bootData.user.weekStart);
-    setPanelRenderer(PanelRenderer);
-    setTimeZoneResolver(() => config.bootData.user.timezone);
-    // Important that extensions are initialized before store
-    initExtensions();
-    configureStore();
+  async init() {
+    try {
+      initEchoSrv();
+      addClassIfNoOverlayScrollbar();
+      setLocale(config.bootData.user.locale);
+      setWeekStart(config.bootData.user.weekStart);
+      setPanelRenderer(PanelRenderer);
+      setTimeZoneResolver(() => config.bootData.user.timezone);
+      // Important that extensions are initialized before store
+      initExtensions();
+      configureStore();
 
-    standardEditorsRegistry.setInit(getAllOptionEditors);
-    standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
-    standardTransformersRegistry.setInit(getStandardTransformers);
-    variableAdapters.setInit(getDefaultVariableAdapters);
-    monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
+      standardEditorsRegistry.setInit(getAllOptionEditors);
+      standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+      standardTransformersRegistry.setInit(getStandardTransformers);
+      variableAdapters.setInit(getDefaultVariableAdapters);
+      monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
 
-    setQueryRunnerFactory(() => new QueryRunner());
-    setVariableQueryRunner(new VariableQueryRunner());
+      setQueryRunnerFactory(() => new QueryRunner());
+      setVariableQueryRunner(new VariableQueryRunner());
 
-    locationUtil.initialize({
-      config,
-      getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
-      getVariablesUrlParams: getVariablesUrlParams,
-    });
+      locationUtil.initialize({
+        config,
+        getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
+        getVariablesUrlParams: getVariablesUrlParams,
+      });
 
-    // intercept anchor clicks and forward it to custom history instead of relying on browser's history
-    document.addEventListener('click', interceptLinkClicks);
+      // intercept anchor clicks and forward it to custom history instead of relying on browser's history
+      document.addEventListener('click', interceptLinkClicks);
 
-    // disable tool tip animation
-    $.fn.tooltip.defaults.animation = false;
+      // disable tool tip animation
+      $.fn.tooltip.defaults.animation = false;
 
-    this.angularApp.init();
+      this.angularApp.init();
 
-    // Preload selected app plugins
-    const promises = [];
-    for (const modulePath of config.pluginsToPreload) {
-      promises.push(importPluginModule(modulePath));
-    }
+      // Preload selected app plugins
+      const promises: Array<Promise<any>> = [];
+      for (const modulePath of config.pluginsToPreload) {
+        promises.push(importPluginModule(modulePath));
+      }
 
-    Promise.all(promises).then(() => {
+      await Promise.all(promises);
+
       ReactDOM.render(
         React.createElement(AppWrapper, {
           app: this,
         }),
         document.getElementById('reactRoot')
       );
-    });
+    } catch (error: any) {
+      console.error('Failed to start Grafana', error);
+      window.__grafana_load_failed();
+    }
   }
 }
 
