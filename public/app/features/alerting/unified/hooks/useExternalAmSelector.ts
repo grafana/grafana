@@ -1,42 +1,56 @@
 import { useSelector } from 'react-redux';
 import { StoreState } from '../../../../types';
 
-export function useExternalAmSelector(): Array<{ url: string; status: string }> {
-  const activeAlertmanagers = useSelector(
-    (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.activeAlertmanagers.result?.data
+const SUFFIX_REGEX = /\/api\/v[1|2]\/alerts/i;
+type AlertmanagerConfig = { url: string; status: string; actualUrl: string };
+
+export function useExternalAmSelector(): AlertmanagerConfig[] | undefined {
+  const discoveredAlertmanagers = useSelector(
+    (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result?.data
   );
   const alertmanagerConfig = useSelector(
     (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagers
   );
 
-  if (!activeAlertmanagers || !alertmanagerConfig) {
-    return [{ url: '', status: '' }];
+  if (!discoveredAlertmanagers || !alertmanagerConfig) {
+    return [];
   }
 
-  const enabledAlertmanagers: Array<{ url: string; status: string }> = [];
-  const droppedAlertmanagers: Array<{ url: string; status: string }> = activeAlertmanagers?.droppedAlertManagers.map(
-    (am) => ({
-      url: am.url,
-      status: 'dropped',
-    })
-  );
+  const enabledAlertmanagers: AlertmanagerConfig[] = [];
+  const droppedAlertmanagers: AlertmanagerConfig[] = discoveredAlertmanagers?.droppedAlertManagers.map((am) => ({
+    url: am.url.replace(SUFFIX_REGEX, ''),
+    status: 'dropped',
+    actualUrl: am.url,
+  }));
 
-  // const enabledAlertmanagers = activeAlertmanagers.activeAlertManagers.map((alertmanager) => {
-  //   alertmanagerConfig.find((url) => alertmanager.url === `${url}/api/v2/alerts`);
-  //   for (const url in alertmanagerConfig) {
-  //     if (alertmanager.url === `${url}/api/v2/alerts`) {
-  //       return {
-  //         url: alertmanager.url,
-  //         status: 'active',
-  //       };
-  //     } else {
-  //       return {
-  //         url: `${url}/api/v2/alerts`,
-  //         status: 'pending',
-  //       };
-  //     }
-  //   }
-  // });
+  for (const url of alertmanagerConfig) {
+    if (discoveredAlertmanagers.activeAlertManagers.length === 0) {
+      enabledAlertmanagers.push({
+        url: url,
+        status: 'pending',
+        actualUrl: '',
+      });
+    } else {
+      let found = false;
+      for (const activeAM of discoveredAlertmanagers.activeAlertManagers) {
+        if (activeAM.url === `${url}/api/v2/alerts`) {
+          found = true;
+          enabledAlertmanagers.push({
+            url: activeAM.url.replace(SUFFIX_REGEX, ''),
+            status: 'active',
+            actualUrl: activeAM.url,
+          });
+        }
+      }
+      if (!found) {
+        enabledAlertmanagers.push({
+          url: url,
+          status: 'pending',
+          actualUrl: '',
+        });
+      }
+    }
+  }
 
   return [...enabledAlertmanagers, ...droppedAlertmanagers];
 }

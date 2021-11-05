@@ -1,4 +1,3 @@
-// Package manager contains plugin manager logic.
 package manager
 
 import (
@@ -6,740 +5,508 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
-	"reflect"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
-)
-
-var (
-	plog         log.Logger
-	installerLog = NewInstallerLogger("plugin.installer", true)
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
 	grafanaComURL = "https://grafana.com/api/plugins"
 )
 
-type unsignedPluginConditionFunc = func(plugin *plugins.PluginBase) bool
-
-type PluginScanner struct {
-	pluginPath                    string
-	errors                        []error
-	backendPluginManager          backendplugin.Manager
-	cfg                           *setting.Cfg
-	requireSigned                 bool
-	log                           log.Logger
-	plugins                       map[string]*plugins.PluginBase
-	allowUnsignedPluginsCondition unsignedPluginConditionFunc
-}
+var _ plugins.Client = (*PluginManager)(nil)
+var _ plugins.Store = (*PluginManager)(nil)
+var _ plugins.PluginDashboardManager = (*PluginManager)(nil)
+var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
+var _ plugins.CoreBackendRegistrar = (*PluginManager)(nil)
+var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
-	BackendPluginManager backendplugin.Manager
-	Cfg                  *setting.Cfg
-	SQLStore             *sqlstore.SQLStore
-	pluginInstaller      plugins.PluginInstaller
-	log                  log.Logger
-	scanningErrors       []error
-
-	// AllowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only runs when plugins are starting
-	// and running plugins will not be terminated if they violate the new policy.
-	AllowUnsignedPluginsCondition unsignedPluginConditionFunc
-	grafanaLatestVersion          string
-	grafanaHasUpdate              bool
-	pluginScanningErrors          map[string]plugins.PluginError
-
-	renderer     *plugins.RendererPlugin
-	dataSources  map[string]*plugins.DataSourcePlugin
-	plugins      map[string]*plugins.PluginBase
-	panels       map[string]*plugins.PanelPlugin
-	apps         map[string]*plugins.AppPlugin
-	staticRoutes []*plugins.PluginStaticRoute
-	pluginsMu    sync.RWMutex
+	cfg              *setting.Cfg
+	requestValidator models.PluginRequestValidator
+	sqlStore         *sqlstore.SQLStore
+	plugins          map[string]*plugins.Plugin
+	pluginInstaller  plugins.Installer
+	pluginLoader     plugins.Loader
+	pluginsMu        sync.RWMutex
+	log              log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) (*PluginManager, error) {
-	pm := newManager(cfg, sqlStore, backendPM)
+func ProvideService(cfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
+	sqlStore *sqlstore.SQLStore) (*PluginManager, error) {
+	pm := newManager(cfg, requestValidator, pluginLoader, sqlStore)
 	if err := pm.init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) *PluginManager {
+func newManager(cfg *setting.Cfg, pluginRequestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
+	sqlStore *sqlstore.SQLStore) *PluginManager {
 	return &PluginManager{
-		Cfg:                  cfg,
-		SQLStore:             sqlStore,
-		BackendPluginManager: backendPM,
-		dataSources:          map[string]*plugins.DataSourcePlugin{},
-		plugins:              map[string]*plugins.PluginBase{},
-		panels:               map[string]*plugins.PanelPlugin{},
-		apps:                 map[string]*plugins.AppPlugin{},
-		pluginScanningErrors: map[string]plugins.PluginError{},
-		log:                  log.New("plugins"),
+		cfg:              cfg,
+		requestValidator: pluginRequestValidator,
+		sqlStore:         sqlStore,
+		pluginLoader:     pluginLoader,
+		plugins:          map[string]*plugins.Plugin{},
+		log:              log.New("plugin.manager"),
+		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
 }
 
-func (pm *PluginManager) init() error {
-	plog = log.New("plugins")
-	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
-
-	pm.log.Info("Starting plugin search")
-
-	plugDir := filepath.Join(pm.Cfg.StaticRootPath, "app/plugins")
-	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
-	if err := pm.scan(plugDir, false); err != nil {
-		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
-	}
-
-	plugDir = pm.Cfg.BundledPluginsPath
-	pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)
-	exists, err := fs.Exists(plugDir)
-	if err != nil {
-		return err
-	}
-	if exists {
-		if err := pm.scan(plugDir, false); err != nil {
-			return errutil.Wrapf(err, "failed to scan bundled plugins directory '%s'", plugDir)
-		}
-	}
-
-	return pm.initExternalPlugins()
-}
-
-func (pm *PluginManager) initExternalPlugins() error {
-	// check if plugins dir exists
-	exists, err := fs.Exists(pm.Cfg.PluginsPath)
+func (m *PluginManager) init() error {
+	// create external plugin's path if not exists
+	exists, err := fs.Exists(m.cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		if err = os.MkdirAll(pm.Cfg.PluginsPath, os.ModePerm); err != nil {
-			pm.log.Error("failed to create external plugins directory", "dir", pm.Cfg.PluginsPath, "error", err)
+		if err = os.MkdirAll(m.cfg.PluginsPath, os.ModePerm); err != nil {
+			m.log.Error("Failed to create external plugins directory", "dir", m.cfg.PluginsPath, "error", err)
 		} else {
-			pm.log.Info("External plugins directory created", "directory", pm.Cfg.PluginsPath)
-		}
-	} else {
-		pm.log.Debug("Scanning external plugins directory", "dir", pm.Cfg.PluginsPath)
-		if err := pm.scan(pm.Cfg.PluginsPath, true); err != nil {
-			return errutil.Wrapf(err, "failed to scan external plugins directory '%s'",
-				pm.Cfg.PluginsPath)
+			m.log.Debug("External plugins directory created", "dir", m.cfg.PluginsPath)
 		}
 	}
 
-	if err := pm.scanPluginPaths(); err != nil {
+	m.log.Info("Initialising plugins")
+
+	// install Core plugins
+	err = m.loadPlugins(m.corePluginPaths()...)
+	if err != nil {
 		return err
 	}
 
-	var staticRoutesList []*plugins.PluginStaticRoute
-	for _, panel := range pm.Panels() {
-		staticRoutes := panel.InitFrontendPlugin(pm.Cfg)
-		staticRoutesList = append(staticRoutesList, staticRoutes...)
+	// install Bundled plugins
+	err = m.loadPlugins(m.cfg.BundledPluginsPath)
+	if err != nil {
+		return err
 	}
 
-	for _, ds := range pm.DataSources() {
-		staticRoutes := ds.InitFrontendPlugin(pm.Cfg)
-		staticRoutesList = append(staticRoutesList, staticRoutes...)
+	// install External plugins
+	err = m.loadPlugins(m.cfg.PluginsPath)
+	if err != nil {
+		return err
 	}
 
-	for _, app := range pm.Apps() {
-		staticRoutes := app.InitApp(pm.panels, pm.dataSources, pm.Cfg)
-		staticRoutesList = append(staticRoutesList, staticRoutes...)
-	}
-
-	if pm.Renderer() != nil {
-		staticRoutes := pm.renderer.InitFrontendPlugin(pm.Cfg)
-		staticRoutesList = append(staticRoutesList, staticRoutes...)
-	}
-	pm.staticRoutes = staticRoutesList
-
-	for _, p := range pm.Plugins() {
-		if p.IsCorePlugin {
-			p.Signature = plugins.PluginSignatureInternal
-		} else {
-			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version, string(p.Signature))
-		}
+	// install plugins from cfg.PluginSettings
+	err = m.loadPlugins(m.pluginSettingPaths()...)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (pm *PluginManager) Run(ctx context.Context) error {
-	pm.checkForUpdates()
+func (m *PluginManager) Run(ctx context.Context) error {
+	if m.cfg.CheckForUpdates {
+		go func() {
+			m.checkForUpdates()
 
-	ticker := time.NewTicker(time.Minute * 10)
-	run := true
+			ticker := time.NewTicker(time.Minute * 10)
+			run := true
 
-	for run {
-		select {
-		case <-ticker.C:
-			pm.checkForUpdates()
-		case <-ctx.Done():
-			run = false
-		}
+			for run {
+				select {
+				case <-ticker.C:
+					m.checkForUpdates()
+				case <-ctx.Done():
+					run = false
+				}
+			}
+		}()
 	}
 
+	<-ctx.Done()
+	m.stop(ctx)
 	return ctx.Err()
 }
 
-func (pm *PluginManager) Renderer() *plugins.RendererPlugin {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	return pm.renderer
-}
-
-func (pm *PluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	return pm.dataSources[id]
-}
-
-func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	var rslt []*plugins.DataSourcePlugin
-	for _, ds := range pm.dataSources {
-		rslt = append(rslt, ds)
+func (m *PluginManager) loadPlugins(paths ...string) error {
+	if len(paths) == 0 {
+		return nil
 	}
 
-	return rslt
-}
-
-func (pm *PluginManager) DataSourceCount() int {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	return len(pm.dataSources)
-}
-
-func (pm *PluginManager) PanelCount() int {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	return len(pm.panels)
-}
-
-func (pm *PluginManager) AppCount() int {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	return len(pm.apps)
-}
-
-func (pm *PluginManager) Plugins() []*plugins.PluginBase {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	var rslt []*plugins.PluginBase
-	for _, p := range pm.plugins {
-		rslt = append(rslt, p)
-	}
-
-	return rslt
-}
-
-func (pm *PluginManager) Apps() []*plugins.AppPlugin {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	var rslt []*plugins.AppPlugin
-	for _, p := range pm.apps {
-		rslt = append(rslt, p)
-	}
-
-	return rslt
-}
-
-func (pm *PluginManager) Panels() []*plugins.PanelPlugin {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	var rslt []*plugins.PanelPlugin
-	for _, p := range pm.panels {
-		rslt = append(rslt, p)
-	}
-
-	return rslt
-}
-
-func (pm *PluginManager) GetPlugin(id string) *plugins.PluginBase {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	return pm.plugins[id]
-}
-
-func (pm *PluginManager) GetApp(id string) *plugins.AppPlugin {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	return pm.apps[id]
-}
-
-func (pm *PluginManager) GrafanaLatestVersion() string {
-	return pm.grafanaLatestVersion
-}
-
-func (pm *PluginManager) GrafanaHasUpdate() bool {
-	return pm.grafanaHasUpdate
-}
-
-// scanPluginPaths scans configured plugin paths.
-func (pm *PluginManager) scanPluginPaths() error {
-	for pluginID, settings := range pm.Cfg.PluginSettings {
-		path, exists := settings["path"]
-		if !exists || path == "" {
-			continue
+	var pluginPaths []string
+	for _, p := range paths {
+		if p != "" {
+			pluginPaths = append(pluginPaths, p)
 		}
+	}
 
-		if err := pm.scan(path, true); err != nil {
-			return errutil.Wrapf(err, "failed to scan directory configured for plugin '%s': '%s'", pluginID, path)
+	loadedPlugins, err := m.pluginLoader.Load(pluginPaths, m.registeredPlugins())
+	if err != nil {
+		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
+		return err
+	}
+
+	for _, p := range loadedPlugins {
+		if err := m.registerAndStart(context.Background(), p); err != nil {
+			m.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
 		}
 	}
 
 	return nil
 }
 
-// scan a directory for plugins.
-func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
-	scanner := &PluginScanner{
-		pluginPath:                    pluginDir,
-		backendPluginManager:          pm.BackendPluginManager,
-		cfg:                           pm.Cfg,
-		requireSigned:                 requireSigned,
-		log:                           pm.log,
-		plugins:                       map[string]*plugins.PluginBase{},
-		allowUnsignedPluginsCondition: pm.AllowUnsignedPluginsCondition,
-	}
-
-	// 1st pass: Scan plugins, also mapping plugins to their respective directories
-	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			pm.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", pluginDir, "err", err)
-			return nil
-		}
-		if errors.Is(err, os.ErrPermission) {
-			pm.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", pluginDir, "err", err)
-			return nil
-		}
-		if pluginDir != "data/plugins" {
-			pm.log.Warn("Could not scan dir", "pluginDir", pluginDir, "err", err)
-		}
-		return err
-	}
-
-	pm.log.Debug("Initial plugin loading done")
-
+func (m *PluginManager) registeredPlugins() map[string]struct{} {
 	pluginsByID := make(map[string]struct{})
-	for scannedPluginPath, scannedPlugin := range scanner.plugins {
-		// Check if scanning found duplicate plugins
-		if _, dupe := pluginsByID[scannedPlugin.Id]; dupe {
-			pm.log.Warn("Skipping plugin as it's a duplicate", "id", scannedPlugin.Id)
-			scanner.errors = append(scanner.errors,
-				plugins.DuplicatePluginError{PluginID: scannedPlugin.Id, ExistingPluginDir: scannedPlugin.PluginDir})
-			delete(scanner.plugins, scannedPluginPath)
-			continue
-		}
-		pluginsByID[scannedPlugin.Id] = struct{}{}
 
-		// Check if scanning found plugins that are already installed
-		if existing := pm.GetPlugin(scannedPlugin.Id); existing != nil {
-			pm.log.Debug("Skipping plugin as it's already installed", "plugin", existing.Id, "version", existing.Info.Version)
-			delete(scanner.plugins, scannedPluginPath)
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+	for _, p := range m.plugins {
+		pluginsByID[p.ID] = struct{}{}
+	}
+
+	return pluginsByID
+}
+
+func (m *PluginManager) Plugin(pluginID string) *plugins.Plugin {
+	m.pluginsMu.RLock()
+	p, ok := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+
+	if ok && (p.IsDecommissioned()) {
+		return nil
+	}
+
+	return p
+}
+
+func (m *PluginManager) Plugins(pluginTypes ...plugins.Type) []*plugins.Plugin {
+	// if no types passed, assume all
+	if len(pluginTypes) == 0 {
+		pluginTypes = plugins.PluginTypes
+	}
+
+	var requestedTypes = make(map[plugins.Type]struct{})
+	for _, pt := range pluginTypes {
+		requestedTypes[pt] = struct{}{}
+	}
+
+	m.pluginsMu.RLock()
+	var pluginsList []*plugins.Plugin
+	for _, p := range m.plugins {
+		if _, exists := requestedTypes[p.Type]; exists {
+			pluginsList = append(pluginsList, p)
+		}
+	}
+	m.pluginsMu.RUnlock()
+	return pluginsList
+}
+
+func (m *PluginManager) Renderer() *plugins.Plugin {
+	for _, p := range m.plugins {
+		if p.IsRenderer() {
+			return p
 		}
 	}
 
-	pluginTypes := map[string]interface{}{
-		"panel":      plugins.PanelPlugin{},
-		"datasource": plugins.DataSourcePlugin{},
-		"app":        plugins.AppPlugin{},
-		"renderer":   plugins.RendererPlugin{},
+	return nil
+}
+
+func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	plugin := m.Plugin(req.PluginContext.PluginID)
+	if plugin == nil {
+		return &backend.QueryDataResponse{}, nil
 	}
 
-	// 2nd pass: Validate and register plugins
-	for dpath, plugin := range scanner.plugins {
-		// Try to find any root plugin
-		ancestors := strings.Split(dpath, string(filepath.Separator))
-		ancestors = ancestors[0 : len(ancestors)-1]
-		aPath := ""
-		if runtime.GOOS != "windows" && filepath.IsAbs(dpath) {
-			aPath = "/"
+	var resp *backend.QueryDataResponse
+	err := instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginID, func() (innerErr error) {
+		resp, innerErr = plugin.QueryData(ctx, req)
+		return
+	})
+
+	if err != nil {
+		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+			return nil, err
 		}
-		for _, a := range ancestors {
-			aPath = filepath.Join(aPath, a)
-			if root, ok := scanner.plugins[aPath]; ok {
-				plugin.Root = root
-				break
+
+		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+			return nil, err
+		}
+
+		return nil, errutil.Wrap("failed to query data", err)
+	}
+
+	for refID, res := range resp.Responses {
+		// set frame ref ID based on response ref ID
+		for _, f := range res.Frames {
+			if f.RefID == "" {
+				f.RefID = refID
 			}
 		}
+	}
 
-		pm.log.Debug("Found plugin", "id", plugin.Id, "signature", plugin.Signature, "hasRoot", plugin.Root != nil)
-		signingError := scanner.validateSignature(plugin)
-		if signingError != nil {
-			pm.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.Id,
-				"signature", plugin.Signature, "status", signingError.ErrorCode)
-			pm.pluginScanningErrors[plugin.Id] = *signingError
-			continue
-		}
+	return resp, err
+}
 
-		pm.log.Debug("Attempting to add plugin", "id", plugin.Id)
+func (m *PluginManager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
+	var dsURL string
+	if pCtx.DataSourceInstanceSettings != nil {
+		dsURL = pCtx.DataSourceInstanceSettings.URL
+	}
 
-		pluginGoType, exists := pluginTypes[plugin.Type]
-		if !exists {
-			return fmt.Errorf("unknown plugin type %q", plugin.Type)
-		}
+	err := m.requestValidator.Validate(dsURL, reqCtx.Req)
+	if err != nil {
+		reqCtx.JsonApiErr(http.StatusForbidden, "Access denied", err)
+		return
+	}
 
-		jsonFPath := filepath.Join(plugin.PluginDir, "plugin.json")
+	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
+	rawURL := path
+	if clonedReq.URL.RawQuery != "" {
+		rawURL += "?" + clonedReq.URL.RawQuery
+	}
+	urlPath, err := url.Parse(rawURL)
+	if err != nil {
+		handleCallResourceError(err, reqCtx)
+		return
+	}
+	clonedReq.URL = urlPath
+	err = m.callResourceInternal(reqCtx.Resp, clonedReq, pCtx)
+	if err != nil {
+		handleCallResourceError(err, reqCtx)
+	}
+}
 
-		// External plugins need a module.js file for SystemJS to load
-		if !strings.HasPrefix(jsonFPath, pm.Cfg.StaticRootPath) && !scanner.IsBackendOnlyPlugin(plugin.Type) {
-			module := filepath.Join(plugin.PluginDir, "module.js")
-			exists, err := fs.Exists(module)
-			if err != nil {
-				return err
-			}
-			if !exists {
-				scanner.log.Warn("Plugin missing module.js",
-					"name", plugin.Name,
-					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
-					"path", module)
-			}
-		}
+func (m *PluginManager) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
+	p := m.Plugin(pCtx.PluginID)
+	if p == nil {
+		return backendplugin.ErrPluginNotRegistered
+	}
 
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `jsonFPath` is based
-		// on plugin the folder structure on disk and not user input.
-		reader, err := os.Open(jsonFPath)
+	keepCookieModel := keepCookiesJSONModel{}
+	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
+		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
 		if err != nil {
-			return err
+			p.Logger().Error("Failed to to unpack JSONData in datasource instance settings", "err", err)
 		}
+	}
+
+	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
+	proxyutil.PrepareProxyRequest(req)
+
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read request body: %w", err)
+	}
+
+	crReq := &backend.CallResourceRequest{
+		PluginContext: pCtx,
+		Path:          req.URL.Path,
+		Method:        req.Method,
+		URL:           req.URL.String(),
+		Headers:       req.Header,
+		Body:          body,
+	}
+
+	return instrumentation.InstrumentCallResourceRequest(p.PluginID(), func() error {
+		childCtx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		stream := newCallResourceResponseStream(childCtx)
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+
 		defer func() {
-			if err := reader.Close(); err != nil {
-				scanner.log.Warn("Failed to close JSON file", "path", jsonFPath, "err", err)
+			if err := stream.Close(); err != nil {
+				m.log.Warn("Failed to close stream", "err", err)
 			}
+			wg.Wait()
 		}()
 
-		jsonParser := json.NewDecoder(reader)
+		var flushStreamErr error
+		go func() {
+			flushStreamErr = flushStream(p, stream, w)
+			wg.Done()
+		}()
 
-		loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(plugins.PluginLoader)
-
-		// Load the full plugin, and add it to manager
-		if err := pm.loadPlugin(jsonParser, plugin, scanner, loader); err != nil {
+		if err := p.CallResource(req.Context(), crReq, stream); err != nil {
 			return err
 		}
-	}
 
-	if len(scanner.errors) > 0 {
-		var errStr []string
-		for _, err := range scanner.errors {
-			errStr = append(errStr, err.Error())
-		}
-		pm.log.Warn("Some plugin scanning errors were found", "errors", strings.Join(errStr, ", "))
-		pm.scanningErrors = scanner.errors
-	}
-
-	return nil
+		return flushStreamErr
+	})
 }
 
-func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugins.PluginBase,
-	scanner *PluginScanner, loader plugins.PluginLoader) error {
-	plug, err := loader.Load(jsonParser, pluginBase, scanner.backendPluginManager)
-	if err != nil {
-		return err
+func handleCallResourceError(err error, reqCtx *models.ReqContext) {
+	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+		reqCtx.JsonApiErr(503, "Plugin unavailable", err)
+		return
 	}
 
-	pm.pluginsMu.Lock()
-	defer pm.pluginsMu.Unlock()
-
-	var pb *plugins.PluginBase
-	switch p := plug.(type) {
-	case *plugins.DataSourcePlugin:
-		pm.dataSources[p.Id] = p
-		pb = &p.PluginBase
-	case *plugins.PanelPlugin:
-		pm.panels[p.Id] = p
-		pb = &p.PluginBase
-	case *plugins.RendererPlugin:
-		pm.renderer = p
-		pb = &p.PluginBase
-	case *plugins.AppPlugin:
-		pm.apps[p.Id] = p
-		pb = &p.PluginBase
-	default:
-		panic(fmt.Sprintf("Unrecognized plugin type %T", plug))
+	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+		reqCtx.JsonApiErr(404, "Not found", err)
+		return
 	}
 
-	if !strings.HasPrefix(pluginBase.PluginDir, pm.Cfg.StaticRootPath) {
-		pm.log.Info("Registering plugin", "id", pb.Id)
-	}
-
-	if len(pb.Dependencies.Plugins) == 0 {
-		pb.Dependencies.Plugins = []plugins.PluginDependencyItem{}
-	}
-
-	if pb.Dependencies.GrafanaVersion == "" {
-		pb.Dependencies.GrafanaVersion = "*"
-	}
-
-	for _, include := range pb.Includes {
-		if include.Role == "" {
-			include.Role = models.ROLE_VIEWER
-		}
-	}
-
-	// Copy relevant fields from the base
-	pb.PluginDir = pluginBase.PluginDir
-	pb.Signature = pluginBase.Signature
-	pb.SignatureType = pluginBase.SignatureType
-	pb.SignatureOrg = pluginBase.SignatureOrg
-	pb.SignedFiles = pluginBase.SignedFiles
-
-	pm.plugins[pb.Id] = pb
-	pm.log.Debug("Successfully added plugin", "id", pb.Id)
-	return nil
+	reqCtx.JsonApiErr(500, "Failed to call resource", err)
 }
 
-func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
-	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
-	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
-	// is embedded in worldping app.
-	if err != nil {
-		return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
-	}
+func flushStream(plugin backendplugin.Plugin, stream callResourceClientResponseStream, w http.ResponseWriter) error {
+	processedStreams := 0
 
-	if f.Name() == "node_modules" {
-		return util.ErrWalkSkipDir
-	}
-
-	if f.IsDir() {
-		return nil
-	}
-
-	if f.Name() != "plugin.json" {
-		return nil
-	}
-
-	if err := s.loadPlugin(currentPath); err != nil {
-		s.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
-		s.errors = append(s.errors, err)
-	}
-
-	return nil
-}
-
-func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
-	s.log.Debug("Loading plugin", "path", pluginJSONFilePath)
-	currentDir := filepath.Dir(pluginJSONFilePath)
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `currentPath` is based
-	// on plugin the folder structure on disk and not user input.
-	reader, err := os.Open(pluginJSONFilePath)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := reader.Close(); err != nil {
-			s.log.Warn("Failed to close JSON file", "path", pluginJSONFilePath, "err", err)
-		}
-	}()
-
-	jsonParser := json.NewDecoder(reader)
-	pluginCommon := plugins.PluginBase{}
-	if err := jsonParser.Decode(&pluginCommon); err != nil {
-		return err
-	}
-
-	if pluginCommon.Id == "" || pluginCommon.Type == "" {
-		return errors.New("did not find type or id properties in plugin.json")
-	}
-
-	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
-	signatureState, err := getPluginSignatureState(s.log, &pluginCommon)
-	if err != nil {
-		s.log.Warn("Could not get plugin signature state", "pluginID", pluginCommon.Id, "err", err)
-		return err
-	}
-	pluginCommon.Signature = signatureState.Status
-	pluginCommon.SignatureType = signatureState.Type
-	pluginCommon.SignatureOrg = signatureState.SigningOrg
-	pluginCommon.SignedFiles = signatureState.Files
-
-	s.plugins[currentDir] = &pluginCommon
-
-	return nil
-}
-
-func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
-	return pluginType == "renderer"
-}
-
-// validateSignature validates a plugin's signature.
-func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *plugins.PluginError {
-	if plugin.Signature == plugins.PluginSignatureValid {
-		s.log.Debug("Plugin has valid signature", "id", plugin.Id)
-		return nil
-	}
-
-	if plugin.Root != nil {
-		// If a descendant plugin with invalid signature, set signature to that of root
-		if plugin.IsCorePlugin || plugin.Signature == plugins.PluginSignatureInternal {
-			s.log.Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
-				"plugin", plugin.Id, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin)
-		} else {
-			s.log.Debug("Setting descendant plugin's signature to that of root", "plugin", plugin.Id,
-				"root", plugin.Root.Id, "signature", plugin.Signature, "rootSignature", plugin.Root.Signature)
-			plugin.Signature = plugin.Root.Signature
-			if plugin.Signature == plugins.PluginSignatureValid {
-				s.log.Debug("Plugin has valid signature (inherited from root)", "id", plugin.Id)
-				return nil
+	for {
+		resp, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			if processedStreams == 0 {
+				return errors.New("received empty resource response")
 			}
+			return nil
 		}
-	} else {
-		s.log.Debug("Non-valid plugin Signature", "pluginID", plugin.Id, "pluginDir", plugin.PluginDir,
-			"state", plugin.Signature)
-	}
-
-	if !s.requireSigned {
-		return nil
-	}
-
-	switch plugin.Signature {
-	case plugins.PluginSignatureUnsigned:
-		if allowed := s.allowUnsigned(plugin); !allowed {
-			s.log.Debug("Plugin is unsigned", "pluginID", plugin.Id)
-			s.errors = append(s.errors, fmt.Errorf("plugin '%s' is unsigned", plugin.Id))
-			return &plugins.PluginError{
-				ErrorCode: signatureMissing,
+		if err != nil {
+			if processedStreams == 0 {
+				return errutil.Wrap("failed to receive response from resource call", err)
 			}
+
+			plugin.Logger().Error("Failed to receive response from resource call", "err", err)
+			return stream.Close()
 		}
-		s.log.Warn("Running an unsigned plugin", "pluginID", plugin.Id, "pluginDir",
-			plugin.PluginDir)
-		return nil
-	case plugins.PluginSignatureInvalid:
-		s.log.Debug("Plugin has an invalid signature", "pluginID", plugin.Id)
-		s.errors = append(s.errors, fmt.Errorf("plugin '%s' has an invalid signature", plugin.Id))
-		return &plugins.PluginError{
-			ErrorCode: signatureInvalid,
+
+		// Expected that headers and status are only part of first stream
+		if processedStreams == 0 && resp.Headers != nil {
+			// Make sure a content type always is returned in response
+			if _, exists := resp.Headers["Content-Type"]; !exists {
+				resp.Headers["Content-Type"] = []string{"application/json"}
+			}
+
+			for k, values := range resp.Headers {
+				// Due to security reasons we don't want to forward
+				// cookies from a backend plugin to clients/browsers.
+				if k == "Set-Cookie" {
+					continue
+				}
+
+				for _, v := range values {
+					// TODO: Figure out if we should use Set here instead
+					// nolint:gocritic
+					w.Header().Add(k, v)
+				}
+			}
+			w.WriteHeader(resp.Status)
 		}
-	case plugins.PluginSignatureModified:
-		s.log.Debug("Plugin has a modified signature", "pluginID", plugin.Id)
-		s.errors = append(s.errors, fmt.Errorf("plugin '%s' has a modified signature", plugin.Id))
-		return &plugins.PluginError{
-			ErrorCode: signatureModified,
+
+		if _, err := w.Write(resp.Body); err != nil {
+			plugin.Logger().Error("Failed to write resource response", "err", err)
 		}
-	default:
-		panic(fmt.Sprintf("Plugin '%s' has an unrecognized plugin signature state '%s'", plugin.Id, plugin.Signature))
+
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
+		processedStreams++
 	}
 }
 
-func (s *PluginScanner) allowUnsigned(plugin *plugins.PluginBase) bool {
-	if s.allowUnsignedPluginsCondition != nil {
-		return s.allowUnsignedPluginsCondition(plugin)
+func (m *PluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
+	p := m.Plugin(pluginID)
+	if p == nil {
+		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
-	if s.cfg.Env == setting.Dev {
-		return true
-	}
-
-	for _, plug := range s.cfg.PluginsAllowUnsigned {
-		if plug == plugin.Id {
-			return true
-		}
-	}
-
-	return false
-}
-
-// ScanningErrors returns plugin scanning errors encountered.
-func (pm *PluginManager) ScanningErrors() []plugins.PluginError {
-	scanningErrs := make([]plugins.PluginError, 0)
-	for id, e := range pm.pluginScanningErrors {
-		scanningErrs = append(scanningErrs, plugins.PluginError{
-			ErrorCode: e.ErrorCode,
-			PluginID:  id,
-		})
-	}
-	return scanningErrs
-}
-
-func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
-	plug, exists := pm.plugins[pluginId]
-	if !exists {
-		return nil, plugins.PluginNotFoundError{PluginID: pluginId}
-	}
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
-	// on plugin the folder structure on disk and not user input.
-	path := filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
-	exists, err := fs.Exists(path)
+	var resp *backend.CollectMetricsResult
+	err := instrumentation.InstrumentCollectMetrics(p.PluginID(), func() (innerErr error) {
+		resp, innerErr = p.CollectMetrics(ctx)
+		return
+	})
 	if err != nil {
 		return nil, err
 	}
-	if !exists {
-		path = filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToLower(name)))
-	}
 
-	exists, err = fs.Exists(path)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return make([]byte, 0), nil
-	}
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
-	// on plugin the folder structure on disk and not user input.
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return resp, nil
 }
 
-func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
-	return pm.staticRoutes
+func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	var dsURL string
+	if req.PluginContext.DataSourceInstanceSettings != nil {
+		dsURL = req.PluginContext.DataSourceInstanceSettings.URL
+	}
+
+	err := m.requestValidator.Validate(dsURL, nil)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  http.StatusForbidden,
+			Message: "Access denied",
+		}, nil
+	}
+
+	p := m.Plugin(req.PluginContext.PluginID)
+	if p == nil {
+		return nil, backendplugin.ErrPluginNotRegistered
+	}
+
+	var resp *backend.CheckHealthResult
+	err = instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
+		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: req.PluginContext})
+		return
+	})
+
+	if err != nil {
+		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+			return nil, err
+		}
+
+		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+			return nil, err
+		}
+
+		return nil, errutil.Wrap("failed to check plugin health", backendplugin.ErrHealthCheckFailed)
+	}
+
+	return resp, nil
 }
 
-func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) error {
-	plugin := pm.GetPlugin(pluginID)
+func (m *PluginManager) isRegistered(pluginID string) bool {
+	p := m.Plugin(pluginID)
+	if p == nil {
+		return false
+	}
 
+	return !p.IsDecommissioned()
+}
+
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
 	var pluginZipURL string
+
+	if opts.PluginRepoURL == "" {
+		opts.PluginRepoURL = grafanaComURL
+	}
+
+	plugin := m.Plugin(pluginID)
 	if plugin != nil {
-		if plugin.IsCorePlugin {
+		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin
 		}
 
 		if plugin.Info.Version == version {
-			return plugins.DuplicatePluginError{
-				PluginID:          pluginID,
+			return plugins.DuplicateError{
+				PluginID:          plugin.ID,
 				ExistingPluginDir: plugin.PluginDir,
 			}
 		}
 
 		// get plugin update information to confirm if upgrading is possible
-		updateInfo, err := pm.pluginInstaller.GetUpdateInfo(pluginID, version, grafanaComURL)
+		updateInfo, err := m.pluginInstaller.GetUpdateInfo(ctx, pluginID, version, opts.PluginRepoURL)
 		if err != nil {
 			return err
 		}
@@ -747,18 +514,26 @@ func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) 
 		pluginZipURL = updateInfo.PluginZipURL
 
 		// remove existing installation of plugin
-		err = pm.Uninstall(context.Background(), plugin.Id)
+		err = m.Remove(ctx, plugin.ID)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := pm.pluginInstaller.Install(ctx, pluginID, version, pm.Cfg.PluginsPath, pluginZipURL, grafanaComURL)
+	if opts.PluginInstallDir == "" {
+		opts.PluginInstallDir = m.cfg.PluginsPath
+	}
+
+	if opts.PluginZipURL == "" {
+		opts.PluginZipURL = pluginZipURL
+	}
+
+	err := m.pluginInstaller.Install(ctx, pluginID, version, opts.PluginInstallDir, opts.PluginZipURL, opts.PluginRepoURL)
 	if err != nil {
 		return err
 	}
 
-	err = pm.initExternalPlugins()
+	err = m.loadPlugins(opts.PluginInstallDir)
 	if err != nil {
 		return err
 	}
@@ -766,64 +541,282 @@ func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) 
 	return nil
 }
 
-func (pm *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
-	plugin := pm.GetPlugin(pluginID)
+func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
+	plugin := m.Plugin(pluginID)
 	if plugin == nil {
 		return plugins.ErrPluginNotInstalled
 	}
 
-	if plugin.IsCorePlugin {
+	if !plugin.IsExternalPlugin() {
 		return plugins.ErrUninstallCorePlugin
 	}
 
 	// extra security check to ensure we only remove plugins that are located in the configured plugins directory
-	path, err := filepath.Rel(pm.Cfg.PluginsPath, plugin.PluginDir)
+	path, err := filepath.Rel(m.cfg.PluginsPath, plugin.PluginDir)
 	if err != nil || strings.HasPrefix(path, ".."+string(filepath.Separator)) {
 		return plugins.ErrUninstallOutsideOfPluginDir
 	}
 
-	if pm.BackendPluginManager.IsRegistered(pluginID) {
-		err := pm.BackendPluginManager.UnregisterAndStop(ctx, pluginID)
+	if m.isRegistered(pluginID) {
+		err := m.unregisterAndStop(ctx, plugin)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = pm.unregister(plugin)
+	return m.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
+}
+
+func (m *PluginManager) LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	if m.isRegistered(pluginID) {
+		return fmt.Errorf("backend plugin %s already registered", pluginID)
+	}
+
+	pluginRootDir := pluginID
+	if pluginID == "stackdriver" {
+		pluginRootDir = "cloud-monitoring"
+	}
+
+	path := filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource", pluginRootDir)
+
+	p, err := m.pluginLoader.LoadWithFactory(path, factory)
 	if err != nil {
 		return err
 	}
 
-	return pm.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
-}
-
-func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
-	pm.pluginsMu.Lock()
-	defer pm.pluginsMu.Unlock()
-
-	switch plugin.Type {
-	case "panel":
-		delete(pm.panels, plugin.Id)
-	case "datasource":
-		delete(pm.dataSources, plugin.Id)
-	case "app":
-		delete(pm.apps, plugin.Id)
-	case "renderer":
-		pm.renderer = nil
+	err = m.register(p)
+	if err != nil {
+		return err
 	}
-
-	delete(pm.plugins, plugin.Id)
-
-	pm.removeStaticRoute(plugin.Id)
 
 	return nil
 }
 
-func (pm *PluginManager) removeStaticRoute(pluginID string) {
-	for i, route := range pm.staticRoutes {
-		if pluginID == route.PluginId {
-			pm.staticRoutes = append(pm.staticRoutes[:i], pm.staticRoutes[i+1:]...)
-			return
+func (m *PluginManager) Routes() []*plugins.StaticRoute {
+	staticRoutes := []*plugins.StaticRoute{}
+
+	for _, p := range m.Plugins() {
+		if p.StaticRoute() != nil {
+			staticRoutes = append(staticRoutes, p.StaticRoute())
 		}
 	}
+	return staticRoutes
+}
+
+func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.Plugin) error {
+	err := m.register(plugin)
+	if err != nil {
+		return err
+	}
+
+	if !m.isRegistered(plugin.ID) {
+		return fmt.Errorf("plugin %s is not registered", plugin.ID)
+	}
+
+	return m.start(ctx, plugin)
+}
+
+func (m *PluginManager) register(p *plugins.Plugin) error {
+	m.pluginsMu.Lock()
+	defer m.pluginsMu.Unlock()
+
+	pluginID := p.ID
+	if _, exists := m.plugins[pluginID]; exists {
+		return fmt.Errorf("plugin %s already registered", pluginID)
+	}
+
+	m.plugins[pluginID] = p
+
+	if !p.IsCorePlugin() {
+		m.log.Info("Plugin registered", "pluginId", pluginID)
+	}
+
+	return nil
+}
+
+func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
+	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
+	if err := p.Decommission(); err != nil {
+		return err
+	}
+
+	if err := p.Stop(ctx); err != nil {
+		return err
+	}
+
+	delete(m.plugins, p.ID)
+
+	m.log.Debug("Plugin unregistered", "pluginId", p.ID)
+	return nil
+}
+
+// start starts a backend plugin process
+func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
+	if !p.IsManaged() || !p.Backend || p.SignatureError != nil {
+		return nil
+	}
+
+	if !m.isRegistered(p.ID) {
+		return backendplugin.ErrPluginNotRegistered
+	}
+
+	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+		return err
+	}
+
+	if !p.IsCorePlugin() {
+		p.Logger().Debug("Successfully started backend plugin process")
+	}
+
+	return nil
+}
+
+func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin) error {
+	if err := p.Start(ctx); err != nil {
+		return err
+	}
+
+	go func(ctx context.Context, p *plugins.Plugin) {
+		if err := restartKilledProcess(ctx, p); err != nil {
+			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
+		}
+	}(ctx, p)
+
+	return nil
+}
+
+func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
+	ticker := time.NewTicker(time.Second * 1)
+
+	for {
+		select {
+		case <-ctx.Done():
+			if err := ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
+				return err
+			}
+			return nil
+		case <-ticker.C:
+			if p.IsDecommissioned() {
+				p.Logger().Debug("Plugin decommissioned")
+				return nil
+			}
+
+			if !p.Exited() {
+				continue
+			}
+
+			p.Logger().Debug("Restarting plugin")
+			if err := p.Start(ctx); err != nil {
+				p.Logger().Error("Failed to restart plugin", "error", err)
+				continue
+			}
+			p.Logger().Debug("Plugin restarted")
+		}
+	}
+}
+
+// stop stops a backend plugin process
+func (m *PluginManager) stop(ctx context.Context) {
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+	var wg sync.WaitGroup
+	for _, p := range m.plugins {
+		wg.Add(1)
+		go func(p backendplugin.Plugin, ctx context.Context) {
+			defer wg.Done()
+			p.Logger().Debug("Stopping plugin")
+			if err := p.Stop(ctx); err != nil {
+				p.Logger().Error("Failed to stop plugin", "error", err)
+			}
+			p.Logger().Debug("Plugin stopped")
+		}(p, ctx)
+	}
+	wg.Wait()
+}
+
+// corePluginPaths provides a list of the Core plugin paths which need to be scanned on init()
+func (m *PluginManager) corePluginPaths() []string {
+	datasourcePaths := []string{
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/alertmanager"),
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/dashboard"),
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/jaeger"),
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/mixed"),
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/zipkin"),
+	}
+
+	panelsPath := filepath.Join(m.cfg.StaticRootPath, "app/plugins/panel")
+
+	return append(datasourcePaths, panelsPath)
+}
+
+// pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
+func (m *PluginManager) pluginSettingPaths() []string {
+	var pluginSettingDirs []string
+	for _, settings := range m.cfg.PluginSettings {
+		path, exists := settings["path"]
+		if !exists || path == "" {
+			continue
+		}
+		pluginSettingDirs = append(pluginSettingDirs, path)
+	}
+
+	return pluginSettingDirs
+}
+
+// callResourceClientResponseStream is used for receiving resource call responses.
+type callResourceClientResponseStream interface {
+	Recv() (*backend.CallResourceResponse, error)
+	Close() error
+}
+
+type keepCookiesJSONModel struct {
+	KeepCookies []string `json:"keepCookies"`
+}
+
+type callResourceResponseStream struct {
+	ctx    context.Context
+	stream chan *backend.CallResourceResponse
+	closed bool
+}
+
+func newCallResourceResponseStream(ctx context.Context) *callResourceResponseStream {
+	return &callResourceResponseStream{
+		ctx:    ctx,
+		stream: make(chan *backend.CallResourceResponse),
+	}
+}
+
+func (s *callResourceResponseStream) Send(res *backend.CallResourceResponse) error {
+	if s.closed {
+		return errors.New("cannot send to a closed stream")
+	}
+
+	select {
+	case <-s.ctx.Done():
+		return errors.New("cancelled")
+	case s.stream <- res:
+		return nil
+	}
+}
+
+func (s *callResourceResponseStream) Recv() (*backend.CallResourceResponse, error) {
+	select {
+	case <-s.ctx.Done():
+		return nil, s.ctx.Err()
+	case res, ok := <-s.stream:
+		if !ok {
+			return nil, io.EOF
+		}
+		return res, nil
+	}
+}
+
+func (s *callResourceResponseStream) Close() error {
+	if s.closed {
+		return errors.New("cannot close a closed stream")
+	}
+
+	close(s.stream)
+	s.closed = true
+	return nil
 }

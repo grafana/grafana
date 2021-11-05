@@ -29,6 +29,9 @@ import { provideTheme } from 'app/core/utils/ConfigProvider';
 import {
   DataFrame,
   DataFrameView,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  DataHoverPayload,
   FieldDisplay,
   FieldType,
   formattedValueToString,
@@ -40,6 +43,7 @@ import {
   LegacyEventHandler,
   LegacyGraphHoverClearEvent,
   LegacyGraphHoverEvent,
+  LegacyGraphHoverEventPayload,
   LinkModelSupplier,
   PanelEvents,
   toUtc,
@@ -49,6 +53,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksSupplier } from 'app/angular/panel/panellinks/linkSuppliers';
 import { DashboardModel } from '../../../features/dashboard/state';
+import { isLegacyGraphHoverEvent } from './utils';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -99,6 +104,9 @@ class GraphElement {
     this.ctrl.dashboard.events.on(LegacyGraphHoverEvent.type, this.onGraphHover.bind(this), this.scope);
     this.ctrl.dashboard.events.on(LegacyGraphHoverClearEvent.type, this.onGraphHoverClear.bind(this), this.scope);
 
+    this.ctrl.dashboard.events.on(DataHoverEvent.type, this.onGraphHover.bind(this), this.scope);
+    this.ctrl.dashboard.events.on(DataHoverClearEvent.type, this.onGraphHoverClear.bind(this), this.scope);
+
     // plot events
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
@@ -147,18 +155,27 @@ class GraphElement {
     ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
   }
 
-  onGraphHover(evt: any) {
+  onGraphHover(evt: LegacyGraphHoverEventPayload | DataHoverPayload) {
     // ignore other graph hover events if shared tooltip is disabled
     if (!this.dashboard.sharedTooltipModeEnabled()) {
       return;
     }
 
-    // ignore if we are the emitter
-    if (!this.plot || evt.panel.id === this.panel.id || this.ctrl.otherPanelInFullscreenMode()) {
+    if (isLegacyGraphHoverEvent(evt)) {
+      // ignore if we are the emitter
+      if (!this.plot || evt.panel?.id === this.panel.id || this.ctrl.otherPanelInFullscreenMode()) {
+        return;
+      }
+
+      this.tooltip.show(evt.pos);
+    }
+
+    // DataHoverEvent can come from multiple panels that doesn't include x position
+    if (!evt.point?.time) {
       return;
     }
 
-    this.tooltip.show(evt.pos);
+    this.tooltip.show({ x: evt.point.time, panelRelY: evt.point.panelRelY ?? 1 });
   }
 
   onPanelTeardown() {

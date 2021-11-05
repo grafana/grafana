@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { useDispatch } from 'react-redux';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, FieldArray, Form, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
-import { addExternalAlertmanagers } from '../../state/actions';
+import { addExternalAlertmanagersAction } from '../../state/actions';
 
 interface Props {
   onClose: () => void;
@@ -13,7 +13,7 @@ interface Props {
 export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const defaultValues = useMemo(
+  const defaultValues: Record<string, any> = useMemo(
     () => ({
       alertmanagers: alertmanagers,
     }),
@@ -27,8 +27,8 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
     </div>
   );
 
-  const onSubmit = (values: Record<string, any>) => {
-    dispatch(addExternalAlertmanagers(values.alertmanagers.map((am) => am.url)));
+  const onSubmit = (values: Record<string, Array<{ url: string }>>) => {
+    dispatch(addExternalAlertmanagersAction(values.alertmanagers.map((am) => cleanAlertmanagerUrl(am.url))));
     onClose();
   };
 
@@ -44,7 +44,10 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
               {({ fields, append, remove }) => (
                 <div className={styles.fieldArray}>
                   <div className={styles.bold}>Source url</div>
-                  <div className={styles.muted}>Auth can be done via URL, eg. user:password@url</div>
+                  <div className={styles.muted}>
+                    Authentication can be done via URL (e.g. user:password@myalertmanager.com) and only the Alertmanager
+                    v2 API is supported. The suffix is added internally, there is no need to specify it.
+                  </div>
                   {fields.map((field, index) => {
                     return (
                       <Field
@@ -56,9 +59,10 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
                           className={styles.input}
                           defaultValue={field.url}
                           {...register(`alertmanagers.${index}.url`, { required: true })}
-                          placeholder="admin:admin@some.url.dev"
+                          placeholder="http://localhost:9093"
                           addonAfter={
                             <Button
+                              aria-label="Remove alertmanager"
                               type="button"
                               onClick={() => remove(index)}
                               variant="destructive"
@@ -78,7 +82,7 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
               )}
             </FieldArray>
             <div>
-              <Button onSubmit={onSubmit}>Add Alertmanagers</Button>
+              <Button onSubmit={() => onSubmit}>Add Alertmanagers</Button>
             </div>
           </div>
         )}
@@ -86,6 +90,10 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
     </Modal>
   );
 };
+
+function cleanAlertmanagerUrl(url: string): string {
+  return url.replace(/\/$/, '').replace(/\/api\/v[1|2]\/alerts/i, '');
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   const muted = css`

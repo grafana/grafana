@@ -2,22 +2,16 @@ import { lastValueFrom, of } from 'rxjs';
 import { setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { ArrayVector, DataFrame, dataFrameToJSON, dateTime, Field, MutableDataFrame } from '@grafana/data';
 
-import { TemplateSrv } from '../../../features/templating/template_srv';
 import { CloudWatchDatasource } from './datasource';
 import { toArray } from 'rxjs/operators';
 import { CloudWatchLogsQueryStatus } from './types';
+import { TemplateSrvMock } from '../../../features/templating/template_srv.mock';
 
 describe('datasource', () => {
   describe('query', () => {
     it('should return error if log query and log groups is not specified', async () => {
       const { datasource } = setup();
-      const observable = datasource.query({
-        targets: [
-          {
-            queryMode: 'Logs' as 'Logs',
-          },
-        ],
-      } as any);
+      const observable = datasource.query({ targets: [{ queryMode: 'Logs' as 'Logs' }] } as any);
 
       await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
@@ -27,18 +21,30 @@ describe('datasource', () => {
 
     it('should return empty response if queries are hidden', async () => {
       const { datasource } = setup();
-      const observable = datasource.query({
-        targets: [
-          {
-            queryMode: 'Logs' as 'Logs',
-            hide: true,
-          },
-        ],
-      } as any);
+      const observable = datasource.query({ targets: [{ queryMode: 'Logs' as 'Logs', hide: true }] } as any);
 
       await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.data).toEqual([]);
+      });
+    });
+
+    it('should interpolate variables in the query', async () => {
+      const { datasource, fetchMock } = setup();
+      datasource.query({
+        targets: [
+          {
+            queryMode: 'Logs' as 'Logs',
+            region: '$region',
+            expression: 'fields $fields',
+            logGroupNames: ['/some/$group'],
+          },
+        ],
+      } as any);
+      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+        queryString: 'fields templatedField',
+        logGroupNames: ['/some/templatedGroup'],
+        region: 'templatedRegion',
       });
     });
 
@@ -121,7 +127,7 @@ describe('datasource', () => {
 function setup({ data = [] }: { data?: any } = {}) {
   const datasource = new CloudWatchDatasource(
     { jsonData: { defaultRegion: 'us-west-1', tracingDatasourceUid: 'xray' } } as any,
-    new TemplateSrv(),
+    new TemplateSrvMock({ region: 'templatedRegion', fields: 'templatedField', group: 'templatedGroup' }) as any,
     {
       timeRange() {
         const time = dateTime('2021-01-01T01:00:00Z');

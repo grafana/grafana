@@ -1,0 +1,6 @@
+{
+  "name": "stylelint",
+  "version": "13.13.1-sdk",
+  "main": "lib/index.js",
+  "type": "commonjs"
+}

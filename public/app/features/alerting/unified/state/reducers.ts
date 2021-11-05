@@ -58,7 +58,7 @@ export const reducer = combineReducers({
     .reducer,
   externalAlertmanagers: combineReducers({
     alertmanagerConfig: createAsyncSlice('alertmanagerConfig', fetchExternalAlertmanagersConfigAction).reducer,
-    activeAlertmanagers: createAsyncSlice('activeAlertmanagers', fetchExternalAlertmanagersAction).reducer,
+    discoveredAlertmanagers: createAsyncSlice('discoveredAlertmanagers', fetchExternalAlertmanagersAction).reducer,
   }),
 });
 

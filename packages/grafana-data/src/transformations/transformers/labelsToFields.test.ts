@@ -145,6 +145,68 @@ describe('Labels as Columns', () => {
       `);
     });
   });
+
+  it('data frame with labels and multiple fields', async () => {
+    const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+      id: DataTransformerID.labelsToFields,
+      options: {},
+    };
+
+    const source = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'a', type: FieldType.number, values: [1, 3], labels: { name: 'thing' } },
+        { name: 'b', type: FieldType.number, values: [2, 4], labels: { name: 'thing' } },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const result = toDataFrameDTO(data[0]);
+
+      const expected: FieldDTO[] = [
+        { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+        { name: 'a', type: FieldType.number, values: [1, 3], config: {} },
+        { name: 'b', type: FieldType.number, values: [2, 4], config: {} },
+        { name: 'name', type: FieldType.string, values: ['thing', 'thing'], config: {} },
+      ];
+
+      expect(result.fields).toEqual(expected);
+    });
+  });
+
+  it('data frame with labels and multiple fields with different labels', async () => {
+    const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+      id: DataTransformerID.labelsToFields,
+      options: {},
+    };
+
+    const source = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'a', type: FieldType.number, values: [1, 3], labels: { name: 'thing', field: 'a' } },
+        { name: 'b', type: FieldType.number, values: [2, 4], labels: { name: 'thing', field: 'b' } },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const result = toDataFrameDTO(data[0]);
+
+      const expected: FieldDTO[] = [
+        { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+        { name: 'a', type: FieldType.number, values: [1, 3], config: {} },
+        { name: 'b', type: FieldType.number, values: [2, 4], config: {} },
+        { name: 'name', type: FieldType.string, values: ['thing', 'thing'], config: {} },
+        { name: 'field', type: FieldType.string, values: ['a', 'a'], config: {} },
+        { name: 'field', type: FieldType.string, values: ['b', 'b'], config: {} },
+      ];
+
+      expect(result.fields).toEqual(expected);
+    });
+  });
 });
 
 function toSimpleObject(frame: DataFrame) {

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -24,7 +23,7 @@ var (
 // ThreemaNotifier is responsible for sending
 // alert notifications to Threema.
 type ThreemaNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	GatewayID   string
 	RecipientID string
 	APISecret   string
@@ -63,7 +62,7 @@ func NewThreemaNotifier(model *NotificationChannelConfig, t *template.Template, 
 	}
 
 	return &ThreemaNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,

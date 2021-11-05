@@ -218,170 +218,202 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 		result := parser.Parse(prepare(response), query)
+		t.Run("should parse aliases", func(t *testing.T) {
+			frame := result.Responses["A"]
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
 
-		frame := result.Responses["A"]
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
+			query = &Query{Alias: "alias $m $measurement", Measurement: "10m"}
+			result = parser.Parse(prepare(response), query)
 
-		query = &Query{Alias: "alias $m $measurement", Measurement: "10m"}
-		result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name := "alias 10m 10m"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
 
-		frame = result.Responses["A"]
-		name := "alias 10m 10m"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
+			query = &Query{Alias: "alias $col", Measurement: "10m"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias mean"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+			name = "alias sum"
+			testFrame.Name = name
+			newField = data.NewField("value", labels, []*float64{
+				pointer.Float64(333),
+			})
+			testFrame.Fields[1] = newField
+			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
+			if diff := cmp.Diff(testFrame, frame.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
 
-		query = &Query{Alias: "alias $col", Measurement: "10m"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias mean"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-		name = "alias sum"
-		testFrame.Name = name
-		newField = data.NewField("value", labels, []*float64{
-			pointer.Float64(333),
+			query = &Query{Alias: "alias $tag_datacenter"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias America"
+			testFrame.Name = name
+			newField = data.NewField("value", labels, []*float64{
+				pointer.Float64(222),
+			})
+			testFrame.Fields[1] = newField
+			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias $tag_datacenter/$tag_datacenter"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias America/America"
+			testFrame.Name = name
+			newField = data.NewField("value", labels, []*float64{
+				pointer.Float64(222),
+			})
+			testFrame.Fields[1] = newField
+			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias [[col]]", Measurement: "10m"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias mean"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias $1"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias upc"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias $5"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias $5"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "series alias"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "series alias"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias 10m 10m"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias [[tag_datacenter]]"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias America"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias [[tag_dc.region.name]]"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias Northeast"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias [[tag_cluster-name]]"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias Cluster"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias [[tag_/cluster/name/]]"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias Cluster/"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias [[tag_@cluster@name@]]"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias Cluster@"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
-		testFrame.Fields[1] = newField
-		testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
-		if diff := cmp.Diff(testFrame, frame.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
+		t.Run("shouldn't parse aliases", func(t *testing.T) {
+			query = &Query{Alias: "alias words with no brackets"}
+			result = parser.Parse(prepare(response), query)
+			frame := result.Responses["A"]
+			name := "alias words with no brackets"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
 
-		query = &Query{Alias: "alias $tag_datacenter"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias America"
-		testFrame.Name = name
-		newField = data.NewField("value", labels, []*float64{
-			pointer.Float64(222),
+			query = &Query{Alias: "alias Test 1.5"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias Test 1.5"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias Test -1"}
+			result = parser.Parse(prepare(response), query)
+			frame = result.Responses["A"]
+			name = "alias Test -1"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
-		testFrame.Fields[1] = newField
-		testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "alias $tag_datacenter/$tag_datacenter"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias America/America"
-		testFrame.Name = name
-		newField = data.NewField("value", labels, []*float64{
-			pointer.Float64(222),
-		})
-		testFrame.Fields[1] = newField
-		testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "alias [[col]]", Measurement: "10m"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias mean"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "alias $1"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias upc"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "alias $5"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias $5"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "series alias"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "series alias"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias 10m 10m"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "alias [[tag_datacenter]]"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias America"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "alias [[tag_dc.region.name]]"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias Northeast"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "alias [[tag_cluster-name]]"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias Cluster"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "alias [[tag_/cluster/name/]]"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias Cluster/"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-
-		query = &Query{Alias: "alias [[tag_@cluster@name@]]"}
-		result = parser.Parse(prepare(response), query)
-		frame = result.Responses["A"]
-		name = "alias Cluster@"
-		testFrame.Name = name
-		testFrame.Fields[1].Config.DisplayNameFromDS = name
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
 	})
 
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {

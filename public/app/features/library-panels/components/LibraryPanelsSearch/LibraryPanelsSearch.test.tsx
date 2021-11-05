@@ -8,7 +8,7 @@ import { LibraryPanelsSearch, LibraryPanelsSearchProps } from './LibraryPanelsSe
 import * as api from '../../state/api';
 import { LibraryElementKind, LibraryElementsSearchResult } from '../../types';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import * as viztypepicker from '../../../panel/components/VizTypePicker/VizTypePicker';
+import * as panelUtils from '../../../panel/state/util';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -64,9 +64,7 @@ async function getTestContext(
     .spyOn(backendSrv, 'get')
     .mockResolvedValue({ sortOptions: [{ displaName: 'Desc', name: 'alpha-desc' }] });
   const getLibraryPanelsSpy = jest.spyOn(api, 'getLibraryPanels').mockResolvedValue(searchResult);
-  const getAllPanelPluginMetaSpy = jest
-    .spyOn(viztypepicker, 'getAllPanelPluginMeta')
-    .mockReturnValue([graph, timeseries]);
+  const getAllPanelPluginMetaSpy = jest.spyOn(panelUtils, 'getAllPanelPluginMeta').mockReturnValue([graph, timeseries]);
 
   const props: LibraryPanelsSearchProps = {
     onClick: jest.fn(),

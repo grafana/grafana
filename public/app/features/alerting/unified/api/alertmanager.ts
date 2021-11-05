@@ -13,6 +13,7 @@ import {
   Receiver,
   TestReceiversPayload,
   TestReceiversResult,
+  TestReceiversAlert,
   ExternalAlertmanagersResponse,
 } from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -161,9 +162,14 @@ export async function fetchStatus(alertManagerSourceName: string): Promise<Alert
   return result.data;
 }
 
-export async function testReceivers(alertManagerSourceName: string, receivers: Receiver[]): Promise<void> {
+export async function testReceivers(
+  alertManagerSourceName: string,
+  receivers: Receiver[],
+  alert?: TestReceiversAlert
+): Promise<void> {
   const data: TestReceiversPayload = {
     receivers,
+    alert,
   };
   const result = await lastValueFrom(
     getBackendSrv().fetch<TestReceiversResult>({
@@ -219,6 +225,7 @@ export async function fetchExternalAlertmanagerConfig(): Promise<{ alertmanagers
     getBackendSrv().fetch<{ alertmanagers: string[] }>({
       method: 'GET',
       url: '/api/v1/ngalert/admin_config',
+      showErrorAlert: false,
     })
   );
 

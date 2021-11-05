@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, HorizontalGroup, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 import {
-  addExternalAlertmanagers,
+  addExternalAlertmanagersAction,
   fetchExternalAlertmanagersAction,
   fetchExternalAlertmanagersConfigAction,
 } from '../../state/actions';
@@ -15,24 +16,29 @@ export const ExternalAlertmanagers = () => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({ open: false, payload: [{ url: '' }] });
+  const [deleteModalState, setDeleteModalState] = useState({ open: false, index: 0 });
   const externalAlertManagers = useExternalAmSelector();
-
-  console.log(externalAlertManagers);
 
   useEffect(() => {
     dispatch(fetchExternalAlertmanagersAction());
     dispatch(fetchExternalAlertmanagersConfigAction());
+    const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [dispatch]);
 
   const onDelete = useCallback(
     (index: number) => {
       // to delete we need to filter the alertmanager from the list and repost
-      const newList = externalAlertManagers
+      const newList = externalAlertManagers!
         .filter((am, i) => i !== index)
         .map((am) => {
           return am.url;
         });
-      dispatch(addExternalAlertmanagers(newList));
+      dispatch(addExternalAlertmanagersAction(newList));
+      setDeleteModalState({ open: false, index: 0 });
     },
     [externalAlertManagers, dispatch]
   );
@@ -46,7 +52,7 @@ export const ExternalAlertmanagers = () => {
     }));
   }, [setModalState, externalAlertManagers]);
 
-  const onAdd = useCallback(() => {
+  const onOpenModal = useCallback(() => {
     setModalState((state) => {
       const ams = externalAlertManagers ? [...externalAlertManagers, { url: '' }] : [{ url: '' }];
       return {
@@ -57,7 +63,7 @@ export const ExternalAlertmanagers = () => {
     });
   }, [externalAlertManagers]);
 
-  const onClose = useCallback(() => {
+  const onCloseModal = useCallback(() => {
     setModalState((state) => ({
       ...state,
       open: false,
@@ -77,45 +83,63 @@ export const ExternalAlertmanagers = () => {
     }
   };
 
+  const noAlertmanagers = externalAlertManagers?.length === 0;
+
   return (
     <div>
       <h4>External Alertmanagers</h4>
       <div className={styles.muted}>
-        If you are running Grafana in HA mode, you can point Prometheus to a list of Alertmanagers. Use the source URL
-        input below to discover alertmanagers.
+        You can have your Grafana-managed alerts be delivered to one or many external Alertmanager(s) in addition to the internal Alertmanager by specifying their URLs below.
       </div>
       <div className={styles.actions}>
-        <Button type="button" onClick={onAdd}>
-          Add Alertmanager
-        </Button>
+        {!noAlertmanagers && (
+          <Button type="button" onClick={onOpenModal}>
+            Add Alertmanager
+          </Button>
+        )}
       </div>
-      {externalAlertManagers && (
+      {noAlertmanagers ? (
+        <EmptyListCTA
+          title="You have not added any external alertmanagers"
+          onClick={onOpenModal}
+          buttonTitle="Add Alertmanager"
+          buttonIcon="bell-slash"
+        />
+      ) : (
         <table className="filter-table form-inline filter-table--hover">
           <thead>
             <tr>
               <th>Url</th>
+              <th>Status</th>
               <th style={{ width: '2%' }}>Action</th>
             </tr>
           </thead>
           <tbody>
-            {externalAlertManagers.map((am, index) => {
+            {externalAlertManagers?.map((am, index) => {
               return (
                 <tr key={index}>
-                  <td className="link-td">
-                    {am.url}{' '}
-                    <Icon
-                      name="heart"
-                      className={css`
-                        color: ${getStatusColor(am.status)};
-                      `}
-                    />
+                  <td>
+                    <span className={styles.url}>{am.url}</span>
+                    {am.actualUrl ? (
+                      <Tooltip content={`Discovered ${am.actualUrl} from ${am.url}`} theme="info">
+                        <Icon name="info-circle" />
+                      </Tooltip>
+                    ) : null}
+                  </td>
+                  <td>
+                    <Icon name="heart" style={{ color: getStatusColor(am.status) }} title={am.status} />
                   </td>
                   <td>
                     <HorizontalGroup>
-                      <Button variant="secondary" type="button" onClick={onEdit}>
+                      <Button variant="secondary" type="button" onClick={onEdit} aria-label="Edit alertmanager">
                         <Icon name="pen" />
                       </Button>
-                      <Button variant="secondary" type="button" onClick={() => onDelete(index)}>
+                      <Button
+                        variant="destructive"
+                        aria-label="Remove alertmanager"
+                        type="button"
+                        onClick={() => setDeleteModalState({ open: true, index })}
+                      >
                         <Icon name="trash-alt" />
                       </Button>
                     </HorizontalGroup>
@@ -126,12 +150,23 @@ export const ExternalAlertmanagers = () => {
           </tbody>
         </table>
       )}
-      {modalState.open && <AddAlertManagerModal onClose={onClose} alertmanagers={modalState.payload} />}
+      <ConfirmModal
+        isOpen={deleteModalState.open}
+        title="Remove Alertmanager"
+        body="Are you sure you want to remove this Alertmanager"
+        confirmText="Remove"
+        onConfirm={() => onDelete(deleteModalState.index)}
+        onDismiss={() => setDeleteModalState({ open: false, index: 0 })}
+      />
+      {modalState.open && <AddAlertManagerModal onClose={onCloseModal} alertmanagers={modalState.payload} />}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  url: css`
+    margin-right: ${theme.spacing(1)};
+  `,
   muted: css`
     color: ${theme.colors.text.secondary};
   `,

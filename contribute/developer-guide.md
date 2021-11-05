@@ -212,7 +212,7 @@ ulimit -a
 To change the number of open files allowed, run:
 
 ```
-ulimit -S -n 2048
+ulimit -S -n 4096
 ```
 
 The number of files needed may be different on your environment. To determine the number of open files needed by `make run`, run:

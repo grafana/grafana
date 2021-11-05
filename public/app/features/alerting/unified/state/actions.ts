@@ -8,6 +8,7 @@ import {
   Receiver,
   Silence,
   SilenceCreatePayload,
+  TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
@@ -651,12 +652,13 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
 interface TestReceiversOptions {
   alertManagerSourceName: string;
   receivers: Receiver[];
+  alert?: TestReceiversAlert;
 }
 
 export const testReceiversAction = createAsyncThunk(
   'unifiedalerting/testReceivers',
-  ({ alertManagerSourceName, receivers }: TestReceiversOptions): Promise<void> => {
-    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers)), {
+  ({ alertManagerSourceName, receivers, alert }: TestReceiversOptions): Promise<void> => {
+    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers, alert)), {
       errorMessage: 'Failed to send test alert.',
       successMessage: 'Test alert sent.',
     });
@@ -749,12 +751,20 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
   }
 );
 
-export const addExternalAlertmanagers = createAsyncThunk(
+export const addExternalAlertmanagersAction = createAsyncThunk(
   'unifiedAlerting/addExternalAlertmanagers',
-  async (alertManagerUrls: string[]): Promise<void> => {
-    return withAppEvents(withSerializedError(addAlertManagers(alertManagerUrls)), {
-      errorMessage: 'Failed adding alertmanagers',
-      successMessage: 'Alertmanagers addded',
-    });
+  async (alertManagerUrls: string[], thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          await addAlertManagers(alertManagerUrls);
+          thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
+        })()
+      ),
+      {
+        errorMessage: 'Failed adding alertmanagers',
+        successMessage: 'Alertmanagers updated',
+      }
+    );
   }
 );

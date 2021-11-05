@@ -34,6 +34,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private windowHeight = 1200;
   private windowWidth = 1920;
   private gridWidth = 0;
+  /** Used to keep track of mobile panel layout position */
+  private lastPanelBottom = 0;
 
   constructor(props: Props) {
     super(props);
@@ -123,35 +125,54 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.updateGridPos(newItem, layout);
   };
 
-  isInView(panel: PanelModel) {
+  isInView(panel: PanelModel, gridWidth: number) {
     if (panel.isViewing || panel.isEditing) {
       return true;
     }
 
     const scrollTop = this.props.scrollTop;
-    const panelTop = panel.gridPos.y * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
-    const panelBottom = panelTop + panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+    const screenPos = this.getPanelScreenPos(panel, gridWidth);
 
     // Show things that are almost in the view
     const buffer = 100;
 
     // The panel is above the viewport
-    if (scrollTop > panelBottom + buffer) {
+    if (scrollTop > screenPos.bottom + buffer) {
       return false;
     }
 
     const scrollViewBottom = scrollTop + this.windowHeight;
 
     // Panel is below view
-    if (panelTop > scrollViewBottom + buffer) {
+    if (screenPos.top > scrollViewBottom + buffer) {
       return false;
     }
 
     return !this.props.dashboard.otherPanelInFullscreen(panel);
   }
 
+  getPanelScreenPos(panel: PanelModel, gridWidth: number): { top: number; bottom: number } {
+    let top = 0;
+
+    // mobile layout
+    if (gridWidth < config.theme2.breakpoints.values.md) {
+      // In mobile layout panels are stacked so we just add the panel vertical margin to the last panel bottom position
+      top = this.lastPanelBottom + GRID_CELL_VMARGIN;
+    } else {
+      // For top position we need to add back the vertical margin removed by translateGridHeightToScreenHeight
+      top = translateGridHeightToScreenHeight(panel.gridPos.y) + GRID_CELL_VMARGIN;
+    }
+
+    this.lastPanelBottom = top + translateGridHeightToScreenHeight(panel.gridPos.h);
+
+    return { top, bottom: this.lastPanelBottom };
+  }
+
   renderPanels(gridWidth: number) {
     const panelElements = [];
+
+    // Reset last panel bottom
+    this.lastPanelBottom = 0;
 
     // This is to avoid layout re-flows, accessing window.innerHeight can trigger re-flow
     // We assume here that if width change height might have changed as well
@@ -165,7 +186,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
 
       // Update is in view state
-      panel.isInView = this.isInView(panel);
+      panel.isInView = this.isInView(panel, gridWidth);
 
       panelElements.push(
         <GrafanaGridItem
@@ -290,17 +311,19 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   const style: CSSProperties = props.style ?? {};
 
   if (isViewing) {
+    // In fullscreen view mode a single panel take up full width & 85% height
     width = gridWidth!;
     height = windowHeight * 0.85;
     style.height = height;
     style.width = '100%';
   } else if (windowWidth < theme.breakpoints.values.md) {
+    // Mobile layout is a bit different, every panel take up full width
     width = props.gridWidth!;
-    height = props.gridPos!.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+    height = translateGridHeightToScreenHeight(gridPos!.h);
     style.height = height;
     style.width = '100%';
   } else {
-    // RGL passes width and height directly to children as style props.
+    // Normal grid layout. The grid framework passes width and height directly to children as style props.
     width = parseFloat(props.style.width);
     height = parseFloat(props.style.height);
   }
@@ -313,5 +336,12 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     </div>
   );
 });
+
+/**
+ * This translates grid height dimensions to real pixels
+ */
+function translateGridHeightToScreenHeight(gridHeight: number): number {
+  return gridHeight * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+}
 
 GrafanaGridItem.displayName = 'GridItemWithDimensions';

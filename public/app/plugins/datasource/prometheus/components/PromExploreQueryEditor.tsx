@@ -1,5 +1,5 @@
 import React, { memo, FC, useEffect } from 'react';
-import { QueryEditorProps } from '@grafana/data';
+import { QueryEditorProps, CoreApp } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
 import PromQueryField from './PromQueryField';
@@ -26,6 +26,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
 
   return (
     <PromQueryField
+      app={CoreApp.Explore}
       datasource={datasource}
       query={query}
       range={range}
