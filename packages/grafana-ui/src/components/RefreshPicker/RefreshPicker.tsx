@@ -71,7 +71,7 @@ export class RefreshPicker extends PureComponent<Props> {
           onClick={onRefresh}
           variant={variant}
           icon={isLoading ? 'fa fa-spinner' : 'sync'}
-          data-testid={selectors.components.RefreshPicker.runButton}
+          data-testid={selectors.components.RefreshPicker.runButtonV2}
         >
           {text}
         </ToolbarButton>
@@ -81,7 +81,7 @@ export class RefreshPicker extends PureComponent<Props> {
             options={options}
             onChange={this.onChangeSelect as any}
             variant={variant}
-            aria-label={selectors.components.RefreshPicker.intervalButton}
+            aria-label={selectors.components.RefreshPicker.intervalButtonV2}
           />
         )}
       </ButtonGroup>

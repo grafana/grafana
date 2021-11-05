@@ -137,8 +137,16 @@ export const Components = {
     active: () => '[class*="-activeTabStyle"]',
   },
   RefreshPicker: {
-    runButton: 'data-testid RefreshPicker run button',
-    intervalButton: 'Choose refresh time interval',
+    /**
+     * @deprecated use runButtonV2 instead
+     */
+    runButton: 'RefreshPicker run button',
+    /**
+     * @deprecated use intervalButtonV2 instead
+     */
+    intervalButton: 'RefreshPicker interval button',
+    runButtonV2: 'data-testid RefreshPicker run button',
+    intervalButtonV2: 'Choose refresh time interval',
   },
   QueryTab: {
     content: 'Query editor tab content',
