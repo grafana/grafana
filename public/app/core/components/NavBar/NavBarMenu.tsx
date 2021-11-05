@@ -38,12 +38,12 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
               {navItems.map((link, index) => (
                 <div className={styles.section} key={index}>
                   <NavBarMenuItem
-                    className={styles.sectionHeader}
                     isActive={activeItem === link}
                     onClick={() => {
                       link.onClick?.();
                       onClose();
                     }}
+                    styleOverrides={styles.sectionHeader}
                     target={link.target}
                     text={link.text}
                     url={link.url}
@@ -58,6 +58,7 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
                         childLink.onClick?.();
                         onClose();
                       }}
+                      styleOverrides={styles.item}
                       target={childLink.target}
                       text={childLink.text}
                       url={childLink.url}
@@ -104,12 +105,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
   `,
   item: css`
-    display: flex;
+    padding: ${theme.spacing(1)} ${theme.spacing(2)};
   `,
   section: css`
     border-bottom: 1px solid ${theme.colors.border.weak};
   `,
   sectionHeader: css`
     font-size: ${theme.typography.h5.fontSize};
+    padding: ${theme.spacing(1)} ${theme.spacing(2)};
   `,
 });

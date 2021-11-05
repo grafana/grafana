@@ -8,6 +8,7 @@ interface Props {
   headerTarget?: HTMLAnchorElement['target'];
   headerText: string;
   headerUrl?: string;
+  isVisible?: boolean;
   items?: NavModelItem[];
   onHeaderClick?: () => void;
   reverseDirection?: boolean;
@@ -18,6 +19,7 @@ const NavBarDropdown = ({
   headerTarget,
   headerText,
   headerUrl,
+  isVisible,
   items = [],
   onHeaderClick,
   reverseDirection = false,
@@ -25,13 +27,13 @@ const NavBarDropdown = ({
 }: Props) => {
   const filteredItems = items.filter((item) => !item.hideFromMenu);
   const theme = useTheme2();
-  const styles = getStyles(theme, reverseDirection, filteredItems);
+  const styles = getStyles(theme, reverseDirection, filteredItems, isVisible);
 
   return (
-    <ul className={`${styles.menu} dropdown-menu dropdown-menu--sidemenu`} role="menu">
+    <ul className={`${styles.menu} navbar-dropdown`} role="menu">
       <NavBarMenuItem
-        className={styles.header}
         onClick={onHeaderClick}
+        styleOverrides={styles.header}
         target={headerTarget}
         text={headerText}
         url={headerUrl}
@@ -57,7 +59,8 @@ export default NavBarDropdown;
 const getStyles = (
   theme: GrafanaTheme2,
   reverseDirection: Props['reverseDirection'],
-  filteredItems: Props['items']
+  filteredItems: Props['items'],
+  isVisible: Props['isVisible']
 ) => {
   const adjustHeightForBorder = filteredItems!.length === 0;
 
@@ -67,12 +70,26 @@ const getStyles = (
       height: ${theme.components.sidemenu.width - (adjustHeightForBorder ? 2 : 1)}px;
       font-size: ${theme.typography.h4.fontSize};
       font-weight: ${theme.typography.h4.fontWeight};
+      padding: ${theme.spacing(1)} ${theme.spacing(2)};
       white-space: nowrap;
       width: 100%;
     `,
     menu: css`
+      background-color: ${theme.colors.background.primary};
       border: 1px solid ${theme.components.panel.borderColor};
+      bottom: ${reverseDirection ? 0 : 'auto'};
+      box-shadow: ${theme.shadows.z3};
+      display: flex;
       flex-direction: ${reverseDirection ? 'column-reverse' : 'column'};
+      left: 100%;
+      list-style: none;
+      min-width: 140px;
+      opacity: ${isVisible ? 1 : 0};
+      position: absolute;
+      top: ${reverseDirection ? 'auto' : 0};
+      transition: ${theme.transitions.create('opacity')};
+      visibility: ${isVisible ? 'visible' : 'hidden'};
+      z-index: ${theme.zIndex.sidemenu};
     `,
     subtitle: css`
       border-${reverseDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};

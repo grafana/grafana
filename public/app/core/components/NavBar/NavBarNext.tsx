@@ -161,8 +161,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     z-index: ${theme.zIndex.sidemenu};
 
     ${theme.breakpoints.up('md')} {
-      background: none;
-      border-right: none;
       gap: ${theme.spacing(1)};
       margin-left: ${theme.spacing(1)};
       padding: ${theme.spacing(1)} 0;
@@ -175,17 +173,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   grafanaLogo: css`
-    display: none;
+    align-items: center;
+    display: flex;
     img {
       height: ${theme.spacing(3)};
       width: ${theme.spacing(3)};
     }
-
-    ${theme.breakpoints.up('md')} {
-      align-items: center;
-      display: flex;
-      justify-content: center;
-    }
+    justify-content: center;
   `,
   mobileSidemenuLogo: css`
     align-items: center;

@@ -2,22 +2,21 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 import { css } from '@emotion/css';
-import classNames from 'classnames';
 
 export interface Props {
-  className?: string;
   icon?: IconName;
   isActive?: boolean;
   isDivider?: boolean;
   onClick?: () => void;
+  styleOverrides?: string;
   target?: HTMLAnchorElement['target'];
   text: string;
   url?: string;
 }
 
-export function NavBarMenuItem({ className, icon, isActive, isDivider, onClick, target, text, url }: Props) {
+export function NavBarMenuItem({ icon, isActive, isDivider, onClick, styleOverrides, target, text, url }: Props) {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive);
+  const styles = getStyles(theme, isActive, styleOverrides);
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -50,19 +49,12 @@ export function NavBarMenuItem({ className, icon, isActive, isDivider, onClick, 
       );
   }
 
-  return isDivider ? (
-    <li data-testid="dropdown-child-divider" className={classNames(styles.container, styles.divider, className)} />
-  ) : (
-    <li className={classNames(styles.container, className)}>{element}</li>
-  );
+  return isDivider ? <li data-testid="dropdown-child-divider" className={styles.divider} /> : <li>{element}</li>;
 }
 
 NavBarMenuItem.displayName = 'NavBarMenuItem';
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
-  container: css`
-    display: flex;
-  `,
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverrides: Props['styleOverrides']) => ({
   divider: css`
     border-bottom: 1px solid ${theme.colors.border.weak};
     height: 1px;
@@ -74,11 +66,13 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     background: none;
     border: none;
     color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
+    display: flex;
     font-size: inherit;
     height: 100%;
-    padding: ${theme.spacing(1)} ${theme.spacing(2)};
+    padding: 5px 12px 5px 10px;
     position: relative;
     text-align: left;
+    white-space: nowrap;
     width: 100%;
 
     &:hover,
@@ -105,6 +99,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       border-radius: 2px;
       background-image: ${theme.colors.gradients.brandVertical};
     }
+    ${styleOverrides};
   `,
   externalLinkIcon: css`
     color: ${theme.colors.text.secondary};
