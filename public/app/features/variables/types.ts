@@ -68,7 +68,7 @@ export interface DataSourceVariableModel extends VariableWithMultiSupport {
 }
 
 export interface QueryVariableModel extends DataSourceVariableModel {
-  datasource: string | null;
+  datasource: DataSourceRef | null;
   definition: string;
   sort: VariableSort;
   queryValue?: string;

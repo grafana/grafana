@@ -885,6 +885,45 @@ describe('ElasticQueryBuilder', () => {
 
         expect(query.aggs['2'].date_histogram.time_zone).toBe(expectedTimezone);
       });
+
+      describe('field property', () => {
+        it('should use timeField from datasource when not specified', () => {
+          const expectedTimezone = 'America/Los_angeles';
+          const query = builder.build({
+            refId: 'A',
+            metrics: [{ type: 'count', id: '1' }],
+            timeField: '@timestamp',
+            bucketAggs: [
+              {
+                type: 'date_histogram',
+                id: '2',
+                settings: { min_doc_count: '1', timeZone: expectedTimezone },
+              },
+            ],
+          });
+
+          expect(query.aggs['2'].date_histogram.field).toBe('@timestamp');
+        });
+
+        it('should use field from bucket agg when specified', () => {
+          const expectedTimezone = 'America/Los_angeles';
+          const query = builder.build({
+            refId: 'A',
+            metrics: [{ type: 'count', id: '1' }],
+            timeField: '@timestamp',
+            bucketAggs: [
+              {
+                type: 'date_histogram',
+                id: '2',
+                field: '@time',
+                settings: { min_doc_count: '1', timeZone: expectedTimezone },
+              },
+            ],
+          });
+
+          expect(query.aggs['2'].date_histogram.field).toBe('@time');
+        });
+      });
     });
   });
 });
