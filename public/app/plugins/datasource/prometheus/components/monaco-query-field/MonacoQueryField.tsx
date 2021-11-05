@@ -4,8 +4,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
-import { getCompletionProvider } from './monaco-completion-provider';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { Props } from './MonacoQueryFieldProps';
+import { getOverrideServices } from './getOverrideServices';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -34,6 +35,7 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
     horizontalScrollbarSize: 0,
   },
   scrollBeyondLastLine: false,
+  suggest: getSuggestOptions(),
   suggestFontSize: 12,
   wordWrap: 'on',
 };
@@ -75,6 +77,8 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 const MonacoQueryField = (props: Props) => {
+  // we need only one instance of `overrideServices` during the lifetime of the react component
+  const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
   const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
 
@@ -102,6 +106,7 @@ const MonacoQueryField = (props: Props) => {
       ref={containerRef}
     >
       <ReactMonacoEditor
+        overrideServices={overrideServicesRef.current}
         options={options}
         language="promql"
         value={initialValue}
@@ -134,7 +139,11 @@ const MonacoQueryField = (props: Props) => {
             return Promise.resolve(result);
           };
 
-          const dataProvider = { getSeries, getHistory, getAllMetricNames };
+          const getAllLabelNames = () => Promise.resolve(lpRef.current.getLabelKeys());
+
+          const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
+
+          const dataProvider = { getSeries, getHistory, getAllMetricNames, getAllLabelNames, getLabelValues };
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

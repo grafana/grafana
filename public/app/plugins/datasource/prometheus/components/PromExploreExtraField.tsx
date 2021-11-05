@@ -98,12 +98,12 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
           aria-label="Step field"
         >
           <InlineFormLabel
-            width={5}
+            width={6}
             tooltip={
-              'Time units can be used here, for example: 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
+              'Time units and built-in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
             }
           >
-            Step
+            Min step
           </InlineFormLabel>
           <input
             type={'text'}
