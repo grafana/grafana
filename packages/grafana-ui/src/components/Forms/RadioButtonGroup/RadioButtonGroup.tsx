@@ -49,8 +49,7 @@ export function RadioButtonGroup<T>({
     if (autoFocus && activeButtonRef.current) {
       activeButtonRef.current.focus();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [autoFocus]);
 
   return (
     <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}>

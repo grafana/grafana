@@ -16,7 +16,14 @@ interface Props {
   onPasswordChange(password: string): void;
 }
 
-export function UserProfile(props: Props) {
+export function UserProfile({
+  user,
+  onUserUpdate,
+  onUserDelete,
+  onUserDisable,
+  onUserEnable,
+  onPasswordChange,
+}: Props) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
 
@@ -36,23 +43,13 @@ export function UserProfile(props: Props) {
     }
   };
 
-  const onUserDelete = () => {
-    const { user, onUserDelete } = props;
-    onUserDelete(user.id);
-  };
+  const handleUserDelete = () => onUserDelete(user.id);
 
-  const onUserDisable = () => {
-    const { user, onUserDisable } = props;
-    onUserDisable(user.id);
-  };
+  const handleUserDisable = () => onUserDisable(user.id);
 
-  const onUserEnable = () => {
-    const { user, onUserEnable } = props;
-    onUserEnable(user.id);
-  };
+  const handleUserEnable = () => onUserEnable(user.id);
 
   const onUserNameChange = (newValue: string) => {
-    const { user, onUserUpdate } = props;
     onUserUpdate({
       ...user,
       name: newValue,
@@ -60,7 +57,6 @@ export function UserProfile(props: Props) {
   };
 
   const onUserEmailChange = (newValue: string) => {
-    const { user, onUserUpdate } = props;
     onUserUpdate({
       ...user,
       email: newValue,
@@ -68,18 +64,12 @@ export function UserProfile(props: Props) {
   };
 
   const onUserLoginChange = (newValue: string) => {
-    const { user, onUserUpdate } = props;
     onUserUpdate({
       ...user,
       login: newValue,
     });
   };
 
-  const onPasswordChange = (newValue: string) => {
-    props.onPasswordChange(newValue);
-  };
-
-  const { user } = props;
   const authSource = user.authLabels?.length && user.authLabels[0];
   const lockMessage = authSource ? `Synced via ${authSource}` : '';
   const styles = getStyles(config.theme);
@@ -140,13 +130,13 @@ export function UserProfile(props: Props) {
                 title="Delete user"
                 body="Are you sure you want to delete this user?"
                 confirmText="Delete user"
-                onConfirm={onUserDelete}
+                onConfirm={handleUserDelete}
                 onDismiss={showDeleteUserModal(false)}
               />
             </>
           )}
           {user.isDisabled && canEnable && (
-            <Button variant="secondary" onClick={onUserEnable}>
+            <Button variant="secondary" onClick={handleUserEnable}>
               Enable user
             </Button>
           )}
@@ -160,7 +150,7 @@ export function UserProfile(props: Props) {
                 title="Disable user"
                 body="Are you sure you want to disable this user?"
                 confirmText="Disable user"
-                onConfirm={onUserDisable}
+                onConfirm={handleUserDisable}
                 onDismiss={showDisableUserModal(false)}
               />
             </>

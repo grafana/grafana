@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { AsyncSelect } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Organization } from 'app/types';
 import { SelectableValue } from '@grafana/data';
+import { useAsyncFn } from 'react-use';
 
 export type OrgSelectItem = SelectableValue<Organization>;
 
@@ -13,47 +14,26 @@ export interface Props {
   autoFocus?: boolean;
 }
 
-export function OrgPicker(props: Props) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [orgs, setOrgs] = useState<Organization[]>([]);
-
+export function OrgPicker({ onSelected, className, inputId, autoFocus }: Props) {
   // For whatever reason the autoFocus prop doesn't seem to work
   // with AsyncSelect, hence this workaround. Maybe fixed in a later version?
   useEffect(() => {
-    if (props.autoFocus && props.inputId) {
-      document.getElementById(props.inputId)?.focus();
+    if (autoFocus && inputId) {
+      document.getElementById(inputId)?.focus();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [autoFocus, inputId]);
 
-  const loadOrgs = async () => {
-    setIsLoading(true);
-    const orgs = await getBackendSrv().get('/api/orgs');
-    setOrgs(orgs);
-    setIsLoading(false);
-    return orgs;
-  };
-
-  const getOrgOptions = async (query: string): Promise<OrgSelectItem[]> => {
-    if (!orgs?.length) {
-      await loadOrgs();
-    }
-    return orgs.map(
-      (org: Organization): OrgSelectItem => ({
-        value: { id: org.id, name: org.name },
-        label: org.name,
-      })
-    );
-  };
-
-  const { className, onSelected, inputId } = props;
+  const [orgOptionsState, getOrgOptions] = useAsyncFn(async () => {
+    const orgs: Organization[] = await getBackendSrv().get('/api/orgs');
+    return orgs.map((org) => ({ value: { id: org.id, name: org.name }, label: org.name }));
+  });
 
   return (
     <AsyncSelect
       menuShouldPortal
       inputId={inputId}
       className={className}
-      isLoading={isLoading}
+      isLoading={orgOptionsState.loading}
       defaultOptions={true}
       isSearchable={false}
       loadOptions={getOrgOptions}
