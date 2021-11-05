@@ -262,7 +262,6 @@ func resetOrgUsersDefaultHandlers(t *testing.T) {
 }
 
 func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
-	var err error
 	url := "/api/orgs/%v/users/"
 	type testCase struct {
 		name                string
@@ -298,7 +297,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			targetOrg:           testAdminOrg2.OrgId,
 		},
 		{
-			name:                "org admin cannot get users from another org (legacy)",
+			name:                "org admin cannot get users in another org (legacy)",
 			enableAccessControl: false,
 			expectedCode:        http.StatusForbidden,
 			user:                testAdminOrg2,
@@ -329,7 +328,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			targetOrg:           testAdminOrg2.OrgId,
 		},
 		{
-			name:                "org admin cannot get users from another org",
+			name:                "org admin cannot get users in another org",
 			enableAccessControl: true,
 			expectedCode:        http.StatusForbidden,
 			user:                testAdminOrg2,
@@ -349,7 +348,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 
 			if tc.expectedCode != http.StatusForbidden {
 				var userList []*models.OrgUserDTO
-				err = json.NewDecoder(response.Body).Decode(&userList)
+				err := json.NewDecoder(response.Body).Decode(&userList)
 				require.NoError(t, err)
 
 				assert.Len(t, userList, tc.expectedUserCount)
@@ -359,189 +358,120 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 }
 
 func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
-	var err error
-	// Use real accesscontrol service
-	sc := setupHTTPServer(t, false, true)
-	resetOrgUsersDefaultHandlers(t)
-	setupOrgUsersDBForAccessControlTests(t, *sc.db)
-
 	url := "/api/orgs/%v/users/"
-	t.Run("server admin can add users to his org", func(t *testing.T) {
-		// Remove user after test
-		t.Cleanup(func() {
-			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testAdminOrg2.UserId, OrgId: testServerAdminViewer.OrgId})
+	type testCase struct {
+		name                string
+		enableAccessControl bool
+		user                models.SignedInUser
+		targetOrg           int64
+		input               string
+		expectedCode        int
+		expectedMessage     util.DynMap
+		expectedUserCount   int
+	}
+
+	tests := []testCase{
+		{
+			name:                "server admin can add users to his org (legacy)",
+			enableAccessControl: false,
+			user:                testServerAdminViewer,
+			targetOrg:           testServerAdminViewer.OrgId,
+			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
+			expectedCode:        http.StatusOK,
+			expectedMessage:     util.DynMap{"message": "User added to organization", "userId": float64(testAdminOrg2.UserId)},
+			expectedUserCount:   3,
+		},
+		{
+			name:                "server admin can add users to another org (legacy)",
+			enableAccessControl: false,
+			user:                testServerAdminViewer,
+			targetOrg:           2,
+			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
+			expectedCode:        http.StatusOK,
+			expectedMessage:     util.DynMap{"message": "User added to organization", "userId": float64(testEditorOrg1.UserId)},
+			expectedUserCount:   3,
+		},
+		{
+			name:                "org admin cannot add users to his org (legacy)",
+			enableAccessControl: false,
+			expectedCode:        http.StatusForbidden,
+			user:                testAdminOrg2,
+			targetOrg:           testAdminOrg2.OrgId,
+			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
+		},
+		{
+			name:                "org admin cannot add users to another org (legacy)",
+			enableAccessControl: false,
+			expectedCode:        http.StatusForbidden,
+			user:                testAdminOrg2,
+			targetOrg:           1,
+			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
+		},
+		{
+			name:                "server admin can add users to his org",
+			enableAccessControl: true,
+			user:                testServerAdminViewer,
+			targetOrg:           testServerAdminViewer.OrgId,
+			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
+			expectedCode:        http.StatusOK,
+			expectedMessage:     util.DynMap{"message": "User added to organization", "userId": float64(testAdminOrg2.UserId)},
+			expectedUserCount:   3,
+		},
+		{
+			name:                "server admin can add users to another org",
+			enableAccessControl: true,
+			user:                testServerAdminViewer,
+			targetOrg:           2,
+			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
+			expectedCode:        http.StatusOK,
+			expectedMessage:     util.DynMap{"message": "User added to organization", "userId": float64(testEditorOrg1.UserId)},
+			expectedUserCount:   3,
+		},
+		{
+			name:                "org admin can add users to his org",
+			enableAccessControl: true,
+			user:                testAdminOrg2,
+			targetOrg:           testAdminOrg2.OrgId,
+			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
+			expectedCode:        http.StatusOK,
+			expectedMessage:     util.DynMap{"message": "User added to organization", "userId": float64(testEditorOrg1.UserId)},
+			expectedUserCount:   3,
+		},
+		{
+			name:                "org admin cannot add users to another org",
+			enableAccessControl: true,
+			expectedCode:        http.StatusForbidden,
+			user:                testAdminOrg2,
+			targetOrg:           1,
+			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			sc := setupHTTPServer(t, false, tc.enableAccessControl)
+			resetOrgUsersDefaultHandlers(t)
+			setupOrgUsersDBForAccessControlTests(t, *sc.db)
+			setSignedInUser(sc.initCtx, tc.user)
+
+			// Perform request
+			input := strings.NewReader(tc.input)
+			response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, tc.targetOrg), input, t)
+			assert.Equal(t, tc.expectedCode, response.Code)
+
+			if tc.expectedCode != http.StatusForbidden {
+				// Check result
+				var message util.DynMap
+				err := json.NewDecoder(response.Body).Decode(&message)
+				require.NoError(t, err)
+				assert.EqualValuesf(t, tc.expectedMessage, message, "server did not answer expected message")
+
+				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg}
+				err = sqlstore.GetOrgUsers(&getUsersQuery)
+				require.NoError(t, err)
+				assert.Len(t, getUsersQuery.Result, tc.expectedUserCount)
+			}
 		})
-
-		// Perform request
-		input := strings.NewReader(`{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`)
-		setSignedInUser(sc.initCtx, testServerAdminViewer)
-		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, testServerAdminViewer.OrgId), input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		// Check result
-		var result util.DynMap
-		err = json.NewDecoder(response.Body).Decode(&result)
-		require.NoError(t, err)
-		require.Contains(t, result, "message")
-		assert.Equal(t, "User added to organization", result["message"])
-		require.Contains(t, result, "userId")
-		assert.EqualValuesf(t, testAdminOrg2.UserId, result["userId"], "userId %v differs from expected", result["userId"])
-
-		getUsersQuery := models.GetOrgUsersQuery{OrgId: testServerAdminViewer.OrgId}
-		err = sqlstore.GetOrgUsers(&getUsersQuery)
-		require.NoError(t, err)
-		assert.Len(t, getUsersQuery.Result, 3)
-	})
-	t.Run("server admin can add users to another org", func(t *testing.T) {
-		// Remove user after test
-		t.Cleanup(func() {
-			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testEditorOrg1.UserId, OrgId: 2})
-		})
-
-		// Perform request
-		input := strings.NewReader(`{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`)
-		setSignedInUser(sc.initCtx, testServerAdminViewer)
-		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, 2), input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		// Check result
-		var result util.DynMap
-		err = json.NewDecoder(response.Body).Decode(&result)
-		require.NoError(t, err)
-		require.Contains(t, result, "message")
-		assert.Equal(t, "User added to organization", result["message"])
-		require.Contains(t, result, "userId")
-		assert.EqualValuesf(t, testEditorOrg1.UserId, result["userId"], "userId %v differs from expected", result["userId"])
-
-		getUsersQuery := models.GetOrgUsersQuery{OrgId: 2}
-		err = sqlstore.GetOrgUsers(&getUsersQuery)
-		require.NoError(t, err)
-		assert.Len(t, getUsersQuery.Result, 3)
-	})
-	t.Run("org admin can add users to his org", func(t *testing.T) {
-		// Remove user after test
-		t.Cleanup(func() {
-			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testEditorOrg1.UserId, OrgId: testAdminOrg2.OrgId})
-		})
-
-		// Perform request
-		input := strings.NewReader(`{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`)
-		setSignedInUser(sc.initCtx, testAdminOrg2)
-		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, testAdminOrg2.OrgId), input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		// Check result
-		var result util.DynMap
-		err = json.NewDecoder(response.Body).Decode(&result)
-		require.NoError(t, err)
-		require.Contains(t, result, "message")
-		assert.Equal(t, "User added to organization", result["message"])
-		require.Contains(t, result, "userId")
-		assert.EqualValuesf(t, testEditorOrg1.UserId, result["userId"], "userId %v differs from expected", result["userId"])
-
-		getUsersQuery := models.GetOrgUsersQuery{OrgId: testAdminOrg2.OrgId}
-		err = sqlstore.GetOrgUsers(&getUsersQuery)
-		require.NoError(t, err)
-		assert.Len(t, getUsersQuery.Result, 3)
-	})
-	t.Run("org admin cannot add users to another org", func(t *testing.T) {
-		// Remove user after test
-		t.Cleanup(func() {
-			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testAdminOrg2.UserId, OrgId: 1})
-		})
-
-		// Perform request
-		input := strings.NewReader(`{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`)
-		setSignedInUser(sc.initCtx, testAdminOrg2)
-		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, 1), input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-}
-
-func TestPostOrgUsersAPIEndpoint_LegacyAccessControl(t *testing.T) {
-	var err error
-	// Use legacy accesscontrol
-	sc := setupHTTPServer(t, false, false)
-	resetOrgUsersDefaultHandlers(t)
-	setupOrgUsersDBForAccessControlTests(t, *sc.db)
-
-	url := "/api/orgs/%v/users/"
-	t.Run("server admin can add users to his org", func(t *testing.T) {
-		// Remove user after test
-		t.Cleanup(func() {
-			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testAdminOrg2.UserId, OrgId: testServerAdminViewer.OrgId})
-		})
-
-		// Perform request
-		input := strings.NewReader(`{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`)
-		setSignedInUser(sc.initCtx, testServerAdminViewer)
-		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, testServerAdminViewer.OrgId), input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		// Check result
-		var result util.DynMap
-		err = json.NewDecoder(response.Body).Decode(&result)
-		require.NoError(t, err)
-		require.Contains(t, result, "message")
-		assert.Equal(t, "User added to organization", result["message"])
-		require.Contains(t, result, "userId")
-		assert.EqualValuesf(t, testAdminOrg2.UserId, result["userId"], "userId %v differs from expected", result["userId"])
-
-		getUsersQuery := models.GetOrgUsersQuery{OrgId: testServerAdminViewer.OrgId}
-		err = sqlstore.GetOrgUsers(&getUsersQuery)
-		require.NoError(t, err)
-		assert.Len(t, getUsersQuery.Result, 3)
-	})
-	t.Run("server admin can add users to another org", func(t *testing.T) {
-		// Remove user after test
-		t.Cleanup(func() {
-			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testEditorOrg1.UserId, OrgId: 2})
-		})
-
-		// Perform request
-		input := strings.NewReader(`{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`)
-		setSignedInUser(sc.initCtx, testServerAdminViewer)
-		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, 2), input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		// Check result
-		var result util.DynMap
-		err = json.NewDecoder(response.Body).Decode(&result)
-		require.NoError(t, err)
-		require.Contains(t, result, "message")
-		assert.Equal(t, "User added to organization", result["message"])
-		require.Contains(t, result, "userId")
-		assert.EqualValuesf(t, testEditorOrg1.UserId, result["userId"], "userId %v differs from expected", result["userId"])
-
-		getUsersQuery := models.GetOrgUsersQuery{OrgId: 2}
-		err = sqlstore.GetOrgUsers(&getUsersQuery)
-		require.NoError(t, err)
-		assert.Len(t, getUsersQuery.Result, 3)
-	})
-	t.Run("org admin cannot add users to his org", func(t *testing.T) {
-		// Remove user after test
-		t.Cleanup(func() {
-			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testEditorOrg1.UserId, OrgId: testAdminOrg2.OrgId})
-		})
-
-		// Perform request
-		input := strings.NewReader(`{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`)
-		setSignedInUser(sc.initCtx, testAdminOrg2)
-		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, testAdminOrg2.OrgId), input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-	t.Run("org admin cannot add users to another org", func(t *testing.T) {
-		// Remove user after test
-		t.Cleanup(func() {
-			_ = sqlstore.RemoveOrgUser(&models.RemoveOrgUserCommand{UserId: testAdminOrg2.UserId, OrgId: 1})
-		})
-
-		// Perform request
-		input := strings.NewReader(`{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`)
-		setSignedInUser(sc.initCtx, testAdminOrg2)
-		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, 1), input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
+	}
 }
 
 func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
