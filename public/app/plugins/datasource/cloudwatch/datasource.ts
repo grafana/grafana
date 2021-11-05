@@ -222,9 +222,9 @@ export class CloudWatchDatasource
           return {
             intervalMs: options.intervalMs,
             maxDataPoints: options.maxDataPoints,
-            datasource: this.getRef(),
             type: 'timeSeriesQuery',
             ...item,
+            datasource: this.getRef(),
           };
         }
       );

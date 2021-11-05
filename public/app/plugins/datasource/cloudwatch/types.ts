@@ -320,20 +320,6 @@ export interface MetricQuery {
   intervalMs?: number;
 }
 
-// interface TsdbQuery {
-// 	TimeRange *TimeRange
-// 	Queries   []*Query
-// 	Debug     bool
-// }
-
-// type Query struct {
-// 	RefId         string
-// 	Model         *simplejson.Json
-// 	DataSource    *models.DataSource
-// 	MaxDataPoints int64
-// 	IntervalMs    int64
-// }
-
 export interface ExecutedQueryPreview {
   id: string;
   executedQuery: string;
