@@ -1,4 +1,4 @@
-import { MarketTrendMode, ColorStrategy, PriceStyle } from './types';
+import { MarketTrendMode, ColorStrategy, PriceStyle } from './models.gen';
 import uPlot from 'uplot';
 import { colorManipulator } from '@grafana/data';
 
