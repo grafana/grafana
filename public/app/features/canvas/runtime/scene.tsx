@@ -175,7 +175,6 @@ export class Scene {
   select = (selection: SelectionParams) => {
     if (this.selecto) {
       this.selecto.setSelectedTargets(selection.targets);
-
       this.updateSelection(selection);
     }
   };
@@ -191,17 +190,30 @@ export class Scene {
     }
   };
 
-  initMoveable = (destroySelecto = false, allowChanges = true) => {
-    const targetElements: HTMLDivElement[] = [];
-    this.root.elements.forEach((element: any) => {
-      if (element instanceof GroupState) {
-        element.elements.forEach((element: ElementState) => {
-          targetElements.push(element.div!);
-        });
-      } else if (element instanceof ElementState) {
-        targetElements.push(element.div!);
+  private generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] => {
+    let targetElements: HTMLDivElement[] = [];
+
+    const stack = [...rootElements];
+
+    while (stack.length > 0) {
+      const currentElement = stack.shift();
+
+      if (currentElement && currentElement.div) {
+        targetElements.push(currentElement.div);
       }
-    });
+
+      const nestedElements = currentElement instanceof GroupState ? currentElement.elements : [];
+
+      for (const nestedElement of nestedElements) {
+        stack.unshift(nestedElement);
+      }
+    }
+
+    return targetElements;
+  };
+
+  initMoveable = (destroySelecto = false, allowChanges = true) => {
+    const targetElements = this.generateTargetElements(this.root.elements);
 
     if (destroySelecto) {
       this.selecto?.destroy();
