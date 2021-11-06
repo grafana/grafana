@@ -13,6 +13,7 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from 'app/features/canvas/runtime/group';
 import { LayerEditorProps } from './layerEditor';
+import { SelectionParams } from 'app/features/canvas/runtime/scene';
 
 type Props = StandardEditorProps<any, LayerEditorProps, PanelOptions>;
 
@@ -43,16 +44,21 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     if (settings?.scene) {
       try {
+        let selection: SelectionParams = { targets: [] };
         if (item instanceof GroupState) {
           const targetElements: HTMLDivElement[] = [];
           item.elements.forEach((element: ElementState) => {
             targetElements.push(element.div!);
           });
 
-          settings.scene.select(targetElements);
+          selection.targets = targetElements;
+          selection.group = item;
+
+          settings.scene.select(selection);
         } else if (item instanceof ElementState) {
           const targetElement = [item?.div!];
-          settings.scene.select(targetElement);
+          selection.targets = targetElement;
+          settings.scene.select(selection);
         }
       } catch (error) {
         appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);

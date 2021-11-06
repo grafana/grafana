@@ -17,23 +17,25 @@ export interface LayerEditorProps {
 export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEditorProps> {
   const { selected, scene } = opts;
 
-  let layer = scene.root as GroupState;
+  if (!scene.currentLayer) {
+    scene.currentLayer = scene.root as GroupState;
+  }
 
   if (selected) {
     for (const element of selected) {
       if (element instanceof GroupState) {
-        layer = element;
+        scene.currentLayer = element;
         break;
       }
 
-      if (layer.parent) {
-        layer = layer.parent;
+      if (element.parent) {
+        scene.currentLayer = element.parent;
         break;
       }
     }
   }
 
-  const options = layer.options || { elements: [] };
+  const options = scene.currentLayer.options || { elements: [] };
 
   return {
     category: ['Layer'],
@@ -50,7 +52,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
           return;
         }
         const c = setOptionImmutably(options, path, value);
-        layer.onChange(c);
+        scene.currentLayer.onChange(c);
       },
     }),
 
@@ -61,7 +63,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
         path: 'root',
         name: 'Elements',
         editor: LayerElementListEditor,
-        settings: { scene, layer, selected },
+        settings: { scene, layer: scene.currentLayer, selected },
       });
 
       // // force clean layer configuration

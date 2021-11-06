@@ -25,9 +25,14 @@ import { ElementState } from './element';
 import { RootElement } from './root';
 import { GroupState } from './group';
 
+export interface SelectionParams {
+  targets: Array<HTMLElement | SVGElement>;
+  group?: GroupState;
+}
+
 export class Scene {
   styles = getStyles(config.theme2);
-  readonly selection = new ReplaySubject<ElementState[]>(1);
+  readonly selection = new ReplaySubject<Array<ElementState | GroupState>>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
   root: RootElement;
 
@@ -40,6 +45,7 @@ export class Scene {
   selecto?: Selecto;
   moveable?: Moveable;
   div?: HTMLDivElement;
+  currentLayer: GroupState;
 
   constructor(cfg: CanvasGroupOptions, enableEditing: boolean, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = this.load(cfg, enableEditing);
@@ -160,18 +166,23 @@ export class Scene {
     this.div = sceneContainer;
   };
 
-  select = (targetElements: Array<HTMLElement | SVGElement>) => {
+  select = (selection: SelectionParams) => {
     if (this.selecto) {
-      this.selecto.setSelectedTargets(targetElements);
+      this.selecto.setSelectedTargets(selection.targets);
 
-      this.updateSelection(targetElements);
+      this.updateSelection(selection);
     }
   };
 
-  private updateSelection = (selectedElements: Array<HTMLElement | SVGElement>) => {
-    this.moveable!.target = selectedElements;
-    const s = selectedElements.map((t) => this.findElementByTarget(t)!);
-    this.selection.next(s);
+  private updateSelection = (selection: SelectionParams) => {
+    this.moveable!.target = selection.targets;
+
+    if (selection.group) {
+      this.selection.next([selection.group]);
+    } else {
+      const s = selection.targets.map((t) => this.findElementByTarget(t)!);
+      this.selection.next(s);
+    }
   };
 
   initMoveable = (destroySelecto = false, allowChanges = true) => {
@@ -251,7 +262,7 @@ export class Scene {
       }
     }).on('selectEnd', (event) => {
       targets = event.selected;
-      this.updateSelection(targets);
+      this.updateSelection({ targets });
 
       if (event.isDragStart) {
         event.inputEvent.preventDefault();
