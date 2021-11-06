@@ -13,7 +13,6 @@ export const MultiSelectionEditor: FC<StandardEditorProps<any, InstanceState, Pa
     const currentSelectedElements = context?.instanceState.selected;
     const currentLayer = currentSelectedElements[0].parent;
 
-    // Create new group and attach currentSelected elements to that group
     const newLayer = new GroupState(
       {
         type: 'group',
@@ -23,21 +22,14 @@ export const MultiSelectionEditor: FC<StandardEditorProps<any, InstanceState, Pa
       currentSelectedElements[0].parent
     );
 
-    // Remove old elements from current layer
-    // This approach is working currently for some reason...
-    // currentLayer.elements.filter((element: ElementState) => !currentSelectedElements.includes(element));
-
     currentSelectedElements.forEach((element: ElementState) => {
       newLayer.doAction(LayerActionID.Duplicate, element);
       currentLayer.doAction(LayerActionID.Delete, element);
     });
 
-    // add new group as element to current layer
     currentLayer.elements.push(newLayer);
 
     context.instanceState.scene.save();
-    // Update current layer displayed in UI
-    // Add conditional rendering button to access parent root level
   };
 
   return (
