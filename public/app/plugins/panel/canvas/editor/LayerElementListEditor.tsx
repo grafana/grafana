@@ -115,6 +115,21 @@ export class LayerElementListEditor extends PureComponent<Props> {
     }
   };
 
+  private decoupleGroup = () => {
+    const settings = this.props.item.settings;
+
+    if (!settings?.layer) {
+      return;
+    }
+
+    const { layer } = settings;
+
+    layer.elements.forEach((element: ElementState) => {
+      layer.parent?.doAction(LayerActionID.Duplicate, element);
+    });
+    this.deleteGroup();
+  };
+
   private deleteGroup = () => {
     const settings = this.props.item.settings;
 
@@ -124,10 +139,8 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     const { layer } = settings;
 
-    if (window.confirm('Are you sure? This will delete group and all nested elements')) {
-      layer.parent?.doAction(LayerActionID.Delete, layer);
-      this.goUpLayer();
-    }
+    layer.parent?.doAction(LayerActionID.Delete, layer);
+    this.goUpLayer();
   };
 
   render() {
@@ -146,13 +159,32 @@ export class LayerElementListEditor extends PureComponent<Props> {
       <>
         {!layer.isRoot() && (
           <>
-            <Button size="sm" variant="secondary" onClick={this.goUpLayer}>
+            <Button icon="angle-up" size="sm" variant="secondary" onClick={this.goUpLayer}>
               Go Up Layer
             </Button>
             <Button size="sm" variant="secondary" onClick={() => this.onSelect(layer)}>
               Select Group
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => this.deleteGroup()}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                if (window.confirm('Are you sure? This will remove group and push elements in next layer up')) {
+                  this.decoupleGroup();
+                }
+              }}
+            >
+              Decouple Group
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                if (window.confirm('Are you sure? This will delete group and all nested elements')) {
+                  this.deleteGroup();
+                }
+              }}
+            >
               Delete Group
             </Button>
           </>
