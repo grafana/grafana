@@ -115,6 +115,21 @@ export class LayerElementListEditor extends PureComponent<Props> {
     }
   };
 
+  private deleteGroup = () => {
+    const settings = this.props.item.settings;
+
+    if (!settings?.layer) {
+      return;
+    }
+
+    const { layer } = settings;
+
+    if (window.confirm('Are you sure? This will delete group and all nested elements')) {
+      layer.parent?.doAction(LayerActionID.Delete, layer);
+      this.goUpLayer();
+    }
+  };
+
   render() {
     const settings = this.props.item.settings;
     if (!settings) {
@@ -135,7 +150,10 @@ export class LayerElementListEditor extends PureComponent<Props> {
               Go Up Layer
             </Button>
             <Button size="sm" variant="secondary" onClick={() => this.onSelect(layer)}>
-              Select All
+              Select Group
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => this.deleteGroup()}>
+              Delete Group
             </Button>
           </>
         )}
@@ -163,27 +181,31 @@ export class LayerElementListEditor extends PureComponent<Props> {
                               &nbsp; {element.UID} ({i})
                             </div>
 
-                            <IconButton
-                              name="copy"
-                              title={'Duplicate'}
-                              className={styles.actionIcon}
-                              onClick={() => layer.doAction(LayerActionID.Duplicate, element)}
-                              surface="header"
-                            />
+                            {element.item.id !== 'group' && (
+                              <>
+                                <IconButton
+                                  name="copy"
+                                  title={'Duplicate'}
+                                  className={styles.actionIcon}
+                                  onClick={() => layer.doAction(LayerActionID.Duplicate, element)}
+                                  surface="header"
+                                />
 
-                            <IconButton
-                              name="trash-alt"
-                              title={'Remove'}
-                              className={cx(styles.actionIcon, styles.dragIcon)}
-                              onClick={() => layer.doAction(LayerActionID.Delete, element)}
-                              surface="header"
-                            />
-                            <Icon
-                              title="Drag and drop to reorder"
-                              name="draggabledots"
-                              size="lg"
-                              className={styles.dragIcon}
-                            />
+                                <IconButton
+                                  name="trash-alt"
+                                  title={'Remove'}
+                                  className={cx(styles.actionIcon, styles.dragIcon)}
+                                  onClick={() => layer.doAction(LayerActionID.Delete, element)}
+                                  surface="header"
+                                />
+                                <Icon
+                                  title="Drag and drop to reorder"
+                                  name="draggabledots"
+                                  size="lg"
+                                  className={styles.dragIcon}
+                                />
+                              </>
+                            )}
                           </div>
                         )}
                       </Draggable>
