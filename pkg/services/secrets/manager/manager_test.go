@@ -146,7 +146,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	})
 }
 
-func TestSecretsService_GetCurrentProvider(t *testing.T) {
+func TestSecretsService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		cfg := `[security]
 			secret_key = sdDkslslld`
@@ -183,4 +183,53 @@ func TestSecretsService_GetCurrentProvider(t *testing.T) {
 
 		assert.Equal(t, "awskms.second_key", svc.currentProvider)
 	})
+
+	t.Run("Should use encrypt/decrypt methods of the current provider", func(t *testing.T) {
+		cfg := `
+		[security]
+		secret_key = sdDkslslld
+		encryption_provider = fake-provider.some-key
+
+		[security.encryption.fake-provider.some-key]
+		`
+
+		raw, err := ini.Load([]byte(cfg))
+		require.NoError(t, err)
+
+		secretsService := ProvideSecretsService(
+			database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
+			bus.New(),
+			ossencryption.ProvideService(),
+			&setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}},
+		)
+
+		secretsService.RegisterProvider("fake-provider.some-key", &fakeProvider{t: t})
+		require.NoError(t, err)
+		assert.Equal(t, "fake-provider.some-key", secretsService.CurrentProviderID())
+		assert.Equal(t, 2, len(secretsService.GetProviders()))
+
+		plaintext := []byte("should be encrypted with a fake key provider")
+		encrypted, err := secretsService.Encrypt(context.Background(), plaintext, secrets.WithoutScope())
+		require.NoError(t, err)
+		decrypted, err := secretsService.Decrypt(context.Background(), encrypted)
+		require.NoError(t, err)
+		assert.Equal(t, plaintext, decrypted)
+	})
+}
+
+const encryptedBy = "fakeProvider"
+
+type fakeProvider struct {
+	t         testing.TB
+	encrypted []byte
+}
+
+func (p *fakeProvider) Encrypt(ctx context.Context, blob []byte) ([]byte, error) {
+	p.encrypted = blob
+	return []byte(encryptedBy), nil
+}
+
+func (p *fakeProvider) Decrypt(ctx context.Context, blob []byte) ([]byte, error) {
+	require.Equal(p.t, encryptedBy, blob, "payload encrypted with fakeProvider is expected")
+	return p.encrypted, nil
 }
