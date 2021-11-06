@@ -101,6 +101,7 @@ export class DashboardModel {
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
   private hasChangesThatAffectsAllPanels: boolean;
+  pinSubMenu: boolean;
 
   // ------------------
   // not persisted
@@ -158,6 +159,7 @@ export class DashboardModel {
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
     this.formatDate = this.formatDate.bind(this);
+    this.pinSubMenu = data.pinSubMenu || false;
 
     this.resetOriginalVariables(true);
     this.resetOriginalTime();
@@ -368,6 +370,10 @@ export class DashboardModel {
         panel.refresh();
       }
     }
+  }
+
+  pinMenuSwitch() {
+    this.pinSubMenu = !this.pinSubMenu;
   }
 
   render() {

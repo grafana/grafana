@@ -9,6 +9,7 @@ import { Annotations } from './Annotations';
 import { SubMenuItems } from './SubMenuItems';
 import { DashboardLink } from '../../state/DashboardModel';
 import { AnnotationQuery } from '@grafana/data';
+import { ToolbarButton } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 interface OwnProps {
@@ -26,6 +27,40 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class SubMenuUnConnected extends PureComponent<Props> {
+  state = { pinned: false };
+  ref: any;
+
+  constructor(props: Props) {
+    super(props);
+    this.ref = React.createRef();
+  }
+
+  handleResizeAndScroll = (e: Event) => {
+    if (!this.props.dashboard.pinSubMenu) {
+      return;
+    }
+    if (e.type === 'scroll' && this.state.pinned) {
+      return;
+    }
+    this.setState({ pinned: true });
+    this.forceUpdate();
+  };
+
+  componentDidMount() {
+    window.addEventListener('resize', this.handleResizeAndScroll.bind(this));
+    window.addEventListener('scroll', this.handleResizeAndScroll.bind(this), true);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.handleResizeAndScroll.bind(this));
+    window.removeEventListener('scroll', this.handleResizeAndScroll.bind(this), true);
+  }
+
+  onPinMenuClicked = () => {
+    this.props.dashboard.pinMenuSwitch();
+    this.forceUpdate();
+  };
+
   onAnnotationStateChanged = (updatedAnnotation: any) => {
     // we're mutating dashboard state directly here until annotations are in Redux.
     for (let index = 0; index < this.props.dashboard.annotations.list.length; index++) {
@@ -46,20 +81,35 @@ class SubMenuUnConnected extends PureComponent<Props> {
       return null;
     }
 
+    const pinned = dashboard.pinSubMenu && this.state.pinned;
     return (
-      <div className="submenu-controls">
-        <form aria-label="Template variables" className={styles}>
-          <SubMenuItems variables={variables} />
-        </form>
-        <Annotations
-          annotations={annotations}
-          onAnnotationChanged={this.onAnnotationStateChanged}
-          events={dashboard.events}
-        />
-        <div className="gf-form gf-form--grow" />
-        {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
-        <div className="clearfix" />
-      </div>
+      <>
+        <div
+          ref={(node) => (this.ref = node)}
+          className="submenu-controls"
+          style={{ zIndex: 10, position: pinned ? 'fixed' : 'inherit' }}
+        >
+          <form aria-label="Template variables" className={styles}>
+            <SubMenuItems variables={variables} />
+          </form>
+          <Annotations
+            annotations={annotations}
+            onAnnotationChanged={this.onAnnotationStateChanged}
+            events={dashboard.events}
+          />
+          <div className="gf-form gf-form--grow" />
+          {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
+          <div style={{ paddingRight: pinned ? 16 : 0 }}>
+            <ToolbarButton
+              icon={dashboard.pinSubMenu ? 'lock' : 'unlock'}
+              tooltip="Pin sub menu position"
+              onClick={this.onPinMenuClicked}
+            />
+          </div>
+          <div className="clearfix" />
+        </div>
+        {pinned && <div className="submenu-controls" style={{ height: this.ref.clientHeight }}></div>}
+      </>
     );
   }
 }
