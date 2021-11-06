@@ -22,6 +22,10 @@ Panel: {
                     // anything for now
                     ...
                 }
+                PanelFieldConfig: {
+                    // anything for now
+                    ...
+                }
             }
         ]
     ]
