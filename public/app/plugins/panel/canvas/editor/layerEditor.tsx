@@ -52,7 +52,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
           return;
         }
         const c = setOptionImmutably(options, path, value);
-        scene.currentLayer.onChange(c);
+        scene.currentLayer?.onChange(c);
       },
     }),
 
