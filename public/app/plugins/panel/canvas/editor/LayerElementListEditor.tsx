@@ -130,9 +130,14 @@ export class LayerElementListEditor extends PureComponent<Props> {
     return (
       <>
         {!layer.isRoot() && (
-          <Button size="sm" variant="secondary" onClick={this.goUpLayer}>
-            Go Up Layer
-          </Button>
+          <>
+            <Button size="sm" variant="secondary" onClick={this.goUpLayer}>
+              Go Up Layer
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => this.onSelect(layer)}>
+              Select All
+            </Button>
+          </>
         )}
         <DragDropContext onDragEnd={this.onDragEnd}>
           <Droppable droppableId="droppable">
