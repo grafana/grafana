@@ -56,11 +56,13 @@ describe('DashboardModel', () => {
   describe('getSaveModelClone', () => {
     it('should sort keys', () => {
       const model = new DashboardModel({});
+      model.autoUpdate = null;
+
       const saveModel = model.getSaveModelClone();
       const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
-      expect(keys[1]).toBe('autoUpdate');
+      expect(keys[1]).toBe('editable');
     });
 
     it('should remove add panel panels', () => {
