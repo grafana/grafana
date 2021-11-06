@@ -150,7 +150,6 @@ export class Scene {
     // We will probably want to add memoization to this as we are calling on drag / resize
 
     const stack = [...this.root.elements];
-
     while (stack.length > 0) {
       const currentElement = stack.shift();
 
@@ -159,7 +158,6 @@ export class Scene {
       }
 
       const nestedElements = currentElement instanceof GroupState ? currentElement.elements : [];
-
       for (const nestedElement of nestedElements) {
         stack.unshift(nestedElement);
       }
@@ -194,7 +192,6 @@ export class Scene {
     let targetElements: HTMLDivElement[] = [];
 
     const stack = [...rootElements];
-
     while (stack.length > 0) {
       const currentElement = stack.shift();
 
@@ -203,7 +200,6 @@ export class Scene {
       }
 
       const nestedElements = currentElement instanceof GroupState ? currentElement.elements : [];
-
       for (const nestedElement of nestedElements) {
         stack.unshift(nestedElement);
       }

@@ -53,7 +53,6 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
           selection.targets = targetElements;
           selection.group = item;
-
           settings.scene.select(selection);
         } else if (item instanceof ElementState) {
           const targetElement = [item?.div!];
@@ -160,7 +159,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
         {!layer.isRoot() && (
           <>
             <Button icon="angle-up" size="sm" variant="secondary" onClick={this.goUpLayer}>
-              Go Up Layer
+              Go Up Level
             </Button>
             <Button size="sm" variant="secondary" onClick={() => this.onSelect(layer)}>
               Select Group
@@ -169,7 +168,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
               size="sm"
               variant="secondary"
               onClick={() => {
-                if (window.confirm('Are you sure? This will remove group and push elements in next layer up')) {
+                if (window.confirm('Are you sure? This will remove group and push elements in next level up')) {
                   this.decoupleGroup();
                 }
               }}

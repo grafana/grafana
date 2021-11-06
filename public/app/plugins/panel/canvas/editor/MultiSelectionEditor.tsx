@@ -34,8 +34,8 @@ export const MultiSelectionEditor: FC<StandardEditorProps<any, InstanceState, Pa
 
   return (
     <div>
-      <Button size="sm" variant="secondary" onClick={createNewLayer}>
-        Create New Layer
+      <Button icon="plus" size="sm" variant="secondary" onClick={createNewLayer}>
+        Create New Group
       </Button>
     </div>
   );
