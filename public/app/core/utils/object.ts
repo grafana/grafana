@@ -5,16 +5,16 @@ export function sortedDeepCloneWithoutNulls<T>(value: T): T {
   if (isArray(value)) {
     return (value.map(sortedDeepCloneWithoutNulls) as unknown) as T;
   }
-  return Object.keys(value)
-    .sort()
-    .reduce((acc: any, key) => {
-      let v = (value as any)[key];
-      if (v != null) {
-        if (isPlainObject(v)) {
-          v = sortedDeepCloneWithoutNulls(v);
+  if (isPlainObject(value)) {
+    return Object.keys(value)
+      .sort()
+      .reduce((acc: any, key) => {
+        const v = (value as any)[key];
+        if (v != null) {
+          acc[key] = sortedDeepCloneWithoutNulls(v);
         }
-        acc[key] = v;
-      }
-      return acc;
-    }, {});
+        return acc;
+      }, {});
+  }
+  return value;
 }
