@@ -101,6 +101,20 @@ export class LayerElementListEditor extends PureComponent<Props> {
     layer.reorder(src, dst);
   };
 
+  goUpLayer = () => {
+    const settings = this.props.item.settings;
+
+    if (!settings?.layer || !settings?.scene) {
+      return;
+    }
+
+    const { scene, layer } = settings;
+
+    if (layer.parent) {
+      scene.updateCurrentLayer(layer.parent);
+    }
+  };
+
   render() {
     const settings = this.props.item.settings;
     if (!settings) {
@@ -115,6 +129,11 @@ export class LayerElementListEditor extends PureComponent<Props> {
     const selection: number[] = settings.selected ? settings.selected.map((v) => v.UID) : [];
     return (
       <>
+        {!layer.isRoot() && (
+          <Button size="sm" variant="secondary" onClick={this.goUpLayer}>
+            Go Up Layer
+          </Button>
+        )}
         <DragDropContext onDragEnd={this.onDragEnd}>
           <Droppable droppableId="droppable">
             {(provided, snapshot) => (

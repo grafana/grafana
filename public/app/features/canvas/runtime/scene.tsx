@@ -99,6 +99,12 @@ export class Scene {
     this.selecto?.clickTarget(event, this.div);
   }
 
+  updateCurrentLayer(newLayer: GroupState) {
+    this.currentLayer = newLayer;
+    this.clearCurrentSelection();
+    this.save();
+  }
+
   toggleAnchor(element: ElementState, k: keyof Anchor) {
     console.log('TODO, smarter toggle', element.UID, element.anchor, k);
     const { div } = element;
