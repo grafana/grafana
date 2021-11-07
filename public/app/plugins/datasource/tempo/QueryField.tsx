@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
+  Badge,
   FileDropzone,
   InlineField,
   InlineFieldRow,
@@ -96,7 +97,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     ];
 
     if (config.featureToggles.tempoServiceGraph) {
-      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Map' });
+      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Graph' });
     }
 
     if (config.featureToggles.tempoSearch && !datasource?.search?.hide) {
@@ -129,6 +130,14 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
               size="md"
             />
           </InlineField>
+
+          {query.queryType === 'nativeSearch' && (
+            <p>
+              <Badge icon="rocket" text="Beta" color="blue" />
+              &nbsp;Tempo search is currently in beta and is designed to return recent traces only. It ignores the time
+              range picker. We are actively working on full backend search. Look for improvements in the near future!
+            </p>
+          )}
         </InlineFieldRow>
         {query.queryType === 'search' && (
           <SearchSection
@@ -179,13 +188,13 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             </InlineField>
           </InlineFieldRow>
         )}
-        {query.queryType === 'serviceMap' && <ServiceMapSection graphDatasourceUid={graphDatasourceUid} />}
+        {query.queryType === 'serviceMap' && <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} />}
       </>
     );
   }
 }
 
-function ServiceMapSection({ graphDatasourceUid }: { graphDatasourceUid?: string }) {
+function ServiceGraphSection({ graphDatasourceUid }: { graphDatasourceUid?: string }) {
   const dsState = useAsync(() => getDS(graphDatasourceUid), [graphDatasourceUid]);
   if (dsState.loading) {
     return null;

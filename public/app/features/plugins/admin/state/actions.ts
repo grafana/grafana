@@ -1,8 +1,8 @@
-import { createAsyncThunk, Update } from '@reduxjs/toolkit';
+import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
 import { getBackendSrv } from '@grafana/runtime';
 import { PanelPlugin } from '@grafana/data';
 import { StoreState, ThunkResult } from 'app/types';
-import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import {
   getRemotePlugins,
   getPluginErrors,
@@ -96,6 +96,8 @@ export const loadPluginDashboards = createAsyncThunk(`${STATE_PREFIX}/loadPlugin
   return getBackendSrv().get(url);
 });
 
+export const panelPluginLoaded = createAction<PanelPlugin>(`${STATE_PREFIX}/panelPluginLoaded`);
+
 // We need this to be backwards-compatible with other parts of Grafana.
 // (Originally in "public/app/features/plugins/state/actions.ts")
 // It cannot be constructed with `createAsyncThunk()` as we need the return value on the call-site,
@@ -110,10 +112,7 @@ export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> =
 
       // second check to protect against raise condition
       if (!getStore().plugins.panels[id]) {
-        dispatch({
-          type: `${STATE_PREFIX}/loadPanelPlugin/fulfilled`,
-          payload: plugin,
-        });
+        dispatch(panelPluginLoaded(plugin));
       }
     }
 

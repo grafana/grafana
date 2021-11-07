@@ -1,6 +1,8 @@
 package ualert
 
 import (
+	"os"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -16,7 +18,8 @@ func (s SecureJsonData) DecryptedValue(key string) (string, bool) {
 	if value, ok := s[key]; ok {
 		decryptedData, err := util.Decrypt(value, setting.SecretKey)
 		if err != nil {
-			log.Fatalf(4, err.Error())
+			log.Error(err.Error())
+			os.Exit(1)
 		}
 		return string(decryptedData), true
 	}
@@ -30,7 +33,8 @@ func (s SecureJsonData) Decrypt() map[string]string {
 	for key, data := range s {
 		decryptedData, err := util.Decrypt(data, setting.SecretKey)
 		if err != nil {
-			log.Fatalf(4, err.Error())
+			log.Error(err.Error())
+			os.Exit(1)
 		}
 
 		decrypted[key] = string(decryptedData)
@@ -44,7 +48,8 @@ func GetEncryptedJsonData(sjd map[string]string) SecureJsonData {
 	for key, data := range sjd {
 		encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
 		if err != nil {
-			log.Fatalf(4, err.Error())
+			log.Error(err.Error())
+			os.Exit(1)
 		}
 
 		encrypted[key] = encryptedData

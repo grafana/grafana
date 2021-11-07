@@ -19,3 +19,13 @@ type Item struct {
 func (i *Item) TableName() string {
 	return "kv_store"
 }
+
+type Key struct {
+	OrgId     int64
+	Namespace string
+	Key       string
+}
+
+func (i *Key) TableName() string {
+	return "kv_store"
+}

@@ -39,10 +39,10 @@ export const Card: CardInterface = ({ heading, description, disabled, href, onCl
   const [tags, figure, meta, actions, secondaryActions] = ['Tags', 'Figure', 'Meta', 'Actions', 'SecondaryActions'].map(
     (item) => {
       const found = React.Children.toArray(children as React.ReactElement[]).find((child) => {
-        return child?.type && (child.type as any).displayName === item;
+        return React.isValidElement(child) && child?.type && (child.type as any).displayName === item;
       });
 
-      if (found) {
+      if (found && React.isValidElement(found)) {
         return React.cloneElement(found, { disabled, styles, ...found.props });
       }
       return found;

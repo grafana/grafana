@@ -5,18 +5,19 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestSlackNotifier(t *testing.T) {
@@ -171,7 +172,8 @@ func TestSlackNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			decryptFn := ossencryption.ProvideService().GetDecryptedValue
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewSlackNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
@@ -218,6 +220,96 @@ func TestSlackNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			require.JSONEq(t, string(expBody), body)
+		})
+	}
+}
+
+func TestSendSlackRequest(t *testing.T) {
+	tests := []struct {
+		name          string
+		slackResponse string
+		statusCode    int
+		expectError   bool
+	}{
+		{
+			name: "Example error",
+			slackResponse: `{
+					"ok": false,
+					"error": "too_many_attachments"
+				}`,
+			statusCode:  http.StatusBadRequest,
+			expectError: true,
+		},
+		{
+			name:        "Non 200 status code, no response body",
+			statusCode:  http.StatusMovedPermanently,
+			expectError: true,
+		},
+		{
+			name: "Success case, normal response body",
+			slackResponse: `{
+				"ok": true,
+				"channel": "C1H9RESGL",
+				"ts": "1503435956.000247",
+				"message": {
+					"text": "Here's a message for you",
+					"username": "ecto1",
+					"bot_id": "B19LU7CSY",
+					"attachments": [
+						{
+							"text": "This is an attachment",
+							"id": 1,
+							"fallback": "This is an attachment's fallback"
+						}
+					],
+					"type": "message",
+					"subtype": "bot_message",
+					"ts": "1503435956.000247"
+				}
+			}`,
+			statusCode:  http.StatusOK,
+			expectError: false,
+		},
+		{
+			name:       "No response body",
+			statusCode: http.StatusOK,
+		},
+		{
+			name:          "Success case, unexpected response body",
+			statusCode:    http.StatusOK,
+			slackResponse: `{"test": true}`,
+			expectError:   false,
+		},
+		{
+			name:          "Success case, ok: true",
+			statusCode:    http.StatusOK,
+			slackResponse: `{"ok": true}`,
+			expectError:   false,
+		},
+		{
+			name:          "200 status code, error in body",
+			statusCode:    http.StatusOK,
+			slackResponse: `{"ok": false, "error": "test error"}`,
+			expectError:   true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(test.statusCode)
+				_, err := w.Write([]byte(test.slackResponse))
+				require.NoError(tt, err)
+			}))
+			req, err := http.NewRequest(http.MethodGet, server.URL, nil)
+			require.NoError(tt, err)
+
+			err = sendSlackRequest(req, log.New("test"))
+			if !test.expectError {
+				require.NoError(tt, err)
+			} else {
+				require.Error(tt, err)
+			}
 		})
 	}
 }

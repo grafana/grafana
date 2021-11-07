@@ -6,6 +6,7 @@ import {
   DataSourceInstanceSettings,
   getDefaultRelativeTimeRange,
   GrafanaTheme2,
+  LoadingState,
   PanelData,
   RelativeTimeRange,
   ThresholdsConfig,
@@ -78,12 +79,12 @@ export const QueryWrapper: FC<Props> = ({
         query={cloneDeep(query.model)}
         onChange={(query) => onChangeQuery(query, index)}
         onRemoveQuery={onRemoveQuery}
-        onAddQuery={onDuplicateQuery}
+        onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
         onRunQuery={onRunQueries}
         queries={queries}
         renderHeaderExtras={() => renderTimePicker(query, index)}
         visualization={
-          data ? (
+          data.state !== LoadingState.NotStarted ? (
             <VizWrapper
               data={data}
               changePanel={changePluginId}

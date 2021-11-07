@@ -23,6 +23,7 @@ const setupTestContext = (options: Partial<Props>) => {
       timezone: 'utc',
     } as unknown) as DashboardModel,
     updateTimeZone: jest.fn(),
+    updateWeekStart: jest.fn(),
   };
 
   const props = { ...defaults, ...options };

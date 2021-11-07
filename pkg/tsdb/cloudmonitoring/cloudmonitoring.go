@@ -21,13 +21,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
 
@@ -63,6 +62,8 @@ var (
 )
 
 const (
+	pluginID string = "stackdriver"
+
 	gceAuthentication         string = "gce"
 	jwtAuthentication         string = "jwt"
 	metricQueryType           string = "metrics"
@@ -72,34 +73,33 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginManager plugins.Manager,
-	backendPluginManager backendplugin.Manager, dsService *datasources.Service) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar,
+	dsService *datasources.Service) *Service {
 	s := &Service{
-		pluginManager:        pluginManager,
-		backendPluginManager: backendPluginManager,
-		httpClientProvider:   httpClientProvider,
-		cfg:                  cfg,
-		im:                   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		dsService:            dsService,
+		httpClientProvider: httpClientProvider,
+		cfg:                cfg,
+		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		dsService:          dsService,
 	}
 
+	mux := http.NewServeMux()
+	s.registerRoutes(mux)
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
+		QueryDataHandler:    s,
+		CallResourceHandler: httpadapter.New(mux),
 	})
 
-	if err := s.backendPluginManager.Register("stackdriver", factory); err != nil {
+	if err := registrar.LoadAndRegister(pluginID, factory); err != nil {
 		slog.Error("Failed to register plugin", "error", err)
 	}
 	return s
 }
 
 type Service struct {
-	pluginManager        plugins.Manager
-	backendPluginManager backendplugin.Manager
-	httpClientProvider   httpclient.Provider
-	cfg                  *setting.Cfg
-	im                   instancemgmt.InstanceManager
-	dsService            *datasources.Service
+	httpClientProvider httpclient.Provider
+	cfg                *setting.Cfg
+	im                 instancemgmt.InstanceManager
+	dsService          *datasources.Service
 }
 
 type QueryModel struct {
@@ -112,10 +112,16 @@ type datasourceInfo struct {
 	url                string
 	authenticationType string
 	defaultProject     string
-	client             *http.Client
+	clientEmail        string
+	tokenUri           string
+	services           map[string]datasourceService
 
-	jsonData                map[string]interface{}
 	decryptedSecureJSONData map[string]string
+}
+
+type datasourceService struct {
+	url    string
+	client *http.Client
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -124,16 +130,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-
-		opts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, err
-		}
-
-		client, err := httpClientProvider.New(opts)
-		if err != nil {
-			return nil, err
 		}
 
 		authType := jwtAuthentication
@@ -146,22 +142,50 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			defaultProject = jsonData["defaultProject"].(string)
 		}
 
-		return &datasourceInfo{
+		var clientEmail string
+		if jsonData["clientEmail"] != nil {
+			clientEmail = jsonData["clientEmail"].(string)
+		}
+
+		var tokenUri string
+		if jsonData["tokenUri"] != nil {
+			tokenUri = jsonData["tokenUri"].(string)
+		}
+
+		dsInfo := &datasourceInfo{
 			id:                      settings.ID,
 			updated:                 settings.Updated,
 			url:                     settings.URL,
 			authenticationType:      authType,
 			defaultProject:          defaultProject,
-			client:                  client,
-			jsonData:                jsonData,
+			clientEmail:             clientEmail,
+			tokenUri:                tokenUri,
 			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
-		}, nil
+			services:                map[string]datasourceService{},
+		}
+
+		opts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, err
+		}
+
+		for name, info := range routes {
+			client, err := newHTTPClient(dsInfo, opts, httpClientProvider, name)
+			if err != nil {
+				return nil, err
+			}
+			dsInfo.services[name] = datasourceService{
+				url:    info.url,
+				client: client,
+			}
+		}
+
+		return dsInfo, nil
 	}
 }
 
-// Query takes in the frontend queries, parses them into the CloudMonitoring query format
-// executes the queries against the CloudMonitoring API and parses the response into
-// the data frames
+// QueryData takes in the frontend queries, parses them into the CloudMonitoring query format
+// executes the queries against the CloudMonitoring API and parses the response into data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	if len(req.Queries) == 0 {
@@ -340,14 +364,6 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 	return cloudMonitoringQueryExecutors, nil
 }
 
-func reverse(s string) string {
-	chars := []rune(s)
-	for i, j := 0, len(chars)-1; i < j; i, j = i+1, j-1 {
-		chars[i], chars[j] = chars[j], chars[i]
-	}
-	return string(chars)
-}
-
 func interpolateFilterWildcards(value string) string {
 	matches := strings.Count(value, "*")
 	switch {
@@ -478,19 +494,6 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 	return alignmentPeriod
 }
 
-func toSnakeCase(str string) string {
-	return strings.ToLower(matchAllCap.ReplaceAllString(str, "${1}_${2}"))
-}
-
-func containsLabel(labels []string, newLabel string) bool {
-	for _, val := range labels {
-		if val == newLabel {
-			return true
-		}
-	}
-	return false
-}
-
 func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string,
 	additionalLabels map[string]string, query *cloudMonitoringTimeSeriesFilter) string {
 	if query.AliasBy == "" {
@@ -578,7 +581,7 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginContext, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
+func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.url)
 	if err != nil {
 		return nil, err
@@ -589,34 +592,14 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 	if body != nil {
 		method = http.MethodPost
 	}
-	req, err := http.NewRequest(method, "https://monitoring.googleapis.com/", body)
+	req, err := http.NewRequest(method, dsInfo.services[cloudMonitor].url, body)
 	if err != nil {
 		slog.Error("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-
-	// find plugin
-	plugin := s.pluginManager.GetDataSource(pluginCtx.PluginID)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
-	}
-
-	var cloudMonitoringRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == "cloudmonitoring" {
-			cloudMonitoringRoute = route
-			break
-		}
-	}
-
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, pluginproxy.DSInfo{
-		ID:                      dsInfo.id,
-		Updated:                 dsInfo.updated,
-		JSONData:                dsInfo.jsonData,
-		DecryptedSecureJSONData: dsInfo.decryptedSecureJSONData,
-	}, s.cfg)
+	req.URL.Path = proxyPass
 
 	return req, nil
 }

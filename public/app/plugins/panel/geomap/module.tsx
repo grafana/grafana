@@ -1,10 +1,11 @@
 import React from 'react';
 import { PanelPlugin } from '@grafana/data';
-import { GeomapPanel } from './GeomapPanel';
+import { GeomapInstanceState, GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
 import { getLayerEditor } from './editor/layerEditor';
+import { LayersEditor } from './editor/LayersEditor';
 import { config } from '@grafana/runtime';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
@@ -32,35 +33,49 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
-    // Check server settings to disable custom basemap settings
-    if (config.geomapDisableCustomBaseLayer) {
+    const state = context.instanceState as GeomapInstanceState;
+    if (!state?.layers) {
+      // TODO? show spinner?
+    } else {
       builder.addCustomEditor({
-        category: ['Base layer'],
+        category: ['Data layer'],
         id: 'layers',
         path: '',
         name: '',
-        // eslint-disable-next-line react/display-name
-        editor: () => <div>The base layer is configured by the server admin.</div>,
+        editor: LayersEditor,
       });
-    } else {
-      builder.addNestedOptions(
-        getLayerEditor({
-          category: ['Base layer'],
-          path: 'basemap', // only one for now
-          basemaps: true,
-          current: context.options?.layers?.[0],
-        })
-      );
-    }
 
-    builder.addNestedOptions(
-      getLayerEditor({
-        category: ['Data layer'],
-        path: 'layers[0]', // only one for now
-        basemaps: false,
-        current: context.options?.layers?.[0],
-      })
-    );
+      const selected = state.layers[state.selected];
+      if (state.selected && selected) {
+        builder.addNestedOptions(
+          getLayerEditor({
+            state: selected,
+            category: ['Data layer'],
+            basemaps: false,
+          })
+        );
+      }
+
+      const baselayer = state.layers[0];
+      if (config.geomapDisableCustomBaseLayer) {
+        builder.addCustomEditor({
+          category: ['Base layer'],
+          id: 'layers',
+          path: '',
+          name: '',
+          // eslint-disable-next-line react/display-name
+          editor: () => <div>The base layer is configured by the server admin.</div>,
+        });
+      } else if (baselayer) {
+        builder.addNestedOptions(
+          getLayerEditor({
+            state: baselayer,
+            category: ['Base layer'],
+            basemaps: true,
+          })
+        );
+      }
+    }
 
     // The controls section
     category = ['Map controls'];

@@ -3,7 +3,7 @@ import cx from 'classnames';
 import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { NodeDatum } from './types';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 import { statToString } from './utils';
 

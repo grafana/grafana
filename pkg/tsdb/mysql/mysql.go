@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -43,7 +43,7 @@ func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager, httpClientProvider httpclient.Provider) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar, httpClientProvider httpclient.Provider) (*Service, error) {
 	s := &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(cfg, httpClientProvider)),
 	}
@@ -51,7 +51,7 @@ func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager, httpClientP
 		QueryDataHandler: s,
 	})
 
-	if err := manager.Register("mysql", factory); err != nil {
+	if err := registrar.LoadAndRegister("mysql", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return s, nil

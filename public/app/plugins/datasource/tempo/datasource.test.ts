@@ -80,7 +80,7 @@ describe('Tempo data source', () => {
     ]);
   });
 
-  it('runs service map queries', async () => {
+  it('runs service graph queries', async () => {
     const ds = new TempoDatasource({
       ...defaultSettings,
       jsonData: {
@@ -97,6 +97,7 @@ describe('Tempo data source', () => {
     expect(response.data).toHaveLength(2);
     expect(response.data[0].name).toBe('Nodes');
     expect(response.data[0].fields[0].values.length).toBe(3);
+    expect(response.data[0].fields[0].config.links.length).toBeGreaterThan(0);
 
     expect(response.data[1].name).toBe('Edges');
     expect(response.data[1].fields[0].values.length).toBe(2);
@@ -209,7 +210,7 @@ const backendSrvWithPrometheus = {
     if (uid === 'prom') {
       return {
         query() {
-          return of({ data: [totalsPromMetric] }, { data: [secondsPromMetric] });
+          return of({ data: [totalsPromMetric, secondsPromMetric, failedPromMetric] });
         },
       };
     }
@@ -255,7 +256,7 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
 };
 
 const totalsPromMetric = new MutableDataFrame({
-  refId: 'tempo_service_graph_request_total',
+  refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
     { name: 'client', values: ['app', 'lb'] },
@@ -263,12 +264,12 @@ const totalsPromMetric = new MutableDataFrame({
     { name: 'job', values: ['local_scrape', 'local_scrape'] },
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #tempo_service_graph_request_total', values: [10, 20] },
+    { name: 'Value #traces_service_graph_request_total', values: [10, 20] },
   ],
 });
 
 const secondsPromMetric = new MutableDataFrame({
-  refId: 'tempo_service_graph_request_server_seconds_sum',
+  refId: 'traces_service_graph_request_server_seconds_sum',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
     { name: 'client', values: ['app', 'lb'] },
@@ -276,7 +277,20 @@ const secondsPromMetric = new MutableDataFrame({
     { name: 'job', values: ['local_scrape', 'local_scrape'] },
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #tempo_service_graph_request_server_seconds_sum', values: [10, 40] },
+    { name: 'Value #traces_service_graph_request_server_seconds_sum', values: [10, 40] },
+  ],
+});
+
+const failedPromMetric = new MutableDataFrame({
+  refId: 'traces_service_graph_request_failed_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #traces_service_graph_request_failed_total', values: [2, 15] },
   ],
 });
 

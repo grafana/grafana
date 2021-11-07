@@ -24,6 +24,7 @@ export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker, TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
+export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
 export { DatePicker, DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
 export {
   DatePickerWithInput,
@@ -41,7 +42,10 @@ export { ConfirmModal, ConfirmModalProps } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Code editor
-export { CodeEditor } from './Monaco/CodeEditorLazy';
+export { CodeEditor } from './Monaco/CodeEditor';
+
+export { ReactMonacoEditorLazy as ReactMonacoEditor } from './Monaco/ReactMonacoEditorLazy';
+
 export {
   Monaco,
   monacoTypes,
@@ -248,6 +252,7 @@ export { LegacyForms, LegacyInputStatus };
 export * from './uPlot/config';
 export { ScaleDistribution } from '@grafana/schema';
 export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
+export { UPLOT_AXIS_FONT_SIZE } from './uPlot/config/UPlotAxisBuilder';
 export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';

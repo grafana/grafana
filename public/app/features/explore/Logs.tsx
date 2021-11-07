@@ -69,6 +69,8 @@ interface Props extends Themeable2 {
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
+  loadingLogsVolumeAvailable: boolean;
+  onClickLoadLogsVolume: () => void;
 }
 
 interface State {
@@ -84,7 +86,7 @@ interface State {
   forceEscape: boolean;
 }
 
-export class UnthemedLogs extends PureComponent<Props, State> {
+class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
@@ -268,6 +270,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       logsQueries,
       clearCache,
       addResultsToCache,
+      onClickLoadLogsVolume,
+      loadingLogsVolumeAvailable,
     } = this.props;
 
     const {
@@ -301,6 +305,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               response.
             </div>
             <ExploreGraph
+              graphStyle="lines"
               data={logsSeries}
               height={150}
               width={width}
@@ -340,16 +345,30 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               />
             </InlineField>
           </InlineFieldRow>
-          <Button
-            variant="secondary"
-            disabled={isFlipping}
-            title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
-            aria-label="Flip results order"
-            className={styles.flipButton}
-            onClick={this.onChangeLogsSortOrder}
-          >
-            {isFlipping ? 'Flipping...' : 'Flip results order'}
-          </Button>
+          <div>
+            {loadingLogsVolumeAvailable && (
+              <Button
+                variant="secondary"
+                aria-label="Load volume button"
+                title="Execute a query to show full range logs volume"
+                onClick={onClickLoadLogsVolume}
+                icon="graph-bar"
+                className={styles.headerButton}
+              >
+                Load volume
+              </Button>
+            )}
+            <Button
+              variant="secondary"
+              disabled={isFlipping}
+              title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
+              aria-label="Flip results order"
+              className={styles.headerButton}
+              onClick={this.onChangeLogsSortOrder}
+            >
+              {isFlipping ? 'Flipping...' : 'Flip results order'}
+            </Button>
+          </div>
         </div>
         <LogsMetaRow
           logRows={logRows}
@@ -441,7 +460,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       margin: ${theme.spacing(2, 0, 1)};
       border: 1px solid ${theme.colors.border.medium};
     `,
-    flipButton: css`
+    headerButton: css`
       margin: ${theme.spacing(0.5, 0, 0, 1)};
     `,
     radioButtons: css`

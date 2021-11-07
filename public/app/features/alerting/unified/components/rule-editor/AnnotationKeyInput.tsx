@@ -10,9 +10,10 @@ interface Props {
   value?: string;
   width?: number;
   className?: string;
+  'aria-label'?: string;
 }
 
-export const AnnotationKeyInput: FC<Props> = ({ value, existingKeys, ...rest }) => {
+export const AnnotationKeyInput: FC<Props> = ({ value, existingKeys, 'aria-label': ariaLabel, ...rest }) => {
   const annotationOptions = useMemo(
     (): SelectableValue[] =>
       Object.values(Annotation)
@@ -23,6 +24,7 @@ export const AnnotationKeyInput: FC<Props> = ({ value, existingKeys, ...rest }) 
 
   return (
     <SelectWithAdd
+      aria-label={ariaLabel}
       value={value}
       options={annotationOptions}
       custom={!!value && !(Object.values(Annotation) as string[]).includes(value)}

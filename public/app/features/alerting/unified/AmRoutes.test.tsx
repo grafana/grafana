@@ -11,7 +11,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
@@ -76,8 +76,8 @@ const ui = {
   editButton: byRole('button', { name: 'Edit' }),
   saveButton: byRole('button', { name: 'Save' }),
 
-  editRouteButton: byTestId('edit-route'),
-  deleteRouteButton: byTestId('delete-route'),
+  editRouteButton: byLabelText('Edit route'),
+  deleteRouteButton: byLabelText('Delete route'),
   newPolicyButton: byRole('button', { name: /New policy/ }),
 
   receiverSelect: byTestId('am-receiver-select'),
@@ -257,7 +257,7 @@ describe('AmRoutes', () => {
     await clickSelectOption(receiverSelect, 'critical');
 
     const groupSelect = ui.groupSelect.get();
-    await userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
+    userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
 
     // configure timing intervals
     userEvent.click(byText('Timing options').get(rootRouteContainer));
@@ -316,8 +316,8 @@ describe('AmRoutes', () => {
     await clickSelectOption(receiverSelect, 'default');
 
     const groupSelect = ui.groupSelect.get();
-    await userEvent.type(byRole('textbox').get(groupSelect), 'severity{enter}');
-    await userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
+    userEvent.type(byRole('textbox').get(groupSelect), 'severity{enter}');
+    userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
     //save
     userEvent.click(ui.saveButton.get(rootRouteContainer));
 
@@ -518,7 +518,7 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
   const inputs = byRole('textbox').queryAll(selectElement);
   expect(inputs).toHaveLength(2);
-  await userEvent.type(inputs[0], value);
+  userEvent.type(inputs[0], value);
   userEvent.click(inputs[1]);
   await selectOptionInTest(selectElement, timeUnit);
 };

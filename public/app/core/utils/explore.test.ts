@@ -194,16 +194,14 @@ describe('getExploreUrl', () => {
   const args = ({
     panel: {
       getSavedId: () => 1,
-    },
-    panelTargets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
-    panelDatasource: {
-      name: 'testDataSource',
-      meta: {
-        id: '1',
-      },
+      targets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
     },
     datasourceSrv: {
-      get: jest.fn(),
+      get() {
+        return {
+          getRef: jest.fn(),
+        };
+      },
       getDataSourceById: jest.fn(),
     },
     timeSrv: {
@@ -243,7 +241,7 @@ describe('hasNonEmptyQuery', () => {
   });
 
   test('should return false if query is empty', () => {
-    expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'panel' }])).toBeFalsy();
+    expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'panel', datasource: { uid: 'some-ds' } }])).toBeFalsy();
   });
 
   test('should return false if no queries exist', () => {

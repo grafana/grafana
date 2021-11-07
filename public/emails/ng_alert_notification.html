@@ -211,21 +211,21 @@ text-decoration: underline;
       </td></tr><tr style="vertical-align: top; padding: 0;" align="left">
         <td colspan="2" class="annotations" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 12px;" align="left" valign="top">
           {{ range .Annotations.SortedPairs }}
-            <p style="color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0 0 10px; padding: 0;" align="left">{{ .Name }}: {{ .Value }}</p>
+          <p style="color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0 0 10px; padding: 0;" align="left"><span class="annotations-heading" style="font-weight: bold; text-transform: capitalize;">{{ .Name }}:</span> <span class="annotations-value" style="padding-left: 8px;">{{ .Value }}</span></p>
           {{ end }}
         </td>
       </tr>
   {{ end }}
   <tr style="vertical-align: top; padding: 0;" align="left">
-    <td valign="top" class="labels-heading" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left">Labels:</td>
-    <td style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
-      <ul class="labels-list" style="font-size: 14px; vertical-align: top;">
+    <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
+      <span class="labels-heading" style="font-size: 14px; font-weight: bold; vertical-align: top; display: inline-block;">Labels:</span>
+      <ul class="labels-list" style="font-size: 14px; vertical-align: top; display: inline-block; padding-left: 8px; margin: 0;">
         {{ range .Labels.SortedPairs }}<li>{{ .Name }}: {{ .Value }}</li>{{ end }}
       </ul>
     </td>
   </tr>
   <tr style="vertical-align: top; padding: 0;" align="left">
-    <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
+    <td colspan="2" class="actions" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 12px;" align="left" valign="top">
       {{ if .SilenceURL }}
         <a href="{{ .SilenceURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
           <img alt="" height="14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAF1SURBVHgBrZLNTsJAEMf/2wYTPfEI9Q1qvBgjsEl5gB498gj1SDHpEKUckaMn4eiNFyAp4cJN30CPHrn5BV1noTWlFD3oJNuZ3Z39zUcH+A9pUffJpzAoOO/xuvvprZHooYCgLISoa7FyFSCbdOXuApj6M43GUVXWhYZUpKP3k1NZ14+kAOYChleVjnssK/ezKHrLAkQuZWIVKCgKyW+n55cUciZClzLoUPOiqISVlPB+s6ZulnNN/ihG3GfT84jKOwGvMO0krVEewoBoHeTA2glIhRuno7WzkH0Yc633sCz/CoiVshdYRGxGKYSo9ahgHnEPoqzvdxP1b/sEHtgsF2e12ditDD6gPE59XgIO8ytfTlbM1DiTzjk7WQvEYgllZ5fSXeE7vnfTOdkC1GqOBSFO2Mk22JG1TB4l+1VzX/IQgQJpBaHHsB6bA47+rNOHUI1O4A/zw2YWAaaT8UyPNkdcZ6JUs0P+7eouGXuO3WC7j7/KF29iokiLUdaFAAAAAElFTkSuQmCC" class="button-img" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border: 0 none;" align="left" />
@@ -286,7 +286,7 @@ text-decoration: underline;
             <td class="status-tag status-firing" width="68" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #ffffff; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 68px; margin: 0; padding: 4px 8px;" align="center" bgcolor="#e02f44" valign="top">
               Firing
             </td>
-            <td class="alert-label" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 16px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; text-decoration: underline; margin: 0; padding: 0 0 0 12px;" align="left" valign="top">
+            <td class="alert-label" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 16px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; text-decoration: underline; margin: 0; padding: 0 0 0 12px;" align="left" valign="middle">
               {{ .Labels.alertname }}
             </td>
           </tr>
@@ -307,7 +307,7 @@ text-decoration: underline;
             <td class="status-tag status-resolved" width="68" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #ffffff; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 68px; margin: 0; padding: 4px 8px;" align="center" bgcolor="#464c54" valign="top">
               Resolved
             </td>
-            <td class="alert-label" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 16px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; text-decoration: underline; margin: 0; padding: 0 0 0 12px;" align="left" valign="top">
+            <td class="alert-label" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 16px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; text-decoration: underline; margin: 0; padding: 0 0 0 12px;" align="left" valign="middle">
               {{ .Labels.alertname }}
             </td>
           </tr>
@@ -322,15 +322,16 @@ text-decoration: underline;
       </table>
       </td></tr></table>
     
-   
+  
 </table>
 {{ end }}
+
 								
 							</center></td>
 						</tr>
 					</table>
 					
-					<table class="footer center" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: center; color: #999999; margin-top: 20px; padding: 0;" bgcolor="#2e2e2e">
+					<table class="footer center" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: center; color: #999999; width: 100%; margin: 0 auto; padding: 0;" bgcolor="#2e2e2e">
 						<tr style="vertical-align: top; padding: 0;" align="left">
 							<td class="wrapper last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; position: relative; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 10px 20px 0px 0px;" align="left" valign="top">
 								<table class="twelve columns center" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: center; width: 580px; margin: 0 auto; padding: 0;">

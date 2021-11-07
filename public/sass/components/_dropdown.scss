@@ -184,11 +184,11 @@
 // Open state for the dropdown
 // ---------------------------
 .open {
-  & > .dropdown-menu {
+  > .dropdown-menu {
     display: block;
   }
 
-  & > .dropdown > .dropdown-menu {
+  > .dropdown > .dropdown-menu {
     // Panel menu. TODO: See if we can merge this with above
     display: block;
   }

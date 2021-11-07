@@ -13,14 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -29,10 +28,10 @@ const (
 )
 
 type AlertmanagerSrv struct {
-	mam   *notifier.MultiOrgAlertmanager
-	enc   encryption.Service
-	store store.AlertingStore
-	log   log.Logger
+	mam     *notifier.MultiOrgAlertmanager
+	secrets secrets.Service
+	store   store.AlertingStore
+	log     log.Logger
 }
 
 type UnknownReceiverError struct {
@@ -108,7 +107,7 @@ func (srv AlertmanagerSrv) getDecryptedSecret(r *apimodels.PostableGrafanaReceiv
 		return "", err
 	}
 
-	decryptedValue, err := srv.enc.Decrypt(context.Background(), decodeValue, setting.SecretKey)
+	decryptedValue, err := srv.secrets.Decrypt(context.Background(), decodeValue)
 	if err != nil {
 		return "", err
 	}
@@ -178,7 +177,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Res
 		return errResp
 	}
 
-	silenceID := macaron.Params(c.Req)[":SilenceId"]
+	silenceID := web.Params(c.Req)[":SilenceId"]
 	if err := am.DeleteSilence(silenceID); err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -305,7 +304,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Respon
 		return errResp
 	}
 
-	silenceID := macaron.Params(c.Req)[":SilenceId"]
+	silenceID := web.Params(c.Req)[":SilenceId"]
 	gettableSilence, err := am.GetSilence(silenceID)
 	if err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
@@ -356,7 +355,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	if err := body.ProcessConfig(srv.enc.Encrypt); err != nil {
+	if err := body.ProcessConfig(srv.secrets.Encrypt); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 
@@ -390,7 +389,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	if err := body.ProcessConfig(srv.enc.Encrypt); err != nil {
+	if err := body.ProcessConfig(srv.secrets.Encrypt); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 
@@ -444,8 +443,12 @@ func contextWithTimeoutFromRequest(ctx context.Context, r *http.Request, default
 
 func newTestReceiversResult(r *notifier.TestReceiversResult) apimodels.TestReceiversResult {
 	v := apimodels.TestReceiversResult{
-		Receivers: make([]apimodels.TestReceiverResult, len(r.Receivers)),
-		NotifedAt: r.NotifedAt,
+		Alert: apimodels.TestReceiversConfigAlertParams{
+			Annotations: r.Alert.Annotations,
+			Labels:      r.Alert.Labels,
+		},
+		Receivers:  make([]apimodels.TestReceiverResult, len(r.Receivers)),
+		NotifiedAt: r.NotifedAt,
 	}
 	for ix, next := range r.Receivers {
 		configs := make([]apimodels.TestReceiverConfigResult, len(next.Configs))

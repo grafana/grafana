@@ -9,7 +9,10 @@
     { "type": "dashboard", "name": "Azure Monitor Key Vault Insights", "path": "dashboards/keyvault.json" },
     { "type": "dashboard", "name": "Azure SQL Database Insights", "path": "dashboards/sqldb.json" },
     { "type": "dashboard", "name": "Azure Data Explorer Insights", "path": "dashboards/adx.json" },
-    { "type": "dashboard", "name": "Azure Resource Overview", "path": "dashboards/arg.json" }
+    { "type": "dashboard", "name": "Azure Resource Overview", "path": "dashboards/arg.json" },
+    { "type": "dashboard", "name": "Azure Alert Consumption", "path": "dashboards/v1Alerts.json" },
+    { "type": "dashboard", "name": "Azure Alert Rules", "path": "dashboards/alertRules.json" },
+    { "type": "dashboard", "name": "Azure Alert Consumption Overview", "path": "dashboards/v1AlertsAtScale.json" }
   ],
 
   "info": {

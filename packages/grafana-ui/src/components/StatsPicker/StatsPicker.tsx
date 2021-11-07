@@ -15,6 +15,7 @@ export interface Props {
   className?: string;
   width?: number;
   menuPlacement?: 'auto' | 'bottom' | 'top';
+  inputId?: string;
 }
 
 export class StatsPicker extends PureComponent<Props> {
@@ -63,7 +64,7 @@ export class StatsPicker extends PureComponent<Props> {
   };
 
   render() {
-    const { stats, allowMultiple, defaultStat, placeholder, className, menuPlacement, width } = this.props;
+    const { stats, allowMultiple, defaultStat, placeholder, className, menuPlacement, width, inputId } = this.props;
 
     const select = fieldReducers.selectOptions(stats);
     return (
@@ -79,6 +80,7 @@ export class StatsPicker extends PureComponent<Props> {
         placeholder={placeholder}
         onChange={this.onSelectionChange}
         menuPlacement={menuPlacement}
+        inputId={inputId}
       />
     );
   }

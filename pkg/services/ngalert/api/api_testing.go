@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type TestingApiSrv struct {
@@ -27,7 +27,7 @@ type TestingApiSrv struct {
 }
 
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
-	recipient := macaron.Params(c.Req)[":Recipient"]
+	recipient := web.Params(c.Req)[":Recipient"]
 	if recipient == apimodels.GrafanaBackend.String() {
 		if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
 			return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")

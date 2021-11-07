@@ -9,17 +9,18 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
 
 func TestHandleRequest(t *testing.T) {
 	t.Run("Should invoke plugin manager QueryData when handling request for query", func(t *testing.T) {
-		svc, _, pm := createService()
+		svc, _, pm := createService(t)
 		backendPluginManagerCalled := false
 		pm.QueryDataHandlerFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			backendPluginManagerCalled = true
@@ -76,12 +77,12 @@ func (e *fakeExecutor) HandleQuery(refId string, fn resultsFn) {
 	e.resultsFn[refId] = fn
 }
 
-type fakeBackendPM struct {
-	backendplugin.Manager
+type fakePluginsClient struct {
+	plugins.Client
 	backend.QueryDataHandlerFunc
 }
 
-func (m *fakeBackendPM) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (m *fakePluginsClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if m.QueryDataHandlerFunc != nil {
 		return m.QueryDataHandlerFunc.QueryData(ctx, req)
 	}
@@ -100,12 +101,14 @@ func (s *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool 
 	return false
 }
 
-func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
-	fakeBackendPM := &fakeBackendPM{}
-	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+func createService(t *testing.T) (*Service, *fakeExecutor, *fakePluginsClient) {
+	fakePluginsClient := &fakePluginsClient{}
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
+
 	s := newService(
 		setting.NewCfg(),
-		fakeBackendPM,
+		fakePluginsClient,
 		&fakeOAuthTokenService{},
 		dsService,
 	)
@@ -115,5 +118,5 @@ func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
 		resultsFn: make(map[string]resultsFn),
 	}
 
-	return s, e, fakeBackendPM
+	return s, e, fakePluginsClient
 }
