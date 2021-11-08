@@ -305,7 +305,7 @@ export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithCh
             onChange={onChange}
             disabled={disabled}
           />
-          <div className={styles.optionBody}>
+          <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
             <span>{data.displayName || data.name}</span>
             {!hideDescription && data.description && <div className={styles.optionDescription}>{data.description}</div>}
           </div>
@@ -363,7 +363,7 @@ export const RoleMenuGroupsOption = React.forwardRef<
         onChange={onChange}
         disabled={disabled}
       />
-      <div className={styles.optionBody}>
+      <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
         <span>{data.displayName || data.name}</span>
       </div>
     </div>
@@ -390,7 +390,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     menu: css`
       // overflow: hidden;
       // width: 50%;
-      width: 300px;
+      width: 260px;
 
       & > div {
         padding-top: ${theme.spacing(1)};
@@ -398,7 +398,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     subMenu: css`
       // overflow: hidden;
-      width: 250px;
+      min-width: 260px;
       display: flex;
       flex-direction: column;
       border-left-style: solid;
@@ -431,12 +431,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
       background-color: ${theme.colors.background.primary};
       padding: ${theme.spacing(1)};
     `,
+    menuOptionBody: css`
+      font-weight: ${theme.typography.fontWeightRegular};
+    `,
     menuOptionDisabled: css`
       color: ${theme.colors.text.disabled};
       cursor: not-allowed;
     `,
     builtInRoleSelector: css`
-      margin-bottom: ${theme.spacing(1)};
+      margin: ${theme.spacing(1, 1.25, 1, 1)};
     `,
     subMenuButtonRow: css`
       background-color: ${theme.colors.background.primary};
