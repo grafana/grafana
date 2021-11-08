@@ -377,7 +377,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			cancel()
 			err := waitForErrChannel(t, stoppedChan)
-			require.ErrorIs(t, err, context.Canceled)
+			require.NoError(t, err)
 		})
 	})
 
