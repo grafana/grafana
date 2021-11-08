@@ -1,19 +1,18 @@
 import React from 'react';
 import { cx } from '@emotion/css';
-import { Container, Icon, IconButton, ValuePicker } from '@grafana/ui';
+import { Container, Icon, IconButton } from '@grafana/ui';
 import { StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
-import { GeomapPanelOptions } from '../types';
-import { GeomapInstanceState } from '../GeomapPanel';
-import { geomapLayerRegistry } from '../layers/registry';
-import { getLayerDragStyles } from '../../canvas/editor/LayerElementListEditor';
-import { dataLayerFilter } from './layerEditor';
+import { GeomapPanelOptions } from '../../types';
+import { GeomapInstanceState } from '../../GeomapPanel';
+import { getLayerDragStyles } from '../../../canvas/editor/LayerElementListEditor';
+import { AddLayerButton } from './AddLayerButton';
 
-type Props = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
+type LayersEditorProps = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
 
-export const LayersEditor = (props: Props) => {
+export const LayersEditor = (props: LayersEditorProps) => {
   const style = getLayerDragStyles(config.theme);
 
   const getRowStyle = (sel: boolean) => {
@@ -47,14 +46,7 @@ export const LayersEditor = (props: Props) => {
   return (
     <>
       <Container>
-        <ValuePicker
-          icon="plus"
-          label="Add layer"
-          variant="secondary"
-          options={geomapLayerRegistry.selectOptions(undefined, dataLayerFilter).options}
-          onChange={(v) => actions.addlayer(v.value!)}
-          isFullWidth={true}
-        />
+        <AddLayerButton actions={actions} />
       </Container>
       <br />
 
