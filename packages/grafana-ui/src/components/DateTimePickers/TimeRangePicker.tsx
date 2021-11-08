@@ -85,7 +85,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
   };
 
   const ref = createRef<HTMLElement>();
-  const { overlayProps } = useOverlay({ onClose, isOpen }, ref);
+  const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen }, ref);
 
   const styles = getStyles(theme);
   const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);

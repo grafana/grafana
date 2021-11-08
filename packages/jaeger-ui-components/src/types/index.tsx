@@ -16,7 +16,7 @@ import { ApiError } from './api-error';
 import { Trace } from './trace';
 
 export { TraceSpan, TraceResponse, Trace, TraceProcess, TraceKeyValuePair, TraceLink } from './trace';
-
+export { SpanLinkFunc, SpanLinkDef } from './links';
 export { default as TTraceTimeline } from './TTraceTimeline';
 export { default as TNil } from './TNil';
 

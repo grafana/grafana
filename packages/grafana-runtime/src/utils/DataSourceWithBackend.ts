@@ -11,13 +11,32 @@ import {
   parseLiveChannelAddress,
   StreamingFrameOptions,
   StreamingFrameAction,
+  getDataSourceRef,
+  DataSourceRef,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { getBackendSrv, getDataSourceSrv, getGrafanaLiveSrv } from '../services';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
-const ExpressionDatasourceID = '__expr__';
+/**
+ * @internal
+ */
+export const ExpressionDatasourceRef = Object.freeze({
+  type: '__expr__',
+  uid: '__expr__',
+});
+
+/**
+ * @internal
+ */
+export function isExpressionReference(ref?: DataSourceRef | string | null): boolean {
+  if (!ref) {
+    return false;
+  }
+  const v = (ref as any).type ?? ref;
+  return v === ExpressionDatasourceRef.type || v === '-100'; // -100 was a legacy accident that should be removed
+}
 
 class HealthCheckError extends Error {
   details: HealthCheckResultDetails;
@@ -89,12 +108,12 @@ class DataSourceWithBackend<
     }
 
     const queries = targets.map((q) => {
-      let datasourceId = this.id;
+      let datasource = this.getRef();
 
-      if (q.datasource === ExpressionDatasourceID) {
+      if (isExpressionReference(q.datasource)) {
         return {
           ...q,
-          datasourceId,
+          datasource: ExpressionDatasourceRef,
         };
       }
 
@@ -102,15 +121,15 @@ class DataSourceWithBackend<
         const ds = getDataSourceSrv().getInstanceSettings(q.datasource);
 
         if (!ds) {
-          throw new Error('Unknown Datasource: ' + q.datasource);
+          throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
-        datasourceId = ds.id;
+        datasource = getDataSourceRef(ds);
       }
 
       return {
         ...this.applyTemplateVariables(q, request.scopedVars),
-        datasourceId,
+        datasource,
         intervalMs,
         maxDataPoints,
       };
@@ -159,6 +178,13 @@ class DataSourceWithBackend<
    * @virtual
    */
   filterQuery?(query: TQuery): boolean;
+
+  /**
+   * Apply template variables for explore
+   */
+  interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars) as TQuery);
+  }
 
   /**
    * Override to apply template variables.  The result is usually also `TQuery`, but sometimes this can

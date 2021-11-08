@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net"
+	"reflect"
 	"testing"
 	"time"
 
@@ -13,510 +14,517 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestUserAuthToken(t *testing.T) {
-	Convey("Test user auth token", t, func() {
-		ctx := createTestContext(t)
-		userAuthTokenService := ctx.tokenService
-		user := &models.User{Id: int64(10)}
-		userID := user.Id
+	ctx := createTestContext(t)
+	user := &models.User{Id: int64(10)}
+	// userID := user.Id
 
-		t := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
-		getTime = func() time.Time {
-			return t
+	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
+	getTime = func() time.Time { return now }
+	defer func() { getTime = time.Now }()
+
+	t.Run("When creating token", func(t *testing.T) {
+		createToken := func() *models.UserToken {
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+				net.ParseIP("192.168.10.11"), "some user agent")
+			require.Nil(t, err)
+			require.NotNil(t, userToken)
+			require.False(t, userToken.AuthTokenSeen)
+			return userToken
 		}
 
-		Convey("When creating token", func() {
-			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
-				net.ParseIP("192.168.10.11"), "some user agent")
-			So(err, ShouldBeNil)
-			So(userToken, ShouldNotBeNil)
-			So(userToken.AuthTokenSeen, ShouldBeFalse)
+		userToken := createToken()
 
-			Convey("Can count active tokens", func() {
-				count, err := userAuthTokenService.ActiveTokenCount(context.Background())
-				So(err, ShouldBeNil)
-				So(count, ShouldEqual, 1)
-			})
-
-			Convey("When lookup unhashed token should return user auth token", func() {
-				userToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-				So(err, ShouldBeNil)
-				So(userToken, ShouldNotBeNil)
-				So(userToken.UserId, ShouldEqual, userID)
-				So(userToken.AuthTokenSeen, ShouldBeTrue)
-
-				storedAuthToken, err := ctx.getAuthTokenByID(userToken.Id)
-				So(err, ShouldBeNil)
-				So(storedAuthToken, ShouldNotBeNil)
-				So(storedAuthToken.AuthTokenSeen, ShouldBeTrue)
-			})
-
-			Convey("When lookup hashed token should return user auth token not found error", func() {
-				userToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.AuthToken)
-				So(err, ShouldEqual, models.ErrUserTokenNotFound)
-				So(userToken, ShouldBeNil)
-			})
-
-			Convey("soft revoking existing token should not delete it", func() {
-				err = userAuthTokenService.RevokeToken(context.Background(), userToken, true)
-				So(err, ShouldBeNil)
-
-				model, err := ctx.getAuthTokenByID(userToken.Id)
-				So(err, ShouldBeNil)
-				So(model, ShouldNotBeNil)
-				So(model.RevokedAt, ShouldBeGreaterThan, 0)
-			})
-
-			Convey("revoking existing token should delete it", func() {
-				err = userAuthTokenService.RevokeToken(context.Background(), userToken, false)
-				So(err, ShouldBeNil)
-
-				model, err := ctx.getAuthTokenByID(userToken.Id)
-				So(err, ShouldBeNil)
-				So(model, ShouldBeNil)
-			})
-
-			Convey("revoking nil token should return error", func() {
-				err = userAuthTokenService.RevokeToken(context.Background(), nil, false)
-				So(err, ShouldEqual, models.ErrUserTokenNotFound)
-			})
-
-			Convey("revoking non-existing token should return error", func() {
-				userToken.Id = 1000
-				err = userAuthTokenService.RevokeToken(context.Background(), userToken, false)
-				So(err, ShouldEqual, models.ErrUserTokenNotFound)
-			})
-
-			Convey("When creating an additional token", func() {
-				userToken2, err := userAuthTokenService.CreateToken(context.Background(), user,
-					net.ParseIP("192.168.10.11"), "some user agent")
-				So(err, ShouldBeNil)
-				So(userToken2, ShouldNotBeNil)
-
-				Convey("Can get first user token", func() {
-					token, err := userAuthTokenService.GetUserToken(context.Background(), userID, userToken.Id)
-					So(err, ShouldBeNil)
-					So(token, ShouldNotBeNil)
-					So(token.Id, ShouldEqual, userToken.Id)
-				})
-
-				Convey("Can get second user token", func() {
-					token, err := userAuthTokenService.GetUserToken(context.Background(), userID, userToken2.Id)
-					So(err, ShouldBeNil)
-					So(token, ShouldNotBeNil)
-					So(token.Id, ShouldEqual, userToken2.Id)
-				})
-
-				Convey("Can get user tokens", func() {
-					tokens, err := userAuthTokenService.GetUserTokens(context.Background(), userID)
-					So(err, ShouldBeNil)
-					So(tokens, ShouldHaveLength, 2)
-					So(tokens[0].Id, ShouldEqual, userToken.Id)
-					So(tokens[1].Id, ShouldEqual, userToken2.Id)
-				})
-
-				Convey("Can revoke all user tokens", func() {
-					err := userAuthTokenService.RevokeAllUserTokens(context.Background(), userID)
-					So(err, ShouldBeNil)
-
-					model, err := ctx.getAuthTokenByID(userToken.Id)
-					So(err, ShouldBeNil)
-					So(model, ShouldBeNil)
-
-					model2, err := ctx.getAuthTokenByID(userToken2.Id)
-					So(err, ShouldBeNil)
-					So(model2, ShouldBeNil)
-				})
-			})
-
-			Convey("When revoking users tokens in a batch", func() {
-				Convey("Can revoke all users tokens", func() {
-					userIds := []int64{}
-					for i := 0; i < 3; i++ {
-						userId := userID + int64(i+1)
-						userIds = append(userIds, userId)
-						_, err := userAuthTokenService.CreateToken(context.Background(), user,
-							net.ParseIP("192.168.10.11"), "some user agent")
-						So(err, ShouldBeNil)
-					}
-
-					err := userAuthTokenService.BatchRevokeAllUserTokens(context.Background(), userIds)
-					So(err, ShouldBeNil)
-
-					for _, v := range userIds {
-						tokens, err := userAuthTokenService.GetUserTokens(context.Background(), v)
-						So(err, ShouldBeNil)
-						So(len(tokens), ShouldEqual, 0)
-					}
-				})
-			})
+		t.Run("Can count active tokens", func(t *testing.T) {
+			count, err := ctx.tokenService.ActiveTokenCount(context.Background())
+			require.Nil(t, err)
+			require.Equal(t, int64(1), count)
 		})
 
-		Convey("expires correctly", func() {
-			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
-				net.ParseIP("192.168.10.11"), "some user agent")
-			So(err, ShouldBeNil)
+		t.Run("When lookup unhashed token should return user auth token", func(t *testing.T) {
+			userToken, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
+			require.Nil(t, err)
+			require.NotNil(t, userToken)
+			require.Equal(t, user.Id, userToken.UserId)
+			require.True(t, userToken.AuthTokenSeen)
 
-			userToken, err = userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			So(err, ShouldBeNil)
+			storedAuthToken, err := ctx.getAuthTokenByID(userToken.Id)
+			require.Nil(t, err)
+			require.NotNil(t, storedAuthToken)
+			require.True(t, storedAuthToken.AuthTokenSeen)
+		})
 
-			getTime = func() time.Time {
-				return t.Add(time.Hour)
-			}
+		t.Run("When lookup hashed token should return user auth token not found error", func(t *testing.T) {
+			userToken, err := ctx.tokenService.LookupToken(context.Background(), userToken.AuthToken)
+			require.Equal(t, models.ErrUserTokenNotFound, err)
+			require.Nil(t, userToken)
+		})
 
-			rotated, err := userAuthTokenService.TryRotateToken(context.Background(), userToken,
-				net.ParseIP("192.168.10.11"), "some user agent")
-			So(err, ShouldBeNil)
-			So(rotated, ShouldBeTrue)
-
-			userToken, err = userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			So(err, ShouldBeNil)
-
-			stillGood, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			So(err, ShouldBeNil)
-			So(stillGood, ShouldNotBeNil)
+		t.Run("soft revoking existing token should not delete it", func(t *testing.T) {
+			err := ctx.tokenService.RevokeToken(context.Background(), userToken, true)
+			require.Nil(t, err)
 
 			model, err := ctx.getAuthTokenByID(userToken.Id)
-			So(err, ShouldBeNil)
+			require.Nil(t, err)
+			require.NotNil(t, model)
+			require.Greater(t, model.RevokedAt, int64(0))
+		})
 
-			Convey("when rotated_at is 6:59:59 ago should find token", func() {
-				getTime = func() time.Time {
-					return time.Unix(model.RotatedAt, 0).Add(24 * 7 * time.Hour).Add(-time.Second)
-				}
+		t.Run("revoking existing token should delete it", func(t *testing.T) {
+			err := ctx.tokenService.RevokeToken(context.Background(), userToken, false)
+			require.Nil(t, err)
 
-				stillGood, err = userAuthTokenService.LookupToken(context.Background(), stillGood.UnhashedToken)
-				So(err, ShouldBeNil)
-				So(stillGood, ShouldNotBeNil)
+			model, err := ctx.getAuthTokenByID(userToken.Id)
+			require.Nil(t, err)
+			require.Nil(t, model)
+		})
+
+		t.Run("revoking nil token should return error", func(t *testing.T) {
+			err := ctx.tokenService.RevokeToken(context.Background(), nil, false)
+			require.Equal(t, models.ErrUserTokenNotFound, err)
+		})
+
+		t.Run("revoking non-existing token should return error", func(t *testing.T) {
+			userToken.Id = 1000
+			err := ctx.tokenService.RevokeToken(context.Background(), userToken, false)
+			require.Equal(t, models.ErrUserTokenNotFound, err)
+		})
+
+		ctx = createTestContext(t)
+		userToken = createToken()
+
+		t.Run("When creating an additional token", func(t *testing.T) {
+			userToken2, err := ctx.tokenService.CreateToken(context.Background(), user,
+				net.ParseIP("192.168.10.11"), "some user agent")
+			require.Nil(t, err)
+			require.NotNil(t, userToken2)
+
+			t.Run("Can get first user token", func(t *testing.T) {
+				token, err := ctx.tokenService.GetUserToken(context.Background(), user.Id, userToken.Id)
+				require.Nil(t, err)
+				require.NotNil(t, token)
+				require.Equal(t, userToken.Id, token.Id)
 			})
 
-			Convey("when rotated_at is 7:00:00 ago should return token expired error", func() {
-				getTime = func() time.Time {
-					return time.Unix(model.RotatedAt, 0).Add(24 * 7 * time.Hour)
-				}
-
-				notGood, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-				So(err, ShouldHaveSameTypeAs, &models.TokenExpiredError{})
-				So(notGood, ShouldBeNil)
-
-				Convey("should not find active token when expired", func() {
-					count, err := userAuthTokenService.ActiveTokenCount(context.Background())
-					So(err, ShouldBeNil)
-					So(count, ShouldEqual, 0)
-				})
+			t.Run("Can get second user token", func(t *testing.T) {
+				token, err := ctx.tokenService.GetUserToken(context.Background(), user.Id, userToken2.Id)
+				require.Nil(t, err)
+				require.NotNil(t, token)
+				require.Equal(t, userToken2.Id, token.Id)
 			})
 
-			Convey("when rotated_at is 5 days ago and created_at is 29 days and 23:59:59 ago should not find token", func() {
-				updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
-				So(err, ShouldBeNil)
-				So(updated, ShouldBeTrue)
-
-				getTime = func() time.Time {
-					return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour).Add(-time.Second)
-				}
-
-				stillGood, err = userAuthTokenService.LookupToken(context.Background(), stillGood.UnhashedToken)
-				So(err, ShouldBeNil)
-				So(stillGood, ShouldNotBeNil)
+			t.Run("Can get user tokens", func(t *testing.T) {
+				tokens, err := ctx.tokenService.GetUserTokens(context.Background(), user.Id)
+				require.Nil(t, err)
+				require.Equal(t, 2, len(tokens))
+				require.Equal(t, userToken.Id, tokens[0].Id)
+				require.Equal(t, userToken2.Id, tokens[1].Id)
 			})
 
-			Convey("when rotated_at is 5 days ago and created_at is 30 days ago should return token expired error", func() {
-				updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
-				So(err, ShouldBeNil)
-				So(updated, ShouldBeTrue)
+			t.Run("Can revoke all user tokens", func(t *testing.T) {
+				err := ctx.tokenService.RevokeAllUserTokens(context.Background(), user.Id)
+				require.Nil(t, err)
 
-				getTime = func() time.Time {
-					return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour)
-				}
+				model, err := ctx.getAuthTokenByID(userToken.Id)
+				require.Nil(t, err)
+				require.Nil(t, model)
 
-				notGood, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-				So(err, ShouldHaveSameTypeAs, &models.TokenExpiredError{})
-				So(notGood, ShouldBeNil)
+				model2, err := ctx.getAuthTokenByID(userToken2.Id)
+				require.Nil(t, err)
+				require.Nil(t, model2)
 			})
 		})
 
-		Convey("can properly rotate tokens", func() {
-			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
+		t.Run("When revoking users tokens in a batch", func(t *testing.T) {
+			t.Run("Can revoke all users tokens", func(t *testing.T) {
+				userIds := []int64{}
+				for i := 0; i < 3; i++ {
+					userId := user.Id + int64(i+1)
+					userIds = append(userIds, userId)
+					_, err := ctx.tokenService.CreateToken(context.Background(), user,
+						net.ParseIP("192.168.10.11"), "some user agent")
+					require.Nil(t, err)
+				}
+
+				err := ctx.tokenService.BatchRevokeAllUserTokens(context.Background(), userIds)
+				require.Nil(t, err)
+
+				for _, v := range userIds {
+					tokens, err := ctx.tokenService.GetUserTokens(context.Background(), v)
+					require.Nil(t, err)
+					require.Equal(t, 0, len(tokens))
+				}
+			})
+		})
+	})
+
+	t.Run("expires correctly", func(t *testing.T) {
+		ctx := createTestContext(t)
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+			net.ParseIP("192.168.10.11"), "some user agent")
+		require.Nil(t, err)
+
+		userToken, err = ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
+		require.Nil(t, err)
+
+		getTime = func() time.Time { return now.Add(time.Hour) }
+
+		rotated, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
+			net.ParseIP("192.168.10.11"), "some user agent")
+		require.Nil(t, err)
+		require.True(t, rotated)
+
+		userToken, err = ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
+		require.Nil(t, err)
+
+		stillGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
+		require.Nil(t, err)
+		require.NotNil(t, stillGood)
+
+		model, err := ctx.getAuthTokenByID(userToken.Id)
+		require.Nil(t, err)
+
+		t.Run("when rotated_at is 6:59:59 ago should find token", func(t *testing.T) {
+			getTime = func() time.Time {
+				return time.Unix(model.RotatedAt, 0).Add(24 * 7 * time.Hour).Add(-time.Second)
+			}
+
+			stillGood, err = ctx.tokenService.LookupToken(context.Background(), stillGood.UnhashedToken)
+			require.Nil(t, err)
+			require.NotNil(t, stillGood)
+		})
+
+		t.Run("when rotated_at is 7:00:00 ago should return token expired error", func(t *testing.T) {
+			getTime = func() time.Time {
+				return time.Unix(model.RotatedAt, 0).Add(24 * 7 * time.Hour)
+			}
+
+			notGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
+			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&models.TokenExpiredError{}))
+			require.Nil(t, notGood)
+
+			t.Run("should not find active token when expired", func(t *testing.T) {
+				count, err := ctx.tokenService.ActiveTokenCount(context.Background())
+				require.Nil(t, err)
+				require.Equal(t, int64(0), count)
+			})
+		})
+
+		t.Run("when rotated_at is 5 days ago and created_at is 29 days and 23:59:59 ago should not find token", func(t *testing.T) {
+			updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
+			require.Nil(t, err)
+			require.True(t, updated)
+
+			getTime = func() time.Time {
+				return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour).Add(-time.Second)
+			}
+
+			stillGood, err = ctx.tokenService.LookupToken(context.Background(), stillGood.UnhashedToken)
+			require.Nil(t, err)
+			require.NotNil(t, stillGood)
+		})
+
+		t.Run("when rotated_at is 5 days ago and created_at is 30 days ago should return token expired error", func(t *testing.T) {
+			updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
+			require.Nil(t, err)
+			require.True(t, updated)
+
+			getTime = func() time.Time {
+				return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour)
+			}
+
+			notGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
+			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&models.TokenExpiredError{}))
+			require.Nil(t, notGood)
+		})
+	})
+
+	t.Run("can properly rotate tokens", func(t *testing.T) {
+		getTime = func() time.Time { return now }
+		ctx := createTestContext(t)
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+			net.ParseIP("192.168.10.11"), "some user agent")
+		require.Nil(t, err)
+
+		prevToken := userToken.AuthToken
+		unhashedPrev := userToken.UnhashedToken
+
+		rotated, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
+			net.ParseIP("192.168.10.12"), "a new user agent")
+		require.Nil(t, err)
+		require.False(t, rotated)
+
+		updated, err := ctx.markAuthTokenAsSeen(userToken.Id)
+		require.Nil(t, err)
+		require.True(t, updated)
+
+		model, err := ctx.getAuthTokenByID(userToken.Id)
+		require.Nil(t, err)
+
+		var tok models.UserToken
+		err = model.toUserToken(&tok)
+		require.Nil(t, err)
+
+		getTime = func() time.Time { return now.Add(time.Hour) }
+
+		rotated, err = ctx.tokenService.TryRotateToken(context.Background(), &tok,
+			net.ParseIP("192.168.10.12"), "a new user agent")
+		require.Nil(t, err)
+		require.True(t, rotated)
+
+		unhashedToken := tok.UnhashedToken
+
+		model, err = ctx.getAuthTokenByID(tok.Id)
+		require.Nil(t, err)
+		model.UnhashedToken = unhashedToken
+
+		require.Equal(t, getTime().Unix(), model.RotatedAt)
+		require.Equal(t, "192.168.10.12", model.ClientIp)
+		require.Equal(t, "a new user agent", model.UserAgent)
+		require.False(t, model.AuthTokenSeen)
+		require.Equal(t, int64(0), model.SeenAt)
+		require.Equal(t, prevToken, model.PrevAuthToken)
+
+		// ability to auth using an old token
+
+		lookedUpUserToken, err := ctx.tokenService.LookupToken(context.Background(), model.UnhashedToken)
+		require.Nil(t, err)
+		require.NotNil(t, lookedUpUserToken)
+		require.True(t, lookedUpUserToken.AuthTokenSeen)
+		require.Equal(t, getTime().Unix(), lookedUpUserToken.SeenAt)
+
+		lookedUpUserToken, err = ctx.tokenService.LookupToken(context.Background(), unhashedPrev)
+		require.Nil(t, err)
+		require.NotNil(t, lookedUpUserToken)
+		require.Equal(t, model.Id, lookedUpUserToken.Id)
+		require.True(t, lookedUpUserToken.AuthTokenSeen)
+
+		getTime = func() time.Time {
+			return now.Add(time.Hour + (2 * time.Minute))
+		}
+
+		lookedUpUserToken, err = ctx.tokenService.LookupToken(context.Background(), unhashedPrev)
+		require.Nil(t, err)
+		require.NotNil(t, lookedUpUserToken)
+		require.True(t, lookedUpUserToken.AuthTokenSeen)
+
+		lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
+		require.Nil(t, err)
+		require.NotNil(t, lookedUpModel)
+		require.False(t, lookedUpModel.AuthTokenSeen)
+
+		rotated, err = ctx.tokenService.TryRotateToken(context.Background(), userToken,
+			net.ParseIP("192.168.10.12"), "a new user agent")
+		require.Nil(t, err)
+		require.True(t, rotated)
+
+		model, err = ctx.getAuthTokenByID(userToken.Id)
+		require.Nil(t, err)
+		require.NotNil(t, model)
+		require.Equal(t, int64(0), model.SeenAt)
+	})
+
+	t.Run("keeps prev token valid for 1 minute after it is confirmed", func(t *testing.T) {
+		getTime = func() time.Time { return now }
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+			net.ParseIP("192.168.10.11"), "some user agent")
+		require.Nil(t, err)
+		require.NotNil(t, userToken)
+
+		lookedUpUserToken, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
+		require.Nil(t, err)
+		require.NotNil(t, lookedUpUserToken)
+
+		getTime = func() time.Time { return now.Add(10 * time.Minute) }
+
+		prevToken := userToken.UnhashedToken
+		rotated, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
+			net.ParseIP("1.1.1.1"), "firefox")
+		require.Nil(t, err)
+		require.True(t, rotated)
+
+		getTime = func() time.Time {
+			return now.Add(20 * time.Minute)
+		}
+
+		currentUserToken, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
+		require.Nil(t, err)
+		require.NotNil(t, currentUserToken)
+
+		prevUserToken, err := ctx.tokenService.LookupToken(context.Background(), prevToken)
+		require.Nil(t, err)
+		require.NotNil(t, prevUserToken)
+	})
+
+	t.Run("will not mark token unseen when prev and current are the same", func(t *testing.T) {
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+			net.ParseIP("192.168.10.11"), "some user agent")
+		require.Nil(t, err)
+		require.NotNil(t, userToken)
+
+		lookedUpUserToken, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
+		require.Nil(t, err)
+		require.NotNil(t, lookedUpUserToken)
+
+		lookedUpUserToken, err = ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
+		require.Nil(t, err)
+		require.NotNil(t, lookedUpUserToken)
+
+		lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
+		require.Nil(t, err)
+		require.NotNil(t, lookedUpModel)
+		require.True(t, lookedUpModel.AuthTokenSeen)
+	})
+
+	t.Run("Rotate token", func(t *testing.T) {
+		t.Run("Should rotate current token and previous token when auth token seen", func(t *testing.T) {
+			getTime = func() time.Time { return now }
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
 				net.ParseIP("192.168.10.11"), "some user agent")
-			So(err, ShouldBeNil)
+			require.Nil(t, err)
+			require.NotNil(t, userToken)
 
 			prevToken := userToken.AuthToken
-			unhashedPrev := userToken.UnhashedToken
-
-			rotated, err := userAuthTokenService.TryRotateToken(context.Background(), userToken,
-				net.ParseIP("192.168.10.12"), "a new user agent")
-			So(err, ShouldBeNil)
-			So(rotated, ShouldBeFalse)
 
 			updated, err := ctx.markAuthTokenAsSeen(userToken.Id)
-			So(err, ShouldBeNil)
-			So(updated, ShouldBeTrue)
-
-			model, err := ctx.getAuthTokenByID(userToken.Id)
-			So(err, ShouldBeNil)
-
-			var tok models.UserToken
-			err = model.toUserToken(&tok)
-			So(err, ShouldBeNil)
+			require.Nil(t, err)
+			require.True(t, updated)
 
 			getTime = func() time.Time {
-				return t.Add(time.Hour)
+				return now.Add(10 * time.Minute)
 			}
 
-			rotated, err = userAuthTokenService.TryRotateToken(context.Background(), &tok,
-				net.ParseIP("192.168.10.12"), "a new user agent")
-			So(err, ShouldBeNil)
-			So(rotated, ShouldBeTrue)
-
-			unhashedToken := tok.UnhashedToken
-
-			model, err = ctx.getAuthTokenByID(tok.Id)
-			So(err, ShouldBeNil)
-			model.UnhashedToken = unhashedToken
-
-			So(model.RotatedAt, ShouldEqual, getTime().Unix())
-			So(model.ClientIp, ShouldEqual, "192.168.10.12")
-			So(model.UserAgent, ShouldEqual, "a new user agent")
-			So(model.AuthTokenSeen, ShouldBeFalse)
-			So(model.SeenAt, ShouldEqual, 0)
-			So(model.PrevAuthToken, ShouldEqual, prevToken)
-
-			// ability to auth using an old token
-
-			lookedUpUserToken, err := userAuthTokenService.LookupToken(context.Background(), model.UnhashedToken)
-			So(err, ShouldBeNil)
-			So(lookedUpUserToken, ShouldNotBeNil)
-			So(lookedUpUserToken.AuthTokenSeen, ShouldBeTrue)
-			So(lookedUpUserToken.SeenAt, ShouldEqual, getTime().Unix())
-
-			lookedUpUserToken, err = userAuthTokenService.LookupToken(context.Background(), unhashedPrev)
-			So(err, ShouldBeNil)
-			So(lookedUpUserToken, ShouldNotBeNil)
-			So(lookedUpUserToken.Id, ShouldEqual, model.Id)
-			So(lookedUpUserToken.AuthTokenSeen, ShouldBeTrue)
-
-			getTime = func() time.Time {
-				return t.Add(time.Hour + (2 * time.Minute))
-			}
-
-			lookedUpUserToken, err = userAuthTokenService.LookupToken(context.Background(), unhashedPrev)
-			So(err, ShouldBeNil)
-			So(lookedUpUserToken, ShouldNotBeNil)
-			So(lookedUpUserToken.AuthTokenSeen, ShouldBeTrue)
-
-			lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
-			So(err, ShouldBeNil)
-			So(lookedUpModel, ShouldNotBeNil)
-			So(lookedUpModel.AuthTokenSeen, ShouldBeFalse)
-
-			rotated, err = userAuthTokenService.TryRotateToken(context.Background(), userToken,
-				net.ParseIP("192.168.10.12"), "a new user agent")
-			So(err, ShouldBeNil)
-			So(rotated, ShouldBeTrue)
-
-			model, err = ctx.getAuthTokenByID(userToken.Id)
-			So(err, ShouldBeNil)
-			So(model, ShouldNotBeNil)
-			So(model.SeenAt, ShouldEqual, 0)
-		})
-
-		Convey("keeps prev token valid for 1 minute after it is confirmed", func() {
-			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
-				net.ParseIP("192.168.10.11"), "some user agent")
-			So(err, ShouldBeNil)
-			So(userToken, ShouldNotBeNil)
-
-			lookedUpUserToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			So(err, ShouldBeNil)
-			So(lookedUpUserToken, ShouldNotBeNil)
-
-			getTime = func() time.Time {
-				return t.Add(10 * time.Minute)
-			}
-
-			prevToken := userToken.UnhashedToken
-			rotated, err := userAuthTokenService.TryRotateToken(context.Background(), userToken,
+			rotated, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
 				net.ParseIP("1.1.1.1"), "firefox")
-			So(err, ShouldBeNil)
-			So(rotated, ShouldBeTrue)
+			require.Nil(t, err)
+			require.True(t, rotated)
+
+			storedToken, err := ctx.getAuthTokenByID(userToken.Id)
+			require.Nil(t, err)
+			require.NotNil(t, storedToken)
+			require.False(t, storedToken.AuthTokenSeen)
+			require.Equal(t, prevToken, storedToken.PrevAuthToken)
+			require.NotEqual(t, prevToken, storedToken.AuthToken)
+
+			prevToken = storedToken.AuthToken
+
+			updated, err = ctx.markAuthTokenAsSeen(userToken.Id)
+			require.Nil(t, err)
+			require.True(t, updated)
 
 			getTime = func() time.Time {
-				return t.Add(20 * time.Minute)
+				return now.Add(20 * time.Minute)
 			}
 
-			currentUserToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			So(err, ShouldBeNil)
-			So(currentUserToken, ShouldNotBeNil)
+			rotated, err = ctx.tokenService.TryRotateToken(context.Background(), userToken,
+				net.ParseIP("1.1.1.1"), "firefox")
+			require.Nil(t, err)
+			require.True(t, rotated)
 
-			prevUserToken, err := userAuthTokenService.LookupToken(context.Background(), prevToken)
-			So(err, ShouldBeNil)
-			So(prevUserToken, ShouldNotBeNil)
+			storedToken, err = ctx.getAuthTokenByID(userToken.Id)
+			require.Nil(t, err)
+			require.NotNil(t, storedToken)
+			require.False(t, storedToken.AuthTokenSeen)
+			require.Equal(t, prevToken, storedToken.PrevAuthToken)
+			require.NotEqual(t, prevToken, storedToken.AuthToken)
 		})
 
-		Convey("will not mark token unseen when prev and current are the same", func() {
-			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
+		t.Run("Should rotate current token, but keep previous token when auth token not seen", func(t *testing.T) {
+			getTime = func() time.Time { return now }
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
 				net.ParseIP("192.168.10.11"), "some user agent")
-			So(err, ShouldBeNil)
-			So(userToken, ShouldNotBeNil)
-
-			lookedUpUserToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			So(err, ShouldBeNil)
-			So(lookedUpUserToken, ShouldNotBeNil)
-
-			lookedUpUserToken, err = userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			So(err, ShouldBeNil)
-			So(lookedUpUserToken, ShouldNotBeNil)
-
-			lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
-			So(err, ShouldBeNil)
-			So(lookedUpModel, ShouldNotBeNil)
-			So(lookedUpModel.AuthTokenSeen, ShouldBeTrue)
-		})
-
-		Convey("Rotate token", func() {
-			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
-				net.ParseIP("192.168.10.11"), "some user agent")
-			So(err, ShouldBeNil)
-			So(userToken, ShouldNotBeNil)
+			require.Nil(t, err)
+			require.NotNil(t, userToken)
 
 			prevToken := userToken.AuthToken
+			userToken.RotatedAt = now.Add(-2 * time.Minute).Unix()
 
-			Convey("Should rotate current token and previous token when auth token seen", func() {
-				updated, err := ctx.markAuthTokenAsSeen(userToken.Id)
-				So(err, ShouldBeNil)
-				So(updated, ShouldBeTrue)
-
-				getTime = func() time.Time {
-					return t.Add(10 * time.Minute)
-				}
-
-				rotated, err := userAuthTokenService.TryRotateToken(context.Background(), userToken,
-					net.ParseIP("1.1.1.1"), "firefox")
-				So(err, ShouldBeNil)
-				So(rotated, ShouldBeTrue)
-
-				storedToken, err := ctx.getAuthTokenByID(userToken.Id)
-				So(err, ShouldBeNil)
-				So(storedToken, ShouldNotBeNil)
-				So(storedToken.AuthTokenSeen, ShouldBeFalse)
-				So(storedToken.PrevAuthToken, ShouldEqual, prevToken)
-				So(storedToken.AuthToken, ShouldNotEqual, prevToken)
-
-				prevToken = storedToken.AuthToken
-
-				updated, err = ctx.markAuthTokenAsSeen(userToken.Id)
-				So(err, ShouldBeNil)
-				So(updated, ShouldBeTrue)
-
-				getTime = func() time.Time {
-					return t.Add(20 * time.Minute)
-				}
-
-				rotated, err = userAuthTokenService.TryRotateToken(context.Background(), userToken,
-					net.ParseIP("1.1.1.1"), "firefox")
-				So(err, ShouldBeNil)
-				So(rotated, ShouldBeTrue)
-
-				storedToken, err = ctx.getAuthTokenByID(userToken.Id)
-				So(err, ShouldBeNil)
-				So(storedToken, ShouldNotBeNil)
-				So(storedToken.AuthTokenSeen, ShouldBeFalse)
-				So(storedToken.PrevAuthToken, ShouldEqual, prevToken)
-				So(storedToken.AuthToken, ShouldNotEqual, prevToken)
-			})
-
-			Convey("Should rotate current token, but keep previous token when auth token not seen", func() {
-				userToken.RotatedAt = getTime().Add(-2 * time.Minute).Unix()
-
-				getTime = func() time.Time {
-					return t.Add(2 * time.Minute)
-				}
-
-				rotated, err := userAuthTokenService.TryRotateToken(context.Background(), userToken,
-					net.ParseIP("1.1.1.1"), "firefox")
-				So(err, ShouldBeNil)
-				So(rotated, ShouldBeTrue)
-
-				storedToken, err := ctx.getAuthTokenByID(userToken.Id)
-				So(err, ShouldBeNil)
-				So(storedToken, ShouldNotBeNil)
-				So(storedToken.AuthTokenSeen, ShouldBeFalse)
-				So(storedToken.PrevAuthToken, ShouldEqual, prevToken)
-				So(storedToken.AuthToken, ShouldNotEqual, prevToken)
-			})
-		})
-
-		Convey("When populating userAuthToken from UserToken should copy all properties", func() {
-			ut := models.UserToken{
-				Id:            1,
-				UserId:        2,
-				AuthToken:     "a",
-				PrevAuthToken: "b",
-				UserAgent:     "c",
-				ClientIp:      "d",
-				AuthTokenSeen: true,
-				SeenAt:        3,
-				RotatedAt:     4,
-				CreatedAt:     5,
-				UpdatedAt:     6,
-				UnhashedToken: "e",
+			getTime = func() time.Time {
+				return now.Add(2 * time.Minute)
 			}
-			utBytes, err := json.Marshal(ut)
-			So(err, ShouldBeNil)
-			utJSON, err := simplejson.NewJson(utBytes)
-			So(err, ShouldBeNil)
-			utMap := utJSON.MustMap()
 
-			var uat userAuthToken
-			err = uat.fromUserToken(&ut)
-			So(err, ShouldBeNil)
-			uatBytes, err := json.Marshal(uat)
-			So(err, ShouldBeNil)
-			uatJSON, err := simplejson.NewJson(uatBytes)
-			So(err, ShouldBeNil)
-			uatMap := uatJSON.MustMap()
+			rotated, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
+				net.ParseIP("1.1.1.1"), "firefox")
+			require.Nil(t, err)
+			require.True(t, rotated)
 
-			So(uatMap, ShouldResemble, utMap)
+			storedToken, err := ctx.getAuthTokenByID(userToken.Id)
+			require.Nil(t, err)
+			require.NotNil(t, storedToken)
+			require.False(t, storedToken.AuthTokenSeen)
+			require.Equal(t, prevToken, storedToken.PrevAuthToken)
+			require.NotEqual(t, prevToken, storedToken.AuthToken)
 		})
+	})
 
-		Convey("When populating userToken from userAuthToken should copy all properties", func() {
-			uat := userAuthToken{
-				Id:            1,
-				UserId:        2,
-				AuthToken:     "a",
-				PrevAuthToken: "b",
-				UserAgent:     "c",
-				ClientIp:      "d",
-				AuthTokenSeen: true,
-				SeenAt:        3,
-				RotatedAt:     4,
-				CreatedAt:     5,
-				UpdatedAt:     6,
-				UnhashedToken: "e",
-			}
-			uatBytes, err := json.Marshal(uat)
-			So(err, ShouldBeNil)
-			uatJSON, err := simplejson.NewJson(uatBytes)
-			So(err, ShouldBeNil)
-			uatMap := uatJSON.MustMap()
+	t.Run("When populating userAuthToken from UserToken should copy all properties", func(t *testing.T) {
+		ut := models.UserToken{
+			Id:            1,
+			UserId:        2,
+			AuthToken:     "a",
+			PrevAuthToken: "b",
+			UserAgent:     "c",
+			ClientIp:      "d",
+			AuthTokenSeen: true,
+			SeenAt:        3,
+			RotatedAt:     4,
+			CreatedAt:     5,
+			UpdatedAt:     6,
+			UnhashedToken: "e",
+		}
+		utBytes, err := json.Marshal(ut)
+		require.Nil(t, err)
+		utJSON, err := simplejson.NewJson(utBytes)
+		require.Nil(t, err)
+		utMap := utJSON.MustMap()
 
-			var ut models.UserToken
-			err = uat.toUserToken(&ut)
-			So(err, ShouldBeNil)
-			utBytes, err := json.Marshal(ut)
-			So(err, ShouldBeNil)
-			utJSON, err := simplejson.NewJson(utBytes)
-			So(err, ShouldBeNil)
-			utMap := utJSON.MustMap()
+		var uat userAuthToken
+		err = uat.fromUserToken(&ut)
+		require.Nil(t, err)
+		uatBytes, err := json.Marshal(uat)
+		require.Nil(t, err)
+		uatJSON, err := simplejson.NewJson(uatBytes)
+		require.Nil(t, err)
+		uatMap := uatJSON.MustMap()
 
-			So(utMap, ShouldResemble, uatMap)
-		})
+		require.True(t, reflect.DeepEqual(uatMap, utMap))
+	})
 
-		Reset(func() {
-			getTime = time.Now
-		})
+	t.Run("When populating userToken from userAuthToken should copy all properties", func(t *testing.T) {
+		uat := userAuthToken{
+			Id:            1,
+			UserId:        2,
+			AuthToken:     "a",
+			PrevAuthToken: "b",
+			UserAgent:     "c",
+			ClientIp:      "d",
+			AuthTokenSeen: true,
+			SeenAt:        3,
+			RotatedAt:     4,
+			CreatedAt:     5,
+			UpdatedAt:     6,
+			UnhashedToken: "e",
+		}
+		uatBytes, err := json.Marshal(uat)
+		require.Nil(t, err)
+		uatJSON, err := simplejson.NewJson(uatBytes)
+		require.Nil(t, err)
+		uatMap := uatJSON.MustMap()
+
+		var ut models.UserToken
+		err = uat.toUserToken(&ut)
+		require.Nil(t, err)
+		utBytes, err := json.Marshal(ut)
+		require.Nil(t, err)
+		utJSON, err := simplejson.NewJson(utBytes)
+		require.Nil(t, err)
+		utMap := utJSON.MustMap()
+
+		require.True(t, reflect.DeepEqual(utMap, uatMap))
 	})
 }
 

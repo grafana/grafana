@@ -7,6 +7,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
+  DataSourceRef,
   MetricFindValue,
   StandardVariableQuery,
   StandardVariableSupport,
@@ -57,6 +58,14 @@ function hasObjectProperty(model: VariableModel, property: string): model is Var
 
   const withProperty = model as Record<string, any>;
   return withProperty.hasOwnProperty(property) && typeof withProperty[property] === 'object';
+}
+
+export function isLegacyAdHocDataSource(datasource: null | DataSourceRef | string): datasource is string {
+  if (datasource === null) {
+    return false;
+  }
+
+  return typeof datasource === 'string';
 }
 
 interface DataSourceWithLegacyVariableSupport<

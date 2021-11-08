@@ -15,7 +15,7 @@ export const CollapseToggle: FC<Props> = ({ isCollapsed, onToggle, className, te
 
   return (
     <button
-      aria-label={`${isCollapsed ? 'expand' : 'collapse'}`}
+      aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} alert group`}
       className={cx(styles.expandButton, className)}
       onClick={() => onToggle(!isCollapsed)}
       {...restOfProps}

@@ -49,3 +49,7 @@ export type GetVariables = typeof getVariables;
 export const getNewVariabelIndex = (state: StoreState = getState()): number => {
   return Object.values(state.templating.variables).length;
 };
+
+export function getVariablesIsDirty(state: StoreState = getState()): boolean {
+  return state.templating.transaction.isDirty;
+}

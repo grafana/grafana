@@ -1,33 +1,20 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
-import { Input, Tag, useStyles, Button, Modal, IconButton } from '@grafana/ui';
+import { Input } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { Rule, Output, RuleType } from './types';
-import { RuleModal } from './RuleModal';
+import { Rule } from './types';
+import { PipelineTable } from './PipelineTable';
 import { AddNewRule } from './AddNewRule';
-
-function renderOutputTags(key: string, output?: Output): React.ReactNode {
-  if (!output?.type) {
-    return null;
-  }
-  return <Tag key={key} name={output.type} />;
-}
 
 export default function PipelineAdminPage() {
   const [rules, setRules] = useState<Rule[]>([]);
-  const [isOpen, setOpen] = useState(false);
-  const [selectedRule, setSelectedRule] = useState<Rule>();
   const [defaultRules, setDefaultRules] = useState<any[]>([]);
+  const [newRule, setNewRule] = useState<Rule>();
   const navModel = useNavModel('live-pipeline');
-  const [isOpenEditor, setOpenEditor] = useState<boolean>(false);
   const [error, setError] = useState<string>();
-  const [clickColumn, setClickColumn] = useState<RuleType>('converter');
-  const styles = useStyles(getStyles);
 
-  useEffect(() => {
+  const loadRules = () => {
     getBackendSrv()
       .get(`api/live/channel-rules`)
       .then((data) => {
@@ -39,19 +26,11 @@ export default function PipelineAdminPage() {
           setError(JSON.stringify(e.data, null, 2));
         }
       });
-  }, [isOpenEditor, isOpen]);
-
-  const onRowClick = (event: any) => {
-    const pattern = event.target.getAttribute('data-pattern');
-    const column = event.target.getAttribute('data-column');
-    if (column === 'pattern') {
-      setClickColumn('converter');
-    } else {
-      setClickColumn(column);
-    }
-    setSelectedRule(rules.filter((rule) => rule.pattern === pattern)[0]);
-    setOpen(true);
   };
+
+  useEffect(() => {
+    loadRules();
+  }, []);
 
   const onSearchQueryChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
@@ -61,11 +40,6 @@ export default function PipelineAdminPage() {
     }
   };
 
-  const onRemoveRule = (pattern: string) => {
-    getBackendSrv()
-      .delete(`api/live/channel-rules`, JSON.stringify({ pattern: pattern }))
-      .catch((e) => console.error(e));
-  };
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -73,75 +47,19 @@ export default function PipelineAdminPage() {
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <Input placeholder="Search pattern..." onChange={onSearchQueryChange} />
-            <Button className={styles.addNew} onClick={() => setOpenEditor(true)}>
-              Add Rule
-            </Button>
           </div>
         </div>
-        <div className="admin-list-table">
-          <table className="filter-table filter-table--hover form-inline">
-            <thead>
-              <tr>
-                <th>Pattern</th>
-                <th>Converter</th>
-                <th>Processor</th>
-                <th>Output</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map((rule) => (
-                <tr key={rule.pattern} onClick={onRowClick} className={styles.row}>
-                  <td data-pattern={rule.pattern} data-column="pattern">
-                    {rule.pattern}
-                  </td>
-                  <td data-pattern={rule.pattern} data-column="converter">
-                    {rule.settings?.converter?.type}
-                  </td>
-                  <td data-pattern={rule.pattern} data-column="processor">
-                    {rule.settings?.frameProcessors?.map((processor) => (
-                      <span key={rule.pattern + processor.type}>{processor.type}</span>
-                    ))}
-                  </td>
-                  <td data-pattern={rule.pattern} data-column="output">
-                    {rule.settings?.frameOutputs?.map((output) => (
-                      <span key={rule.pattern + output.type}>{renderOutputTags('out', output)}</span>
-                    ))}
-                  </td>
-                  <td>
-                    <IconButton name="trash-alt" onClick={() => onRemoveRule(rule.pattern)}></IconButton>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {isOpenEditor && (
-          <Modal isOpen={isOpenEditor} onDismiss={() => setOpenEditor(false)} title="Add a new rule">
-            <AddNewRule onClose={setOpenEditor} />
-          </Modal>
-        )}
-        {isOpen && selectedRule && (
-          <RuleModal
-            rule={selectedRule}
-            isOpen={isOpen}
-            onClose={() => {
-              setOpen(false);
-            }}
-            clickColumn={clickColumn}
-          />
-        )}
+
+        <PipelineTable rules={rules} onRuleChanged={loadRules} selectRule={newRule} />
+
+        <AddNewRule
+          onRuleAdded={(r: Rule) => {
+            console.log('GOT', r, 'vs', rules[0]);
+            setNewRule(r);
+            loadRules();
+          }}
+        />
       </Page.Contents>
     </Page>
   );
 }
-
-const getStyles = (theme: GrafanaTheme) => {
-  return {
-    row: css`
-      cursor: pointer;
-    `,
-    addNew: css`
-      margin-left: 10px;
-    `,
-  };
-};

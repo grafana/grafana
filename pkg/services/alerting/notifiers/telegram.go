@@ -254,7 +254,7 @@ func appendIfPossible(message string, extra string, sizeLimit int) string {
 	if len(extra)+len(message) <= sizeLimit {
 		return message + extra
 	}
-	log.Debugf("Line too long for image caption. value: %s", extra)
+	log.Debug("Line too long for image caption.", "value", extra)
 	return message
 }
 

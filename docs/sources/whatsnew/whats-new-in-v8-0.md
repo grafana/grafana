@@ -24,7 +24,7 @@ As part of the new alert changes, we have introduced a new data source, Alertman
 
 > **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release.
 
-To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts]({{< relref "../alerting/difference-old-new.md" >}}).
+To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
 
 ### Library panels
 

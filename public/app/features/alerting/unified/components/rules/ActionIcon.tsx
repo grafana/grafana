@@ -31,12 +31,13 @@ export const ActionIcon: FC<Props> = ({
     <Icon role="button" className={cx(useStyles(getStyle), className)} onClick={onClick} name={icon} {...rest} />
   );
 
+  const ariaLabel = typeof tooltip === 'string' ? tooltip : undefined;
   return (
     <Tooltip content={tooltip} placement={tooltipPlacement}>
       {(() => {
         if (to) {
           return (
-            <Link to={to} target={target}>
+            <Link aria-label={ariaLabel} to={to} target={target}>
               {iconEl}
             </Link>
           );

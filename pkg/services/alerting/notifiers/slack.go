@@ -13,7 +13,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -36,7 +35,7 @@ func init() {
 				Label:        "Recipient",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
-				Description:  "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID - required unless you provide a webhook",
+				Description:  "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
 				PropertyName: "recipient",
 			},
 			// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
@@ -119,8 +118,6 @@ func init() {
 	})
 }
 
-var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*)|(#[^ .A-Z]{1,79})|([a-zA-Z0-9]+))$")
-
 const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier.
@@ -135,11 +132,7 @@ func NewSlackNotifier(model *models.AlertNotification, fn alerting.GetDecryptedV
 	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
-	if recipient != "" {
-		if !reRecipient.MatchString(recipient) {
-			return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
-		}
-	} else if apiURL.String() == slackAPIEndpoint {
+	if recipient == "" && apiURL.String() == slackAPIEndpoint {
 		return nil, alerting.ValidationError{
 			Reason: "recipient must be specified when using the Slack chat API",
 		}
@@ -382,18 +375,24 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
-		// Slack responds to some requests with a JSON document, that might contain an error
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		// Slack responds to some requests with a JSON document, that might contain an error.
 		rslt := struct {
 			Ok  bool   `json:"ok"`
 			Err string `json:"error"`
 		}{}
-		if err := json.Unmarshal(body, &rslt); err == nil {
-			if !rslt.Ok && rslt.Err != "" {
-				sn.log.Warn("Sending Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status,
-					"err", rslt.Err)
-				return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
-			}
+
+		// Marshaling can fail if Slack's response body is plain text (e.g. "ok").
+		if err := json.Unmarshal(body, &rslt); err != nil && json.Valid(body) {
+			sn.log.Error("Failed to unmarshal Slack API response", "url", sn.url.String(), "statusCode", resp.Status,
+				"err", err)
+			return fmt.Errorf("failed to unmarshal Slack API response with status code %d: %s", resp.StatusCode, err)
+		}
+
+		if !rslt.Ok && rslt.Err != "" {
+			sn.log.Error("Sending Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status,
+				"err", rslt.Err)
+			return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 		}
 
 		sn.log.Debug("Sending Slack API request succeeded", "url", sn.url.String(), "statusCode", resp.Status)
@@ -401,7 +400,7 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 		return nil
 	}
 
-	sn.log.Warn("Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status, "body", string(body))
+	sn.log.Error("Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status, "body", string(body))
 	return fmt.Errorf("request to Slack API failed with status code %d", resp.StatusCode)
 }
 
