@@ -36,7 +36,7 @@ func (t *testBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule
 }
 
 func TestStorage_Get(t *testing.T) {
-	s := NewCacheSegmentedTree(&testBuilder{})
+	s := NewCacheSegmentedTree(&testBuilder{}, &testBuilder{})
 	rule, ok, err := s.Get(1, "stream/telegraf/cpu")
 	require.NoError(t, err)
 	require.True(t, ok)
@@ -59,7 +59,7 @@ func TestStorage_Get(t *testing.T) {
 }
 
 func BenchmarkRuleGet(b *testing.B) {
-	s := NewCacheSegmentedTree(&testBuilder{})
+	s := NewCacheSegmentedTree(&testBuilder{}, &testBuilder{})
 	for i := 0; i < b.N; i++ {
 		_, ok, err := s.Get(1, "stream/telegraf/cpu")
 		if err != nil || !ok {

@@ -36,6 +36,7 @@ func (s *BuiltinDataOutput) OutputData(ctx context.Context, vars Vars, data []by
 	_, status, err := handler.OnPublish(ctx, u, models.PublishEvent{
 		Channel: vars.Channel,
 		Data:    data,
+		Path:    vars.Path,
 	})
 	if err != nil {
 		return nil, err

@@ -911,6 +911,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 	channel := cmd.Channel
 
 	if g.Pipeline != nil {
+		ctx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
 		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
 		if err != nil {
 			logger.Error("Error getting channel rule", "user", user, "channel", channel, "error", err)
@@ -918,7 +919,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		}
 		if ok {
 			if rule.PublishAuth != nil {
-				ok, err := rule.PublishAuth.CanPublish(ctx.Req.Context(), user)
+				ok, err := rule.PublishAuth.CanPublish(ctx, user)
 				if err != nil {
 					logger.Error("Error checking publish permissions", "user", user, "channel", channel, "error", err)
 					return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
@@ -931,12 +932,14 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
 				}
 			}
-			_, err := g.Pipeline.ProcessInput(ctx.Req.Context(), user.OrgId, channel, cmd.Data)
+			_, err := g.Pipeline.ProcessInput(ctx, user.OrgId, channel, cmd.Data)
 			if err != nil {
 				logger.Error("Error processing input", "user", user, "channel", channel, "error", err)
 				return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 			}
 			return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
+		} else {
+			return response.Error(http.StatusNotFound, http.StatusText(http.StatusNotFound), nil)
 		}
 	}
 
