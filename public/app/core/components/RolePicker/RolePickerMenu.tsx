@@ -364,6 +364,7 @@ interface RoleMenuGroupsOptionProps<T> {
   onSelect: (value: string) => void;
   onClick?: (value: string) => void;
   isSelected?: boolean;
+  partiallySelected?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
 }
@@ -371,7 +372,7 @@ interface RoleMenuGroupsOptionProps<T> {
 export const RoleMenuGroupsOption = React.forwardRef<
   HTMLDivElement,
   React.PropsWithChildren<RoleMenuGroupsOptionProps<any>>
->(({ data, isFocused, isSelected, disabled, onSelect, onClick }, ref) => {
+>(({ data, isFocused, isSelected, partiallySelected, disabled, onSelect, onClick }, ref) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
@@ -401,7 +402,7 @@ export const RoleMenuGroupsOption = React.forwardRef<
     <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onClickInternal}>
       <Checkbox
         value={isSelected}
-        className={customStyles.menuOptionCheckbox}
+        className={cx(customStyles.menuOptionCheckbox, { [customStyles.checkboxPartiallyChecked]: partiallySelected })}
         onChange={onChange}
         disabled={disabled}
       />
@@ -486,6 +487,16 @@ export const getStyles = (theme: GrafanaTheme2) => {
     subMenuButtonRow: css`
       background-color: ${theme.colors.background.primary};
       padding: ${theme.spacing(1)};
+    `,
+    checkboxPartiallyChecked: css`
+      input {
+        &:checked + span {
+          &:after {
+            border-width: 0 3px 0px 0;
+            transform: rotate(90deg);
+          }
+        }
+      }
     `,
   };
 };
