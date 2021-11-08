@@ -1,5 +1,4 @@
 import React from 'react';
-import angular from 'angular';
 import { find, findLast, isEmpty, isString, set } from 'lodash';
 import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
 import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
@@ -110,8 +109,6 @@ export class CloudWatchDatasource
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
-    options = angular.copy(options);
-
     let queries = options.targets.filter((item) => item.id !== '' || item.hide !== true);
     const { logQueries, metricsQueries } = this.getTargetsByQueryMode(queries);
 

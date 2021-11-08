@@ -20,6 +20,7 @@ import './give_focus';
 import './diff-view';
 import './array_join';
 import './angular_wrappers';
+import './GrafanaCtrl';
 
 // components
 import './components/query_part_editor';

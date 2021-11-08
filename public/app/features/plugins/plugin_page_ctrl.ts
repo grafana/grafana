@@ -1,11 +1,10 @@
-import angular from 'angular';
 import { find } from 'lodash';
-
 import { getPluginSettings } from './PluginSettingsCache';
 import { PluginMeta, AppEvents } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { promiseToDigest } from '../../angular/promiseToDigest';
-import { NavModelSrv } from 'app/angular/services/nav_model_srv';
+//import { promiseToDigest } from '../../angular/promiseToDigest';
+//import { NavModelSrv } from 'app/angular/services/nav_model_srv';
+import { coreModule } from 'app/angular/fakeModule';
 
 export class AppPageCtrl {
   page: any;
@@ -59,4 +58,4 @@ export class AppPageCtrl {
   }
 }
 
-angular.module('grafana.controllers').controller('AppPageCtrl', AppPageCtrl);
+coreModule.controller('AppPageCtrl', AppPageCtrl);

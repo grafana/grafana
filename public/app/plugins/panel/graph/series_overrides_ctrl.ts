@@ -1,5 +1,5 @@
 import { map, each, isUndefined } from 'lodash';
-import coreModule from 'app/angular/core_module';
+import coreModule from 'app/angular/fakeModule';
 import { textUtil } from '@grafana/data';
 
 /** @ngInject */

@@ -1,9 +1,8 @@
-import angular, { ILocationService } from 'angular';
+import { ILocationService } from 'angular';
 import { each } from 'lodash';
-
+import $ from 'jquery';
 import config from 'app/core/config';
-import coreModule from 'app/angular/core_module';
-
+import coreModule from 'app/angular/fakeModule';
 import { DataSourceApi, PanelEvents } from '@grafana/data';
 import { importDataSourcePlugin, importAppPlugin } from './plugin_loader';
 import { importPanelPlugin } from './importPanelPlugin';
@@ -216,7 +215,7 @@ function pluginDirectiveLoader(
   }
 
   function appendAndCompile(scope: any, elem: JQuery, componentInfo: any) {
-    const child = angular.element(document.createElement(componentInfo.name));
+    const child = $(document.createElement(componentInfo.name));
     each(componentInfo.attrs, (value, key) => {
       child.attr(key, value);
     });

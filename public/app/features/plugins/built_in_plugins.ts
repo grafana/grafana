@@ -45,15 +45,12 @@ import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
 import * as stateTimelinePanel from 'app/plugins/panel/state-timeline/module';
 import * as statusHistoryPanel from 'app/plugins/panel/status-history/module';
 import * as marketTrendPanel from 'app/plugins/panel/market-trend/module';
-import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
 import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
-import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
-import * as oldTablePanel from 'app/plugins/panel/table-old/module';
 import * as statPanel from 'app/plugins/panel/stat/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
@@ -73,6 +70,12 @@ import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
 const iconPanel = async () => await import(/* webpackChunkName: "iconPanel" */ 'app/plugins/panel/icon/module');
+
+const heatmapPanel = async () =>
+  await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
+const oldTablePanel = async () =>
+  await import(/* webpackChunkName: "oldTablePanel" */ 'app/plugins/panel/table-old/module');
+const graphPanel = async () => await import(/* webpackChunkName: "graphPanel" */ 'app/plugins/panel/graph/module');
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,

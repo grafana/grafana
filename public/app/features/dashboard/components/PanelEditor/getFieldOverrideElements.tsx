@@ -14,7 +14,7 @@ import { OptionPaneRenderProps } from './types';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
-import { getDataLinksVariableSuggestions } from 'app/angular/panel/panellinks/link_srv';
+//import { getDataLinksVariableSuggestions } from 'app/angular/panel/panellinks/link_srv';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
 import { css } from '@emotion/css';
 
@@ -57,7 +57,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
 
   const context = {
     data,
-    getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+    getSuggestions: (scope?: VariableSuggestionsScope) => {},
     isOverride: true,
   };
 

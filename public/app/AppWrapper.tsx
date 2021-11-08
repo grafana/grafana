@@ -40,10 +40,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
   constructor(props: AppWrapperProps) {
     super(props);
-
-    this.state = {
-      ngInjector: null,
-    };
   }
 
   componentDidMount() {

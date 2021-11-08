@@ -2,7 +2,7 @@ import { map, find } from 'lodash';
 import { IScope } from 'angular';
 import { AppEvents } from '@grafana/data';
 
-import coreModule from 'app/angular/core_module';
+import coreModule from 'app/angular/fakeModule';
 import appEvents from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ValidationSrv } from 'app/features/manage-dashboards';

@@ -1,19 +1,19 @@
 import { isArray, reduce } from 'lodash';
-import { QueryPartDef, QueryPart } from 'app/angular/components/query_part';
+//import { QueryPartDef, QueryPart } from 'app/angular/components/query_part';
 
-const alertQueryDef = new QueryPartDef({
-  type: 'query',
-  params: [
-    { name: 'queryRefId', type: 'string', dynamicLookup: true },
-    {
-      name: 'from',
-      type: 'string',
-      options: ['10s', '1m', '5m', '10m', '15m', '1h', '2h', '6h', '12h', '24h', '48h'],
-    },
-    { name: 'to', type: 'string', options: ['now', 'now-1m', 'now-5m', 'now-10m', 'now-1h'] },
-  ],
-  defaultParams: ['#A', '15m', 'now', 'avg'],
-});
+// const alertQueryDef = new QueryPartDef({
+//   type: 'query',
+//   params: [
+//     { name: 'queryRefId', type: 'string', dynamicLookup: true },
+//     {
+//       name: 'from',
+//       type: 'string',
+//       options: ['10s', '1m', '5m', '10m', '15m', '1h', '2h', '6h', '12h', '24h', '48h'],
+//     },
+//     { name: 'to', type: 'string', options: ['now', 'now-1m', 'now-5m', 'now-10m', 'now-1h'] },
+//   ],
+//   defaultParams: ['#A', '15m', 'now', 'avg'],
+// });
 
 const conditionTypes = [{ text: 'Query', value: 'query' }];
 
@@ -194,7 +194,7 @@ function getAlertAnnotationInfo(ah: any) {
 }
 
 export default {
-  alertQueryDef: alertQueryDef,
+  alertQueryDef: {},
   getStateDisplayModel: getStateDisplayModel,
   conditionTypes: conditionTypes,
   evalFunctions: evalFunctions,

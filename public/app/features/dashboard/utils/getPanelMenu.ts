@@ -16,7 +16,6 @@ import { contextSrv } from '../../../core/services/context_srv';
 import { navigateToExplore } from '../../explore/state/main';
 import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
-import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 
 export function getPanelMenu(

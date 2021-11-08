@@ -1,6 +1,6 @@
-import coreModule from 'app/angular/core_module';
+import coreModule from 'app/angular/fakeModule';
 import appEvents from 'app/core/app_events';
-import angular from 'angular';
+//import angular from 'angular';
 import { AppEvents } from '@grafana/data';
 
 const template = `
@@ -20,7 +20,7 @@ export function uploadDashboardDirective() {
       btnText: '@?',
     },
     link: (scope: any, elem: JQuery) => {
-      scope.btnText = angular.isDefined(scope.btnText) ? scope.btnText : 'Upload .json file';
+      scope.btnText = 'asd';
 
       function file_selected(evt: any) {
         const files = evt.target.files; // FileList object

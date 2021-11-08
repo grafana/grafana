@@ -1,4 +1,4 @@
-import coreModule from 'app/angular/core_module';
+import coreModule from 'app/angular/fakeModule';
 import config from 'app/core/config';
 import tinycolor from 'tinycolor2';
 export class ThresholdFormCtrl {

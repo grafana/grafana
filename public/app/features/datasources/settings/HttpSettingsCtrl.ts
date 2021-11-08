@@ -1,4 +1,4 @@
-import { coreModule } from 'app/angular/core_module';
+import { coreModule } from 'app/angular/fakeModule';
 
 coreModule.directive('datasourceHttpSettings', () => {
   return {

@@ -12,7 +12,7 @@ import $ from 'jquery';
 import { clone, find, flatten, isUndefined, map, max as _max, min as _min, sortBy as _sortBy, toNumber } from 'lodash';
 import { tickStep } from 'app/core/utils/ticks';
 import { updateLegendValues } from 'app/core/core';
-import { coreModule } from 'app/angular/core_module';
+import { coreModule } from 'app/angular/fakeModule';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';

@@ -11,7 +11,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import coreModule from 'app/angular/core_module';
+import coreModule from 'app/angular/fakeModule';
 import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
 import { standardAnnotationSupport } from './standardAnnotationSupport';
 import { runRequest } from '../query/state/runRequest';

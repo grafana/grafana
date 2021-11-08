@@ -1,6 +1,6 @@
 import $ from 'jquery';
-import angular from 'angular';
-import { extend } from 'lodash';
+// import angular from 'angular';
+// import { extend } from 'lodash';
 
 const $win = $(window);
 
@@ -22,21 +22,20 @@ $.fn.place_tt = (() => {
       $tooltip.appendTo(document.body);
 
       if (opts.compile) {
-        angular
-          .element(document)
-          .injector()
-          .invoke([
-            '$compile',
-            '$rootScope',
-            ($compile, $rootScope) => {
-              const tmpScope = $rootScope.$new(true);
-              extend(tmpScope, opts.scopeData);
-
-              $compile($tooltip)(tmpScope);
-              tmpScope.$digest();
-              tmpScope.$destroy();
-            },
-          ]);
+        // angular
+        //   .element(document)
+        //   .injector()
+        //   .invoke([
+        //     '$compile',
+        //     '$rootScope',
+        //     ($compile, $rootScope) => {
+        //       const tmpScope = $rootScope.$new(true);
+        //       extend(tmpScope, opts.scopeData);
+        //       $compile($tooltip)(tmpScope);
+        //       tmpScope.$digest();
+        //       tmpScope.$destroy();
+        //     },
+        //   ]);
       }
 
       width = $tooltip.outerWidth(true)!;

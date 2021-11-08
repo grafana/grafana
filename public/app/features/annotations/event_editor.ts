@@ -1,13 +1,12 @@
 import { cloneDeep, isNumber } from 'lodash';
-import { coreModule } from 'app/angular/core_module';
+import { coreModule } from 'app/angular/fakeModule';
 import { AnnotationEvent, dateTime } from '@grafana/data';
-import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from './api';
 import { getDashboardQueryRunner } from '../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 export class EventEditorCtrl {
   // @ts-ignore initialized through Angular not constructor
-  panelCtrl: MetricsPanelCtrl;
+  panelCtrl: any;
   // @ts-ignore initialized through Angular not constructor
   event: AnnotationEvent;
   timeRange?: { from: number; to: number };

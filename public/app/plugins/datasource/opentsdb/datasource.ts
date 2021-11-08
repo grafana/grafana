@@ -1,6 +1,6 @@
-import angular from 'angular';
 import {
   clone,
+  cloneDeep,
   compact,
   each,
   every,
@@ -504,7 +504,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     }
 
     if (target.filters && target.filters.length > 0) {
-      query.filters = angular.copy(target.filters);
+      query.filters = cloneDeep(target.filters);
       if (query.filters) {
         for (const filterKey in query.filters) {
           query.filters[filterKey].filter = this.templateSrv.replace(
@@ -515,7 +515,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
         }
       }
     } else {
-      query.tags = angular.copy(target.tags);
+      query.tags = cloneDeep(target.tags);
       if (query.tags) {
         for (const tagKey in query.tags) {
           query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], options.scopedVars, 'pipe');

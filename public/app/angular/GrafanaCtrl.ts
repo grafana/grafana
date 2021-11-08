@@ -7,7 +7,7 @@ import $ from 'jquery';
 import { colors } from '@grafana/ui';
 import { setLegacyAngularInjector, setAppEvents, setAngularLoader } from '@grafana/runtime';
 import config from 'app/core/config';
-import coreModule from 'app/angular/core_module';
+import coreModule from 'app/angular/fakeModule';
 import appEvents from 'app/core/app_events';
 import { AngularLoader } from 'app/angular/services/AngularLoader';
 

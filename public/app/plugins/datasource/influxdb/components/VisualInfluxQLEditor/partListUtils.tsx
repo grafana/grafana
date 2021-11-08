@@ -5,9 +5,9 @@ import InfluxQueryModel from '../../influx_query_model';
 import { unwrap } from './unwrap';
 import queryPart from '../../query_part';
 import { toSelectableValue } from './toSelectableValue';
-import { QueryPartDef } from 'app/angular/components/query_part';
+//import { QueryPartDef } from 'app/angular/components/query_part';
 
-type Categories = Record<string, QueryPartDef[]>;
+//type Categories = Record<string, QueryPartDef[]>;
 
 export function getNewSelectPartOptions(): SelectableValue[] {
   const categories: Categories = queryPart.getCategories();
