@@ -263,7 +263,6 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.Equal(t, resp.StatusCode, 200)
 		require.JSONEq(t, `{}`, string(b))
 	}
-
 }
 
 func createRule(t *testing.T, grafanaListedAddr string, folder string, user, password string) {
