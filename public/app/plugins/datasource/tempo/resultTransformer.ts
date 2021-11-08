@@ -8,6 +8,7 @@ import {
   MutableDataFrame,
   TraceKeyValuePair,
   TraceLog,
+  TraceSpanReference,
   TraceSpanRow,
 } from '@grafana/data';
 import { SpanKind, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
@@ -236,6 +237,24 @@ function getLogs(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
   return logs;
 }
 
+function getReferences(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
+  const references: TraceSpanReference[] = [];
+  if (span.links) {
+    for (const link of span.links) {
+      const { traceId, spanId } = link;
+      const attributes: TraceKeyValuePair[] = [];
+      if (link.attributes) {
+        for (const attribute of link.attributes) {
+          attributes.push({ key: attribute.key, value: getAttributeValue(attribute.value) });
+        }
+      }
+      references.push({ traceId, spanId, tags: attributes });
+    }
+  }
+
+  return references;
+}
+
 export function transformFromOTLP(
   traceData: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
   nodeGraph = false
@@ -252,6 +271,7 @@ export function transformFromOTLP(
       { name: 'duration', type: FieldType.number },
       { name: 'logs', type: FieldType.other },
       { name: 'tags', type: FieldType.other },
+      { name: 'links', type: FieldType.other },
     ],
     meta: {
       preferredVisualisationType: 'trace',
@@ -276,6 +296,7 @@ export function transformFromOTLP(
             duration: (span.endTimeUnixNano! - span.startTimeUnixNano!) / 1000000,
             tags: getSpanTags(span, librarySpan.instrumentationLibrary),
             logs: getLogs(span),
+            references: getReferences(span),
           } as TraceSpanRow);
         }
       }

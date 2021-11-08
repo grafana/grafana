@@ -95,12 +95,13 @@ Required fields:
 
 Optional fields:
 
-| Field name     | Type                | Description                                                        |
-| -------------- | ------------------- | ------------------------------------------------------------------ |
-| logs           | TraceLog[]          | List of logs associated with the current span.                     |
-| tags           | TraceKeyValuePair[] | List of tags associated with the current span.                     |
-| warnings       | string[]            | List of warnings associated with the current span.                 |
-| stackTraces    | string[]            | List of stack traces associated with the current span.             |
-| errorIconColor | string              | Color of the error icon in case span is tagged with `error: true`. |
+| Field name     | Type                 | Description                                                        |
+| -------------- | -------------------- | ------------------------------------------------------------------ |
+| logs           | TraceLog[]           | List of logs associated with the current span.                     |
+| references     | TraceSpanReference[] | List of links associated with the current span.                    |
+| tags           | TraceKeyValuePair[]  | List of tags associated with the current span.                     |
+| warnings       | string[]             | List of warnings associated with the current span.                 |
+| stackTraces    | string[]             | List of stack traces associated with the current span.             |
+| errorIconColor | string               | Color of the error icon in case span is tagged with `error: true`. |
 
 For details about the types see [TraceSpanRow](https://grafana.com/docs/grafana/latest/packages_api/data/tracespanrow/), [TraceKeyValuePair](https://grafana.com/docs/grafana/latest/packages_api/data/tracekeyvaluepair/) and [TraceLog](https://grafana.com/docs/grafana/latest/packages_api/data/tracelog/)
