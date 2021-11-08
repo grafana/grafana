@@ -23,6 +23,8 @@ import {
   DataTransformerConfig,
   AnnotationQuery,
   DataQuery,
+  getDataSourceRef,
+  isDataSourceRef,
 } from '@grafana/data';
 // Constants
 import {
@@ -40,7 +42,6 @@ import { config } from 'app/core/config';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
@@ -704,34 +705,21 @@ export class DashboardMigrator {
         if (variable.type !== 'query') {
           continue;
         }
-        let name = (variable as any).datasource as string;
-        if (name) {
-          variable.datasource = migrateDatasourceNameToRef(name);
-        }
+        variable.datasource = migrateDatasourceNameToRef(variable.datasource);
       }
 
       // Mutate panel models
       for (const panel of this.dashboard.panels) {
-        let name = (panel as any).datasource as string;
-        if (!name) {
-          panel.datasource = null; // use default
-        } else if (name === MIXED_DATASOURCE_NAME) {
-          panel.datasource = { type: MIXED_DATASOURCE_NAME };
-          for (const target of panel.targets) {
-            name = (target as any).datasource as string;
-            panel.datasource = migrateDatasourceNameToRef(name);
-          }
-          continue; // do not cleanup targets
-        } else {
-          panel.datasource = migrateDatasourceNameToRef(name);
+        panel.datasource = migrateDatasourceNameToRef(panel.datasource);
+
+        if (!panel.targets) {
+          continue;
         }
 
-        // cleanup query datasource references
-        if (!panel.targets) {
-          panel.targets = [];
-        } else {
-          for (const target of panel.targets) {
-            delete target.datasource;
+        for (const target of panel.targets) {
+          const targetRef = migrateDatasourceNameToRef(target.datasource);
+          if (targetRef != null) {
+            target.datasource = targetRef;
           }
         }
       }
@@ -1051,17 +1039,21 @@ function migrateSinglestat(panel: PanelModel) {
   return panel;
 }
 
-export function migrateDatasourceNameToRef(name: string): DataSourceRef | null {
-  if (!name || name === 'default') {
+export function migrateDatasourceNameToRef(nameOrRef?: string | DataSourceRef | null): DataSourceRef | null {
+  if (nameOrRef == null || nameOrRef === 'default') {
     return null;
   }
 
-  const ds = getDataSourceSrv().getInstanceSettings(name);
-  if (!ds) {
-    return { uid: name }; // not found
+  if (isDataSourceRef(nameOrRef)) {
+    return nameOrRef;
   }
 
-  return { type: ds.meta.id, uid: ds.uid };
+  const ds = getDataSourceSrv().getInstanceSettings(nameOrRef);
+  if (!ds) {
+    return { uid: nameOrRef as string }; // not found
+  }
+
+  return getDataSourceRef(ds);
 }
 
 // mutates transformations appending a new transformer after the existing one
@@ -1085,7 +1077,7 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
     return panel;
   }
 
-  if (fieldConfig.defaults) {
+  if (fieldConfig.defaults && fieldConfig.defaults.mappings) {
     fieldConfig.defaults.mappings = upgradeValueMappings(
       fieldConfig.defaults.mappings,
       fieldConfig.defaults.thresholds

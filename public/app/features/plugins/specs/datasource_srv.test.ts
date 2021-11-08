@@ -125,7 +125,7 @@ describe('datasource_srv', () => {
       it('should work with variable', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasource}');
         expect(ds?.name).toBe('${datasource}');
-        expect(ds?.uid).toBe('uid-code-BBB');
+        expect(ds?.uid).toBe('${datasource}');
       });
 
       it('should not set isDefault when being fetched via variable', () => {
@@ -136,7 +136,7 @@ describe('datasource_srv', () => {
       it('should work with variable', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasourceDefault}');
         expect(ds?.name).toBe('${datasourceDefault}');
-        expect(ds?.uid).toBe('uid-code-BBB');
+        expect(ds?.uid).toBe('${datasourceDefault}');
       });
     });
 

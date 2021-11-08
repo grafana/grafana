@@ -272,6 +272,12 @@ export class UPlotConfigBuilder {
   }
 }
 
+export type Renderers = Array<{
+  fieldMap: Record<string, string>;
+  indicesOnly: string[];
+  init: (config: UPlotConfigBuilder, fieldIndices: Record<string, number>) => void;
+}>;
+
 /** @alpha */
 type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   frame: DataFrame;
@@ -280,6 +286,9 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
   allFrames: DataFrame[];
+  renderers?: Renderers;
+  tweakScale?: (opts: ScaleProps) => ScaleProps;
+  tweakAxis?: (opts: AxisProps) => AxisProps;
 } & T;
 
 /** @alpha */
