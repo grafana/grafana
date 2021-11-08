@@ -47,16 +47,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   componentDidMount() {
-    if (this.container) {
-      this.bootstrapNgApp();
-    } else {
-      throw new Error('Failed to boot angular app, no container to attach to');
-    }
-  }
-
-  bootstrapNgApp() {
-    const injector = this.props.app.angularApp.bootstrap();
-    this.setState({ ngInjector: injector });
+    $('.preloader').remove();
   }
 
   renderRoute = (route: RouteDescriptor) => {
@@ -89,8 +80,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   render() {
     navigationLogger('AppWrapper', false, 'rendering');
 
-    // @ts-ignore
-    const appSeed = `<grafana-app ng-cloak></app-notifications-list></grafana-app>`;
     const newNavigationEnabled = config.featureToggles.newNavigation;
 
     return (
@@ -112,13 +101,13 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                         id="ngRoot"
                         ref={this.container}
                         dangerouslySetInnerHTML={{
-                          __html: appSeed,
+                          __html: '<grafana-app ng-cloak></app-notifications-list></grafana-app>',
                         }}
                       />
 
                       <AppNotificationList />
                       <SearchWrapper />
-                      {this.state.ngInjector && this.container && this.renderRoutes()}
+                      {this.container && this.renderRoutes()}
                       {bodyRenderHooks.map((Hook, index) => (
                         <Hook key={index.toString()} />
                       ))}

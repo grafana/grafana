@@ -1,4 +1,3 @@
-import coreModule from 'app/angular/core_module';
 import { appEvents } from 'app/core/app_events';
 import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
@@ -67,13 +66,11 @@ export class DashboardSrv {
   }
 }
 
-coreModule.service('dashboardSrv', DashboardSrv);
-
 //
 // Code below is to export the service to React components
 //
 
-let singletonInstance: DashboardSrv;
+let singletonInstance: DashboardSrv = new DashboardSrv();
 
 export function setDashboardSrv(instance: DashboardSrv) {
   singletonInstance = instance;
