@@ -30,6 +30,7 @@ interface RolePickerMenuProps {
 
 export const RolePickerMenu = ({
   builtInRole,
+  builtInRoles,
   options,
   appliedRoles,
   onUpdate,
@@ -37,6 +38,7 @@ export const RolePickerMenu = ({
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
+  const [selectedBuiltInRoles, setSelectedBuiltInRoles] = useState<Role[]>(builtInRoles[builtInRole]);
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [selectedMenuGroup, setSelectedMenuGroup] = useState('');
   const [selectedMenuGroups, setSelectedMenuGroups] = useState<string[]>([]);
@@ -118,6 +120,7 @@ export const RolePickerMenu = ({
 
   const onSelectedBuiltinRoleChange = (newRole: OrgRole) => {
     setSelectedBuiltInRole(newRole);
+    setSelectedBuiltInRoles(builtInRoles[newRole]);
   };
 
   const onClearInternal = async () => {
@@ -174,6 +177,7 @@ export const RolePickerMenu = ({
                         data={option}
                         key={i}
                         isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                        disabled={!!(option.uid && !!selectedBuiltInRoles.find((role) => role.uid === option.uid))}
                         onSelect={onSelect}
                         hideDescription
                       />
@@ -223,6 +227,7 @@ export const RolePickerMenu = ({
         <RolePickerSubMenu
           options={subMenuOptions}
           selectedOptions={selectedOptions}
+          disabledOptions={selectedBuiltInRoles}
           onSelect={onSelect}
           onClear={onClearSubMenu}
         />
@@ -240,6 +245,7 @@ const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:');
 interface RolePickerSubMenuProps {
   options: Role[];
   selectedOptions: Role[];
+  disabledOptions: Role[];
   onSelect: (option: Role) => void;
   onClear?: () => void;
 }
@@ -247,6 +253,7 @@ interface RolePickerSubMenuProps {
 export const RolePickerSubMenu = ({
   options,
   selectedOptions,
+  disabledOptions,
   onSelect,
   onClear,
 }: RolePickerSubMenuProps): JSX.Element => {
@@ -268,7 +275,14 @@ export const RolePickerSubMenu = ({
             <RoleMenuOption
               data={option}
               key={i}
-              isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+              isSelected={
+                !!(
+                  option.uid &&
+                  (!!selectedOptions.find((opt) => opt.uid === option.uid) ||
+                    disabledOptions.find((opt) => opt.uid === option.uid))
+                )
+              }
+              disabled={!!(option.uid && disabledOptions.find((opt) => opt.uid === option.uid))}
               onSelect={onSelect}
               hideDescription
             />
