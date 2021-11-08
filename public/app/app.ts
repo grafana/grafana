@@ -83,6 +83,7 @@ export class GrafanaApp {
 
   async init() {
     try {
+      setBackendSrv(backendSrv);
       initEchoSrv();
       addClassIfNoOverlayScrollbar();
       setLocale(config.bootData.user.locale);
