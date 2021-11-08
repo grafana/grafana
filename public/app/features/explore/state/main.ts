@@ -20,6 +20,8 @@ export interface SyncTimesPayload {
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
+export const localStorageFullAction = createAction('explore/localStorageFullAction');
+export const richHistoryLimitExceededAction = createAction('explore/richHistoryLimitExceededAction');
 
 /**
  * Resets state for explore.
@@ -136,11 +138,8 @@ export const navigateToExplore = (
   return async (dispatch) => {
     const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
     const datasourceSrv = getDataSourceSrv();
-    const datasource = await datasourceSrv.get(panel.datasource);
     const path = await getExploreUrl({
       panel,
-      panelTargets: panel.targets,
-      panelDatasource: datasource,
       datasourceSrv,
       timeSrv: getTimeSrv(),
     });
@@ -163,6 +162,8 @@ export const initialExploreState: ExploreState = {
   left: initialExploreItemState,
   right: undefined,
   richHistory: [],
+  localStorageFull: false,
+  richHistoryLimitExceededWarningShown: false,
 };
 
 /**
@@ -214,6 +215,20 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       richHistory: action.payload.richHistory,
+    };
+  }
+
+  if (localStorageFullAction.match(action)) {
+    return {
+      ...state,
+      localStorageFull: true,
+    };
+  }
+
+  if (richHistoryLimitExceededAction.match(action)) {
+    return {
+      ...state,
+      richHistoryLimitExceededWarningShown: true,
     };
   }
 

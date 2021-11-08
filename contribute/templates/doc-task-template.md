@@ -14,7 +14,7 @@ weight = 100
 
 # Task
 
-A *task* topic is intended for a procedure that describes how to accomplish a task. It lists a series of steps that users follow to produce an intended outcome. It tells the reader *how* to do something. [Install Grafana plugins](https://grafana.com/docs/grafana/latest/plugins/installation/) and [Playlist](https://grafana.com/docs/grafana/latest/reference/playlist/) are examples of task topics. Playlist includes a small amount of concept information in the introduction, which is appropriate.
+A _task_ topic is intended for a procedure that describes how to accomplish a task. It lists a series of steps that users follow to produce an intended outcome. It tells the reader _how_ to do something. [Install Grafana plugins](https://grafana.com/docs/grafana/latest/plugins/installation/) and [Playlist](https://grafana.com/docs/grafana/latest/reference/playlist/) are examples of task topics. Playlist includes a small amount of concept information in the introduction, which is appropriate.
 
 Always include an introduction of a short paragraph or two to explain what the task is for, perhaps give the reader an idea of what the outcome will be.
 
@@ -52,6 +52,6 @@ Thanks to internet search engines, every page in the documentation could be page
 
 ## Testing
 
-It is a good practice to have someone else test the task you have written. If they can successfully complete the task using *only* what the steps you have written, not guessing or using their inherent knowledge, then your task has passed the test. However, it is very common to find you have skipped steps, because *you* are very familiar with Grafana and the topic you are explaining.
+It is a good practice to have someone else test the task you have written. If they can successfully complete the task using _only_ what the steps you have written, not guessing or using their inherent knowledge, then your task has passed the test. However, it is very common to find you have skipped steps, because _you_ are very familiar with Grafana and the topic you are explaining.
 
 New users or people from other teams are very helpful for these tests.

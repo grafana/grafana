@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
-import { CatalogPlugin, IconName } from '../types';
+import { CatalogPlugin, PluginIconName } from '../types';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -37,7 +37,7 @@ export function PluginDetailsHeaderDependencies({ plugin, className }: Props): R
           {pluginDependencies.map((p) => {
             return (
               <span key={p.name}>
-                <Icon name={IconName[p.type]} className={styles.icon} />
+                <Icon name={PluginIconName[p.type]} className={styles.icon} />
                 {p.name} {p.version}
               </span>
             );

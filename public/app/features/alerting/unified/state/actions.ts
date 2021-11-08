@@ -7,6 +7,7 @@ import {
   Receiver,
   Silence,
   SilenceCreatePayload,
+  TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
@@ -29,17 +30,23 @@ import {
   deleteAlertManagerConfig,
   testReceivers,
 } from '../api/alertmanager';
-import { fetchRules } from '../api/prometheus';
+import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
   deleteNamespace,
   deleteRulerRulesGroup,
   fetchRulerRules,
   fetchRulerRulesGroup,
   fetchRulerRulesNamespace,
+  FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
-import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
+import {
+  getAllRulesSourceNames,
+  GRAFANA_RULES_SOURCE_NAME,
+  isGrafanaRulesSource,
+  isVanillaPrometheusAlertManagerDataSource,
+} from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
 import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
 import { formValuesToRulerRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
@@ -59,40 +66,57 @@ const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
-  (rulesSourceName: string): Promise<RuleNamespace[]> => withSerializedError(fetchRules(rulesSourceName))
+  ({ rulesSourceName, filter }: { rulesSourceName: string; filter?: FetchPromRulesFilter }): Promise<RuleNamespace[]> =>
+    withSerializedError(fetchRules(rulesSourceName, filter))
 );
 
 export const fetchAlertManagerConfigAction = createAsyncThunk(
   'unifiedalerting/fetchAmConfig',
   (alertManagerSourceName: string): Promise<AlertManagerCortexConfig> =>
     withSerializedError(
-      retryWhile(
-        () => fetchAlertManagerConfig(alertManagerSourceName),
-        // if config has been recently deleted, it takes a while for cortex start returning the default one.
-        // retry for a short while instead of failing
-        (e) => !!messageFromError(e)?.includes('alertmanager storage object not found'),
-        FETCH_CONFIG_RETRY_TIMEOUT
-      ).then((result) => {
-        // if user config is empty for cortex alertmanager, try to get config from status endpoint
-        if (
-          isEmpty(result.alertmanager_config) &&
-          isEmpty(result.template_files) &&
-          alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME
-        ) {
+      (async () => {
+        // for vanilla prometheus, there is no config endpoint. Only fetch config from status
+        if (isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName)) {
           return fetchStatus(alertManagerSourceName).then((status) => ({
             alertmanager_config: status.config,
             template_files: {},
           }));
         }
-        return result;
-      })
+
+        return retryWhile(
+          () => fetchAlertManagerConfig(alertManagerSourceName),
+          // if config has been recently deleted, it takes a while for cortex start returning the default one.
+          // retry for a short while instead of failing
+          (e) => !!messageFromError(e)?.includes('alertmanager storage object not found'),
+          FETCH_CONFIG_RETRY_TIMEOUT
+        ).then((result) => {
+          // if user config is empty for cortex alertmanager, try to get config from status endpoint
+          if (
+            isEmpty(result.alertmanager_config) &&
+            isEmpty(result.template_files) &&
+            alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME
+          ) {
+            return fetchStatus(alertManagerSourceName).then((status) => ({
+              alertmanager_config: status.config,
+              template_files: {},
+            }));
+          }
+          return result;
+        });
+      })()
     )
 );
 
 export const fetchRulerRulesAction = createAsyncThunk(
   'unifiedalerting/fetchRulerRules',
-  (rulesSourceName: string): Promise<RulerRulesConfigDTO | null> => {
-    return withSerializedError(fetchRulerRules(rulesSourceName));
+  ({
+    rulesSourceName,
+    filter,
+  }: {
+    rulesSourceName: string;
+    filter?: FetchRulerRulesFilter;
+  }): Promise<RulerRulesConfigDTO | null> => {
+    return withSerializedError(fetchRulerRules(rulesSourceName, filter));
   }
 );
 
@@ -104,12 +128,12 @@ export const fetchSilencesAction = createAsyncThunk(
 );
 
 // this will only trigger ruler rules fetch if rules are not loaded yet and request is not in flight
-export function fetchRulerRulesIfNotFetchedYet(dataSourceName: string): ThunkResult<void> {
+export function fetchRulerRulesIfNotFetchedYet(rulesSourceName: string): ThunkResult<void> {
   return (dispatch, getStore) => {
     const { rulerRules } = getStore().unifiedAlerting;
-    const resp = rulerRules[dataSourceName];
+    const resp = rulerRules[rulesSourceName];
     if (!resp?.result && !(resp && isRulerNotSupportedResponse(resp)) && !resp?.loading) {
-      dispatch(fetchRulerRulesAction(dataSourceName));
+      dispatch(fetchRulerRulesAction({ rulesSourceName }));
     }
   };
 }
@@ -117,12 +141,12 @@ export function fetchRulerRulesIfNotFetchedYet(dataSourceName: string): ThunkRes
 export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
   return (dispatch, getStore) => {
     const { promRules, rulerRules } = getStore().unifiedAlerting;
-    getAllRulesSourceNames().map((name) => {
-      if (force || !promRules[name]?.loading) {
-        dispatch(fetchPromRulesAction(name));
+    getAllRulesSourceNames().map((rulesSourceName) => {
+      if (force || !promRules[rulesSourceName]?.loading) {
+        dispatch(fetchPromRulesAction({ rulesSourceName }));
       }
-      if (force || !rulerRules[name]?.loading) {
-        dispatch(fetchRulerRulesAction(name));
+      if (force || !rulerRules[rulesSourceName]?.loading) {
+        dispatch(fetchRulerRulesAction({ rulesSourceName }));
       }
     });
   };
@@ -131,9 +155,9 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
 export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
   return (dispatch, getStore) => {
     const { promRules } = getStore().unifiedAlerting;
-    getAllRulesSourceNames().map((name) => {
-      if (force || !promRules[name]?.loading) {
-        dispatch(fetchPromRulesAction(name));
+    getAllRulesSourceNames().map((rulesSourceName) => {
+      if (force || !promRules[rulesSourceName]?.loading) {
+        dispatch(fetchPromRulesAction({ rulesSourceName }));
       }
     });
   };
@@ -235,8 +259,8 @@ export function deleteRuleAction(
         }
         await deleteRule(ruleWithLocation);
         // refetch rules for this rules source
-        dispatch(fetchRulerRulesAction(ruleWithLocation.ruleSourceName));
-        dispatch(fetchPromRulesAction(ruleWithLocation.ruleSourceName));
+        dispatch(fetchRulerRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
+        dispatch(fetchPromRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
 
         if (options.navigateTo) {
           locationService.replace(options.navigateTo);
@@ -610,12 +634,13 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
 interface TestReceiversOptions {
   alertManagerSourceName: string;
   receivers: Receiver[];
+  alert?: TestReceiversAlert;
 }
 
 export const testReceiversAction = createAsyncThunk(
   'unifiedalerting/testReceivers',
-  ({ alertManagerSourceName, receivers }: TestReceiversOptions): Promise<void> => {
-    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers)), {
+  ({ alertManagerSourceName, receivers, alert }: TestReceiversOptions): Promise<void> => {
+    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers, alert)), {
       errorMessage: 'Failed to send test alert.',
       successMessage: 'Test alert sent.',
     });
@@ -697,7 +722,7 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
           }
 
           // refetch all rules
-          await thunkAPI.dispatch(fetchRulerRulesAction(rulesSourceName));
+          await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName }));
         })()
       ),
       {

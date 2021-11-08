@@ -16,10 +16,16 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceWithLogsContextSupport,
+  DataSourceWithLogsVolumeSupport,
   dateMath,
   DateTime,
   FieldCache,
+  FieldType,
+  getLogLevelFromKey,
+  Labels,
   LoadingState,
+  LogLevel,
   LogRowModel,
   QueryResultMeta,
   ScopedVars,
@@ -52,11 +58,18 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
+import { queryLogsVolume } from 'app/core/logs_model';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
 const NS_IN_MS = 1000000;
+
+/**
+ * Loki's logs volume query may be expensive as it requires counting all logs in the selected range. If such query
+ * takes too much time it may need be made more specific to limit number of logs processed under the hood.
+ */
+const LOGS_VOLUME_TIMEOUT = 10000;
 
 const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
 const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
@@ -67,7 +80,9 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
   query: '',
 };
 
-export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
+export class LokiDatasource
+  extends DataSourceApi<LokiQuery, LokiOptions>
+  implements DataSourceWithLogsContextSupport, DataSourceWithLogsVolumeSupport<LokiQuery> {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
@@ -100,6 +115,31 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     };
 
     return getBackendSrv().fetch<Record<string, any>>(req);
+  }
+
+  getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+    const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
+    if (!isLogsVolumeAvailable) {
+      return undefined;
+    }
+
+    const logsVolumeRequest = cloneDeep(request);
+    logsVolumeRequest.targets = logsVolumeRequest.targets
+      .filter((target) => target.expr && !isMetricsQuery(target.expr))
+      .map((target) => {
+        return {
+          ...target,
+          instant: false,
+          expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+        };
+      });
+
+    return queryLogsVolume(this, logsVolumeRequest, {
+      timeout: LOGS_VOLUME_TIMEOUT,
+      extractLevel,
+      range: request.range,
+      targets: request.targets,
+    });
   }
 
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
@@ -301,7 +341,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => ({
         ...query,
-        datasource: this.name,
+        datasource: this.getRef(),
         expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
       }));
     }
@@ -467,8 +507,17 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
+    const labels = this.languageProvider.getLabelKeys();
     const query = Object.keys(row.labels)
-      .map((label) => `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`) // escape backslashes in label as users can't escape them by themselves
+      .map((label: string) => {
+        if (labels.includes(label)) {
+          // escape backslashes in label as users can't escape them by themselves
+          return `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`;
+        }
+        return '';
+      })
+      // Filter empty strings
+      .filter((label) => !!label)
       .join(',');
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
@@ -694,12 +743,32 @@ export function lokiSpecialRegexEscape(value: any) {
  * Checks if the query expression uses function and so should return a time series instead of logs.
  * Sometimes important to know that before we actually do the query.
  */
-function isMetricsQuery(query: string): boolean {
+export function isMetricsQuery(query: string): boolean {
   const tokens = Prism.tokenize(query, syntax);
   return tokens.some((t) => {
     // Not sure in which cases it can be string maybe if nothing matched which means it should not be a function
     return typeof t !== 'string' && t.type === 'function';
   });
+}
+
+function extractLevel(dataFrame: DataFrame): LogLevel {
+  let valueField;
+  try {
+    valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
+  } catch {}
+  return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
+}
+
+function getLogLevelFromLabels(labels: Labels): LogLevel {
+  const labelNames = ['level', 'lvl', 'loglevel'];
+  let levelLabel;
+  for (let labelName of labelNames) {
+    if (labelName in labels) {
+      levelLabel = labelName;
+      break;
+    }
+  }
+  return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }
 
 export default LokiDatasource;

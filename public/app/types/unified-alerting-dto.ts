@@ -42,7 +42,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
     value: string;
   }>;
   labels: Labels;
-  annotations: Annotations;
+  annotations?: Annotations;
   duration?: number; // for
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;

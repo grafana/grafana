@@ -43,7 +43,7 @@ func (ss *SQLStore) GetOrgQuotaByTarget(ctx context.Context, query *models.GetOr
 		}
 
 		var used int64
-		if query.Target != alertRuleTarget || query.IsNgAlertEnabled {
+		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s WHERE org_id=?",
 				dialect.Quote(query.Target))
@@ -97,7 +97,7 @@ func (ss *SQLStore) GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotas
 		result := make([]*models.OrgQuotaDTO, len(quotas))
 		for i, q := range quotas {
 			var used int64
-			if q.Target != alertRuleTarget || query.IsNgAlertEnabled {
+			if q.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 				// get quota used.
 				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
 				resp := make([]*targetCount, 0)
@@ -163,7 +163,7 @@ func (ss *SQLStore) GetUserQuotaByTarget(ctx context.Context, query *models.GetU
 		}
 
 		var used int64
-		if query.Target != alertRuleTarget || query.IsNgAlertEnabled {
+		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
 			resp := make([]*targetCount, 0)
@@ -211,7 +211,7 @@ func (ss *SQLStore) GetUserQuotas(ctx context.Context, query *models.GetUserQuot
 		result := make([]*models.UserQuotaDTO, len(quotas))
 		for i, q := range quotas {
 			var used int64
-			if q.Target != alertRuleTarget || query.IsNgAlertEnabled {
+			if q.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 				// get quota used.
 				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
 				resp := make([]*targetCount, 0)
@@ -266,7 +266,7 @@ func (ss *SQLStore) UpdateUserQuota(ctx context.Context, cmd *models.UpdateUserQ
 func (ss *SQLStore) GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var used int64
-		if query.Target != alertRuleTarget || query.IsNgAlertEnabled {
+		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s",
 				dialect.Quote(query.Target))

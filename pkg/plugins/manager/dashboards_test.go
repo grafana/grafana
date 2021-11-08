@@ -1,13 +1,15 @@
 package manager
 
 import (
+	"context"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -21,11 +23,11 @@ func TestGetPluginDashboards(t *testing.T) {
 			},
 		},
 	}
-	pm := newManager(cfg, &sqlstore.SQLStore{}, &fakeBackendPluginManager{})
+	pm := newManager(cfg, nil, loader.New(nil, cfg, &signature.UnsignedPluginAuthorizer{Cfg: cfg}), &sqlstore.SQLStore{})
 	err := pm.init()
 	require.NoError(t, err)
 
-	bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 		if query.Slug == "nginx-connections" {
 			dash := models.NewDashboard("Nginx Connections")
 			dash.Data.Set("revision", "1.1")
@@ -36,7 +38,7 @@ func TestGetPluginDashboards(t *testing.T) {
 		return models.ErrDashboardNotFound
 	})
 
-	bus.AddHandler("test", func(query *models.GetDashboardsByPluginIdQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 		var data = simplejson.New()
 		data.Set("title", "Nginx Connections")
 		data.Set("revision", 22)

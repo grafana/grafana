@@ -2,9 +2,9 @@ package schema
 
 AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
 VisibilityMode:     "auto" | "never" | "always"                             @cuetsy(kind="enum")
-DrawStyle:          "line" | "bars" | "points"                              @cuetsy(kind="enum")
+GraphDrawStyle:     "line" | "bars" | "points"                              @cuetsy(kind="enum")
 LineInterpolation:  "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(kind="enum")
-ScaleDistribution:  "linear" | "log"                                        @cuetsy(kind="enum")
+ScaleDistribution:  "linear" | "log" | "ordinal"                            @cuetsy(kind="enum")
 GraphGradientMode:  "none" | "opacity" | "hue" | "scheme"                   @cuetsy(kind="enum")
 StackingMode:       "none" | "normal" | "percent"                           @cuetsy(kind="enum")
 BarAlignment:       -1 | 0 | 1                                              @cuetsy(kind="enum",memberNames="Before|Center|After")
@@ -19,6 +19,10 @@ LineConfig: {
 	lineWidth?:         number
 	lineInterpolation?: LineInterpolation
 	lineStyle?:         LineStyle
+
+	// Indicate if null values should be treated as gaps or connected.
+	// When the value is a number, it represents the maximum delta in the
+	// X axis that should be considered connected.  For timeseries, this is milliseconds
 	spanNulls?:         bool | number
 } @cuetsy(kind="interface")
 BarConfig: {
@@ -47,6 +51,7 @@ AxisConfig: {
 	axisWidth?:         number
 	axisSoftMin?:       number
 	axisSoftMax?:       number
+	axisGridShow?:      bool
 	scaleDistribution?: ScaleDistributionConfig
 } @cuetsy(kind="interface")
 HideSeriesConfig: {
@@ -76,7 +81,7 @@ GraphFieldConfig: {
 	BarConfig
 	StackableFieldConfig
 	HideableFieldConfig
-	drawStyle?:       DrawStyle
+	drawStyle?:       GraphDrawStyle
 	gradientMode?:    GraphGradientMode
 	thresholdsStyle?: GraphThresholdsStyleConfig
 } @cuetsy(kind="interface")

@@ -106,7 +106,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-    const events = this.buildFakeAnnotationEvents(req.range, 10);
+    const events = this.buildFakeAnnotationEvents(req.range, 50);
     const dataFrame = new ArrayDataFrame(events);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
 

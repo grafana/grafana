@@ -208,10 +208,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
             error={formState.errors.createdBy?.message}
             invalid={!!formState.errors.createdBy}
           >
-            <Input
-              {...register('createdBy', { required: { value: true, message: 'Required.' } })}
-              placeholder="Username"
-            />
+            <Input {...register('createdBy', { required: { value: true, message: 'Required.' } })} placeholder="User" />
           </Field>
         </FieldSet>
         <div className={styles.flexRow}>

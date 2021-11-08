@@ -3,6 +3,7 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import {
   DataQuery,
   DataSourceInstanceSettings,
+  LoadingState,
   PanelData,
   RelativeTimeRange,
   ThresholdsConfig,
@@ -230,13 +231,15 @@ export class QueryRows extends PureComponent<Props, State> {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query, index) => {
-                  const data = this.props.data ? this.props.data[query.refId] : ({} as PanelData);
+                  const data: PanelData = this.props.data?.[query.refId] ?? {
+                    series: [],
+                    state: LoadingState.NotStarted,
+                  };
                   const dsSettings = this.getDataSourceSettings(query);
 
                   if (!dsSettings) {
                     return null;
                   }
-
                   return (
                     <QueryWrapper
                       index={index}

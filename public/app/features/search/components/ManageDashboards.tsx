@@ -1,10 +1,9 @@
 import React, { FC, memo, useState } from 'react';
 import { css } from '@emotion/css';
-import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import { stylesFactory, useTheme, Spinner, FilterInput } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { FolderDTO } from 'app/types';
 import { useManageDashboards } from '../hooks/useManageDashboards';
 import { SearchLayout } from '../types';

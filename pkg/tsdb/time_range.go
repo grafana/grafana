@@ -79,22 +79,30 @@ func tryParseUnixMsEpoch(val string) (time.Time, bool) {
 }
 
 func (tr *TimeRange) ParseFrom() (time.Time, error) {
-	return parse(tr.From, tr.now, false, nil)
+	return parse(tr.From, tr.now, false, nil, -1)
 }
 
 func (tr *TimeRange) ParseTo() (time.Time, error) {
-	return parse(tr.To, tr.now, true, nil)
+	return parse(tr.To, tr.now, true, nil, -1)
 }
 
 func (tr *TimeRange) ParseFromWithLocation(location *time.Location) (time.Time, error) {
-	return parse(tr.From, tr.now, false, location)
+	return parse(tr.From, tr.now, false, location, -1)
 }
 
 func (tr *TimeRange) ParseToWithLocation(location *time.Location) (time.Time, error) {
-	return parse(tr.To, tr.now, true, location)
+	return parse(tr.To, tr.now, true, location, -1)
 }
 
-func parse(s string, now time.Time, withRoundUp bool, location *time.Location) (time.Time, error) {
+func (tr *TimeRange) ParseFromWithWeekStart(location *time.Location, weekstart time.Weekday) (time.Time, error) {
+	return parse(tr.From, tr.now, false, location, weekstart)
+}
+
+func (tr *TimeRange) ParseToWithWeekStart(location *time.Location, weekstart time.Weekday) (time.Time, error) {
+	return parse(tr.To, tr.now, true, location, weekstart)
+}
+
+func parse(s string, now time.Time, withRoundUp bool, location *time.Location, weekstart time.Weekday) (time.Time, error) {
 	if res, ok := tryParseUnixMsEpoch(s); ok {
 		return res, nil
 	}
@@ -107,6 +115,12 @@ func parse(s string, now time.Time, withRoundUp bool, location *time.Location) (
 		}
 		if location != nil {
 			options = append(options, datemath.WithLocation(location))
+		}
+		if weekstart != -1 {
+			if weekstart > now.Weekday() {
+				weekstart = weekstart - 7
+			}
+			options = append(options, datemath.WithStartOfWeek(weekstart))
 		}
 
 		return datemath.ParseAndEvaluate(s, options...)

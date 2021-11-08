@@ -46,6 +46,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
   const onBlur = (e: FocusEvent<HTMLInputElement>) => updateVariable();
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.keyCode === 13) {
+      event.preventDefault();
       updateVariable();
     }
   };

@@ -20,6 +20,10 @@ func addDashboardAclMigrations(mg *Migrator) {
 			{Cols: []string{"dashboard_id"}},
 			{Cols: []string{"dashboard_id", "user_id"}, Type: UniqueIndex},
 			{Cols: []string{"dashboard_id", "team_id"}, Type: UniqueIndex},
+			{Cols: []string{"user_id"}},
+			{Cols: []string{"team_id"}},
+			{Cols: []string{"org_id", "role"}},
+			{Cols: []string{"permission"}},
 		},
 	}
 
@@ -29,6 +33,10 @@ func addDashboardAclMigrations(mg *Migrator) {
 	mg.AddMigration("add index dashboard_acl_dashboard_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[0]))
 	mg.AddMigration("add unique index dashboard_acl_dashboard_id_user_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[1]))
 	mg.AddMigration("add unique index dashboard_acl_dashboard_id_team_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[2]))
+	mg.AddMigration("add index dashboard_acl_user_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[3]))
+	mg.AddMigration("add index dashboard_acl_team_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[4]))
+	mg.AddMigration("add index dashboard_acl_org_id_role", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[5]))
+	mg.AddMigration("add index dashboard_permission", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[6]))
 
 	const rawSQL = `
 INSERT INTO dashboard_acl

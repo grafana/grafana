@@ -32,6 +32,11 @@ export interface DimensionSupplier<T = any> {
   get: (index: number) => T;
 }
 
+export enum ScaleDimensionMode {
+  Linear = 'linear',
+  Quadratic = 'quad',
+}
+
 /** This will map the field value% to a scaled value within the range */
 export interface ScaleDimensionConfig extends BaseDimensionConfig<number> {
   min: number;
@@ -66,6 +71,8 @@ export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
 /** Places that use the value */
 export interface ResourceDimensionOptions {
   resourceType: 'icon' | 'image';
+  folderName?: ResourceFolderName;
+  showSourceRadio?: boolean;
 }
 
 export enum ResourceDimensionMode {
@@ -78,4 +85,11 @@ export enum ResourceDimensionMode {
 /** Get the path to a resource (URL) */
 export interface ResourceDimensionConfig extends BaseDimensionConfig<string> {
   mode: ResourceDimensionMode;
+}
+
+export enum ResourceFolderName {
+  Icon = 'img/icons/unicons',
+  IOT = 'img/icons/iot',
+  Marker = 'img/icons/marker',
+  BG = 'img/bg',
 }

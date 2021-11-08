@@ -1,12 +1,20 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Collapse } from '@grafana/ui';
-import { AbsoluteTimeRange, Field, LoadingState, LogRowModel, RawTimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  Field,
+  hasLogsContextSupport,
+  hasLogsVolumeSupport,
+  LoadingState,
+  LogRowModel,
+  RawTimeRange,
+} from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
-import { addResultsToCache, clearCache } from './state/query';
+import { addResultsToCache, clearCache, loadLogsVolumeData } from './state/query';
 import { updateTimeRange } from './state/time';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
@@ -14,6 +22,7 @@ import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
 import { getFieldLinksForExplore } from './utils/links';
+import { config } from 'app/core/config';
 
 interface LogsContainerProps extends PropsFromRedux {
   width: number;
@@ -27,7 +36,7 @@ interface LogsContainerProps extends PropsFromRedux {
   onStopScanning: () => void;
 }
 
-export class LogsContainer extends PureComponent<LogsContainerProps> {
+class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -36,7 +45,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
     const { datasourceInstance } = this.props;
 
-    if (datasourceInstance?.getLogRowContext) {
+    if (hasLogsContextSupport(datasourceInstance)) {
       return datasourceInstance.getLogRowContext(row, options);
     }
 
@@ -46,7 +55,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   showContextToggle = (row?: LogRowModel): boolean => {
     const { datasourceInstance } = this.props;
 
-    if (datasourceInstance?.showContextToggle) {
+    if (hasLogsContextSupport(datasourceInstance)) {
       return datasourceInstance.showContextToggle(row);
     }
 
@@ -60,6 +69,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
   render() {
     const {
+      datasourceInstance,
       loading,
       loadingState,
       logRows,
@@ -80,6 +90,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       exploreId,
       addResultsToCache,
       clearCache,
+      logsVolumeDataProvider,
+      loadLogsVolumeData,
     } = this.props;
 
     if (!logRows) {
@@ -139,6 +151,12 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               getFieldLinks={this.getFieldLinks}
               addResultsToCache={() => addResultsToCache(exploreId)}
               clearCache={() => clearCache(exploreId)}
+              loadingLogsVolumeAvailable={
+                hasLogsVolumeSupport(datasourceInstance) &&
+                !!logsVolumeDataProvider &&
+                !config.featureToggles.autoLoadFullRangeLogsVolume
+              }
+              onClickLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -151,7 +169,18 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const { logsResult, loading, scanning, datasourceInstance, isLive, isPaused, range, absoluteRange } = item;
+  const {
+    logsResult,
+    loading,
+    scanning,
+    datasourceInstance,
+    isLive,
+    isPaused,
+    range,
+    absoluteRange,
+    logsVolumeDataProvider,
+    logsVolumeData,
+  } = item;
   const timeZone = getTimeZone(state.user);
 
   return {
@@ -168,6 +197,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    logsVolumeDataProvider,
+    logsVolumeData,
   };
 }
 
@@ -176,6 +207,7 @@ const mapDispatchToProps = {
   splitOpen,
   addResultsToCache,
   clearCache,
+  loadLogsVolumeData,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

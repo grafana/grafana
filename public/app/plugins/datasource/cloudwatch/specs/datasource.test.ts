@@ -290,22 +290,6 @@ describe('CloudWatchDatasource', () => {
       });
       expect(i).toBe(3);
     });
-
-    it('should call the replace method on provided log groups', () => {
-      const { ds } = getTestContext();
-      const replaceSpy = jest.spyOn(ds, 'replace').mockImplementation((target?: string) => target ?? '');
-      ds.makeLogActionRequest('StartQuery', [
-        {
-          queryString: 'test query string',
-          region: 'default',
-          logGroupNames: ['log-group', '${my_var}Variable', 'Cool${other_var}'],
-        },
-      ]);
-
-      expect(replaceSpy).toBeCalledWith('log-group', undefined, true, 'log groups');
-      expect(replaceSpy).toBeCalledWith('${my_var}Variable', undefined, true, 'log groups');
-      expect(replaceSpy).toBeCalledWith('Cool${other_var}', undefined, true, 'log groups');
-    });
   });
 
   describe('When performing CloudWatch metrics query', () => {

@@ -31,6 +31,12 @@ describe('DropdownChild', () => {
     expect(icon).toBeInTheDocument();
   });
 
+  it('displays an external link icon if the target is _blank', () => {
+    render(<DropdownChild text={mockText} icon={mockIcon} url={mockUrl} target="_blank" />);
+    const icon = screen.getByTestId('external-link-icon');
+    expect(icon).toBeInTheDocument();
+  });
+
   it('displays a divider instead when isDivider is true', () => {
     render(<DropdownChild text={mockText} icon={mockIcon} url={mockUrl} isDivider />);
 

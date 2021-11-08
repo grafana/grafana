@@ -49,7 +49,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 		UserId: 1,
 	}
 
-	err := CreateOrg(&userCmd)
+	err := CreateOrg(context.Background(), &userCmd)
 	require.NoError(t, err)
 	orgId = userCmd.Result.Id
 

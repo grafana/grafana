@@ -236,11 +236,8 @@ export class KeybindingSrv {
     if (contextSrv.hasAccessToExplore()) {
       this.bindWithPanelId('x', async (panelId) => {
         const panel = dashboard.getPanelById(panelId)!;
-        const datasource = await getDatasourceSrv().get(panel.datasource);
         const url = await getExploreUrl({
           panel,
-          panelTargets: panel.targets,
-          panelDatasource: datasource,
           datasourceSrv: getDatasourceSrv(),
           timeSrv: getTimeSrv(),
         });

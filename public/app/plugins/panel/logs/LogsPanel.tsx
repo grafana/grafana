@@ -1,7 +1,16 @@
 import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import { LogRows, CustomScrollbar, LogLabels, useStyles2 } from '@grafana/ui';
-import { PanelProps, Field, Labels, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
+import {
+  PanelProps,
+  Field,
+  Labels,
+  GrafanaTheme2,
+  LogsSortOrder,
+  LogRowModel,
+  DataHoverClearEvent,
+  DataHoverEvent,
+} from '@grafana/data';
 import { Options } from './types';
 import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -28,6 +37,24 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const style = useStyles2(getStyles(title, isAscending));
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
+
+  const { eventBus } = usePanelContext();
+  const onLogRowHover = useCallback(
+    (row?: LogRowModel) => {
+      if (!row) {
+        eventBus.publish(new DataHoverClearEvent());
+      } else {
+        eventBus.publish(
+          new DataHoverEvent({
+            point: {
+              time: row.timeEpochMs,
+            },
+          })
+        );
+      }
+    },
+    [eventBus]
+  );
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
@@ -85,6 +112,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
           logsSortOrder={sortOrder}
           enableLogDetails={enableLogDetails}
           previewLimit={isAscending ? logRows.length : undefined}
+          onLogRowHover={onLogRowHover}
         />
         {showCommonLabels && isAscending && renderCommonLabels()}
       </div>

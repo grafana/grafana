@@ -35,6 +35,11 @@ export class SentryEchoBackend implements EchoBackend<SentryEchoEvent, SentryEch
       dsn: options.dsn || 'https://examplePublicKey@o0.ingest.sentry.io/0',
       sampleRate: options.sampleRate,
       transport: EchoSrvTransport, // will dump errors to EchoSrv
+      ignoreErrors: [
+        'ResizeObserver loop limit exceeded',
+        'ResizeObserver loop completed',
+        'Non-Error exception captured with keys',
+      ],
     };
 
     if (options.user) {

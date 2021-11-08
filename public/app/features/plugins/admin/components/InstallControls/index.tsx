@@ -4,12 +4,14 @@ import { satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PluginType } from '@grafana/data';
 
-import { CatalogPlugin, PluginStatus } from '../../types';
-import { isGrafanaAdmin, getExternalManageLink } from '../../helpers';
 import { ExternallyManagedButton } from './ExternallyManagedButton';
 import { InstallControlsButton } from './InstallControlsButton';
+import { CatalogPlugin, PluginStatus } from '../../types';
+import { getExternalManageLink } from '../../helpers';
+import { useIsRemotePluginsAvailable } from '../../state/hooks';
+import { isGrafanaAdmin } from '../../permissions';
 
 interface Props {
   plugin: CatalogPlugin;
@@ -20,6 +22,7 @@ export const InstallControls = ({ plugin }: Props) => {
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const hasPermission = isGrafanaAdmin();
   const grafanaDependency = plugin.details?.grafanaDependency;
+  const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const unsupportedGrafanaVersion = grafanaDependency
     ? !satisfies(config.buildInfo.version, grafanaDependency, {
         // needed for when running against main
@@ -32,7 +35,7 @@ export const InstallControls = ({ plugin }: Props) => {
       : PluginStatus.UNINSTALL
     : PluginStatus.INSTALL;
 
-  if (plugin.isCore || plugin.isDisabled) {
+  if (plugin.isCore || plugin.isDisabled || plugin.type === PluginType.renderer) {
     return null;
   }
 
@@ -76,6 +79,14 @@ export const InstallControls = ({ plugin }: Props) => {
 
   if (isExternallyManaged) {
     return <ExternallyManagedButton pluginId={plugin.id} pluginStatus={pluginStatus} />;
+  }
+
+  if (!isRemotePluginsAvailable) {
+    return (
+      <div className={styles.message}>
+        The install controls have been disabled because the Grafana server cannot access grafana.com.
+      </div>
+    );
   }
 
   return <InstallControlsButton plugin={plugin} pluginStatus={pluginStatus} />;

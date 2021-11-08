@@ -10,19 +10,18 @@ import (
 	"strconv"
 	"strings"
 
+	mssql "github.com/denisenkom/go-mssqldb"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
-
-	mssql "github.com/denisenkom/go-mssqldb"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var logger = log.New("tsdb.mssql")
@@ -31,7 +30,7 @@ type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar) (*Service, error) {
 	s := &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
 	}
@@ -39,7 +38,7 @@ func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*Service, 
 		QueryDataHandler: s,
 	})
 
-	if err := manager.Register("mssql", factory); err != nil {
+	if err := registrar.LoadAndRegister("mssql", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return s, nil

@@ -131,7 +131,12 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
 };
 
 export const decorateWithLogsResult = (
-  options: { absoluteRange?: AbsoluteTimeRange; refreshInterval?: string; queries?: DataQuery[] } = {}
+  options: {
+    absoluteRange?: AbsoluteTimeRange;
+    refreshInterval?: string;
+    queries?: DataQuery[];
+    fullRangeLogsVolumeAvailable?: boolean;
+  } = {}
 ) => (data: ExplorePanelData): ExplorePanelData => {
   if (data.logsFrames.length === 0) {
     return { ...data, logsResult: null };
@@ -142,7 +147,10 @@ export const decorateWithLogsResult = (
   const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
   const rows = sortedNewResults.rows;
-  const series = sortedNewResults.series;
+  const series =
+    config.featureToggles.fullRangeLogsVolume && options.fullRangeLogsVolumeAvailable
+      ? undefined
+      : sortedNewResults.series;
   const logsResult = { ...sortedNewResults, rows, series };
 
   return { ...data, logsResult };
@@ -154,13 +162,14 @@ export function decorateData(
   queryResponse: PanelData,
   absoluteRange: AbsoluteTimeRange,
   refreshInterval: string | undefined,
-  queries: DataQuery[] | undefined
+  queries: DataQuery[] | undefined,
+  fullRangeLogsVolumeAvailable: boolean
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
-    map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
+    map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
     mergeMap(decorateWithTableResult)
   );
 }

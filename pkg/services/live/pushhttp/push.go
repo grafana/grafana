@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -46,7 +46,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 }
 
 func (g *Gateway) Handle(ctx *models.ReqContext) {
-	streamID := macaron.Params(ctx.Req)[":streamId"]
+	streamID := web.Params(ctx.Req)[":streamId"]
 
 	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, liveDto.ScopeStream, streamID)
 	if err != nil {
@@ -97,8 +97,8 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 }
 
 func (g *Gateway) HandlePath(ctx *models.ReqContext) {
-	streamID := macaron.Params(ctx.Req)[":streamId"]
-	path := macaron.Params(ctx.Req)[":path"]
+	streamID := web.Params(ctx.Req)[":streamId"]
+	path := web.Params(ctx.Req)[":path"]
 
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {

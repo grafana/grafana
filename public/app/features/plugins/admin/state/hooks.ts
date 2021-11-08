@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAll, fetchDetails, install, uninstall } from './actions';
-import { CatalogPlugin, PluginCatalogStoreState } from '../types';
+import { setDisplayMode } from './reducer';
+import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall } from './actions';
+import { CatalogPlugin, PluginCatalogStoreState, PluginListDisplayMode } from '../types';
 import {
   find,
   selectAll,
@@ -9,6 +10,7 @@ import {
   selectIsRequestPending,
   selectRequestError,
   selectIsRequestNotFetched,
+  selectDisplayMode,
 } from './selectors';
 import { sortPlugins, Sorters } from '../helpers';
 
@@ -63,9 +65,21 @@ export const useUninstall = () => {
   return (id: string) => dispatch(uninstall(id));
 };
 
+export const useIsRemotePluginsAvailable = () => {
+  const error = useSelector(selectRequestError(fetchRemotePlugins.typePrefix));
+  return error === null;
+};
+
 export const useFetchStatus = () => {
   const isLoading = useSelector(selectIsRequestPending(fetchAll.typePrefix));
   const error = useSelector(selectRequestError(fetchAll.typePrefix));
+
+  return { isLoading, error };
+};
+
+export const useFetchDetailsStatus = () => {
+  const isLoading = useSelector(selectIsRequestPending(fetchDetails.typePrefix));
+  const error = useSelector(selectRequestError(fetchDetails.typePrefix));
 
   return { isLoading, error };
 };
@@ -103,4 +117,14 @@ export const useFetchDetails = (id: string) => {
   useEffect(() => {
     shouldFetch && dispatch(fetchDetails(id));
   }, [plugin]); // eslint-disable-line
+};
+
+export const useDisplayMode = () => {
+  const dispatch = useDispatch();
+  const displayMode = useSelector(selectDisplayMode);
+
+  return {
+    displayMode,
+    setDisplayMode: (v: PluginListDisplayMode) => dispatch(setDisplayMode(v)),
+  };
 };

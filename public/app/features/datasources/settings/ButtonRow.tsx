@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 
-import config from 'app/core/config';
 import { Button, LinkButton } from '@grafana/ui';
 
 import { AccessControlAction } from 'app/types/';
@@ -22,9 +21,9 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest, exploreU
 
   return (
     <div className="gf-form-button-row">
-      <LinkButton variant="secondary" fill="solid" href={`${config.appSubUrl}/datasources`}>
+      <Button variant="secondary" fill="solid" type="button" onClick={() => history.back()}>
         Back
-      </LinkButton>
+      </Button>
       <LinkButton variant="secondary" fill="solid" href={exploreUrl} disabled={!canExploreDataSources}>
         Explore
       </LinkButton>

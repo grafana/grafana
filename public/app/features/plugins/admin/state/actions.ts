@@ -1,20 +1,46 @@
-import { createAsyncThunk, Update } from '@reduxjs/toolkit';
+import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
 import { getBackendSrv } from '@grafana/runtime';
 import { PanelPlugin } from '@grafana/data';
 import { StoreState, ThunkResult } from 'app/types';
-import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
-import { getCatalogPlugins, getPluginDetails, installPlugin, uninstallPlugin } from '../api';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
+import {
+  getRemotePlugins,
+  getPluginErrors,
+  getLocalPlugins,
+  getPluginDetails,
+  installPlugin,
+  uninstallPlugin,
+} from '../api';
 import { STATE_PREFIX } from '../constants';
-import { updatePanels } from '../helpers';
-import { CatalogPlugin } from '../types';
+import { mergeLocalsAndRemotes, updatePanels } from '../helpers';
+import { CatalogPlugin, RemotePlugin } from '../types';
 
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
   try {
-    return await getCatalogPlugins();
+    const { dispatch } = thunkApi;
+    const [localPlugins, pluginErrors, { payload: remotePlugins }] = await Promise.all([
+      getLocalPlugins(),
+      getPluginErrors(),
+      dispatch(fetchRemotePlugins()),
+    ]);
+
+    return mergeLocalsAndRemotes(localPlugins, remotePlugins, pluginErrors);
   } catch (e) {
     return thunkApi.rejectWithValue('Unknown error.');
   }
 });
+
+export const fetchRemotePlugins = createAsyncThunk<RemotePlugin[], void, { rejectValue: RemotePlugin[] }>(
+  `${STATE_PREFIX}/fetchRemotePlugins`,
+  async (_, thunkApi) => {
+    try {
+      return await getRemotePlugins();
+    } catch (error) {
+      error.isHandled = true;
+      return thunkApi.rejectWithValue([]);
+    }
+  }
+);
 
 export const fetchDetails = createAsyncThunk(`${STATE_PREFIX}/fetchDetails`, async (id: string, thunkApi) => {
   try {
@@ -70,6 +96,8 @@ export const loadPluginDashboards = createAsyncThunk(`${STATE_PREFIX}/loadPlugin
   return getBackendSrv().get(url);
 });
 
+export const panelPluginLoaded = createAction<PanelPlugin>(`${STATE_PREFIX}/panelPluginLoaded`);
+
 // We need this to be backwards-compatible with other parts of Grafana.
 // (Originally in "public/app/features/plugins/state/actions.ts")
 // It cannot be constructed with `createAsyncThunk()` as we need the return value on the call-site,
@@ -84,10 +112,7 @@ export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> =
 
       // second check to protect against raise condition
       if (!getStore().plugins.panels[id]) {
-        dispatch({
-          type: `${STATE_PREFIX}/loadPanelPlugin/fulfilled`,
-          payload: plugin,
-        });
+        dispatch(panelPluginLoaded(plugin));
       }
     }
 

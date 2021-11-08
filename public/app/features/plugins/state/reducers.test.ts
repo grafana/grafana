@@ -11,6 +11,16 @@ import {
 } from './reducers';
 import { PluginMetaInfo, PluginType } from '@grafana/data';
 
+// Mock the config to enable the old version of the plugins page
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  const mockedRuntime = { ...original };
+
+  mockedRuntime.config.pluginAdminEnabled = false;
+
+  return mockedRuntime;
+});
+
 describe('pluginsReducer', () => {
   describe('when pluginsLoaded is dispatched', () => {
     it('then state should be correct', () => {

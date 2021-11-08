@@ -3,7 +3,7 @@ import { Alert, Button, ConfirmModal, TextArea, HorizontalGroup, Field, Form } f
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { useDispatch } from 'react-redux';
 import {
   deleteAlertManagerConfigAction,
@@ -23,6 +23,7 @@ export default function Admin(): JSX.Element {
   const [showConfirmDeleteAMConfig, setShowConfirmDeleteAMConfig] = useState(false);
   const { loading: isDeleting } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
   const { loading: isSaving } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+  const readOnly = alertManagerSourceName ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) : false;
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -82,41 +83,50 @@ export default function Admin(): JSX.Element {
         <Form defaultValues={defaultValues} onSubmit={onSubmit} key={defaultValues.configJSON}>
           {({ register, errors }) => (
             <>
-              <Field
-                disabled={loading}
-                label="Configuration"
-                invalid={!!errors.configJSON}
-                error={errors.configJSON?.message}
-              >
-                <TextArea
-                  {...register('configJSON', {
-                    required: { value: true, message: 'Required.' },
-                    validate: (v) => {
-                      try {
-                        JSON.parse(v);
-                        return true;
-                      } catch (e) {
-                        return e.message;
-                      }
-                    },
-                  })}
-                  id="configuration"
-                  rows={25}
-                />
-              </Field>
-              <HorizontalGroup>
-                <Button type="submit" variant="primary" disabled={loading}>
-                  Save
-                </Button>
-                <Button
-                  type="button"
+              {!readOnly && (
+                <Field
                   disabled={loading}
-                  variant="destructive"
-                  onClick={() => setShowConfirmDeleteAMConfig(true)}
+                  label="Configuration"
+                  invalid={!!errors.configJSON}
+                  error={errors.configJSON?.message}
                 >
-                  Reset configuration
-                </Button>
-              </HorizontalGroup>
+                  <TextArea
+                    {...register('configJSON', {
+                      required: { value: true, message: 'Required.' },
+                      validate: (v) => {
+                        try {
+                          JSON.parse(v);
+                          return true;
+                        } catch (e) {
+                          return e.message;
+                        }
+                      },
+                    })}
+                    id="configuration"
+                    rows={25}
+                  />
+                </Field>
+              )}
+              {readOnly && (
+                <Field label="Configuration">
+                  <pre data-testid="readonly-config">{defaultValues.configJSON}</pre>
+                </Field>
+              )}
+              {!readOnly && (
+                <HorizontalGroup>
+                  <Button type="submit" variant="primary" disabled={loading}>
+                    Save
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={loading}
+                    variant="destructive"
+                    onClick={() => setShowConfirmDeleteAMConfig(true)}
+                  >
+                    Reset configuration
+                  </Button>
+                </HorizontalGroup>
+              )}
               {!!showConfirmDeleteAMConfig && (
                 <ConfirmModal
                   isOpen={true}

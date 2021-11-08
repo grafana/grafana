@@ -60,7 +60,7 @@ var config = {
       url: '${HOST}/datasources',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 35,
+      threshold: 0,
     },
     {
       url: '${HOST}/org/users',
@@ -78,7 +78,7 @@ var config = {
       url: '${HOST}/plugins',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 40,
+      threshold: 0,
     },
     {
       url: '${HOST}/org',

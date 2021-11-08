@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { SpanKind, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
-import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { createGraphFrames } from './graphTransform';
 
 export function createTableFrame(
@@ -161,7 +161,7 @@ function resourceToProcess(resource: collectorTypes.opentelemetryProto.resource.
   }
 
   for (const attribute of resource.attributes) {
-    if (attribute.key === ResourceAttributes.SERVICE_NAME) {
+    if (attribute.key === SemanticResourceAttributes.SERVICE_NAME) {
       serviceName = attribute.value.stringValue || serviceName;
     }
     serviceTags.push({ key: attribute.key, value: getAttributeValue(attribute.value) });
@@ -237,7 +237,8 @@ function getLogs(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
 }
 
 export function transformFromOTLP(
-  traceData: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[]
+  traceData: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
+  nodeGraph = false
 ): DataQueryResponse {
   const frame = new MutableDataFrame({
     fields: [
@@ -283,7 +284,12 @@ export function transformFromOTLP(
     return { error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] };
   }
 
-  return { data: [frame, ...createGraphFrames(frame)] };
+  let data = [frame];
+  if (nodeGraph) {
+    data.push(...(createGraphFrames(frame) as MutableDataFrame[]));
+  }
+
+  return { data };
 }
 
 /**
@@ -463,7 +469,7 @@ function getOTLPEvents(logs: TraceLog[]): collectorTypes.opentelemetryProto.trac
   return events;
 }
 
-export function transformTrace(response: DataQueryResponse): DataQueryResponse {
+export function transformTrace(response: DataQueryResponse, nodeGraph = false): DataQueryResponse {
   // We need to parse some of the fields which contain stringified json.
   // Seems like we can't just map the values as the frame we got from backend has some default processing
   // and will stringify the json back when we try to set it. So we create a new field and swap it instead.
@@ -475,9 +481,14 @@ export function transformTrace(response: DataQueryResponse): DataQueryResponse {
 
   parseJsonFields(frame);
 
+  let data = [...response.data];
+  if (nodeGraph) {
+    data.push(...createGraphFrames(frame));
+  }
+
   return {
     ...response,
-    data: [...response.data, ...createGraphFrames(frame)],
+    data,
   };
 }
 

@@ -4,6 +4,7 @@ import { TextPanel } from './TextPanel';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 import { TextPanelEditor } from './TextPanelEditor';
 import { defaultPanelOptions, PanelOptions, TextMode } from './models.gen';
+import { TextPanelSuggestionSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
   .setPanelOptions((builder) => {
@@ -29,4 +30,5 @@ export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
         defaultValue: defaultPanelOptions.content,
       });
   })
-  .setMigrationHandler(textPanelMigrationHandler);
+  .setMigrationHandler(textPanelMigrationHandler)
+  .setSuggestionsSupplier(new TextPanelSuggestionSupplier());

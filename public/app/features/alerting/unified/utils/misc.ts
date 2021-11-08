@@ -37,9 +37,9 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
   const alertState = queryParams['alertState'] === undefined ? undefined : String(queryParams['alertState']);
   const dataSource = queryParams['dataSource'] === undefined ? undefined : String(queryParams['dataSource']);
+  const ruleType = queryParams['ruleType'] === undefined ? undefined : String(queryParams['ruleType']);
   const groupBy = queryParams['groupBy'] === undefined ? undefined : String(queryParams['groupBy']).split(',');
-  const silenceState = queryParams['silenceState'] === undefined ? undefined : String(queryParams['silenceState']);
-  return { queryString, alertState, dataSource, groupBy, silenceState };
+  return { queryString, alertState, dataSource, groupBy, ruleType };
 };
 
 export const getSilenceFiltersFromUrlParams = (queryParams: UrlQueryMap): SilenceFilterState => {
@@ -55,6 +55,15 @@ export function recordToArray(record: Record<string, string>): Array<{ key: stri
 
 export function makeAMLink(path: string, alertManagerName?: string): string {
   return `${path}${alertManagerName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${encodeURIComponent(alertManagerName)}` : ''}`;
+}
+
+export function makeSilenceLink(alertmanagerSourceName: string, rule: CombinedRule) {
+  return (
+    `${config.appSubUrl}/alerting/silence/new?alertmanager=${alertmanagerSourceName}` +
+    `&matchers=alertname=${rule.name},${Object.entries(rule.labels)
+      .map(([key, value]) => encodeURIComponent(`${key}=${value}`))
+      .join(',')}`
+  );
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet

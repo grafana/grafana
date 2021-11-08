@@ -7,24 +7,19 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/services/rendering"
-
-	"github.com/grafana/grafana/pkg/services/licensing"
-
 	"github.com/grafana/grafana/pkg/bus"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"gopkg.in/macaron.v1"
-
+	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	sqlstore.InitTestDB(t)
 
@@ -40,31 +35,30 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	pm := &manager.PluginManager{Cfg: cfg, SQLStore: sqlStore}
-
-	r := &rendering.RenderingService{
-		Cfg:           cfg,
-		PluginManager: pm,
-	}
 
 	hs := &HTTPServer{
-		Cfg:           cfg,
-		Bus:           bus.GetBus(),
-		License:       &licensing.OSSLicensingService{Cfg: cfg},
-		RenderService: r,
+		Cfg:     cfg,
+		Bus:     bus.GetBus(),
+		License: &licensing.OSSLicensingService{Cfg: cfg},
+		RenderService: &rendering.RenderingService{
+			Cfg:                   cfg,
+			RendererPluginManager: &fakeRendererManager{},
+		},
 		SQLStore:      sqlStore,
-		PluginManager: pm,
+		pluginStore:   &fakePluginStore{},
+		updateChecker: &updatechecker.Service{},
+		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}
 
-	m := macaron.New()
+	m := web.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
-	m.UseMiddleware(macaron.Renderer(filepath.Join(setting.StaticRootPath, "views"), "[[", "]]"))
+	m.UseMiddleware(web.Renderer(filepath.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	m.Get("/api/frontend/settings/", hs.GetFrontendSettings)
 
 	return m, hs
 }
 
-func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
+func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	type buildInfo struct {
 		Version string `json:"version"`
 		Commit  string `json:"commit"`

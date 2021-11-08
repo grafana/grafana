@@ -16,6 +16,7 @@ export interface TraceToLogsOptions {
   spanEndTimeShift?: string;
   filterByTraceID?: boolean;
   filterBySpanID?: boolean;
+  lokiSearch?: boolean;
 }
 
 export interface TraceToLogsData extends DataSourceJsonData {
@@ -147,6 +148,20 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
                 ...options.jsonData.tracesToLogs,
                 filterBySpanID: event.currentTarget.checked,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Loki Search" labelWidth={26} grow tooltip="Use this logs data source to search for traces.">
+          <InlineSwitch
+            defaultChecked={true}
+            value={options.jsonData.tracesToLogs?.lokiSearch}
+            onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                lokiSearch: event.currentTarget.checked,
               })
             }
           />

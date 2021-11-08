@@ -26,7 +26,7 @@ const getOptionsStyles = stylesFactory(() => {
 });
 
 interface Props {
-  title: string;
+  title?: string;
   options: TimeOption[];
   value?: TimeOption;
   onChange: (option: TimeOption) => void;
@@ -69,7 +69,7 @@ const Options: React.FC<Props> = ({ options, value, onChange, title }) => {
             value={option}
             selected={isEqual(option, value)}
             onSelect={onChange}
-            name={title}
+            name={title ?? 'Time ranges'}
           />
         ))}
       </ul>

@@ -1,13 +1,12 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.4.6'
-build_image = 'grafana/build-container:1.4.3'
+grabpl_version = '2.5.5'
+build_image = 'grafana/build-container:1.4.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.14.2'
 windows_image = 'mcr.microsoft.com/windows:1809'
-dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
 
@@ -43,12 +42,23 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     ]
     common_cmds = [
         './bin/grabpl verify-drone',
+        # Generate Go code, will install Wire
+        # TODO: Install Wire in Docker image instead
+        'make gen-go',
     ]
 
     if ver_mode == 'release':
+        args = '${DRONE_TAG}'
         common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
     elif ver_mode == 'test-release':
+        args = test_release_ver
         common_cmds.append('./bin/grabpl verify-version {}'.format(test_release_ver))
+    else:
+        if not is_downstream:
+            build_no = '${DRONE_BUILD_NUMBER}'
+        else:
+            build_no = '$${SOURCE_BUILD_NUMBER}'
+        args = '--build-id {}'.format(build_no)
 
     identify_runner_step = {
         'name': 'identify-runner',
@@ -60,7 +70,8 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if install_deps:
         common_cmds.extend([
-            'yarn install --frozen-lockfile --no-progress',
+            './bin/grabpl gen-version {}'.format(args),
+            'yarn install --immutable',
         ])
     if edition in ('enterprise', 'enterprise2'):
         source_commit = ''
@@ -92,9 +103,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             {
                 'name': 'initialize',
                 'image': build_image,
-                'environment': {
-                    'DOCKERIZE_VERSION': dockerize_version,
-                },
                 'depends_on': [
                     'clone',
                 ],
@@ -117,9 +125,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         {
             'name': 'initialize',
             'image': build_image,
-            'environment': {
-                'DOCKERIZE_VERSION': dockerize_version,
-            },
             'commands': download_grabpl_cmds + common_cmds,
         },
     ]
@@ -158,9 +163,6 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
-            # Generate Go code, will install Wire
-            # TODO: Install Wire in Docker image instead
-            'make gen-go',
             # Don't use Make since it will re-download the linters
             './bin/grabpl lint-backend --edition {}'.format(edition),
         ],
@@ -191,7 +193,7 @@ def build_storybook_step(edition, ver_mode):
         'image': build_image,
         'depends_on': [
             # Best to ensure that this step doesn't mess with what's getting built and packaged
-            'package',
+            'build-frontend',
         ],
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=4096',
@@ -364,12 +366,7 @@ def build_plugins_step(edition, sign=False):
         ],
     }
 
-def test_backend_step(edition, tries=None):
-    test_backend_cmd = './bin/grabpl test-backend --edition {}'.format(edition)
-    integration_tests_cmd = './bin/grabpl integration-tests --edition {}'.format(edition)
-    if tries:
-        test_backend_cmd += ' --tries {}'.format(tries)
-        integration_tests_cmd += ' --tries {}'.format(tries)
+def test_backend_step(edition):
     return {
         'name': 'test-backend' + enterprise2_suffix(edition),
         'image': build_image,
@@ -379,10 +376,19 @@ def test_backend_step(edition, tries=None):
         'commands': [
             # First make sure that there are no tests with FocusConvey
             '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
-            # Then execute non-integration tests in parallel, since it should be safe
-            test_backend_cmd,
-            # Then execute integration tests in serial
-            integration_tests_cmd,
+            './bin/grabpl test-backend --edition {}'.format(edition),
+        ],
+    }
+
+def test_backend_integration_step(edition):
+    return {
+        'name': 'test-backend-integration' + enterprise2_suffix(edition),
+        'image': build_image,
+        'depends_on': [
+            'lint-backend',
+        ],
+        'commands': [
+            './bin/grabpl integration-tests --edition {}'.format(edition),
         ],
     }
 
@@ -391,13 +397,30 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'initialize',
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
             'yarn run ci:test-frontend',
+        ],
+    }
+
+def lint_frontend_step():
+    return {
+        'name': 'lint-frontend',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+            'TEST_MAX_WORKERS': '50%',
+        },
+        'commands': [
+            'yarn run prettier:check',
+            'yarn run lint',
+            'yarn run typecheck',
         ],
     }
 
@@ -416,7 +439,7 @@ def test_a11y_frontend_step(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn -s test:accessibility --json > pa11y-ci-results.json',
+            'yarn run test:accessibility --json > pa11y-ci-results.json',
         ],
     }
 
@@ -435,7 +458,7 @@ def test_a11y_frontend_step_pr(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn -s test:accessibility-pr',
+            'yarn run test:accessibility-pr',
         ],
     }
 
@@ -469,6 +492,7 @@ def codespell_step():
             # Important: all words have to be in lowercase, and separated by "\n".
             'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
             'codespell -I words_to_ignore.txt docs/',
+            'rm words_to_ignore.txt',
         ],
     }
 
@@ -484,13 +508,11 @@ def shellcheck_step():
         ],
     }
 
-def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
+def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is_downstream=False):
     deps = [
         'build-plugins',
         'build-backend',
         'build-frontend',
-        'codespell',
-        'shellcheck',
     ]
     if include_enterprise2:
         sfx = '-enterprise2'
@@ -499,28 +521,6 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
             'test-backend' + sfx,
         ])
 
-    if ver_mode == 'release':
-        args = '${DRONE_TAG}'
-    elif ver_mode == 'test-release':
-        args = test_release_ver
-    else:
-        if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
-        else:
-            build_no = '$${SOURCE_BUILD_NUMBER}'
-        args = '--build-id {}'.format(build_no)
-
-    return {
-        'name': 'gen-version',
-        'image': build_image,
-        'depends_on': deps,
-        'commands': [
-            './bin/grabpl gen-version {}'.format(args),
-        ],
-    }
-
-
-def package_step(edition, ver_mode, variants=None, is_downstream=False):
     variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
@@ -568,11 +568,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
     return {
         'name': 'package' + enterprise2_suffix(edition),
         'image': build_image,
-        'depends_on': [
-            # This step should have all the dependencies required for packaging, and should generate
-            # dist/grafana.version
-            'gen-version',
-        ],
+        'depends_on': deps,
         'environment': env,
         'commands': cmds,
     }
@@ -620,7 +616,7 @@ def e2e_tests_step(edition, port=3001, tries=None):
         'commands': [
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
-            './node_modules/.bin/cypress install',
+            'yarn run cypress install',
             cmd,
         ],
     }
@@ -645,7 +641,7 @@ def copy_packages_for_docker_step():
         'name': 'copy-packages-for-docker',
         'image': build_image,
         'depends_on': [
-            'end-to-end-tests-server',
+            'package',
         ],
         'commands': [
             'ls dist/*.tar.gz*',
@@ -684,8 +680,7 @@ def postgres_integration_tests_step():
         'name': 'postgres-integration-tests',
         'image': build_image,
         'depends_on': [
-            'test-backend',
-            'test-frontend',
+            'initialize',
         ],
         'environment': {
             'PGPASSWORD': 'grafanatest',
@@ -709,8 +704,7 @@ def mysql_integration_tests_step():
         'name': 'mysql-integration-tests',
         'image': build_image,
         'depends_on': [
-            'test-backend',
-            'test-frontend',
+            'initialize',
         ],
         'environment': {
             'GRAFANA_TEST_DB': 'mysql',
@@ -779,26 +773,6 @@ def release_canary_npm_packages_step(edition):
         ],
     }
 
-def push_to_deployment_tools_step(edition, is_downstream=False):
-    if edition != 'enterprise' or not is_downstream:
-        return None
-
-    return {
-        'name': 'push-to-deployment_tools',
-        'image': deploy_docker_image,
-        'depends_on': [
-            'build-docker-images',
-            # This step should have all the dependencies required for packaging, and should generate
-            # dist/grafana.version
-            'gen-version',
-        ],
-        'settings': {
-            'github_token': from_secret(github_token),
-            'images_file': './deployment_tools_config.json',
-            'docker_tag_file': './dist/grafana.version'
-        },
-    }
-
 def enterprise2_suffix(edition):
     if edition == 'enterprise2':
         return '-{}'.format(edition)
@@ -818,8 +792,6 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
     dependencies = [
         'end-to-end-tests' + enterprise2_suffix(edition),
-        'mysql-integration-tests',
-        'postgres-integration-tests',
     ]
 
     if edition in ('enterprise', 'enterprise2'):
@@ -1003,5 +975,28 @@ def validate_scuemata_step():
         ],
         'commands': [
             './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
+        ],
+    }
+
+def ensure_cuetsified_step():
+    return {
+        'name': 'ensure-cuetsified',
+        'image': build_image,
+        'depends_on': [
+            'validate-scuemata',
+        ],
+        'commands': [
+            '# Make sure the git tree is clean.',
+            '# Stashing changes, since packages that were produced in build-backend step are needed.',
+            'git stash',
+            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
+            '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
+            '# It is required that the generated Typescript be in sync with the input CUE files.',
+            '# ...Modulo eslint auto-fixes...:',
+            'yarn run eslint . --ext .gen.ts --fix',
+            '# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result.',
+            './scripts/clean-git-or-error.sh',
+            '# Un-stash changes.',
+            'git stash pop',
         ],
     }

@@ -3,18 +3,7 @@ import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from '@emotion/css';
 import { AppEvents, GrafanaTheme2, NavModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  Button,
-  stylesFactory,
-  withTheme2,
-  Input,
-  TextArea,
-  Field,
-  Form,
-  Legend,
-  FileUpload,
-  Themeable2,
-} from '@grafana/ui';
+import { Button, stylesFactory, withTheme2, Input, TextArea, Field, Form, FileUpload, Themeable2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
@@ -94,11 +83,15 @@ class UnthemedDashboardImport extends PureComponent<Props> {
           </FileUpload>
         </div>
         <div className={styles.option}>
-          <Legend>Import via grafana.com</Legend>
           <Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
             {({ register, errors }) => (
-              <Field invalid={!!errors.gcomDashboard} error={errors.gcomDashboard && errors.gcomDashboard.message}>
+              <Field
+                label="Import via grafana.com"
+                invalid={!!errors.gcomDashboard}
+                error={errors.gcomDashboard && errors.gcomDashboard.message}
+              >
                 <Input
+                  id="url-input"
                   placeholder="Grafana.com dashboard URL or ID"
                   type="text"
                   {...register('gcomDashboard', {
@@ -112,17 +105,21 @@ class UnthemedDashboardImport extends PureComponent<Props> {
           </Form>
         </div>
         <div className={styles.option}>
-          <Legend>Import via panel json</Legend>
           <Form onSubmit={this.getDashboardFromJson} defaultValues={{ dashboardJson: '' }}>
             {({ register, errors }) => (
               <>
-                <Field invalid={!!errors.dashboardJson} error={errors.dashboardJson && errors.dashboardJson.message}>
+                <Field
+                  label="Import via panel json"
+                  invalid={!!errors.dashboardJson}
+                  error={errors.dashboardJson && errors.dashboardJson.message}
+                >
                   <TextArea
                     {...register('dashboardJson', {
                       required: 'Need a dashboard JSON model',
                       validate: validateDashboardJson,
                     })}
                     data-testid={selectors.components.DashboardImportPage.textarea}
+                    id="dashboard-json-textarea"
                     rows={10}
                   />
                 </Field>

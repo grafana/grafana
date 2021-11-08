@@ -7,11 +7,13 @@ import NavBarDropdown from './NavBarDropdown';
 export interface Props {
   isActive?: boolean;
   children: ReactNode;
+  className?: string;
   label: string;
   menuItems?: NavModelItem[];
   menuSubTitle?: string;
   onClick?: () => void;
   reverseMenuDirection?: boolean;
+  showMenu?: boolean;
   target?: HTMLAnchorElement['target'];
   url?: string;
 }
@@ -19,11 +21,13 @@ export interface Props {
 const NavBarItem = ({
   isActive = false,
   children,
+  className,
   label,
   menuItems = [],
   menuSubTitle,
   onClick,
   reverseMenuDirection = false,
+  showMenu = true,
   target,
   url,
 }: Props) => {
@@ -56,17 +60,19 @@ const NavBarItem = ({
   }
 
   return (
-    <div className={cx(styles.container, 'dropdown', { dropup: reverseMenuDirection })}>
+    <div className={cx(styles.container, 'dropdown', className, { dropup: reverseMenuDirection })}>
       {element}
-      <NavBarDropdown
-        headerTarget={target}
-        headerText={label}
-        headerUrl={url}
-        items={menuItems}
-        onHeaderClick={onClick}
-        reverseDirection={reverseMenuDirection}
-        subtitleText={menuSubTitle}
-      />
+      {showMenu && (
+        <NavBarDropdown
+          headerTarget={target}
+          headerText={label}
+          headerUrl={url}
+          items={menuItems}
+          onHeaderClick={onClick}
+          reverseDirection={reverseMenuDirection}
+          subtitleText={menuSubTitle}
+        />
+      )}
     </div>
   );
 };
@@ -95,7 +101,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
 
         .dropdown-menu {
           animation: dropdown-anim 150ms ease-in-out 100ms forwards;
-          border: none;
           display: flex;
           // important to overlap it otherwise it can be hidden
           // again by the mouse getting outside the hover space
@@ -117,9 +122,10 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     border: none;
     color: inherit;
     display: block;
-    line-height: 42px;
+    line-height: ${theme.components.sidemenu.width}px;
+    padding: 0;
     text-align: center;
-    width: ${theme.components.sidemenu.width - 1}px;
+    width: ${theme.components.sidemenu.width}px;
 
     &::before {
       display: ${isActive ? 'block' : 'none'};
@@ -152,8 +158,8 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
 
     img {
       border-radius: 50%;
-      height: 28px;
-      width: 28px;
+      height: ${theme.spacing(3)};
+      width: ${theme.spacing(3)};
     }
   `,
 });

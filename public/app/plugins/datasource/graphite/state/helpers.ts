@@ -4,7 +4,7 @@ import { dispatch } from '../../../../store/store';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { FuncInstance } from '../gfunc';
-import { GraphiteTagOperator } from '../types';
+import { GraphiteQuery, GraphiteTagOperator } from '../types';
 
 /**
  * Helpers used by reducers and providers. They modify state object directly so should operate on a copy of the state.
@@ -152,7 +152,13 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
   }
 
   const oldTarget = state.queryModel.target.target;
-  state.queryModel.updateModelTarget(state.queries);
+  // Interpolate from other queries:
+  // Because of mixed data sources the list may contain queries for non-Graphite data sources. To ensure a valid query
+  // is used for interpolation we should check required properties are passed though in theory it allows to interpolate
+  // with queries that contain "target" property as well.
+  state.queryModel.updateModelTarget(
+    (state.queries || []).filter((query) => 'target' in query && typeof (query as GraphiteQuery).target === 'string')
+  );
 
   if (state.queryModel.target.target !== oldTarget && !state.paused) {
     state.refresh(state.target.target);

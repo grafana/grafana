@@ -2,18 +2,32 @@ package flux
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
-const variableFilter = `(?m)([a-zA-Z]+)\.([a-zA-Z]+)`
+// $__interval_ms is the exact value in milliseconds
+// $__interval is rounded to nice whole values
+// v.windowPeriod is the exact value string-formatted
 
-// interpolate processes macros
-func interpolate(query queryModel) (string, error) {
+func interpolateInterval(flux string, interval time.Duration) string {
+	intervalMs := int64(interval / time.Millisecond)
+	intervalText := intervalv2.FormatDuration(interval)
+
+	flux = strings.ReplaceAll(flux, "$__interval_ms", strconv.FormatInt(intervalMs, 10))
+	flux = strings.ReplaceAll(flux, "$__interval", intervalText)
+	return flux
+}
+
+var fluxVariableFilterExp = regexp.MustCompile(`(?m)([a-zA-Z]+)\.([a-zA-Z]+)`)
+
+func interpolateFluxSpecificVariables(query queryModel) string {
 	flux := query.RawQuery
 
-	variableFilterExp, err := regexp.Compile(variableFilter)
-	matches := variableFilterExp.FindAllStringSubmatch(flux, -1)
+	matches := fluxVariableFilterExp.FindAllStringSubmatch(flux, -1)
 	if matches != nil {
 		timeRange := query.TimeRange
 		from := timeRange.From.UTC().Format(time.RFC3339Nano)
@@ -35,5 +49,11 @@ func interpolate(query queryModel) (string, error) {
 			}
 		}
 	}
-	return flux, err
+	return flux
+}
+
+func interpolate(query queryModel) string {
+	flux := interpolateFluxSpecificVariables(query)
+	flux = interpolateInterval(flux, query.Interval)
+	return flux
 }

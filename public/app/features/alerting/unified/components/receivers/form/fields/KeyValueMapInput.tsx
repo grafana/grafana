@@ -6,10 +6,11 @@ import { ActionIcon } from '../../../rules/ActionIcon';
 
 interface Props {
   value?: Record<string, string>;
+  readOnly?: boolean;
   onChange: (value: Record<string, string>) => void;
 }
 
-export const KeyValueMapInput: FC<Props> = ({ value, onChange }) => {
+export const KeyValueMapInput: FC<Props> = ({ value, onChange, readOnly = false }) => {
   const styles = useStyles2(getStyles);
   const [pairs, setPairs] = useState(recordToPairs(value));
   useEffect(() => setPairs(recordToPairs(value)), [value]);
@@ -44,36 +45,48 @@ export const KeyValueMapInput: FC<Props> = ({ value, onChange }) => {
             <tr>
               <th>Name</th>
               <th>Value</th>
-              <th></th>
+              {!readOnly && <th></th>}
             </tr>
           </thead>
           <tbody>
             {pairs.map(([key, value], index) => (
               <tr key={index}>
                 <td>
-                  <Input value={key} onChange={(e) => updatePair([e.currentTarget.value, value], index)} />
+                  <Input
+                    readOnly={readOnly}
+                    value={key}
+                    onChange={(e) => updatePair([e.currentTarget.value, value], index)}
+                  />
                 </td>
                 <td>
-                  <Input value={value} onChange={(e) => updatePair([key, e.currentTarget.value], index)} />
+                  <Input
+                    readOnly={readOnly}
+                    value={value}
+                    onChange={(e) => updatePair([key, e.currentTarget.value], index)}
+                  />
                 </td>
-                <td>
-                  <ActionIcon icon="trash-alt" tooltip="delete" onClick={() => deleteItem(index)} />
-                </td>
+                {!readOnly && (
+                  <td>
+                    <ActionIcon icon="trash-alt" tooltip="delete" onClick={() => deleteItem(index)} />
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
       )}
-      <Button
-        className={styles.addButton}
-        type="button"
-        variant="secondary"
-        icon="plus"
-        size="sm"
-        onClick={() => setPairs([...pairs, ['', '']])}
-      >
-        Add
-      </Button>
+      {!readOnly && (
+        <Button
+          className={styles.addButton}
+          type="button"
+          variant="secondary"
+          icon="plus"
+          size="sm"
+          onClick={() => setPairs([...pairs, ['', '']])}
+        >
+          Add
+        </Button>
+      )}
     </div>
   );
 };

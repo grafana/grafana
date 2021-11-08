@@ -194,16 +194,14 @@ describe('getExploreUrl', () => {
   const args = ({
     panel: {
       getSavedId: () => 1,
-    },
-    panelTargets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
-    panelDatasource: {
-      name: 'testDataSource',
-      meta: {
-        id: '1',
-      },
+      targets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
     },
     datasourceSrv: {
-      get: jest.fn(),
+      get() {
+        return {
+          getRef: jest.fn(),
+        };
+      },
       getDataSourceById: jest.fn(),
     },
     timeSrv: {
@@ -243,7 +241,7 @@ describe('hasNonEmptyQuery', () => {
   });
 
   test('should return false if query is empty', () => {
-    expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'panel' }])).toBeFalsy();
+    expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'panel', datasource: { uid: 'some-ds' } }])).toBeFalsy();
   });
 
   test('should return false if no queries exist', () => {
@@ -302,7 +300,7 @@ describe('getTimeRangeFromUrl', () => {
   it('should parse moment date', () => {
     // convert date strings to moment object
     const range = { from: dateTime('2020-10-22T10:44:33.615Z'), to: dateTime('2020-10-22T10:49:33.615Z') };
-    const result = getTimeRangeFromUrl(range, 'browser');
+    const result = getTimeRangeFromUrl(range, 'browser', 0);
     expect(result.raw).toEqual(range);
   });
 
@@ -311,7 +309,7 @@ describe('getTimeRangeFromUrl', () => {
       from: dateTime('2020-10-22T10:00:00Z').valueOf().toString(),
       to: dateTime('2020-10-22T11:00:00Z').valueOf().toString(),
     };
-    const result = getTimeRangeFromUrl(range, 'browser');
+    const result = getTimeRangeFromUrl(range, 'browser', 0);
     expect(result.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
     expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
     expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
@@ -323,7 +321,7 @@ describe('getTimeRangeFromUrl', () => {
       from: dateTime('2020-10-22T10:00:00Z').toISOString(),
       to: dateTime('2020-10-22T11:00:00Z').toISOString(),
     };
-    const result = getTimeRangeFromUrl(range, 'browser');
+    const result = getTimeRangeFromUrl(range, 'browser', 0);
     expect(result.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
     expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
     expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());

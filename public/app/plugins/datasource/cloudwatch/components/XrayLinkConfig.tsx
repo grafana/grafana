@@ -43,7 +43,12 @@ export function XrayLinkConfig({ datasourceUid, onChange }: Props) {
       )}
 
       <div className="gf-form-group">
-        <InlineField label="Data source" labelWidth={28} tooltip="X-ray data source containing traces">
+        <InlineField
+          htmlFor="data-source-picker"
+          label="Data source"
+          labelWidth={28}
+          tooltip="X-ray data source containing traces"
+        >
           <DataSourcePicker
             pluginId={xRayDsId}
             onChange={(ds) => onChange(ds.uid)}

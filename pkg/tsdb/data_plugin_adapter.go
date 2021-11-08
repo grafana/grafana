@@ -9,15 +9,31 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
 // nolint:staticcheck // plugins.DataQuery deprecated
-func dataPluginQueryAdapter(pluginID string, handler backend.QueryDataHandler, oAuthService oauthtoken.OAuthTokenService) plugins.DataPluginFunc {
-	return plugins.DataPluginFunc(func(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
-		instanceSettings, err := modelToInstanceSettings(ds)
+func dataPluginQueryAdapter(pluginID string, handler backend.QueryDataHandler, oAuthService oauthtoken.OAuthTokenService,
+	dsService *datasources.Service) plugins.DataPluginFunc {
+	return func(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
+		jsonDataBytes, err := ds.JsonData.MarshalJSON()
 		if err != nil {
 			return plugins.DataResponse{}, err
+		}
+
+		instanceSettings := &backend.DataSourceInstanceSettings{
+			ID:                      ds.Id,
+			Name:                    ds.Name,
+			URL:                     ds.Url,
+			Database:                ds.Database,
+			User:                    ds.User,
+			BasicAuthEnabled:        ds.BasicAuth,
+			BasicAuthUser:           ds.BasicAuthUser,
+			JSONData:                jsonDataBytes,
+			DecryptedSecureJSONData: dsService.DecryptedValues(ds),
+			Updated:                 ds.Updated,
+			UID:                     ds.Uid,
 		}
 
 		if query.Headers == nil {
@@ -90,26 +106,5 @@ func dataPluginQueryAdapter(pluginID string, handler backend.QueryDataHandler, o
 		}
 
 		return tR, nil
-	})
-}
-
-func modelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstanceSettings, error) {
-	jsonDataBytes, err := ds.JsonData.MarshalJSON()
-	if err != nil {
-		return nil, err
 	}
-
-	return &backend.DataSourceInstanceSettings{
-		ID:                      ds.Id,
-		Name:                    ds.Name,
-		URL:                     ds.Url,
-		Database:                ds.Database,
-		User:                    ds.User,
-		BasicAuthEnabled:        ds.BasicAuth,
-		BasicAuthUser:           ds.BasicAuthUser,
-		JSONData:                jsonDataBytes,
-		DecryptedSecureJSONData: ds.DecryptedValues(),
-		Updated:                 ds.Updated,
-		UID:                     ds.Uid,
-	}, nil
 }

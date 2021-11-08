@@ -49,6 +49,7 @@ type OAuthInfo struct {
 	TlsClientKey           string
 	TlsClientCa            string
 	TlsSkipVerify          bool
+	UsePKCE                bool
 }
 
 func ProvideService(cfg *setting.Cfg) *SocialService {
@@ -84,6 +85,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			TlsClientKey:         sec.Key("tls_client_key").String(),
 			TlsClientCa:          sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:        sec.Key("tls_skip_verify_insecure").MustBool(),
+			UsePKCE:              sec.Key("use_pkce").MustBool(),
 		}
 
 		// when empty_scopes parameter exists and is true, overwrite scope with empty value

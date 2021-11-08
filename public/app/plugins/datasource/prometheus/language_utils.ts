@@ -2,19 +2,17 @@ import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
 
-export const processHistogramLabels = (labels: string[]) => {
+export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
   const regexp = new RegExp('_bucket($|:)');
-  for (let index = 0; index < labels.length; index++) {
-    const label = labels[index];
-    const isHistogramValue = regexp.test(label);
+  for (let index = 0; index < metrics.length; index++) {
+    const metric = metrics[index];
+    const isHistogramValue = regexp.test(metric);
     if (isHistogramValue) {
-      resultSet.add(label);
+      resultSet.add(metric);
     }
   }
-  const result = [...resultSet];
-
-  return { values: { __name__: result } };
+  return [...resultSet];
 };
 
 export function processLabels(labels: Array<{ [key: string]: string }>, withName = false) {
@@ -235,4 +233,29 @@ export function limitSuggestions(items: string[]) {
 
 export function addLimitInfo(items: any[] | undefined): string {
   return items && items.length >= SUGGESTIONS_LIMIT ? `, limited to the first ${SUGGESTIONS_LIMIT} received items` : '';
+}
+
+// NOTE: the following 2 exported functions are very similar to the prometheus*Escape
+// functions in datasource.ts, but they are not exactly the same algorithm, and we found
+// no way to reuse one in the another or vice versa.
+
+// Prometheus regular-expressions use the RE2 syntax (https://github.com/google/re2/wiki/Syntax),
+// so every character that matches something in that list has to be escaped.
+// the list of metacharacters is: *+?()|\.[]{}^$
+// we make a javascript regular expression that matches those characters:
+const RE2_METACHARACTERS = /[*+?()|\\.\[\]{}^$]/g;
+function escapePrometheusRegexp(value: string): string {
+  return value.replace(RE2_METACHARACTERS, '\\$&');
+}
+
+// based on the openmetrics-documentation, the 3 symbols we have to handle are:
+// - \n ... the newline character
+// - \  ... the backslash character
+// - "  ... the double-quote character
+export function escapeLabelValueInExactSelector(labelValue: string): string {
+  return labelValue.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/"/g, '\\"');
+}
+
+export function escapeLabelValueInRegexSelector(labelValue: string): string {
+  return escapeLabelValueInExactSelector(escapePrometheusRegexp(labelValue));
 }

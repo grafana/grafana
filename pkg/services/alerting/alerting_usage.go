@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -20,14 +21,14 @@ type UsageStats struct {
 // UsageStatsQuerier returns usage stats about alert rules
 // configured in Grafana.
 type UsageStatsQuerier interface {
-	QueryUsageStats() (*UsageStats, error)
+	QueryUsageStats(context.Context) (*UsageStats, error)
 }
 
 // QueryUsageStats returns usage stats about alert rules
 // configured in Grafana.
-func (e *AlertEngine) QueryUsageStats() (*UsageStats, error) {
+func (e *AlertEngine) QueryUsageStats(ctx context.Context) (*UsageStats, error) {
 	cmd := &models.GetAllAlertsQuery{}
-	err := e.Bus.Dispatch(cmd)
+	err := e.Bus.DispatchCtx(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func (e *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAle
 	result := map[string]int{}
 	for k, v := range typeCount {
 		query := &models.GetDataSourceQuery{Id: k}
-		err := e.Bus.Dispatch(query)
+		err := e.Bus.DispatchCtx(context.TODO(), query)
 		if err != nil {
 			return map[string]int{}, nil
 		}

@@ -600,7 +600,7 @@ Content-Type: application/json
 
 `POST /api/admin/provisioning/notifications/reload`
 
-`POST /api/admin/provisioning/accesscontrol/reload`
+`POST /api/admin/provisioning/access-control/reload`
 
 Reloads the provisioning config files for specified type and provision entities again. It won't return
 until the new provisioned entities are already stored in the database. In case of dashboards, it will stop

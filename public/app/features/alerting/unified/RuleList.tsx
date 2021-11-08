@@ -1,6 +1,6 @@
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { useStyles2, LinkButton, withErrorBoundary } from '@grafana/ui';
-import React, { useEffect, useMemo } from 'react';
+import { useStyles2, LinkButton, withErrorBoundary, Button } from '@grafana/ui';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
@@ -19,6 +19,7 @@ import { useLocation } from 'react-router-dom';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RuleStats } from './components/rules/RuleStats';
 import { RuleListErrors } from './components/rules/RuleListErrors';
+import { getFiltersFromUrlParams } from './utils/misc';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -31,8 +32,11 @@ export const RuleList = withErrorBoundary(
     const styles = useStyles2(getStyles);
     const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
     const location = useLocation();
+    const [expandAll, setExpandAll] = useState(false);
 
     const [queryParams] = useQueryParams();
+    const filters = getFiltersFromUrlParams(queryParams);
+    const filtersActive = Object.values(filters).some((filter) => filter !== undefined);
 
     const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
       ? (queryParams['view'] as keyof typeof VIEWS)
@@ -76,8 +80,19 @@ export const RuleList = withErrorBoundary(
             <RulesFilter />
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
-              <RuleStats showInactive={true} showRecording={true} namespaces={filteredNamespaces} />
-              <div />
+              <div className={styles.statsContainer}>
+                {view === 'groups' && filtersActive && (
+                  <Button
+                    className={styles.expandAllButton}
+                    icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
+                    variant="secondary"
+                    onClick={() => setExpandAll(!expandAll)}
+                  >
+                    {expandAll ? 'Collapse all' : 'Expand all'}
+                  </Button>
+                )}
+                <RuleStats showInactive={true} showRecording={true} namespaces={filteredNamespaces} />
+              </div>
               {(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor) && (
                 <LinkButton
                   href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
@@ -90,7 +105,7 @@ export const RuleList = withErrorBoundary(
           </>
         )}
         {showNewAlertSplash && <NoRulesSplash />}
-        {haveResults && <ViewComponent namespaces={filteredNamespaces} />}
+        {haveResults && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
       </AlertingPageWrapper>
     );
   },
@@ -108,5 +123,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(2)};
     display: flex;
     justify-content: space-between;
+  `,
+  statsContainer: css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  `,
+  expandAllButton: css`
+    margin-right: ${theme.spacing(1)};
   `,
 });

@@ -17,10 +17,15 @@ const DropdownChild = ({ isDivider = false, icon, onClick, target, text, url }: 
   const styles = getStyles(theme);
 
   const linkContent = (
-    <>
-      {icon && <Icon data-testid="dropdown-child-icon" name={icon} className={styles.icon} />}
-      {text}
-    </>
+    <div className={styles.linkContent}>
+      <div>
+        {icon && <Icon data-testid="dropdown-child-icon" name={icon} className={styles.icon} />}
+        {text}
+      </div>
+      {target === '_blank' && (
+        <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
+      )}
+    </div>
   );
 
   let element = (
@@ -53,7 +58,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     width: 100%;
   `,
+  externalLinkIcon: css`
+    color: ${theme.colors.text.secondary};
+    margin-left: ${theme.spacing(1)};
+  `,
   icon: css`
     margin-right: ${theme.spacing(1)};
+  `,
+  linkContent: css`
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    justify-content: space-between;
   `,
 });

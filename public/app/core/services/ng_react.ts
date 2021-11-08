@@ -10,16 +10,16 @@
 // - reactDirective (factory for creating specific directives that correspond to reactComponent directives)
 
 import { kebabCase } from 'lodash';
-import React from 'react';
+import React, { ComponentType } from 'react';
 import ReactDOM from 'react-dom';
 import angular, { auto } from 'angular';
 
 // get a react component from name (components can be an angular injectable e.g. value, factory or
 // available on window
-function getReactComponent(name: string, $injector: auto.IInjectorService) {
+function getReactComponent(name: string | Function, $injector: auto.IInjectorService): ComponentType {
   // if name is a function assume it is component and return it
   if (angular.isFunction(name)) {
-    return name;
+    return (name as unknown) as ComponentType;
   }
 
   // a React component name must be specified
@@ -46,7 +46,7 @@ function getReactComponent(name: string, $injector: auto.IInjectorService) {
     throw Error('Cannot find react component ' + name);
   }
 
-  return reactComponent;
+  return (reactComponent as unknown) as ComponentType;
 }
 
 // wraps a function with scope.$apply, if already applied just return

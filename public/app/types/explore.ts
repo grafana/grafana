@@ -1,4 +1,4 @@
-import { Unsubscribable } from 'rxjs';
+import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -12,7 +12,9 @@ import {
   RawTimeRange,
   TimeRange,
   EventBusExtended,
+  DataQueryResponse,
 } from '@grafana/data';
+import { ExploreGraphStyle } from 'app/core/utils/explore';
 
 export enum ExploreId {
   left = 'left',
@@ -44,6 +46,17 @@ export interface ExploreState {
    * History of all queries
    */
   richHistory: RichHistoryQuery[];
+
+  /**
+   * True if local storage quota was exceeded when a new item was added. This is to prevent showing
+   * multiple errors when local storage is full.
+   */
+  localStorageFull: boolean;
+
+  /**
+   * True if a warning message of hitting the exceeded number of items has been shown already.
+   */
+  richHistoryLimitExceededWarningShown: boolean;
 }
 
 export interface ExploreItemState {
@@ -149,6 +162,15 @@ export interface ExploreItemState {
    * We are currently caching last 5 query responses.
    */
   cache: Array<{ key: string; value: PanelData }>;
+
+  // properties below should be more generic if we add more providers
+  // see also: DataSourceWithLogsVolumeSupport
+  logsVolumeDataProvider?: Observable<DataQueryResponse>;
+  logsVolumeDataSubscription?: SubscriptionLike;
+  logsVolumeData?: DataQueryResponse;
+
+  /* explore graph style */
+  graphStyle: ExploreGraphStyle;
 }
 
 export interface ExploreUpdateState {

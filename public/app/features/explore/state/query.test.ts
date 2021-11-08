@@ -5,13 +5,14 @@ import {
   cancelQueriesAction,
   clearCache,
   importQueries,
+  loadLogsVolumeData,
   queryReducer,
   runQueries,
   scanStartAction,
   scanStopAction,
 } from './query';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { interval, of } from 'rxjs';
+import { interval, Observable, of } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
@@ -32,6 +33,18 @@ import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 import Mock = jest.Mock;
+import { config } from '@grafana/runtime';
+
+jest.mock('@grafana/runtime', () => ({
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  config: {
+    ...((jest.requireActual('@grafana/runtime') as unknown) as any).config,
+    featureToggles: {
+      fullRangeLogsVolume: true,
+      autoLoadFullRangeLogsVolume: false,
+    },
+  },
+}));
 
 const t = toUtc();
 const testRange = {
@@ -51,6 +64,7 @@ const defaultInitialState = {
     [ExploreId.left]: {
       datasourceInstance: {
         query: jest.fn(),
+        getRef: jest.fn(),
         meta: {
           id: 'something',
         },
@@ -69,6 +83,22 @@ const defaultInitialState = {
   },
 };
 
+function setupQueryResponse(state: StoreState) {
+  (state.explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
+    of({
+      error: { message: 'test error' },
+      data: [
+        new MutableDataFrame({
+          fields: [{ name: 'test', values: new ArrayVector() }],
+          meta: {
+            preferredVisualisationType: 'graph',
+          },
+        }),
+      ],
+    } as DataQueryResponse)
+  );
+}
+
 describe('runQueries', () => {
   it('should pass dataFrames to state even if there is error in response', async () => {
     setTimeSrv({
@@ -77,19 +107,7 @@ describe('runQueries', () => {
     const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
       ...(defaultInitialState as any),
     });
-    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
-      of({
-        error: { message: 'test error' },
-        data: [
-          new MutableDataFrame({
-            fields: [{ name: 'test', values: new ArrayVector() }],
-            meta: {
-              preferredVisualisationType: 'graph',
-            },
-          }),
-        ],
-      } as DataQueryResponse)
-    );
+    setupQueryResponse(getState());
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
@@ -143,8 +161,8 @@ describe('importing queries', () => {
         importQueries(
           ExploreId.left,
           [
-            { datasource: 'postgres1', refId: 'refId_A' },
-            { datasource: 'postgres1', refId: 'refId_B' },
+            { datasource: { type: 'postgresql' }, refId: 'refId_A' },
+            { datasource: { type: 'postgresql' }, refId: 'refId_B' },
           ],
           { name: 'Postgres1', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
           { name: 'Postgres2', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>
@@ -301,6 +319,88 @@ describe('reducer', () => {
       await dispatch(clearCache(ExploreId.left));
 
       expect(getState().explore[ExploreId.left].cache).toEqual([]);
+    });
+  });
+
+  describe('logs volume', () => {
+    let dispatch: ThunkDispatch,
+      getState: () => StoreState,
+      unsubscribes: Function[],
+      mockLogsVolumeDataProvider: () => Observable<DataQueryResponse>;
+
+    beforeEach(() => {
+      mockLogsVolumeDataProvider = () => {
+        return of(
+          { state: LoadingState.Loading, error: undefined, data: [] },
+          { state: LoadingState.Done, error: undefined, data: [{}] }
+        );
+      };
+
+      const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...(defaultInitialState as any),
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            datasourceInstance: {
+              query: jest.fn(),
+              getRef: jest.fn(),
+              meta: {
+                id: 'something',
+              },
+              getLogsVolumeDataProvider: () => {
+                return mockLogsVolumeDataProvider();
+              },
+            },
+          },
+        },
+      });
+
+      dispatch = store.dispatch;
+      getState = store.getState;
+
+      setupQueryResponse(getState());
+      unsubscribes = [];
+
+      mockLogsVolumeDataProvider = () => {
+        return ({
+          subscribe: () => {
+            const unsubscribe = jest.fn();
+            unsubscribes.push(unsubscribe);
+            return {
+              unsubscribe,
+            };
+          },
+        } as unknown) as Observable<DataQueryResponse>;
+      };
+    });
+
+    it('should cancel any unfinished logs volume queries', async () => {
+      await dispatch(runQueries(ExploreId.left));
+      // no subscriptions created yet
+      expect(unsubscribes).toHaveLength(0);
+
+      await dispatch(loadLogsVolumeData(ExploreId.left));
+      // loading in progress - one subscription created, not cleaned up yet
+      expect(unsubscribes).toHaveLength(1);
+      expect(unsubscribes[0]).not.toBeCalled();
+
+      setupQueryResponse(getState());
+      await dispatch(runQueries(ExploreId.left));
+      // new query was run - first subscription is cleaned up, no new subscriptions yet
+      expect(unsubscribes).toHaveLength(1);
+      expect(unsubscribes[0]).toBeCalled();
+
+      await dispatch(loadLogsVolumeData(ExploreId.left));
+      // new subscription is created, only the old was was cleaned up
+      expect(unsubscribes).toHaveLength(2);
+      expect(unsubscribes[0]).toBeCalled();
+      expect(unsubscribes[1]).not.toBeCalled();
+    });
+
+    it('should load logs volume after running the query', async () => {
+      config.featureToggles.autoLoadFullRangeLogsVolume = true;
+      await dispatch(runQueries(ExploreId.left));
+      expect(unsubscribes).toHaveLength(1);
     });
   });
 });

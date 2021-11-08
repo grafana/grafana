@@ -24,11 +24,12 @@ func (p PermissionType) String() string {
 
 // Typed errors
 var (
-	ErrDashboardAclInfoMissing           = errors.New("user id and team id cannot both be empty for a dashboard permission")
-	ErrDashboardPermissionDashboardEmpty = errors.New("dashboard id must be greater than zero for a dashboard permission")
-	ErrFolderAclInfoMissing              = errors.New("user id and team id cannot both be empty for a folder permission")
-	ErrFolderPermissionFolderEmpty       = errors.New("folder id must be greater than zero for a folder permission")
-	ErrPermissionsWithRoleNotAllowed     = errors.New("team and user permissions cannot have an associated role")
+	ErrDashboardAclInfoMissing              = errors.New("user id and team id cannot both be empty for a dashboard permission")
+	ErrDashboardPermissionDashboardEmpty    = errors.New("dashboard id must be greater than zero for a dashboard permission")
+	ErrFolderAclInfoMissing                 = errors.New("user id and team id cannot both be empty for a folder permission")
+	ErrFolderPermissionFolderEmpty          = errors.New("folder id must be greater than zero for a folder permission")
+	ErrPermissionsWithRoleNotAllowed        = errors.New("permissions cannot have both a user and team")
+	ErrPermissionsWithUserAndTeamNotAllowed = errors.New("team and user permissions cannot have an associated role")
 )
 
 // Dashboard ACL model

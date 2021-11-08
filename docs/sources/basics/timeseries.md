@@ -15,9 +15,9 @@ Imagine you wanted to know how the temperature outside changes throughout the da
 | 10:00 | 26°C  |
 | 11:00 | 27°C  |
 
-Temperature data like this is one example of what we call a _time series_—a sequence of measurements, ordered in time. Every row in the table represents one individual measurement at a specific time.
+Temperature data like this is one example of what we call a _time series_ — a sequence of measurements, ordered in time. Every row in the table represents one individual measurement at a specific time.
 
-Tables are useful when you want to identify individual measurements but make it difficult to see the big picture. A more common visualization for time series is the _graph_, which instead places each measurement along a time axis. Visual representations like the graph make it easier to discover patterns and features of the data that otherwise would be difficult to see.
+Tables are useful when you want to identify individual measurements, but they make it difficult to see the big picture. A more common visualization for time series is the _graph_, which instead places each measurement along a time axis. Visual representations like the graph make it easier to discover patterns and features of the data that otherwise would be difficult to see.
 
 {{< figure src="/static/img/docs/example_graph.png" class="docs-image--no-shadow" max-width="850px" >}}
 
@@ -29,14 +29,14 @@ Temperature data like the one in the example, is far from the only example of a 
 
 While each of these examples are sequences of chronologically ordered measurements, they also share other attributes:
 
-- New data is appended at the end, at regular intervals—for example, hourly at 09:00, 10:00, 11:00, and so on.
-- Measurements are seldom updated after they were added—for example, yesterday's temperature doesn't change.
+- New data is appended at the end, at regular intervals — for example, hourly at 09:00, 10:00, 11:00, and so on.
+- Measurements are seldom updated after they were added — for example, yesterday's temperature doesn't change.
 
 Time series are powerful. They help you understand the past by letting you analyze the state of the system at any point in time. Time series could tell you that the server crashed moments after the free disk space went down to zero.
 
 Time series can also help you predict the future, by uncovering trends in your data. If the number of registered users has been increasing monthly by 4% for the past few months, you can predict how big your user base is going to be at the end of the year.
 
-Some time series have patterns that repeat themselves over a known period. For example, the temperature is typically higher during the day, before it dips down at night. By identifying these periodic, or _seasonal_, time series, you can make confident predictions about the next period. If we know that the system load peaks every day around 18:00, we can add more machines right before.
+Some time series have patterns that repeat themselves over a known period. For example, the temperature is typically higher during the day, before it dips down at night. By identifying these periodic, or _seasonal_, time series, you can make confident predictions about the next period. If you know that the system load peaks every day around 18:00, you can add more machines right before.
 
 ## Aggregating time series
 
@@ -45,7 +45,7 @@ Depending on what you're measuring, the data can vary greatly. What if you wante
 Combining a collection of measurements is called _aggregation_. There are several ways to aggregate time series data. Here are some common ones:
 
 - **Average** returns the sum of all values divided by the total number of values.
-- **Min** and **Max** return the smallest, and largest value in the collection.
+- **Min** and **Max** return the smallest and largest value in the collection.
 - **Sum** returns the sum of all values in the collection.
 - **Count** returns the number of values in the collection.
 
@@ -81,25 +81,25 @@ We could even take it a step further, by calculating the deltas of these deltas:
 1572524345, +30, -1, +1, +0
 ```
 
-If measurements are taken at regular intervals, most of these delta-of-deltas will be 0. Because of optimizations like these, TSDBs uses drastically less space than other databases.
+If measurements are taken at regular intervals, most of these delta-of-deltas will be 0. Because of optimizations like these, TSDBs use drastically less space than other databases.
 
 Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken. Here's an example of the [InfluxDB data format](https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/#syntax) that demonstrates how each measurement is stored.
+
+```
+weather,location=us-midwest temperature=82 1465839830100400200
+  |    -------------------- --------------  |
+  |             |             |             |
+  |             |             |             |
++-----------+--------+-+---------+-+---------+
+|measurement|,tag_set| |field_set| |timestamp|
++-----------+--------+-+---------+-+---------+
+```
 
 Here are some of the TSDBs supported by Grafana:
 
 - [Graphite](https://graphiteapp.org/)
 - [InfluxDB](https://www.influxdata.com/products/influxdb-overview/)
 - [Prometheus](https://prometheus.io/)
-
-  ```
-  weather,location=us-midwest temperature=82 1465839830100400200
-    |    -------------------- --------------  |
-    |             |             |             |
-    |             |             |             |
-  +-----------+--------+-+---------+-+---------+
-  |measurement|,tag_set| |field_set| |timestamp|
-  +-----------+--------+-+---------+-+---------+
-  ```
 
 ### Collecting time series data
 
