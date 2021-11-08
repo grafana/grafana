@@ -82,7 +82,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
 			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock)
 			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.Id))).Code
-			require.Equal(t, http.StatusForbidden, actual)
+			require.Equal(t, testcase.expectedCode, actual)
 		})
 	})
 }

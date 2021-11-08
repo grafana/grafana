@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
 )
@@ -40,4 +41,22 @@ func SetupMockAccesscontrol(t *testing.T, userpermissionsfunc func(c context.Con
 	}
 	acmock.GetUserPermissionsFunc = userpermissionsfunc
 	return acmock
+}
+
+// this is a way to see
+// that the Mock implements the store interface
+var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
+
+type Calls struct {
+	DeleteServiceAccount []interface{}
+}
+
+type ServiceAccountsStoreMock struct {
+	Calls Calls
+}
+
+func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
+	// now we can test that the mock has these calls when we call the function
+	s.Calls.DeleteServiceAccount = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
+	return nil
 }
