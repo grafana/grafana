@@ -6,14 +6,12 @@ type CacheablePlugin = {
   version: string;
 };
 
-// TODO: should we use pluginId rather than path?
 export function registerPluginInCache({ path, version }: CacheablePlugin): void {
   if (!cache[path]) {
     cache[path] = encodeURI(version);
   }
 }
 
-// TODO: should we use pluginId rather than path?
 export function invalidatePluginInCache(pluginId: string): void {
   const path = `plugins/${pluginId}/module`;
   if (cache[path]) {

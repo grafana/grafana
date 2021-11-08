@@ -64,6 +64,7 @@ export const install = createAsyncThunk(
     try {
       await installPlugin(id, version);
       await updatePanels();
+
       if (isUpdating) {
         invalidatePluginInCache(id);
       }
@@ -79,6 +80,7 @@ export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id
   try {
     await uninstallPlugin(id);
     await updatePanels();
+
     invalidatePluginInCache(id);
 
     return {
