@@ -107,6 +107,11 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgId)
 
+	// TODO: add to chore, for cleaning up after we have created
+	// service accounts table in the modelling
+	whereConditions = append(whereConditions, "user.is_service_account = ?")
+	whereParams = append(whereParams, false)
+
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
 		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
@@ -156,6 +161,11 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgID)
+
+	// TODO: add to chore, for cleaning up after we have created
+	// service accounts table in the modelling
+	whereConditions = append(whereConditions, "user.is_service_account = ?")
+	whereParams = append(whereParams, false)
 
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
