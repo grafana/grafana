@@ -45,7 +45,7 @@ describe('Duration util', () => {
       expect(isValidGoDuration(durationString)).toEqual(true);
     });
 
-    it('valid duration float string returns true', () => {
+    it('valid float number duration string returns true', () => {
       const durationString = '3.1h 4.0m 0.1s 2.11ms 0.03us 5.3333ns';
       expect(isValidGoDuration(durationString)).toEqual(true);
     });
