@@ -6,6 +6,7 @@ import './services/dynamic_directive_srv';
 import './services/ng_react';
 import './services/segment_srv';
 import './services/popover_srv';
+import './services/timer';
 import './dropdown_typeahead';
 import './autofill_event_fix';
 import './metric_segment';
@@ -21,6 +22,12 @@ import './angular_wrappers';
 // components
 import './components/query_part_editor';
 import './components/form_dropdown/form_dropdown';
-//import './components/sql_part/sql_part_editor';
+import './components/scroll';
+import './components/jsontree';
+import './components/switch';
+import './components/info_popover';
+import './components/spectrum_picker';
+import './components/code_editor/code_editor';
+import './components/sql_part/sql_part_editor';
 
 export { AngularApp } from './AngularApp';
