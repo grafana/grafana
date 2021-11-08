@@ -178,22 +178,20 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
           <label htmlFor={inputId}>{org.name}</label>
         </td>
         {config.licenseInfo.hasLicense ? (
-          <>
-            <td>
-              <div className={styles.rolePickerWrapper}>
-                <div className={styles.rolePicker}>
-                  <UserRolePicker
-                    userId={user?.id || 0}
-                    orgId={org.orgId}
-                    builtInRole={org.role}
-                    onBuiltinRoleChange={this.onBuiltinRoleChange}
-                    disabled={rolePickerDisabled}
-                  />
-                </div>
-                {isExternalUser && <ExternalUserTooltip />}
+          <td>
+            <div className={styles.rolePickerWrapper}>
+              <div className={styles.rolePicker}>
+                <UserRolePicker
+                  userId={user?.id || 0}
+                  orgId={org.orgId}
+                  builtInRole={org.role}
+                  onBuiltinRoleChange={this.onBuiltinRoleChange}
+                  disabled={rolePickerDisabled}
+                />
               </div>
-            </td>
-          </>
+              {isExternalUser && <ExternalUserTooltip />}
+            </div>
+          </td>
         ) : (
           <>
             {isChangingRole ? (
