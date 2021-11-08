@@ -1,7 +1,7 @@
 import { debounce, each, map, partial, escape, unescape } from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
-import { promiseToDigest } from '../../utils/promiseToDigest';
+import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 const template = `
 <div class="dropdown cascade-open">
