@@ -155,6 +155,7 @@ export const RolePickerMenu = ({
                         key={i}
                         isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                         onSelect={onSelect}
+                        hideDescription
                       />
                     ))}
                   </div>
@@ -249,6 +250,7 @@ export const RolePickerSubMenu = ({
               key={i}
               isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
               onSelect={onSelect}
+              hideDescription
             />
           ))}
         </div>
