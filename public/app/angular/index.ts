@@ -18,4 +18,9 @@ import './diff-view';
 import './array_join';
 import './angular_wrappers';
 
+// components
+import './components/query_part_editor';
+import './components/form_dropdown/form_dropdown';
+//import './components/sql_part/sql_part_editor';
+
 export { AngularApp } from './AngularApp';
