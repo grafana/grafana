@@ -348,7 +348,9 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 			for _, item := range alertRules {
 				key := item.GetKey()
 				itemVersion := item.Version
-				ruleInfo, newRoutine := sch.registry.getOrCreateInfo(key)
+				ruleInfo, newRoutine := sch.registry.getOrCreateInfo(key, func() *alertRuleInfo {
+					return newAlertRuleInfo(ctx)
+				})
 
 				// enforce minimum evaluation interval
 				if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
@@ -360,7 +362,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return sch.ruleRoutine(ctx, key, ruleInfo.evalCh, ruleInfo.stopCh)
+						return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh)
 					})
 				}
 
@@ -389,7 +391,10 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					item.ruleInfo.Eval(tick, item.version)
+					success := item.ruleInfo.Eval(tick, item.version)
+					if !success {
+						sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+					}
 				})
 			}
 
@@ -420,7 +425,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 	}
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext) error {
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
 
@@ -515,9 +520,14 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 	evalRunning := false
 	var currentRule *models.AlertRule
+	defer sch.stopApplied(key)
 	for {
 		select {
-		case ctx := <-evalCh:
+		case ctx, ok := <-evalCh:
+			if !ok {
+				logger.Debug("Evaluation channel has been closed. Exiting")
+				return nil
+			}
 			if evalRunning {
 				continue
 			}
@@ -545,12 +555,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					log.Error("evaluation failed after all retries", "err", err)
 				}
 			}()
-		case <-stopCh:
-			sch.stopApplied(key)
-			logger.Debug("stopping alert rule routine")
-			// interrupt evaluation if it's running
-			return nil
 		case <-grafanaCtx.Done():
+			logger.Debug("stopping alert rule routine")
 			return grafanaCtx.Err()
 		}
 	}
@@ -582,13 +588,13 @@ type alertRuleRegistry struct {
 
 // getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleRegistry) getOrCreateInfo(key models.AlertRuleKey) (*alertRuleInfo, bool) {
+func (r *alertRuleRegistry) getOrCreateInfo(key models.AlertRuleKey, createNew func() *alertRuleInfo) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	info, ok := r.alertRuleInfo[key]
 	if !ok {
-		info = newAlertRuleInfo()
+		info = createNew()
 		r.alertRuleInfo[key] = info
 	}
 	return info, !ok
@@ -634,39 +640,28 @@ func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 
 type alertRuleInfo struct {
 	evalCh  chan *evalContext
-	stopCh  chan struct{}
+	ctx     context.Context
+	Stop    context.CancelFunc
 	mtx     sync.Mutex
 	stopped bool // indicates that the stopCh was closed and therefore the rule evaluation routine should exit
 }
 
-func newAlertRuleInfo() *alertRuleInfo {
-	return &alertRuleInfo{evalCh: make(chan *evalContext), stopCh: make(chan struct{}), stopped: false}
-}
-
-// Stop signals the rule evaluation routine to stop via stopCh and sets flag stopped to true. Does nothing If the loop is stopped
-func (a *alertRuleInfo) Stop() bool {
-	a.mtx.Lock()
-	defer a.mtx.Unlock()
-	if a.stopped {
-		return false
-	}
-	close(a.stopCh)
-	a.stopped = true
-	return true
+func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
+	ctx, cancel := context.WithCancel(parent)
+	return &alertRuleInfo{evalCh: make(chan *evalContext), ctx: ctx, Stop: cancel, stopped: false}
 }
 
 // Eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
 func (a *alertRuleInfo) Eval(t time.Time, version int64) bool {
-	a.mtx.Lock()
-	defer a.mtx.Unlock()
-	if a.stopped {
-		return false
-	}
-	a.evalCh <- &evalContext{
+	select {
+	case a.evalCh <- &evalContext{
 		now:     t,
 		version: version,
+	}:
+		return true
+	case <-a.ctx.Done():
+		return false
 	}
-	return true
 }
 
 type evalContext struct {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -271,11 +272,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), evalState)
 
 			go func() {
-				stop := make(chan struct{})
-				t.Cleanup(func() {
-					close(stop)
-				})
-				_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
+				ctx, cancel := context.WithCancel(context.Background())
+				t.Cleanup(cancel)
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
@@ -366,29 +365,13 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	}
 
 	t.Run("should exit", func(t *testing.T) {
-		t.Run("when we signal it to stop", func(t *testing.T) {
-			stopChan := make(chan struct{})
-			stoppedChan := make(chan error)
-
-			sch, _, _, _, _ := createSchedule(make(chan time.Time))
-
-			go func() {
-				err := sch.ruleRoutine(context.Background(), models.AlertRuleKey{}, make(chan *evalContext), stopChan)
-				stoppedChan <- err
-			}()
-
-			stopChan <- struct{}{}
-			err := waitForErrChannel(t, stoppedChan)
-			require.NoError(t, err)
-		})
-
 		t.Run("when context is cancelled", func(t *testing.T) {
 			stoppedChan := make(chan error)
 			sch, _, _, _, _ := createSchedule(make(chan time.Time))
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
-				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evalContext), make(chan struct{}))
+				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evalContext))
 				stoppedChan <- err
 			}()
 
@@ -407,11 +390,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
 		go func() {
-			stop := make(chan struct{})
-			t.Cleanup(func() {
-				close(stop)
-			})
-			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -461,11 +442,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
 		go func() {
-			stop := make(chan struct{})
-			t.Cleanup(func() {
-				close(stop)
-			})
-			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -546,11 +525,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			rule := CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting)
 
 			go func() {
-				stop := make(chan struct{})
-				t.Cleanup(func() {
-					close(stop)
-				})
-				_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
+				ctx, cancel := context.WithCancel(context.Background())
+				t.Cleanup(cancel)
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
 			}()
 
 			evalChan <- &evalContext{
@@ -576,7 +553,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 func TestSchedule_alertRuleInfo(t *testing.T) {
 	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
 		t.Run("Eval should send to evalCh", func(t *testing.T) {
-			r := newAlertRuleInfo()
+			r := newAlertRuleInfo(context.Background())
 			expected := time.Now()
 			resultCh := make(chan bool)
 			version := rand.Int63()
@@ -592,35 +569,43 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 				t.Fatal("No message was received on eval channel")
 			}
 		})
-		t.Run("Stop should close stopCh and set stopped", func(t *testing.T) {
-			r := newAlertRuleInfo()
-			require.True(t, r.Stop())
-			require.True(t, r.stopped)
-			_, ok := <-r.stopCh
-			require.False(t, ok)
+		t.Run("Eval should exit when context is cancelled", func(t *testing.T) {
+			r := newAlertRuleInfo(context.Background())
+			resultCh := make(chan bool)
+			go func() {
+				resultCh <- r.Eval(time.Now(), rand.Int63())
+			}()
+			runtime.Gosched()
+			r.Stop()
+			select {
+			case result := <-resultCh:
+				require.False(t, result)
+			case <-time.After(5 * time.Second):
+				t.Fatal("No message was received on eval channel")
+			}
 		})
 	})
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Eval should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo()
+			r := newAlertRuleInfo(context.Background())
 			r.Stop()
 			require.False(t, r.Eval(time.Now(), rand.Int63()))
 		})
 		t.Run("Stop should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo()
+			r := newAlertRuleInfo(context.Background())
 			r.Stop()
-			require.False(t, r.Stop())
+			r.Stop()
 		})
 	})
 	t.Run("should be thread-safe", func(t *testing.T) {
-		r := newAlertRuleInfo()
+		r := newAlertRuleInfo(context.Background())
 		wg := sync.WaitGroup{}
 		go func() {
 			for {
 				select {
 				case <-r.evalCh:
 					time.Sleep(time.Millisecond)
-				case <-r.stopCh:
+				case <-r.ctx.Done():
 					return
 				}
 			}
