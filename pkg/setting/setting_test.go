@@ -550,7 +550,7 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
 				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, false)
+				assert.Equal(t, AlertingEnabled, true)
 			},
 		},
 	}
