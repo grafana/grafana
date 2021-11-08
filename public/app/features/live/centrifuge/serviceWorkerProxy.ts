@@ -6,15 +6,13 @@ import * as comlink from 'comlink';
 import { asyncScheduler, Observable, observeOn } from 'rxjs';
 import { LiveChannelAddress, LiveChannelConfig, LiveChannelEvent } from '@grafana/data';
 import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
-import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
+import { createWorker } from './createCentrifugeServiceWorker';
 
 export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
   private centrifugeWorker;
 
   constructor(deps: CentrifugeSrvDeps) {
-    this.centrifugeWorker = comlink.wrap<RemoteCentrifugeService>(
-      new Worker(new URL('./service.worker.ts', import.meta.url)) as comlink.Endpoint
-    );
+    this.centrifugeWorker = comlink.wrap<RemoteCentrifugeService>(createWorker() as comlink.Endpoint);
     this.centrifugeWorker.initialize(deps, comlink.proxy(deps.dataStreamSubscriberReadiness));
   }
 

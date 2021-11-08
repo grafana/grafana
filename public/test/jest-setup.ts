@@ -2,6 +2,7 @@ import { configure } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import $ from 'jquery';
 import 'mutationobserver-shim';
+import './mocks/workers';
 
 const global = window as any;
 global.$ = global.jQuery = $;

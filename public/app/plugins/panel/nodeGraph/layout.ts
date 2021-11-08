@@ -4,7 +4,7 @@ import { Field } from '@grafana/data';
 import { useNodeLimit } from './useNodeLimit';
 import useMountedState from 'react-use/lib/useMountedState';
 import { graphBounds } from './utils';
-import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
+import { createWorker } from './createLayoutWorker';
 
 export interface Config {
   linkDistance: number;
@@ -134,7 +134,7 @@ function defaultLayout(
   edges: EdgeDatum[],
   done: (data: { nodes: NodeDatum[]; edges: EdgeDatum[] }) => void
 ) {
-  const worker = new Worker(new URL('./layout.worker.js', import.meta.url));
+  const worker = createWorker();
   worker.onmessage = (event: MessageEvent<{ nodes: NodeDatum[]; edges: EdgeDatumLayout[] }>) => {
     for (let i = 0; i < nodes.length; i++) {
       // These stats needs to be Field class but the data is stringified over the worker boundary
