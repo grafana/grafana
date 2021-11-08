@@ -6,13 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -20,9 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
 )
 
 // SetupTestEnv initializes a store to used by the tests.
