@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/hashicorp/go-version"
 )
 
@@ -30,25 +29,25 @@ func (m *PluginManager) checkForUpdates() {
 	pluginSlugs := m.externalPluginIDsAsCSV()
 	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + m.cfg.BuildVersion)
 	if err != nil {
-		log.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
+		m.log.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
 		return
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Warn("Failed to close response body", "err", err)
+			m.log.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Debug("Update check failed, reading response from grafana.com", "error", err.Error())
+		m.log.Debug("Update check failed, reading response from grafana.com", "error", err.Error())
 		return
 	}
 
 	var gcomPlugins []gcomPlugin
 	err = json.Unmarshal(body, &gcomPlugins)
 	if err != nil {
-		log.Debug("Failed to unmarshal plugin repo, reading response from grafana.com", "error", err.Error())
+		m.log.Debug("Failed to unmarshal plugin repo, reading response from grafana.com", "error", err.Error())
 		return
 	}
 

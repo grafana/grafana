@@ -210,6 +210,20 @@ describe('Graphite actions', async () => {
     });
   });
 
+  it('current time range is passed when getting list of tags when editing', async () => {
+    const currentRange = { from: 0, to: 1 };
+    ctx.state.range = currentRange;
+    await getTagsSelectables(ctx.state, 0, 'any');
+    expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange });
+  });
+
+  it('current time range is passed when getting list of tags for adding', async () => {
+    const currentRange = { from: 0, to: 1 };
+    ctx.state.range = currentRange;
+    await getTagsAsSegmentsSelectables(ctx.state, 'any');
+    expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange });
+  });
+
   describe('when autocomplete for metric names is not available', () => {
     silenceConsoleOutput();
     beforeEach(() => {
