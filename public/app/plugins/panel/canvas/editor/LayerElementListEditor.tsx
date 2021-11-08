@@ -14,6 +14,7 @@ import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from 'app/features/canvas/runtime/group';
 import { LayerEditorProps } from './layerEditor';
 import { SelectionParams } from 'app/features/canvas/runtime/scene';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 type Props = StandardEditorProps<any, LayerEditorProps, PanelOptions>;
 
@@ -129,6 +130,21 @@ export class LayerElementListEditor extends PureComponent<Props> {
     this.deleteGroup();
   };
 
+  private onDecoupleGroup = () => {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Decouple group',
+        text: `Are you sure you want to decouple this group?`,
+        text2: 'This will remove the group and push nested elements in the next level up.',
+        confirmText: 'Yes',
+        yesText: 'Decouple',
+        onConfirm: async () => {
+          this.decoupleGroup();
+        },
+      })
+    );
+  };
+
   private deleteGroup = () => {
     const settings = this.props.item.settings;
 
@@ -140,6 +156,22 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     layer.parent?.doAction(LayerActionID.Delete, layer);
     this.goUpLayer();
+  };
+
+  private onDeleteGroup = () => {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete group',
+        text: `Are you sure you want to delete this group?`,
+        text2: 'This will delete the group and all nested elements.',
+        icon: 'trash-alt',
+        confirmText: 'Delete',
+        yesText: 'Delete',
+        onConfirm: async () => {
+          this.deleteGroup();
+        },
+      })
+    );
   };
 
   render() {
@@ -164,26 +196,10 @@ export class LayerElementListEditor extends PureComponent<Props> {
             <Button size="sm" variant="secondary" onClick={() => this.onSelect(layer)}>
               Select Group
             </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                if (window.confirm('Are you sure? This will remove group and push elements in next level up')) {
-                  this.decoupleGroup();
-                }
-              }}
-            >
+            <Button size="sm" variant="secondary" onClick={() => this.onDecoupleGroup()}>
               Decouple Group
             </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                if (window.confirm('Are you sure? This will delete group and all nested elements')) {
-                  this.deleteGroup();
-                }
-              }}
-            >
+            <Button size="sm" variant="secondary" onClick={() => this.onDeleteGroup()}>
               Delete Group
             </Button>
           </>

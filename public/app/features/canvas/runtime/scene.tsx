@@ -45,7 +45,7 @@ export class Scene {
   selecto?: Selecto;
   moveable?: Moveable;
   div?: HTMLDivElement;
-  currentLayer: GroupState | undefined = undefined;
+  currentLayer?: GroupState;
 
   constructor(cfg: CanvasGroupOptions, enableEditing: boolean, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = this.load(cfg, enableEditing);
