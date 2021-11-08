@@ -2,100 +2,200 @@ package datamigrations
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/runner"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-type secretsColumn struct {
-	Table string
-	Name  string
+type simpleSecret struct {
+	tableName       string
+	columnName      string
+	isBase64Encoded bool
 }
 
-var secretColumnsToMigrate = []secretsColumn{
-	{Table: "alert_configuration", Name: "alertmanager_configuration"},
+func (s simpleSecret) migrate(secretsSrv *manager.SecretsService, sess *sqlstore.DBSession) error {
+	var rows []struct {
+		Id     int
+		Secret string
+	}
+
+	selectSQL := fmt.Sprintf("SELECT id, %s as secret FROM %s", s.columnName, s.tableName)
+	if err := sess.SQL(selectSQL).Find(&rows); err != nil {
+		return err
+	}
+
+	for _, row := range rows {
+		if len(row.Secret) == 0 {
+			continue
+		}
+
+		var (
+			err     error
+			decoded = []byte(row.Secret)
+		)
+
+		if s.isBase64Encoded {
+			decoded, err = base64.StdEncoding.DecodeString(row.Secret)
+			if err != nil {
+				return err
+			}
+		}
+
+		decrypted, err := secretsSrv.Decrypt(context.Background(), decoded)
+		if err != nil {
+			return err
+		}
+
+		encrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
+		if err != nil {
+			return err
+		}
+
+		updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
+		if _, err := sess.Exec(updateSQL, encrypted, row.Id); err != nil {
+			return err
+		}
+	}
+
+	logger.Infof("Column %s from %s has been re-encrypted successfully\n", s.columnName, s.tableName)
+
+	return nil
 }
 
-// MigrateSecrets migrates symmetric encrypted
-// secrets into envelope encryption.
+type jsonSecret struct {
+	tableName string
+}
+
+func (s jsonSecret) migrate(secretsSrv *manager.SecretsService, sess *sqlstore.DBSession) error {
+	var rows []struct {
+		Id             int
+		SecureJsonData map[string][]byte
+	}
+
+	selectSQL := fmt.Sprintf("SELECT id, secure_json_data FROM %s", s.tableName)
+	if err := sess.SQL(selectSQL).Find(&rows); err != nil {
+		return err
+	}
+
+	for _, row := range rows {
+		if len(row.SecureJsonData) == 0 {
+			continue
+		}
+
+		decrypted, err := secretsSrv.DecryptJsonData(context.Background(), row.SecureJsonData)
+		if err != nil {
+			return err
+		}
+
+		var toUpdate struct {
+			SecureJsonData map[string][]byte
+		}
+
+		toUpdate.SecureJsonData, err = secretsSrv.EncryptJsonDataWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
+		if err != nil {
+			return err
+		}
+
+		if _, err := sess.Table(s.tableName).Update(toUpdate); err != nil {
+			return err
+		}
+	}
+
+	logger.Infof("Secure json data from %s has been re-encrypted successfully\n", s.tableName)
+
+	return nil
+}
+
+type alertingSecret struct{}
+
+func (s alertingSecret) migrate(secretsSrv *manager.SecretsService, sess *sqlstore.DBSession) error {
+	var results []struct {
+		Id                        int
+		AlertmanagerConfiguration []byte
+	}
+
+	selectSQL := "SELECT id, alertmanager_configuration FROM alert_configuration"
+	if err := sess.SQL(selectSQL).Find(&results); err != nil {
+		return err
+	}
+
+	for _, result := range results {
+		postableUserConfig, err := notifier.Load(result.AlertmanagerConfiguration)
+		if err != nil {
+			return err
+		}
+
+		for _, receiver := range postableUserConfig.AlertmanagerConfig.Receivers {
+			for _, gmr := range receiver.GrafanaManagedReceivers {
+				for k, v := range gmr.SecureSettings {
+					decoded, err := base64.StdEncoding.DecodeString(v)
+					if err != nil {
+						return err
+					}
+
+					decrypted, err := secretsSrv.Decrypt(context.Background(), decoded)
+					if err != nil {
+						return err
+					}
+
+					reencrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
+					if err != nil {
+						return err
+					}
+
+					gmr.SecureSettings[k] = base64.StdEncoding.EncodeToString(reencrypted)
+				}
+			}
+		}
+
+		result.AlertmanagerConfiguration, err = json.Marshal(postableUserConfig)
+		if err != nil {
+			return err
+		}
+
+		if _, err := sess.Table("alert_configuration").Update(&result); err != nil {
+			return err
+		}
+	}
+
+	logger.Info("Alerting secrets has been re-encrypted successfully\n")
+
+	return nil
+}
+
 func MigrateSecrets(_ utils.CommandLine, runner runner.Runner) error {
-	return runner.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if err := migrateEncryptedColumns(runner.SecretsService, sess); err != nil {
-			return err
-		}
+	if !runner.SettingsProvider.IsFeatureToggleEnabled("envelopeEncryption") {
+		logger.Warn("Envelope encryption is not enabled, quitting...")
+		return nil
+	}
 
-		encryptedJSONColumns := []secretsColumn{
-			{Table: "alert_notification", Name: "secure_settings"},
-			{Table: "data_source", Name: "secure_json_data"},
-		}
-		if err := migrateEncryptedJSONColumns(sess, encryptedJSONColumns); err != nil {
-			return err
+	toMigrate := []interface {
+		migrate(*manager.SecretsService, *sqlstore.DBSession) error
+	}{
+		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted", isBase64Encoded: false},
+		simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token", isBase64Encoded: true},
+		simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token", isBase64Encoded: true},
+		simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type", isBase64Encoded: true},
+		jsonSecret{tableName: "data_source"},
+		jsonSecret{tableName: "plugin_setting"},
+		alertingSecret{},
+	}
+
+	return runner.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		for _, m := range toMigrate {
+			if err := m.migrate(runner.SecretsService, sess); err != nil {
+				return err
+			}
 		}
 
 		return nil
 	})
-}
-
-func migrateEncryptedColumns(secretsSrv secrets.Service, sess *sqlstore.DBSession) error {
-	cols := []secretsColumn{
-		{Table: "dashboard_snapshot", Name: "dashboard_encrypted"},
-		{Table: "user_auth", Name: "o_auth_access_token"},
-		{Table: "user_auth", Name: "o_auth_refresh_token"},
-		{Table: "user_auth", Name: "o_auth_token_type"},
-		{Table: "user_auth", Name: "o_auth_token_type"},
-	}
-
-	for _, col := range cols {
-		var rows []struct {
-			Id     int
-			Secret string
-		}
-
-		// 1. Fetch all rows with its id
-		selectSQL := fmt.Sprintf("SELECT id, %s as secret FROM %s", col.Name, col.Table)
-		if err := sess.SQL(selectSQL).Find(&rows); err != nil {
-			return err
-		}
-
-		// 2. Re-encrypt the secret of each row
-		for _, row := range rows {
-			encrypted, err := migrateSecretsColumn(secretsSrv, row.Secret)
-			if err != nil {
-				return err
-			}
-
-			if _, err := sess.Table(col.Table).ID(selectSQL).Update(&row); err != nil {
-				return err
-			}
-
-			row.Secret = encrypted
-		}
-	}
-
-	return nil
-}
-
-func migrateEncryptedJSONColumns(sess *sqlstore.DBSession, cols []secretsColumn) error {
-	for _, col := range cols {
-		fmt.Println(col)
-	}
-
-	return nil
-}
-
-func migrateSecretsColumn(secretsSrv secrets.Service, secret string) (string, error) {
-	decrypted, err := secretsSrv.Decrypt(context.Background(), []byte(secret))
-	if err != nil {
-		return "", err
-	}
-
-	encrypted, err := secretsSrv.Encrypt(context.Background(), decrypted, secrets.WithoutScope())
-	if err != nil {
-		return "", err
-	}
-
-	return string(encrypted), nil
 }
