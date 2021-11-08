@@ -1,12 +1,8 @@
 import angular from 'angular';
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import { assign } from 'lodash';
 
-import {
-  AngularComponent,
-  AngularLoader as AngularLoaderInterface,
-  setAngularLoader as setAngularLoaderInterface,
-} from '@grafana/runtime';
+import { AngularComponent, AngularLoader as AngularLoaderInterface } from '@grafana/runtime';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class AngularLoader implements AngularLoaderInterface {
@@ -37,10 +33,6 @@ export class AngularLoader implements AngularLoaderInterface {
       },
     };
   }
-}
-
-export function setAngularLoader(v: AngularLoader) {
-  setAngularLoaderInterface(v);
 }
 
 coreModule.service('angularLoader', AngularLoader);

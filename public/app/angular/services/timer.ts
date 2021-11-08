@@ -1,5 +1,5 @@
 import { without, each } from 'lodash';
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import { ITimeoutService } from 'angular';
 
 // This service really just tracks a list of $timeout promises to give us a
