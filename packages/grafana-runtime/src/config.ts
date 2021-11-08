@@ -67,7 +67,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     tempoServiceGraph: false,
     tempoSearch: false,
     recordedQueries: false,
-    prometheusMonaco: false,
     newNavigation: false,
     fullRangeLogsVolume: false,
     autoLoadFullRangeLogsVolume: false,

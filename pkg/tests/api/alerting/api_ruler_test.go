@@ -245,6 +245,24 @@ func TestAlertRulePermissions(t *testing.T) {
 		}`
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 	}
+
+	// Remove permissions from ALL folders.
+	require.NoError(t, store.UpdateDashboardACL(1, nil))
+	{
+		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(u)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, resp.StatusCode, 200)
+		require.JSONEq(t, `{}`, string(b))
+	}
 }
 
 func createRule(t *testing.T, grafanaListedAddr string, folder string, user, password string) {

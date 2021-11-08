@@ -2772,7 +2772,7 @@ __metadata:
     is-hotkey: 0.1.6
     jquery: 3.5.1
     lodash: 4.17.21
-    memoize-one: 5.1.1
+    memoize-one: 6.0.0
     mock-raf: 1.0.1
     moment: 2.29.1
     monaco-editor: 0.27.0
@@ -2923,7 +2923,7 @@ __metadata:
     json-markup: ^1.1.0
     lodash: 4.17.21
     lru-memoize: ^1.1.0
-    memoize-one: ^5.0.0
+    memoize-one: 6.0.0
     moment: 2.29.1
     moment-timezone: 0.5.33
     prop-types: 15.7.2
@@ -18001,8 +18001,8 @@ __metadata:
     lint-staged: 11.2.6
     lodash: 4.17.21
     logfmt: ^1.3.2
-    lru-cache: ^5.1.1
-    memoize-one: 5.1.1
+    lru-cache: 6.0.0
+    memoize-one: 6.0.0
     mini-css-extract-plugin: 2.4.2
     module-alias: 2.2.2
     moment: 2.29.1
@@ -22227,6 +22227,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lru-cache@npm:6.0.0, lru-cache@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "lru-cache@npm:6.0.0"
+  dependencies:
+    yallist: ^4.0.0
+  checksum: f97f499f898f23e4585742138a22f22526254fdba6d75d41a1c2526b3b6cc5747ef59c5612ba7375f42aca4f8461950e925ba08c991ead0651b4918b7c978297
+  languageName: node
+  linkType: hard
+
 "lru-cache@npm:^4.0.1":
   version: 4.1.5
   resolution: "lru-cache@npm:4.1.5"
@@ -22243,15 +22252,6 @@ __metadata:
   dependencies:
     yallist: ^3.0.2
   checksum: c154ae1cbb0c2206d1501a0e94df349653c92c8cbb25236d7e85190bcaf4567a03ac6eb43166fabfa36fd35623694da7233e88d9601fbf411a9a481d85dbd2cb
-  languageName: node
-  linkType: hard
-
-"lru-cache@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "lru-cache@npm:6.0.0"
-  dependencies:
-    yallist: ^4.0.0
-  checksum: f97f499f898f23e4585742138a22f22526254fdba6d75d41a1c2526b3b6cc5747ef59c5612ba7375f42aca4f8461950e925ba08c991ead0651b4918b7c978297
   languageName: node
   linkType: hard
 
@@ -22617,10 +22617,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"memoize-one@npm:5.1.1":
-  version: 5.1.1
-  resolution: "memoize-one@npm:5.1.1"
-  checksum: 51a8e96cd94614909e1656843ecb9307440fbfa64994be12978bb30bc190f8e66010cb7a35d3ee641a52302ce701dcea990b636ea2ef3c1cf94a50b4651f5446
+"memoize-one@npm:6.0.0":
+  version: 6.0.0
+  resolution: "memoize-one@npm:6.0.0"
+  checksum: f185ea69f7cceae5d1cb596266dcffccf545e8e7b4106ec6aa93b71ab9d16460dd118ac8b12982c55f6d6322fcc1485de139df07eacffaae94888b9b3ad7675f
   languageName: node
   linkType: hard
 
