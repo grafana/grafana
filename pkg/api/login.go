@@ -156,7 +156,7 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 	}
 	for key := range oauthInfos {
 		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
-		oauthLogger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+		c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
 	}

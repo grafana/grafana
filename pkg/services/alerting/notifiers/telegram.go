@@ -250,11 +250,11 @@ func generateImageCaption(evalContext *alerting.EvalContext, ruleURL string, met
 	return message
 }
 
-func appendIfPossible(log log.Logger, message string, extra string, sizeLimit int) string {
+func appendIfPossible(tlog log.Logger, message string, extra string, sizeLimit int) string {
 	if len(extra)+len(message) <= sizeLimit {
 		return message + extra
 	}
-	log.Debug("Line too long for image caption.", "value", extra)
+	tlog.Debug("Line too long for image caption.", "value", extra)
 	return message
 }
 
