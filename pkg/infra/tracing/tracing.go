@@ -10,10 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 
+	"go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
-	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -40,14 +40,13 @@ func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 }
 
 type TracingService struct {
-	enabled           bool
-	address           string
-	customTags        map[string]string
-	samplerType       string
-	samplerParam      float64
-	samplingServerURL string
-	log               log.Logger
-	// closer                   io.Closer
+	enabled                  bool
+	address                  string
+	customTags               map[string]string
+	samplerType              string
+	samplerParam             float64
+	samplingServerURL        string
+	log                      log.Logger
 	zipkinPropagation        bool
 	disableSharedZipkinSpans bool
 	tracerProvider           *tracesdk.TracerProvider
@@ -55,32 +54,35 @@ type TracingService struct {
 	Cfg *setting.Cfg
 }
 
-// TODO: change settings according to opentelemetry configuration
 func (ts *TracingService) parseSettings() error {
-	var section, err = ts.Cfg.Raw.GetSection("tracing.jaeger")
+	// TODO to add other distributed tracing systems
+	return ts.parseJaegerSettings()
+}
+
+func (ts *TracingService) parseJaegerSettings() error {
+	section, err := ts.Cfg.Raw.GetSection("tracing.jaeger")
 	if err != nil {
 		return err
 	}
-
 	ts.address = section.Key("address").MustString("")
-	if ts.address == "" {
-		host := os.Getenv(envJaegerAgentHost)
-		port := os.Getenv(envJaegerAgentPort)
-		if host != "" || port != "" {
-			ts.address = fmt.Sprintf("%s:%s", host, port)
-		}
-	}
-	if ts.address == "" {
-		ts.address = "http://localhost:14268/api/traces"
+
+	host := os.Getenv(envJaegerAgentHost)
+	port := os.Getenv(envJaegerAgentPort)
+	if host != "" || port != "" {
+		ts.address = fmt.Sprintf("%s:%s", host, port)
 	}
 
-	ts.enabled = true
+	if ts.address != "" {
+		ts.enabled = true
+	}
+
 	ts.customTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
 	ts.samplerType = section.Key("sampler_type").MustString("")
 	ts.samplerParam = section.Key("sampler_param").MustFloat64(1)
 	ts.zipkinPropagation = section.Key("zipkin_propagation").MustBool(false)
 	ts.disableSharedZipkinSpans = section.Key("disable_shared_zipkin_spans").MustBool(false)
 	ts.samplingServerURL = section.Key("sampling_server_url").MustString("")
+
 	return nil
 }
 
@@ -90,6 +92,7 @@ func (ts *TracingService) initJaegerCfg() (*tracesdk.TracerProvider, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	tp := tracesdk.NewTracerProvider(
 		// Always be sure to batch in production.
 		tracesdk.WithBatcher(exp),
@@ -99,9 +102,10 @@ func (ts *TracingService) initJaegerCfg() (*tracesdk.TracerProvider, error) {
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String("grafana"),
 			attribute.String("environment", "production"),
-			// attribute.Int64("ID", 11),
 		)),
+		tracesdk.WithSampler(tracesdk.TraceIDRatioBased(ts.samplerParam)),
 	)
+
 	return tp, nil
 }
 
@@ -111,11 +115,17 @@ func (ts *TracingService) initGlobalTracer() error {
 		return err
 	}
 	// Register our TracerProvider as the global so any imported
-	// instrumentation in the future will default to using it.
-	otel.SetTracerProvider(tp)
+	// instrumentation in the future will default to using it
+	// only if tracing is enabled
+	if ts.enabled {
+		otel.SetTracerProvider(tp)
+	}
 
-	Tracer = tp.Tracer("component-main")
-	otel.SetTextMapPropagator(propagation.TraceContext{})
+	Tracer = otel.GetTracerProvider().Tracer("component-main")
+
+	if ts.zipkinPropagation {
+		otel.SetTextMapPropagator(b3.New())
+	}
 
 	return nil
 }
