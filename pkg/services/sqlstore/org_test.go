@@ -141,7 +141,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
-			ac3cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true, IsServiceAccount: true}
+			ac3cmd := models.CreateUserCommand{Login: "ac3", Email: "ac3@test.com", Name: "ac3 name", IsAdmin: true, IsServiceAccount: true}
 
 			ac1, err := sqlStore.CreateUser(context.Background(), ac1cmd)
 			require.NoError(t, err)
