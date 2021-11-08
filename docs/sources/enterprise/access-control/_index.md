@@ -25,14 +25,19 @@ To grant or revoke access to your users, create or remove built-in role assignme
 
 ## Resources with fine-grained permissions
 
-Fine-grained access control is currently available for [Reporting]({{< relref "../reporting.md" >}}) and [Managing Users]({{< relref "../../manage-users/_index.md" >}}).
-To learn more about specific endpoints where you can use access control, refer to [Permissions]({{< relref "./permissions.md" >}}) and to the relevant API guide:
+Fine-grained access control is available for the following capabilities:
 
-- [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}})
-- [Admin API]({{< relref "../../http_api/admin.md" >}})
-- [Organization API]({{< relref "../../http_api/org.md" >}})
-- [Reporting API]({{< relref "../../http_api/reporting.md" >}})
-- [User API]({{< relref "../../http_api/user.md" >}})
+- [Use Explore mode]({{< relref "../../explore/_index.md" >}})
+- [Manage users]({{< relref "../../manage-users/_index.md" >}})
+- [Manage LDAP authentication]({{< relref "../../auth/ldap/_index.md" >}})
+- [Manage data sources]({{< relref "../../datasources/_index.md" >}})
+- [Manage data source permissions]({{< relref "../datasource_permissions.md" >}})
+- [Manage a Grafana Enterprise license]({{< relref "../license/_index.md" >}})
+- [Provision Grafana]({{< relref "../../administration/provisioning/_index.md" >}})
+- [Manage reports]({{< relref "../reporting.md" >}})
+- [View server information]({{< relref "../../administration/view-server/_index.md" >}})
+
+To learn about specific endpoints where you can use fine-grained access control, refer to [Permissions]({{< relref "./permissions.md" >}}) and to the relevant [API]({{< relref "../../http_api/_index.md" >}}) documentation.
 
 ## Enable fine-grained access control
 
