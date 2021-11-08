@@ -33,7 +33,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   return {
     grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
     pluginDependencies: dependencies?.plugins || [],
-    links: remote?.json?.info.links || local?.info.links || [],
+    links: local?.info.links || remote?.json?.info.links || [],
     readme: localReadme || remote?.readme,
     versions,
   };
