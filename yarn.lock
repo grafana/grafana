@@ -2772,7 +2772,7 @@ __metadata:
     is-hotkey: 0.1.6
     jquery: 3.5.1
     lodash: 4.17.21
-    memoize-one: 5.1.1
+    memoize-one: 6.0.0
     mock-raf: 1.0.1
     moment: 2.29.1
     monaco-editor: 0.27.0
@@ -2923,7 +2923,7 @@ __metadata:
     json-markup: ^1.1.0
     lodash: 4.17.21
     lru-memoize: ^1.1.0
-    memoize-one: ^5.0.0
+    memoize-one: 6.0.0
     moment: 2.29.1
     moment-timezone: 0.5.33
     prop-types: 15.7.2
@@ -18002,7 +18002,7 @@ __metadata:
     lodash: 4.17.21
     logfmt: ^1.3.2
     lru-cache: 6.0.0
-    memoize-one: 5.1.1
+    memoize-one: 6.0.0
     mini-css-extract-plugin: 2.4.2
     module-alias: 2.2.2
     moment: 2.29.1
@@ -22617,10 +22617,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"memoize-one@npm:5.1.1":
-  version: 5.1.1
-  resolution: "memoize-one@npm:5.1.1"
-  checksum: 51a8e96cd94614909e1656843ecb9307440fbfa64994be12978bb30bc190f8e66010cb7a35d3ee641a52302ce701dcea990b636ea2ef3c1cf94a50b4651f5446
+"memoize-one@npm:6.0.0":
+  version: 6.0.0
+  resolution: "memoize-one@npm:6.0.0"
+  checksum: f185ea69f7cceae5d1cb596266dcffccf545e8e7b4106ec6aa93b71ab9d16460dd118ac8b12982c55f6d6322fcc1485de139df07eacffaae94888b9b3ad7675f
   languageName: node
   linkType: hard
 
