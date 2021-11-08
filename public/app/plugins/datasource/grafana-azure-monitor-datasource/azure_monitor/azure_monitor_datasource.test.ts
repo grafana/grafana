@@ -2,7 +2,9 @@ import AzureMonitorDatasource from '../datasource';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { AzureDataSourceJsonData, DatasourceValidationResult } from '../types';
+import { AzureDataSourceJsonData, AzureQueryType, DatasourceValidationResult } from '../types';
+import createMockQuery from '../__mocks__/query';
+import { singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 
 const templateSrv = new TemplateSrv();
 
@@ -73,358 +75,6 @@ describe('AzureMonitorDatasource', () => {
       });
     });
   });
-
-  describe('When performing metricFindQuery', () => {
-    describe('with a subscriptions query', () => {
-      const response = {
-        value: [
-          { displayName: 'Primary', subscriptionId: 'sub1' },
-          { displayName: 'Secondary', subscriptionId: 'sub2' },
-        ],
-      };
-
-      beforeEach(() => {
-        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
-      });
-
-      it('should return a list of subscriptions', async () => {
-        const results = await ctx.ds.metricFindQuery('subscriptions()');
-        expect(results.length).toBe(2);
-        expect(results[0].text).toBe('Primary');
-        expect(results[0].value).toBe('sub1');
-        expect(results[1].text).toBe('Secondary');
-        expect(results[1].value).toBe('sub2');
-      });
-    });
-
-    describe('with a resource groups query', () => {
-      const response = {
-        value: [{ name: 'grp1' }, { name: 'grp2' }],
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
-      });
-
-      it('should return a list of resource groups', async () => {
-        const results = await ctx.ds.metricFindQuery('ResourceGroups()');
-        expect(results.length).toBe(2);
-        expect(results[0].text).toBe('grp1');
-        expect(results[0].value).toBe('grp1');
-        expect(results[1].text).toBe('grp2');
-        expect(results[1].value).toBe('grp2');
-      });
-    });
-
-    describe('with a resource groups query that specifies a subscription id', () => {
-      const response = {
-        value: [{ name: 'grp1' }, { name: 'grp2' }],
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          expect(path).toContain('11112222-eeee-4949-9b2d-9106972f9123');
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of resource groups', async () => {
-        const results = await ctx.ds.metricFindQuery('ResourceGroups(11112222-eeee-4949-9b2d-9106972f9123)');
-        expect(results.length).toBe(2);
-        expect(results[0].text).toBe('grp1');
-        expect(results[0].value).toBe('grp1');
-        expect(results[1].text).toBe('grp2');
-        expect(results[1].value).toBe('grp2');
-      });
-    });
-
-    describe('with namespaces query', () => {
-      const response = {
-        value: [
-          {
-            name: 'test',
-            type: 'Microsoft.Network/networkInterfaces',
-          },
-        ],
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(path).toBe(basePath + '/nodesapp/resources?api-version=2018-01-01');
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of namespaces', async () => {
-        const results = await ctx.ds.metricFindQuery('Namespaces(nodesapp)');
-        expect(results.length).toEqual(1);
-        expect(results[0].text).toEqual('Network interface');
-        expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
-      });
-    });
-
-    describe('with namespaces query that specifies a subscription id', () => {
-      const response = {
-        value: [
-          {
-            name: 'test',
-            type: 'Microsoft.Network/networkInterfaces',
-          },
-        ],
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
-          expect(path).toBe(basePath + '/nodesapp/resources?api-version=2018-01-01');
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of namespaces', async () => {
-        const results = await ctx.ds.metricFindQuery('namespaces(11112222-eeee-4949-9b2d-9106972f9123, nodesapp)');
-        expect(results.length).toEqual(1);
-        expect(results[0].text).toEqual('Network interface');
-        expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
-      });
-    });
-
-    describe('with resource names query', () => {
-      const response = {
-        value: [
-          {
-            name: 'Failure Anomalies - nodeapp',
-            type: 'microsoft.insights/alertrules',
-          },
-          {
-            name: 'nodeapp',
-            type: 'microsoft.insights/components',
-          },
-        ],
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(path).toBe(basePath + '/nodeapp/resources?api-version=2018-01-01');
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of resource names', async () => {
-        const results = await ctx.ds.metricFindQuery('resourceNames(nodeapp, microsoft.insights/components )');
-        expect(results.length).toEqual(1);
-        expect(results[0].text).toEqual('nodeapp');
-        expect(results[0].value).toEqual('nodeapp');
-      });
-    });
-
-    describe('with resource names query and that specifies a subscription id', () => {
-      const response = {
-        value: [
-          {
-            name: 'Failure Anomalies - nodeapp',
-            type: 'microsoft.insights/alertrules',
-          },
-          {
-            name: 'nodeapp',
-            type: 'microsoft.insights/components',
-          },
-        ],
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
-          expect(path).toBe(basePath + '/nodeapp/resources?api-version=2018-01-01');
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of resource names', () => {
-        return ctx.ds
-          .metricFindQuery(
-            'resourceNames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components )'
-          )
-          .then((results: any) => {
-            expect(results.length).toEqual(1);
-            expect(results[0].text).toEqual('nodeapp');
-            expect(results[0].value).toEqual('nodeapp');
-          });
-      });
-    });
-
-    describe('with metric names query', () => {
-      const response = {
-        value: [
-          {
-            name: {
-              value: 'Percentage CPU',
-              localizedValue: 'Percentage CPU',
-            },
-          },
-          {
-            name: {
-              value: 'UsedCapacity',
-              localizedValue: 'Used capacity',
-            },
-          },
-        ],
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(path).toBe(
-            basePath +
-              '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
-              'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
-          );
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of metric names', async () => {
-        const results = await ctx.ds.metricFindQuery(
-          'Metricnames(nodeapp, microsoft.insights/components, rn, default)'
-        );
-        expect(results.length).toEqual(2);
-        expect(results[0].text).toEqual('Percentage CPU');
-        expect(results[0].value).toEqual('Percentage CPU');
-
-        expect(results[1].text).toEqual('Used capacity');
-        expect(results[1].value).toEqual('UsedCapacity');
-      });
-    });
-
-    describe('with metric names query and specifies a subscription id', () => {
-      const response = {
-        value: [
-          {
-            name: {
-              value: 'Percentage CPU',
-              localizedValue: 'Percentage CPU',
-            },
-          },
-          {
-            name: {
-              value: 'UsedCapacity',
-              localizedValue: 'Used capacity',
-            },
-          },
-        ],
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
-          expect(path).toBe(
-            basePath +
-              '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
-              'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
-          );
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of metric names', async () => {
-        const results = await ctx.ds.metricFindQuery(
-          'Metricnames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components, rn, default)'
-        );
-        expect(results.length).toEqual(2);
-        expect(results[0].text).toEqual('Percentage CPU');
-        expect(results[0].value).toEqual('Percentage CPU');
-
-        expect(results[1].text).toEqual('Used capacity');
-        expect(results[1].value).toEqual('UsedCapacity');
-      });
-    });
-
-    describe('with metric namespace query', () => {
-      const response = {
-        value: [
-          {
-            name: 'Microsoft.Compute-virtualMachines',
-            properties: {
-              metricNamespaceName: 'Microsoft.Compute/virtualMachines',
-            },
-          },
-          {
-            name: 'Telegraf-mem',
-            properties: {
-              metricNamespaceName: 'Telegraf/mem',
-            },
-          },
-        ],
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(path).toBe(
-            basePath +
-              '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
-          );
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of metric names', async () => {
-        const results = await ctx.ds.metricFindQuery('Metricnamespace(nodeapp, Microsoft.Compute/virtualMachines, rn)');
-        expect(results.length).toEqual(2);
-        expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
-        expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
-
-        expect(results[1].text).toEqual('Telegraf-mem');
-        expect(results[1].value).toEqual('Telegraf/mem');
-      });
-    });
-
-    describe('with metric namespace query and specifies a subscription id', () => {
-      const response = {
-        value: [
-          {
-            name: 'Microsoft.Compute-virtualMachines',
-            properties: {
-              metricNamespaceName: 'Microsoft.Compute/virtualMachines',
-            },
-          },
-          {
-            name: 'Telegraf-mem',
-            properties: {
-              metricNamespaceName: 'Telegraf/mem',
-            },
-          },
-        ],
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
-          expect(path).toBe(
-            basePath +
-              '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
-          );
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of metric namespaces', async () => {
-        const results = await ctx.ds.metricFindQuery(
-          'Metricnamespace(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, Microsoft.Compute/virtualMachines, rn)'
-        );
-        expect(results.length).toEqual(2);
-        expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
-        expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
-
-        expect(results[1].text).toEqual('Telegraf-mem');
-        expect(results[1].value).toEqual('Telegraf/mem');
-      });
-    });
-  });
-
   describe('When performing getSubscriptions', () => {
     const response = {
       value: [
@@ -835,6 +485,36 @@ describe('AzureMonitorDatasource', () => {
             ]
           `);
         });
+    });
+
+    describe('When performing targetContainsTemplate', () => {
+      it('should return false when no variable is being used', () => {
+        const query = createMockQuery();
+        query.queryType = AzureQueryType.AzureMonitor;
+        expect(ctx.ds.targetContainsTemplate(query)).toEqual(false);
+      });
+
+      it('should return true when subscriptions field is using a variable', () => {
+        const query = createMockQuery();
+        const templateSrv = new TemplateSrv();
+        templateSrv.init([subscriptionsVariable]);
+
+        const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+        query.queryType = AzureQueryType.AzureMonitor;
+        query.subscription = `$${subscriptionsVariable.name}`;
+        expect(ds.targetContainsTemplate(query)).toEqual(true);
+      });
+
+      it('should return false when a variable is used in a different part of the query', () => {
+        const query = createMockQuery();
+        const templateSrv = new TemplateSrv();
+        templateSrv.init([singleVariable]);
+
+        const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+        query.queryType = AzureQueryType.AzureMonitor;
+        query.azureLogAnalytics = { resource: `$${singleVariable.name}` };
+        expect(ds.targetContainsTemplate(query)).toEqual(false);
+      });
     });
 
     it('should return an empty array for a Metric that does not have dimensions', () => {

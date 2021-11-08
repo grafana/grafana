@@ -65,6 +65,7 @@ export const getAvailableIcons = () =>
     'external-link-alt',
     'eye',
     'eye-slash',
+    'ellipsis-h',
     'fa fa-spinner',
     'favorite',
     'file-alt',

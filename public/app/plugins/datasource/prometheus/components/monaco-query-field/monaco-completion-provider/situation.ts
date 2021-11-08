@@ -84,39 +84,40 @@ export type Label = {
   op: LabelOperator;
 };
 
-export type Intent =
+export type Situation =
   | {
-      type: 'ALL_METRIC_NAMES';
+      type: 'IN_FUNCTION';
     }
   | {
-      type: 'FUNCTIONS_AND_ALL_METRIC_NAMES';
+      type: 'AT_ROOT';
     }
   | {
-      type: 'HISTORY_AND_FUNCTIONS_AND_ALL_METRIC_NAMES';
+      type: 'EMPTY';
     }
   | {
-      type: 'ALL_DURATIONS';
+      type: 'IN_DURATION';
     }
   | {
-      type: 'LABEL_NAMES_FOR_SELECTOR';
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME';
       metricName?: string;
       otherLabels: Label[];
     }
   | {
-      type: 'LABEL_NAMES_FOR_BY';
+      type: 'IN_GROUPING';
       metricName: string;
       otherLabels: Label[];
     }
   | {
-      type: 'LABEL_VALUES';
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME';
       metricName?: string;
       labelName: string;
+      betweenQuotes: boolean;
       otherLabels: Label[];
     };
 
 type Resolver = {
   path: NodeTypeName[];
-  fun: (node: SyntaxNode, text: string, pos: number) => Intent | null;
+  fun: (node: SyntaxNode, text: string, pos: number) => Situation | null;
 };
 
 function isPathMatch(resolverPath: string[], cursorPath: string[]): boolean {
@@ -139,8 +140,12 @@ const RESOLVERS: Resolver[] = [
     fun: resolveInFunction,
   },
   {
+    path: ['StringLiteral', 'LabelMatcher'],
+    fun: resolveLabelMatcher,
+  },
+  {
     path: [ERROR_NODE_NAME, 'LabelMatcher'],
-    fun: resolveLabelMatcherError,
+    fun: resolveLabelMatcher,
   },
   {
     path: [ERROR_NODE_NAME, 'MatrixSelector'],
@@ -259,7 +264,7 @@ function getNodeInSubtree(node: SyntaxNode, typeName: NodeTypeName): SyntaxNode 
   return null;
 }
 
-function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): Intent | null {
+function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): Situation | null {
   const aggrExpNode = walk(node, [
     ['parent', 'AggregateModifier'],
     ['parent', 'AggregateExpr'],
@@ -284,15 +289,18 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
 
   const metricName = getNodeText(idNode, text);
   return {
-    type: 'LABEL_NAMES_FOR_BY',
+    type: 'IN_GROUPING',
     metricName,
     otherLabels: [],
   };
 }
 
-function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): Intent | null {
-  // we are probably in the scenario where the user is before entering the
-  // label-value, like `{job=^}` (^ marks the cursor)
+function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situation | null {
+  // we can arrive here in two situation. `node` is either:
+  // - a StringNode (like in `{job="^"}`)
+  // - or an error node (like in `{job=^}`)
+  const inStringNode = !node.type.isError;
+
   const parent = walk(node, [['parent', 'LabelMatcher']]);
   if (parent === null) {
     return null;
@@ -344,7 +352,10 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
   }
 
   // now we need to find the other names
-  const otherLabels = getLabels(labelMatchersNode, text);
+  const allLabels = getLabels(labelMatchersNode, text);
+
+  // we need to remove "our" label from all-labels, if it is in there
+  const otherLabels = allLabels.filter((label) => label.name !== labelName);
 
   const metricNameNode = walk(labelMatchersNode, [
     ['parent', 'VectorSelector'],
@@ -355,8 +366,9 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
   if (metricNameNode === null) {
     // we are probably in a situation without a metric name
     return {
-      type: 'LABEL_VALUES',
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       labelName,
+      betweenQuotes: inStringNode,
       otherLabels,
     };
   }
@@ -364,28 +376,29 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
   const metricName = getNodeText(metricNameNode, text);
 
   return {
-    type: 'LABEL_VALUES',
+    type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
     metricName,
     labelName,
+    betweenQuotes: inStringNode,
     otherLabels,
   };
 }
 
-function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Intent {
+function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation {
   return {
-    type: 'FUNCTIONS_AND_ALL_METRIC_NAMES',
+    type: 'AT_ROOT',
   };
 }
 
-function resolveInFunction(node: SyntaxNode, text: string, pos: number): Intent {
+function resolveInFunction(node: SyntaxNode, text: string, pos: number): Situation {
   return {
-    type: 'ALL_METRIC_NAMES',
+    type: 'IN_FUNCTION',
   };
 }
 
-function resolveDurations(node: SyntaxNode, text: string, pos: number): Intent {
+function resolveDurations(node: SyntaxNode, text: string, pos: number): Situation {
   return {
-    type: 'ALL_DURATIONS',
+    type: 'IN_DURATION',
   };
 }
 
@@ -393,14 +406,31 @@ function subTreeHasError(node: SyntaxNode): boolean {
   return getNodeInSubtree(node, ERROR_NODE_NAME) !== null;
 }
 
-function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Intent | null {
+function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
   // for example `something{^}`
 
   // there are some false positives that can end up in this situation, that we want
-  // to eliminate, for example: `something{a~^}`
-  // basically, if this subtree contains any error-node, we stop
+  // to eliminate:
+  // `something{a~^}` (if this subtree contains any error-node, we stop)
   if (subTreeHasError(node)) {
     return null;
+  }
+
+  // next false positive:
+  // `something{a="1"^}`
+  const child = walk(node, [['firstChild', 'LabelMatchList']]);
+  if (child !== null) {
+    // means the label-matching part contains at least one label already.
+    //
+    // in this case, we will need to have a `,` character at the end,
+    // to be able to suggest adding the next label.
+    // the area between the end-of-the-child-node and the cursor-pos
+    // must contain a `,` in this case.
+    const textToCheck = text.slice(child.to, pos);
+
+    if (!textToCheck.includes(',')) {
+      return null;
+    }
   }
 
   const metricNameNode = walk(node, [
@@ -414,7 +444,7 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
   if (metricNameNode === null) {
     // we are probably in a situation without a metric name.
     return {
-      type: 'LABEL_NAMES_FOR_SELECTOR',
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels,
     };
   }
@@ -422,7 +452,7 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
   const metricName = getNodeText(metricNameNode, text);
 
   return {
-    type: 'LABEL_NAMES_FOR_SELECTOR',
+    type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
     metricName,
     otherLabels,
   };
@@ -451,13 +481,13 @@ function getErrorNode(tree: Tree, pos: number): SyntaxNode | null {
   return null;
 }
 
-export function getIntent(text: string, pos: number): Intent | null {
+export function getSituation(text: string, pos: number): Situation | null {
   // there is a special-case when we are at the start of writing text,
   // so we handle that case first
 
   if (text === '') {
     return {
-      type: 'HISTORY_AND_FUNCTIONS_AND_ALL_METRIC_NAMES',
+      type: 'EMPTY',
     };
   }
 

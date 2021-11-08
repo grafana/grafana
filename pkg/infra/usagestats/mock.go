@@ -16,10 +16,10 @@ func (usm *UsageStatsMock) RegisterMetricsFunc(fn MetricsFunc) {
 	usm.metricsFuncs = append(usm.metricsFuncs, fn)
 }
 
-func (usm *UsageStatsMock) GetUsageReport(_ context.Context) (Report, error) {
+func (usm *UsageStatsMock) GetUsageReport(ctx context.Context) (Report, error) {
 	all := make(map[string]interface{})
 	for _, fn := range usm.metricsFuncs {
-		fnMetrics, err := fn()
+		fnMetrics, err := fn(ctx)
 		require.NoError(usm.T, err)
 
 		for name, value := range fnMetrics {
