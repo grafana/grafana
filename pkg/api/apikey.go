@@ -81,6 +81,17 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 				return response.Error(500, "Unable to clone user to service account", err)
 			}
 			cmd.ServiceAccountId = serviceAccount.Id
+		} else {
+			//Check if user and service account are in the same org
+			query := models.GetUserByIdQuery{Id: serviceAccount.Id}
+			err = bus.DispatchCtx(c.Req.Context(), &query)
+			if err != nil {
+				return response.Error(500, "Unable to clone user to service account", err)
+			}
+			serviceAccountDetails := query.Result
+			if serviceAccountDetails.OrgId != c.OrgId || serviceAccountDetails.OrgId != cmd.OrgId {
+				return response.Error(403, "Target service is not in the same organisation as requesting user or api key", err)
+			}
 		}
 	}
 
