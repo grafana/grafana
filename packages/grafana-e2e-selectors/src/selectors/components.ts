@@ -138,11 +138,11 @@ export const Components = {
   },
   RefreshPicker: {
     /**
-     * @deprecated use runButtonV2 instead
+     * @deprecated use runButtonV2 from Grafana 8.3 instead
      */
     runButton: 'RefreshPicker run button',
     /**
-     * @deprecated use intervalButtonV2 instead
+     * @deprecated use intervalButtonV2 from Grafana 8.3 instead
      */
     intervalButton: 'RefreshPicker interval button',
     runButtonV2: 'data-testid RefreshPicker run button',
