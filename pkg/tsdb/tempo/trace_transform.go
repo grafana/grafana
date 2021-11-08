@@ -23,9 +23,9 @@ type TraceLog struct {
 }
 
 type TraceReference struct {
-	SpanID     string      `json:"spanID"`
-	TraceID    string      `json:"traceID"`
-	Attributes []*KeyValue `json:"attributes"`
+	SpanID  string      `json:"spanID"`
+	TraceID string      `json:"traceID"`
+	Tags    []*KeyValue `json:"tags"`
 }
 
 func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
@@ -349,16 +349,16 @@ func spanLinksToReferences(links pdata.SpanLinkSlice) []*TraceReference {
 
 		spanId := link.SpanID().HexString()
 
-		attributes := make([]*KeyValue, 0, link.Attributes().Len())
+		tags := make([]*KeyValue, 0, link.Attributes().Len())
 		link.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
-			attributes = append(attributes, &KeyValue{Key: key, Value: getAttributeVal(attr)})
+			tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 			return true
 		})
 
 		references = append(references, &TraceReference{
-			TraceID:    traceId,
-			SpanID:     spanId,
-			Attributes: attributes,
+			TraceID: traceId,
+			SpanID:  spanId,
+			Tags:    tags,
 		})
 	}
 
