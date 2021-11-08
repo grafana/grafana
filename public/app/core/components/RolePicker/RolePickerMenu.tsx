@@ -17,7 +17,10 @@ import { OrgRole, Role } from 'app/types';
 type BuiltInRoles = { [key: string]: Role[] };
 
 const BuiltinRoles = ['Viewer', 'Editor', 'Admin'];
-const BuiltinRoleOption: Array<SelectableValue<string>> = BuiltinRoles.map((r: string) => ({ label: r, value: r }));
+const BuiltinRoleOption: Array<SelectableValue<OrgRole>> = BuiltinRoles.map((r: string) => ({
+  label: r,
+  value: r as OrgRole,
+}));
 
 interface RolePickerMenuProps {
   builtInRole: OrgRole;
