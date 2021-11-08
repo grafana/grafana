@@ -63,7 +63,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 		meta, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
 		if !exists {
-			hs.log.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
+			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
 		dsMap["preload"] = meta.Preload

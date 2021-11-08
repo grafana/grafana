@@ -130,7 +130,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
-				oauthLogger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
+				c.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
 				redirectTo = hs.Cfg.AppSubURL + "/"
 			}
 			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
@@ -151,7 +151,7 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 	}
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
 	if len(oauthInfos) != 1 {
-		oauthLogger.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
+		c.Logger.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
 		return false
 	}
 	for key := range oauthInfos {
@@ -248,7 +248,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			result["redirectUrl"] = redirectTo
 		} else {
-			oauthLogger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
+			c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
 		}
 		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
@@ -62,7 +61,7 @@ func TestTelegramNotifier(t *testing.T) {
 					State:   models.AlertStateOK,
 				}, &validations.OSSPluginRequestValidator{})
 
-			caption := generateImageCaption(log.New("telegram_test"), evalContext, "http://grafa.url/abcdef", "")
+			caption := generateImageCaption(evalContext, "http://grafa.url/abcdef", "")
 			require.LessOrEqual(t, len(caption), 1024)
 			require.Contains(t, caption, "Some kind of message.")
 			require.Contains(t, caption, "[OK] This is an alarm")
@@ -78,7 +77,7 @@ func TestTelegramNotifier(t *testing.T) {
 						State:   models.AlertStateOK,
 					}, &validations.OSSPluginRequestValidator{})
 
-				caption := generateImageCaption(log.New("telegram_test"), evalContext,
+				caption := generateImageCaption(evalContext,
 					"http://grafa.url/abcdefaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 					"foo bar")
 				require.LessOrEqual(t, len(caption), 1024)
@@ -96,7 +95,7 @@ func TestTelegramNotifier(t *testing.T) {
 						State:   models.AlertStateOK,
 					}, &validations.OSSPluginRequestValidator{})
 
-				caption := generateImageCaption(log.New("telegram_test"), evalContext,
+				caption := generateImageCaption(evalContext,
 					"http://grafa.url/foo",
 					"")
 				require.LessOrEqual(t, len(caption), 1024)
@@ -113,7 +112,7 @@ func TestTelegramNotifier(t *testing.T) {
 						State:   models.AlertStateOK,
 					}, &validations.OSSPluginRequestValidator{})
 
-				caption := generateImageCaption(log.New("telegram_test"), evalContext,
+				caption := generateImageCaption(evalContext,
 					"http://grafa.url/foo",
 					"foo bar long song")
 				require.LessOrEqual(t, len(caption), 1024)

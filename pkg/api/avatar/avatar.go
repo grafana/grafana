@@ -97,7 +97,7 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 	if avatar.Expired() {
 		// The cache item is either expired or newly created, update it from the server
 		if err := avatar.Update(); err != nil {
-			alog.Debug("avatar update", "err", err)
+			ctx.Logger.Debug("avatar update", "err", err)
 			avatar = a.notFound
 		}
 	}
@@ -106,7 +106,7 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 		avatar = a.notFound
 	} else if !exists {
 		if err := a.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
-			alog.Debug("add avatar to cache", "err", err)
+			ctx.Logger.Debug("add avatar to cache", "err", err)
 		}
 	}
 
@@ -119,7 +119,7 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 	ctx.Resp.Header().Set("Cache-Control", "private, max-age=3600")
 
 	if err := avatar.Encode(ctx.Resp); err != nil {
-		alog.Warn("avatar encode error:", "err", err)
+		ctx.Logger.Warn("avatar encode error:", "err", err)
 		ctx.Resp.WriteHeader(500)
 	}
 }

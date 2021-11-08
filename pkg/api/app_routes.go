@@ -52,6 +52,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 			for _, method := range strings.Split(route.Method, ",") {
 				r.Handle(strings.TrimSpace(method), url, handlers)
 			}
+
 			applog.Debug("Plugins: Adding proxy route", "url", url)
 		}
 	}
