@@ -154,7 +154,7 @@ func (tn *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.EvalCo
 	}
 
 	metrics := generateMetricsMessage(evalContext)
-	message := generateImageCaption(evalContext, ruleURL, metrics)
+	message := generateImageCaption(tn.log, evalContext, ruleURL, metrics)
 
 	return tn.generateTelegramCmd(message, "caption", "sendPhoto", func(w *multipart.Writer) {
 		fw, err := w.CreateFormFile("photo", evalContext.ImageOnDiskPath)
@@ -226,7 +226,7 @@ func generateMetricsMessage(evalContext *alerting.EvalContext) string {
 	return metrics
 }
 
-func generateImageCaption(evalContext *alerting.EvalContext, ruleURL string, metrics string) string {
+func generateImageCaption(log log.Logger, evalContext *alerting.EvalContext, ruleURL string, metrics string) string {
 	message := evalContext.GetNotificationTitle()
 
 	if len(evalContext.Rule.Message) > 0 {
@@ -239,18 +239,18 @@ func generateImageCaption(evalContext *alerting.EvalContext, ruleURL string, met
 
 	if len(ruleURL) > 0 {
 		urlLine := fmt.Sprintf("\nURL: %s", ruleURL)
-		message = appendIfPossible(message, urlLine, captionLengthLimit)
+		message = appendIfPossible(log, message, urlLine, captionLengthLimit)
 	}
 
 	if metrics != "" {
 		metricsLines := fmt.Sprintf("\n\nMetrics:%s", metrics)
-		message = appendIfPossible(message, metricsLines, captionLengthLimit)
+		message = appendIfPossible(log, message, metricsLines, captionLengthLimit)
 	}
 
 	return message
 }
 
-func appendIfPossible(message string, extra string, sizeLimit int) string {
+func appendIfPossible(log log.Logger, message string, extra string, sizeLimit int) string {
 	if len(extra)+len(message) <= sizeLimit {
 		return message + extra
 	}

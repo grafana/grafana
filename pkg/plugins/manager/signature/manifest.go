@@ -170,7 +170,7 @@ func Calculate(log log.Logger, plugin *plugins.Plugin) (plugins.Signature, error
 
 	// Verify the manifest contents
 	for p, hash := range manifest.Files {
-		err = verifyHash(plugin.ID, filepath.Join(plugin.PluginDir, p), hash)
+		err = verifyHash(log, plugin.ID, filepath.Join(plugin.PluginDir, p), hash)
 		if err != nil {
 			return plugins.Signature{
 				Status: plugins.SignatureModified,
@@ -213,7 +213,7 @@ func Calculate(log log.Logger, plugin *plugins.Plugin) (plugins.Signature, error
 	}, nil
 }
 
-func verifyHash(pluginID string, path string, hash string) error {
+func verifyHash(log log.Logger, pluginID string, path string, hash string) error {
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `path` is based
 	// on the path provided in a manifest file for a plugin and not user input.
