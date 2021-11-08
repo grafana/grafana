@@ -70,7 +70,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Role: accesscontrol.RoleDTO{
 				Version:     2,
 				Name:        "fixed:datasources:writer",
-				DisplayName: "Data sources writer",
+				DisplayName: "Data source writer",
 				Description: "Create, read, update, delete, or query data sources",
 				Permissions: []accesscontrol.Permission{
 					{
@@ -127,7 +127,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Role: accesscontrol.RoleDTO{
 				Version:     2,
 				Name:        "fixed:current:org:reader",
-				DisplayName: "Organization reader",
+				DisplayName: "Current Organization reader",
 				Description: "Read current organization and its quotas.",
 				Permissions: []accesscontrol.Permission{
 					{
@@ -146,8 +146,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Role: accesscontrol.RoleDTO{
 				Version:     2,
 				Name:        "fixed:current:org:writer",
-				DisplayName: "Organization writer",
-				Description: "Read current organization, its quotas, and its preferences. Write current organization and its preferences.",
+				DisplayName: "Current Organization writer",
+				Description: "Read current organization, its quotas, and its preferences. Update current organization and its preferences.",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionOrgsRead,

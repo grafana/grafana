@@ -18,7 +18,7 @@ var (
 	datasourcesQuerierRole = RoleDTO{
 		Version:     2,
 		Name:        datasourcesQuerier,
-		DisplayName: "Data sources querier",
+		DisplayName: "Data source querier",
 		Description: "Query data sources using the Explore feature in Grafana. Users will only be able to query datasources for which they also have data source query permissions.",
 		Permissions: []Permission{
 			{
@@ -59,7 +59,7 @@ var (
 
 	orgUsersReaderRole = RoleDTO{
 		Name:        orgUsersReader,
-		DisplayName: "Organization users reader",
+		DisplayName: "Organization user reader",
 		Description: "Read users in organization.",
 		Version:     2,
 		Permissions: []Permission{
@@ -72,7 +72,7 @@ var (
 
 	orgUsersWriterRole = RoleDTO{
 		Name:        orgUsersWriter,
-		DisplayName: "Organization users writer",
+		DisplayName: "Organization user writer",
 		Description: "Read, add, remove, or update a role for users in organization",
 		Version:     2,
 		Permissions: ConcatPermissions(orgUsersReaderRole.Permissions, []Permission{
@@ -93,7 +93,7 @@ var (
 
 	settingsReaderRole = RoleDTO{
 		Version:     3,
-		DisplayName: "Settings reader",
+		DisplayName: "Setting reader",
 		Description: "Read settings.",
 		Name:        settingsReader,
 		Permissions: []Permission{
@@ -107,7 +107,7 @@ var (
 	statsReaderRole = RoleDTO{
 		Version:     2,
 		Name:        statsReader,
-		DisplayName: "Stats reader",
+		DisplayName: "Statistics reader",
 		Description: "Read server statistics.",
 		Permissions: []Permission{
 			{
@@ -118,7 +118,7 @@ var (
 
 	usersReaderRole = RoleDTO{
 		Name:        usersReader,
-		DisplayName: "Users reader",
+		DisplayName: "User reader",
 		Description: "Read all users and their information, such as team membership, authentication tokens, and quotas.",
 		Version:     2,
 		Permissions: []Permission{
@@ -143,7 +143,7 @@ var (
 
 	usersWriterRole = RoleDTO{
 		Name:        usersWriter,
-		DisplayName: "Users writer",
+		DisplayName: "User writer",
 		Description: "Read and update all attributes and settings for all users in Grafana.",
 		Version:     2,
 		Permissions: ConcatPermissions(usersReaderRole.Permissions, []Permission{
