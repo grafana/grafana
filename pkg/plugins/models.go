@@ -201,14 +201,14 @@ type PluginMetaDTO struct {
 type DataSourceDTO struct {
 	ID        int64                  `json:"id,omitempty"`
 	UID       string                 `json:"uid,omitempty"`
-	Type      string                 `json:"type,omitempty"`
-	Name      string                 `json:"name,omitempty"`
+	Type      string                 `json:"type"`
+	Name      string                 `json:"name"`
+	Meta      *PluginMetaDTO         `json:"meta"`
 	URL       string                 `json:"url,omitempty"`
 	IsDefault bool                   `json:"isDefault,omitempty"`
 	Access    string                 `json:"access,omitempty"`
 	Preload   bool                   `json:"preload,omitempty"`
 	Module    string                 `json:"module,omitempty"`
-	Meta      *PluginMetaDTO         `json:"meta,omitempty"`
 	JSONData  map[string]interface{} `json:"jsonData,omitempty"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
