@@ -2373,7 +2373,7 @@ __metadata:
     "@types/jest": 27.0.2
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
-    "@types/marked": 3.0.2
+    "@types/marked": 4.0.0
     "@types/node": 16.11.6
     "@types/papaparse": 5.2.0
     "@types/react": 17.0.30
@@ -2386,7 +2386,7 @@ __metadata:
     date-fns: 2.21.3
     eventemitter3: 4.0.7
     lodash: 4.17.21
-    marked: 2.0.1
+    marked: 4.0.0
     moment: 2.29.1
     moment-timezone: 0.5.33
     ol: 6.7.0
@@ -7856,10 +7856,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/marked@npm:3.0.2":
-  version: 3.0.2
-  resolution: "@types/marked@npm:3.0.2"
-  checksum: 48c3c190f97bffafbaacfc2ebcb8b87bfee12977b302ebf5ca028258f8131ffa1d3042455eaac4087bc816a3d5e0c8f65f4250e792b9dd18a533d49e99742d35
+"@types/marked@npm:4.0.0":
+  version: 4.0.0
+  resolution: "@types/marked@npm:4.0.0"
+  checksum: e9d085ac163744ee9abf34cc53cda37bf4c9147dc0b555c2cb349ea5f3b51c82df7083b86f1ddc8001c11fe6f2ffaf93d2d816826f8148ba8a25a81a3e3d661c
   languageName: node
   linkType: hard
 
@@ -22452,12 +22452,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:2.0.1":
-  version: 2.0.1
-  resolution: "marked@npm:2.0.1"
+"marked@npm:4.0.0":
+  version: 4.0.0
+  resolution: "marked@npm:4.0.0"
   bin:
-    marked: bin/marked
-  checksum: 2144b5f0c5f9446aa1ef15350ff8c5b2e27ef32f64f31047fc06cb68afad52b9d4b8587353c24f9150ec181061866c2e2a93f458963999af487887f9a1ef4e32
+    marked: bin/marked.js
+  checksum: 1889c1b58cba6ea764435ef2fefef037733899dcb1d54300453b355ac70ada0109132631b0a2c3ee0ce633b930a1bc6d6ee1bd1dea38cf901dd30099fa68e143
   languageName: node
   linkType: hard
 
