@@ -38,7 +38,11 @@ export const getBuiltinRoles = (): Promise<{ [key: string]: Role[] }> => {
 };
 
 export const getUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
-  const roles = await getBackendSrv().get(`/api/access-control/users/${userId}/roles`);
+  let userRolesUrl = `/api/access-control/users/${userId}/roles`;
+  if (orgId) {
+    userRolesUrl += `?targetOrgId=${orgId}`;
+  }
+  const roles = await getBackendSrv().get(userRolesUrl);
   if (!roles || !roles.length) {
     return [];
   }
@@ -46,7 +50,11 @@ export const getUserRoles = async (userId: number, orgId?: number): Promise<Role
 };
 
 export const updateUserRoles = (roleUids: string[], userId: number, orgId?: number) => {
-  return getBackendSrv().put(`/api/access-control/users/${userId}/roles`, {
+  let userRolesUrl = `/api/access-control/users/${userId}/roles`;
+  if (orgId) {
+    userRolesUrl += `?targetOrgId=${orgId}`;
+  }
+  return getBackendSrv().put(userRolesUrl, {
     orgId,
     roleUids,
   });
