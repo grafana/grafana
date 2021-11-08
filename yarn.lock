@@ -2626,7 +2626,7 @@ __metadata:
     fork-ts-checker-webpack-plugin: 6.4.0
     fs-extra: ^10.0.0
     globby: ^10.0.1
-    html-loader: 3.0.1
+    html-loader: 0.5.5
     html-webpack-plugin: ^3.2.0
     inquirer: ^6.3.1
     jest: 26.6.3
@@ -10432,6 +10432,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ast-types@npm:0.9.6":
+  version: 0.9.6
+  resolution: "ast-types@npm:0.9.6"
+  checksum: 6b75831c192963453eaeaedaa9db41823cd964bfb9c40ad8da6e978393dd66611f8cc4f778ecabce6a4a9b44a04c83b2571d98fcb561b87596d7b2ea796447db
+  languageName: node
+  linkType: hard
+
 "ast-types@npm:^0.14.2":
   version: 0.14.2
   resolution: "ast-types@npm:0.14.2"
@@ -15588,6 +15595,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"es6-templates@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "es6-templates@npm:0.2.3"
+  dependencies:
+    recast: ~0.11.12
+    through: ~2.3.6
+  checksum: 37261e42e26b2627dc2e3c3a6244445b79a61e5de4ba8b17f1e692ae5f40bff1d2aa0d9e314fd8207036b14126f7dfc39ef54b10fd0a19eba6e8a53d6840d036
+  languageName: node
+  linkType: hard
+
 "escalade@npm:^3.0.2, escalade@npm:^3.1.1":
   version: 3.1.1
   resolution: "escalade@npm:3.1.1"
@@ -15896,6 +15913,16 @@ __metadata:
     esparse: ./bin/esparse.js
     esvalidate: ./bin/esvalidate.js
   checksum: b45bc805a613dbea2835278c306b91aff6173c8d034223fa81498c77dcbce3b2931bf6006db816f62eacd9fd4ea975dfd85a5b7f3c6402cfd050d4ca3c13a628
+  languageName: node
+  linkType: hard
+
+"esprima@npm:~3.1.0":
+  version: 3.1.3
+  resolution: "esprima@npm:3.1.3"
+  bin:
+    esparse: ./bin/esparse.js
+    esvalidate: ./bin/esvalidate.js
+  checksum: 2771c059aa61f2b2fe9d898f11c737c45c26eae6052908f1e2b8bd91c6a440607420f2679cbfd6cbb79f2fa502b37a3053048d287bcd30ea582d46c969fcf67e
   languageName: node
   linkType: hard
 
@@ -16434,6 +16461,13 @@ __metadata:
   version: 2.0.2
   resolution: "fastest-stable-stringify@npm:2.0.2"
   checksum: 5e2cb166c7bb6f16ac25a1e4be17f6b8d2923234c80739e12c9d21dea376b3128b2c63f90aa2aae7746cfec4dcf188d1d4eb6a964bb484ca133f17c8e9acfacc
+  languageName: node
+  linkType: hard
+
+"fastparse@npm:^1.1.1":
+  version: 1.1.2
+  resolution: "fastparse@npm:1.1.2"
+  checksum: c4d199809dc4e8acafeb786be49481cc9144de296e2d54df4540ccfd868d0df73afc649aba70a748925eb32bbc4208b723d6288adf92382275031a8c7e10c0aa
   languageName: node
   linkType: hard
 
@@ -18580,6 +18614,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"html-loader@npm:0.5.5":
+  version: 0.5.5
+  resolution: "html-loader@npm:0.5.5"
+  dependencies:
+    es6-templates: ^0.2.3
+    fastparse: ^1.1.1
+    html-minifier: ^3.5.8
+    loader-utils: ^1.1.0
+    object-assign: ^4.1.1
+  checksum: 33ec6046ad4f604288513dc4008619fac9550d047a0bb87bed4f04e2b13b2c83241eed912dab2a8a235382b082199b4c70a44c6ac7ed43a39fdb63db2de91596
+  languageName: node
+  linkType: hard
+
 "html-loader@npm:3.0.1":
   version: 3.0.1
   resolution: "html-loader@npm:3.0.1"
@@ -18626,7 +18673,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-minifier@npm:^3.2.3":
+"html-minifier@npm:^3.2.3, html-minifier@npm:^3.5.8":
   version: 3.5.21
   resolution: "html-minifier@npm:3.5.21"
   dependencies:
@@ -26944,6 +26991,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"private@npm:~0.1.5":
+  version: 0.1.8
+  resolution: "private@npm:0.1.8"
+  checksum: a00abd713d25389f6de7294f0e7879b8a5d09a9ec5fd81cc2f21b29d4f9a80ec53bc4222927d3a281d4aadd4cd373d9a28726fca3935921950dc75fd71d1fdbb
+  languageName: node
+  linkType: hard
+
 "process-nextick-args@npm:~2.0.0":
   version: 2.0.1
   resolution: "process-nextick-args@npm:2.0.1"
@@ -28797,6 +28851,18 @@ __metadata:
   dependencies:
     util.promisify: ^1.0.0
   checksum: 75ef0595dea6186384b785a9e0993c58ec604f8be2e39b602fec6d7837c7f770af4a4eb3c81f864a7d81c518a7167a6eaabbc7695b7a88c56e1ef04b91c1d586
+  languageName: node
+  linkType: hard
+
+"recast@npm:~0.11.12":
+  version: 0.11.23
+  resolution: "recast@npm:0.11.23"
+  dependencies:
+    ast-types: 0.9.6
+    esprima: ~3.1.0
+    private: ~0.1.5
+    source-map: ~0.5.0
+  checksum: e2a6f973fa8e7f4aac6fdebd27706d67570c71d127632f15fad350a430c63b0dcdd9d7ceffad547b07114b5d28895e6fe078a287c1f8e5410c90aaa7289787ac
   languageName: node
   linkType: hard
 
@@ -30749,7 +30815,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map@npm:^0.5.0, source-map@npm:^0.5.6, source-map@npm:^0.5.7":
+"source-map@npm:^0.5.0, source-map@npm:^0.5.6, source-map@npm:^0.5.7, source-map@npm:~0.5.0":
   version: 0.5.7
   resolution: "source-map@npm:0.5.7"
   checksum: 5dc2043b93d2f194142c7f38f74a24670cd7a0063acdaf4bf01d2964b402257ae843c2a8fa822ad5b71013b5fcafa55af7421383da919752f22ff488bc553f4d
@@ -32206,7 +32272,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"through@npm:2, through@npm:2.3.x, through@npm:>=2.2.7 <3, through@npm:^2.3.4, through@npm:^2.3.6, through@npm:^2.3.8":
+"through@npm:2, through@npm:2.3.x, through@npm:>=2.2.7 <3, through@npm:^2.3.4, through@npm:^2.3.6, through@npm:^2.3.8, through@npm:~2.3.6":
   version: 2.3.8
   resolution: "through@npm:2.3.8"
   checksum: a38c3e059853c494af95d50c072b83f8b676a9ba2818dcc5b108ef252230735c54e0185437618596c790bbba8fcdaef5b290405981ffa09dce67b1f1bf190cbd
