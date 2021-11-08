@@ -17978,7 +17978,7 @@ __metadata:
     glob: 7.1.6
     history: 4.10.1
     hoist-non-react-statics: 3.3.2
-    html-loader: 2.1.2
+    html-loader: 3.0.1
     html-webpack-harddisk-plugin: 2.0.0
     html-webpack-plugin: 5.3.2
     http-server: 14.0.0
@@ -18604,19 +18604,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-loader@npm:2.1.2":
-  version: 2.1.2
-  resolution: "html-loader@npm:2.1.2"
+"html-loader@npm:3.0.1":
+  version: 3.0.1
+  resolution: "html-loader@npm:3.0.1"
   dependencies:
-    html-minifier-terser: ^5.1.1
+    html-minifier-terser: ^6.0.2
     parse5: ^6.0.1
   peerDependencies:
     webpack: ^5.0.0
-  checksum: ed0b9033121b5ee5f85c3fbc5e17208f207cc33785417c014dc942a579410089de923d9c509a2d42821f3488efe984d2b898f277469e47eabf1a37cfbc48c302
+  checksum: 9963912f20c14ac2303d262778ea230e66bb7953db004ae55787a55ae4baecc350ce6ddb89ff8bdf5d3cf715ee8460545c2d2109304be3246bbad2123f7c9a57
   languageName: node
   linkType: hard
 
-"html-minifier-terser@npm:^5.0.1, html-minifier-terser@npm:^5.1.1":
+"html-minifier-terser@npm:^5.0.1":
   version: 5.1.1
   resolution: "html-minifier-terser@npm:5.1.1"
   dependencies:
