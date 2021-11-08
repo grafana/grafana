@@ -72,11 +72,8 @@ type UnifiedAlertingSettings struct {
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg := UnifiedAlertingSettings{}
 	ua := iniFile.Section("unified_alerting")
-	uaCfg.Enabled = ua.Key("enabled").MustBool(true)
-
-	if uaCfg.Enabled && AlertingEnabled {
-		AlertingEnabled = false
-	}
+	// if legacy alerting is enabled, enable unified alerting by default. If the legacy alerting is disabled, require unified alerting to be enabled explicitly
+	uaCfg.Enabled = ua.Key("enabled").MustBool(AlertingEnabled)
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
 	orgsStr := valueAsString(ua, "disabled_orgs", "")
