@@ -1,5 +1,3 @@
-// Libraries
-import coreModule from 'app/angular/core_module';
 // Services & Utils
 import { importDataSourcePlugin } from './plugin_loader';
 import {
@@ -7,6 +5,7 @@ import {
   DataSourceSrv as DataSourceService,
   getDataSourceSrv as getDataSourceService,
   TemplateSrv,
+  getTemplateSrv,
 } from '@grafana/runtime';
 // Types
 import {
@@ -17,8 +16,6 @@ import {
   DataSourceSelectItem,
   ScopedVars,
 } from '@grafana/data';
-import { auto } from 'angular';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 // Pretend Datasource
 import {
   dataSource as expressionDatasource,
@@ -27,6 +24,8 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 import { DataSourceVariableModel } from '../variables/types';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import appEvents from 'app/core/app_events';
+import { getAngularInjector } from 'app/angular/lazyBootAngular';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -35,12 +34,7 @@ export class DatasourceSrv implements DataSourceService {
   private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
   private defaultName = ''; // actually UID
 
-  /** @ngInject */
-  constructor(
-    private $injector: auto.IInjectorService,
-    private $rootScope: GrafanaRootScope,
-    private templateSrv: TemplateSrv
-  ) {}
+  constructor(private templateSrv: TemplateSrv = getTemplateSrv()) {}
 
   init(settingsMapByName: Record<string, DataSourceInstanceSettings>, defaultName: string) {
     this.datasources = {};
@@ -164,11 +158,15 @@ export class DatasourceSrv implements DataSourceService {
 
       // If there is only one constructor argument it is instanceSettings
       const useAngular = dsPlugin.DataSourceClass.length !== 1;
-      const instance: DataSourceApi = useAngular
-        ? this.$injector.instantiate(dsPlugin.DataSourceClass, {
-            instanceSettings: dsConfig,
-          })
-        : new dsPlugin.DataSourceClass(dsConfig);
+      let instance: DataSourceApi<any, any>;
+
+      if (useAngular) {
+        instance = (await getAngularInjector()).instantiate(dsPlugin.DataSourceClass, {
+          instanceSettings: dsConfig,
+        });
+      } else {
+        instance = new dsPlugin.DataSourceClass(dsConfig);
+      }
 
       instance.components = dsPlugin.components;
       instance.meta = dsConfig.meta;
@@ -178,9 +176,7 @@ export class DatasourceSrv implements DataSourceService {
       this.datasources[instance.uid] = instance;
       return instance;
     } catch (err) {
-      if (this.$rootScope) {
-        this.$rootScope.appEvent(AppEvents.alertError, [dsConfig.name + ' plugin failed', err.toString()]);
-      }
+      appEvents.emit(AppEvents.alertError, [dsConfig.name + ' plugin failed', err.toString()]);
       return Promise.reject({ message: `Datasource: ${key} was not found` });
     }
   }
@@ -321,5 +317,4 @@ export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
 };
 
-coreModule.service('datasourceSrv', DatasourceSrv);
 export default DatasourceSrv;
