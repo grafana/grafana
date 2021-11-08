@@ -77,11 +77,18 @@ func NewKafkaNotifier(model *models.AlertNotification, _ alerting.GetDecryptedVa
 	if basicAuth && username == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find user for BasicAuth"}
 	}
+
 	password := model.Settings.Get("basicAuthPass").MustString()
 	if basicAuth && password == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find pass for BasicAuth"}
 	}
 
+	// Ensure blank strings sent if basicAuth not enabled
+	if !basicAuth {
+		username = ""
+		password = ""
+	}
+	// Webhook will ignore empty strings for User / Pass
 	return &KafkaNotifier{
 		NotifierBase: NewNotifierBase(model),
 		Endpoint:     endpoint,
