@@ -639,16 +639,14 @@ func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 }
 
 type alertRuleInfo struct {
-	evalCh  chan *evalContext
-	ctx     context.Context
-	Stop    context.CancelFunc
-	mtx     sync.Mutex
-	stopped bool // indicates that the stopCh was closed and therefore the rule evaluation routine should exit
+	evalCh chan *evalContext
+	ctx    context.Context
+	Stop   context.CancelFunc
 }
 
 func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 	ctx, cancel := context.WithCancel(parent)
-	return &alertRuleInfo{evalCh: make(chan *evalContext), ctx: ctx, Stop: cancel, stopped: false}
+	return &alertRuleInfo{evalCh: make(chan *evalContext), ctx: ctx, Stop: cancel}
 }
 
 // Eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
