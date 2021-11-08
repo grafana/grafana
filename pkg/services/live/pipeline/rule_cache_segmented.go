@@ -11,15 +11,19 @@ import (
 
 // CacheSegmentedTree provides a fast access to channel rule configuration.
 type CacheSegmentedTree struct {
-	radixMu     sync.RWMutex
-	radix       map[int64]*tree.Node
-	ruleBuilder RuleBuilder
+	radixMu            sync.RWMutex
+	radix              map[int64]*tree.Node
+	builtinRadix       map[int64]*tree.Node
+	ruleBuilder        RuleBuilder
+	builtinRuleBuilder RuleBuilder
 }
 
-func NewCacheSegmentedTree(storage RuleBuilder) *CacheSegmentedTree {
+func NewCacheSegmentedTree(builder RuleBuilder, builtinBuilder RuleBuilder) *CacheSegmentedTree {
 	s := &CacheSegmentedTree{
-		radix:       map[int64]*tree.Node{},
-		ruleBuilder: storage,
+		radix:              map[int64]*tree.Node{},
+		builtinRadix:       map[int64]*tree.Node{},
+		ruleBuilder:        builder,
+		builtinRuleBuilder: builtinBuilder,
 	}
 	go s.updatePeriodically()
 	return s
@@ -50,11 +54,19 @@ func (s *CacheSegmentedTree) fillOrg(orgID int64) error {
 	if err != nil {
 		return err
 	}
+	builtinChannels, err := s.builtinRuleBuilder.BuildRules(context.Background(), orgID)
+	if err != nil {
+		return err
+	}
 	s.radixMu.Lock()
 	defer s.radixMu.Unlock()
 	s.radix[orgID] = tree.New()
 	for _, ch := range channels {
 		s.radix[orgID].AddRoute("/"+ch.Pattern, ch)
+	}
+	s.builtinRadix[orgID] = tree.New()
+	for _, ch := range builtinChannels {
+		s.builtinRadix[orgID].AddRoute("/"+ch.Pattern, ch)
 	}
 	return nil
 }
@@ -76,8 +88,16 @@ func (s *CacheSegmentedTree) Get(orgID int64, channel string) (*LiveChannelRule,
 		return nil, false, nil
 	}
 	nodeValue := t.GetValue("/"+channel, true)
-	if nodeValue.Handler == nil {
+	if nodeValue.Handler != nil {
+		return nodeValue.Handler.(*LiveChannelRule), true, nil
+	}
+	t, ok = s.builtinRadix[orgID]
+	if !ok {
 		return nil, false, nil
 	}
-	return nodeValue.Handler.(*LiveChannelRule), true, nil
+	nodeValue = t.GetValue("/"+channel, true)
+	if nodeValue.Handler != nil {
+		return nodeValue.Handler.(*LiveChannelRule), true, nil
+	}
+	return nil, false, nil
 }

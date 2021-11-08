@@ -196,7 +196,14 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 				EncryptionService:    g.EncryptionService,
 			}
 		}
-		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
+		builtinBuilder := &pipeline.BuiltinRuleBuilder{
+			Node:                 node,
+			ManagedStream:        g.ManagedStreamRunner,
+			FrameStorage:         pipeline.NewFrameStorage(),
+			ChannelHandlerGetter: g,
+			EncryptionService:    g.EncryptionService,
+		}
+		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder, builtinBuilder)
 
 		// Pre-build/validate channel rules for all organizations on start.
 		// This can be unreasonable to have in production scenario with many
@@ -557,13 +564,19 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 	var ruleFound bool
 
 	if g.Pipeline != nil {
+		// Parse the identifier ${scope}/${namespace}/${path}
+		addr, err := live.ParseChannel(channel)
+		if err != nil {
+			logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+			return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
+		}
 		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
 		if err != nil {
 			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
 		ruleFound = ok
-		if ok {
+		if ruleFound {
 			if rule.SubscribeAuth != nil {
 				ok, err := rule.SubscribeAuth.CanSubscribe(client.Context(), user)
 				if err != nil {
@@ -580,8 +593,11 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 				var err error
 				for _, sub := range rule.Subscribers {
 					reply, status, err = sub.Subscribe(client.Context(), pipeline.Vars{
-						OrgID:   orgID,
-						Channel: channel,
+						OrgID:     orgID,
+						Channel:   channel,
+						Scope:     addr.Scope,
+						Namespace: addr.Namespace,
+						Path:      addr.Path,
 					})
 					if err != nil {
 						logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
@@ -592,6 +608,9 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 					}
 				}
 			}
+		} else {
+			logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+			return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
 		}
 	}
 	if !ruleFound {
@@ -684,6 +703,9 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 			return centrifuge.PublishReply{
 				Result: &centrifuge.PublishResult{},
 			}, nil
+		} else {
+			logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+			return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
 		}
 	}
 
@@ -1062,7 +1084,14 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) respon
 		Storage:              storage,
 		ChannelHandlerGetter: g,
 	}
-	channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
+	builtinBuilder := &pipeline.BuiltinRuleBuilder{
+		Node:                 g.node,
+		ManagedStream:        g.ManagedStreamRunner,
+		FrameStorage:         pipeline.NewFrameStorage(),
+		ChannelHandlerGetter: g,
+		EncryptionService:    g.EncryptionService,
+	}
+	channelRuleGetter := pipeline.NewCacheSegmentedTree(builder, builtinBuilder)
 	pipe, err := pipeline.New(channelRuleGetter)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error creating pipeline", err)
