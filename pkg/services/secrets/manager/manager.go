@@ -139,9 +139,13 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 }
 
 func (s *SecretsService) EncryptJsonData(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions) (map[string][]byte, error) {
+	return s.EncryptJsonDataWithDBSession(ctx, kv, opt, nil)
+}
+
+func (s *SecretsService) EncryptJsonDataWithDBSession(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions, sess *sqlstore.DBSession) (map[string][]byte, error) {
 	encrypted := make(map[string][]byte)
 	for key, value := range kv {
-		encryptedData, err := s.Encrypt(ctx, []byte(value), opt)
+		encryptedData, err := s.EncryptWithDBSession(ctx, []byte(value), opt, sess)
 		if err != nil {
 			return nil, err
 		}
