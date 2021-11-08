@@ -77,7 +77,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	}
 
 	if len(namespaceMap) == 0 {
-		srv.log.Debug("User has no access to any of namespaces")
+		srv.log.Debug("User does not have access to any of the namespaces")
 		return response.JSON(http.StatusOK, ruleResponse)
 	}
 
