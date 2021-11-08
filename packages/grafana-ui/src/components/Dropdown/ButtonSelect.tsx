@@ -40,7 +40,6 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
 
   const onArrowKeyDown = (event: React.KeyboardEvent) => {
     event.stopPropagation();
-    event.preventDefault();
     if (event.key === 'ArrowDown' || event.key === 'Enter') {
       setIsOpen(!isOpen);
     }

@@ -74,6 +74,9 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
           event.stopPropagation();
           onClose?.();
           break;
+        case 'Tab':
+          onClose?.();
+          break;
         default:
           break;
       }
