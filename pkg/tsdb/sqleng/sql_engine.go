@@ -382,7 +382,6 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 	return sql, nil
 }
 
-//nolint: staticcheck // legacydata.DataPlugin deprecated
 func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext context.Context,
 	rows *core.Rows, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames, err := rows.Columns()
@@ -425,7 +424,6 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 		default:
 		}
 	}
-	//nolint: staticcheck // legacydata.DataPlugin deprecated
 
 	qm.TimeRange.From = query.TimeRange.From.UTC()
 	qm.TimeRange.To = query.TimeRange.To.UTC()

@@ -215,7 +215,6 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 	return response.JSON(statusCode, &resp)
 }
 
-// nolint:staticcheck // legacydata.DataQueryResponse deprecated
 func (hs *HTTPServer) createRequest(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (*backend.QueryDataRequest, error) {
 	instanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
 	if err != nil {

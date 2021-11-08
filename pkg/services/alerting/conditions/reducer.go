@@ -18,7 +18,6 @@ type queryReducer struct {
 }
 
 //nolint: gocyclo
-//nolint: staticcheck // legacydata.DataTimeSeries deprecated
 func (s *queryReducer) Reduce(series legacydata.DataTimeSeries) null.Float {
 	if len(series.Points) == 0 {
 		return null.FloatFromPtr(nil)
@@ -127,7 +126,6 @@ func newSimpleReducer(t string) *queryReducer {
 	return &queryReducer{Type: t}
 }
 
-//nolint: staticcheck // legacydata.* deprecated
 func calculateDiff(series legacydata.DataTimeSeries, allNull bool, value float64, fn func(float64, float64) float64) (bool, float64) {
 	var (
 		points = series.Points
