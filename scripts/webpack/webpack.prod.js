@@ -46,6 +46,16 @@ module.exports = merge(common, {
       new CssMinimizerPlugin(),
     ],
   },
+
+  // enable persistent cache for faster builds
+  cache: {
+    type: 'filesystem',
+    name: 'grafana-default-production',
+    buildDependencies: {
+      config: [__filename],
+    },
+  },
+
   plugins: [
     new MiniCssExtractPlugin({
       filename: 'grafana.[name].[fullhash].css',
