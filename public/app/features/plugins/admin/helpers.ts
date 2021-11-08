@@ -164,7 +164,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     orgName: remote?.orgName || local?.info.author.name || '',
     popularity: remote?.popularity || 0,
     publishedAt: remote?.createdAt || '',
-    type: remote?.typeCode || local?.type,
+    type,
     signature: getPluginSignature({ local, remote, error }),
     signatureOrg: local?.signatureOrg || remote?.versionSignedByOrgName,
     signatureType: local?.signatureType || remote?.versionSignatureType || remote?.signatureType || undefined,
