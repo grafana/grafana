@@ -179,7 +179,12 @@ export const RolePickerMenu = ({
                       <RoleMenuOption
                         data={option}
                         key={i}
-                        isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                        isSelected={
+                          !!(
+                            (option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid)) ||
+                            !!selectedBuiltInRoles.find((role) => role.uid === option.uid)
+                          )
+                        }
                         disabled={!!(option.uid && !!selectedBuiltInRoles.find((role) => role.uid === option.uid))}
                         onSelect={onSelect}
                         hideDescription

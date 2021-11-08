@@ -17,24 +17,32 @@ export const UserRolePicker: FC<Props> = ({ builtInRole, userId, orgId, onBuilti
       builtInRole={builtInRole}
       onRolesChange={(roles) => updateUserRoles(roles, userId, orgId)}
       onBuiltinRoleChange={onBuiltinRoleChange}
-      getRoleOptions={getRolesOptions}
+      getRoleOptions={async () => getRolesOptions(orgId)}
       getRoles={async () => getUserRoles(userId, orgId)}
-      getBuiltinRoles={getBuiltinRoles}
+      getBuiltinRoles={async () => getBuiltinRoles(orgId)}
       disabled={disabled}
     />
   );
 };
 
-export const getRolesOptions = async (query?: string): Promise<Role[]> => {
-  const roles = await getBackendSrv().get('/api/access-control/roles');
+export const getRolesOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
+  let rolesUrl = '/api/access-control/roles';
+  if (orgId) {
+    rolesUrl += `?targetOrgId=${orgId}`;
+  }
+  const roles = await getBackendSrv().get(rolesUrl);
   if (!roles || !roles.length) {
     return [];
   }
   return roles;
 };
 
-export const getBuiltinRoles = (): Promise<{ [key: string]: Role[] }> => {
-  return getBackendSrv().get('/api/access-control/builtin-roles');
+export const getBuiltinRoles = (orgId?: number): Promise<{ [key: string]: Role[] }> => {
+  let builtinRolesUrl = '/api/access-control/builtin-roles';
+  if (orgId) {
+    builtinRolesUrl += `?targetOrgId=${orgId}`;
+  }
+  return getBackendSrv().get(builtinRolesUrl);
 };
 
 export const getUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
