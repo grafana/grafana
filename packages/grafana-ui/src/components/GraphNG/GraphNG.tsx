@@ -18,9 +18,11 @@ import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { Renderers, UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { UPlotChart } from '../uPlot/Plot';
+import { ScaleProps } from '../uPlot/config/UPlotScaleBuilder';
+import { AxisProps } from '../uPlot/config/UPlotAxisBuilder';
 
 /**
  * @internal -- not a public API
@@ -41,12 +43,23 @@ export interface GraphNGProps extends Themeable2 {
   timeZone: TimeZone;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
+  renderers?: Renderers;
+  tweakScale?: (opts: ScaleProps) => ScaleProps;
+  tweakAxis?: (opts: AxisProps) => AxisProps;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+
+  /**
+   * needed for propsToDiff to re-init the plot & config
+   * this is a generic approach to plot re-init, without having to specify which panel-level options
+   * should cause invalidation. we can drop this in favor of something like panelOptionsRev that gets passed in
+   * similar to structureRev. then we can drop propsToDiff entirely.
+   */
+  options?: Record<string, any>;
 }
 
 function sameProps(prevProps: any, nextProps: any, propsToDiff: Array<string | PropDiffFn> = []) {
