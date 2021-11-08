@@ -198,7 +198,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 		})
 	}
 
-	resp, err := hs.LegacyDataRequestHandler.HandleRequest(c.Req.Context(), ds, request)
+	resp, err := hs.legacyDataRequestHandler.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}

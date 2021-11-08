@@ -98,7 +98,7 @@ type HTTPServer struct {
 	LivePushGateway           *pushhttp.Gateway
 	ContextHandler            *contexthandler.ContextHandler
 	SQLStore                  *sqlstore.SQLStore
-	LegacyDataRequestHandler  legacydata.RequestHandler
+	legacyDataRequestHandler  legacydata.RequestHandler
 	AlertEngine               *alerting.AlertEngine
 	LoadSchemaService         *schemaloader.SchemaLoaderService
 	AlertNG                   *ngalert.AlertNG
@@ -156,7 +156,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		HooksService:              hooksService,
 		CacheService:              cacheService,
 		SQLStore:                  sqlStore,
-		LegacyDataRequestHandler:  legacyDataRequestHandler,
+		legacyDataRequestHandler:  legacyDataRequestHandler,
 		AlertEngine:               alertEngine,
 		PluginRequestValidator:    pluginRequestValidator,
 		pluginClient:              pluginClient,
