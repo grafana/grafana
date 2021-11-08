@@ -14,7 +14,7 @@ import { AnnotationsSettings } from './AnnotationsSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 export interface Props {
@@ -29,18 +29,9 @@ export interface SettingsPage {
   component: React.ReactNode;
 }
 
-const updateSearchParams = (init: string, partial: string) => {
-  const searchParams = new URLSearchParams(init);
-  const newSearchParams = new URLSearchParams(partial);
-  newSearchParams.forEach((v, k) => {
-    searchParams.set(k, v);
-  });
-  return '?' + searchParams.toString();
-};
-
 const onClose = () => locationService.partial({ editview: null });
 
-const MakeEditable: React.FC<{ onMakeEditable: () => any }> = (props) => (
+const MakeEditable = (props: { onMakeEditable: () => any }) => (
   <div>
     <div className="dashboard-settings__header">Dashboard not editable</div>
     <Button onClick={props.onMakeEditable}>Make editable</Button>
@@ -147,7 +138,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
             <aside className="dashboard-settings__aside">
               {pages.map((page) => (
                 <Link
-                  to={(loc) => updateSearchParams(loc.search, `editview=${page.id}`)}
+                  to={(loc) => locationUtil.updateSearchParams(loc.search, `editview=${page.id}`)}
                   className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
                   key={page.id}
                 >
