@@ -3,7 +3,8 @@ import { Field, Label } from '@grafana/ui';
 import React, { ReactNode } from 'react';
 import Highlighter from 'react-highlight-words';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
-import { OptionsPaneItemOverrides, OptionPaneItemOverrideInfo } from './OptionsPaneItemOverrides';
+import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
+import { OptionPaneItemOverrideInfo } from './types';
 
 export interface OptionsPaneItemProps {
   title: string;

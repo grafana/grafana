@@ -1,8 +1,8 @@
 import React from 'react';
 import { Tooltip, useStyles2 } from '@grafana/ui';
-import { DataFrame, FieldConfigPropertyItem, FieldConfigSource, GrafanaTheme2 } from '@grafana/data';
-import { get as lodashGet } from 'lodash';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, CSSObject } from '@emotion/css';
+import { OptionPaneItemOverrideInfo } from './types';
 
 export interface Props {
   overrides: OptionPaneItemOverrideInfo[];
@@ -20,69 +20,6 @@ export function OptionsPaneItemOverrides({ overrides }: Props) {
       ))}
     </div>
   );
-}
-
-export interface OptionPaneItemOverrideInfo {
-  type: 'data' | 'rule';
-  onClick?: () => void;
-  tooltip: string;
-  description: string;
-}
-
-export const dataOverrideTooltipDescription =
-  'Some data fields have this option pre-configured. Add a field override rule to override the pre-configured value.';
-export const overrideRuleTooltipDescription = 'An override rule exists for this property';
-
-export function searchForOptionOverrides(
-  fieldOption: FieldConfigPropertyItem,
-  fieldConfig: FieldConfigSource,
-  frames: DataFrame[] | undefined
-): OptionPaneItemOverrideInfo[] {
-  const infoDots: OptionPaneItemOverrideInfo[] = [];
-
-  // Look for options overriden in data field config
-  if (frames) {
-    for (const frame of frames) {
-      for (const field of frame.fields) {
-        const value = lodashGet(field.config, fieldOption.path);
-        if (value == null) {
-          continue;
-        }
-
-        infoDots.push({
-          type: 'data',
-          description: dataOverrideTooltipDescription,
-          tooltip: dataOverrideTooltipDescription,
-        });
-
-        break;
-      }
-    }
-  }
-
-  // Try to find this option in override rules
-  let overrideRuleFound = false;
-
-  for (const rule of fieldConfig.overrides) {
-    for (const prop of rule.properties) {
-      if (prop.id === fieldOption.id) {
-        infoDots.push({
-          type: 'rule',
-          description: overrideRuleTooltipDescription,
-          tooltip: overrideRuleTooltipDescription,
-        });
-
-        overrideRuleFound = true;
-        break;
-      }
-    }
-
-    if (overrideRuleFound) {
-      break;
-    }
-  }
-
-  return infoDots;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

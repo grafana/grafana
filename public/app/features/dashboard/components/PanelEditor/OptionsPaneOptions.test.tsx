@@ -17,7 +17,7 @@ import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
-import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './OptionsPaneItemOverrides';
+import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
 
 standardEditorsRegistry.setInit(getStandardOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
