@@ -152,6 +152,12 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
+	result := apimodels.NamespaceConfigResponse{}
+
+	if len(namespaceMap) == 0 {
+		srv.log.Debug("User has no access to any namespaces")
+		return response.JSON(http.StatusOK, result)
+	}
 
 	namespaceUIDs := make([]string, len(namespaceMap))
 	for k := range namespaceMap {
@@ -215,7 +221,6 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		}
 	}
 
-	result := apimodels.NamespaceConfigResponse{}
 	for namespace, m := range configs {
 		for _, ruleGroupConfig := range m {
 			result[namespace] = append(result[namespace], ruleGroupConfig)
