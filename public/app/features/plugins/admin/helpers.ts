@@ -148,7 +148,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   }
 
   return {
-    description: remote?.description || local?.info.description || '',
+    description: local?.info.description || remote?.description || '',
     downloads: remote?.downloads || 0,
     hasUpdate: local?.hasUpdate || false,
     id,
