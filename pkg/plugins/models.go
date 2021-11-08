@@ -205,9 +205,9 @@ type DataSourceDTO struct {
 	Name      string                 `json:"name"`
 	Meta      *PluginMetaDTO         `json:"meta"`
 	URL       string                 `json:"url,omitempty"`
-	IsDefault bool                   `json:"isDefault,omitempty"`
+	IsDefault bool                   `json:"isDefault"`
 	Access    string                 `json:"access,omitempty"`
-	Preload   bool                   `json:"preload,omitempty"`
+	Preload   bool                   `json:"preload"`
 	Module    string                 `json:"module,omitempty"`
 	JSONData  map[string]interface{} `json:"jsonData,omitempty"`
 
