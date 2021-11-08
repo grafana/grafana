@@ -160,7 +160,10 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 
 	hs.Live.HandleDatasourceDelete(c.OrgId, ds.Uid)
 
-	return response.Success("Data source deleted")
+	return response.JSON(200, util.DynMap{
+		"message": "Data source deleted",
+		"id":      ds.Id,
+	})
 }
 
 func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Response {
