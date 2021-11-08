@@ -214,14 +214,14 @@ describe('Plugins/Helpers', () => {
       });
     });
 
-    test('`.description` - prefers the remote', () => {
+    test('`.description` - prefers the local', () => {
       // Local & Remote
       expect(
         mapToCatalogPlugin(
           { ...localPlugin, info: { ...localPlugin.info, description: 'Local description' } },
           { ...remotePlugin, description: 'Remote description' }
         )
-      ).toMatchObject({ description: 'Remote description' });
+      ).toMatchObject({ description: 'Local description' });
 
       // Remote only
       expect(mapToCatalogPlugin(undefined, { ...remotePlugin, description: 'Remote description' })).toMatchObject({
@@ -398,7 +398,7 @@ describe('Plugins/Helpers', () => {
       expect(mapToCatalogPlugin()).toMatchObject({ publishedAt: '' });
     });
 
-    test('`.type` - prefers the remote', () => {
+    test('`.type` - prefers the local', () => {
       // Local & Remote
       expect(
         mapToCatalogPlugin(
@@ -406,7 +406,7 @@ describe('Plugins/Helpers', () => {
           { ...remotePlugin, typeCode: PluginType.datasource }
         )
       ).toMatchObject({
-        type: PluginType.datasource,
+        type: PluginType.app,
       });
 
       // Remote only
