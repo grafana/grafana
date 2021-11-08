@@ -32,7 +32,7 @@ export interface SelectionParams {
 
 export class Scene {
   styles = getStyles(config.theme2);
-  readonly selection = new ReplaySubject<Array<ElementState | GroupState>>(1);
+  readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
   root: RootElement;
 
