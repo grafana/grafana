@@ -41,7 +41,7 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { configureStore } from './store/configureStore';
 import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { AngularApp } from './angular/AngularApp';
+import { AngularApp } from './angular';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
