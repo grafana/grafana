@@ -408,6 +408,7 @@ export const RoleMenuGroupsOption = React.forwardRef<
       />
       <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
         <span>{data.displayName || data.name}</span>
+        <span className={customStyles.menuOptionExpand}></span>
       </div>
     </div>
   );
@@ -480,6 +481,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
     menuOptionDisabled: css`
       color: ${theme.colors.text.disabled};
       cursor: not-allowed;
+    `,
+    menuOptionExpand: css`
+      position: absolute;
+      right: ${theme.spacing(1.25)};
+      color: ${theme.colors.text.disabled};
+
+      &:after {
+        content: '>';
+      }
     `,
     builtInRoleSelector: css`
       margin: ${theme.spacing(1, 1.25, 1, 1)};
