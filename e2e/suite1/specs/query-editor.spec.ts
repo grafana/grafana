@@ -13,7 +13,7 @@ e2e.scenario({
     cy.contains('gdev-prometheus').scrollIntoView().should('be.visible').click();
     const queryText = 'http_requests_total';
 
-    // we need to wait for the query-field being lazy-loaded.
+    // we need to wait for the query-field being lazy-loaded, in two steps:
     // it is a two-step process:
     // 1. first we wait for the text 'Loading...' to appear
     // 1. then we wait for the text 'Loading...' to disappear
