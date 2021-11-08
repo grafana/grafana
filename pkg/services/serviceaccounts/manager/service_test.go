@@ -36,3 +36,14 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 		assert.Len(t, svcMock.Calls.DeleteServiceAccount, 0)
 	})
 }
+
+func TestProvideServiceAccount_IsDisabled(t *testing.T) {
+	t.Run("should return true if feature toggle is set", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		storeMock := &tests.ServiceAccountsStoreMock{Calls: tests.Calls{}}
+		cfg.FeatureToggles = map[string]bool{"service-accounts": true}
+		svc := ServiceAccountsService{cfg: cfg, store: storeMock}
+		disabled := svc.IsDisabled()
+		assert.Equal(t, false, disabled)
+	})
+}

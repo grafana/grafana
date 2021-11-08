@@ -10,3 +10,7 @@ var (
 const (
 	ActionDelete = "serviceaccounts:delete"
 )
+
+type Status struct {
+	Enabled bool `json:"enabled"`
+}
