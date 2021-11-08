@@ -39,6 +39,7 @@ export const RolePickerMenu = ({
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [selectedMenuGroup, setSelectedMenuGroup] = useState('');
+  const [selectedMenuGroups, setSelectedMenuGroups] = useState<string[]>([]);
   const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
 
   const theme = useTheme2();
@@ -64,6 +65,7 @@ export const RolePickerMenu = ({
         const groupOptions = groupsMap[groupName];
         groups.push({
           name: groupName,
+          value: groupName,
           options: groupOptions,
         });
       }
@@ -79,7 +81,22 @@ export const RolePickerMenu = ({
     }
   };
 
-  const onGroupsSelect = (value: string) => {};
+  const onGroupsSelect = (value: string) => {
+    const group = optionGroups.find((g) => {
+      return g.name === value;
+    });
+    if (selectedMenuGroups.includes(value)) {
+      setSelectedMenuGroups(selectedMenuGroups.filter((group) => group !== value));
+      if (group) {
+        setSelectedOptions(selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid)));
+      }
+    } else {
+      setSelectedMenuGroups([...selectedMenuGroups, value]);
+      if (group) {
+        setSelectedOptions([...selectedOptions, ...group.options]);
+      }
+    }
+  };
 
   const onMenuGroupClick = (value: string) => {
     if (selectedMenuGroup === value) {
@@ -115,6 +132,9 @@ export const RolePickerMenu = ({
       const groupName = getRoleGroup(role);
       return groupName !== selectedMenuGroup;
     });
+    if (selectedMenuGroup) {
+      setSelectedMenuGroups(selectedMenuGroups.filter((group) => group !== selectedMenuGroup));
+    }
     setSelectedOptions(options);
   };
 
@@ -178,7 +198,7 @@ export const RolePickerMenu = ({
                       <RoleMenuGroupsOption
                         data={option}
                         key={i}
-                        // isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                        isSelected={!!(option.value && !!selectedMenuGroups.find((opt) => opt === option.value))}
                         onSelect={onGroupsSelect}
                         onClick={onMenuGroupClick}
                       />
