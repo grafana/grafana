@@ -153,6 +153,7 @@ export type LocalPlugin = {
   signatureType: PluginSignatureType;
   state: string;
   type: PluginType;
+  dependencies: PluginDependencies;
 };
 
 interface Rel {

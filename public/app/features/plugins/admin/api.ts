@@ -28,7 +28,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     getPluginVersions(id),
     getLocalPluginReadme(id),
   ]);
-  const dependencies = remote?.json?.dependencies;
+  const dependencies = local?.dependencies || remote?.json?.dependencies;
 
   return {
     grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
