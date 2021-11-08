@@ -141,13 +141,15 @@ Please refer to each datasource documentation for specific provisioning examples
 
 Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `jsonData` field. Here are the most common settings that the core datasources use.
 
+> **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
+
 | Name                    | Type    | Datasource                                                       | Description                                                                                                                                       |
 | ----------------------- | ------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| tlsAuth                 | boolean | _All_                                                            | Enable TLS authentication using client cert configured in secure json data                                                                        |
-| tlsAuthWithCACert       | boolean | _All_                                                            | Enable TLS authentication using CA cert                                                                                                           |
-| tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.                                                                  |
-| serverName              | string  | _All_                                                            | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL. |
-| timeout                 | string  | _All_                                                            | Request timeout in seconds. Overrides dataproxy.timeout option                                                                                    |
+| tlsAuth                 | boolean | _HTTP\*_, MySQL                                                  | Enable TLS authentication using client cert configured in secure json data                                                                        |
+| tlsAuthWithCACert       | boolean | _HTTP\*_, MySQL, PostgreSQL                                      | Enable TLS authentication using CA cert                                                                                                           |
+| tlsSkipVerify           | boolean | _HTTP\*_, MySQL, PostgreSQL                                      | Controls whether a client verifies the server's certificate chain and host name.                                                                  |
+| serverName              | string  | _HTTP\*_                                                         | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL. |
+| timeout                 | string  | _HTTP\*_                                                         | Request timeout in seconds. Overrides dataproxy.timeout option                                                                                    |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                                                                                  |
 | timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                                                                              |
 | httpMode                | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                                                                       |
@@ -185,7 +187,7 @@ Since not all datasources have the same configuration settings we only have the 
 | maxOpenConns            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of open connections to the database (Grafana v5.4+)                                                                                |
 | maxIdleConns            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of connections in the idle connection pool (Grafana v5.4+)                                                                         |
 | connMaxLifetime         | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+)                                                                      |
-| keepCookies             | array   | _All_                                                            | Cookies that needs to be passed along while communicating with datasources                                                                        |
+| keepCookies             | array   | _HTTP\*_                                                         | Cookies that needs to be passed along while communicating with datasources                                                                        |
 
 #### Secure Json Data
 
@@ -193,17 +195,19 @@ Since not all datasources have the same configuration settings we only have the 
 
 Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "configuration.md#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
-| Name              | Type   | Datasource                   | Description                                              |
-| ----------------- | ------ | ---------------------------- | -------------------------------------------------------- |
-| tlsCACert         | string | _All_                        | CA cert for out going requests                           |
-| tlsClientCert     | string | _All_                        | TLS Client cert for outgoing requests                    |
-| tlsClientKey      | string | _All_                        | TLS Client key for outgoing requests                     |
-| password          | string | _All_                        | password                                                 |
-| basicAuthPassword | string | _All_                        | password for basic authentication                        |
-| accessKey         | string | Cloudwatch                   | Access key for connecting to Cloudwatch                  |
-| secretKey         | string | Cloudwatch                   | Secret key for connecting to Cloudwatch                  |
-| sigV4AccessKey    | string | Elasticsearch and Prometheus | SigV4 access key. Required when using keys auth provider |
-| sigV4SecretKey    | string | Elasticsearch and Prometheus | SigV4 secret key. Required when using keys auth provider |
+> **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
+
+| Name              | Type   | Datasource                         | Description                                              |
+| ----------------- | ------ | ---------------------------------- | -------------------------------------------------------- |
+| tlsCACert         | string | _HTTP\*_, MySQL, PostgreSQL        | CA cert for out going requests                           |
+| tlsClientCert     | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client cert for outgoing requests                    |
+| tlsClientKey      | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client key for outgoing requests                     |
+| password          | string | _HTTP\*_, MySQL, PostgreSQL, MSSQL | password                                                 |
+| basicAuthPassword | string | _HTTP\*_                           | password for basic authentication                        |
+| accessKey         | string | Cloudwatch                         | Access key for connecting to Cloudwatch                  |
+| secretKey         | string | Cloudwatch                         | Secret key for connecting to Cloudwatch                  |
+| sigV4AccessKey    | string | Elasticsearch and Prometheus       | SigV4 access key. Required when using keys auth provider |
+| sigV4SecretKey    | string | Elasticsearch and Prometheus       | SigV4 secret key. Required when using keys auth provider |
 
 #### Custom HTTP headers for datasources
 
