@@ -199,30 +199,30 @@ type PluginMetaDTO struct {
 }
 
 type DataSourceDTO struct {
-	ID        int64                  `json:"id"`
-	UID       string                 `json:"uid"`
-	Type      string                 `json:"type"`
-	Name      string                 `json:"name"`
-	URL       string                 `json:"url"`
-	IsDefault bool                   `json:"isDefault"`
-	Access    string                 `json:"access"`
-	Preload   bool                   `json:"preload"`
-	Module    string                 `json:"module"`
-	Meta      *PluginMetaDTO         `json:"meta"`
-	JSONData  map[string]interface{} `json:"jsonData"`
+	ID        int64                  `json:"id,omitempty"`
+	UID       string                 `json:"uid,omitempty"`
+	Type      string                 `json:"type,omitempty"`
+	Name      string                 `json:"name,omitempty"`
+	URL       string                 `json:"url,omitempty"`
+	IsDefault bool                   `json:"isDefault,omitempty"`
+	Access    string                 `json:"access,omitempty"`
+	Preload   bool                   `json:"preload,omitempty"`
+	Module    string                 `json:"module,omitempty"`
+	Meta      *PluginMetaDTO         `json:"meta,omitempty"`
+	JSONData  map[string]interface{} `json:"jsonData,omitempty"`
 
-	BasicAuth       string `json:"basicAuth"`
-	WithCredentials bool   `json:"withCredentials"`
+	BasicAuth       string `json:"basicAuth,omitempty"`
+	WithCredentials bool   `json:"withCredentials,omitempty"`
 
 	// InfluxDB
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
 
 	// InfluxDB + Elasticsearch
-	Database string `json:"database"`
+	Database string `json:"database,omitempty"`
 
 	// Prometheus
-	DirectURL string `json:"directUrl"`
+	DirectURL string `json:"directUrl,omitempty"`
 }
 
 type PanelDTO struct {
