@@ -181,6 +181,11 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
     y = u.valToPos((min || max)!, u.series[(sMaxIdx || sMinIdx)!].scale!);
   }
 
+  // if y is out of canvas bounds, snap it to the bottom
+  if (y !== undefined && y < 0) {
+    y = u.bbox.height / devicePixelRatio;
+  }
+
   return y;
 }
 
