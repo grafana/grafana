@@ -25,7 +25,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/grafana/grafana/pkg/util/stacktrace"
 )
 
 type Installer struct {
@@ -510,18 +509,8 @@ func latestSupportedVersion(plugin *Plugin) *Version {
 	return nil
 }
 
-func (i *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("failed to extract files from archive")
-
-			if rErr, ok := r.(error); ok {
-				stack := stacktrace.Stack(3)
-				i.log.Debugf("Failed to extract files from archive, error: %v, stack: %s", rErr, string(stack))
-			}
-		}
-	}()
-
+func (i *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) error {
+	var err error
 	dest, err = filepath.Abs(dest)
 	if err != nil {
 		return err
@@ -538,14 +527,16 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 	}
 
 	r, err := zip.OpenReader(archiveFile)
+	if err != nil {
+		return err
+	}
+
 	defer func() {
 		if err := r.Close(); err != nil {
 			i.log.Warn("failed to close zip file", "err", err)
 		}
 	}()
-	if err != nil {
-		return err
-	}
+
 	for _, zf := range r.File {
 		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
 		// nolint:gosec
@@ -600,7 +591,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		}
 	}
 
-	return err
+	return nil
 }
 
 func isSymlink(file *zip.File) bool {
