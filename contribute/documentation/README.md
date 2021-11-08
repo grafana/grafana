@@ -1,3 +1,71 @@
+
+# Contribute to Grafana documentation
+
+This guide...
+
+## Welcome
+
+xxxxx
+
+
+### Intended audience
+
+xxx...
+
+
+## Understanding the structure of Grafana documentation
+
+All Grafana Enterprise and OSS documentation is located in the current repository (the repository you are currently in) at 
+
+After you expand sources, you will see directories, for example `administration` and `alerting`.
+The Grafana documentation is organized into topics, called _sections_. You can take a look at the current build at [grafana.com/docs/](https://grafana.com/docs/).
+
+Each top-level section is located under the [docs/sources](/docs/sources) directory. Subsections are added by creating a subdirectory in the directory of the parent section.
+
+For each section, an `_index.md` file provides an overview of the topic.
+
+
+## Ways to contribute
+
+xxxx.
+
+
+### Edit a topic
+
+Task topic for editing directly in GH, branching and PR, but no fork and clone. Great for small changes. Uses some of the content here, a bit under Your first contribution. https://github.com/grafana/grafana/blob/main/contribute/documentation.md. Add that ya need GH account as prereq..
+
+### Write a topic
+
+xxx.
+
+#### Understanding topic types
+
+Include the chunking information in https://github.com/grafana/grafana/blob/main/contribute/templates/README.md
+
+#### Use a documentation template to contribute a topic
+
+Introduction to the templates, where they are located, etc, that written in MD (refer to or include common md elements we use), refer them to the commented text for specific usage guidelines, mention branch, commit, and create PR actions, mention how to preview docs locally to check work.
+
+### Write a collection of topics
+
+Not sure if this needs more than to say 'use your topic writing skills and get with us to determine IA for bulk content'. 
+
+
+## Understanding the PR review and approval workflow
+
+Describe where to post PR for review, and what the review process is like. This doesn't have to be long.
+
+## Join our community
+
+From here, but expand on this, if possible: https://github.com/grafana/grafana/blob/main/contribute/documentation.md
+
+## Reference: Top five writing tips
+
+xxxx.
+
+
+
+++++++++++++++++++++++++++++++++++
 # Templates
 
 Templates are both a starting point and an instruction manual for writing something new. They are intended to make life easier by providing a jumping-off point, something besides a blank page to start from. They are not intended to be a limitation. If the template does not work perfectly for your use case, you can adjust or change it. We will work it out in code review.
