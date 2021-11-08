@@ -1,12 +1,12 @@
 package setting
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/prometheus/alertmanager/cluster"
@@ -75,7 +75,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.Enabled = ua.Key("enabled").MustBool(true)
 
 	if uaCfg.Enabled && AlertingEnabled {
-		return errors.New("both legacy and Grafana 8 Alerts are enabled. Disable at least one and try again")
+		AlertingEnabled = false
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})

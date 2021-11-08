@@ -464,7 +464,7 @@ func TestAlertingEnabled(t *testing.T) {
 			},
 		},
 		{
-			desc:                   "when both alerting are enabled, it should error",
+			desc:                   "when both alerting are enabled, unified alerting should prevail",
 			legacyAlertingEnabled:  "true",
 			unifiedAlertingEnabled: "true",
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
@@ -473,7 +473,9 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
-				require.Error(t, err)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
+				assert.Equal(t, AlertingEnabled, false)
 			},
 		},
 		{
@@ -516,7 +518,9 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
-				require.Error(t, err)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
+				assert.Equal(t, AlertingEnabled, false)
 			},
 		},
 		{
