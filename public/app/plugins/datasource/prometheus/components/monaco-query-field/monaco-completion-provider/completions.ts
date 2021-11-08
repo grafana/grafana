@@ -162,6 +162,7 @@ async function getLabelValues(
 async function getLabelValuesForMetricCompletions(
   metric: string | undefined,
   labelName: string,
+  betweenQuotes: boolean,
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
@@ -169,7 +170,7 @@ async function getLabelValuesForMetricCompletions(
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
-    insertText: `"${text}"`, // FIXME: escaping strange characters?
+    insertText: betweenQuotes ? text : `"${text}"`, // FIXME: escaping strange characters?
   }));
 }
 
@@ -195,6 +196,7 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
       return getLabelValuesForMetricCompletions(
         situation.metricName,
         situation.labelName,
+        situation.betweenQuotes,
         situation.otherLabels,
         dataProvider
       );

@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/encryption"
+
 	"github.com/centrifugal/centrifuge"
 	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
@@ -62,7 +64,7 @@ type CoreGrafanaScope struct {
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore,
+	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, encService encryption.Service,
 	usageStatsService usagestats.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
@@ -73,6 +75,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
+		EncryptionService:     encService,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -180,15 +183,17 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 		} else {
 			storage := &pipeline.FileStorage{
-				DataPath: cfg.DataPath,
+				DataPath:          cfg.DataPath,
+				EncryptionService: g.EncryptionService,
 			}
-			g.channelRuleStorage = storage
+			g.pipelineStorage = storage
 			builder = &pipeline.StorageRuleBuilder{
 				Node:                 node,
 				ManagedStream:        g.ManagedStreamRunner,
 				FrameStorage:         pipeline.NewFrameStorage(),
-				RuleStorage:          storage,
+				Storage:              storage,
 				ChannelHandlerGetter: g,
+				EncryptionService:    g.EncryptionService,
 			}
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
@@ -364,6 +369,7 @@ type GrafanaLive struct {
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
+	EncryptionService     encryption.Service
 	pluginStore           plugins.Store
 
 	node         *centrifuge.Node
@@ -382,7 +388,7 @@ type GrafanaLive struct {
 
 	ManagedStreamRunner *managedstream.Runner
 	Pipeline            *pipeline.Pipeline
-	channelRuleStorage  pipeline.RuleStorage
+	pipelineStorage     pipeline.Storage
 
 	contextGetter    *liveplugin.ContextGetter
 	runStreamManager *runstream.Manager
@@ -428,10 +434,6 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 	}
 
 	return eGroup.Wait()
-}
-
-func (g *GrafanaLive) ChannelRuleStorage() pipeline.RuleStorage {
-	return g.channelRuleStorage
 }
 
 func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []glob.Glob) func(r *http.Request) bool {
@@ -980,7 +982,7 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
 
 // HandleChannelRulesListHTTP ...
 func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.Response {
-	result, err := g.channelRuleStorage.ListChannelRules(c.Req.Context(), c.OrgId)
+	result, err := g.pipelineStorage.ListChannelRules(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
 	}
@@ -1003,15 +1005,31 @@ type DryRunRuleStorage struct {
 	ChannelRules []pipeline.ChannelRule
 }
 
-func (s *DryRunRuleStorage) CreateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
+func (s *DryRunRuleStorage) GetRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackendGetCmd) (pipeline.RemoteWriteBackend, bool, error) {
+	return pipeline.RemoteWriteBackend{}, false, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) CreateRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackendCreateCmd) (pipeline.RemoteWriteBackend, error) {
+	return pipeline.RemoteWriteBackend{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) UpdateRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackendUpdateCmd) (pipeline.RemoteWriteBackend, error) {
+	return pipeline.RemoteWriteBackend{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) DeleteRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackendDeleteCmd) error {
+	return errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) CreateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRuleCreateCmd) (pipeline.ChannelRule, error) {
 	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
 }
 
-func (s *DryRunRuleStorage) UpdateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
+func (s *DryRunRuleStorage) UpdateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRuleUpdateCmd) (pipeline.ChannelRule, error) {
 	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
 }
 
-func (s *DryRunRuleStorage) DeleteChannelRule(_ context.Context, _ int64, _ string) error {
+func (s *DryRunRuleStorage) DeleteChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRuleDeleteCmd) error {
 	return errors.New("not implemented by dry run rule storage")
 }
 
@@ -1041,7 +1059,7 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) respon
 		Node:                 g.node,
 		ManagedStream:        g.ManagedStreamRunner,
 		FrameStorage:         pipeline.NewFrameStorage(),
-		RuleStorage:          storage,
+		Storage:              storage,
 		ChannelHandlerGetter: g,
 	}
 	channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
@@ -1074,17 +1092,17 @@ func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
-	var rule pipeline.ChannelRule
-	err = json.Unmarshal(body, &rule)
+	var cmd pipeline.ChannelRuleCreateCmd
+	err = json.Unmarshal(body, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
 	}
-	result, err := g.channelRuleStorage.CreateChannelRule(c.Req.Context(), c.OrgId, rule)
+	rule, err := g.pipelineStorage.CreateChannelRule(c.Req.Context(), c.OrgId, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
-		"rule": result,
+		"rule": rule,
 	})
 }
 
@@ -1094,15 +1112,15 @@ func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.R
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
-	var rule pipeline.ChannelRule
-	err = json.Unmarshal(body, &rule)
+	var cmd pipeline.ChannelRuleUpdateCmd
+	err = json.Unmarshal(body, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
 	}
-	if rule.Pattern == "" {
+	if cmd.Pattern == "" {
 		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
 	}
-	rule, err = g.channelRuleStorage.UpdateChannelRule(c.Req.Context(), c.OrgId, rule)
+	rule, err := g.pipelineStorage.UpdateChannelRule(c.Req.Context(), c.OrgId, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update channel rule", err)
 	}
@@ -1117,15 +1135,15 @@ func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) respons
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
-	var rule pipeline.ChannelRule
-	err = json.Unmarshal(body, &rule)
+	var cmd pipeline.ChannelRuleDeleteCmd
+	err = json.Unmarshal(body, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
 	}
-	if rule.Pattern == "" {
+	if cmd.Pattern == "" {
 		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
 	}
-	err = g.channelRuleStorage.DeleteChannelRule(c.Req.Context(), c.OrgId, rule.Pattern)
+	err = g.pipelineStorage.DeleteChannelRule(c.Req.Context(), c.OrgId, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete channel rule", err)
 	}
@@ -1145,13 +1163,102 @@ func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) respo
 
 // HandleRemoteWriteBackendsListHTTP ...
 func (g *GrafanaLive) HandleRemoteWriteBackendsListHTTP(c *models.ReqContext) response.Response {
-	result, err := g.channelRuleStorage.ListRemoteWriteBackends(c.Req.Context(), c.OrgId)
+	backends, err := g.pipelineStorage.ListRemoteWriteBackends(c.Req.Context(), c.OrgId)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get remote write backends", err)
+	}
+	result := make([]pipeline.RemoteWriteBackendDto, 0, len(backends))
+	for _, b := range backends {
+		result = append(result, pipeline.RemoteWriteBackendToDto(b))
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
 		"remoteWriteBackends": result,
 	})
+}
+
+// HandleChannelRulesPostHTTP ...
+func (g *GrafanaLive) HandleRemoteWriteBackendsPostHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var cmd pipeline.RemoteWriteBackendCreateCmd
+	err = json.Unmarshal(body, &cmd)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding remote write backend", err)
+	}
+	result, err := g.pipelineStorage.CreateRemoteWriteBackend(c.Req.Context(), c.OrgId, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create remote write backend", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"remoteWriteBackend": pipeline.RemoteWriteBackendToDto(result),
+	})
+}
+
+// HandleChannelRulesPutHTTP ...
+func (g *GrafanaLive) HandleRemoteWriteBackendsPutHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var cmd pipeline.RemoteWriteBackendUpdateCmd
+	err = json.Unmarshal(body, &cmd)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding remote write backend", err)
+	}
+	if cmd.UID == "" {
+		return response.Error(http.StatusBadRequest, "UID required", nil)
+	}
+	existingBackend, ok, err := g.pipelineStorage.GetRemoteWriteBackend(c.Req.Context(), c.OrgId, pipeline.RemoteWriteBackendGetCmd{
+		UID: cmd.UID,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get remote write backend", err)
+	}
+	if ok {
+		if cmd.SecureSettings == nil {
+			cmd.SecureSettings = map[string]string{}
+		}
+		secureJSONData, err := g.EncryptionService.DecryptJsonData(c.Req.Context(), existingBackend.SecureSettings, setting.SecretKey)
+		if err != nil {
+			logger.Error("Error decrypting secure settings", "error", err)
+			return response.Error(http.StatusInternalServerError, "Error decrypting secure settings", err)
+		}
+		for k, v := range secureJSONData {
+			if _, ok := cmd.SecureSettings[k]; !ok {
+				cmd.SecureSettings[k] = v
+			}
+		}
+	}
+	result, err := g.pipelineStorage.UpdateRemoteWriteBackend(c.Req.Context(), c.OrgId, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update remote write backend", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"remoteWriteBackend": pipeline.RemoteWriteBackendToDto(result),
+	})
+}
+
+// HandleChannelRulesDeleteHTTP ...
+func (g *GrafanaLive) HandleRemoteWriteBackendsDeleteHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var cmd pipeline.RemoteWriteBackendDeleteCmd
+	err = json.Unmarshal(body, &cmd)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding remote write backend", err)
+	}
+	if cmd.UID == "" {
+		return response.Error(http.StatusBadRequest, "UID required", nil)
+	}
+	err = g.pipelineStorage.DeleteRemoteWriteBackend(c.Req.Context(), c.OrgId, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete remote write backend", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{})
 }
 
 // Write to the standard log15 logger
