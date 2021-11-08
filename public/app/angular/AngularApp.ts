@@ -15,6 +15,13 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv } from '@grafana/runtime';
 import './panel/all';
 import './partials';
+import './filters/filters';
+import './services/alert_srv';
+import './services/dynamic_directive_srv';
+import './services/ng_react';
+import './services/segment_srv';
+import './services/popover_srv';
+
 export class AngularApp {
   ngModuleDependencies: any[];
   preBootModules: any[];
