@@ -767,7 +767,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	// remove permissions from _ALL_ folders
 	require.NoError(t, store.UpdateDashboardACL(1, nil))
 
-	// make sure that folder2 is not included in the response
+	// make sure that no folders are included in the response
 	{
 		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
