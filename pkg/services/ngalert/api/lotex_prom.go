@@ -80,6 +80,11 @@ func (p *LotexProm) getEndpoints(ctx *models.ReqContext) (*promEndpoints, error)
 	if err != nil {
 		return nil, err
 	}
+
+	if ds.Url == "" {
+		return nil, fmt.Errorf("HTTP URL is empty")
+	}
+
 	routes, ok := dsTypeToLotexRoutes[ds.Type]
 	if !ok {
 		return nil, fmt.Errorf("unexpected datasource type. expecting loki or prometheus")
