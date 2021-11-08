@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
+// nameExp matches the part after the last '/' symbol
 var nameExp = regexp.MustCompile(`([^\/]*)\/*$`)
 
 // responseEntry holds a cache entry for a processed response

@@ -155,7 +155,7 @@ func Test_processData_functions(t *testing.T) {
 	serviceResp := serviceResponse{
 		Services: []serviceDescription{
 			{
-				Name:        "foo",
+				Name:        "blah/foo",
 				DisplayName: "bar",
 			},
 			{
@@ -181,7 +181,7 @@ func Test_processData_functions(t *testing.T) {
 	sloResp := sloResponse{
 		SLOs: []sloDescription{
 			{
-				Name:        "foo",
+				Name:        "blah/foo",
 				DisplayName: "bar",
 				Goal:        0.1,
 			},
