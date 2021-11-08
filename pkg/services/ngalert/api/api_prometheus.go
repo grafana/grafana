@@ -109,9 +109,10 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	}
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:        c.SignedInUser.OrgId,
-		DashboardUID: dashboardUID,
-		PanelID:      panelID,
+		OrgID:         c.SignedInUser.OrgId,
+		DashboardUID:  dashboardUID,
+		PanelID:       panelID,
+		NamespaceUIDs: namespaceUIDs,
 	}
 	if err := srv.store.GetOrgAlertRules(&alertRuleQuery); err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
