@@ -38,3 +38,4 @@ export * from './geometry';
 export { isUnsignedPluginSignature } from './pluginSignature';
 export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo } from './config';
 export * from './alerts';
+export * from './slider';
