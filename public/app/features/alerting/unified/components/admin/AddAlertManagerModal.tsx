@@ -4,16 +4,17 @@ import { useDispatch } from 'react-redux';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, FieldArray, Form, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
 import { addExternalAlertmanagersAction } from '../../state/actions';
+import { AlertmanagerUrl } from 'app/plugins/datasource/alertmanager/types';
 
 interface Props {
   onClose: () => void;
-  alertmanagers: Array<{ url: string }>;
+  alertmanagers: AlertmanagerUrl[];
 }
 
 export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const defaultValues: Record<string, any> = useMemo(
+  const defaultValues: Record<string, AlertmanagerUrl[]> = useMemo(
     () => ({
       alertmanagers: alertmanagers,
     }),
@@ -27,7 +28,7 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
     </div>
   );
 
-  const onSubmit = (values: Record<string, Array<{ url: string }>>) => {
+  const onSubmit = (values: Record<string, AlertmanagerUrl[]>) => {
     dispatch(addExternalAlertmanagersAction(values.alertmanagers.map((am) => cleanAlertmanagerUrl(am.url))));
     onClose();
   };

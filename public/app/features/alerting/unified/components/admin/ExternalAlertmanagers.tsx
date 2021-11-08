@@ -32,7 +32,7 @@ export const ExternalAlertmanagers = () => {
   const onDelete = useCallback(
     (index: number) => {
       // to delete we need to filter the alertmanager from the list and repost
-      const newList = externalAlertManagers!
+      const newList = (externalAlertManagers ?? [])
         .filter((am, i) => i !== index)
         .map((am) => {
           return am.url;
