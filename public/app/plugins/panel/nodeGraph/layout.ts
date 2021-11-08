@@ -4,6 +4,7 @@ import { Field } from '@grafana/data';
 import { useNodeLimit } from './useNodeLimit';
 import useMountedState from 'react-use/lib/useMountedState';
 import { graphBounds } from './utils';
+import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
 
 export interface Config {
   linkDistance: number;

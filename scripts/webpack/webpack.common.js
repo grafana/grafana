@@ -1,7 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const webpack = require('webpack');
-
+const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 class CopyUniconsPlugin {
@@ -30,7 +30,7 @@ module.exports = {
     path: path.resolve(__dirname, '../../public/build'),
     filename: '[name].[fullhash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
-    publicPath: 'auto',
+    publicPath: 'public/build/',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
@@ -58,6 +58,7 @@ module.exports = {
     source: false,
   },
   plugins: [
+    new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),

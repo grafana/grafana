@@ -81,7 +81,6 @@ module.exports = merge(common, {
       template: path.resolve(__dirname, '../../public/views/index-template.html'),
       hash: true,
       inject: false,
-      publicPath: 'public/build/',
       chunksSortMode: 'none',
       excludeChunks: ['dark', 'light'],
     }),
