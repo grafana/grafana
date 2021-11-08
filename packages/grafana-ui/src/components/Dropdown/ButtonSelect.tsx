@@ -38,6 +38,14 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
     setIsOpen(!isOpen);
   };
 
+  const onArrowKeyDown = (event: React.KeyboardEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (event.key === 'ArrowDown' || event.key === 'Enter') {
+      setIsOpen(!isOpen);
+    }
+  };
+
   const onChangeInternal = (item: SelectableValue<T>) => {
     onChange(item);
     setIsOpen(false);
@@ -49,6 +57,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
         className={className}
         isOpen={isOpen}
         onClick={onToggle}
+        onKeyDown={onArrowKeyDown}
         narrow={narrow}
         variant={variant}
         {...restProps}
@@ -58,7 +67,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
       {isOpen && (
         <div className={styles.menuWrapper}>
           <ClickOutsideWrapper onClick={onCloseMenu} parent={document} includeButtonPress={false}>
-            <FocusScope contain restoreFocus autoFocus>
+            <FocusScope contain autoFocus restoreFocus>
               <Menu onClose={onCloseMenu}>
                 {options.map((item) => (
                   <MenuItem
