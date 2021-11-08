@@ -9,10 +9,11 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   label?: string;
   description?: string;
   value?: boolean;
+  size?: number;
 }
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, value, onChange, disabled, className, ...inputProps }, ref) => {
+  ({ label, description, value, size, onChange, disabled, className, ...inputProps }, ref) => {
     const handleOnChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         if (onChange) {
@@ -21,7 +22,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       },
       [onChange]
     );
-    const styles = useStyles2(getCheckboxStyles);
+    const styles = useStyles2(getCheckboxStyles(size));
 
     return (
       <label className={cx(styles.wrapper, className)}>
@@ -42,112 +43,114 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   }
 );
 
-export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
-  const labelStyles = getLabelStyles(theme);
-  const checkboxSize = 2;
-  const labelPadding = 1;
+export function getCheckboxStyles(checkboxSize?: number) {
+  return stylesFactory((theme: GrafanaTheme2) => {
+    const labelStyles = getLabelStyles(theme);
+    const labelPadding = 1;
+    const cbSize = checkboxSize ? checkboxSize : 2;
 
-  return {
-    wrapper: css`
-      position: relative;
-      vertical-align: middle;
-      font-size: 0;
-    `,
-    input: css`
-      position: absolute;
-      z-index: 1;
-      top: 0;
-      left: 0;
-      width: 100% !important; // global styles unset this
-      height: 100%;
-      opacity: 0;
+    return {
+      wrapper: css`
+        position: relative;
+        vertical-align: middle;
+        font-size: 0;
+      `,
+      input: css`
+        position: absolute;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        width: 100% !important; // global styles unset this
+        height: 100%;
+        opacity: 0;
 
-      &:focus + span,
-      &:focus-visible + span {
-        ${getFocusStyles(theme)}
-      }
+        &:focus + span,
+        &:focus-visible + span {
+          ${getFocusStyles(theme)}
+        }
 
-      &:focus:not(:focus-visible) + span {
-        ${getMouseFocusStyles(theme)}
-      }
+        &:focus:not(:focus-visible) + span {
+          ${getMouseFocusStyles(theme)}
+        }
 
-      /**
+        /**
        * Using adjacent sibling selector to style checked state.
        * Primarily to limit the classes necessary to use when these classes will be used
        * for angular components styling
        * */
-      &:checked + span {
-        background: blue;
-        background: ${theme.colors.primary.main};
-        border: none;
+        &:checked + span {
+          background: blue;
+          background: ${theme.colors.primary.main};
+          border: none;
 
-        &:hover {
-          background: ${theme.colors.primary.shade};
+          &:hover {
+            background: ${theme.colors.primary.shade};
+          }
+
+          &:after {
+            content: '';
+            position: absolute;
+            z-index: 2;
+            left: ${2.5 * cbSize}px;
+            top: 1px;
+            width: ${3 * cbSize}px;
+            height: ${6 * cbSize}px;
+            border: solid ${theme.colors.primary.contrastText};
+            border-width: 0 3px 3px 0;
+            transform: rotate(45deg);
+          }
         }
 
-        &:after {
-          content: '';
-          position: absolute;
-          z-index: 2;
-          left: 5px;
-          top: 1px;
-          width: 6px;
-          height: 12px;
-          border: solid ${theme.colors.primary.contrastText};
-          border-width: 0 3px 3px 0;
-          transform: rotate(45deg);
-        }
-      }
-
-      &:disabled + span {
-        background-color: ${theme.colors.action.disabledBackground};
-        cursor: not-allowed;
-
-        &:hover {
+        &:disabled + span {
           background-color: ${theme.colors.action.disabledBackground};
-        }
+          cursor: not-allowed;
 
-        &:after {
-          border-color: ${theme.colors.action.disabledText};
-        }
-      }
-    `,
-    checkmark: css`
-      position: relative; /* Checkbox should be layered on top of the invisible input so it recieves :hover */
-      z-index: 2;
-      display: inline-block;
-      width: ${theme.spacing(checkboxSize)};
-      height: ${theme.spacing(checkboxSize)};
-      border-radius: ${theme.shape.borderRadius()};
-      background: ${theme.components.input.background};
-      border: 1px solid ${theme.components.input.borderColor};
+          &:hover {
+            background-color: ${theme.colors.action.disabledBackground};
+          }
 
-      &:hover {
-        cursor: pointer;
-        border-color: ${theme.components.input.borderHover};
-      }
-    `,
-    label: cx(
-      labelStyles.label,
-      css`
-        position: relative;
+          &:after {
+            border-color: ${theme.colors.action.disabledText};
+          }
+        }
+      `,
+      checkmark: css`
+        position: relative; /* Checkbox should be layered on top of the invisible input so it recieves :hover */
         z-index: 2;
-        padding-left: ${theme.spacing(labelPadding)};
-        white-space: nowrap;
-        cursor: pointer;
-        position: relative;
-        top: -3px;
-      `
-    ),
-    description: cx(
-      labelStyles.description,
-      css`
-        line-height: ${theme.typography.bodySmall.lineHeight};
-        padding-left: ${theme.spacing(checkboxSize + labelPadding)};
-        margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
-      `
-    ),
-  };
-});
+        display: inline-block;
+        width: ${theme.spacing(cbSize)};
+        height: ${theme.spacing(cbSize)};
+        border-radius: ${theme.shape.borderRadius()};
+        background: ${theme.components.input.background};
+        border: 1px solid ${theme.components.input.borderColor};
+
+        &:hover {
+          cursor: pointer;
+          border-color: ${theme.components.input.borderHover};
+        }
+      `,
+      label: cx(
+        labelStyles.label,
+        css`
+          position: relative;
+          z-index: 2;
+          padding-left: ${theme.spacing(labelPadding)};
+          white-space: nowrap;
+          cursor: pointer;
+          position: relative;
+          top: -3px;
+        `
+      ),
+      description: cx(
+        labelStyles.description,
+        css`
+          line-height: ${theme.typography.bodySmall.lineHeight};
+          padding-left: ${theme.spacing(cbSize + labelPadding)};
+          margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
+        `
+      ),
+    };
+  });
+}
 
 Checkbox.displayName = 'Checkbox';
