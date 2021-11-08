@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -27,7 +28,7 @@ func TestLoginUsingLDAP(t *testing.T) {
 			return config, nil
 		}
 
-		enabled, err := loginUsingLDAP(sc.loginUserQuery)
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery)
 		require.EqualError(t, err, errTest.Error())
 
 		assert.True(t, enabled)
@@ -38,7 +39,7 @@ func TestLoginUsingLDAP(t *testing.T) {
 		setting.LDAPEnabled = false
 
 		sc.withLoginResult(false)
-		enabled, err := loginUsingLDAP(sc.loginUserQuery)
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery)
 		require.NoError(t, err)
 
 		assert.False(t, enabled)

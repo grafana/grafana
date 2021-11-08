@@ -259,7 +259,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	ccAlertQuery := ngmodels.AlertQuery{
 		RefID:         ccRefID,
 		Model:         exprModelJSON,
-		DatasourceUID: expr.DatasourceUID,
+		DatasourceUID: expr.OldDatasourceUID,
 	}
 
 	ngCond.Data = append(ngCond.Data, ccAlertQuery)
