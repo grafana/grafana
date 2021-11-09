@@ -7,21 +7,22 @@ import { GrafanaTheme2, PluginType } from '@grafana/data';
 
 import { ExternallyManagedButton } from './ExternallyManagedButton';
 import { InstallControlsButton } from './InstallControlsButton';
-import { CatalogPlugin, PluginStatus } from '../../types';
-import { getExternalManageLink, getLatestCompatibleVersion } from '../../helpers';
+import { CatalogPlugin, PluginStatus, Version } from '../../types';
+import { getExternalManageLink } from '../../helpers';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';
 import { isGrafanaAdmin } from '../../permissions';
 
 interface Props {
   plugin: CatalogPlugin;
+  latestCompatibleVersion?: Version;
 }
 
-export const InstallControls = ({ plugin }: Props) => {
+export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
   const styles = useStyles2(getStyles);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const hasPermission = isGrafanaAdmin();
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
-  const isCompatible = Boolean(getLatestCompatibleVersion(plugin.details?.versions));
+  const isCompatible = Boolean(latestCompatibleVersion);
 
   const pluginStatus = plugin.isInstalled
     ? plugin.hasUpdate
@@ -83,7 +84,13 @@ export const InstallControls = ({ plugin }: Props) => {
     );
   }
 
-  return <InstallControlsButton plugin={plugin} pluginStatus={pluginStatus} />;
+  return (
+    <InstallControlsButton
+      plugin={plugin}
+      pluginStatus={pluginStatus}
+      latestCompatibleVersion={latestCompatibleVersion}
+    />
+  );
 };
 
 export const getStyles = (theme: GrafanaTheme2) => {

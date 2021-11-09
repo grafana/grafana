@@ -90,7 +90,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
         <p>{plugin.description}</p>
 
         <HorizontalGroup height="auto">
-          <InstallControls plugin={plugin} />
+          <InstallControls plugin={plugin} latestCompatibleVersion={latestCompatibleVersion} />
           <GetStartedWithPlugin plugin={plugin} />
         </HorizontalGroup>
       </div>
