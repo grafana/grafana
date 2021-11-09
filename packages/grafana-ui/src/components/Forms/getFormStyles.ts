@@ -23,7 +23,7 @@ export const getFormStyles = stylesFactory(
         size: options.size,
       }),
       input: getInputStyles({ theme, invalid: options.invalid }),
-      checkbox: getCheckboxStyles()(theme),
+      checkbox: getCheckboxStyles(theme),
     };
   }
 );

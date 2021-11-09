@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import mdx from './Checkbox.mdx';
 import { Checkbox } from './Checkbox';
-import { VerticalGroup } from '../Layout/Layout';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { Field } from './Field';
 
 export default {
@@ -38,6 +38,16 @@ export const uncontrolled = () => {
         description="Set to true if you want to skip TLS cert validation"
       />
     </div>
+  );
+};
+
+export const Variants = () => {
+  return (
+    <HorizontalGroup>
+      <Checkbox defaultChecked={true} label="Small - default" size={'sm'} />
+      <Checkbox defaultChecked={true} label="Medium" size={'md'} />
+      <Checkbox defaultChecked={true} label="Large" size={'lg'} />
+    </HorizontalGroup>
   );
 };
 
