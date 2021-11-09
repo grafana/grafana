@@ -80,21 +80,19 @@ export const PageToolbar: FC<Props> = React.memo(
               )}
             </>
           )}
-          {title ? (
-            titleHref ? (
-              <h1 className={styles.h1Styles}>
-                <Link
-                  aria-label="Search dashboard by name"
-                  className={cx(styles.titleText, styles.titleLink)}
-                  href={titleHref}
-                >
-                  {title}
-                </Link>
-              </h1>
-            ) : (
-              <h1 className={styles.titleText}>{title}</h1>
-            )
-          ) : null}
+
+          {title && titleHref && (
+            <h1 className={styles.h1Styles}>
+              <Link
+                aria-label="Search dashboard by name"
+                className={cx(styles.titleText, styles.titleLink)}
+                href={titleHref}
+              >
+                {title}
+              </Link>
+            </h1>
+          )}
+          {title && !titleHref && <h1 className={styles.titleText}>{title}</h1>}
         </nav>
         {leftItems?.map((child, index) => (
           <div className={styles.leftActionItem} key={index}>
