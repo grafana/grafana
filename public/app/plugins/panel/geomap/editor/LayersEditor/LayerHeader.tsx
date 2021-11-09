@@ -7,10 +7,11 @@ import { MapLayerState } from '../../types';
 
 export interface LayerHeaderProps {
   layer: MapLayerState<any>;
+  layers: Array<MapLayerState<any>>;
   onChange: (layer: MapLayerState<any>) => void;
 }
 
-export const LayerHeader = ({ layer, onChange }: LayerHeaderProps) => {
+export const LayerHeader = ({ layer, layers, onChange }: LayerHeaderProps) => {
   const styles = useStyles(getStyles);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -42,6 +43,13 @@ export const LayerHeader = ({ layer, onChange }: LayerHeaderProps) => {
     if (newName.length === 0) {
       setValidationError('An empty layer name is not allowed');
       return;
+    }
+
+    for (const otherLayer of layers) {
+      if (otherLayer !== layer && newName === otherLayer.options.name) {
+        setValidationError('Layer name already exists');
+        return;
+      }
     }
 
     if (validationError) {
