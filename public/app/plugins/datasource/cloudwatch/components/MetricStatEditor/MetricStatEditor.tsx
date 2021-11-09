@@ -13,11 +13,18 @@ import { Dimensions } from '..';
 export type Props = {
   query: CloudWatchMetricsQuery;
   datasource: CloudWatchDatasource;
+  disableExpressions?: boolean;
   onChange: (value: CloudWatchMetricsQuery) => void;
   onRunQuery: () => void;
 };
 
-export function MetricStatEditor({ query, datasource, onChange, onRunQuery }: React.PropsWithChildren<Props>) {
+export function MetricStatEditor({
+  query,
+  datasource,
+  disableExpressions = false,
+  onChange,
+  onRunQuery,
+}: React.PropsWithChildren<Props>) {
   const { region, namespace, metricName, dimensions } = query;
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
@@ -89,27 +96,30 @@ export function MetricStatEditor({ query, datasource, onChange, onRunQuery }: Re
             query={query}
             onChange={(dimensions) => onQueryChange({ ...query, dimensions })}
             dimensionKeys={dimensionKeys}
+            disableExpressions={disableExpressions}
             datasource={datasource}
           />
         </EditorField>
       </EditorRow>
-      <EditorRow>
-        <EditorField
-          label="Match Exact"
-          optional={true}
-          tooltip="Only show metrics that exactly match all defined dimension names."
-        >
-          <Switch
-            checked={!!query.matchExact}
-            onChange={(e) => {
-              onQueryChange({
-                ...query,
-                matchExact: e.currentTarget.checked,
-              });
-            }}
-          />
-        </EditorField>
-      </EditorRow>
+      {!disableExpressions && (
+        <EditorRow>
+          <EditorField
+            label="Match exact"
+            optional={true}
+            tooltip="Only show metrics that exactly match all defined dimension names."
+          >
+            <Switch
+              checked={!!query.matchExact}
+              onChange={(e) => {
+                onQueryChange({
+                  ...query,
+                  matchExact: e.currentTarget.checked,
+                });
+              }}
+            />
+          </EditorField>
+        </EditorRow>
+      )}
     </EditorRows>
   );
 }

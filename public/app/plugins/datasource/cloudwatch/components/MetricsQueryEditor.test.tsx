@@ -1,6 +1,6 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -194,6 +194,34 @@ describe('QueryEditor', () => {
         expect(screen.getByText('Metric Query')).toBeInTheDocument();
         const radio = screen.getByLabelText('Code');
         expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+      });
+    });
+  });
+
+  describe('should handle expression options correctly', () => {
+    it('should display match exact switch', () => {
+      const props = setup();
+      render(<MetricsQueryEditor {...props} />);
+      expect(screen.getByText('Match exact')).toBeInTheDocument();
+    });
+
+    it('shoud display wildcard option in dimension value dropdown', async () => {
+      const props = setup();
+      props.datasource.getDimensionValues = jest.fn().mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
+      (props.query as CloudWatchMetricsQuery).metricQueryType = MetricQueryType.Search;
+      (props.query as CloudWatchMetricsQuery).metricEditorMode = MetricEditorMode.Builder;
+      (props.query as CloudWatchMetricsQuery).dimensions = { instanceId: 'instance-123' };
+      render(<MetricsQueryEditor {...props} />);
+      expect(screen.getByText('Match exact')).toBeInTheDocument();
+
+      const valueElement = screen.getByText('instance-123');
+      expect(valueElement).toBeInTheDocument();
+      expect(screen.queryByText('*')).toBeNull();
+      act(async () => {
+        await valueElement.click();
+        await waitFor(() => {
+          expect(screen.getByText('*')).toBeInTheDocument();
+        });
       });
     });
   });

@@ -16,6 +16,7 @@ export interface Props {
   datasource: CloudWatchDatasource;
   filter: DimensionFilterCondition;
   dimensionKeys: Array<SelectableValue<string>>;
+  disableExpressions: boolean;
   onChange: (value: DimensionFilterCondition) => void;
   onDelete: () => void;
 }
@@ -35,6 +36,7 @@ export const FilterItem: FunctionComponent<Props> = ({
   query: { region, namespace, metricName, dimensions },
   datasource,
   dimensionKeys,
+  disableExpressions,
   onChange,
   onDelete,
 }) => {
@@ -51,7 +53,7 @@ export const FilterItem: FunctionComponent<Props> = ({
     return datasource
       .getDimensionValues(region, namespace, metricName, filter.key, dimensionsExcludingCurrentKey)
       .then((result: Array<SelectableValue<string>>) => {
-        if (result.length) {
+        if (result.length && !disableExpressions) {
           result.unshift(wildcardOption);
         }
         return appendTemplateVariables(datasource, result);

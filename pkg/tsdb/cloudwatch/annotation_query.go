@@ -57,11 +57,10 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *
 				for _, vvv := range vv {
 					if vvvv, ok := vvv.(string); ok {
 						dimension := &cloudwatch.Dimension{
-							Name: aws.String(k),
+							Name:  aws.String(k),
+							Value: aws.String(vvvv),
 						}
-						if vvvv != "*" {
-							dimension.Value = aws.String(vvvv)
-						}
+
 						qd = append(qd, dimension)
 					}
 				}

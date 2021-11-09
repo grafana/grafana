@@ -11,6 +11,7 @@ export interface Props {
   onChange: (dimensions: DimensionsType) => void;
   datasource: CloudWatchDatasource;
   dimensionKeys: Array<SelectableValue<string>>;
+  disableExpressions: boolean;
 }
 
 export interface DimensionFilterCondition {
@@ -41,7 +42,7 @@ const filterConditionsToDimensions = (filters: DimensionFilterCondition[]) => {
   }, {});
 };
 
-export const Dimensions: React.FC<Props> = ({ query, datasource, dimensionKeys, onChange }) => {
+export const Dimensions: React.FC<Props> = ({ query, datasource, dimensionKeys, disableExpressions, onChange }) => {
   const dimensionFilters = useMemo(() => dimensionsToFilterConditions(query.dimensions), [query.dimensions]);
   const [items, setItems] = useState<DimensionFilterCondition[]>(dimensionFilters);
   const onDimensionsChange = (newItems: Array<Partial<DimensionFilterCondition>>) => {
@@ -59,7 +60,7 @@ export const Dimensions: React.FC<Props> = ({ query, datasource, dimensionKeys, 
     <EditorList
       items={items}
       onChange={onDimensionsChange}
-      renderItem={makeRenderFilter(datasource, query, dimensionKeys)}
+      renderItem={makeRenderFilter(datasource, query, dimensionKeys, disableExpressions)}
     />
   );
 };
@@ -67,7 +68,8 @@ export const Dimensions: React.FC<Props> = ({ query, datasource, dimensionKeys, 
 function makeRenderFilter(
   datasource: CloudWatchDatasource,
   query: CloudWatchMetricsQuery,
-  dimensionKeys: Array<SelectableValue<string>>
+  dimensionKeys: Array<SelectableValue<string>>,
+  disableExpressions: boolean
 ) {
   function renderFilter(
     item: DimensionFilterCondition,
@@ -80,6 +82,7 @@ function makeRenderFilter(
         onChange={(item) => onChange(item)}
         datasource={datasource}
         query={query}
+        disableExpressions={disableExpressions}
         dimensionKeys={dimensionKeys}
         onDelete={onDelete}
       />

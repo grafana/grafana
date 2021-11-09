@@ -70,4 +70,21 @@ describe('MetricStatEditor', () => {
       expect(onRunQuery).not.toHaveBeenCalled();
     });
   });
+
+  describe('expressions', () => {
+    it('should display match exact switch is not set', () => {
+      render(<MetricStatEditor {...props} />);
+      expect(screen.getByText('Match exact')).toBeInTheDocument();
+    });
+
+    it('should display match exact switch if prop is set to false', () => {
+      render(<MetricStatEditor {...props} disableExpressions={false} />);
+      expect(screen.getByText('Match exact')).toBeInTheDocument();
+    });
+
+    it('should not display match exact switch if prop is set to true', async () => {
+      render(<MetricStatEditor {...props} disableExpressions={true} />);
+      expect(screen.queryByText('Match exact')).toBeNull();
+    });
+  });
 });

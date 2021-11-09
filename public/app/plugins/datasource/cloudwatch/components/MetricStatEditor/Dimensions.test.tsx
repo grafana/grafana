@@ -32,6 +32,7 @@ const q: CloudWatchMetricsQuery = {
 const props = {
   datasource: ds.datasource,
   query: q,
+  disableExpressions: false,
   onChange: jest.fn(),
   onRunQuery: jest.fn(),
 };
