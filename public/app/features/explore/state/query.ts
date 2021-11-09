@@ -614,6 +614,15 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
+  if (cancelQueriesAction.match(action)) {
+    stopQueryState(state.querySubscription);
+
+    return {
+      ...state,
+      loading: false,
+    };
+  }
+
   if (modifyQueriesAction.match(action)) {
     const { queries } = state;
     const { modification, index, modifier } = action.payload;
