@@ -39,7 +39,6 @@ import {
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
-import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
 import { getScrollbarWidth, getStandardFieldConfigs } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
@@ -63,6 +62,7 @@ import { RudderstackBackend } from './core/services/echo/backends/analytics/Rudd
 import { getAllOptionEditors } from './core/components/editors/registry';
 import { backendSrv } from './core/services/backend_srv';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
+import { AngularApp } from './angular';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -79,10 +79,10 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export class GrafanaApp {
-  //angularApp: AngularApp;
+  angularApp: AngularApp;
 
   constructor() {
-    //this.angularApp = new AngularApp();
+    this.angularApp = new AngularApp();
   }
 
   async init() {
@@ -121,6 +121,9 @@ export class GrafanaApp {
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
+
+      // Init angular
+      this.angularApp.init();
 
       // Preload selected app plugins
       const promises: Array<Promise<any>> = [];

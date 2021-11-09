@@ -47,6 +47,16 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   componentDidMount() {
+    if (this.container) {
+      this.bootstrapNgApp();
+    } else {
+      throw new Error('Failed to boot angular app, no container to attach to');
+    }
+  }
+
+  bootstrapNgApp() {
+    const injector = this.props.app.angularApp.bootstrap();
+    this.setState({ ngInjector: injector });
     $('.preloader').remove();
   }
 
@@ -107,7 +117,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
                       <AppNotificationList />
                       <SearchWrapper />
-                      {this.container && this.renderRoutes()}
+                      {this.state.ngInjector && this.renderRoutes()}
                       {bodyRenderHooks.map((Hook, index) => (
                         <Hook key={index.toString()} />
                       ))}

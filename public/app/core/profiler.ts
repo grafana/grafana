@@ -1,9 +1,6 @@
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-
 export class Profiler {
   panelsRendered = 0;
   enabled?: boolean = undefined;
-  $rootScope?: GrafanaRootScope = undefined;
 
   renderingCompleted() {
     // add render counter to root scope
