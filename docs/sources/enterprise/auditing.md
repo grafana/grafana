@@ -174,7 +174,7 @@ For example, creating an API key produces an audit log like this:
 
 | Action                            | Distinguishing fields                                                                                  |
 | ----------------------------------| ------------------------------------------------------------------------------------------------------ |
-| Save alert manager configuration  | `{"action": "create", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/alerts"}`           |
+| Save alert manager configuration  | `{"action": "update", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/alerts"}`           |
 | Reset alert manager configuration | `{"action": "delete", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/alerts"}`           |
 | Create silence                    | `{"action": "create", "requestUri": "/api/alertmanager/<recipient>\*/api/v2/silences"}`                |
 | Delete silence                    | `{"action": "delete", "requestUri": "/api/alertmanager/<recipient>\*/api/v2/silences/<silence id>"}`   |
