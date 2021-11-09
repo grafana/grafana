@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -61,7 +62,7 @@ func TestValidateLoginAttempts(t *testing.T) {
 			withLoginAttempts(t, tc.loginAttempts)
 
 			query := &models.LoginUserQuery{Username: "user", Cfg: tc.cfg}
-			err := validateLoginAttempts(query)
+			err := validateLoginAttempts(context.Background(), query)
 			require.Equal(t, tc.expected, err)
 		})
 	}
@@ -77,7 +78,7 @@ func TestSaveInvalidLoginAttempt(t *testing.T) {
 			return nil
 		})
 
-		err := saveInvalidLoginAttempt(&models.LoginUserQuery{
+		err := saveInvalidLoginAttempt(context.Background(), &models.LoginUserQuery{
 			Username:  "user",
 			Password:  "pwd",
 			IpAddress: "192.168.1.1:56433",
@@ -99,7 +100,7 @@ func TestSaveInvalidLoginAttempt(t *testing.T) {
 			return nil
 		})
 
-		err := saveInvalidLoginAttempt(&models.LoginUserQuery{
+		err := saveInvalidLoginAttempt(context.Background(), &models.LoginUserQuery{
 			Username:  "user",
 			Password:  "pwd",
 			IpAddress: "192.168.1.1:56433",

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -28,7 +29,7 @@ func SignUp(c *models.ReqContext, form dtos.SignUpForm) response.Response {
 	}
 
 	existing := models.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	if err := bus.Dispatch(&existing); err == nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &existing); err == nil {
 		return response.Error(422, "User with same email address already exists", nil)
 	}
 
@@ -44,7 +45,7 @@ func SignUp(c *models.ReqContext, form dtos.SignUpForm) response.Response {
 	}
 	cmd.RemoteAddr = c.Req.RemoteAddr
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to create signup", err)
 	}
 
@@ -75,7 +76,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2For
 
 	// verify email
 	if setting.VerifyEmailEnabled {
-		if ok, rsp := verifyUserSignUpEmail(form.Email, form.Code); !ok {
+		if ok, rsp := verifyUserSignUpEmail(c.Req.Context(), form.Email, form.Code); !ok {
 			return rsp
 		}
 		createUserCmd.EmailVerified = true
@@ -99,19 +100,19 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2For
 	}
 
 	// mark temp user as completed
-	if ok, rsp := updateTempUserStatus(form.Code, models.TmpUserCompleted); !ok {
+	if ok, rsp := updateTempUserStatus(c.Req.Context(), form.Code, models.TmpUserCompleted); !ok {
 		return rsp
 	}
 
 	// check for pending invites
 	invitesQuery := models.GetTempUsersQuery{Email: form.Email, Status: models.TmpUserInvitePending}
-	if err := bus.Dispatch(&invitesQuery); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &invitesQuery); err != nil {
 		return response.Error(500, "Failed to query database for invites", err)
 	}
 
 	apiResponse := util.DynMap{"message": "User sign up completed successfully", "code": "redirect-to-landing-page"}
 	for _, invite := range invitesQuery.Result {
-		if ok, rsp := applyUserInvite(user, invite, false); !ok {
+		if ok, rsp := applyUserInvite(c.Req.Context(), user, invite, false); !ok {
 			return rsp
 		}
 		apiResponse["code"] = "redirect-to-select-org"
@@ -127,10 +128,10 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2For
 	return response.JSON(200, apiResponse)
 }
 
-func verifyUserSignUpEmail(email string, code string) (bool, response.Response) {
+func verifyUserSignUpEmail(ctx context.Context, email string, code string) (bool, response.Response) {
 	query := models.GetTempUserByCodeQuery{Code: code}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		if errors.Is(err, models.ErrTempUserNotFound) {
 			return false, response.Error(404, "Invalid email verification code", nil)
 		}

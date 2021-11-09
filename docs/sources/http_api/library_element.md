@@ -442,7 +442,8 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-    "message": "Library element deleted"
+    "message": "Library element deleted",
+    "id": 28
 }
 ```
 
