@@ -50,11 +50,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const { frames, warn } = useMemo(
-    () => prepareGraphableFields(data?.series, config.theme2),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, options]
-  );
+  const { frames, message } = useMemo(() => prepareGraphableFields(data, config.theme2), [data]);
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
     let tweakScale = (opts: ScaleProps) => opts;
@@ -219,10 +215,10 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
-  if (!frames || warn) {
+  if (!frames || message) {
     return (
       <div className="panel-empty">
-        <p>{warn ?? 'No data found in response'}</p>
+        <p>{message ?? 'No data found in response'}</p>
       </div>
     );
   }
