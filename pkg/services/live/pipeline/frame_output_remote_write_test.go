@@ -51,7 +51,7 @@ func TestRemoteWriteFrameOutput_sample(t *testing.T) {
 			},
 		},
 	}
-	out := NewRemoteWriteFrameOutput("", "", "", 500)
+	out := NewRemoteWriteFrameOutput("", nil, 500)
 	sampledTimeSeries := out.sample(timeSeries)
 	require.Len(t, sampledTimeSeries, 2)
 
@@ -123,7 +123,7 @@ func TestRemoteWriteFrameOutput_sample_merge(t *testing.T) {
 			},
 		},
 	}
-	out := NewRemoteWriteFrameOutput("", "", "", 50)
+	out := NewRemoteWriteFrameOutput("", nil, 50)
 	sampledTimeSeries := out.sample(timeSeries)
 	require.Len(t, sampledTimeSeries, 2)
 
