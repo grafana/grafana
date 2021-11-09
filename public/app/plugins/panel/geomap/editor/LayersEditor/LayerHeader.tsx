@@ -5,10 +5,10 @@ import { GrafanaTheme } from '@grafana/data';
 
 import { MapLayerState } from '../../types';
 
-type LayerHeaderProps = {
+export interface LayerHeaderProps {
   layer: MapLayerState<any>;
   onChange: (layer: MapLayerState<any>) => void;
-};
+}
 
 export const LayerHeader = ({ layer, onChange }: LayerHeaderProps) => {
   const styles = useStyles(getStyles);
@@ -43,13 +43,6 @@ export const LayerHeader = ({ layer, onChange }: LayerHeaderProps) => {
       setValidationError('An empty layer name is not allowed');
       return;
     }
-
-    // for (const otherQuery of queries) {
-    //   if (otherQuery !== query && newName === otherQuery.refId) {
-    //     setValidationError('Query name already exists');
-    //     return;
-    //   }
-    // }
 
     if (validationError) {
       setValidationError(null);
