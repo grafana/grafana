@@ -26,7 +26,13 @@ import {
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { registerEchoBackend, setEchoSrv, setPanelRenderer, setQueryRunnerFactory } from '@grafana/runtime';
+import {
+  registerEchoBackend,
+  setBackendSrv,
+  setEchoSrv,
+  setPanelRenderer,
+  setQueryRunnerFactory,
+} from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -41,7 +47,7 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { configureStore } from './store/configureStore';
 import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { AngularApp } from './angular/AngularApp';
+import { AngularApp } from './angular';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -52,6 +58,7 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { getAllOptionEditors } from './core/components/editors/registry';
+import { backendSrv } from './core/services/backend_srv';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -76,6 +83,7 @@ export class GrafanaApp {
 
   async init() {
     try {
+      setBackendSrv(backendSrv);
       initEchoSrv();
       addClassIfNoOverlayScrollbar();
       setLocale(config.bootData.user.locale);

@@ -1,4 +1,4 @@
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import appEvents from 'app/core/app_events';
 import angular from 'angular';
 import { AppEvents } from '@grafana/data';
