@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { Redirect } from 'react-router-dom';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { MuteTimeInterval, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { useCleanup } from '../../../core/hooks/useCleanup';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
@@ -17,6 +17,7 @@ import { AmRouteReceiver, FormAmRoute } from './types/amroutes';
 import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues } from './utils/amroutes';
 import { initialAsyncRequestState } from './utils/redux';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
+import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
 
 const AmRoutes: FC = () => {
   const dispatch = useDispatch();
@@ -47,6 +48,8 @@ const AmRoutes: FC = () => {
   const receivers = stringsToSelectableValues(
     (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
   ) as AmRouteReceiver[];
+
+  const muteTimings: MuteTimeInterval[] = config?.mute_time_intervals ?? [];
 
   const enterRootRouteEditMode = () => {
     setIsRootRouteEditMode(true);
@@ -124,6 +127,8 @@ const AmRoutes: FC = () => {
             receivers={receivers}
             routes={rootRoute}
           />
+          <div className={styles.break} />
+          <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} muteTimings={muteTimings} />
         </>
       )}
     </AlertingPageWrapper>

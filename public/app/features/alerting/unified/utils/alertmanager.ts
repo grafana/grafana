@@ -19,7 +19,6 @@ export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig
   if (!config.template_files) {
     config.template_files = {};
   }
-  console.log('CONFIG: ', config);
   return config;
 }
 

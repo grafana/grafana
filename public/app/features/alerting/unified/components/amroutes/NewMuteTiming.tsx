@@ -156,7 +156,12 @@ const NewMuteTiming = (props: Props) => {
                   </div>
                 );
               })}
-              <Button variant="secondary" icon={'plus'} onClick={() => append({ start_time: '', end_time: '' })}>
+              <Button
+                variant="secondary"
+                type="button"
+                icon={'plus'}
+                onClick={() => append({ start_time: '', end_time: '' })}
+              >
                 Add another time range
               </Button>
             </>

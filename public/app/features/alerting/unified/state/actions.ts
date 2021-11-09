@@ -655,6 +655,32 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
   }
 );
 
+export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimingName: string): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const config = getState().unifiedAlerting.amConfigs[alertManagerSourceName].result;
+
+    const muteIntervals =
+      config?.alertmanager_config?.mute_time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
+
+    if (config) {
+      dispatch(
+        updateAlertManagerConfigAction({
+          alertManagerSourceName,
+          oldConfig: config,
+          newConfig: {
+            ...config,
+            alertmanager_config: {
+              ...config.alertmanager_config,
+              mute_time_intervals: muteIntervals,
+            },
+          },
+          refetch: true,
+        })
+      );
+    }
+  };
+};
+
 interface TestReceiversOptions {
   alertManagerSourceName: string;
   receivers: Receiver[];
