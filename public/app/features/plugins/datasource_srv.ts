@@ -1,5 +1,5 @@
 // Libraries
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 // Services & Utils
 import { importDataSourcePlugin } from './plugin_loader';
 import {
@@ -22,12 +22,11 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 // Pretend Datasource
 import {
   dataSource as expressionDatasource,
-  ExpressionDatasourceID,
   ExpressionDatasourceUID,
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
 import { DataSourceVariableModel } from '../variables/types';
-import { cloneDeep } from 'lodash';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -59,9 +58,9 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // Preload expressions
-    this.datasources[ExpressionDatasourceID] = expressionDatasource as any;
+    this.datasources[ExpressionDatasourceRef.type] = expressionDatasource as any;
     this.datasources[ExpressionDatasourceUID] = expressionDatasource as any;
-    this.settingsMapByUid[ExpressionDatasourceID] = expressionInstanceSettings;
+    this.settingsMapByUid[ExpressionDatasourceRef.uid] = expressionInstanceSettings;
     this.settingsMapByUid[ExpressionDatasourceUID] = expressionInstanceSettings;
   }
 
@@ -76,7 +75,7 @@ export class DatasourceSrv implements DataSourceService {
     if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
       if (!isstring && ref) {
         const type = (ref as any)?.type as string;
-        if (type === ExpressionDatasourceID) {
+        if (type === ExpressionDatasourceRef.type) {
           return expressionDatasource.instanceSettings;
         } else if (type) {
           console.log('FIND Default instance for datasource type?', ref);
@@ -101,13 +100,14 @@ export class DatasourceSrv implements DataSourceService {
       if (!dsSettings) {
         return undefined;
       }
-      // The return name or uid needs preservet string containing the variable
-      const clone = cloneDeep(dsSettings);
-      clone.name = nameOrUid;
-      // A data source being looked up using a variable should not be considered default
-      clone.isDefault = false;
 
-      return clone;
+      // Return an instance with un-interpolated values for name and uid
+      return {
+        ...dsSettings,
+        isDefault: false,
+        name: nameOrUid,
+        uid: nameOrUid,
+      };
     }
 
     return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];
@@ -243,6 +243,7 @@ export class DatasourceSrv implements DataSourceService {
           base.push({
             ...dsSettings,
             name: key,
+            uid: key,
           });
         }
       }

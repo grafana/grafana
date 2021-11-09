@@ -32,7 +32,7 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error)
 	}
 
 	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
-	ns.Bus.AddHandler(ns.validateResetPasswordCode)
+	ns.Bus.AddHandlerCtx(ns.validateResetPasswordCode)
 	ns.Bus.AddHandler(ns.sendEmailCommandHandler)
 
 	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandlerSync)
@@ -163,14 +163,14 @@ func (ns *NotificationService) sendResetPasswordEmail(cmd *models.SendResetPassw
 	})
 }
 
-func (ns *NotificationService) validateResetPasswordCode(query *models.ValidateResetPasswordCodeQuery) error {
+func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery) error {
 	login := getLoginForEmailCode(query.Code)
 	if login == "" {
 		return models.ErrInvalidEmailCode
 	}
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, &userQuery); err != nil {
 		return err
 	}
 
