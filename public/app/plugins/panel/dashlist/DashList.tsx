@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { take } from 'lodash';
 
 import { InterpolateFunction, PanelProps } from '@grafana/data';
-import { CustomScrollbar, Icon, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, IconButton, useStyles2 } from '@grafana/ui';
 
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -141,9 +141,13 @@ export function DashList(props: PanelProps<DashListOptions>) {
                         </a>
                         {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
                       </div>
-                      <span className={css.dashlistStar} onClick={(e) => toggleDashboardStar(e, dash)}>
-                        <Icon name={dash.isStarred ? 'favorite' : 'star'} type={dash.isStarred ? 'mono' : 'default'} />
-                      </span>
+                      <IconButton
+                        aria-label={`Star dashboard "${dash.title}".`}
+                        className={css.dashlistStar}
+                        name={dash.isStarred ? 'favorite' : 'star'}
+                        iconType={dash.isStarred ? 'mono' : 'default'}
+                        onClick={(e) => toggleDashboardStar(e, dash)}
+                      />
                     </div>
                   </li>
                 ))}

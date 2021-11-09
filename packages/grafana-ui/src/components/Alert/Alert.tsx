@@ -53,7 +53,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
-        <div className={styles.body}>
+        <div className={styles.body} role="alert">
           <div className={styles.title}>{title}</div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
