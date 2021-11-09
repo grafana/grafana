@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -186,11 +186,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 }
 
 const getStyles = stylesFactory(() => ({
-  select: cx(
-    css({
-      minWidth: 200,
-    }),
-    'ds-picker',
-    'select-container'
-  ),
+  // TODO: Check if minWidth was relied on anywhere
+  select: cx('ds-picker', 'select-container'),
 }));

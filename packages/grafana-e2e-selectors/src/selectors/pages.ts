@@ -147,6 +147,7 @@ export const Pages = {
       scrollBar: () => '.scrollbar-view',
     },
     Toolbar: {
+      // FIXME: e2e tests are probably going to fail
       navBar: () => '.explore-toolbar',
     },
   },
