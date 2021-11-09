@@ -83,8 +83,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         })
         .addBooleanSwitch({
           path: 'hidden',
-          name: 'Hidden field',
-          description: 'Do not display the column',
+          name: 'Hide in table',
           defaultValue: undefined,
           hideFromDefaults: true,
         });
