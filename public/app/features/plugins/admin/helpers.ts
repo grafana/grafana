@@ -249,11 +249,10 @@ export const updatePanels = () =>
       config.panels = settings.panels;
     });
 
-// TODO: implement a logic that tries to find the latest compatible version
 export function getLatestCompatibleVersion(versions: Version[] | undefined): string | undefined {
   if (!versions) {
     return;
   }
-  const [latest] = versions;
+  const [latest] = versions.filter((v) => Boolean(v.isCompatible));
   return latest?.version;
 }

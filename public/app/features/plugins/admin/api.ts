@@ -82,7 +82,7 @@ async function getPluginVersions(id: string): Promise<Version[]> {
   try {
     const versions: { items: PluginVersion[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/versions`);
 
-    return (versions.items || []).map(({ version, createdAt }) => ({ version, createdAt }));
+    return (versions.items || []).map(({ version, createdAt, isCompatible }) => ({ version, createdAt, isCompatible }));
   } catch (error) {
     // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
     error.isHandled = true;

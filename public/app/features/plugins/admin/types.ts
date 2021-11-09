@@ -171,6 +171,7 @@ export interface Build {
 export interface Version {
   version: string;
   createdAt: string;
+  isCompatible: boolean;
 }
 
 export interface PluginDetails {
@@ -269,4 +270,5 @@ export type PluginVersion = {
   status: string;
   downloadSlug: string;
   links: Array<{ rel: string; href: string }>;
+  isCompatible: boolean;
 };

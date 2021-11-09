@@ -149,7 +149,7 @@ describe('Plugin details page', () => {
     it('should display the correct version in the header for remote plugin', async () => {
       const details: CatalogPluginDetails = {
         links: [],
-        versions: [{ version: '1.2.443', createdAt: '' }],
+        versions: [{ version: '1.2.443', createdAt: '', isCompatible: true }],
       };
 
       const { queryByText } = renderPluginDetails({ id, details });
@@ -197,6 +197,7 @@ describe('Plugin details page', () => {
               {
                 version: '1.0.0',
                 createdAt: '2016-04-06T20:23:41.000Z',
+                isCompatible: true,
               },
             ],
           },
@@ -363,6 +364,7 @@ describe('Plugin details page', () => {
             {
               version: '1.0.0',
               createdAt: '',
+              isCompatible: true,
             },
           ],
         },
