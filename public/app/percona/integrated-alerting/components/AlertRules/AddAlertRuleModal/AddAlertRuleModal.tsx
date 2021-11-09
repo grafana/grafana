@@ -145,6 +145,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                 <SelectField
                   label={Messages.templateField}
                   disabled={!!alertRule}
+                  tooltipText={Messages.tooltips.template}
                   options={templateOptions}
                   {...input}
                   onChange={(name) => {
@@ -158,31 +159,43 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
               )}
             </Field>
 
-            <TextInputField label={Messages.nameField} name="name" validators={nameValidators} />
+            <TextInputField
+              label={Messages.nameField}
+              name="name"
+              validators={nameValidators}
+              tooltipText={Messages.tooltips.name}
+            />
 
             {currentTemplate &&
               currentTemplate.params?.map((param) => <AlertRuleParamField key={param.name} param={param} />)}
 
-            <NumberInputField label={Messages.durationField} name="duration" validators={durationValidators} />
+            <NumberInputField
+              label={Messages.durationField}
+              name="duration"
+              validators={durationValidators}
+              tooltipText={Messages.tooltips.duration}
+            />
 
             <Field name="severity" validate={required}>
               {({ input }) => (
                 <SelectField
                   label={Messages.severityField}
                   options={SEVERITY_OPTIONS}
+                  tooltipText={Messages.tooltips.severity}
                   {...input}
                   data-testid="severity-select-input"
                 />
               )}
             </Field>
 
-            <TextareaInputField label={Messages.filtersField} name="filters" />
+            <TextareaInputField label={Messages.filtersField} name="filters" tooltipText={Messages.tooltips.filters} />
 
             <Field name="notificationChannels">
               {({ input }) => (
                 <MultiSelectField
                   label={Messages.channelField}
                   options={channelsOptions}
+                  tooltipText={Messages.tooltips.channels}
                   {...input}
                   data-testid="notificationChannels-multiselect-input"
                 />
