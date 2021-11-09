@@ -543,7 +543,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					return evaluate(currentRule, attempt, ctx)
 				})
 				if err != nil {
-					log.Error("evaluation failed after all retries", "err", err)
+					logger.Error("evaluation failed after all retries", "err", err)
 				}
 			}()
 		case <-stopCh:
