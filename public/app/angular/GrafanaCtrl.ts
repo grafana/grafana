@@ -13,7 +13,6 @@ import { AngularLoader } from 'app/angular/services/AngularLoader';
 
 // Types
 import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
-import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { IRootScopeService, IAngularEvent, auto } from 'angular';
@@ -29,13 +28,11 @@ export class GrafanaCtrl {
     utilSrv: UtilSrv,
     $rootScope: GrafanaRootScope,
     contextSrv: ContextSrv,
-    linkSrv: LinkSrv,
     angularLoader: AngularLoader,
     $injector: auto.IInjectorService
   ) {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
-    setLinkSrv(linkSrv);
     setLegacyAngularInjector($injector);
     setAppEvents(appEvents);
 
