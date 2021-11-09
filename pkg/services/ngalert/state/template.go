@@ -87,35 +87,32 @@ func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[str
 	return m
 }
 
-func graphLink(rawQuery string) string {
-	var query struct {
-		Datasource string `json:"datasource"`
-		Expr       string `json:"expr"`
-	}
+type query struct {
+	Datasource string `json:"datasource"`
+	Expr       string `json:"expr"`
+}
 
-	if err := json.Unmarshal([]byte(rawQuery), &query); err != nil {
+func graphLink(rawQuery string) string {
+	var q query
+	if err := json.Unmarshal([]byte(rawQuery), &q); err != nil {
 		return ""
 	}
 
-	escapedExpression := url.QueryEscape(query.Expr)
-	escapedDatasource := url.QueryEscape(query.Datasource)
+	escapedExpression := url.QueryEscape(q.Expr)
+	escapedDatasource := url.QueryEscape(q.Datasource)
 
 	return fmt.Sprintf(
 		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":false,"range":true}]`, escapedDatasource, escapedExpression)
 }
 
 func tableLink(rawQuery string) string {
-	var query struct {
-		Datasource string `json:"datasource"`
-		Expr       string `json:"expr"`
-	}
-
-	if err := json.Unmarshal([]byte(rawQuery), &query); err != nil {
+	var q query
+	if err := json.Unmarshal([]byte(rawQuery), &q); err != nil {
 		return ""
 	}
 
-	escapedExpression := url.QueryEscape(query.Expr)
-	escapedDatasource := url.QueryEscape(query.Datasource)
+	escapedExpression := url.QueryEscape(q.Expr)
+	escapedDatasource := url.QueryEscape(q.Datasource)
 
 	return fmt.Sprintf(
 		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":true,"range":false}]`, escapedDatasource, escapedExpression)
