@@ -21,7 +21,7 @@ type Role struct {
 	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
 	DisplayName string `json:"displayName"`
-	Group       string `json:"group"`
+	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
 
 	Updated time.Time `json:"updated"`
@@ -62,7 +62,7 @@ type RoleDTO struct {
 	Name        string       `json:"name"`
 	DisplayName string       `json:"displayName"`
 	Description string       `json:"description"`
-	Group       string       `json:"group"`
+	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
 
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
