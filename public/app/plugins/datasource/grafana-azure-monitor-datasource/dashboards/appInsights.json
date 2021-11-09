@@ -1,46 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_AZURE_MONITOR",
-      "label": "Azure Monitor",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "grafana-azure-monitor-datasource",
-      "pluginName": "Azure Monitor"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "8.1.2"
-    },
-    {
-      "type": "datasource",
-      "id": "grafana-azure-monitor-datasource",
-      "name": "Azure Monitor",
-      "version": "0.3.0"
-    },
-    {
-      "type": "panel",
-      "id": "stat",
-      "name": "Stat",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "text",
-      "name": "Text",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "timeseries",
-      "name": "Time series",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -60,48 +18,38 @@
       }
     ]
   },
-  "description": "Overview of different metrics for app monitoring through Application Insights.",
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1634753897983,
+  "iteration": 1636496211065,
   "links": [],
   "panels": [
     {
+      "collapsed": false,
       "datasource": null,
       "gridPos": {
-        "h": 4,
-        "w": 2,
+        "h": 1,
+        "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 10,
-      "options": {
-        "content": "<a style=\"color: inherit;\" href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/overview\" target=\"_blank\">\n  <div>\n    <h1> ${res} </h1>\n    <h5 style=\"margin-bottom: 0px;\"> Application Insights </h5>\n    <img src=\"https://cdn-images-1.medium.com/max/1600/0*m7zHr9EvegDjx8Si.png\" style=\"width:50px; height:25px; margin-left:140px;margin-bottom:35px\"/>\n  </div>\n</a>",
-        "mode": "html"
-      },
-      "pluginVersion": "8.1.2",
-      "targets": [
-        {
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
-      "type": "text"
+      "id": 52,
+      "panels": [],
+      "title": "Azure Portal Links",
+      "type": "row"
     },
     {
       "datasource": null,
       "gridPos": {
-        "h": 4,
-        "w": 2,
-        "x": 2,
-        "y": 0
+        "h": 3,
+        "w": 5,
+        "x": 0,
+        "y": 1
       },
-      "id": 44,
-      "links": [],
+      "id": 10,
       "options": {
-        "content": "<a style=\"color: inherit;\" href=\"https://ms.portal.azure.com/#blade/AppInsightsExtension/ProactiveDetectionFeedBlade/ComponentId/%7B%22Name%22%3A%22${res}%22%2C%22SubscriptionId%22%3A%22${sub}%22%2C%22ResourceGroup%22%3A%22${rg}%22%7D/TimeContext/%7B%22durationMs%22%3A604800000%2C%22endTime%22%3Anull%2C%22createdTime%22%3A%222021-10-18T19%3A26%3A58.876Z%22%2C%22isInitialTime%22%3Atrue%2C%22grain%22%3A1%2C%22useDashboardTimeRange%22%3Afalse%7D\" target=\"_blank\">\n<div style=\"padding-top: 20px\">\n  <center><h3 style=\"color: #4d99b8;\">Smart detection</h3></center>\n  <center><h4>${res}</h4></center>\n</div>\n</a>",
+        "content": "<a style=\"color: inherit;\" href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/overview\" target=\"_blank\">\n  <div>\n    <h3 style=\"color: #a16feb\"> ${res} </h1>\n    <h5 style=\"margin-bottom: 0px;\"> Application Insights  </h5>\n  </div>\n</a>",
         "mode": "html"
       },
       "pluginVersion": "8.1.2",
@@ -114,69 +62,7 @@
       "type": "text"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
-      "gridPos": {
-        "h": 4,
-        "w": 2,
-        "x": 4,
-        "y": 0
-      },
-      "id": 46,
-      "links": [],
-      "options": {
-        "content": "<a style=\"color: inherit;\" href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/quickPulse\" target=\"_blank\">\n<div style=\"padding-top: 20px\">\n  <center><h3 style=\"color: #2272b9;\">Live Metrics</h3></center>\n  <center><h4>${res}</h4></center>\n</div>\n</a>\n           \n           ",
-        "mode": "html"
-      },
-      "pluginVersion": "8.1.2",
-      "targets": [
-        {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
-          "azureMonitor": {
-            "aggOptions": [],
-            "aggregation": "Count",
-            "alias": "Servers",
-            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "microsoft.insights/components",
-            "metricName": "requests/count",
-            "metricNamespace": "microsoft.insights/components",
-            "resourceGroup": "$rg",
-            "resourceName": "$res",
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "50"
-          },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
-          },
-          "queryType": "Azure Monitor",
-          "refId": "A",
-          "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-            "263177d8-32b8-465a-b939-be00c75e88c5"
-          ]
-        }
-      ],
-      "type": "text"
-    },
-    {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -221,10 +107,10 @@
         ]
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 2,
-        "x": 6,
-        "y": 0
+        "x": 5,
+        "y": 1
       },
       "id": 40,
       "options": {
@@ -290,14 +176,15 @@
     {
       "datasource": null,
       "gridPos": {
-        "h": 4,
-        "w": 2,
-        "x": 8,
-        "y": 0
+        "h": 3,
+        "w": 4,
+        "x": 7,
+        "y": 1
       },
-      "id": 42,
+      "id": 44,
+      "links": [],
       "options": {
-        "content": "<a style=\"color: inherit;\" href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/applicationMap\" target=\"_blank\">\n<div>\n  <center><h2 style=\"position:center; padding-top: 10px; color: #ff8c00;\">App map</h2></center>\n  <center><h3>${res}</h3></center>\n</div>\n</a>\n           ",
+        "content": "<a style=\"color: inherit;\" href=\"https://ms.portal.azure.com/#blade/AppInsightsExtension/ProactiveDetectionFeedBlade/ComponentId/%7B%22Name%22%3A%22${res}%22%2C%22SubscriptionId%22%3A%22${sub}%22%2C%22ResourceGroup%22%3A%22${rg}%22%7D/TimeContext/%7B%22durationMs%22%3A604800000%2C%22endTime%22%3Anull%2C%22createdTime%22%3A%222021-10-18T19%3A26%3A58.876Z%22%2C%22isInitialTime%22%3Atrue%2C%22grain%22%3A1%2C%22useDashboardTimeRange%22%3Afalse%7D\" target=\"_blank\">\n<div style=\"padding-top: 20px\">\n  <center><p style=\"color: #4d99b8; font-size:18px;\">Smart detection</p></center>\n  <center><p>${res}</p></center>\n</div>\n</a>",
         "mode": "html"
       },
       "pluginVersion": "8.1.2",
@@ -310,17 +197,79 @@
       "type": "text"
     },
     {
+      "datasource": "Azure Monitor",
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 11,
+        "y": 1
+      },
+      "id": 46,
+      "links": [],
+      "options": {
+        "content": "<a style=\"color: inherit;\" href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/quickPulse\" target=\"_blank\">\n<div style=\"padding-top: 20px\">\n  <center><p style=\"color: #2272b9; font-size:18px;\">Live Metrics</p></center>\n  <center><p>${res}</p></center>\n</div>\n</a>\n           \n           ",
+        "mode": "html"
+      },
+      "pluginVersion": "8.1.2",
+      "targets": [
+        {
+          "appInsights": {
+            "dimension": [],
+            "metricName": "select",
+            "timeGrain": "auto"
+          },
+          "azureLogAnalytics": {
+            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          },
+          "azureMonitor": {
+            "aggOptions": [],
+            "aggregation": "Count",
+            "alias": "Servers",
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
+            "dimensionFilter": "*",
+            "dimensionFilters": [],
+            "metricDefinition": "microsoft.insights/components",
+            "metricName": "requests/count",
+            "metricNamespace": "microsoft.insights/components",
+            "resourceGroup": "$rg",
+            "resourceName": "$res",
+            "timeGrain": "auto",
+            "timeGrains": [],
+            "top": "50"
+          },
+          "azureResourceGraph": {
+            "resultFormat": "table"
+          },
+          "insightsAnalytics": {
+            "query": "",
+            "resultFormat": "time_series"
+          },
+          "queryType": "Azure Monitor",
+          "refId": "A",
+          "subscription": "$sub",
+          "subscriptions": [
+            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
+            "39a6a513-91ca-4958-aa57-8374048b16ab",
+            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
+            "263177d8-32b8-465a-b939-be00c75e88c5"
+          ]
+        }
+      ],
+      "type": "text"
+    },
+    {
       "datasource": null,
       "gridPos": {
-        "h": 4,
-        "w": 14,
-        "x": 10,
-        "y": 0
+        "h": 3,
+        "w": 3,
+        "x": 14,
+        "y": 1
       },
-      "id": 16,
+      "id": 42,
       "options": {
-        "content": "",
-        "mode": "markdown"
+        "content": "<a style=\"color: inherit;\" href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/applicationMap\" target=\"_blank\">\n<div>\n  <center><p style=\"position:center; padding-top: 15px; color: #ff8c00; font-size:18px\">App map</p></center>\n  <center><p>${res}</p></center>\n</div>\n</a>\n           ",
+        "mode": "html"
       },
       "pluginVersion": "8.1.2",
       "targets": [
@@ -329,8 +278,21 @@
           "refId": "A"
         }
       ],
-      "transparent": true,
       "type": "text"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 54,
+      "panels": [],
+      "title": "Application Insights",
+      "type": "row"
     },
     {
       "datasource": null,
@@ -338,11 +300,11 @@
         "h": 3,
         "w": 4,
         "x": 0,
-        "y": 4
+        "y": 5
       },
       "id": 12,
       "options": {
-        "content": "<h1 style=\"font-size: 35px; color:#73bf69;\"> Usage </h1>",
+        "content": "<h1 style=\"font-size: 20px; color:#73bf69;\"> Usage </h1>",
         "mode": "html"
       },
       "pluginVersion": "8.1.2",
@@ -355,7 +317,7 @@
       "type": "text"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -402,7 +364,7 @@
         "h": 3,
         "w": 2,
         "x": 4,
-        "y": 4
+        "y": 5
       },
       "id": 48,
       "options": {
@@ -468,95 +430,16 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "Azure Monitor",
       "gridPos": {
         "h": 3,
         "w": 4,
         "x": 6,
-        "y": 4
+        "y": 5
       },
       "id": 14,
       "options": {
-        "content": "<h1 style=\"font-size:35px; color:#ec008c;\">Reliability</h1>",
-        "mode": "html"
-      },
-      "pluginVersion": "8.1.2",
-      "targets": [
-        {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "Microsoft.Insights/components",
-            "metricNamespace": "microsoft.insights/components",
-            "resourceGroup": "$rg",
-            "resourceName": "$res",
-            "timeGrain": "",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
-          },
-          "queryType": "Azure Monitor",
-          "refId": "A",
-          "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
-        }
-      ],
-      "type": "text"
-    },
-    {
-      "datasource": null,
-      "gridPos": {
-        "h": 3,
-        "w": 1,
-        "x": 10,
-        "y": 4
-      },
-      "id": 36,
-      "links": [],
-      "options": {
-        "content": "<a style=\"color: #ffffff;\"href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/failures\" target=\"_blank\">\n<div>\n  <img src=\"https://images.vexels.com/media/users/3/153978/isolated/preview/483ef8b10a46e28d02293a31570c8c56-warning-sign-colored-stroke-icon-by-vexels.png\" width=\"40px\"/>\n  <h5> Failures </h5>\n  <h6>${res}</h6>\n</div>\n</a>\n",
-        "mode": "html"
-      },
-      "pluginVersion": "8.1.2",
-      "targets": [
-        {
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
-      "type": "text"
-    },
-    {
-      "datasource": "${DS_AZURE_MONITOR}",
-      "gridPos": {
-        "h": 3,
-        "w": 5,
-        "x": 11,
-        "y": 4
-      },
-      "id": 17,
-      "options": {
-        "content": "<h1 style=\"font-size:35px; color:#7e58ff;\">Responsiveness</h1>",
+        "content": "<h1 style=\"font-size:20px; color:#ec008c;\">Reliability</h1>",
         "mode": "html"
       },
       "pluginVersion": "8.1.2",
@@ -607,13 +490,13 @@
       "gridPos": {
         "h": 3,
         "w": 2,
-        "x": 16,
-        "y": 4
+        "x": 10,
+        "y": 5
       },
-      "id": 38,
+      "id": 36,
       "links": [],
       "options": {
-        "content": "<a style=\"color: #ffffff;\"href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/performance\" target=\"_blank\">\n<div>\n  <img src=\"https://44s3b94691sl3smgmb1y936e-wpengine.netdna-ssl.com/wp-content/uploads/2016/12/performance-icon-png-6.png\" width=\"40px\" style=\"margin-bottom:10px\"/>\n  <h5> Performance </h5>\n  <h6>${res}</h6>\n</div>\n</a>\n",
+        "content": "<a style=\"color: #ffffff;\"href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/failures\" target=\"_blank\">\n<div>\n  <img src=\"https://images.vexels.com/media/users/3/153978/isolated/preview/483ef8b10a46e28d02293a31570c8c56-warning-sign-colored-stroke-icon-by-vexels.png\" width=\"40px\"/>\n  <p style=\"font-size:16px; margin-bottom:0px;\"> Failures </p>\n  <p>${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
       "pluginVersion": "8.1.2",
@@ -626,16 +509,16 @@
       "type": "text"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "Azure Monitor",
       "gridPos": {
         "h": 3,
-        "w": 5,
-        "x": 18,
-        "y": 4
+        "w": 3,
+        "x": 12,
+        "y": 5
       },
-      "id": 18,
+      "id": 17,
       "options": {
-        "content": "<h1 style=\"font-size:35px; color:#3274d9;\">Browser</h1>",
+        "content": "<h1 style=\"font-size:20px; color:#7e58ff;\">Responsiveness</h1>",
         "mode": "html"
       },
       "pluginVersion": "8.1.2",
@@ -685,13 +568,92 @@
       "datasource": null,
       "gridPos": {
         "h": 3,
-        "w": 1,
-        "x": 23,
-        "y": 4
+        "w": 3,
+        "x": 15,
+        "y": 5
+      },
+      "id": 38,
+      "links": [],
+      "options": {
+        "content": "<a style=\"color: #ffffff;\"href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/performance\" target=\"_blank\">\n<div>\n  <img src=\"https://44s3b94691sl3smgmb1y936e-wpengine.netdna-ssl.com/wp-content/uploads/2016/12/performance-icon-png-6.png\" width=\"40px\" style=\"margin-bottom:10px\"/>\n  <p style=\"font-size:16px; margin-bottom:0px;\"> Performance </p>\n  <p>${res}</p>\n</div>\n</a>\n",
+        "mode": "html"
+      },
+      "pluginVersion": "8.1.2",
+      "targets": [
+        {
+          "queryType": "randomWalk",
+          "refId": "A"
+        }
+      ],
+      "type": "text"
+    },
+    {
+      "datasource": "Azure Monitor",
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 18,
+        "y": 5
+      },
+      "id": 18,
+      "options": {
+        "content": "<h1 style=\"font-size:20px; color:#3274d9;\">Browser</h1>",
+        "mode": "html"
+      },
+      "pluginVersion": "8.1.2",
+      "targets": [
+        {
+          "appInsights": {
+            "dimension": [],
+            "metricName": "select",
+            "timeGrain": "auto"
+          },
+          "azureLogAnalytics": {
+            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          },
+          "azureMonitor": {
+            "aggOptions": [],
+            "dimensionFilter": "*",
+            "dimensionFilters": [],
+            "metricDefinition": "Microsoft.Insights/components",
+            "metricNamespace": "microsoft.insights/components",
+            "resourceGroup": "$rg",
+            "resourceName": "$res",
+            "timeGrain": "",
+            "timeGrains": [],
+            "top": "10"
+          },
+          "azureResourceGraph": {
+            "resultFormat": "table"
+          },
+          "insightsAnalytics": {
+            "query": "",
+            "resultFormat": "time_series"
+          },
+          "queryType": "Azure Monitor",
+          "refId": "A",
+          "subscription": "$sub",
+          "subscriptions": [
+            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
+            "39a6a513-91ca-4958-aa57-8374048b16ab",
+            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
+          ]
+        }
+      ],
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 3,
+        "w": 2,
+        "x": 22,
+        "y": 5
       },
       "id": 50,
       "options": {
-        "content": "<a style=\"color: #ffffff;\" href=\"https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/id/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/detailBlade/MetricsExplorerBlade/sourceExtension/AppInsightsExtension/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D/Chart/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22operation%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Browsers%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22dependencies%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22dependencies%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22dependency%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Have%20AJAX%20calls%20been%20slow%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fcount%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22pageViews%2Fcount%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22operation%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Has%20page%20view%20traffic%20changed%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22exceptions%2Fbrowser%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22exceptions%2Fbrowser%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22exception%2FproblemId%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22When%20are%20script%20errors%20occurring%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g0%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3Afalse%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20slowest%20pages%3F%22%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3Afalse%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20slowest%20pages%3F%22%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22exceptions%2Fbrowser%22%2C%22color%22%3A%22msportalfx-bgcolor-d0%22%7D%2C%22name%22%3A%22exceptions%2Fbrowser%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22exception%2FproblemId%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20most%20common%20script%20errors%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%5D%7D/openInEditMode/\" target=\"_blank\">\n<div style=\"padding-top: 35px; background-color: #3274d9; width: 100%; height: 100%\">\n  <center><h5> Browsers </h5></center>\n</div>\n</a>",
+        "content": "<a style=\"color: #ffffff;\" href=\"https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/id/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/detailBlade/MetricsExplorerBlade/sourceExtension/AppInsightsExtension/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D/Chart/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22operation%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Browsers%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22dependencies%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22dependencies%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22dependency%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Have%20AJAX%20calls%20been%20slow%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fcount%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22pageViews%2Fcount%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22operation%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Has%20page%20view%20traffic%20changed%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22exceptions%2Fbrowser%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22exceptions%2Fbrowser%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22exception%2FproblemId%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22When%20are%20script%20errors%20occurring%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g0%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3Afalse%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20slowest%20pages%3F%22%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3Afalse%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20slowest%20pages%3F%22%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22exceptions%2Fbrowser%22%2C%22color%22%3A%22msportalfx-bgcolor-d0%22%7D%2C%22name%22%3A%22exceptions%2Fbrowser%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22exception%2FproblemId%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20most%20common%20script%20errors%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%5D%7D/openInEditMode/\" target=\"_blank\">\n<div style=\"padding-top: 35px; background-color: #3274d9; width: 100%; height: 100%\">\n  <center><p style=\"font-size:16px; margin-bottom:0px;\"> Browsers </p></center>\n</div>\n</a>",
         "mode": "html"
       },
       "pluginVersion": "8.1.2",
@@ -705,7 +667,7 @@
       "type": "text"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -763,7 +725,7 @@
         "h": 9,
         "w": 6,
         "x": 0,
-        "y": 7
+        "y": 8
       },
       "id": 20,
       "interval": "60s",
@@ -774,6 +736,7 @@
           "url": "https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/segmentationUsers"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["sum"],
@@ -835,7 +798,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -889,9 +852,9 @@
       },
       "gridPos": {
         "h": 9,
-        "w": 5,
+        "w": 6,
         "x": 6,
-        "y": 7
+        "y": 8
       },
       "id": 2,
       "links": [
@@ -901,6 +864,7 @@
           "url": "https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/failures"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["sum"],
@@ -958,7 +922,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -968,6 +932,7 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -1016,9 +981,9 @@
       },
       "gridPos": {
         "h": 9,
-        "w": 7,
-        "x": 11,
-        "y": 7
+        "w": 6,
+        "x": 12,
+        "y": 8
       },
       "id": 4,
       "links": [
@@ -1028,6 +993,7 @@
           "url": "https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/performance"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["mean"],
@@ -1086,7 +1052,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1146,7 +1112,7 @@
         "h": 9,
         "w": 6,
         "x": 18,
-        "y": 7
+        "y": 8
       },
       "id": 6,
       "links": [
@@ -1156,6 +1122,7 @@
           "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D/Chart/%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22pageViews%2Fcount%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Page%20views%22%7D%2C%22aggregationType%22%3A7%2C%22thresholds%22%3A%5B%5D%7D%5D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%5D%7D%2C%22grouping%22%3Anull%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22legendVisualization%22%3A%7B%22isVisible%22%3Atrue%2C%22position%22%3A2%2C%22hideSubtitle%22%3Afalse%7D%2C%22axisVisualization%22%3A%7B%22x%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A2%7D%2C%22y%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A1%7D%7D%2C%22disablePinning%22%3Atrue%7D%2C%22title%22%3A%22Count%20Page%20views%20for%20${res}%22%2C%22titleKind%22%3A1%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22showUTCTime%22%3Afalse%2C%22grain%22%3A1%7D%2C%22ariaLabel%22%3Anull%7D/openInEditMode/true"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["sum"],
@@ -1213,7 +1180,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1223,6 +1190,7 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisWidth": 50,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 14,
@@ -1288,7 +1256,7 @@
         "h": 10,
         "w": 6,
         "x": 0,
-        "y": 16
+        "y": 17
       },
       "id": 8,
       "links": [
@@ -1298,6 +1266,7 @@
           "url": "https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/availability"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["mean"],
@@ -1355,7 +1324,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1437,9 +1406,9 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 5,
+        "w": 6,
         "x": 6,
-        "y": 16
+        "y": 17
       },
       "id": 24,
       "links": [
@@ -1449,6 +1418,7 @@
           "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Atrue%7D%7D/Chart/%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22exceptions%2Fserver%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Server%20exceptions%22%2C%22color%22%3A%22%2347BDF5%22%7D%2C%22aggregationType%22%3A7%2C%22thresholds%22%3A%5B%5D%7D%2C%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22dependencies%2Ffailed%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Dependency%20failures%22%2C%22color%22%3A%22%237E58FF%22%7D%2C%22aggregationType%22%3A7%2C%22thresholds%22%3A%5B%5D%7D%5D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%5D%7D%2C%22grouping%22%3Anull%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22legendVisualization%22%3A%7B%22isVisible%22%3Atrue%2C%22position%22%3A2%2C%22hideSubtitle%22%3Afalse%7D%2C%22axisVisualization%22%3A%7B%22x%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A2%7D%2C%22y%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A1%7D%7D%2C%22disablePinning%22%3Atrue%7D%2C%22title%22%3A%22Server%20exceptions%20and%20Dependency%20failures%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22showUTCTime%22%3Atrue%2C%22grain%22%3A1%7D%2C%22ariaLabel%22%3Anull%7D/openInEditMode/true"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["sum"],
@@ -1552,7 +1522,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1563,6 +1533,8 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "axisSoftMax": -6,
+            "axisSoftMin": 0,
+            "axisWidth": 50,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -1608,9 +1580,9 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 7,
-        "x": 11,
-        "y": 16
+        "w": 6,
+        "x": 12,
+        "y": 17
       },
       "id": 28,
       "links": [
@@ -1620,6 +1592,7 @@
           "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Atrue%7D%7D/Chart/%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22performanceCounters%2FprocessorCpuPercentage%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Processor%20time%22%2C%22color%22%3A%22%2347BDF5%22%7D%2C%22aggregationType%22%3A4%2C%22thresholds%22%3A%5B%5D%7D%2C%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22performanceCounters%2FprocessCpuPercentage%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Process%20CPU%22%2C%22color%22%3A%22%237E58FF%22%7D%2C%22aggregationType%22%3A4%2C%22thresholds%22%3A%5B%5D%7D%5D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%5D%7D%2C%22grouping%22%3Anull%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22legendVisualization%22%3A%7B%22isVisible%22%3Atrue%2C%22position%22%3A2%2C%22hideSubtitle%22%3Afalse%7D%2C%22axisVisualization%22%3A%7B%22x%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A2%7D%2C%22y%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A1%7D%7D%2C%22disablePinning%22%3Atrue%7D%2C%22title%22%3A%22Average%20processor%20and%20process%20CPU%20utilization%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22showUTCTime%22%3Atrue%2C%22grain%22%3A1%7D%2C%22ariaLabel%22%3Anull%7D/openInEditMode/true"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["mean"],
@@ -1719,7 +1692,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1837,7 +1810,7 @@
         "h": 10,
         "w": 6,
         "x": 18,
-        "y": 16
+        "y": 17
       },
       "id": 32,
       "links": [
@@ -1847,6 +1820,7 @@
           "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Atrue%7D%7D/Chart/%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22browserTimings%2FnetworkDuration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Page%20load%20network%20connect%20time%22%2C%22color%22%3A%22%237E58FF%22%7D%2C%22aggregationType%22%3A4%2C%22thresholds%22%3A%5B%5D%7D%2C%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22browserTimings%2FprocessingDuration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Client%20processing%20time%22%2C%22color%22%3A%22%2344F1C8%22%7D%2C%22aggregationType%22%3A4%2C%22thresholds%22%3A%5B%5D%7D%2C%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22browserTimings%2FsendDuration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Send%20request%20time%22%2C%22color%22%3A%22%23EB9371%22%7D%2C%22aggregationType%22%3A4%2C%22thresholds%22%3A%5B%5D%7D%2C%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22browserTimings%2FreceiveDuration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Receiving%20response%20time%22%2C%22color%22%3A%22%230672F1%22%7D%2C%22aggregationType%22%3A4%2C%22thresholds%22%3A%5B%5D%7D%5D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%5D%7D%2C%22grouping%22%3Anull%2C%22visualization%22%3A%7B%22chartType%22%3A3%2C%22legendVisualization%22%3A%7B%22isVisible%22%3Atrue%2C%22position%22%3A2%2C%22hideSubtitle%22%3Afalse%7D%2C%22axisVisualization%22%3A%7B%22x%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A2%7D%2C%22y%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A1%7D%7D%2C%22disablePinning%22%3Atrue%7D%2C%22title%22%3A%22Average%20page%20load%20time%20breakdown%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22showUTCTime%22%3Atrue%2C%22grain%22%3A1%7D%2C%22ariaLabel%22%3Anull%7D/openInEditMode/true"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["mean"],
@@ -2030,7 +2004,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2039,6 +2013,7 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -2086,7 +2061,7 @@
         "h": 10,
         "w": 6,
         "x": 0,
-        "y": 26
+        "y": 27
       },
       "id": 22,
       "links": [
@@ -2096,6 +2071,7 @@
           "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Atrue%7D%7D/Chart/%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22availabilityResults%2Fcount%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Availability%20test%20results%20count%22%2C%22color%22%3A%22%2347BDF5%22%7D%2C%22aggregationType%22%3A7%2C%22thresholds%22%3A%5B%5D%7D%5D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%5D%7D%2C%22grouping%22%3Anull%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22legendVisualization%22%3A%7B%22isVisible%22%3Atrue%2C%22position%22%3A2%2C%22hideSubtitle%22%3Afalse%7D%2C%22axisVisualization%22%3A%7B%22x%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A2%7D%2C%22y%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A1%7D%7D%2C%22disablePinning%22%3Atrue%7D%2C%22title%22%3A%22Availability%20test%20results%20count%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22showUTCTime%22%3Atrue%2C%22grain%22%3A1%7D%2C%22ariaLabel%22%3Anull%7D/openInEditMode/true"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["sum"],
@@ -2153,7 +2129,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2208,9 +2184,9 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 5,
+        "w": 6,
         "x": 6,
-        "y": 26
+        "y": 27
       },
       "id": 26,
       "links": [
@@ -2220,6 +2196,7 @@
           "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Atrue%7D%7D/Chart/%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22performanceCounters%2FprocessIOBytesPerSecond%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Process%20IO%20rate%22%2C%22color%22%3A%22%2347BDF5%22%7D%2C%22aggregationType%22%3A4%2C%22thresholds%22%3A%5B%5D%7D%5D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%5D%7D%2C%22grouping%22%3Anull%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22legendVisualization%22%3A%7B%22isVisible%22%3Atrue%2C%22position%22%3A2%2C%22hideSubtitle%22%3Afalse%7D%2C%22axisVisualization%22%3A%7B%22x%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A2%7D%2C%22y%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A1%7D%7D%2C%22disablePinning%22%3Atrue%7D%2C%22title%22%3A%22Average%20process%20I%2FO%20rate%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22showUTCTime%22%3Atrue%2C%22grain%22%3A1%7D%2C%22ariaLabel%22%3Anull%7D/openInEditMode/true"
         }
       ],
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": ["mean"],
@@ -2254,7 +2231,7 @@
             "resourceName": "$res",
             "timeGrain": "auto",
             "timeGrains": [],
-            "top": "50"
+            "top": "100"
           },
           "azureResourceGraph": {
             "resultFormat": "table"
@@ -2277,7 +2254,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2288,6 +2265,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "axisSoftMin": 0,
+            "axisWidth": 80,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -2333,9 +2311,9 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 7,
-        "x": 11,
-        "y": 26
+        "w": 6,
+        "x": 12,
+        "y": 27
       },
       "id": 30,
       "links": [
@@ -2345,6 +2323,7 @@
           "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Atrue%7D%7D/Chart/%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22performanceCounters%2FmemoryAvailableBytes%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Available%20memory%22%2C%22color%22%3A%22%2347BDF5%22%7D%2C%22aggregationType%22%3A4%2C%22thresholds%22%3A%5B%5D%7D%5D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%5D%7D%2C%22grouping%22%3Anull%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22legendVisualization%22%3A%7B%22isVisible%22%3Atrue%2C%22position%22%3A2%2C%22hideSubtitle%22%3Afalse%7D%2C%22axisVisualization%22%3A%7B%22x%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A2%7D%2C%22y%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A1%7D%7D%2C%22disablePinning%22%3Atrue%7D%2C%22title%22%3A%22Average%20available%20memory%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22showUTCTime%22%3Atrue%2C%22grain%22%3A1%7D%2C%22ariaLabel%22%3Anull%7D/openInEditMode/true"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["mean"],
@@ -2402,7 +2381,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": "${ds}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2412,6 +2391,8 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "axisWidth": 50,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -2459,7 +2440,7 @@
         "h": 10,
         "w": 6,
         "x": 18,
-        "y": 26
+        "y": 27
       },
       "id": 34,
       "links": [
@@ -2469,6 +2450,7 @@
           "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Atrue%7D%7D/Chart/%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22exceptions%2Fbrowser%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Browser%20exceptions%22%2C%22color%22%3A%22%2347BDF5%22%7D%2C%22aggregationType%22%3A7%2C%22thresholds%22%3A%5B%5D%7D%5D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%5D%7D%2C%22grouping%22%3Anull%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22legendVisualization%22%3A%7B%22isVisible%22%3Atrue%2C%22position%22%3A2%2C%22hideSubtitle%22%3Afalse%7D%2C%22axisVisualization%22%3A%7B%22x%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A2%7D%2C%22y%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A1%7D%7D%2C%22disablePinning%22%3Atrue%7D%2C%22title%22%3A%22Browser%20exceptions%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A1800000%7D%2C%22showUTCTime%22%3Atrue%2C%22grain%22%3A1%7D%2C%22ariaLabel%22%3Anull%7D/openInEditMode/true"
         }
       ],
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": ["sum"],
@@ -2533,9 +2515,34 @@
   "templating": {
     "list": [
       {
+        "current": {
+          "selected": false,
+          "text": "Azure Monitor",
+          "value": "Azure Monitor"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "ds",
+        "options": [],
+        "query": "grafana-azure-monitor-datasource",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_AZURE_MONITOR}",
+        "current": {
+          "selected": false,
+          "text": "Test/Demo - One Observability",
+          "value": "263177d8-32b8-465a-b939-be00c75e88c5"
+        },
+        "datasource": "${ds}",
         "definition": "Subscriptions()",
         "description": null,
         "error": null,
@@ -2554,8 +2561,12 @@
       },
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_AZURE_MONITOR}",
+        "current": {
+          "selected": false,
+          "text": "kaprince-grafana",
+          "value": "kaprince-grafana"
+        },
+        "datasource": "${ds}",
         "definition": "ResourceGroups($sub)",
         "description": null,
         "error": null,
@@ -2574,9 +2585,37 @@
       },
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_AZURE_MONITOR}",
-        "definition": "ResourceNames($sub, $rg, microsoft.insights/components)",
+        "current": {
+          "selected": false,
+          "text": "microsoft.insights/components",
+          "value": "microsoft.insights/components"
+        },
+        "datasource": "${ds}",
+        "definition": "Namespaces($sub, $rg)",
+        "description": null,
+        "error": null,
+        "hide": 2,
+        "includeAll": false,
+        "label": "Namespace",
+        "multi": false,
+        "name": "ns",
+        "options": [],
+        "query": "Namespaces($sub, $rg)",
+        "refresh": 1,
+        "regex": "([mM](icrosoft)\\.[iI](nsights)/(components))",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "Grafana",
+          "value": "Grafana"
+        },
+        "datasource": "${ds}",
+        "definition": "ResourceNames($sub, $rg, $ns)",
         "description": null,
         "error": null,
         "hide": 0,
@@ -2585,7 +2624,7 @@
         "multi": false,
         "name": "res",
         "options": [],
-        "query": "ResourceNames($sub, $rg, microsoft.insights/components)",
+        "query": "ResourceNames($sub, $rg, $ns)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -2595,12 +2634,12 @@
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-30d",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Azure App monitoring - Application Insights",
   "uid": "Yo38mcvnz",
-  "version": 62
+  "version": 77
 }
