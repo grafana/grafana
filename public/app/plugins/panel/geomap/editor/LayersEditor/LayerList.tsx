@@ -48,7 +48,7 @@ export const LayerList = ({ layers, onDragEnd, selected, actions }: LayerListPro
                         onMouseDown={() => actions!.selectLayer(element.UID)}
                       >
                         <LayerHeader layer={{ ...element }} onChange={onLayerNameChange} />
-                        <div className={style.textWrapper}>&nbsp; ({element.options.type})</div>
+                        <div className={style.textWrapper}>&nbsp; {element.options.type}</div>
 
                         <IconButton
                           name="trash-alt"

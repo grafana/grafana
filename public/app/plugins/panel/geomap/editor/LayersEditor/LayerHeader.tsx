@@ -28,10 +28,10 @@ export const LayerHeader = ({ layer, onChange }: LayerHeaderProps) => {
       return;
     }
 
-    if (layer.name !== newName) {
+    if (layer.options.name !== newName) {
       onChange({
         ...layer,
-        name: newName,
+        options: { ...layer.options, name: newName },
       });
     }
   };
@@ -73,7 +73,7 @@ export const LayerHeader = ({ layer, onChange }: LayerHeaderProps) => {
             onClick={onEditLayer}
             data-testid="layer-name-div"
           >
-            <span className={styles.layerName}>{layer.name}</span>
+            <span className={styles.layerName}>{layer.options.name}</span>
             <Icon name="pen" className={styles.layerEditIcon} size="sm" />
           </button>
         )}
@@ -82,7 +82,7 @@ export const LayerHeader = ({ layer, onChange }: LayerHeaderProps) => {
           <>
             <Input
               type="text"
-              defaultValue={layer.name}
+              defaultValue={layer.options.name}
               onBlur={onEditLayerBlur}
               autoFocus
               onKeyDown={onKeyDown}

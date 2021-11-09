@@ -424,12 +424,13 @@ export class GeomapPanel extends Component<Props, State> {
       handler.update(this.props.data);
     }
 
-    const name = `Layer ${this.counter}`;
+    if (!options.name) {
+      options.name = `Layer ${this.counter}`;
+    }
     const UID = `lyr-${this.counter++}`;
 
     return {
       UID,
-      name,
       isBasemap,
       options,
       layer,
