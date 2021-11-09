@@ -118,8 +118,6 @@ export class Scene {
 
       this.save();
     });
-
-    throw new Error('Method not implemented.');
   }
 
   clearCurrentSelection() {
