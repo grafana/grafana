@@ -46,7 +46,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
       {!routes.receiver ? (
         readOnly ? (
           <EmptyArea>
-            <p>There is no default contact point configured for root route.</p>
+            <p>There is no default contact point configured for the root route.</p>
           </EmptyArea>
         ) : (
           <EmptyAreaWithCTA
