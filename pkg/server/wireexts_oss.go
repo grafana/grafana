@@ -56,6 +56,7 @@ var wireExtsBasicSet = wire.NewSet(
 	searchusers.ProvideUsersService,
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	acdatabase.ProvideService,
+	wire.Bind(new(accesscontrol.Store), new(*acdatabase.AccessControlStore)),
 	wire.Bind(new(accesscontrol.ResourceStore), new(*acdatabase.AccessControlStore)),
 )
 

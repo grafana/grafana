@@ -171,6 +171,12 @@ func (p Permission) OSSPermission() Permission {
 	}
 }
 
+type GetUserPermissionsQuery struct {
+	OrgID  int64 `json:"-"`
+	UserID int64 `json:"userId"`
+	Roles  []string
+}
+
 // ScopeParams holds the parameters used to fill in scope templates
 type ScopeParams struct {
 	OrgID     int64

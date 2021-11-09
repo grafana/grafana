@@ -31,6 +31,10 @@ type AccessControl interface {
 	DeclareFixedRoles(...RoleRegistration) error
 }
 
+type Store interface {
+	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
+}
+
 type ResourceStore interface {
 	// SetUserResourcePermissions sets permissions for managed user role on a resource
 	SetUserResourcePermissions(ctx context.Context, orgID, userID int64, cmd SetResourcePermissionsCommand) ([]ResourcePermission, error)

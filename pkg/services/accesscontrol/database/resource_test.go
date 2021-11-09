@@ -389,8 +389,3 @@ func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlst
 		require.NoError(t, err)
 	}
 }
-
-func setupTestEnv(t testing.TB) (*AccessControlStore, *sqlstore.SQLStore) {
-	store := sqlstore.InitTestDB(t)
-	return ProvideService(store), store
-}
