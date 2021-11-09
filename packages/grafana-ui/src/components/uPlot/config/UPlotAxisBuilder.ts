@@ -15,7 +15,9 @@ export interface AxisProps {
   valueRotation?: number;
   placement?: AxisPlacement;
   grid?: Axis.Grid;
-  ticks?: boolean;
+  ticks?: Axis.Ticks;
+  filter?: Axis.Filter;
+  space?: Axis.Space;
   formatValue?: (v: any) => string;
   incrs?: Axis.Incrs;
   splits?: Axis.Splits;
@@ -86,7 +88,9 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       show = true,
       placement = AxisPlacement.Auto,
       grid = { show: true },
-      ticks = true,
+      ticks,
+      space,
+      filter,
       gap = 5,
       formatValue,
       splits,
@@ -127,17 +131,23 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
-      ticks: {
-        show: ticks,
-        stroke: gridColor,
-        width: 1 / devicePixelRatio,
-        size: 4,
-      },
+      ticks: Object.assign(
+        {
+          show: true,
+          stroke: gridColor,
+          width: 1 / devicePixelRatio,
+          size: 4,
+        },
+        ticks
+      ),
       splits,
       values: values,
-      space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
-        return this.calculateSpace(self, axisIdx, scaleMin, scaleMax, plotDim);
-      },
+      space:
+        space ??
+        ((self, axisIdx, scaleMin, scaleMax, plotDim) => {
+          return this.calculateSpace(self, axisIdx, scaleMin, scaleMax, plotDim);
+        }),
+      filter,
     };
 
     if (label != null && label.length > 0) {

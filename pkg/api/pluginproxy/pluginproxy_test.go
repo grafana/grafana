@@ -9,7 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,6 +19,9 @@ import (
 )
 
 func TestPluginProxy(t *testing.T) {
+	setting.SecretKey = "password"
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+
 	t.Run("When getting proxy headers", func(t *testing.T) {
 		route := &plugins.Route{
 			Headers: []plugins.Header{
@@ -24,10 +29,8 @@ func TestPluginProxy(t *testing.T) {
 			},
 		}
 
-		setting.SecretKey = "password"
-
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-			key, err := ossencryption.ProvideService().Encrypt(ctx, []byte("123"), "password")
+			key, err := secretsService.Encrypt(ctx, []byte("123"), secrets.WithoutScope())
 			if err != nil {
 				return err
 			}
@@ -45,6 +48,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -66,6 +70,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -88,6 +93,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -109,6 +115,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{IsAnonymous: true},
 				Context: &macaron.Context{
@@ -143,6 +150,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -174,6 +182,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -196,10 +205,10 @@ func TestPluginProxy(t *testing.T) {
 		}
 
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-			encryptedJsonData, err := ossencryption.ProvideService().EncryptJsonData(
+			encryptedJsonData, err := secretsService.EncryptJsonData(
 				ctx,
 				map[string]string{"key": "123"},
-				setting.SecretKey,
+				secrets.WithoutScope(),
 			)
 
 			if err != nil {
@@ -220,6 +229,7 @@ func TestPluginProxy(t *testing.T) {
 
 		req := getPluginProxiedRequest(
 			t,
+			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -238,7 +248,7 @@ func TestPluginProxy(t *testing.T) {
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route) *http.Request {
+func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
 		route = &plugins.Route{
@@ -247,7 +257,7 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, ossencryption.ProvideService())
+	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, secretsService)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
 	require.NoError(t, err)
