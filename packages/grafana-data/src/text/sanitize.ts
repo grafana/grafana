@@ -38,3 +38,7 @@ export function hasAnsiCodes(input: string): boolean {
 export function escapeHtml(str: string): string {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+export function sanitizeAngularInterpolation(url: string): string {
+  return url.replace(/\{\{/g, '%7B%7B').replace(/\}\}/g, '%7D%7D');
+}

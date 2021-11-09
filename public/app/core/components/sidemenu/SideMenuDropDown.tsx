@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { filter } from 'lodash';
 import DropDownChild from './DropDownChild';
-import { NavModelItem } from '@grafana/data';
+import { NavModelItem, textUtil } from '@grafana/data';
 import { Link } from '@grafana/ui';
 
 interface Props {
@@ -16,9 +16,11 @@ const SideMenuDropDown: FC<Props> = (props) => {
     childrenLinks = filter(link.children, (item) => !item.hideFromMenu);
   }
 
+  const sanitizedUrl = textUtil.sanitizeAngularInterpolation(link.url ?? '');
+
   const linkContent = <span className="sidemenu-item-text">{link.text}</span>;
   const anchor = link.url ? (
-    <Link href={link.url} onClick={onHeaderClick} className="side-menu-header-link">
+    <Link href={sanitizedUrl} onClick={onHeaderClick} className="side-menu-header-link">
       {linkContent}
     </Link>
   ) : (
