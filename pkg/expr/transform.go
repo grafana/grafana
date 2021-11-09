@@ -40,6 +40,9 @@ func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery
 	}
 
 	for _, q := range query.Queries {
+		if q.DataSource == nil {
+			return nil, fmt.Errorf("mising datasource info: " + q.RefID)
+		}
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
 			return nil, err
@@ -50,6 +53,10 @@ func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery
 			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			QueryType:     q.QueryType,
+			Datasource: DataSourceRef{
+				Type: q.DataSource.Type,
+				UID:  q.DataSource.Uid,
+			},
 			TimeRange: TimeRange{
 				From: query.TimeRange.GetFromAsTimeUTC(),
 				To:   query.TimeRange.GetToAsTimeUTC(),
@@ -72,11 +79,28 @@ type Request struct {
 type Query struct {
 	RefID         string
 	TimeRange     TimeRange
-	DatasourceUID string
+	DatasourceUID string        // deprecated, value -100 when expressions
+	Datasource    DataSourceRef `json:"datasource"`
 	JSON          json.RawMessage
 	Interval      time.Duration
 	QueryType     string
 	MaxDataPoints int64
+}
+
+type DataSourceRef struct {
+	Type string `json:"type"` // value should be __expr__
+	UID  string `json:"uid"`  // value should be __expr__
+}
+
+func (q *Query) GetDatasourceUID() string {
+	if q.DatasourceUID != "" {
+		return q.DatasourceUID // backwards compatibility gets precedence
+	}
+
+	if q.Datasource.UID != "" {
+		return q.Datasource.UID
+	}
+	return ""
 }
 
 // TimeRange is a time.Time based TimeRange.

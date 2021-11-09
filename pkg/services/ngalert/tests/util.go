@@ -7,14 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -36,9 +38,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	cfg.UnifiedAlerting.Enabled = true
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
+	sqlStore := sqlstore.InitTestDB(t)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	ng, err := ngalert.ProvideService(
-		cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t),
-		nil, nil, nil, nil, ossencryption.ProvideService(), m,
+		cfg, nil, routing.NewRouteRegister(), sqlStore,
+		nil, nil, nil, nil, secretsService, m,
 	)
 	require.NoError(t, err)
 	return ng, &store.DBstore{

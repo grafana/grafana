@@ -36,22 +36,6 @@ func New(logger string, ctx ...interface{}) Logger {
 	return Root.New(params...)
 }
 
-func Warn(msg string, v ...interface{}) {
-	Root.Warn(msg, v...)
-}
-
-func Debug(msg string, args ...interface{}) {
-	Root.Debug(msg, args...)
-}
-
-func Info(msg string, args ...interface{}) {
-	Root.Info(msg, args...)
-}
-
-func Error(msg string, args ...interface{}) {
-	Root.Error(msg, args...)
-}
-
 func Close() error {
 	var err error
 	for _, logger := range loggersToClose {
