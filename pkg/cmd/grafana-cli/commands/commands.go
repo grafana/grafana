@@ -26,12 +26,7 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.
 			return errutil.Wrap("failed to load configuration", err)
 		}
 
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{})
-		if err != nil {
-			return errutil.Wrap("failed to initialize SQL store", err)
-		}
-
-		r, err := runner.Initialize(cfg, sqlStore)
+		r, err := runner.Initialize(cfg)
 		if err != nil {
 			return errutil.Wrap("failed to initialize runner", err)
 		}
