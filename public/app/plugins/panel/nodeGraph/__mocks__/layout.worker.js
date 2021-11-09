@@ -4,9 +4,15 @@ export default class TestWorker {
   constructor() {}
   postMessage(data) {
     const { nodes, edges, config } = data;
-    setTimeout(() => {
+    this.timeout = setTimeout(() => {
+      this.timeout = null;
       layout(nodes, edges, config);
       this.onmessage({ data: { nodes, edges } });
     }, 1);
+  }
+  terminate() {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+    }
   }
 }
