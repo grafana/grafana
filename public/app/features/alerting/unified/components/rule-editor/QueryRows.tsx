@@ -59,6 +59,47 @@ export class QueryRows extends PureComponent<Props, State> {
     );
   };
 
+  queriesWithUpdatedReferences = (queries: AlertQuery[], previousRefId: string, newRefId: string) => {
+    return queries.map((query) => {
+      if (!isExpressionQuery(query.model)) {
+        return query;
+      }
+
+      const isMathExpression = query.model.type === 'math';
+      const isReduceExpression = query.model.type === 'reduce';
+      const isResampleExpression = query.model.type === 'resample';
+      const isClassicExpression = query.model.type === 'classic_conditions';
+      const isQueryWithParams = isClassicExpression || isReduceExpression;
+
+      if (isMathExpression) {
+        const oldExpression = new RegExp(`\\$${previousRefId}`, 'gm');
+        const newExpression = `$${newRefId}`;
+
+        query.model.expression = query.model.expression?.replace(oldExpression, newExpression);
+        return query;
+      }
+
+      if (isResampleExpression) {
+        query.model.expression = newRefId;
+        return query;
+      }
+
+      if (isQueryWithParams) {
+        const conditions = query.model.conditions?.map((condition) => ({
+          ...condition,
+          query: {
+            ...condition.query,
+            params: condition.query.params.map((param: string) => (param === previousRefId ? newRefId : param)),
+          },
+        }));
+
+        return { ...query, model: { ...query.model, conditions } };
+      }
+
+      return query;
+    });
+  };
+
   onChangeThreshold = (thresholds: ThresholdsConfig, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
@@ -128,11 +169,16 @@ export class QueryRows extends PureComponent<Props, State> {
   onChangeQuery = (query: DataQuery, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
+    // find what queries still have a reference to the old name
+    const previousRefId = queries[index].refId;
+    const newRefId = query.refId;
+
     onQueriesChange(
-      queries.map((item, itemIndex) => {
+      this.queriesWithUpdatedReferences(queries, previousRefId, newRefId).map((item, itemIndex) => {
         if (itemIndex !== index) {
           return item;
         }
+
         return {
           ...item,
           refId: query.refId,
