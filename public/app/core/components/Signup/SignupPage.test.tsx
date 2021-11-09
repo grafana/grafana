@@ -20,7 +20,6 @@ jest.mock('app/core/config', () => {
       commit: '1',
       env: 'production',
       edition: 'Open Source',
-      isEnterprise: false,
     },
     licenseInfo: {
       stateInfo: '',

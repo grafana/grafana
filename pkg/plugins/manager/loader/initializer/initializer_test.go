@@ -249,7 +249,7 @@ func TestInitializer_envVars(t *testing.T) {
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
 		assert.Equal(t, "GF_EDITION=test", envVars[2])
-		assert.Equal(t, "GF_ENTERPRISE_license_PATH=/path/to/ent/license", envVars[3])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=", envVars[4])
 	})
 }
@@ -349,6 +349,14 @@ func (t *testLicensingService) HasValidLicense() bool {
 
 func (t *testLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
+}
+
+func (*testLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*testLicensingService) FeatureEnabled(feature string) bool {
+	return false
 }
 
 type testPlugin struct {

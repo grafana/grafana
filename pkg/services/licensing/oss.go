@@ -48,6 +48,14 @@ func (*OSSLicensingService) HasValidLicense() bool {
 	return false
 }
 
+func (*OSSLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*OSSLicensingService) FeatureEnabled(feature string) bool {
+	return false
+}
+
 func ProvideService(cfg *setting.Cfg, hooksService *hooks.HooksService) *OSSLicensingService {
 	l := &OSSLicensingService{
 		Cfg:          cfg,

@@ -200,7 +200,7 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 		hostEnv = append(
 			hostEnv,
 			fmt.Sprintf("GF_EDITION=%s", i.license.Edition()),
-			fmt.Sprintf("GF_ENTERPRISE_license_PATH=%s", i.cfg.EnterpriseLicensePath),
+			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", i.cfg.EnterpriseLicensePath),
 		)
 
 		if envProvider, ok := i.license.(models.LicenseEnvironment); ok {

@@ -124,7 +124,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
         version: 'v1.0',
         commit: '1',
         env: 'production',
-        isEnterprise: false,
       },
       viewersCanEdit: false,
       editorsCanAdmin: false,

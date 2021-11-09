@@ -1,6 +1,6 @@
 import config from 'app/core/config';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { featureEnabled, getBackendSrv, locationService } from '@grafana/runtime';
 import { ThunkResult, LdapUser, UserSession, UserDTO, AccessControlAction, UserFilter } from 'app/types';
 
 import {
@@ -35,7 +35,7 @@ export function loadAdminUserPage(userId: number): ThunkResult<void> {
       await dispatch(loadUserProfile(userId));
       await dispatch(loadUserOrgs(userId));
       await dispatch(loadUserSessions(userId));
-      if (config.ldapEnabled && config.licenseInfo.hasLicense) {
+      if (config.ldapEnabled && featureEnabled('ldapsync')) {
         await dispatch(loadLdapSyncStatus());
       }
       dispatch(userAdminPageLoadedAction(true));
@@ -183,7 +183,7 @@ export function loadLdapSyncStatus(): ThunkResult<void> {
   return async (dispatch) => {
     // Available only in enterprise
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
-    if (config.licenseInfo.hasLicense && canReadLDAPStatus) {
+    if (featureEnabled('ldapsync') && canReadLDAPStatus) {
       const syncStatus = await getBackendSrv().get(`/api/admin/ldap-sync-status`);
       dispatch(ldapSyncStatusLoadedAction(syncStatus));
     }

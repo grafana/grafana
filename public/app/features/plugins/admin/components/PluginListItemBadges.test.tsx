@@ -49,14 +49,14 @@ describe('PluginListItemBadges', () => {
   });
 
   it('renders an enterprise badge (when a license is valid)', () => {
-    config.licenseInfo.hasValidLicense = true;
+    config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
     render(<PluginListItemBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
     expect(screen.queryByRole('button', { name: /learn more/i })).not.toBeInTheDocument();
   });
 
   it('renders an enterprise badge with icon and link (when a license is invalid)', () => {
-    config.licenseInfo.hasValidLicense = false;
+    config.licenseInfo.enabledFeatures = {};
     render(<PluginListItemBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
     expect(screen.getByLabelText(/lock icon/i)).toBeInTheDocument();

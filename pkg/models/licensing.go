@@ -19,6 +19,10 @@ type Licensing interface {
 	LicenseURL(showAdminLicensingPage bool) string
 
 	StateInfo() string
+
+	EnabledFeatures() map[string]bool
+
+	FeatureEnabled(feature string) bool
 }
 
 type LicenseEnvironment interface {
