@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -35,7 +36,8 @@ const (
 const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
-	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore) *ContextHandler {
+	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -43,6 +45,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		RemoteCache:      remoteCache,
 		RenderService:    renderService,
 		SQLStore:         sqlStore,
+		ac:               ac,
 	}
 }
 
@@ -54,6 +57,7 @@ type ContextHandler struct {
 	RemoteCache      *remotecache.RemoteCache
 	RenderService    rendering.Service
 	SQLStore         *sqlstore.SQLStore
+	ac               accesscontrol.AccessControl
 
 	// GetTime returns the current time.
 	// Stubbable by tests.
@@ -126,6 +130,16 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 		ol.String("uname", reqContext.Login),
 		ol.Int64("orgId", reqContext.OrgId),
 		ol.Int64("userId", reqContext.UserId))
+
+	if !h.ac.IsDisabled() {
+		permissions, err := h.ac.GetUserPermissions(reqContext.Req.Context(), reqContext.SignedInUser)
+		if err != nil {
+			reqContext.JsonApiErr(403, "failed to get permissions", err)
+			return
+		}
+		mContext.Req = mContext.Req.WithContext(accesscontrol.ContextWithPermissions(mContext.Req.Context(), permissions))
+		mContext.Map(mContext.Req)
+	}
 
 	mContext.Map(reqContext)
 
