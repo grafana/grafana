@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
+import formatDuration from 'date-fns/formatDuration';
 import { SelectableValue, parseDuration } from '@grafana/data';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { ButtonGroup, ToolbarButton, ToolbarButtonVariant } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
-import { Duration } from 'date-fns';
 
 // Default intervals used in the refresh picker component
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
@@ -101,20 +101,17 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
 > {
   const intervalsOrDefault = intervals || defaultIntervals;
   const options = intervalsOrDefault.map((interval) => {
-    const duration = parseDuration(interval);
-    const unit = Object.keys(duration) as Array<keyof Duration>;
-    const amount = duration[unit[0]];
-    let describedIntervalLabel = interval;
+    const duration: { [key: string]: string | number } = parseDuration(interval);
+    let key = Object.keys(duration)[0];
+    const value = duration[key];
+    duration[key] = Number(value);
 
-    if (amount !== undefined) {
-      const formattedUnit = amount > 1 ? unit : unit[0].slice(0, -1);
-      describedIntervalLabel = amount + ' ' + formattedUnit;
-    }
+    const ariaLabel = formatDuration(duration);
 
     return {
       label: interval,
       value: interval,
-      ariaLabel: describedIntervalLabel,
+      ariaLabel: ariaLabel,
     };
   });
 
