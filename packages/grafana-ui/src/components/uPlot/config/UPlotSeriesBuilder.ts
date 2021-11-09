@@ -38,9 +38,9 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   softMax?: number | null;
 
   drawStyle?: GraphDrawStyle;
-  pathBuilder?: Series.PathBuilder;
-  pointsFilter?: Series.Points.Filter;
-  pointsBuilder?: Series.Points.Show;
+  pathBuilder?: Series.PathBuilder | null;
+  pointsFilter?: Series.Points.Filter | null;
+  pointsBuilder?: Series.Points.Show | null;
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   theme: GrafanaTheme2;

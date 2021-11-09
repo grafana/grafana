@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Market trend",
+  "id": "market-trend",
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/candlestick.svg",
+      "large": "img/candlestick.svg"
+    }
+  }
+}
