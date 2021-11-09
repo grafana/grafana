@@ -1,0 +1,1 @@
+/*eslint-disable*/module.exports={messages:{"datasources.loaded-count":[["0","plural",{one:[" Naloženo one ","#"," data source"],few:[" Naloženo few ","#"," data source"],many:[" Naloženo many ","#"," data source"],other:[" Loaded other ","#"," datasources"]}]],"datasources.title":"Data sources","settings.org-profile-title":"Příchozí zprávy"}};

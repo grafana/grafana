@@ -9,7 +9,7 @@ import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
 // Types
-import { IconName } from '@grafana/ui';
+import { IconName, Legend } from '@grafana/ui';
 import { StoreState, AccessControlAction } from 'app/types';
 // Actions
 import { loadDataSources } from './state/actions';
@@ -22,6 +22,7 @@ import {
   getDataSourcesSearchQuery,
 } from './state/selectors';
 import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
+import { Plural, Trans } from '@lingui/macro';
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -91,16 +92,24 @@ export class DataSourcesListPage extends PureComponent<Props> {
         <Page.Contents isLoading={!hasFetched}>
           <>
             {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyList} />}
-            {hasFetched &&
-              dataSourcesCount > 0 && [
+
+            {hasFetched && dataSourcesCount > 0 && (
+              <>
                 <PageActionBar
                   searchQuery={searchQuery}
                   setSearchQuery={(query) => setDataSourcesSearchQuery(query)}
                   linkButton={linkButton}
                   key="action-bar"
-                />,
+                />
+                <Legend>
+                  <Trans id="datasources.title">Data sources</Trans>
+                </Legend>
+                <p>
+                  <Plural id="datasources.loaded-count" value={dataSources.length} other="Loaded one # datasources" />
+                </p>
                 <DataSourcesList dataSources={dataSources} layoutMode={layoutMode} key="list" />,
-              ]}
+              </>
+            )}
           </>
         </Page.Contents>
       </Page>

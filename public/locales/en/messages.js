@@ -1,0 +1,1 @@
+/*eslint-disable*/module.exports={messages:{"datasources.loaded-count":[["0","plural",{one:[" Loaded ","#"," datasource"],other:[" Loaded ","#"," datasources"]}]],"datasources.title":"Data sources","settings.org-profile-title":"Organization profile"}};

@@ -1,0 +1,19 @@
+{
+  "locales": [
+    "en",
+    "cs"
+  ],
+  "catalogs": [
+    {
+      "path": "public/locales/{locale}/messages",
+      "include": [
+        "public/app"
+      ]
+    }
+  ],
+  "fallbackLocales": {
+    "default": "en"
+  },
+  "sourceLocale": "en",
+  "format": "po"
+}

@@ -42,6 +42,7 @@ module.exports = function getBabelConfig(options = {}) {
       '@babel/plugin-proposal-optional-chaining',
       '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
       'angularjs-annotate',
+      'macros', // needed for lingui
     ],
   };
 

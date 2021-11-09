@@ -16,6 +16,12 @@ import { AppNotificationList } from './core/components/AppNotifications/AppNotif
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 
+import { i18n } from '@lingui/core';
+import { I18nProvider } from '@lingui/react';
+
+import { messages as enMessages } from '../locales/en/messages';
+import { messages as csMessages } from '../locales/cs/messages';
+
 interface AppWrapperProps {
   app: GrafanaApp;
 }
@@ -23,6 +29,27 @@ interface AppWrapperProps {
 interface AppWrapperState {
   ngInjector: any;
 }
+
+function loadLocale(locale: string) {
+  const pluralsOrdinal = new Intl.PluralRules(locale, { type: 'ordinal' });
+  const pluralsCardinal = new Intl.PluralRules(locale, { type: 'cardinal' });
+
+  i18n.loadLocaleData(locale, {
+    plurals(count: number, ordinal: boolean) {
+      return (ordinal ? pluralsOrdinal : pluralsCardinal).select(count);
+    },
+  });
+
+  i18n.load({
+    en: enMessages,
+    cs: csMessages,
+  });
+  i18n.activate(locale);
+}
+
+loadLocale('cs');
+
+(window as any).loadLocale = loadLocale;
 
 /** Used by enterprise */
 let bodyRenderHooks: ComponentType[] = [];
@@ -94,44 +121,46 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     const newNavigationEnabled = config.featureToggles.newNavigation;
 
     return (
-      <Provider store={store}>
-        <ErrorBoundaryAlert style="page">
-          <ConfigContext.Provider value={config}>
-            <ThemeProvider>
-              <ModalsProvider>
-                <GlobalStyles />
-                <div className="grafana-app">
-                  <Router history={locationService.getHistory()}>
-                    {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
-                    <main className="main-view">
-                      {pageBanners.map((Banner, index) => (
-                        <Banner key={index.toString()} />
-                      ))}
+      <I18nProvider i18n={i18n}>
+        <Provider store={store}>
+          <ErrorBoundaryAlert style="page">
+            <ConfigContext.Provider value={config}>
+              <ThemeProvider>
+                <ModalsProvider>
+                  <GlobalStyles />
+                  <div className="grafana-app">
+                    <Router history={locationService.getHistory()}>
+                      {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
+                      <main className="main-view">
+                        {pageBanners.map((Banner, index) => (
+                          <Banner key={index.toString()} />
+                        ))}
 
-                      <div
-                        id="ngRoot"
-                        ref={this.container}
-                        dangerouslySetInnerHTML={{
-                          __html: appSeed,
-                        }}
-                      />
+                        <div
+                          id="ngRoot"
+                          ref={this.container}
+                          dangerouslySetInnerHTML={{
+                            __html: appSeed,
+                          }}
+                        />
 
-                      <AppNotificationList />
-                      <SearchWrapper />
-                      {this.state.ngInjector && this.container && this.renderRoutes()}
-                      {bodyRenderHooks.map((Hook, index) => (
-                        <Hook key={index.toString()} />
-                      ))}
-                    </main>
-                  </Router>
-                </div>
-                <LiveConnectionWarning />
-                <ModalRoot />
-              </ModalsProvider>
-            </ThemeProvider>
-          </ConfigContext.Provider>
-        </ErrorBoundaryAlert>
-      </Provider>
+                        <AppNotificationList />
+                        <SearchWrapper />
+                        {this.state.ngInjector && this.container && this.renderRoutes()}
+                        {bodyRenderHooks.map((Hook, index) => (
+                          <Hook key={index.toString()} />
+                        ))}
+                      </main>
+                    </Router>
+                  </div>
+                  <LiveConnectionWarning />
+                  <ModalRoot />
+                </ModalsProvider>
+              </ThemeProvider>
+            </ConfigContext.Provider>
+          </ErrorBoundaryAlert>
+        </Provider>
+      </I18nProvider>
     );
   }
 }
