@@ -1,6 +1,6 @@
 import { debounce, each, indexOf, map, partial, escape, unescape } from 'lodash';
 import $ from 'jquery';
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 
 const template = `
 <div class="dropdown cascade-open">

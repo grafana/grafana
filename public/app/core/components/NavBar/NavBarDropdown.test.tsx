@@ -26,7 +26,7 @@ describe('NavBarDropdown', () => {
   it('attaches the header url to the header text if provided', () => {
     render(
       <BrowserRouter>
-        <NavBarDropdown headerText={mockHeaderText} headerUrl={mockHeaderUrl} />
+        <NavBarDropdown headerText={mockHeaderText} headerUrl={mockHeaderUrl} isVisible />
       </BrowserRouter>
     );
     const link = screen.getByRole('link', { name: mockHeaderText });
