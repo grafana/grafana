@@ -525,16 +525,20 @@ describe('graphiteDatasource', () => {
     });
   });
 
-  describe('exporting to abstract query', () => {
-    function assertQueryExport(target: string, labelMatchers: AbstractLabelMatcher[]): void {
-      let abstractQuery = ctx.ds.exportToAbstractQuery({
-        refId: 'A',
-        target,
-      });
-      expect(abstractQuery).toMatchObject({
-        refId: 'A',
-        labelMatchers: labelMatchers,
-      });
+  describe('exporting to abstract query', async () => {
+    async function assertQueryExport(target: string, labelMatchers: AbstractLabelMatcher[]): Promise<void> {
+      let abstractQueries = await ctx.ds.exportToAbstractQueries([
+        {
+          refId: 'A',
+          target,
+        },
+      ]);
+      expect(abstractQueries).toMatchObject([
+        {
+          refId: 'A',
+          labelMatchers: labelMatchers,
+        },
+      ]);
     }
 
     beforeEach(() => {
@@ -555,43 +559,43 @@ describe('graphiteDatasource', () => {
       }));
     });
 
-    it('extracts metric name based on configuration', () => {
-      assertQueryExport('interpolate(alias(servers.west.001.cpu,1,2))', [
+    it('extracts metric name based on configuration', async () => {
+      await assertQueryExport('interpolate(alias(servers.west.001.cpu,1,2))', [
         { name: 'cluster', operator: AbstractLabelOperator.Equal, value: 'west' },
         { name: 'server', operator: AbstractLabelOperator.Equal, value: '001' },
       ]);
 
-      assertQueryExport('interpolate(alias(servers.east.001.request.POST.200,1,2))', [
+      await assertQueryExport('interpolate(alias(servers.east.001.request.POST.200,1,2))', [
         { name: 'cluster', operator: AbstractLabelOperator.Equal, value: 'east' },
         { name: 'server', operator: AbstractLabelOperator.Equal, value: '001' },
       ]);
 
-      assertQueryExport('interpolate(alias(servers.*.002.*,1,2))', [
+      await assertQueryExport('interpolate(alias(servers.*.002.*,1,2))', [
         { name: 'server', operator: AbstractLabelOperator.Equal, value: '002' },
       ]);
     });
 
-    it('extracts tags', () => {
-      assertQueryExport("interpolate(seriesByTag('cluster=west', 'server=002'), inf))", [
+    it('extracts tags', async () => {
+      await assertQueryExport("interpolate(seriesByTag('cluster=west', 'server=002'), inf))", [
         { name: 'cluster', operator: AbstractLabelOperator.Equal, value: 'west' },
         { name: 'server', operator: AbstractLabelOperator.Equal, value: '002' },
       ]);
-      assertQueryExport("interpolate(seriesByTag('foo=bar', 'server=002'), inf))", [
+      await assertQueryExport("interpolate(seriesByTag('foo=bar', 'server=002'), inf))", [
         { name: 'foo', operator: AbstractLabelOperator.Equal, value: 'bar' },
         { name: 'server', operator: AbstractLabelOperator.Equal, value: '002' },
       ]);
     });
 
-    it('extracts regular expressions', () => {
-      assertQueryExport('interpolate(alias(servers.eas*.{001,002}.request.POST.200,1,2))', [
+    it('extracts regular expressions', async () => {
+      await assertQueryExport('interpolate(alias(servers.eas*.{001,002}.request.POST.200,1,2))', [
         { name: 'cluster', operator: AbstractLabelOperator.EqualRegEx, value: '^eas.*' },
         { name: 'server', operator: AbstractLabelOperator.EqualRegEx, value: '^(001|002)' },
       ]);
     });
 
-    it('does not extract metrics when the config does not match', () => {
-      assertQueryExport('interpolate(alias(test.west.001.cpu))', []);
-      assertQueryExport('interpolate(alias(servers.west.001))', []);
+    it('does not extract metrics when the config does not match', async () => {
+      await assertQueryExport('interpolate(alias(test.west.001.cpu))', []);
+      await assertQueryExport('interpolate(alias(servers.west.001))', []);
     });
   });
 });

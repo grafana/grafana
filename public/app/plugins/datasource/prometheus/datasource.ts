@@ -174,12 +174,12 @@ export class PrometheusDatasource
     return getBackendSrv().fetch<T>(options);
   }
 
-  importAbstractQuery(labelBasedQuery: AbstractQuery): PromQuery {
-    return this.languageProvider.importAbstractQuery(labelBasedQuery);
+  async importAbstractQueries(abstractQueries: AbstractQuery[]): Promise<PromQuery[]> {
+    return abstractQueries.map((abstractQuery) => this.languageProvider.importAbstractQuery(abstractQuery));
   }
 
-  exportToAbstractQuery(query: PromQuery): AbstractQuery {
-    return this.languageProvider.exportToAbstractQuery(query);
+  async exportToAbstractQueries(queries: PromQuery[]): Promise<AbstractQuery[]> {
+    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
   }
 
   // Use this for tab completion features, wont publish response to other components

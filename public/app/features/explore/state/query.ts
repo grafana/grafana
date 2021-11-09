@@ -274,10 +274,8 @@ export const importQueries = (
       // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
       importedQueries = queries.map(({ datasource, ...query }) => query);
     } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
-      importedQueries = queries.map((query) => {
-        const labelBasedQuery = sourceDataSource.exportToAbstractQuery(query);
-        return targetDataSource.importAbstractQuery(labelBasedQuery);
-      });
+      const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
+      importedQueries = await targetDataSource.importAbstractQueries(abstractQueries);
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
       importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);

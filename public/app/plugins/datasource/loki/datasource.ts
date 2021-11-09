@@ -364,12 +364,12 @@ export class LokiDatasource
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
-  importAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
-    return this.languageProvider.importAbstractQuery(labelBasedQuery);
+  async importAbstractQueries(abstractQueries: AbstractQuery[]): Promise<LokiQuery[]> {
+    return abstractQueries.map((abstractQuery) => this.languageProvider.importAbstractQuery(abstractQuery));
   }
 
-  exportToAbstractQuery(query: LokiQuery): AbstractQuery {
-    return this.languageProvider.exportToAbstractQuery(query);
+  async exportToAbstractQueries(queries: LokiQuery[]): Promise<AbstractQuery[]> {
+    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {

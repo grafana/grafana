@@ -84,14 +84,14 @@ export type AbstractLabelMatcher = {
  * @internal
  */
 export interface DataSourceWithQueryImportSupport<TQuery extends DataQuery> {
-  importAbstractQuery(labelBasedQuery: AbstractQuery): TQuery;
+  importAbstractQueries(labelBasedQuery: AbstractQuery[]): Promise<TQuery[]>;
 }
 
 /**
  * @internal
  */
 export interface DataSourceWithQueryExportSupport<TQuery extends DataQuery> {
-  exportToAbstractQuery(query: TQuery): AbstractQuery;
+  exportToAbstractQueries(query: TQuery[]): Promise<AbstractQuery[]>;
 }
 
 /**
@@ -100,7 +100,7 @@ export interface DataSourceWithQueryExportSupport<TQuery extends DataQuery> {
 export const hasQueryImportSupport = <TQuery extends DataQuery>(
   datasource: any
 ): datasource is DataSourceWithQueryImportSupport<TQuery> => {
-  return (datasource as DataSourceWithQueryImportSupport<TQuery>).importAbstractQuery !== undefined;
+  return (datasource as DataSourceWithQueryImportSupport<TQuery>).importAbstractQueries !== undefined;
 };
 
 /**
@@ -109,5 +109,5 @@ export const hasQueryImportSupport = <TQuery extends DataQuery>(
 export const hasQueryExportSupport = <TQuery extends DataQuery>(
   datasource: any
 ): datasource is DataSourceWithQueryExportSupport<TQuery> => {
-  return (datasource as DataSourceWithQueryExportSupport<TQuery>).exportToAbstractQuery !== undefined;
+  return (datasource as DataSourceWithQueryExportSupport<TQuery>).exportToAbstractQueries !== undefined;
 };

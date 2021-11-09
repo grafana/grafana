@@ -113,6 +113,10 @@ export class GraphiteDatasource
     };
   }
 
+  async exportToAbstractQueries(queries: GraphiteQuery[]): Promise<AbstractQuery[]> {
+    return queries.map((query) => this.exportToAbstractQuery(query));
+  }
+
   exportToAbstractQuery(query: GraphiteQuery): AbstractQuery {
     const graphiteQuery: GraphiteQueryModel = new GraphiteQueryModel(
       this,

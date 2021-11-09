@@ -167,8 +167,8 @@ export class ElasticDatasource
       );
   }
 
-  importAbstractQuery(labelBasedQuery: AbstractQuery): ElasticsearchQuery {
-    return this.languageProvider.importAbstractQuery(labelBasedQuery);
+  async importAbstractQueries(abstractQueries: AbstractQuery[]): Promise<ElasticsearchQuery[]> {
+    return abstractQueries.map((abstractQuery) => this.languageProvider.importAbstractQuery(abstractQuery));
   }
 
   /**
