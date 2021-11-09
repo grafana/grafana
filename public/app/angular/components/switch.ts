@@ -1,4 +1,4 @@
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 
 const template = `
 <label for="check-{{ctrl.id}}" class="gf-form-switch-container">

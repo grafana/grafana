@@ -3,7 +3,7 @@
  * Allows remaining <spectrum-picker> untouched in outdated plugins.
  * Technically, it's just a wrapper for react component with two-way data binding support.
  */
-import coreModule from '../../core_module';
+import coreModule from '../core_module';
 
 /** @ngInject */
 export function spectrumPicker() {

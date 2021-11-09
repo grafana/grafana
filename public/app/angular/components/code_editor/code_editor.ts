@@ -28,7 +28,7 @@
  * Ctrl-Enter (Command-Enter): run onChange() function
  */
 
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import config from 'app/core/config';
 
 const DEFAULT_THEME_DARK = 'ace/theme/grafana-dark';
