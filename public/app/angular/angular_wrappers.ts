@@ -1,4 +1,4 @@
-import { react2AngularDirective } from 'app/core/utils/react2angular';
+import { react2AngularDirective } from 'app/angular/react2angular';
 import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/QueryEditor';
 import { AnnotationQueryEditor as CloudMonitoringAnnotationQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/AnnotationQueryEditor';
 import { AnnotationQueryEditor as CloudWatchAnnotationQueryEditor } from 'app/plugins/datasource/cloudwatch/components/AnnotationQueryEditor';

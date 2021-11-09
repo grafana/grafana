@@ -1,5 +1,5 @@
 import { each, isString, map } from 'lodash';
-import coreModule from '../../core/core_module';
+import coreModule from '../core_module';
 
 /** @ngInject */
 export function uiSegmentSrv(this: any, $sce: any, templateSrv: any) {
