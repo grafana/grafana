@@ -1,5 +1,5 @@
 import { map, clone } from 'lodash';
-import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/core/components/query_part/query_part';
+import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/angular/components/query_part';
 
 const index: any[] = [];
 const categories: any = {

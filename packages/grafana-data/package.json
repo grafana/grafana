@@ -52,7 +52,7 @@
     "@types/jquery": "3.3.38",
     "@types/lodash": "4.14.123",
     "@types/marked": "3.0.2",
-    "@types/node": "14.17.27",
+    "@types/node": "16.11.6",
     "@types/papaparse": "5.2.0",
     "@types/react": "17.0.30",
     "@types/rollup-plugin-visualizer": "4.2.1",

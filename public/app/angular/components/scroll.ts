@@ -1,7 +1,7 @@
 import $ from 'jquery';
 // @ts-ignore
 import baron from 'baron';
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 
 const scrollBarHTML = `
 <div class="baron__track">

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/login"
@@ -131,7 +130,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
-				log.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
+				c.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
 				redirectTo = hs.Cfg.AppSubURL + "/"
 			}
 			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
@@ -152,12 +151,12 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 	}
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
 	if len(oauthInfos) != 1 {
-		log.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
+		c.Logger.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
 		return false
 	}
 	for key := range oauthInfos {
 		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
-		log.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+		c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
 	}
@@ -208,7 +207,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		Cfg:        hs.Cfg,
 	}
 
-	err := bus.Dispatch(authQuery)
+	err := bus.DispatchCtx(c.Req.Context(), authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
 		resp = response.Error(401, "Invalid username or password", err)
@@ -249,7 +248,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			result["redirectUrl"] = redirectTo
 		} else {
-			log.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
+			c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
 		}
 		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}
