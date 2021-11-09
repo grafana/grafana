@@ -7,6 +7,7 @@ import { config } from '@grafana/runtime';
 import { MapLayerState } from '../../types';
 import { getLayerDragStyles } from 'app/plugins/panel/canvas/editor/LayerElementListEditor';
 import { GeomapLayerActions } from '../../GeomapPanel';
+import { LayerHeader } from './LayerHeader';
 
 type LayerListProps = {
   layers: Array<MapLayerState<any>>;
@@ -42,8 +43,8 @@ export const LayerList = ({ layers, onDragEnd, selected, actions }: LayerListPro
                         {...provided.dragHandleProps}
                         onMouseDown={() => actions!.selectLayer(element.UID)}
                       >
-                        <span className={style.typeWrapper}>{element.options.type}</span>
-                        <div className={style.textWrapper}>&nbsp; ({element.layer.getSourceState() ?? '?'})</div>
+                        <LayerHeader layer={element} />
+                        <div className={style.textWrapper}>&nbsp; ({element.options.type})</div>
 
                         <IconButton
                           name="trash-alt"

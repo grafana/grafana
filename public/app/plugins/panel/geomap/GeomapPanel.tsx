@@ -92,7 +92,7 @@ export class GeomapPanel extends Component<Props, State> {
 
   shouldComponentUpdate(nextProps: Props) {
     if (!this.map) {
-      return true; // not yet initalized
+      return true; // not yet initialized
     }
 
     // Check for resize
@@ -361,7 +361,7 @@ export class GeomapPanel extends Component<Props, State> {
       }
       layers[selected] = info;
 
-      // initalize with new data
+      // initialize with new data
       if (info.handler.update) {
         info.handler.update(this.props.data);
       }
@@ -408,9 +408,12 @@ export class GeomapPanel extends Component<Props, State> {
       handler.update(this.props.data);
     }
 
+    const name = `Layer ${this.counter}`;
     const UID = `lyr-${this.counter++}`;
+
     return {
       UID,
+      name,
       isBasemap,
       options,
       layer,
@@ -427,7 +430,7 @@ export class GeomapPanel extends Component<Props, State> {
     let view = new View({
       center: [0, 0],
       zoom: 1,
-      showFullExtent: true, // alows zooming so the full range is visiable
+      showFullExtent: true, // allows zooming so the full range is visible
     });
 
     // With shared views, all panels use the same view instance
