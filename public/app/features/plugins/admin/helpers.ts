@@ -160,7 +160,9 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isEnterprise: remote?.status === 'enterprise',
     isInstalled: Boolean(local) || isDisabled,
     isDisabled: isDisabled,
+    // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
+    // TODO<check if we would like to keep preferring the remote version>
     orgName: remote?.orgName || local?.info.author.name || '',
     popularity: remote?.popularity || 0,
     publishedAt: remote?.createdAt || '',
@@ -168,6 +170,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     signature: getPluginSignature({ local, remote, error }),
     signatureOrg: local?.signatureOrg || remote?.versionSignedByOrgName,
     signatureType: local?.signatureType || remote?.versionSignatureType || remote?.signatureType || undefined,
+    // TODO<check if we would like to keep preferring the remote version>
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     installedVersion,
     error: error?.errorCode,
