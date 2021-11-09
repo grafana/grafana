@@ -29,17 +29,19 @@ export const RolePicker = ({
   const [builtInRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     async function fetchOptions() {
       try {
         let options = await getRoleOptions();
         setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
 
-        const roles = await getRoles();
-        setAppliedRoles(roles);
-
         const builtInRoles = await getBuiltinRoles();
         setBuiltinRoles(builtInRoles);
+
+        const builtInUids = builtInRoles[builtInRole].map((r) => r.uid);
+        const roles = await getRoles();
+        setAppliedRoles(roles.filter((role) => !builtInUids.includes(role.uid)));
       } catch (e) {
         // TODO handle error
         console.error('Error loading options');
@@ -87,12 +89,6 @@ export const RolePicker = ({
     return roleOptions;
   };
 
-  // Remove from applied roles the roles inherited from built in role
-  const getAppliedRoles = () => {
-    const builtInUids = builtInRoles[builtInRole].map((r) => r.uid);
-    return appliedRoles.filter((role) => !builtInUids.includes(role.uid));
-  };
-
   if (isLoading) {
     return null;
   }
@@ -103,7 +99,7 @@ export const RolePicker = ({
         <RolePickerInput
           builtInRole={builtInRole}
           builtInRoles={builtInRoles[builtInRole]}
-          appliedRoles={getAppliedRoles()}
+          appliedRoles={appliedRoles}
           query={query}
           onQueryChange={onInputChange}
           onOpen={onOpen}
