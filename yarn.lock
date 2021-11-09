@@ -4840,6 +4840,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-aria/focus@npm:3.5.0":
+  version: 3.5.0
+  resolution: "@react-aria/focus@npm:3.5.0"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-aria/interactions": ^3.6.0
+    "@react-aria/utils": ^3.9.0
+    "@react-types/shared": ^3.9.0
+    clsx: ^1.1.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: c03d4433bdb1c19d3119b88bec4d44857cc7efaf9205b1b855731f768dd13231e4e88adb1352fd1c64b5ec0454038b8535d30a07e43b605f41d519ae81dbeb6b
+  languageName: node
+  linkType: hard
+
 "@react-aria/i18n@npm:^3.3.2":
   version: 3.3.2
   resolution: "@react-aria/i18n@npm:3.3.2"
@@ -4856,7 +4871,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/interactions@npm:^3.5.1":
+"@react-aria/interactions@npm:^3.5.1, @react-aria/interactions@npm:^3.6.0":
   version: 3.6.0
   resolution: "@react-aria/interactions@npm:3.6.0"
   dependencies:
@@ -17723,6 +17738,8 @@ __metadata:
     "@opentelemetry/semantic-conventions": 1.0.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.0-rc.6
     "@popperjs/core": 2.5.4
+    "@react-aria/focus": 3.5.0
+    "@react-aria/overlays": 3.7.2
     "@reduxjs/toolkit": 1.6.1
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 5.25.0

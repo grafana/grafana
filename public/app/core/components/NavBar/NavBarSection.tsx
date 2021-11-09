@@ -32,11 +32,5 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
       display: flex;
       flex-direction: inherit;
     }
-
-    .sidemenu-open--xs & {
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(1)};
-    }
   `,
 });
