@@ -22,6 +22,11 @@ const BuiltinRoleOption: Array<SelectableValue<OrgRole>> = BuiltinRoles.map((r: 
   value: r as OrgRole,
 }));
 
+const fixedRoleGroupNames: { [key: string]: string } = {
+  ldap: 'LDAP',
+  current: 'Current org',
+};
+
 interface RolePickerMenuProps {
   builtInRole: OrgRole;
   builtInRoles: BuiltInRoles;
@@ -66,18 +71,18 @@ export const RolePickerMenu = ({
     const groups = [];
     for (const groupName in groupsMap) {
       if (Object.prototype.hasOwnProperty.call(groupsMap, groupName)) {
-        const groupOptions = groupsMap[groupName];
+        const groupOptions = groupsMap[groupName].sort(sortRolesByName);
         groups.push({
-          name: groupName,
+          name: fixedRoleGroupNames[groupName] || capitalize(groupName),
           value: groupName,
           options: groupOptions,
         });
       }
     }
-    return groups;
+    return groups.sort((a, b) => (a.name < b.name ? -1 : 1));
   }, [options]);
 
-  const customRoles = options.filter(filterCustomRoles);
+  const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
   const optionGroups = getOptionGroups();
 
   const getSelectedGroupOptions = (group: string) => {
@@ -112,7 +117,7 @@ export const RolePickerMenu = ({
 
   const onGroupChange = (value: string) => {
     const group = optionGroups.find((g) => {
-      return g.name === value;
+      return g.value === value;
     });
     if (groupSelected(value)) {
       if (group) {
@@ -136,7 +141,7 @@ export const RolePickerMenu = ({
     setOpenedMenuGroup(value);
     setShowSubMenu(true);
     const group = optionGroups.find((g) => {
-      return g.name === value;
+      return g.value === value;
     });
     if (group) {
       setSubMenuOptions(group.options);
@@ -184,6 +189,23 @@ export const RolePickerMenu = ({
             onChange={onSelectedBuiltinRoleChange}
             fullWidth={true}
           />
+          {!!optionGroups.length && (
+            <div>
+              <div className={customStyles.groupHeader}>Fixed roles</div>
+              <div className={styles.optionBody}>
+                {optionGroups.map((option, i) => (
+                  <RoleMenuGroupOption
+                    data={option}
+                    key={i}
+                    isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
+                    partiallySelected={groupPartiallySelected(option.value)}
+                    onChange={onGroupChange}
+                    onClick={onMenuGroupClick}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           {!!customRoles.length && (
             <div>
               <div className={customStyles.groupHeader}>Custom roles</div>
@@ -201,23 +223,6 @@ export const RolePickerMenu = ({
                     disabled={!!(option.uid && !!selectedBuiltInRoles.find((role) => role.uid === option.uid))}
                     onChange={onChange}
                     hideDescription
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-          {!!optionGroups.length && (
-            <div>
-              <div className={customStyles.groupHeader}>Fixed roles</div>
-              <div className={styles.optionBody}>
-                {optionGroups.map((option, i) => (
-                  <RoleMenuGroupOption
-                    data={option}
-                    key={i}
-                    isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
-                    partiallySelected={groupPartiallySelected(option.value)}
-                    onChange={onGroupChange}
-                    onClick={onMenuGroupClick}
                   />
                 ))}
               </div>
@@ -396,7 +401,7 @@ export const RoleMenuGroupOption = React.forwardRef<
 
   const onClickInternal = (event: FormEvent<HTMLElement>) => {
     if (onClick) {
-      onClick(data.name);
+      onClick(data.value!);
     }
   };
 
@@ -422,6 +427,12 @@ const getRoleGroup = (role: Role) => {
   let groupName = role.name.substr('fixed:'.length);
   return groupName.substring(0, groupName.indexOf(':'));
 };
+
+const capitalize = (s: string): string => {
+  return s.slice(0, 1).toUpperCase() + s.slice(1);
+};
+
+const sortRolesByName = (a: Role, b: Role) => (a.name < b.name ? -1 : 1);
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
