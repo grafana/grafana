@@ -172,6 +172,7 @@ export interface Version {
   version: string;
   createdAt: string;
   isCompatible: boolean;
+  grafanaDependency: string | null;
 }
 
 export interface PluginDetails {
@@ -271,4 +272,5 @@ export type PluginVersion = {
   downloadSlug: string;
   links: Array<{ rel: string; href: string }>;
   isCompatible: boolean;
+  grafanaDependency: string | null;
 };

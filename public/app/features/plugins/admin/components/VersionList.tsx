@@ -35,7 +35,7 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
               {/* Version number */}
               {isInstalledVersion ? (
                 <td className={styles.currentVersion}>{version.version} (installed version)</td>
-              ) : version.version === latestCompatibleVersion ? (
+              ) : version.version === latestCompatibleVersion?.version ? (
                 <td>{version.version} (latest compatible version)</td>
               ) : (
                 <td>{version.version}</td>

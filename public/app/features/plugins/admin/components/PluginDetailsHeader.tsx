@@ -20,7 +20,8 @@ type Props = {
 
 export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
-  const version = plugin.installedVersion || getLatestCompatibleVersion(plugin.details?.versions);
+  const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
+  const version = plugin.installedVersion || latestCompatibleVersion?.version;
 
   return (
     <div className={styles.headerContainer}>
@@ -82,6 +83,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
 
         <PluginDetailsHeaderDependencies
           plugin={plugin}
+          latestCompatibleVersion={latestCompatibleVersion}
           className={cx(styles.headerInformationRow, styles.headerInformationRowSecondary)}
         />
 
