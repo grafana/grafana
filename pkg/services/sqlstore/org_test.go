@@ -147,7 +147,8 @@ func TestAccountDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			ac2, err := sqlStore.CreateUser(context.Background(), ac2cmd)
 			require.NoError(t, err)
-			ac3, err := sqlStore.CreateUser(context.Background(), ac3cmd)
+			// user only used for making sure we filter out the service accounts
+			_, err := sqlStore.CreateUser(context.Background(), ac3cmd)
 			require.NoError(t, err)
 
 			t.Run("Should be able to read user info projection", func(t *testing.T) {
