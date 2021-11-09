@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import SideMenuDropDown from './SideMenuDropDown';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
-import { NavModelItem } from '@grafana/data';
+import { NavModelItem, textUtil } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 
 export interface Props {
@@ -23,11 +23,12 @@ const TopSectionItem: FC<Props> = ({ link, onClick }) => {
       {link.img && <img src={link.img} />}
     </span>
   );
+  const sanitizedUrl = textUtil.sanitizeAngularInterpolation(link.url ?? '');
 
   const anchor = link.url ? (
     <Link
       className="sidemenu-link"
-      href={link.url}
+      href={sanitizedUrl}
       target={link.target}
       aria-label={link.text}
       onClick={onClick}
