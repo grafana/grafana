@@ -15,6 +15,7 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { AngularRoot } from './angular/AngularRoot';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -107,14 +108,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                         <Banner key={index.toString()} />
                       ))}
 
-                      <div
-                        id="ngRoot"
-                        ref={this.container}
-                        dangerouslySetInnerHTML={{
-                          __html: '<grafana-app ng-cloak></app-notifications-list></grafana-app>',
-                        }}
-                      />
-
+                      <AngularRoot ref={this.container} />
                       <AppNotificationList />
                       <SearchWrapper />
                       {this.state.ngInjector && this.renderRoutes()}
