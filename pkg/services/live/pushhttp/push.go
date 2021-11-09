@@ -98,7 +98,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 
 func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 	streamID := web.Params(ctx.Req)[":streamId"]
-	path := web.Params(ctx.Req)[":path"]
+	path := web.Params(ctx.Req)["*"]
 
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
