@@ -21,7 +21,7 @@ import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
-import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink } from '../types/trace';
+import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import { SpanLinkFunc } from '../types';
 
 const getStyles = createStyle((theme: Theme) => {
@@ -76,6 +76,7 @@ type SpanDetailRowProps = {
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
   referencesToggle: (spanID: string) => void;
+  referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
   span: TraceSpan;
@@ -108,6 +109,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       logsToggle,
       processToggle,
       referencesToggle,
+      referenceItemToggle,
       warningsToggle,
       stackTracesToggle,
       span,
@@ -151,6 +153,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               logsToggle={logsToggle}
               processToggle={processToggle}
               referencesToggle={referencesToggle}
+              referenceItemToggle={referenceItemToggle}
               warningsToggle={warningsToggle}
               stackTracesToggle={stackTracesToggle}
               span={span}

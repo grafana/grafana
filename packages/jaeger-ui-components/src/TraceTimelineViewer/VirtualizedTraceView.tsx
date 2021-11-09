@@ -32,7 +32,7 @@ import {
 import { Accessors } from '../ScrollManager';
 import { getColorByKey } from '../utils/color-generator';
 import { SpanLinkFunc, TNil } from '../types';
-import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '../types/trace';
+import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { PEER_SERVICE } from '../constants/tag-keys';
 
@@ -74,6 +74,7 @@ type TVirtualizedTraceViewOwnProps = {
   detailWarningsToggle: (spanID: string) => void;
   detailStackTracesToggle: (spanID: string) => void;
   detailReferencesToggle: (spanID: string) => void;
+  detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
@@ -414,6 +415,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailLogsToggle,
       detailProcessToggle,
       detailReferencesToggle,
+      detailReferenceItemToggle,
       detailWarningsToggle,
       detailStackTracesToggle,
       detailStates,
@@ -446,6 +448,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           logItemToggle={detailLogItemToggle}
           logsToggle={detailLogsToggle}
           processToggle={detailProcessToggle}
+          referenceItemToggle={detailReferenceItemToggle}
           referencesToggle={detailReferencesToggle}
           warningsToggle={detailWarningsToggle}
           stackTracesToggle={detailStackTracesToggle}

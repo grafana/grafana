@@ -16,6 +16,7 @@ import * as React from 'react';
 import IoAlert from 'react-icons/lib/io/alert';
 import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
 import IoNetwork from 'react-icons/lib/io/network';
+import IoLink from 'react-icons/lib/io/link';
 import MdFileUpload from 'react-icons/lib/md/file-upload';
 import { css } from '@emotion/css';
 import cx from 'classnames';
@@ -62,6 +63,10 @@ const getStyles = createStyle((theme: Theme) => {
     endpointName: css`
       label: endpointName;
       color: ${autoColor(theme, '#808080')};
+    `,
+    linkIcon: css`
+      float: right;
+      margin-right: 0.25rem;
     `,
     view: css`
       label: view;
@@ -349,6 +354,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       hasChildren: isParent,
       operationName,
       process: { serviceName },
+      references,
     } = span;
     const label = formatDuration(duration);
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
@@ -437,6 +443,11 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
               <small className={styles.endpointName}> | {label}</small>
+              {references.find((ref) => ref.refType === 'FOLLOWS_FROM') && (
+                <span className={styles.linkIcon}>
+                  <IoLink />
+                </span>
+              )}
             </a>
             {createSpanLink &&
               (() => {

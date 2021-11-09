@@ -16,16 +16,43 @@ import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
 
+import AccordianKeyValues from './AccordianKeyValues';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
 import { TraceSpanReference } from '../../types/trace';
 import ReferenceLink from '../../url/ReferenceLink';
 
-import { createStyle } from '../../Theme';
-import { uAlignIcon } from '../../uberUtilityStyles';
+import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
+import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
+    AccordianLogs: css`
+      label: AccordianLogs;
+      border: 1px solid ${autoColor(theme, '#d8d8d8')};
+      position: relative;
+      margin-bottom: 0.25rem;
+    `,
+    AccordianLogsHeader: css`
+      label: AccordianLogsHeader;
+      background: ${autoColor(theme, '#e4e4e4')};
+      color: inherit;
+      display: block;
+      padding: 0.25rem 0.5rem;
+      &:hover {
+        background: ${autoColor(theme, '#dadada')};
+      }
+    `,
+    AccordianLogsContent: css`
+      label: AccordianLogsContent;
+      background: ${autoColor(theme, '#f0f0f0')};
+      border-top: 1px solid ${autoColor(theme, '#d8d8d8')};
+      padding: 0.5rem 0.5rem 0.25rem 0.5rem;
+    `,
+    AccordianLogsFooter: css`
+      label: AccordianLogsFooter;
+      color: ${autoColor(theme, '#999')};
+    `,
     ReferencesList: css`
       background: #fff;
       border: 1px solid #ddd;
@@ -71,54 +98,116 @@ type AccordianReferencesProps = {
   interactive?: boolean;
   isOpen: boolean;
   onToggle?: null | (() => void);
+  openedItems?: Set<TraceSpanReference>;
+  onItemToggle?: (reference: TraceSpanReference) => void;
   focusSpan: (uiFind: string) => void;
 };
 
 type ReferenceItemProps = {
   data: TraceSpanReference[];
+  interactive?: boolean;
+  openedItems?: Set<TraceSpanReference>;
+  onItemToggle?: (reference: TraceSpanReference) => void;
   focusSpan: (uiFind: string) => void;
 };
 
 // export for test
 export function References(props: ReferenceItemProps) {
-  const { data, focusSpan } = props;
-  const styles = getStyles();
+  const { data, focusSpan, openedItems, onItemToggle, interactive } = props;
+  const styles = getStyles(useTheme());
 
   return (
-    <div className={cx(styles.ReferencesList)}>
-      <ul className={styles.list}>
-        {data.map((reference) => {
-          return (
-            <li className={styles.item} key={`${reference.spanID}`}>
-              <ReferenceLink reference={reference} focusSpan={focusSpan}>
-                <span className={styles.itemContent}>
-                  {reference.span ? (
-                    <span>
-                      <span className="span-svc-name">{reference.span.process.serviceName}</span>
-                      <small className="endpoint-name">{reference.span.operationName}</small>
-                    </span>
-                  ) : (
-                    <span className="span-svc-name">&lt; span in another trace &gt;</span>
-                  )}
-                  <small className={styles.debugInfo}>
-                    <span className={styles.debugLabel} data-label="Reference Type:">
-                      {reference.refType}
-                    </span>
-                    <span className={styles.debugLabel} data-label="SpanID:">
-                      {reference.spanID}
-                    </span>
-                  </small>
-                </span>
-              </ReferenceLink>
-            </li>
-          );
-        })}
-      </ul>
+    <div className={styles.AccordianLogsContent}>
+      {data.map((reference, i) => (
+        <div key={reference.spanID}>
+          <AccordianKeyValues
+            className={i < data.length - 1 ? ubMb1 : null}
+            data={reference.tags || []}
+            highContrast
+            interactive={interactive}
+            isOpen={openedItems ? openedItems.has(reference) : false}
+            label={`${reference.traceID}:${reference.spanID}`}
+            // label="Hello world"
+            // linksGetter={linksGetter}
+            linksGetter={null}
+            onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
+          />
+        </div>
+      ))}
+      {/* <div className={cx(styles.ReferencesList)}>
+        <ul className={styles.list}>
+          {data.map((reference, i) => {
+            return (
+              <li className={styles.item} key={`${reference.spanID}`}>
+                <ReferenceLink reference={reference} focusSpan={focusSpan}>
+                  <span className={styles.itemContent}>
+                    {reference.span ? (
+                      <span>
+                        <span className="span-svc-name">{reference.span.process.serviceName}</span>
+                        <small className="endpoint-name">{reference.span.operationName}</small>
+                      </span>
+                    ) : (
+                      <span className="span-svc-name">&lt; span in another trace &gt;</span>
+                    )}
+                    <small className={styles.debugInfo}>
+                      <span className={styles.debugLabel} data-label="Reference Type:">
+                        {reference.refType}
+                      </span>
+                      <span className={styles.debugLabel} data-label="SpanID:">
+                        {reference.spanID}
+                      </span>
+                    </small>
+                  </span>
+                </ReferenceLink>
+              </li>
+            );
+          })}
+        </ul>
+      </div> */}
     </div>
   );
 }
 
-export default class AccordianReferences extends React.PureComponent<AccordianReferencesProps> {
+const AccordianReferences: React.FC<AccordianReferencesProps> = ({
+  data,
+  interactive = true,
+  isOpen,
+  onToggle,
+  focusSpan,
+}) => {
+  const isEmpty = !Array.isArray(data) || !data.length;
+  let arrow: React.ReactNode | null = null;
+  let HeaderComponent: 'span' | 'a' = 'span';
+  let headerProps: {} | null = null;
+  if (interactive) {
+    arrow = isOpen ? <IoIosArrowDown className={uAlignIcon} /> : <IoIosArrowRight className={uAlignIcon} />;
+    HeaderComponent = 'a';
+    headerProps = {
+      'aria-checked': isOpen,
+      onClick: isEmpty ? null : onToggle,
+      role: 'switch',
+    };
+  }
+
+  const styles = getStyles(useTheme());
+
+  return (
+    <div className={styles.AccordianLogs}>
+      <HeaderComponent className={styles.AccordianLogsHeader} {...headerProps}>
+        {arrow}
+        <strong>
+          <span>References</span>
+        </strong>{' '}
+        ({data.length})
+      </HeaderComponent>
+      {isOpen && <References data={data} focusSpan={focusSpan} />}
+    </div>
+  );
+};
+
+export default React.memo(AccordianReferences);
+
+export class AccordianReferencesx extends React.PureComponent<AccordianReferencesProps> {
   static defaultProps: Partial<AccordianReferencesProps> = {
     highContrast: false,
     interactive: true,
@@ -148,7 +237,7 @@ export default class AccordianReferences extends React.PureComponent<AccordianRe
           </strong>{' '}
           ({data.length})
         </div>
-        {isOpen && <References data={data} focusSpan={focusSpan} />}
+        {isOpen && <References data={[...data, ...data]} focusSpan={focusSpan} />}
       </div>
     );
   }

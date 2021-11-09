@@ -16,8 +16,8 @@ export type TraceLog = {
 };
 
 export type TraceSpanReference = {
-  traceId: string;
-  spanId: string;
+  traceID: string;
+  spanID: string;
   tags?: TraceKeyValuePair[];
 };
 

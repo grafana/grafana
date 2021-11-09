@@ -248,7 +248,7 @@ function getReferences(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
           tags.push({ key: attribute.key, value: getAttributeValue(attribute.value) });
         }
       }
-      references.push({ traceId, spanId, tags });
+      references.push({ traceID: traceId, spanID: spanId, tags });
     }
   }
 
