@@ -32,6 +32,7 @@ interface RolePickerMenuProps {
   builtInRoles: BuiltInRoles;
   options: Role[];
   appliedRoles: Role[];
+  showGroups?: boolean;
   onUpdate: (newBuiltInRole: OrgRole, newRoles: string[]) => void;
   onClear?: () => void;
 }
@@ -41,6 +42,7 @@ export const RolePickerMenu = ({
   builtInRoles,
   options,
   appliedRoles,
+  showGroups,
   onUpdate,
   onClear,
 }: RolePickerMenuProps): JSX.Element => {
@@ -83,6 +85,7 @@ export const RolePickerMenu = ({
   }, [options]);
 
   const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
+  const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
   const optionGroups = getOptionGroups();
 
   const getSelectedGroupOptions = (group: string) => {
@@ -189,7 +192,7 @@ export const RolePickerMenu = ({
             onChange={onSelectedBuiltinRoleChange}
             fullWidth={true}
           />
-          {!!optionGroups.length && (
+          {showGroups && !!optionGroups.length ? (
             <div>
               <div className={customStyles.groupHeader}>Fixed roles</div>
               <div className={styles.optionBody}>
@@ -201,6 +204,28 @@ export const RolePickerMenu = ({
                     partiallySelected={groupPartiallySelected(option.value)}
                     onChange={onGroupChange}
                     onClick={onMenuGroupClick}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className={customStyles.groupHeader}>Fixed roles</div>
+              <div className={styles.optionBody}>
+                {fixedRoles.map((option, i) => (
+                  <RoleMenuOption
+                    data={option}
+                    key={i}
+                    isSelected={
+                      !!(
+                        (option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid)) ||
+                        !!selectedBuiltInRoles.find((role) => role.uid === option.uid)
+                      )
+                    }
+                    disabled={!!(option.uid && !!selectedBuiltInRoles.find((role) => role.uid === option.uid))}
+                    onChange={onChange}
+                    // onClick={onMenuGroupClick}
+                    hideDescription
                   />
                 ))}
               </div>
@@ -256,6 +281,7 @@ export const RolePickerMenu = ({
 };
 
 const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:');
+const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
 
 interface RolePickerSubMenuProps {
   options: Role[];

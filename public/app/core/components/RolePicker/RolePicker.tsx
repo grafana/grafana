@@ -118,6 +118,7 @@ export const RolePicker = ({
             builtInRoles={builtInRoles}
             appliedRoles={appliedRoles}
             onUpdate={onUpdate}
+            showGroups={query.length === 0}
           />
         )}
       </ClickOutsideWrapper>
