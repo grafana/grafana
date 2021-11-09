@@ -83,7 +83,7 @@
     "pixelmatch": "^5.1.0",
     "pngjs": "^6.0.0",
     "postcss-flexbugs-fixes": "4.2.0",
-    "postcss-loader": "3.0.0",
+    "postcss-loader": "6.2.0",
     "postcss-preset-env": "6.7.0",
     "prettier": "^2.2.1",
     "react-dev-utils": "^11.0.4",
