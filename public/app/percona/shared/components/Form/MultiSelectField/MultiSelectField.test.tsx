@@ -1,16 +1,11 @@
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-
-import { MultiSelect } from '@grafana/ui';
-
-import { Label } from '../Label';
 
 import { MultiSelectField } from './MultiSelectField';
 
 describe('MultiSelectField', () => {
   it('should render', () => {
-    const wrapper = mount(<MultiSelectField label="label" name="name" onChange={jest.fn()} />);
-    expect(wrapper.find(Label).exists()).toBeTruthy();
-    expect(wrapper.find(MultiSelect).exists()).toBeTruthy();
+    render(<MultiSelectField label="label" name="name" onChange={jest.fn()} />);
+    expect(screen.queryByText('label')).toBeInTheDocument();
   });
 });
