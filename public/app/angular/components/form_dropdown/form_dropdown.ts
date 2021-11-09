@@ -1,7 +1,7 @@
 import { debounce, find, indexOf, map, isObject, escape, unescape } from 'lodash';
 import coreModule from '../../core_module';
 import { ISCEService } from 'angular';
-import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { promiseToDigest } from '../../promiseToDigest';
 
 function typeaheadMatcher(this: any, item: string) {
   let str = this.query;

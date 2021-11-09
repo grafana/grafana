@@ -6,19 +6,19 @@ import $ from 'jquery';
 // Utils and servies
 import { colors } from '@grafana/ui';
 import {
-  setBackendSrv,
   setDataSourceSrv,
   setLegacyAngularInjector,
   setLocationSrv,
   locationService,
   setAppEvents,
+  setAngularLoader,
 } from '@grafana/runtime';
 import config from 'app/core/config';
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
+import { AngularLoader } from 'app/angular/services/AngularLoader';
 
 // Types
 import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
@@ -28,7 +28,6 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { IRootScopeService, IAngularEvent, auto } from 'angular';
 import { AppEvent } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { initGrafanaLive } from 'app/features/live';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
@@ -48,7 +47,6 @@ export class GrafanaCtrl {
   ) {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
-    setBackendSrv(backendSrv);
     setDataSourceSrv(datasourceSrv);
     setLinkSrv(linkSrv);
     setDashboardSrv(dashboardSrv);
@@ -119,10 +117,6 @@ export function grafanaAppDirective() {
       $.fn.modal.Constructor.prototype.enforceFocus = () => {};
 
       $('.preloader').remove();
-
-      appEvents.on(CoreEvents.toggleSidemenuMobile, () => {
-        body.toggleClass('sidemenu-open--xs');
-      });
 
       appEvents.on(CoreEvents.toggleSidemenuHidden, () => {
         body.toggleClass('sidemenu-hidden');

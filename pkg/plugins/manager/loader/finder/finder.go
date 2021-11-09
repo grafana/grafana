@@ -28,7 +28,7 @@ func (f *Finder) Find(pluginDirs []string) ([]string, error) {
 	for _, dir := range pluginDirs {
 		exists, err := fs.Exists(dir)
 		if err != nil {
-			log.Warn("Error occurred when checking if plugin directory exists", "dir", dir, "err", err)
+			logger.Warn("Error occurred when checking if plugin directory exists", "dir", dir, "err", err)
 		}
 		if !exists {
 			logger.Warn("Skipping finding plugins as directory does not exist", "dir", dir)
