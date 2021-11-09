@@ -41,19 +41,19 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
 
       case MappingType.RegexToText:
         if (value == null) {
-          console.log('null value');
           continue;
         }
 
         if (typeof value !== 'string') {
-          console.log('non-string value', typeof value);
           continue;
         }
 
         const regex = stringToJsRegex(vm.options.pattern);
-        const thisResult = Object.create(vm.options.result);
-        thisResult.text = value.replace(regex, vm.options.result.text || '');
-        return thisResult;
+        if (value.match(regex)) {
+          const thisResult = Object.create(vm.options.result);
+          thisResult.text = value.replace(regex, vm.options.result.text || '');
+          return thisResult;
+        }
 
       case MappingType.SpecialValue:
         switch (vm.options.match) {
