@@ -57,23 +57,10 @@ var (
 		}),
 	}
 
-	orgUsersReaderRole = RoleDTO{
-		Name:        orgUsersReader,
-		DisplayName: "Organization user reader",
-		Description: "Read users in organization.",
-		Version:     2,
-		Permissions: []Permission{
-			{
-				Action: ActionOrgUsersRead,
-				Scope:  ScopeUsersAll,
-			},
-		},
-	}
-
 	orgUsersWriterRole = RoleDTO{
 		Name:        orgUsersWriter,
 		DisplayName: "Organization user writer",
-		Description: "Read, add, remove, or update a role for users in organization",
+		Description: "Within a single organization, add a user, invite a user, read information about a user and their role, remove a user from that organization, or change the role of a user.",
 		Version:     2,
 		Permissions: ConcatPermissions(orgUsersReaderRole.Permissions, []Permission{
 			{
@@ -89,6 +76,19 @@ var (
 				Scope:  ScopeUsersAll,
 			},
 		}),
+	}
+
+	orgUsersReaderRole = RoleDTO{
+		Name:        orgUsersReader,
+		DisplayName: "Organization user reader",
+		Description: "Read users within a single organization.",
+		Version:     2,
+		Permissions: []Permission{
+			{
+				Action: ActionOrgUsersRead,
+				Scope:  ScopeUsersAll,
+			},
+		},
 	}
 
 	settingsReaderRole = RoleDTO{
@@ -119,7 +119,7 @@ var (
 	usersReaderRole = RoleDTO{
 		Name:        usersReader,
 		DisplayName: "User reader",
-		Description: "Read all users and their information, such as team membership, authentication tokens, and quotas.",
+		Description: "Read all users and their information, such as team memberships, authentication tokens, and quotas.",
 		Version:     2,
 		Permissions: []Permission{
 			{

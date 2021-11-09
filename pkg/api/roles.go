@@ -56,7 +56,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				Version:     2,
 				Name:        "fixed:provisioning:writer",
 				DisplayName: "Provisioning writer",
-				Description: "Reload provisioning configurations",
+				Description: "Reload provisioning.",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionProvisioningReload,
