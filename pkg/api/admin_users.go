@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -123,7 +124,7 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
+	if err := bus.DispatchCtx(context.TODO(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return response.Error(500, "Could not disable external user", nil)
 	}
 
@@ -149,7 +150,7 @@ func AdminEnableUser(c *models.ReqContext) response.Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
+	if err := bus.DispatchCtx(context.TODO(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return response.Error(500, "Could not enable external user", nil)
 	}
 

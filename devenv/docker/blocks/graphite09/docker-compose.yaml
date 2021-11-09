@@ -10,10 +10,7 @@
 
   fake-graphite09-data:
     image: grafana/fake-data-gen
-    network_mode: bridge
     environment:
       FD_DATASOURCE: graphite
       FD_PORT: 2303
       FD_GRAPHITE_VERSION: 0.9
-
-

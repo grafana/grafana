@@ -12,13 +12,15 @@ import (
 // encrypted.
 type SecureJsonData map[string][]byte
 
+var seclogger = log.New("securejsondata")
+
 // DecryptedValue returns single decrypted value from SecureJsonData. Similar to normal map access second return value
 // is true if the key exists and false if not.
 func (s SecureJsonData) DecryptedValue(key string) (string, bool) {
 	if value, ok := s[key]; ok {
 		decryptedData, err := util.Decrypt(value, setting.SecretKey)
 		if err != nil {
-			log.Error(err.Error())
+			seclogger.Error(err.Error())
 			os.Exit(1)
 		}
 		return string(decryptedData), true
@@ -33,7 +35,7 @@ func (s SecureJsonData) Decrypt() map[string]string {
 	for key, data := range s {
 		decryptedData, err := util.Decrypt(data, setting.SecretKey)
 		if err != nil {
-			log.Error(err.Error())
+			seclogger.Error(err.Error())
 			os.Exit(1)
 		}
 
@@ -48,7 +50,7 @@ func GetEncryptedJsonData(sjd map[string]string) SecureJsonData {
 	for key, data := range sjd {
 		encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
 		if err != nil {
-			log.Error(err.Error())
+			seclogger.Error(err.Error())
 			os.Exit(1)
 		}
 
