@@ -427,16 +427,16 @@ func (f *StorageRuleBuilder) extractFrameConditionChecker(config *FrameCondition
 	}
 }
 
-func (f *StorageRuleBuilder) getBasicAuth(writeConfig WriteConfig) (*BasicAuth, error) {
+func (f *StorageRuleBuilder) constructBasicAuth(writeConfig WriteConfig) (*BasicAuth, error) {
 	if writeConfig.Settings.BasicAuth == nil {
 		return nil, nil
 	}
 	var password string
-	hasSecurePassword := len(writeConfig.SecureSettings["password"]) > 0
+	hasSecurePassword := len(writeConfig.SecureSettings["basicAuthPassword"]) > 0
 	if hasSecurePassword {
-		passwordBytes, err := f.EncryptionService.Decrypt(context.Background(), writeConfig.SecureSettings["password"], setting.SecretKey)
+		passwordBytes, err := f.EncryptionService.Decrypt(context.Background(), writeConfig.SecureSettings["basicAuthPassword"], setting.SecretKey)
 		if err != nil {
-			return nil, fmt.Errorf("password can't be decrypted: %w", err)
+			return nil, fmt.Errorf("basicAuthPassword can't be decrypted: %w", err)
 		}
 		password = string(passwordBytes)
 	} else {
@@ -506,7 +506,7 @@ func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig,
 		if !ok {
 			return nil, fmt.Errorf("unknown write config uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
-		basicAuth, err := f.getBasicAuth(writeConfig)
+		basicAuth, err := f.constructBasicAuth(writeConfig)
 		if err != nil {
 			return nil, fmt.Errorf("error getting password: %w", err)
 		}
@@ -523,7 +523,7 @@ func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig,
 		if !ok {
 			return nil, fmt.Errorf("unknown loki backend uid: %s", config.LokiOutputConfig.UID)
 		}
-		basicAuth, err := f.getBasicAuth(writeConfig)
+		basicAuth, err := f.constructBasicAuth(writeConfig)
 		if err != nil {
 			return nil, fmt.Errorf("error getting password: %w", err)
 		}
@@ -560,9 +560,9 @@ func (f *StorageRuleBuilder) extractDataOutputter(config *DataOutputterConfig, w
 		if !ok {
 			return nil, fmt.Errorf("unknown loki backend uid: %s", config.LokiOutputConfig.UID)
 		}
-		basicAuth, err := f.getBasicAuth(writeConfig)
+		basicAuth, err := f.constructBasicAuth(writeConfig)
 		if err != nil {
-			return nil, fmt.Errorf("error getting password: %w", err)
+			return nil, fmt.Errorf("error constructing basicAuth: %w", err)
 		}
 		return NewLokiDataOutput(
 			writeConfig.Settings.Endpoint,
