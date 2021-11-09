@@ -1,11 +1,8 @@
-import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { css } from '@emotion/css';
-import { ClickOutsideWrapper, Tooltip, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import { ClickOutsideWrapper } from '@grafana/ui';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
 import { Role, OrgRole } from 'app/types';
-import { ValueContainer } from './ValueContainer';
 
 export interface Props {
   builtInRole: OrgRole;
@@ -32,8 +29,6 @@ export const RolePicker = ({
   const [builtInRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const styles = useStyles2(getStyles);
-  const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     async function fetchOptions() {
       try {
@@ -102,66 +97,30 @@ export const RolePicker = ({
     return null;
   }
 
-  const numberOfRoles = appliedRoles.length;
-
   return (
     <div data-testid="role-picker" style={{ position: 'relative' }}>
       <ClickOutsideWrapper onClick={onClose}>
-        {!isOpen ? (
-          <div className={styles.selectedRoles} onClick={onOpen}>
-            <Tooltip
-              content={
-                <>
-                  {builtInRoles[builtInRole].map((role) => (
-                    <p key={role.uid}>{role.displayName}</p>
-                  ))}
-                </>
-              }
-            >
-              <div>
-                <ValueContainer iconName={'user'}>{builtInRole}</ValueContainer>
-              </div>
-            </Tooltip>
-            {!!numberOfRoles && (
-              <ValueContainer>{`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}</ValueContainer>
-            )}
-          </div>
-        ) : (
-          <>
-            <RolePickerInput
-              builtInRole={builtInRole}
-              builtInRoles={builtInRoles[builtInRole]}
-              appliedRoles={getAppliedRoles()}
-              query={query}
-              onQueryChange={onInputChange}
-              onOpen={onOpen}
-              onClose={onClose}
-              isFocused={isOpen}
-              ref={inputRef}
-              disabled={disabled}
-            />
-            {isOpen && (
-              <RolePickerMenu
-                options={getOptions()}
-                builtInRole={builtInRole}
-                builtInRoles={builtInRoles}
-                appliedRoles={appliedRoles}
-                onUpdate={onUpdate}
-              />
-            )}
-          </>
+        <RolePickerInput
+          builtInRole={builtInRole}
+          builtInRoles={builtInRoles[builtInRole]}
+          appliedRoles={getAppliedRoles()}
+          query={query}
+          onQueryChange={onInputChange}
+          onOpen={onOpen}
+          onClose={onClose}
+          isFocused={isOpen}
+          disabled={disabled}
+        />
+        {isOpen && (
+          <RolePickerMenu
+            options={getOptions()}
+            builtInRole={builtInRole}
+            builtInRoles={builtInRoles}
+            appliedRoles={appliedRoles}
+            onUpdate={onUpdate}
+          />
         )}
       </ClickOutsideWrapper>
     </div>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    selectedRoles: css`
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-    `,
-  };
 };
