@@ -47,7 +47,7 @@ export const LayerList = ({ layers, onDragEnd, selected, actions }: LayerListPro
                         {...provided.dragHandleProps}
                         onMouseDown={() => actions!.selectLayer(element.UID)}
                       >
-                        <LayerHeader layer={element} onChange={onLayerNameChange} />
+                        <LayerHeader layer={{ ...element }} onChange={onLayerNameChange} />
                         <div className={style.textWrapper}>&nbsp; ({element.options.type})</div>
 
                         <IconButton
