@@ -1,5 +1,5 @@
 const cache: Record<string, string> = {};
-const defaultBust = Date.now();
+const initializedAt: number = Date.now();
 
 type CacheablePlugin = {
   path: string;
@@ -19,7 +19,7 @@ export function invalidatePluginInCache(pluginId: string): void {
   }
 }
 
-export function locateWithCache(load: { address: string }): string {
+export function locateWithCache(load: { address: string }, defaultBust = initializedAt): string {
   const { address } = load;
   const path = extractPath(address);
 

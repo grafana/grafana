@@ -1,12 +1,7 @@
 import { invalidatePluginInCache, locateWithCache, registerPluginInCache } from './pluginCacheBuster';
 
 describe('PluginCacheBuster', () => {
-  let spy: jest.SpyInstance;
-  const now = Date.now();
-
-  beforeAll(() => {
-    spy = jest.spyOn(Date, 'now').mockReturnValue(now);
-  });
+  const now = 12345;
 
   it('should append plugin version as cache flag if plugin is registered in buster', () => {
     const slug = 'bubble-chart-1';
@@ -17,7 +12,7 @@ describe('PluginCacheBuster', () => {
     registerPluginInCache({ path, version });
 
     const url = `${address}?_cache=${encodeURI(version)}`;
-    expect(locateWithCache({ address })).toBe(url);
+    expect(locateWithCache({ address }, now)).toBe(url);
   });
 
   it('should append Date.now as cache flag if plugin is not registered in buster', () => {
@@ -25,7 +20,7 @@ describe('PluginCacheBuster', () => {
     const address = `http://localhost:3000/public/${resolvePath(slug)}.js`;
 
     const url = `${address}?_cache=${encodeURI(String(now))}`;
-    expect(locateWithCache({ address })).toBe(url);
+    expect(locateWithCache({ address }, now)).toBe(url);
   });
 
   it('should append Date.now as cache flag if plugin is invalidated in buster', () => {
@@ -38,11 +33,7 @@ describe('PluginCacheBuster', () => {
     invalidatePluginInCache(slug);
 
     const url = `${address}?_cache=${encodeURI(String(now))}`;
-    expect(locateWithCache({ address })).toBe(url);
-  });
-
-  afterAll(() => {
-    spy.mockRestore();
+    expect(locateWithCache({ address }, now)).toBe(url);
   });
 });
 
