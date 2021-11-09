@@ -33,61 +33,57 @@ export interface MenuItemProps<T = any> {
 
 /** @internal */
 export const MenuItem = React.memo(
-  React.forwardRef<HTMLAnchorElement & HTMLButtonElement, MenuItemProps>(
-    (
+  React.forwardRef<HTMLAnchorElement & HTMLButtonElement, MenuItemProps>((props, ref) => {
+    const {
+      url,
+      icon,
+      label,
+      ariaLabel,
+      ariaChecked,
+      target,
+      onClick,
+      className,
+      active,
+      role = 'menuitem',
+      tabIndex = -1,
+    } = props;
+    const styles = useStyles2(getStyles);
+    const itemStyle = cx(
       {
-        url,
-        icon,
-        label,
-        ariaLabel,
-        ariaChecked,
-        target,
-        onClick,
-        className,
-        active,
-        role = 'menuitem',
-        tabIndex = -1,
+        [styles.item]: true,
+        [styles.activeItem]: active,
       },
-      ref
-    ) => {
-      const styles = useStyles2(getStyles);
-      const itemStyle = cx(
-        {
-          [styles.item]: true,
-          [styles.activeItem]: active,
-        },
-        className
-      );
+      className
+    );
 
-      const Wrapper = url === undefined ? 'button' : 'a';
-      return (
-        <Wrapper
-          target={target}
-          className={itemStyle}
-          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
-          href={url}
-          onClick={
-            onClick
-              ? (event) => {
-                  if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
-                    event.preventDefault();
-                    onClick(event);
-                  }
+    const Wrapper = url === undefined ? 'button' : 'a';
+    return (
+      <Wrapper
+        target={target}
+        className={itemStyle}
+        rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+        href={url}
+        onClick={
+          onClick
+            ? (event) => {
+                if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
+                  event.preventDefault();
+                  onClick(event);
                 }
-              : undefined
-          }
-          role={url === undefined ? role : undefined}
-          data-role="menuitem" // used to identify menuitem in Menu.tsx
-          ref={ref}
-          aria-label={ariaLabel}
-          aria-checked={ariaChecked}
-          tabIndex={tabIndex}
-        >
-          {icon && <Icon name={icon} className={styles.icon} aria-hidden />} {label}
-        </Wrapper>
-      );
-    }
-  )
+              }
+            : undefined
+        }
+        role={url === undefined ? role : undefined}
+        data-role="menuitem" // used to identify menuitem in Menu.tsx
+        ref={ref}
+        aria-label={ariaLabel}
+        aria-checked={ariaChecked}
+        tabIndex={tabIndex}
+      >
+        {icon && <Icon name={icon} className={styles.icon} aria-hidden />} {label}
+      </Wrapper>
+    );
+  })
 );
 MenuItem.displayName = 'MenuItem';
 
