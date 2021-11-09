@@ -283,6 +283,7 @@
     "fast-json-patch": "3.1.0",
     "fast-text-encoding": "^1.0.0",
     "file-saver": "2.0.2",
+    "focus-trap-react": "^8.8.2",
     "history": "4.10.1",
     "hoist-non-react-statics": "3.3.2",
     "immer": "9.0.6",

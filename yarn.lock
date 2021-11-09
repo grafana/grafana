@@ -2789,6 +2789,7 @@ __metadata:
     emotion: 11.0.0
     enzyme: 3.11.0
     expose-loader: 3.0.0
+    focus-trap-react: ^8.8.2
     hoist-non-react-statics: 3.3.2
     immutable: 4.0.0
     is-hotkey: 0.1.6
@@ -16801,6 +16802,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"focus-trap-react@npm:^8.8.2":
+  version: 8.8.2
+  resolution: "focus-trap-react@npm:8.8.2"
+  dependencies:
+    focus-trap: ^6.7.1
+  peerDependencies:
+    prop-types: ^15.7.2
+    react: ">=16.0.0"
+    react-dom: ">=16.0.0"
+  checksum: 187f4376f6f04abd657da2efdcf723f0478ca2e96b818e1a9b37697e4a910d586f2483b3a878ce09b168c15f0c947295d118ce01cd07bcfaf61f0b281fa622b7
+  languageName: node
+  linkType: hard
+
+"focus-trap@npm:^6.7.1":
+  version: 6.7.1
+  resolution: "focus-trap@npm:6.7.1"
+  dependencies:
+    tabbable: ^5.2.1
+  checksum: b96c54a6a2976f8509ed8447ce3a8b76db3801b9c170f278f60b0c878478f2bb2ebc6dbe3ccd7157006b9a7ad9a86c18283efff0f3e387e29ba3ea89d8687b9c
+  languageName: node
+  linkType: hard
+
 "follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.14.0":
   version: 1.14.4
   resolution: "follow-redirects@npm:1.14.4"
@@ -17957,6 +17980,7 @@ __metadata:
     fast-text-encoding: ^1.0.0
     file-loader: 6.2.0
     file-saver: 2.0.2
+    focus-trap-react: ^8.8.2
     fork-ts-checker-webpack-plugin: 6.4.0
     fs-extra: 10.0.0
     gaze: 1.1.3
@@ -30992,6 +31016,13 @@ __metadata:
   version: 0.20.19
   resolution: "systemjs@npm:0.20.19"
   checksum: 4b5a404be790cd545d6994f617c24ef3a3ae52e029c6498f10206f715c6777c4c0733ab9d626723fdfa359f12707835f302986516e5835be26c202bc13e242df
+  languageName: node
+  linkType: hard
+
+"tabbable@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "tabbable@npm:5.2.1"
+  checksum: d26e9eeb880c4c78b59244bac2c931ad46f6c64a01e5c15ba6da348dc86442222912733846a9e63373342a81fa15d4afb31267606b38431510d10b0fb9ec9bba
   languageName: node
   linkType: hard
 

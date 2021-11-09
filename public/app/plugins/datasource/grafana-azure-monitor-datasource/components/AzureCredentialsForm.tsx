@@ -1,9 +1,9 @@
 import React, { ChangeEvent, FunctionComponent, useEffect, useReducer, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, Button, Select } from '@grafana/ui';
 import { AzureAuthType, AzureCredentials } from '../types';
 import { isCredentialsComplete } from '../credentials';
-const { Select, Input } = LegacyForms;
+const { Input } = LegacyForms;
 
 export interface Props {
   managedIdentityEnabled: boolean;
@@ -162,7 +162,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
               options={authTypeOptions}
               onChange={onAuthTypeChange}
-              isDisabled={disabled}
+              disabled={disabled}
             />
           </div>
         </div>
@@ -176,12 +176,13 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                   Azure Cloud
                 </InlineFormLabel>
                 <Select
+                  aria-label="Azure Cloud"
                   menuShouldPortal
                   className="width-15"
                   value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
                   options={azureCloudOptions}
                   onChange={onAzureCloudChange}
-                  isDisabled={disabled}
+                  disabled={disabled}
                 />
               </div>
             </div>
@@ -254,6 +255,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
               <div className="width-30">
                 <Select
+                  aria-label="Default Subscription"
                   menuShouldPortal
                   value={
                     credentials.defaultSubscriptionId
@@ -262,7 +264,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                   }
                   options={subscriptions}
                   onChange={onSubscriptionChange}
-                  isDisabled={disabled}
+                  disabled={disabled}
                 />
               </div>
             </div>
