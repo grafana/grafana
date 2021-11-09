@@ -191,7 +191,7 @@ export async function importPluginModule(path: string, version?: string): Promis
 }
 
 export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  return importPluginModule(meta.module, meta.info.version).then((pluginExports) => {
+  return importPluginModule(meta.module, meta.info?.version).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
       dsPlugin.meta = meta;
@@ -214,7 +214,7 @@ export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): 
 }
 
 export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaData.AppPlugin> {
-  return importPluginModule(meta.module, meta.info.version).then((pluginExports) => {
+  return importPluginModule(meta.module, meta.info?.version).then((pluginExports) => {
     const plugin = pluginExports.plugin ? (pluginExports.plugin as grafanaData.AppPlugin) : new grafanaData.AppPlugin();
     plugin.init(meta);
     plugin.meta = meta;

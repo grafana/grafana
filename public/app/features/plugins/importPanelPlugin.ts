@@ -29,7 +29,7 @@ export function importPanelPluginFromMeta(meta: grafanaData.PanelPluginMeta): Pr
 }
 
 function getPanelPlugin(meta: grafanaData.PanelPluginMeta): Promise<grafanaData.PanelPlugin> {
-  return importPluginModule(meta.module, meta.info.version)
+  return importPluginModule(meta.module, meta.info?.version)
     .then((pluginExports) => {
       if (pluginExports.plugin) {
         return pluginExports.plugin as grafanaData.PanelPlugin;
