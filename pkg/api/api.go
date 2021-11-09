@@ -491,7 +491,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)
 
 	// grafana.net proxy
-	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
+	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
 	// Gravatar service.
 	avatarCacheServer := avatar.NewCacheServer(hs.Cfg)
