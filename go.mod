@@ -13,10 +13,6 @@ replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
 replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/goxmldsig v1.1.1
 
-// For now we are using a Grafana fork of alertmanager until the ability to bypass label name/key validation
-// is merged into upstream (2021-10-01).
-replace github.com/prometheus/alertmanager => github.com/grafana/alertmanager v0.21.1-0.20210929114340-613e5cc2a4ee
-
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.4.0
@@ -29,7 +25,7 @@ require (
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v1.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
-	github.com/centrifugal/centrifuge v0.18.4
+	github.com/centrifugal/centrifuge v0.18.8
 	github.com/cortexproject/cortex v1.10.1-0.20211014125347-85c378182d0d
 	github.com/crewjam/saml v0.4.6-0.20210521115923-29c6295245bd
 	github.com/davecgh/go-spew v1.1.1
@@ -82,7 +78,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210904010418-6d279e18f982 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.23.1-0.20210914172521-e35efbddb66a
+	github.com/prometheus/alertmanager v0.23.1-0.20211021072955-1b8afe7cb5aa
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.31.1
@@ -90,7 +86,6 @@ require (
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.1
-	github.com/smartystreets/goconvey v1.6.4
 	github.com/spyzhov/ajson v0.4.2
 	github.com/stretchr/testify v1.7.0
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
@@ -141,14 +136,13 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/alecthomas/units v0.0.0-20210912230133-d1bdfacee922 // indirect
 	github.com/apache/arrow/go/arrow v0.0.0-20210223225224-5bea62493d91 // indirect
-	github.com/armon/go-metrics v0.3.6 // indirect
+	github.com/armon/go-metrics v0.3.8 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/centrifugal/protocol v0.7.3 // indirect
-	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
@@ -183,7 +177,6 @@ require (
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.1.0 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
 	github.com/grafana/grafana-google-sdk-go v0.0.0-20211019132340-3ff525a010d5
@@ -195,13 +188,12 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/memberlist v0.2.4 // indirect
-	github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce // indirect
-	github.com/igm/sockjs-go/v3 v3.0.0 // indirect
+	github.com/hashicorp/yamux v0.0.0-20210826001029-26ff87cf9493 // indirect
+	github.com/igm/sockjs-go/v3 v3.0.1 // indirect
 	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
-	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/klauspost/cpuid/v2 v2.0.5 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
@@ -211,7 +203,7 @@ require (
 	github.com/miekg/dns v1.1.43 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
-	github.com/mna/redisc v1.2.1 // indirect
+	github.com/mna/redisc v1.3.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de // indirect
@@ -237,7 +229,6 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/smartystreets/assertions v1.0.1 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

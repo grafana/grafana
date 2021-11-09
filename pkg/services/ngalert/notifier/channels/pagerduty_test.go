@@ -7,16 +7,16 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestPagerdutyNotifier(t *testing.T) {
@@ -136,7 +136,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			decryptFn := ossencryption.ProvideService().GetDecryptedValue
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewPagerdutyNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)

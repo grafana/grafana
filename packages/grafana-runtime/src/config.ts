@@ -34,7 +34,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   externalUserMngInfo = '';
   allowOrgCreate = false;
   disableLoginForm = false;
-  defaultDatasource = '';
+  defaultDatasource = ''; // UID
   alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
@@ -66,7 +66,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     tempoServiceGraph: false,
     tempoSearch: false,
     recordedQueries: false,
-    prometheusMonaco: false,
     newNavigation: false,
     fullRangeLogsVolume: false,
     autoLoadFullRangeLogsVolume: false,

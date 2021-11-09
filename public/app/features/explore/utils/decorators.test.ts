@@ -18,11 +18,11 @@ import {
   decorateWithLogsResult,
   decorateWithTableResult,
 } from './decorators';
-import { describe } from '../../../../test/lib/common';
 import { ExplorePanelData } from 'app/types';
 import TableModel from 'app/core/table_model';
 
-jest.mock('@grafana/data/src/datetime/formatter', () => ({
+jest.mock('@grafana/data', () => ({
+  ...(jest.requireActual('@grafana/data') as any),
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
 }));

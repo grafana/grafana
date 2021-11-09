@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.5.5'
-build_image = 'grafana/build-container:1.4.3'
+build_image = 'grafana/build-container:1.4.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -374,8 +374,6 @@ def test_backend_step(edition):
             'lint-backend',
         ],
         'commands': [
-            # First make sure that there are no tests with FocusConvey
-            '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
             './bin/grabpl test-backend --edition {}'.format(edition),
         ],
     }
@@ -421,7 +419,6 @@ def lint_frontend_step():
             'yarn run prettier:check',
             'yarn run lint',
             'yarn run typecheck',
-            'yarn run check-strict',
         ],
     }
 

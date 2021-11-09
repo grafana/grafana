@@ -53,7 +53,7 @@ export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
 export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
   (cloudwatchQuery as CloudWatchLogsQuery).queryMode === 'Logs';
 
-export interface CloudWatchAnnotationQuery extends CloudWatchMetricsQuery {
+interface AnnotationProperties {
   enable: boolean;
   name: string;
   iconColor: string;
@@ -61,6 +61,10 @@ export interface CloudWatchAnnotationQuery extends CloudWatchMetricsQuery {
   actionPrefix: string;
   alarmNamePrefix: string;
 }
+
+export type CloudWatchLogsAnnotationQuery = CloudWatchLogsQuery & AnnotationProperties;
+export type CloudWatchMetricsAnnotationQuery = CloudWatchMetricsQuery & AnnotationProperties;
+export type CloudWatchAnnotationQuery = CloudWatchLogsAnnotationQuery | CloudWatchMetricsAnnotationQuery;
 
 export type SelectableStrings = Array<SelectableValue<string>>;
 
