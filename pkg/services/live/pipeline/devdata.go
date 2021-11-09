@@ -99,14 +99,25 @@ type DevRuleBuilder struct {
 func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
-			Pattern:   "plugin/testdata/random-20Hz-stream",
+			Pattern: "plugin/testdata/random-20Hz-stream",
+			DataOutputters: []DataOutputter{
+				NewLokiDataOutput(
+					os.Getenv("GF_LIVE_LOKI_ENDPOINT"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_LOKI_USER"),
+						Password: os.Getenv("GF_LIVE_LOKI_PASSWORD"),
+					},
+				),
+			},
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 				NewRemoteWriteFrameOutput(
 					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+						Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					},
 					1000,
 				),
 			},
@@ -291,8 +302,10 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 				NewManagedStreamFrameOutput(f.ManagedStream),
 				NewRemoteWriteFrameOutput(
 					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+						Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					},
 					0,
 				),
 				NewChangeLogFrameOutput(f.FrameStorage, ChangeLogOutputConfig{
@@ -326,8 +339,10 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 				NewManagedStreamFrameOutput(f.ManagedStream),
 				NewRemoteWriteFrameOutput(
 					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+						Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					},
 					0,
 				),
 			},

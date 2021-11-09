@@ -55,7 +55,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       {
         refId: 'annotationQuery',
         type: 'annotationQuery',
-        datasourceId: this.id,
+        datasource: this.getRef(),
         view: 'FULL',
         crossSeriesReducer: 'REDUCE_NONE',
         perSeriesAligner: 'ALIGN_NONE',
@@ -108,7 +108,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     scopedVars: ScopedVars
   ): Record<string, any> {
     return {
-      datasourceId: this.id,
+      datasource: this.getRef(),
       refId,
       intervalMs: this.intervalMs,
       type: 'timeSeriesQuery',
@@ -133,7 +133,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       targets: [
         {
           refId,
-          datasourceId: this.id,
+          datasource: this.getRef(),
           queryType: QueryType.METRICS,
           metricQuery: {
             projectName: this.templateSrv.replace(projectName),
@@ -212,7 +212,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
             {
               refId: 'getGCEDefaultProject',
               type: 'getGCEDefaultProject',
-              datasourceId: this.id,
+              datasource: this.getRef(),
             },
           ],
         })

@@ -1,15 +1,15 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import DropdownChild from './DropdownChild';
+import { NavBarMenuItem } from './NavBarMenuItem';
 
-describe('DropdownChild', () => {
+describe('NavBarMenuItem', () => {
   const mockText = 'MyChildItem';
   const mockUrl = '/route';
   const mockIcon = 'home-alt';
 
   it('displays the text', () => {
-    render(<DropdownChild text={mockText} />);
+    render(<NavBarMenuItem text={mockText} />);
     const text = screen.getByText(mockText);
     expect(text).toBeInTheDocument();
   });
@@ -17,7 +17,7 @@ describe('DropdownChild', () => {
   it('attaches the url to the text if provided', () => {
     render(
       <BrowserRouter>
-        <DropdownChild text={mockText} url={mockUrl} />
+        <NavBarMenuItem text={mockText} url={mockUrl} />
       </BrowserRouter>
     );
     const link = screen.getByRole('link', { name: mockText });
@@ -26,19 +26,19 @@ describe('DropdownChild', () => {
   });
 
   it('displays an icon if a valid icon is provided', () => {
-    render(<DropdownChild text={mockText} icon={mockIcon} />);
+    render(<NavBarMenuItem text={mockText} icon={mockIcon} />);
     const icon = screen.getByTestId('dropdown-child-icon');
     expect(icon).toBeInTheDocument();
   });
 
   it('displays an external link icon if the target is _blank', () => {
-    render(<DropdownChild text={mockText} icon={mockIcon} url={mockUrl} target="_blank" />);
+    render(<NavBarMenuItem text={mockText} icon={mockIcon} url={mockUrl} target="_blank" />);
     const icon = screen.getByTestId('external-link-icon');
     expect(icon).toBeInTheDocument();
   });
 
   it('displays a divider instead when isDivider is true', () => {
-    render(<DropdownChild text={mockText} icon={mockIcon} url={mockUrl} isDivider />);
+    render(<NavBarMenuItem text={mockText} icon={mockIcon} url={mockUrl} isDivider />);
 
     // Check the divider is shown
     const divider = screen.getByTestId('dropdown-child-divider');
