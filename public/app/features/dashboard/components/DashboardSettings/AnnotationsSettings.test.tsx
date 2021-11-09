@@ -116,9 +116,7 @@ describe('AnnotationsSettings', () => {
 
     expect(screen.getByRole('heading', { name: /annotations/i })).toBeInTheDocument();
     expect(screen.queryByRole('table')).toBeInTheDocument();
-    expect(
-      screen.getByRole('row', { name: /annotations & alerts \(built\-in\) grafana cancel delete/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /annotations & alerts \(built\-in\) grafana/i })).toBeInTheDocument();
     expect(
       screen.queryByLabelText(selectors.components.CallToActionCard.button('Add annotation query'))
     ).toBeInTheDocument();
@@ -142,14 +140,14 @@ describe('AnnotationsSettings', () => {
     userEvent.click(within(heading).getByText(/annotations/i));
 
     expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(screen.getByRole('row', { name: /my annotation \(built\-in\) grafana cancel delete/i })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /my annotation \(built\-in\) grafana/i })).toBeInTheDocument();
     expect(
       screen.queryByLabelText(selectors.components.CallToActionCard.button('Add annotation query'))
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /new query/i })).not.toBeInTheDocument();
 
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(screen.getByRole('button', { name: /^delete$/i }), undefined, { skipPointerEventsCheck: true });
+    userEvent.click(screen.getAllByLabelText(/Delete query with title/)[0]);
+    userEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(screen.queryAllByRole('row').length).toBe(0);
     expect(
@@ -238,9 +236,7 @@ describe('AnnotationsSettings', () => {
     userEvent.click(within(heading).getByText(/annotations/i));
 
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(2);
-    expect(
-      screen.queryByRole('row', { name: /my prometheus annotation prometheus cancel delete/i })
-    ).toBeInTheDocument();
+    expect(screen.queryByRole('row', { name: /my prometheus annotation prometheus/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /new query/i })).toBeInTheDocument();
     expect(
       screen.queryByLabelText(selectors.components.CallToActionCard.button('Add annotation query'))
@@ -252,8 +248,8 @@ describe('AnnotationsSettings', () => {
 
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(3);
 
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(screen.getAllByRole('button', { name: /delete/i })[1], undefined, { skipPointerEventsCheck: true });
+    userEvent.click(screen.getAllByLabelText(/Delete query with title/)[0]);
+    userEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(2);
   });

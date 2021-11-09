@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,12 +26,12 @@ var (
 var loginLogger = log.New("login")
 
 func Init() {
-	bus.AddHandler("auth", authenticateUser)
+	bus.AddHandlerCtx("auth", authenticateUser)
 }
 
 // authenticateUser authenticates the user via username & password
-func authenticateUser(query *models.LoginUserQuery) error {
-	if err := validateLoginAttempts(query); err != nil {
+func authenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
+	if err := validateLoginAttempts(ctx, query); err != nil {
 		return err
 	}
 
@@ -38,14 +39,14 @@ func authenticateUser(query *models.LoginUserQuery) error {
 		return err
 	}
 
-	err := loginUsingGrafanaDB(query)
+	err := loginUsingGrafanaDB(ctx, query)
 	if err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
 		!errors.Is(err, ErrUserDisabled)) {
 		query.AuthModule = "grafana"
 		return err
 	}
 
-	ldapEnabled, ldapErr := loginUsingLDAP(query)
+	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query)
 	if ldapEnabled {
 		query.AuthModule = models.AuthModuleLDAP
 		if ldapErr == nil || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
@@ -58,7 +59,7 @@ func authenticateUser(query *models.LoginUserQuery) error {
 	}
 
 	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ldap.ErrInvalidCredentials) {
-		if err := saveInvalidLoginAttempt(query); err != nil {
+		if err := saveInvalidLoginAttempt(ctx, query); err != nil {
 			loginLogger.Error("Failed to save invalid login attempt", "err", err)
 		}
 

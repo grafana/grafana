@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { DataFrame, PanelProps } from '@grafana/data';
-import { TooltipPlugin, useTheme2, ZoomPlugin } from '@grafana/ui';
+import { TooltipPlugin, useTheme2, ZoomPlugin, usePanelContext } from '@grafana/ui';
 import { TimelineMode, TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
 import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
@@ -22,6 +22,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   onChangeTimeRange,
 }) => {
   const theme = useTheme2();
+  const { sync } = usePanelContext();
 
   const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, options.mergeValues ?? true, theme), [
     data,
@@ -103,6 +104,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             <TooltipPlugin
               data={alignedFrame}
+              sync={sync}
               config={config}
               mode={options.tooltip.mode}
               timeZone={timeZone}

@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -26,7 +27,7 @@ var ldapLogger = log.New("login.ldap")
 
 // loginUsingLDAP logs in user using LDAP. It returns whether LDAP is enabled and optional error and query arg will be
 // populated with the logged in user if successful.
-var loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
+var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery) (bool, error) {
 	enabled := isLDAPEnabled()
 
 	if !enabled {
@@ -57,7 +58,7 @@ var loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
 		ExternalUser:  externalUser,
 		SignupAllowed: setting.LDAPAllowSignup,
 	}
-	err = bus.Dispatch(upsert)
+	err = bus.DispatchCtx(ctx, upsert)
 	if err != nil {
 		return true, err
 	}
