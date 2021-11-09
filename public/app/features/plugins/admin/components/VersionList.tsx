@@ -4,6 +4,7 @@ import { css } from '@emotion/css';
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { Version } from '../types';
+import { getLatestCompatibleVersion } from '../helpers';
 
 interface Props {
   versions?: Version[];
@@ -12,6 +13,7 @@ interface Props {
 
 export const VersionList = ({ versions = [], installedVersion }: Props) => {
   const styles = useStyles2(getStyles);
+  const latestCompatibleVersion = getLatestCompatibleVersion(versions);
 
   if (versions.length === 0) {
     return <p>No version history was found.</p>;
@@ -30,11 +32,16 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
           const isInstalledVersion = installedVersion === version.version;
           return (
             <tr key={version.version}>
+              {/* Version number */}
               {isInstalledVersion ? (
                 <td className={styles.currentVersion}>{version.version} (installed version)</td>
+              ) : version.version === latestCompatibleVersion ? (
+                <td>{version.version} (latest compatible version)</td>
               ) : (
                 <td>{version.version}</td>
               )}
+
+              {/* Last updated */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>
                 {dateTimeFormatTimeAgo(version.createdAt)}
               </td>
