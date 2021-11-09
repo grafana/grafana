@@ -1,4 +1,4 @@
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 
 export function react2AngularDirective(name: string, component: any, options: any) {

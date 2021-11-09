@@ -11,8 +11,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import coreModule from 'app/core/core_module';
-import { DashboardModel } from '../dashboard/state';
+import coreModule from 'app/angular/core_module';
 import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
 import { standardAnnotationSupport } from './standardAnnotationSupport';
 import { runRequest } from '../query/state/runRequest';
@@ -26,13 +25,6 @@ function getNextRequestId() {
  * @deprecated AnnotationsSrv is deprecated in favor of DashboardQueryRunner
  */
 export class AnnotationsSrv {
-  /**
-   * @deprecated init is deprecated in favor of DashboardQueryRunner.run
-   */
-  init(dashboard: DashboardModel) {
-    deprecationWarning('annotations_srv.ts', 'init', 'DashboardQueryRunner.run');
-  }
-
   /**
    * @deprecated clearPromiseCaches is deprecated
    */

@@ -48,7 +48,7 @@ go.sum @grafana/backend-platform
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
 # Grafana live
-/pkg/service/live/ @grafana/grafana-edge-squad
+/pkg/services/live/ @grafana/grafana-edge-squad
 
 # Unified Alerting
 /pkg/services/ngalert @grafana/alerting-squad

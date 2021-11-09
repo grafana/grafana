@@ -1,5 +1,5 @@
 // Libraries
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 // Services & Utils
 import { importDataSourcePlugin } from './plugin_loader';
 import {

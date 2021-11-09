@@ -40,7 +40,7 @@
     "@types/inquirer": "^8.0.0",
     "@types/jest": "27.0.2",
     "@types/lodash": "4.14.149",
-    "@types/node": "^14.0.0",
+    "@types/node": "^16.0.0",
     "@types/prettier": "^2.4.0",
     "@types/react-dev-utils": "^9.0.4",
     "@types/rimraf": "^3.0.0",
