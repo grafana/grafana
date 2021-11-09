@@ -763,4 +763,30 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 }`, string(b))
 	}
+
+	// remove permissions from _ALL_ folders
+	require.NoError(t, store.UpdateDashboardACL(1, nil))
+
+	// make sure that no folders are included in the response
+	{
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(promRulesURL)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+
+		require.JSONEq(t, `
+{
+	"status": "success",
+	"data": {
+		"groups": []
+	}
+}`, string(b))
+	}
 }
