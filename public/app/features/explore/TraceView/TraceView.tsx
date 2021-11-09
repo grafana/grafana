@@ -1,4 +1,5 @@
-import { DataFrame, DataFrameView, SplitOpen, TraceSpanRow } from '@grafana/data';
+import { DataFrame, DataFrameView, DataLink, mapInternalLinkToExplore, SplitOpen, TraceSpanRow } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { colors, useTheme } from '@grafana/ui';
 import {
   ThemeOptions,
@@ -16,6 +17,7 @@ import {
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { TempoQuery } from 'app/plugins/datasource/tempo/datasource';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -32,6 +34,33 @@ function noop(): {} {
   return {};
 }
 
+const createLink = (datasourceName: string, datasourceUid: string) => (traceId: string, spanId: string) => {
+  // return '';
+  const dataLink: DataLink = {
+    title: datasourceName,
+    url: '',
+    internal: {
+      datasourceUid: datasourceUid,
+      datasourceName: datasourceName,
+      query: {
+        queryType: 'traceId',
+        query: traceId,
+        search: '',
+      },
+    },
+  };
+
+  const link = mapInternalLinkToExplore({
+    link: dataLink,
+    internalLink: dataLink.internal!,
+    scopedVars: {},
+    range: {} as any,
+    field: {} as any,
+    replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+  });
+
+  return link.href;
+};
 type Props = {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
@@ -69,6 +98,7 @@ export function TraceView(props: Props) {
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
+  const dataSourceUid = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.uid);
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
@@ -147,7 +177,7 @@ export function TraceView(props: Props) {
           updateViewRangeTime={updateViewRangeTime}
           viewRange={viewRange}
           focusSpan={noop}
-          createLinkToExternalSpan={noop as any}
+          createLinkToExternalSpan={createLink(dataSourceName || '', dataSourceUid || '')}
           setSpanNameColumnWidth={setSpanNameColumnWidth}
           collapseAll={collapseAll}
           collapseOne={collapseOne}

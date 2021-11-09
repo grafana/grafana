@@ -120,6 +120,28 @@ export function References(props: ReferenceItemProps) {
     <div className={styles.AccordianLogsContent}>
       {data.map((reference, i) => (
         <div key={reference.spanID}>
+          <div className={styles.item} key={`${reference.spanID}`}>
+            <ReferenceLink reference={reference} focusSpan={focusSpan}>
+              <span className={styles.itemContent}>
+                {reference.span ? (
+                  <span>
+                    <span className="span-svc-name">{reference.span.process.serviceName}</span>
+                    <small className="endpoint-name">{reference.span.operationName}</small>
+                  </span>
+                ) : (
+                  <span className="span-svc-name">&lt; span in another trace &gt;</span>
+                )}
+                <small className={styles.debugInfo}>
+                  <span className={styles.debugLabel} data-label="Reference Type:">
+                    {reference.refType}
+                  </span>
+                  <span className={styles.debugLabel} data-label="SpanID:">
+                    {reference.spanID}
+                  </span>
+                </small>
+              </span>
+            </ReferenceLink>
+          </div>
           <AccordianKeyValues
             className={i < data.length - 1 ? ubMb1 : null}
             data={reference.tags || []}
