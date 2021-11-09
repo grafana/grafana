@@ -1,5 +1,5 @@
 import { find, map, reduce, remove } from 'lodash';
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import { ThresholdMapper } from './state/ThresholdMapper';
 import { QueryPart } from 'app/angular/components/query_part';
 import alertDef from './state/alertDef';
@@ -12,7 +12,7 @@ import { DataQuery, DataSourceApi, rangeUtil } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
 import { CoreEvents } from 'app/types';
-import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { promiseToDigest } from 'app/angular/promiseToDigest';
 import { ShowConfirmModalEvent } from '../../types/events';
 
 export class AlertTabCtrl {

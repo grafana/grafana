@@ -1,6 +1,6 @@
 import angular from 'angular';
 import Clipboard from 'clipboard';
-import coreModule from '../core/core_module';
+import coreModule from './core_module';
 import { appEvents } from 'app/core/core';
 import { AppEvents } from '@grafana/data';
 
