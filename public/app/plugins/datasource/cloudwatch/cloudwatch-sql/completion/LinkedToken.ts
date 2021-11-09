@@ -70,6 +70,28 @@ export class LinkedToken {
     return null;
   }
 
+  getPreviousUntil(type: TokenType, ignoreTypes: TokenType[], value?: string): LinkedToken[] | null {
+    let tokens: LinkedToken[] = [];
+    let curr = this.previous;
+    while (curr != null) {
+      if (ignoreTypes.some((t) => t === curr?.type)) {
+        curr = curr.previous;
+        continue;
+      }
+
+      const isType = curr.type === type;
+      if (value !== undefined ? isType && curr.value === value : isType) {
+        return tokens;
+      }
+      if (!curr.isWhiteSpace()) {
+        tokens.push(curr);
+      }
+      curr = curr.previous;
+    }
+
+    return tokens;
+  }
+
   getNextUntil(type: TokenType, ignoreTypes: TokenType[], value?: string): LinkedToken[] | null {
     let tokens: LinkedToken[] = [];
     let curr = this.next;

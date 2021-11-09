@@ -8,7 +8,7 @@ import {
   QueryEditorOperatorExpression,
   QueryEditorGroupByExpression,
 } from '../../expressions';
-import { SQLExpression, CloudWatchMetricsQuery } from '../../types';
+import { SQLExpression, CloudWatchMetricsQuery, Dimensions } from '../../types';
 
 export function getMetricNameFromExpression(selectExpression: SQLExpression['select']): string | undefined {
   return selectExpression?.parameters?.[0].name;
@@ -122,6 +122,27 @@ function flattenGroupByExpressions(
 export function getFlattenedGroupBys(sql: SQLExpression): QueryEditorGroupByExpression[] {
   const groupBy = sql.groupBy;
   return flattenGroupByExpressions(groupBy?.expressions ?? []);
+}
+
+/** Converts an array of QueryEditorGroupByExpression to a Dimensions  **/
+export function groupByExpressionsToDimensions(groupBys: QueryEditorGroupByExpression[]): Dimensions {
+  const groupByStrings = groupBys.reduce((acc: string[], curr: QueryEditorGroupByExpression) => {
+    if (curr.property?.name) {
+      return [...acc, curr.property.name];
+    }
+    return acc;
+  }, []);
+  return stringArrayToDimensions(groupByStrings);
+}
+
+/** Converts a string array to a Dimensions object with null values  **/
+export function stringArrayToDimensions(arr: string[]): Dimensions {
+  return arr.reduce((acc, curr) => {
+    if (curr) {
+      return { ...acc, [curr]: null };
+    }
+    return acc;
+  }, {});
 }
 
 export function setSql(query: CloudWatchMetricsQuery, sql: SQLExpression): CloudWatchMetricsQuery {

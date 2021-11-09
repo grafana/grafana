@@ -180,17 +180,21 @@ export class CompletionItemProvider {
             const namespaceToken = getNamespaceToken(currentToken);
             if (namespaceToken?.value) {
               let dimensionFilter = {};
+              let labelKeyTokens;
               if (statementPosition === StatementPosition.SchemaFuncExtraArgument) {
-                const labelKeyTokens = namespaceToken?.getNextUntil(TokenType.Parenthesis, [
+                labelKeyTokens = namespaceToken?.getNextUntil(TokenType.Parenthesis, [
                   TokenType.Delimiter,
                   TokenType.Whitespace,
                 ]);
-                if (labelKeyTokens) {
-                  dimensionFilter = labelKeyTokens.reduce((acc, curr) => {
-                    return { ...acc, [curr.value]: null };
-                  }, {});
-                }
+              } else if (statementPosition === StatementPosition.AfterGroupByKeywords) {
+                labelKeyTokens = currentToken?.getPreviousUntil(TokenType.Keyword, [
+                  TokenType.Delimiter,
+                  TokenType.Whitespace,
+                ]);
               }
+              dimensionFilter = (labelKeyTokens || []).reduce((acc, curr) => {
+                return { ...acc, [curr.value]: null };
+              }, {});
               const keys = await this.datasource.getDimensionKeys(
                 this.templateSrv.replace(namespaceToken.value.replace(/\"/g, '')),
                 this.templateSrv.replace(this.region),

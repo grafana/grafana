@@ -1,6 +1,6 @@
 import { toOption } from '@grafana/data';
 import { Select, Switch } from '@grafana/ui';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
@@ -9,6 +9,7 @@ import { appendTemplateVariables } from '../../utils/utils';
 import EditorField from '../ui/EditorField';
 import EditorFieldGroup from '../ui/EditorFieldGroup';
 import {
+  stringArrayToDimensions,
   getMetricNameFromExpression,
   getNamespaceFromExpression,
   getSchemaLabelKeys as getSchemaLabels,
@@ -45,7 +46,12 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
 
   const namespaceOptions = useNamespaces(datasource);
   const metricOptions = useMetrics(datasource, query.region, namespace);
-  const dimensionKeys = useDimensionKeys(datasource, query.region, namespace, metricName);
+  const existingFilters = useMemo(() => stringArrayToDimensions(schemaLabels ?? []), [schemaLabels]);
+  const unusedDimensionKeys = useDimensionKeys(datasource, query.region, namespace, metricName, existingFilters);
+  const dimensionKeys = useMemo(
+    () => (schemaLabels?.length ? [...unusedDimensionKeys, ...schemaLabels.map(toOption)] : unusedDimensionKeys),
+    [unusedDimensionKeys, schemaLabels]
+  );
 
   return (
     <>

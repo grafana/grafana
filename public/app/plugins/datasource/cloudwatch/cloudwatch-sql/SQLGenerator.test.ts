@@ -1,15 +1,5 @@
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import {
-  QueryEditorArrayExpression,
-  QueryEditorExpression,
-  QueryEditorExpressionType,
-  QueryEditorPropertyType,
-  QueryEditorOperatorExpression,
-  QueryEditorGroupByExpression,
-  QueryEditorFunctionExpression,
-  QueryEditorPropertyExpression,
-  QueryEditorFunctionParameterExpression,
-} from '../expressions';
+import { QueryEditorExpressionType } from '../expressions';
 import { SQLExpression } from '../types';
 import {
   aggregationvariable,
@@ -17,6 +7,14 @@ import {
   metricVariable,
   namespaceVariable,
 } from '../__mocks__/CloudWatchDataSource';
+import {
+  createFunctionWithParameter,
+  createArray,
+  createOperator,
+  createGroupBy,
+  createFunction,
+  createProperty,
+} from '../__mocks__/sqlUtils';
 import SQLGenerator from './SQLGenerator';
 
 describe('SQLGenerator', () => {
@@ -377,69 +375,3 @@ describe('SQLGenerator', () => {
     });
   });
 });
-
-function createArray(
-  expressions: QueryEditorExpression[],
-  type: QueryEditorExpressionType.And | QueryEditorExpressionType.Or = QueryEditorExpressionType.And
-): QueryEditorArrayExpression {
-  const array = {
-    type,
-    expressions,
-  };
-
-  // console.log(JSON.stringify(array, null, 4));
-  return array;
-}
-
-function createOperator(property: string, operator: string, value?: string): QueryEditorOperatorExpression {
-  return {
-    type: QueryEditorExpressionType.Operator,
-    property: {
-      name: property,
-      type: QueryEditorPropertyType.String,
-    },
-    operator: {
-      name: operator,
-      value: value,
-    },
-  };
-}
-function createGroupBy(column: string): QueryEditorGroupByExpression {
-  return {
-    type: QueryEditorExpressionType.GroupBy,
-    property: {
-      type: QueryEditorPropertyType.String,
-      name: column,
-    },
-  };
-}
-function createFunction(name: string): QueryEditorFunctionExpression {
-  return {
-    type: QueryEditorExpressionType.Function,
-    name,
-  };
-}
-
-function createFunctionWithParameter(functionName: string, params: string[]): QueryEditorFunctionExpression {
-  const reduce = createFunction(functionName);
-  reduce.parameters = params.map((name) => {
-    const param: QueryEditorFunctionParameterExpression = {
-      type: QueryEditorExpressionType.FunctionParameter,
-      name,
-    };
-
-    return param;
-  });
-
-  return reduce;
-}
-
-function createProperty(name: string): QueryEditorPropertyExpression {
-  return {
-    type: QueryEditorExpressionType.Property,
-    property: {
-      type: QueryEditorPropertyType.String,
-      name: name,
-    },
-  };
-}

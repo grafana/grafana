@@ -3,6 +3,7 @@ import { SelectableValue, toOption } from '@grafana/data';
 import { appendTemplateVariables } from './utils/utils';
 import { Dimensions } from './types';
 import { CloudWatchDatasource } from './datasource';
+import { useDeepCompareEffect } from 'react-use';
 
 export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableValue<string>>, boolean] => {
   const [regionsIsLoading, setRegionsIsLoading] = useState<boolean>(false);
@@ -56,8 +57,8 @@ export const useDimensionKeys = (
 ) => {
   const [dimensionKeys, setDimensionKeys] = useState<Array<SelectableValue<string>>>([]);
 
-  useEffect(() => {
-    console.log('Fetching dimension keys');
+  // doing deep comparison to avoid making new api calls to list metrics unless dimension filter object props changes
+  useDeepCompareEffect(() => {
     datasource
       .getDimensionKeys(namespace, region, dimensionFilter, metricName)
       .then((result: Array<SelectableValue<string>>) => {
