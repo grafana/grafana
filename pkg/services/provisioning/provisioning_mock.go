@@ -25,7 +25,7 @@ type ProvisioningServiceMock struct {
 	RunFunc                                 func(ctx context.Context) error
 }
 
-func NewProvisioningServiceMock() *ProvisioningServiceMock {
+func NewProvisioningServiceMock(ctx context.Context) *ProvisioningServiceMock {
 	return &ProvisioningServiceMock{
 		Calls: &Calls{},
 	}
@@ -55,7 +55,7 @@ func (mock *ProvisioningServiceMock) ProvisionPlugins() error {
 	return nil
 }
 
-func (mock *ProvisioningServiceMock) ProvisionNotifications() error {
+func (mock *ProvisioningServiceMock) ProvisionNotifications(ctx context.Context) error {
 	mock.Calls.ProvisionNotifications = append(mock.Calls.ProvisionNotifications, nil)
 	if mock.ProvisionNotificationsFunc != nil {
 		return mock.ProvisionNotificationsFunc()
