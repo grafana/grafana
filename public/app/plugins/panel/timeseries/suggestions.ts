@@ -74,7 +74,7 @@ export class TimeSeriesSuggestionsSupplier {
       });
 
       list.append({
-        name: SuggestionName.LineChartGradientColoredLine,
+        name: SuggestionName.LineChartGradientColorScheme,
         fieldConfig: {
           defaults: {
             color: {
@@ -108,7 +108,7 @@ export class TimeSeriesSuggestionsSupplier {
         });
 
         list.append({
-          name: SuggestionName.BarChart,
+          name: SuggestionName.BarChartGradientColorScheme,
           fieldConfig: {
             defaults: {
               color: {
