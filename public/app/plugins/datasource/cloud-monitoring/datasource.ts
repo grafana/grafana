@@ -224,11 +224,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return Promise.resolve([]);
     }
     let { projectName: p, serviceId: s } = this.interpolateProps({ projectName, serviceId });
-    return this.getResource(`slos/v3/projects/${p}/services/${s}/serviceLevelObjectives`);
+    return this.getResource(`slo-services/v3/projects/${p}/services/${s}/serviceLevelObjectives`);
   }
 
   getProjects(): Promise<Array<SelectableValue<string>>> {
-    return this.getResource(`cloudresourcemanager/v1/projects`);
+    return this.getResource(`projects`);
   }
 
   migrateQuery(query: CloudMonitoringQuery): CloudMonitoringQuery {

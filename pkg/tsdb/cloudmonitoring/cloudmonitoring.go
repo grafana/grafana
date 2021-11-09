@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/patrickmn/go-cache"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -79,7 +78,6 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, re
 		cfg:                cfg,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		dsService:          dsService,
-		cache:              cache.New(1*time.Minute, 2*time.Minute),
 	}
 
 	mux := http.NewServeMux()
@@ -140,7 +138,6 @@ type Service struct {
 	cfg                *setting.Cfg
 	im                 instancemgmt.InstanceManager
 	dsService          *datasources.Service
-	cache              *cache.Cache
 }
 
 type QueryModel struct {

@@ -21,12 +21,7 @@ import (
 // nameExp matches the part after the last '/' symbol
 var nameExp = regexp.MustCompile(`([^\/]*)\/*$`)
 
-// responseEntry holds a cache entry for a processed response
-type responseEntry struct {
-	status  int
-	body    []byte
-	headers http.Header
-}
+const resourceManagerPath = "/v1/projects"
 
 type processResponse func(body []byte) ([]byte, error)
 
@@ -35,8 +30,8 @@ func (s *Service) registerRoutes(mux *http.ServeMux) {
 
 	mux.HandleFunc("/metricDescriptors/", s.resourceHandler(cloudMonitor, processMetricDescriptors))
 	mux.HandleFunc("/services/", s.resourceHandler(cloudMonitor, processServices))
-	mux.HandleFunc("/slos/", s.resourceHandler(cloudMonitor, processSLOs))
-	mux.HandleFunc("/cloudresourcemanager/", s.resourceHandler(resourceManager, processProjects))
+	mux.HandleFunc("/slo-services/", s.resourceHandler(cloudMonitor, processSLOs))
+	mux.HandleFunc("/projects", s.resourceHandler(resourceManager, processProjects))
 }
 
 func getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
@@ -60,24 +55,6 @@ func (s *Service) resourceHandler(subDataSource string, responseFn processRespon
 }
 
 func (s *Service) doRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client, responseFn processResponse) http.ResponseWriter {
-	// check cache
-	if s.cache != nil {
-		x, found := s.cache.Get(req.URL.String())
-		if found {
-			slog.Debug("Fetching resource from cache", "key", req.URL.String())
-			entry := x.(responseEntry)
-			writeResponseBytes(rw, entry.status, entry.body)
-
-			for k, v := range entry.headers {
-				rw.Header().Set(k, v[0])
-				for _, v := range v[1:] {
-					rw.Header().Add(k, v)
-				}
-			}
-			return rw
-		}
-	}
-
 	res, err := cli.Do(req)
 	if err != nil {
 		writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
@@ -100,14 +77,6 @@ func (s *Service) doRequest(rw http.ResponseWriter, req *http.Request, cli *http
 		return rw
 	}
 	writeResponseBytes(rw, res.StatusCode, body)
-
-	if s.cache != nil {
-		s.cache.Set(req.URL.String(), responseEntry{
-			status:  res.StatusCode,
-			body:    body,
-			headers: res.Header,
-		}, 0)
-	}
 
 	for k, v := range res.Header {
 		rw.Header().Set(k, v[0])
@@ -295,6 +264,9 @@ func (s *Service) setRequestVariables(req *http.Request, subDataSource string) (
 }
 
 func getTarget(original string) (target string, err error) {
+	if original == "/projects" {
+		return resourceManagerPath, nil
+	}
 	splittedPath := strings.SplitN(original, "/", 3)
 	if len(splittedPath) < 3 {
 		err = fmt.Errorf("the request should contain the service on its path")
