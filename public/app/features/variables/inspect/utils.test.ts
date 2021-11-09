@@ -236,7 +236,7 @@ variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
 ]);
 
-describe.skip('getDependenciesForVariable', () => {
+describe('getDependenciesForVariable', () => {
   describe('when called with a real world example with dependencies', () => {
     it('then it should return correct dependencies', () => {
       const {
@@ -254,7 +254,7 @@ describe.skip('getDependenciesForVariable', () => {
   });
 });
 
-describe.skip('getAllAffectedPanelIdsForVariableChange ', () => {
+describe('getAllAffectedPanelIdsForVariableChange ', () => {
   describe('when called with a real world example with dependencies and panels', () => {
     it('then it should return correct panelIds', () => {
       const {
@@ -1522,7 +1522,9 @@ const dashWithTemplateDependenciesAndPanels: any = {
           text: ['A'],
           value: ['A'],
         },
-        datasource: '${ds}',
+        datasource: {
+          uid: '${ds}',
+        },
         definition: '*',
         description: null,
         error: null,
@@ -1603,7 +1605,9 @@ const dashWithTemplateDependenciesAndPanels: any = {
           text: 'AB',
           value: 'AB',
         },
-        datasource: '${ds}',
+        datasource: {
+          uid: '${ds}',
+        },
         definition: '$query_with_ds.*',
         description: null,
         error: null,
