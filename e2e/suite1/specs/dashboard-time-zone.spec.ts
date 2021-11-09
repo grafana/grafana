@@ -19,9 +19,9 @@ e2e.scenario({
   scenario: () => {
     e2e.flows.openDashboard({ uid: '5SdHCasdf' });
 
-    const fromTimeZone = 'Coordinated Universal Time';
+    const fromTimeZone = 'UTC';
     const toTimeZone = 'America/Chicago';
-    const offset = -5;
+    const offset = offsetBetweenTimeZones(toTimeZone, fromTimeZone);
 
     const panelsToCheck = [
       'Random walk series',
@@ -53,8 +53,7 @@ e2e.scenario({
     e2e.components.TimeZonePicker.container()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.singleValue().should('be.visible').should('have.text', fromTimeZone);
-
+        e2e.components.Select.singleValue().should('be.visible').should('have.text', 'Coordinated Universal Time');
         e2e.components.Select.input().should('be.visible').click();
       });
 
@@ -98,4 +97,17 @@ const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => 
   const diff = Math.abs(differenceInMinutes(utcDate, tzDate)); // use Math.abs if tzDate is in future
 
   return diff <= Math.abs(offset * 60);
+};
+
+const offsetBetweenTimeZones = (timeZone1: string, timeZone2: string, when: Date = new Date()): number => {
+  const t1 = convertDateToAnotherTimeZone(when, timeZone1);
+  const t2 = convertDateToAnotherTimeZone(when, timeZone2);
+  return (t1.getTime() - t2.getTime()) / (1000 * 60 * 60);
+};
+
+const convertDateToAnotherTimeZone = (date: Date, timeZone: string): Date => {
+  const dateString = date.toLocaleString('en-US', {
+    timeZone: timeZone,
+  });
+  return new Date(dateString);
 };
