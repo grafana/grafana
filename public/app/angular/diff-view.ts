@@ -1,5 +1,5 @@
 import angular from 'angular';
-import coreModule from '../core/core_module';
+import coreModule from './core_module';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class DeltaCtrl {

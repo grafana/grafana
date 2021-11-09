@@ -4,8 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { selectors } from '@grafana/e2e-selectors';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { setAngularLoader } from 'app/core/services/AngularLoader';
+import { setAngularLoader, setDataSourceSrv } from '@grafana/runtime';
 import { AnnotationsSettings } from './AnnotationsSettings';
 
 describe('AnnotationsSettings', () => {
@@ -80,7 +79,6 @@ describe('AnnotationsSettings', () => {
       },
     } as any);
 
-    // @ts-ignore
     setAngularLoader({
       load: () => ({
         destroy: jest.fn(),
