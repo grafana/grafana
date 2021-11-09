@@ -1,4 +1,4 @@
-import { coreModule } from '../core/core_module';
+import { coreModule } from './core_module';
 import { RouteProvider } from '../core/navigation/patch/RouteProvider';
 import { RouteParamsProvider } from '../core/navigation/patch/RouteParamsProvider';
 import { ILocationService } from 'angular';

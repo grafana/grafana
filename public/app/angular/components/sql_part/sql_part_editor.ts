@@ -1,12 +1,11 @@
-import { debounce, each, map, partial, escape, unescape } from 'lodash';
+import { debounce, each, indexOf, map, partial, escape, unescape } from 'lodash';
 import $ from 'jquery';
-import coreModule from 'app/core/core_module';
-import { promiseToDigest } from '../../utils/promiseToDigest';
+import coreModule from 'app/angular/core_module';
 
 const template = `
 <div class="dropdown cascade-open">
-<a ng-click="showActionsMenu()" class="query-part-name pointer dropdown-toggle" data-toggle="dropdown">{{part.def.type}}</a>
-<span>(</span><span class="query-part-parameters"></span><span>)</span>
+<a ng-click="showActionsMenu()" class="query-part-name pointer dropdown-toggle" data-toggle="dropdown">{{part.label}}</a>
+<span>{{part.def.wrapOpen}}</span><span class="query-part-parameters"></span><span>{{part.def.wrapClose}}</span>
 <ul class="dropdown-menu">
   <li ng-repeat="action in partActions">
     <a ng-click="triggerPartAction(action)">{{action.text}}</a>
@@ -15,8 +14,8 @@ const template = `
 `;
 
 /** @ngInject */
-export function queryPartEditorDirective(templateSrv: any) {
-  const paramTemplate = '<input type="text" class="hide input-mini tight-form-func-param"></input>';
+export function sqlPartEditorDirective(templateSrv: any) {
+  const paramTemplate = '<input type="text" class="hide input-mini"></input>';
 
   return {
     restrict: 'E',
@@ -31,6 +30,7 @@ export function queryPartEditorDirective(templateSrv: any) {
       const partDef = part.def;
       const $paramsContainer = elem.find('.query-part-parameters');
       const debounceLookup = $scope.debounce;
+      let cancelBlur: any = null;
 
       $scope.partActions = [];
 
@@ -53,8 +53,13 @@ export function queryPartEditorDirective(templateSrv: any) {
         }
       }
 
-      function inputBlur(this: any, paramIndex: number) {
-        const $input = $(this);
+      function inputBlur($input: JQuery, paramIndex: number) {
+        cancelBlur = setTimeout(() => {
+          switchToLink($input, paramIndex);
+        }, 200);
+      }
+
+      function switchToLink($input: JQuery, paramIndex: number) {
         const $link = $input.prev();
         const newValue = $input.val();
 
@@ -73,7 +78,7 @@ export function queryPartEditorDirective(templateSrv: any) {
 
       function inputKeyPress(this: any, paramIndex: number, e: any) {
         if (e.which === 13) {
-          inputBlur.call(this, paramIndex);
+          switchToLink($(this), paramIndex);
         }
       }
 
@@ -98,10 +103,16 @@ export function queryPartEditorDirective(templateSrv: any) {
           }
 
           $scope.$apply(() => {
-            $scope.handleEvent({ $event: { name: 'get-param-options' } }).then((result: any) => {
+            $scope.handleEvent({ $event: { name: 'get-param-options', param: param } }).then((result: any) => {
               const dynamicOptions = map(result, (op) => {
                 return escape(op.value);
               });
+
+              // add current value to dropdown if it's not in dynamicOptions
+              if (indexOf(dynamicOptions, part.params[paramIndex]) === -1) {
+                dynamicOptions.unshift(escape(part.params[paramIndex]));
+              }
+
               callback(dynamicOptions);
             });
           });
@@ -115,9 +126,11 @@ export function queryPartEditorDirective(templateSrv: any) {
           items: 1000,
           updater: (value: string) => {
             value = unescape(value);
-            setTimeout(() => {
-              inputBlur.call($input[0], paramIndex);
-            }, 0);
+            if (value === part.params[paramIndex]) {
+              clearTimeout(cancelBlur);
+              $input.focus();
+              return value;
+            }
             return value;
           },
         });
@@ -135,11 +148,9 @@ export function queryPartEditorDirective(templateSrv: any) {
       }
 
       $scope.showActionsMenu = () => {
-        promiseToDigest($scope)(
-          $scope.handleEvent({ $event: { name: 'get-part-actions' } }).then((res: any) => {
-            $scope.partActions = res;
-          })
-        );
+        $scope.handleEvent({ $event: { name: 'get-part-actions' } }).then((res: any) => {
+          $scope.partActions = res;
+        });
       };
 
       $scope.triggerPartAction = (action: string) => {
@@ -153,17 +164,17 @@ export function queryPartEditorDirective(templateSrv: any) {
           }
 
           if (index > 0) {
-            $('<span>, </span>').appendTo($paramsContainer);
+            $('<span>' + partDef.separator + '</span>').appendTo($paramsContainer);
           }
 
           const paramValue = templateSrv.highlightVariablesAsHtml(part.params[index]);
-          const $paramLink = $('<a class="graphite-func-param-link pointer">' + paramValue + '</a>');
+          const $paramLink = $('<a class="query-part__link">' + paramValue + '</a>');
           const $input = $(paramTemplate);
 
           $paramLink.appendTo($paramsContainer);
           $input.appendTo($paramsContainer);
 
-          $input.blur(partial(inputBlur, index));
+          $input.blur(partial(inputBlur, $input, index));
           $input.keyup(inputKeyDown);
           $input.keypress(partial(inputKeyPress, index));
           $paramLink.click(partial(clickFuncParam, index));
@@ -182,4 +193,4 @@ export function queryPartEditorDirective(templateSrv: any) {
   };
 }
 
-coreModule.directive('queryPartEditor', queryPartEditorDirective);
+coreModule.directive('sqlPartEditor', sqlPartEditorDirective);

@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -64,7 +63,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 		meta, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
 		if !exists {
-			log.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
+			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
 		dsMap["preload"] = meta.Preload

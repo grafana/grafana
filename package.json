@@ -243,6 +243,8 @@
     "@opentelemetry/exporter-collector": "0.23.0",
     "@opentelemetry/semantic-conventions": "1.0.0",
     "@popperjs/core": "2.5.4",
+    "@react-aria/focus": "3.5.0",
+    "@react-aria/overlays": "3.7.2",
     "@reduxjs/toolkit": "1.6.1",
     "@sentry/browser": "5.25.0",
     "@sentry/types": "5.24.2",

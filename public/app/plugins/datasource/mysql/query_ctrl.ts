@@ -2,7 +2,7 @@ import { clone, filter, find, findIndex, indexOf, map } from 'lodash';
 import appEvents from 'app/core/app_events';
 import { MysqlMetaQuery } from './meta_query';
 import { QueryCtrl } from 'app/plugins/sdk';
-import { SqlPart } from 'app/core/components/sql_part/sql_part';
+import { SqlPart } from 'app/angular/components/sql_part/sql_part';
 import MySQLQueryModel from './mysql_query_model';
 import sqlPart from './sql_part';
 import { auto } from 'angular';

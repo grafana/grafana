@@ -1,5 +1,5 @@
 import { extend } from 'lodash';
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 // @ts-ignore
 import Drop from 'tether-drop';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
