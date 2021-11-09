@@ -83,7 +83,6 @@ grafanaRuntime.SystemJS.config({
 
 function exposeToPlugin(name: string, component: any) {
   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
-    console.log('registerDynamic callback', name);
     module.exports = component;
   });
 }
@@ -179,16 +178,20 @@ for (const flotDep of flotDeps) {
 }
 
 export async function importPluginModule(path: string): Promise<any> {
-  const builtIn = builtInPlugins[path];
-  if (builtIn) {
-    // for handling dynamic imports
-    if (typeof builtIn === 'function') {
-      return await builtIn();
-    } else {
-      return Promise.resolve(builtIn);
+  try {
+    const builtIn = builtInPlugins[path];
+    if (builtIn) {
+      // for handling dynamic imports
+      if (typeof builtIn === 'function') {
+        return await builtIn();
+      } else {
+        return builtIn;
+      }
     }
+    return grafanaRuntime.SystemJS.import(path);
+  } catch (error: any) {
+    console.error('Failed to load plugin: ', path, error);
   }
-  return grafanaRuntime.SystemJS.import(path);
 }
 
 export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
