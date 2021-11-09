@@ -215,7 +215,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			settings,
 		)
 		svcDecrypt.RegisterProvider(providerID, &fake)
-		svcDecrypt.Decrypt(context.Background(), encrypted)
+		_, _ = svcDecrypt.Decrypt(context.Background(), encrypted)
 		assert.True(t, fake.decryptCalled, "fake provider's decrypt should be called")
 	})
 }
