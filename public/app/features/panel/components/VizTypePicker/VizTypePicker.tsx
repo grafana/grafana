@@ -1,118 +1,63 @@
-import React, { useCallback, useMemo } from 'react';
-
-import config from 'app/core/config';
+import React, { useMemo } from 'react';
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
-import { EmptySearchResult, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
+import { EmptySearchResult, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, PanelData, PanelPluginMeta } from '@grafana/data';
 import { css } from '@emotion/css';
+import { filterPluginList, getAllPanelPluginMeta } from '../../state/util';
+import { VizTypeChangeDetails } from './types';
 
 export interface Props {
   current: PanelPluginMeta;
-  onTypeChange: (newType: PanelPluginMeta, withModKey: boolean) => void;
+  data?: PanelData;
+  onChange: (options: VizTypeChangeDetails) => void;
   searchQuery: string;
   onClose: () => void;
 }
 
-export function getAllPanelPluginMeta(): PanelPluginMeta[] {
-  const allPanels = config.panels;
-
-  return Object.keys(allPanels)
-    .filter((key) => allPanels[key]['hideFromList'] === false)
-    .map((key) => allPanels[key])
-    .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
-}
-
-export function filterPluginList(
-  pluginsList: PanelPluginMeta[],
-  searchQuery: string,
-  current: PanelPluginMeta
-): PanelPluginMeta[] {
-  if (!searchQuery.length) {
-    return pluginsList.filter((p) => {
-      if (p.state === PluginState.deprecated) {
-        return current.id === p.id;
-      }
-      return true;
-    });
-  }
-
-  const query = searchQuery.toLowerCase();
-  const first: PanelPluginMeta[] = [];
-  const match: PanelPluginMeta[] = [];
-
-  for (const item of pluginsList) {
-    if (item.state === PluginState.deprecated && current.id !== item.id) {
-      continue;
-    }
-
-    const name = item.name.toLowerCase();
-    const idx = name.indexOf(query);
-
-    if (idx === 0) {
-      first.push(item);
-    } else if (idx > 0) {
-      match.push(item);
-    }
-  }
-
-  return first.concat(match);
-}
-
-export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, current }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+export function VizTypePicker({ searchQuery, onChange, current, data }: Props) {
+  const styles = useStyles2(getStyles);
   const pluginsList: PanelPluginMeta[] = useMemo(() => {
     return getAllPanelPluginMeta();
   }, []);
 
-  const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
+  const filteredPluginTypes = useMemo((): PanelPluginMeta[] => {
     return filterPluginList(pluginsList, searchQuery, current);
   }, [current, pluginsList, searchQuery]);
 
-  const renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
-    const isCurrent = plugin.id === current.id;
-    const filteredPluginList = getFilteredPluginList();
-
-    const matchesQuery = filteredPluginList.indexOf(plugin) > -1;
-    return (
-      <VizTypePickerPlugin
-        disabled={!matchesQuery && !!searchQuery}
-        key={plugin.id}
-        isCurrent={isCurrent}
-        plugin={plugin}
-        onClick={(e) => onTypeChange(plugin, Boolean(e.metaKey || e.ctrlKey || e.altKey))}
-      />
-    );
-  };
-
-  const filteredPluginList = getFilteredPluginList();
-  const hasResults = filteredPluginList.length > 0;
-  const renderList = filteredPluginList.concat(pluginsList.filter((p) => filteredPluginList.indexOf(p) === -1));
+  if (filteredPluginTypes.length === 0) {
+    return <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>;
+  }
 
   return (
     <div className={styles.grid}>
-      {hasResults ? (
-        renderList.map((plugin, index) => {
-          if (plugin.state === PluginState.deprecated) {
-            return null;
+      {filteredPluginTypes.map((plugin, index) => (
+        <VizTypePickerPlugin
+          disabled={false}
+          key={plugin.id}
+          isCurrent={plugin.id === current.id}
+          plugin={plugin}
+          onClick={(e) =>
+            onChange({
+              pluginId: plugin.id,
+              withModKey: Boolean(e.metaKey || e.ctrlKey || e.altKey),
+            })
           }
-          return renderVizPlugin(plugin, index);
-        })
-      ) : (
-        <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
-      )}
+        />
+      ))}
     </div>
   );
-};
+}
 
-VizTypePicker.displayName = 'VizTypePicker';
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     grid: css`
       max-width: 100%;
       display: grid;
-      grid-gap: ${theme.spacing.sm};
+      grid-gap: ${theme.spacing(0.5)};
     `,
+    heading: css({
+      ...theme.typography.h5,
+      margin: theme.spacing(0, 0.5, 1),
+    }),
   };
-});
+};

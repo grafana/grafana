@@ -258,6 +258,8 @@ export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
   placement: LegendPlacement;
+  sortBy?: string;
+  sortDesc?: boolean;
 }
 
 export enum BarGaugeDisplayMode {
@@ -272,6 +274,7 @@ export interface TableFieldOptions {
   hidden?: boolean;
   minWidth?: number;
   width?: number;
+  filterable?: boolean;
 }
 
 export const defaultTableFieldOptions: TableFieldOptions = {

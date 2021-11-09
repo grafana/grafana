@@ -27,7 +27,7 @@ import SpanTreeOffset from './SpanTreeOffset';
 import SpanBar from './SpanBar';
 import Ticks from './Ticks';
 
-import { TNil } from '../types';
+import { SpanLinkFunc, TNil } from '../types';
 import { TraceSpan } from '../types/trace';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
@@ -294,9 +294,7 @@ type SpanBarRowProps = {
   removeHoverIndentGuideId: (spanID: string) => void;
   clippingLeft?: boolean;
   clippingRight?: boolean;
-  createSpanLink?: (
-    span: TraceSpan
-  ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
+  createSpanLink?: SpanLinkFunc;
 };
 
 /**
@@ -443,27 +441,31 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             {createSpanLink &&
               (() => {
                 const link = createSpanLink(span);
-                return (
-                  <a
-                    href={link.href}
-                    // Needs to have target otherwise preventDefault would not work due to angularRouter.
-                    target={'_blank'}
-                    style={{ marginRight: '5px' }}
-                    rel="noopener noreferrer"
-                    onClick={
-                      link.onClick
-                        ? (event) => {
-                            if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
-                              event.preventDefault();
-                              link.onClick(event);
+                if (link) {
+                  return (
+                    <a
+                      href={link.href}
+                      // Needs to have target otherwise preventDefault would not work due to angularRouter.
+                      target={'_blank'}
+                      style={{ marginRight: '5px' }}
+                      rel="noopener noreferrer"
+                      onClick={
+                        link.onClick
+                          ? (event) => {
+                              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                                event.preventDefault();
+                                link.onClick(event);
+                              }
                             }
-                          }
-                        : undefined
-                    }
-                  >
-                    {link.content}
-                  </a>
-                );
+                          : undefined
+                      }
+                    >
+                      {link.content}
+                    </a>
+                  );
+                } else {
+                  return null;
+                }
               })()}
 
             {span.references && span.references.length > 1 && (

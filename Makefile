@@ -153,7 +153,7 @@ clean: ## Clean up intermediate build artifacts.
 # This repository's configuration is protected (https://readme.drone.io/signature/).
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
-drone:
+drone: $(DRONE)
 	@if [ "$(DRONE_VERSION)" != "1.4.0" ]; then\
 		echo "WARN: You are using drone-cli ${DRONE_VERSION}. Please update your LOCAL version to 1.4.0. Using latest bingo version...";\
 	fi

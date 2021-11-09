@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import { DashboardModel } from '../../state/DashboardModel';
 import { getBackendSrv } from '@grafana/runtime';
 

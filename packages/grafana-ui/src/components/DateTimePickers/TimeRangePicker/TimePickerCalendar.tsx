@@ -76,9 +76,16 @@ const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopP
 function TimePickerCalendar(props: TimePickerCalendarProps) {
   const theme = useTheme2();
   const styles = getStyles(theme, props.isReversed);
-  const { isOpen, isFullscreen } = props;
+  const { isOpen, isFullscreen, onClose } = props;
   const ref = React.createRef<HTMLElement>();
-  const { overlayProps } = useOverlay(props, ref);
+  const { overlayProps } = useOverlay(
+    {
+      isDismissable: true,
+      isOpen,
+      onClose,
+    },
+    ref
+  );
 
   if (!isOpen) {
     return null;

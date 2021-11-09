@@ -8,6 +8,7 @@ import {
   GENERAL_FOLDER,
   ReadonlyFolderPicker,
 } from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
+import { DashListSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<DashListOptions>(DashList)
   .setPanelOptions((builder) => {
@@ -87,4 +88,5 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
     }
 
     return newOptions;
-  });
+  })
+  .setSuggestionsSupplier(new DashListSuggestionsSupplier());

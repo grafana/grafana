@@ -46,7 +46,7 @@ We’ve continued to bolster the new, unified alerting system launched in Grafan
 
 ## Image Renderer performance improvements and measurement
 
-You can use Grafana’s image renderer to generate JPEG and PDF images of panels and dashboards. Use these images for alert notifications, PDF exports, and reports sent by Grafana. We’ve added additional metrics to the image renderer to help you diagnose its performance, and [included guidance in our documentation](https://grafana.com/docs/grafana/next/image-rendering/#rendering-mode) to help you configure it for the best mix of performance and resource usage. Tests show that we have reduced image load time from the 95th percentile of 10 seconds to less than 3 seconds under normal load.
+You can use Grafana’s image renderer to generate images of panels and dashboards. Grafana uses these images for alert notifications, PDF exports (Grafana Enterprise), and reports sent by Grafana (Grafana Enterprise). We’ve added additional metrics to the image renderer to help you diagnose its performance, and [included guidance in our documentation](https://grafana.com/docs/grafana/next/image-rendering/#rendering-mode) to help you configure it for the best mix of performance and resource usage. Tests show that we have reduced image load time from the 95th percentile of 10 seconds to less than 3 seconds under normal load.
 
 # Grafana Enterprise
 

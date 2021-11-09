@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,7 +27,7 @@ func TestDashboardImport(t *testing.T) {
 		info, dash, err := pm.ImportDashboard("test-app", "dashboards/connections.json", 1, 0, nil, false,
 			[]plugins.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "graphite"},
-			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN}, nil)
+			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN})
 		require.NoError(t, err)
 		require.NotNil(t, info)
 		require.NotNil(t, dash)
@@ -88,7 +90,7 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 				},
 			},
 		}
-		pm := newManager(cfg, &sqlstore.SQLStore{}, &fakeBackendPluginManager{})
+		pm := newManager(cfg, nil, loader.New(nil, cfg, &signature.UnsignedPluginAuthorizer{Cfg: cfg}), &sqlstore.SQLStore{})
 		err := pm.init()
 		require.NoError(t, err)
 

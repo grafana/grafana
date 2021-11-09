@@ -7,75 +7,61 @@ weight = 400
 
 # Create a Grafana managed alerting rule
 
-Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fix thresholds. These rules will be executed and notifications sent by Grafana itself.
+Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fix thresholds. When these are executed, Grafana sends notifications to the contact point.
 
-## Add or edit a Grafana managed alerting rule
+## Add Grafana managed rule
 
-1. In the Grafana menu hover your cursor over the Alerting (bell) icon.
-1. To create a new alert rule, click **New alert rule**. To edit an existing rule, expand one of the rules in the **Grafana** section and click **Edit**.
-1. Click on the **Alert type** drop down and select **Grafana managed alert**.
-1. Fill out the rest of the fields. Descriptions are listed below in [Alert rule fields](#alert-rule-fields).
-1. When you have finished writing your rule, click **Save** in the upper right corner to save the rule,, or **Save and exit** to save and exit rule editing.
+1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
+1. Click **New alert rule**.
+1. In Step 1, add the rule name, type, and storage location.
+   - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
+   - From the **Rule type** drop-down, select **Grafana managed alert**.
+   - From the **Folder** drop-down, select the folder where you want to store the rule. If you do not select a folder, the rule is stored in the General folder. To create a new folder, click the drop-down and enter the new folder name.
+1. In Step 2, add queries and expressions to evaluate.
+   - Keep the default name or hover over and click the edit icon to change the name.
+   - For queries, select a data source from the drop-down.
+   - Add one or more [queries]({{< relref "../../../panels/queries.md" >}}) or [expressions]({{< relref "../../../panels/expressions.md" >}}).
+   - For each expression, select either **Classic condition** to create a single alert rule, or choose from **Math**, **Reduce**, **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
+   - Click **Run queries** to verify that the query is successful.
+1. In Step 3, add conditions.
+   - From the **Condition** drop-down, select the query or expression to trigger the alert rule.
+   - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
+   - For **Evaluate for**, specify the duration for which the condition must be true before an alert fires.
+     > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the Firing state, else it reverts back to the Normal state.
+   - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#no-data-and-error-handling).
+   - Click **Preview alerts** to check the result of running the query at this moment. Preview excludes no data and error handling.
+1. In Step 4, add additional metadata associated with the rule.
+   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "./alert-annotation-label.md" >}}).
+   - Add Runbook URL, panel, dashboard, and alert IDs.
+   - Add custom labels.
+1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
 
-## Alert rule fields
+### Single and multi dimensional rule
 
-This section describes the fields you fill out to create an alert.
+For Grafana managed alerts, you can create a rule with a classic condition or you can create a multi-dimensional rule.
 
-### Alert type
+**Rule with classic condition**
 
-- **Alert name -** Enter a descriptive name. The name will be displayed in the alert rule list, as well as added as `alertname` label to every alert instance that is created from this rule.
-- **Alert type -** Select **Grafana managed alert**.
-- **Folder -** Select a folder this alert rule will belong to. To create a new folder, click on the drop down and type in a new folder name.
+Use the classic condition expression to create a rule that triggers a single alert when its condition is met. For a query that returns multiple series, Grafana does not track the alert state of each series. As a result, Grafana sends only a single alert even when alert conditions are met for multiple series.
 
-![Alert type section screenshot](/static/img/docs/alerting/unified/rule-edit-grafana-alert-type-8-0.png 'Alert type section screenshot')
+**Multi dimensional rule**
 
-### Query
+To generate a separate alert for each series, create a multi-dimensional rule. Use `Math`, `Reduce`, or `Resample` expressions to create a multi-dimensional rule. For example:
 
-Add one or more [queries]({{< relref "../../../panels/queries.md" >}}) or [expressions]({{< relref "../../../panels/expressions.md" >}}). You can use classic condition expression to create a rule that will trigger a single alert if it's threshold is met, or use reduce and math expressions to create a multi dimensional alert rule that can trigger multiple alerts, one per matching series in the query result.
+- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data]({{< relref "../fundamentals/grafana-managed-numeric-rule.md" >}})).
+- Add a `Math` expression with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not fire, or a positive number if it should fire. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
+
+![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
 
 > **Note:** Grafana does not support alert queries with template variables. More information is available at <https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514>.
 
 #### Rule with classic condition
 
-You can use classic condition expression to create a rule that will trigger a single alert if it's conditions is met. It works about the same way as dashboard alerts in previous versions of Grafana.
+For more information, see [expressions documentation]({{< relref "../../../panels/expressions.md" >}}).
 
-1. Add one or more queries
-1. Add an expression. Click on **Operation** dropdown and select **Classic condition**.
-1. Add one or more conditions. For each condition you can specify operator (`AND` / `OR`), aggregation function, query letter and threshold value.
+### No data and error handling
 
-If a query returns multiple series, then the aggregation function and threshold check will be evaluated for each series.It will not track alert state **per series**. This has implications that are detailed in the scenario below.
-
-- Alert condition with query that returns 2 series: **server1** and **server2**
-- **server1** series causes the alert rule to fire and switch to state `Firing`
-- Notifications are sent out with message: _load peaking (server1)_
-- In a subsequent evaluation of the same alert rule, the **server2** series also causes the alert rule to fire
-- No new notifications are sent as the alert rule is already in state `Firing`.
-
-So, as you can see from the above scenario Grafana will not send out notifications when other series cause the alert to fire if the rule already is in state `Firing`. If you want to have alert per series, create a multi dimensional alert rule as described in the section below.
-
-![Query section classic condition](/static/img/docs/alerting/unified/rule-edit-classic-8-0.png 'Query section classic condition screenshot')
-
-#### Multi dimensional rule
-
-You can use reduce and math expressions to create a rule that will create an alert per series returned by the query.
-
-1. Add one or more queries
-2. Add a `reduce` expression for each query to aggregate values in the selected time range into a single value. With some data sources this is not needed for [rules using numeric data]({{< relref "../grafana-managed-numeric-rule.md" >}}).
-3. Add a `math` expressions with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not be firing, or > 0 if it should be firing. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
-
-See or [expressions documentation]({{< relref "../../../panels/expressions.md" >}}) for in depth explanation of `math` and `reduce` expressions.
-
-![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
-
-### Conditions
-
-- **Condition -** Select the letter of the query or expression whose result will trigger the alert rule. You will likely want to select either a `classic condition` or a `math` expression.
-- **Evaluate every -** How often the rule should be evaluated, executing the defined queries and expressions. Must be no less than 10 seconds and a multiple of 10 seconds. Examples: `1m`, `30s`
-- **Evaluate for -** For how long the selected condition should violated before an alert enters `Alerting` state. When condition threshold is violated for the first time, an alert becomes `Pending`. If the **for** time elapses and the condition is still violated, it becomes `Alerting`. Else it reverts back to `Normal`.
-
-#### No Data & Error handling
-
-Toggle **Configure no data and error handling** switch to configure how the rule should handle cases where evaluation results in error or returns no data.
+Configure alerting behavior in the absence of data using information in the following tables.
 
 | No Data Option | Description                                                                                           |
 | -------------- | ----------------------------------------------------------------------------------------------------- |
@@ -87,63 +73,3 @@ Toggle **Configure no data and error handling** switch to configure how the rule
 | ----------------------- | ---------------------------------- |
 | Alerting                | Set alert rule state to `Alerting` |
 | OK                      | Set alert rule state to `Normal`   |
-
-![Conditions section](/static/img/docs/alerting/unified/rule-edit-grafana-conditions-8-0.png 'Conditions section screenshot')
-
-### Details
-
-Annotations and labels can be optionally added in the details section.
-
-#### Annotations
-
-Annotations are key and value pairs that provide additional meta information about the alert, for example description, summary, runbook URL. They are displayed in rule and alert details in the UI and can be used in contact type message templates. Annotations can also be templated, for example `Instance {{ $labels.instance }} down` will have the evaluated `instance` label value added for every alert this rule produces.
-
-#### Labels
-
-Labels are key value pairs that categorize or identify an alert. Labels are used to match alerts in silences or match and groups alerts in notification policies. Labels are also shown in rule or alert details in the UI and can be used in contact type message templates. For example, it is common to add a `severity` label and then configure a separate notification policy for each severity. Or one could add a `team` label and configure team specific notification policies, or silence all alerts for a particular team. Labels can also be templated like annotations, for example `{{ $labels.namespace }}/{{ $labels.job }}` will produce a new rule label that will have the evaluated `namespace` and `job` label value added for every alert this rule produces. The rule labels take precedence over the labels produced by the query/condition.
-
-![Details section](/static/img/docs/alerting/unified/rule-edit-details-8-0.png 'Details section screenshot')
-
-#### Template variables
-
-The following template variables are available when expanding annotations and labels.
-
-| Name    | Description                                                                                                                                                                                                                                                                         |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| $labels | The labels from the query or condition. For example, `{{ $labels.instance }}` and `{{ $labels.job }}`. This is unavailable when the rule uses a classic condition.                                                                                                                  |
-| $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the expression. This is unavailable when the rule uses a classic condition. |
-| $value  | The value string of the alert instance. For example, `[ var='A' labels={instance=foo} value=10 ]`.                                                                                                                                                                                  |
-
-#### Template functions
-
-The following template functions are available when expanding annotations and labels.
-
-| Name               | Argument                   | Return                 | Description                                                                                                                        |
-| ------------------ | -------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| humanize           | number or string           | string                 | Converts a number to a more readable format, using metric prefixes.                                                                |
-| humanize1024       | number or string           | string                 | Like humanize, but uses 1024 as the base rather than 1000.                                                                         |
-| humanizeDuration   | number or string           | string                 | Converts a duration in seconds to a more readable format.                                                                          |
-| humanizePercentage | number or string           | string                 | Converts a ratio value to a fraction of 100.                                                                                       |
-| humanizeTimestamp  | number or string           | string                 | Converts a Unix timestamp in seconds to a more readable format.                                                                    |
-| title              | string                     | string                 | strings.Title, capitalises first character of each word.                                                                           |
-| toUpper            | string                     | string                 | strings.ToUpper, converts all characters to upper case.                                                                            |
-| toLower            | string                     | string                 | strings.ToLower, converts all characters to lower case.                                                                            |
-| match              | pattern, text              | boolean                | regexp.MatchString Tests for a unanchored regexp match.                                                                            |
-| reReplaceAll       | pattern, replacement, text | string                 | Regexp.ReplaceAllString Regexp substitution, unanchored.                                                                           |
-| graphLink          | expr                       | string                 | Not supported                                                                                                                      |
-| tableLink          | expr                       | string                 | Not supported                                                                                                                      |
-| args               | []interface{}              | map[string]interface{} | Converts a list of objects to a map with keys, for example, arg0, arg1. Use this function to pass multiple arguments to templates. |
-| externalURL        | nothing                    | string                 | Returns a string representing the external URL.                                                                                    |
-| pathPrefix         | nothing                    | string                 | Returns the path of the external URL.                                                                                              |
-| tmpl               | string, []interface{}      | nothing                | Not supported.                                                                                                                     |
-| safeHtml           | string                     | string                 | Not supported.                                                                                                                     |
-| query              | query string               | []sample               | Not supported.                                                                                                                     |
-| first              | []sample                   | sample                 | Not supported.                                                                                                                     |
-| label              | label, sample              | string                 | Not supported.                                                                                                                     |
-| strvalue           | []sample                   | string                 | Not supported.                                                                                                                     |
-| value              | sample                     | float64                | Not supported.                                                                                                                     |
-| sortByLabel        | label, []samples           | []sample               | Not supported.                                                                                                                     |
-
-## Preview alerts
-
-To evaluate the rule and see what alerts it would produce, click **Preview alerts**. It will display a list of alerts with state and value for each one.
