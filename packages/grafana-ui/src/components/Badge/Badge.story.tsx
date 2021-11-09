@@ -1,12 +1,12 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { Story, Meta } from '@storybook/react';
 import { Badge, BadgeProps } from '@grafana/ui';
 import { iconOptions } from '../../utils/storybook/knobs';
 
 export default {
   title: 'Data Display/Badge',
   component: Badge,
-  decorators: [],
+  decorators: [(story) => <div>{story()}</div>],
   parameters: {
     docs: {},
   },
@@ -15,7 +15,7 @@ export default {
     color: { control: 'select' },
     text: { control: 'text' },
   },
-};
+} as Meta;
 
 const Template: Story<BadgeProps> = (args) => <Badge {...args} />;
 
