@@ -93,10 +93,6 @@ export function grafanaAppDirective() {
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = () => {};
 
-      appEvents.on(CoreEvents.toggleSidemenuMobile, () => {
-        body.toggleClass('sidemenu-open--xs');
-      });
-
       appEvents.on(CoreEvents.toggleSidemenuHidden, () => {
         body.toggleClass('sidemenu-hidden');
       });
