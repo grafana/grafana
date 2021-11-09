@@ -162,6 +162,7 @@ For example, creating an API key produces an audit log like this:
 | Enable permissions for datasource                  | `{"action": "enable-permissions", "resources": [{"type": "datasource"}]}`                 |
 | Disable permissions for datasource                 | `{"action": "disable-permissions", "resources": [{"type": "datasource"}]}`                |
 | Grant datasource permission to role, team, or user | `{"action": "create", "resources": [{"type": "datasource"}, {"type": "dspermission"}]}`\* |
+| Remove datasource permission                       | `{"action": "delete", "resources": [{"type": "datasource"}, {"type": "dspermission"}]}`   |
 | Enable caching for datasource                      | `{"action": "enable-cache", "resources": [{"type": "datasource"}]}`                       |
 | Disable caching for datasource                     | `{"action": "disable-cache", "resources": [{"type": "datasource"}]}`                      |
 | Update datasource caching configuration            | `{"action": "update", "resources": [{"type": "datasource"}]}`                             |
