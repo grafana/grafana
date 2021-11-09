@@ -27,9 +27,24 @@ export class IconPanel extends Component<Props> {
 
   initElement = (props: Props) => {
     this.element = new ElementState(iconItem, props.options.root as any);
-    this.element.updateSize(props.width, props.height);
+    this.updateSize(props);
     this.element.updateData(this.dims);
     return this.element;
+  };
+
+  updateSize = (props: Props) => {
+    const { width, height } = props;
+    this.element.anchor = {
+      top: true,
+      left: true,
+    };
+    this.element.placement = {
+      left: 0,
+      top: 0,
+      width,
+      height,
+    };
+    this.element.updateSize(width, height);
   };
 
   dims: DimensionContext = {
@@ -44,7 +59,7 @@ export class IconPanel extends Component<Props> {
     let changed = false;
 
     if (width !== nextProps.width || height !== nextProps.height) {
-      this.element.updateSize(nextProps.width, nextProps.height);
+      this.updateSize(nextProps);
       changed = true;
     }
     if (data !== nextProps.data) {

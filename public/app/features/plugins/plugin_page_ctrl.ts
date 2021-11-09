@@ -3,9 +3,9 @@ import { find } from 'lodash';
 
 import { getPluginSettings } from './PluginSettingsCache';
 import { PluginMeta, AppEvents } from '@grafana/data';
-import { NavModelSrv } from 'app/core/core';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { promiseToDigest } from '../../core/utils/promiseToDigest';
+import { promiseToDigest } from '../../angular/promiseToDigest';
+import { NavModelSrv } from 'app/angular/services/nav_model_srv';
 
 export class AppPageCtrl {
   page: any;

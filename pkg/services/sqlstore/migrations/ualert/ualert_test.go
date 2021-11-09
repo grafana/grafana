@@ -1,7 +1,6 @@
 package ualert
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -31,17 +30,16 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			err: fmt.Errorf("failed to validate receiver \"SlackWithBadURL\" of type \"slack\": invalid URL %q: parse %q: net/url: invalid control character in URL", invalidUri, invalidUri),
 		},
 		{
-			name: "when a slack receiver has an invalid recipient - it should error",
+			name: "when a slack receiver has an invalid recipient - it should not error",
 			receivers: []*PostableGrafanaReceiver{
 				{
 					UID:            util.GenerateShortUID(),
 					Name:           "SlackWithBadRecipient",
 					Type:           "slack",
-					Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "this-doesnt-pass"}),
+					Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "this passes"}),
 					SecureSettings: map[string]string{"url": "http://webhook.slack.com/myuser"},
 				},
 			},
-			err: errors.New("failed to validate receiver \"SlackWithBadRecipient\" of type \"slack\": recipient on invalid format: \"this-doesnt-pass\""),
 		},
 		{
 			name: "when the configuration is valid - it should not error",

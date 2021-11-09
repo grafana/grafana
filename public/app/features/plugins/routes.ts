@@ -1,7 +1,7 @@
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
-import { isGrafanaAdmin } from './admin/helpers';
+import { isGrafanaAdmin } from './admin/permissions';
 import { PluginAdminRoutes } from './admin/types';
 
 const pluginAdminRoutes = [

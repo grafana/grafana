@@ -6,12 +6,13 @@ import {
   getDefaultRelativeTimeRange,
   TimeRange,
   IntervalValues,
+  DataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -189,7 +190,10 @@ const getDefaultExpression = (refId: string): AlertQuery => {
     refId,
     hide: false,
     type: ExpressionQueryType.classic,
-    datasource: ExpressionDatasourceID,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: 'grafana-expression',
+    },
     conditions: [
       {
         type: 'query',
@@ -223,14 +227,15 @@ const dataQueriesToGrafanaQueries = async (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
   scopedVars: ScopedVars | {},
-  datasourceName?: string,
+  panelDataSourceRef?: DataSourceRef,
   maxDataPoints?: number,
   minInterval?: string
 ): Promise<AlertQuery[]> => {
   const result: AlertQuery[] = [];
+
   for (const target of queries) {
-    const datasource = await getDataSourceSrv().get(target.datasource || datasourceName);
-    const dsName = datasource.name;
+    const datasource = await getDataSourceSrv().get(target.datasource?.uid ? target.datasource : panelDataSourceRef);
+    const dsRef = { uid: datasource.uid, type: datasource.type };
 
     const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
     const { interval, intervalMs } = getIntervals(range, minInterval ?? datasource.interval, maxDataPoints);
@@ -239,37 +244,37 @@ const dataQueriesToGrafanaQueries = async (
       __interval_ms: { text: intervalMs, value: intervalMs },
       ...scopedVars,
     };
+
     const interpolatedTarget = datasource.interpolateVariablesInQueries
       ? await datasource.interpolateVariablesInQueries([target], queryVariables)[0]
       : target;
-    if (dsName) {
-      // expressions
-      if (dsName === ExpressionDatasourceID) {
+
+    // expressions
+    if (dsRef.uid === ExpressionDatasourceUID) {
+      const newQuery: AlertQuery = {
+        refId: interpolatedTarget.refId,
+        queryType: '',
+        relativeTimeRange,
+        datasourceUid: ExpressionDatasourceUID,
+        model: interpolatedTarget,
+      };
+      result.push(newQuery);
+      // queries
+    } else {
+      const datasourceSettings = getDataSourceSrv().getInstanceSettings(dsRef);
+      if (datasourceSettings && datasourceSettings.meta.alerting) {
         const newQuery: AlertQuery = {
           refId: interpolatedTarget.refId,
-          queryType: '',
+          queryType: interpolatedTarget.queryType ?? '',
           relativeTimeRange,
-          datasourceUid: ExpressionDatasourceUID,
-          model: interpolatedTarget,
+          datasourceUid: datasourceSettings.uid,
+          model: {
+            ...interpolatedTarget,
+            maxDataPoints,
+            intervalMs,
+          },
         };
         result.push(newQuery);
-        // queries
-      } else {
-        const datasourceSettings = getDataSourceSrv().getInstanceSettings(dsName);
-        if (datasourceSettings && datasourceSettings.meta.alerting) {
-          const newQuery: AlertQuery = {
-            refId: interpolatedTarget.refId,
-            queryType: interpolatedTarget.queryType ?? '',
-            relativeTimeRange,
-            datasourceUid: datasourceSettings.uid,
-            model: {
-              ...interpolatedTarget,
-              maxDataPoints,
-              intervalMs,
-            },
-          };
-          result.push(newQuery);
-        }
       }
     }
   }

@@ -24,6 +24,7 @@ exports[`PromExploreQueryEditor should render component 1`] = `
       }
     />
   }
+  app="explore"
   data={
     Object {
       "request": Object {

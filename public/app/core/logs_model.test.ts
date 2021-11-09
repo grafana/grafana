@@ -1,7 +1,12 @@
 import {
   ArrayVector,
   DataFrame,
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  dateTimeParse,
   FieldType,
+  LoadingState,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
@@ -10,14 +15,17 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import {
+  COMMON_LABELS,
   dataFrameToLogsModel,
   dedupLogRows,
-  getSeriesProperties,
-  logSeriesToLogsModel,
   filterLogLevels,
+  getSeriesProperties,
   LIMIT_LABEL,
-  COMMON_LABELS,
+  logSeriesToLogsModel,
+  queryLogsVolume,
 } from './logs_model';
+import { Observable } from 'rxjs';
+import { MockObservableDataSourceApi } from '../../test/mocks/datasource_srv';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -937,5 +945,122 @@ describe('getSeriesProperties()', () => {
     expect(result.bucketSize).toBe(4);
     // From time is also aligned to bucketSize (divisible by 4)
     expect(result.visibleRange).toMatchObject({ from: 8, to: 30 });
+  });
+});
+
+describe('logs volume', () => {
+  class TestDataQuery implements DataQuery {
+    refId = 'a';
+    target = '';
+  }
+
+  let volumeProvider: Observable<DataQueryResponse>,
+    datasource: MockObservableDataSourceApi,
+    request: DataQueryRequest<TestDataQuery>;
+
+  function createFrame(labels: object, timestamps: number[], values: number[]) {
+    return toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: timestamps },
+        {
+          name: 'Number',
+          type: FieldType.number,
+          values,
+          labels,
+        },
+      ],
+    });
+  }
+
+  function createExpectedFields(levelName: string, timestamps: number[], values: number[]) {
+    return [
+      { name: 'Time', values: { buffer: timestamps } },
+      {
+        name: 'Value',
+        config: { displayNameFromDS: levelName },
+        values: { buffer: values },
+      },
+    ];
+  }
+
+  function setup(datasourceSetup: () => void) {
+    datasourceSetup();
+    request = ({
+      targets: [{ target: 'volume query 1' }, { target: 'volume query 2' }],
+      scopedVars: {},
+    } as unknown) as DataQueryRequest<TestDataQuery>;
+    volumeProvider = queryLogsVolume(datasource, request, {
+      extractLevel: (dataFrame: DataFrame) => {
+        return dataFrame.fields[1]!.labels!.level === 'error' ? LogLevel.error : LogLevel.unknown;
+      },
+      range: {
+        from: dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' }),
+        to: dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' }),
+        raw: { from: '0', to: '1' },
+      },
+      targets: request.targets,
+    });
+  }
+
+  function setupMultipleResults() {
+    // level=unknown
+    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5]);
+    // level=error
+    const resultAFrame2 = createFrame({ app: 'app01', level: 'error' }, [100, 200, 300], [0, 1, 0]);
+    // level=unknown
+    const resultBFrame1 = createFrame({ app: 'app02' }, [100, 200, 300], [1, 2, 3]);
+    // level=error
+    const resultBFrame2 = createFrame({ app: 'app02', level: 'error' }, [100, 200, 300], [1, 1, 1]);
+
+    datasource = new MockObservableDataSourceApi('loki', [
+      {
+        data: [resultAFrame1, resultAFrame2],
+      },
+      {
+        data: [resultBFrame1, resultBFrame2],
+      },
+    ]);
+  }
+
+  function setupErrorResponse() {
+    datasource = new MockObservableDataSourceApi('loki', [], undefined, 'Error message');
+  }
+
+  it('aggregates data frames by level', async () => {
+    setup(setupMultipleResults);
+
+    await expect(volumeProvider).toEmitValuesWith((received) => {
+      expect(received).toMatchObject([
+        { state: LoadingState.Loading, error: undefined, data: [] },
+        {
+          state: LoadingState.Done,
+          error: undefined,
+          data: [
+            {
+              fields: createExpectedFields('unknown', [100, 200, 300], [6, 7, 8]),
+            },
+            {
+              fields: createExpectedFields('error', [100, 200, 300], [1, 2, 1]),
+            },
+          ],
+        },
+      ]);
+    });
+  });
+
+  it('returns error', async () => {
+    setup(setupErrorResponse);
+
+    await expect(volumeProvider).toEmitValuesWith((received) => {
+      expect(received).toMatchObject([
+        { state: LoadingState.Loading, error: undefined, data: [] },
+        {
+          state: LoadingState.Error,
+          error: 'Error message',
+          data: [],
+        },
+        'Error message',
+      ]);
+    });
   });
 });

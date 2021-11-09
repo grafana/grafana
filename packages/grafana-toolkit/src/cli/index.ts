@@ -1,6 +1,6 @@
 // @ts-ignore
 import chalk from 'chalk';
-import program from 'commander';
+import { program } from 'commander';
 import { promises as fs } from 'fs';
 import { execTask } from './utils/execTask';
 import { startTask } from './tasks/core.start';
@@ -280,10 +280,11 @@ export const run = (includeInternalScripts = false) => {
 
   program.parse(process.argv);
 
-  if (program.depreciate && program.depreciate.length === 2) {
+  const options = program.opts();
+  if (options.depreciate && options.depreciate.length === 2) {
     console.log(
       chalk.yellow.bold(
-        `[NPM script depreciation] ${program.depreciate[0]} is deprecated! Use ${program.depreciate[1]} instead!`
+        `[NPM script depreciation] ${options.depreciate[0]} is deprecated! Use ${options.depreciate[1]} instead!`
       )
     );
   }

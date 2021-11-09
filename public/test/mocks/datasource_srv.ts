@@ -4,6 +4,8 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
+  DataSourceRef,
+  getDataSourceUID,
 } from '@grafana/data';
 import { Observable } from 'rxjs';
 
@@ -12,15 +14,16 @@ export class DatasourceSrvMock {
     //
   }
 
-  get(name?: string): Promise<DataSourceApi> {
-    if (!name) {
+  get(ref?: DataSourceRef | string): Promise<DataSourceApi> {
+    if (!ref) {
       return Promise.resolve(this.defaultDS);
     }
-    const ds = this.datasources[name];
+    const uid = getDataSourceUID(ref) ?? '';
+    const ds = this.datasources[uid];
     if (ds) {
       return Promise.resolve(ds);
     }
-    return Promise.reject('Unknown Datasource: ' + name);
+    return Promise.reject(`Unknown Datasource: ${JSON.stringify(ref)}`);
   }
 }
 

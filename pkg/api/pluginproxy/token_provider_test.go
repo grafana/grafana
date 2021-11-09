@@ -23,11 +23,11 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 	server := httptest.NewServer(apiHandler)
 	defer server.Close()
 
-	pluginRoute := &plugins.AppPluginRoute{
+	pluginRoute := &plugins.Route{
 		Path:   "pathwithtokenauth1",
 		URL:    "",
 		Method: "GET",
-		TokenAuth: &plugins.JwtTokenAuth{
+		TokenAuth: &plugins.JWTTokenAuth{
 			Url: server.URL + "/oauth/token",
 			Scopes: []string{
 				"https://www.testapi.com/auth/monitoring.read",
@@ -43,7 +43,7 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 		},
 	}
 
-	authParams := &plugins.JwtTokenAuth{
+	authParams := &plugins.JWTTokenAuth{
 		Url: server.URL + "/oauth/token",
 		Scopes: []string{
 			"https://www.testapi.com/auth/monitoring.read",

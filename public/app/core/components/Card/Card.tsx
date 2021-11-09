@@ -3,6 +3,7 @@ import { cx } from '@emotion/css';
 
 export interface CardProps {
   logoUrl?: string;
+  logoAlt?: string;
   title: string;
   description?: string;
   labels?: React.ReactNode;
@@ -14,6 +15,7 @@ export interface CardProps {
 
 export const Card: React.FC<CardProps> = ({
   logoUrl,
+  logoAlt,
   title,
   description,
   labels,
@@ -26,7 +28,7 @@ export const Card: React.FC<CardProps> = ({
 
   return (
     <div className={mainClassName} onClick={onClick} aria-label={ariaLabel}>
-      {logoUrl && <img className="add-data-source-item-logo" src={logoUrl} />}
+      {logoUrl && <img className="add-data-source-item-logo" src={logoUrl} alt={logoAlt ?? ''} />}
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{title}</span>
         {description && <span className="add-data-source-item-desc">{description}</span>}

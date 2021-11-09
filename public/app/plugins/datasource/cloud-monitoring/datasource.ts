@@ -31,7 +31,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   ) {
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
-    this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
+    this.api = new API(`/api/datasources/${this.id}/resources/cloudmonitoring/v3/projects/`);
     this.variables = new CloudMonitoringVariableSupport(this);
     this.intervalMs = 0;
   }
@@ -293,7 +293,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         value: projectId,
         label: name,
       }),
-      baseUrl: `${this.instanceSettings.url!}/cloudresourcemanager/v1/`,
+      baseUrl: `/api/datasources/${this.id}/resources/cloudresourcemanager/v1/`,
     });
   }
 

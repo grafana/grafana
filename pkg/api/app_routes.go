@@ -17,6 +17,7 @@ import (
 )
 
 var pluginProxyTransport *http.Transport
+var applog = log.New("app.routes")
 
 func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 	pluginProxyTransport = &http.Transport{
@@ -32,9 +33,9 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	for _, plugin := range hs.PluginManager.Apps() {
+	for _, plugin := range hs.pluginStore.Plugins(plugins.App) {
 		for _, route := range plugin.Routes {
-			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
+			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.ID, route.Path)
 			handlers := make([]web.Handler, 0)
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
 				ReqSignedIn: true,
@@ -47,20 +48,21 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 					handlers = append(handlers, middleware.RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN))
 				}
 			}
-			handlers = append(handlers, AppPluginRoute(route, plugin.Id, hs))
+			handlers = append(handlers, AppPluginRoute(route, plugin.ID, hs))
 			for _, method := range strings.Split(route.Method, ",") {
 				r.Handle(strings.TrimSpace(method), url, handlers)
 			}
-			log.Debugf("Plugins: Adding proxy route %s", url)
+
+			applog.Debug("Plugins: Adding proxy route", "url", url)
 		}
 	}
 }
 
-func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer) web.Handler {
+func AppPluginRoute(route *plugins.Route, appID string, hs *HTTPServer) web.Handler {
 	return func(c *models.ReqContext) {
 		path := web.Params(c.Req)["*"]
 
-		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg, hs.EncryptionService)
+		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg, hs.SecretsService)
 		proxy.Transport = pluginProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req)
 	}

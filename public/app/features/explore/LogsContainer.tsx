@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Collapse } from '@grafana/ui';
 import {
   AbsoluteTimeRange,
@@ -36,7 +36,7 @@ interface LogsContainerProps extends PropsFromRedux {
   onStopScanning: () => void;
 }
 
-export class LogsContainer extends PureComponent<LogsContainerProps> {
+class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });

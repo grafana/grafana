@@ -14,6 +14,7 @@ import {
   EventBusExtended,
   DataQueryResponse,
 } from '@grafana/data';
+import { ExploreGraphStyle } from 'app/core/utils/explore';
 
 export enum ExploreId {
   left = 'left',
@@ -167,6 +168,9 @@ export interface ExploreItemState {
   logsVolumeDataProvider?: Observable<DataQueryResponse>;
   logsVolumeDataSubscription?: SubscriptionLike;
   logsVolumeData?: DataQueryResponse;
+
+  /* explore graph style */
+  graphStyle: ExploreGraphStyle;
 }
 
 export interface ExploreUpdateState {
