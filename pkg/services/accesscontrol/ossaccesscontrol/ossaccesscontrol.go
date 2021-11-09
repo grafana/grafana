@@ -92,8 +92,12 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	permissions, ok := accesscontrol.PermissionsFromContext(ctx)
+	if ok {
+		return permissions, nil
+	}
+
 	builtinRoles := ac.GetUserBuiltInRoles(user)
-	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
 		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
 			for _, name := range roleNames {
