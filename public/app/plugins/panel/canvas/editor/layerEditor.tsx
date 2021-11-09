@@ -59,6 +59,11 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
 
     // Dynamically fill the selected element
     build: (builder, context) => {
+      const currentLayer = scene.currentLayer;
+      if (currentLayer && !currentLayer.isRoot()) {
+        // TODO: the non-root nav option
+      }
+
       builder.addCustomEditor({
         id: 'content',
         path: 'root',
@@ -67,19 +72,10 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
         settings: { scene, layer: scene.currentLayer, selected },
       });
 
-      // // force clean layer configuration
-      // const layer = canvasElementRegistry.getIfExists(options?.type ?? DEFAULT_CANVAS_ELEMENT_CONFIG.type)!;
-      //const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultConfig, ...options?.config } };
       const ctx = { ...context, options };
-
-      // if (layer.registerOptionsUI) {
-      //   layer.registerOptionsUI(builder, ctx);
-      // }
-
       optionBuilder.addBackground(builder as any, ctx);
       optionBuilder.addBorder(builder as any, ctx);
 
-      const currentLayer = scene.currentLayer;
       if (currentLayer && !currentLayer.isRoot()) {
         builder.addCustomEditor({
           category: ['Layout'],
