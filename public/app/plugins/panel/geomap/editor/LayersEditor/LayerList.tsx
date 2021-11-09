@@ -23,6 +23,10 @@ export const LayerList = ({ layers, onDragEnd, selected, actions }: LayerListPro
     return sel ? `${style.row} ${style.sel}` : style.row;
   };
 
+  const onLayerNameChange = (layer: MapLayerState<any>) => {
+    actions.updateLayer(layer.UID, layer);
+  };
+
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="droppable">
@@ -43,7 +47,7 @@ export const LayerList = ({ layers, onDragEnd, selected, actions }: LayerListPro
                         {...provided.dragHandleProps}
                         onMouseDown={() => actions!.selectLayer(element.UID)}
                       >
-                        <LayerHeader layer={element} />
+                        <LayerHeader layer={element} onChange={onLayerNameChange} />
                         <div className={style.textWrapper}>&nbsp; ({element.options.type})</div>
 
                         <IconButton

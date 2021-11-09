@@ -5,9 +5,12 @@ import { GrafanaTheme } from '@grafana/data';
 
 import { MapLayerState } from '../../types';
 
-type LayerHeaderProps = { layer: MapLayerState<any> };
+type LayerHeaderProps = {
+  layer: MapLayerState<any>;
+  onChange: (layer: MapLayerState<any>) => void;
+};
 
-export const LayerHeader = ({ layer }: LayerHeaderProps) => {
+export const LayerHeader = ({ layer, onChange }: LayerHeaderProps) => {
   const styles = useStyles(getStyles);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -25,7 +28,12 @@ export const LayerHeader = ({ layer }: LayerHeaderProps) => {
       return;
     }
 
-    // Save name change here
+    if (layer.name !== newName) {
+      onChange({
+        ...layer,
+        name: newName,
+      });
+    }
   };
 
   const onInputChange = (event: React.SyntheticEvent<HTMLInputElement>) => {

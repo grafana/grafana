@@ -46,6 +46,7 @@ interface State extends OverlayProps {
 export interface GeomapLayerActions {
   selectLayer: (uid: string) => void;
   deleteLayer: (uid: string) => void;
+  updateLayer: (uid: string, updatedLayer: MapLayerState<any>) => void;
   addlayer: (type: string) => void;
   reorder: (src: number, dst: number) => void;
 }
@@ -151,6 +152,21 @@ export class GeomapPanel extends Component<Props, State> {
       }
       this.layers = layers;
       this.doOptionsUpdate(0);
+    },
+    updateLayer: (uid: string, updatedLayer: MapLayerState<any>) => {
+      const selected = this.layers.findIndex((v) => v.UID === uid);
+      const layers: MapLayerState[] = [];
+      for (const lyr of this.layers) {
+        if (lyr.UID === uid) {
+          this.map?.removeLayer(lyr.layer);
+          this.map?.addLayer(updatedLayer.layer);
+          layers.push(updatedLayer);
+        } else {
+          layers.push(lyr);
+        }
+      }
+      this.layers = layers;
+      this.doOptionsUpdate(selected);
     },
     addlayer: (type: string) => {
       const item = geomapLayerRegistry.getIfExists(type);
