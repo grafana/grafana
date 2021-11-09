@@ -55,6 +55,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   stacking,
   text,
   rawValue,
+  getColor,
   allFrames,
   valueRotation,
   valueMaxLength,
@@ -83,6 +84,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     barWidth,
     stacking,
     rawValue,
+    getColor,
     formatValue,
     text,
     showValue,
@@ -324,6 +326,10 @@ export function prepareGraphableFrames(
   for (let frame of series) {
     const fields: Field[] = [];
     for (const field of frame.fields) {
+      // if (field.name === options.colorField) {
+      //   continue;
+      // }
+
       if (field.type === FieldType.number) {
         field.state = field.state ?? {};
 

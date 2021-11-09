@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
 import { cloneDeep } from 'lodash';
-import { DataFrame, FieldType, TimeRange } from '@grafana/data';
+import { DataFrame, Field, FieldType, TimeRange } from '@grafana/data';
 import { GraphNG, GraphNGProps, PlotLegend, UPlotConfigBuilder, usePanelContext, useTheme2 } from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
 import { BarChartOptions } from './types';
 import { isLegendOrdered, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
+import { findField } from 'app/features/dimensions';
 
 /**
  * @alpha
@@ -22,9 +23,22 @@ const propsToDiff: Array<string | PropDiffFn> = [
   'groupWidth',
   'stacking',
   'showValue',
+  'colorField',
   'legend',
   (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
 ];
+
+function findFieldInFrames(frames?: DataFrame[], name?: string): Field | undefined {
+  if (frames?.length) {
+    for (const frame of frames) {
+      const f = findField(frame, name);
+      if (f) {
+        return f;
+      }
+    }
+  }
+  return undefined;
+}
 
 export const BarChart: React.FC<BarChartProps> = (props) => {
   const theme = useTheme2();
@@ -66,7 +80,20 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       text,
       valueRotation,
       valueMaxLength,
+      colorField,
     } = props;
+
+    let getColor;
+
+    if (colorField != null) {
+      let f = findFieldInFrames(allFrames, colorField);
+
+      if (f) {
+        getColor = (seriesIdx: number, valueIdx: number) => {
+          return f?.display!(f.values.get(valueIdx)).color;
+        };
+      }
+    }
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -85,6 +112,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       tooltip,
       text,
       rawValue,
+      getColor,
       allFrames: props.frames,
     });
   };

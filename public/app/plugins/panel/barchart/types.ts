@@ -22,6 +22,7 @@ export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, 
   valueRotation: number;
   valueMaxLength: number;
   rawValue: (seriesIdx: number, valueIdx: number) => number;
+  colorField?: string;
 }
 
 /**

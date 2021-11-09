@@ -43,6 +43,7 @@ export interface BarsOptions {
   showValue: VisibilityMode;
   stacking: StackingMode;
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
+  getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
   formatValue: (seriesIdx: number, value: any) => string;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
@@ -54,7 +55,7 @@ export interface BarsOptions {
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri, xDir: dir, rawValue, formatValue, showValue } = opts;
+  const { xOri, xDir: dir, rawValue, getColor, formatValue, showValue } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
@@ -127,11 +128,27 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 
   let barsPctLayout: Array<null | { offs: number[]; size: number[] }> = [];
+  let barsColors: Array<null | { fill: Array<string | null>; stroke: Array<string | null> }> = [];
   let barRects: Rect[] = [];
 
   // minimum available space for labels between bar end and plotting area bound (in canvas pixels)
   let vSpace = Infinity;
   let hSpace = Infinity;
+
+  let useMappedColors = getColor != null;
+
+  let mappedColorDisp = useMappedColors
+    ? {
+        fill: {
+          unit: 3,
+          values: (u: uPlot, seriesIdx: number) => barsColors[seriesIdx]!.fill,
+        },
+        stroke: {
+          unit: 3,
+          values: (u: uPlot, seriesIdx: number) => barsColors[seriesIdx]!.stroke,
+        },
+      }
+    : {};
 
   let barsBuilder = uPlot.paths.bars!({
     disp: {
@@ -143,6 +160,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         unit: 2,
         values: (u, seriesIdx) => barsPctLayout[seriesIdx]!.size,
       },
+      ...mappedColorDisp,
     },
     // collect rendered bar geometry
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
@@ -192,6 +210,28 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     } else {
       barsPctLayout = [null as any].concat(distrTwo(u.data[0].length, u.data.length - 1));
     }
+
+    if (useMappedColors) {
+      barsColors = [null];
+
+      // map per-bar colors
+      for (let i = 1; i < u.data.length; i++) {
+        let colors = u.data[i].map((value, valueIdx) => {
+          if (value != null) {
+            console.log(value, valueIdx);
+            return getColor!(i, valueIdx, value);
+          }
+
+          return null;
+        });
+
+        barsColors.push({
+          fill: colors,
+          stroke: Array(u.data[i].length).fill(null),
+        });
+      }
+    }
+
     barRects.length = 0;
     vSpace = hSpace = Infinity;
   };
