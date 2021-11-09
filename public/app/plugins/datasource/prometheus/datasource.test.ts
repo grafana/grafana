@@ -99,6 +99,33 @@ describe('PrometheusDatasource', () => {
     });
   });
 
+  describe('Remote write status', () => {
+    it('should perform a GET request to /api/v1/status/flags', () => {
+      ds.isRemoteWriteAvailable();
+      expect(fetchMock.mock.calls.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].method).toBe('GET');
+      expect(fetchMock.mock.calls[0][0].url).toContain('/api/v1/status/flags');
+    });
+
+    it('should return true if remote-write-receiver is enabled', async () => {
+      fetchMock.mockReturnValue(of({ data: { data: { ['enable-feature']: 'remote-write-receiver' } } }));
+      let result = await ds.isRemoteWriteAvailable();
+      expect(result).toEqual(true);
+    });
+
+    it('should return false if remote write is not enabled', async () => {
+      fetchMock.mockReturnValue(of({ data: { data: { ['enable-feature']: '' } } }));
+      let result = await ds.isRemoteWriteAvailable();
+      expect(result).toEqual(false);
+    });
+
+    it('should return false if enable-feature is not part of the response', async () => {
+      fetchMock.mockReturnValue(of({ data: {} }));
+      let result = await ds.isRemoteWriteAvailable();
+      expect(result).toEqual(false);
+    });
+  });
+
   describe('Datasource metadata requests', () => {
     it('should perform a GET request with the default config', () => {
       ds.metadataRequest('/foo', { bar: 'baz baz', foo: 'foo' });

@@ -5,6 +5,11 @@
   "category": "tsdb",
   "routes": [
     {
+      "method": "GET",
+      "path": "api/v1/status/flags",
+      "reqRole": "Admin"
+    },
+    {
       "method": "POST",
       "path": "api/v1/query",
       "reqRole": "Viewer"

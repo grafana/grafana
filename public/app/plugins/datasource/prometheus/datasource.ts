@@ -73,6 +73,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   lookupsDisabled: boolean;
   customQueryParameters: any;
   exemplarsAvailable: boolean;
+  remoteWriteAvailable?: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -106,6 +107,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   init = async () => {
     this.loadRules();
     this.exemplarsAvailable = await this.areExemplarsAvailable();
+    this.remoteWriteAvailable = await this.isRemoteWriteAvailable();
   };
 
   getQueryDisplayText(query: PromQuery) {
@@ -849,6 +851,15 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
         return true;
       }
       return false;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  async isRemoteWriteAvailable() {
+    try {
+      const res = await this.metadataRequest('/api/v1/status/flags');
+      return res.data?.data['enable-feature']?.includes('remote-write-receiver') ?? false;
     } catch (err) {
       return false;
     }
