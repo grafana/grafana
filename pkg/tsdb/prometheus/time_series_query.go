@@ -69,28 +69,29 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		if query.RangeQuery {
 			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				plog.Error("Range query", query.Expr, "failed with", err)
+				plog.Error("Range query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-			} else {
-				response[RangeQueryType] = rangeResponse
+				continue
 			}
+			response[RangeQueryType] = rangeResponse
 		}
 
 		if query.InstantQuery {
 			instantResponse, _, err := client.Query(ctx, query.Expr, query.End)
 			if err != nil {
-				plog.Error("Instant query", query.Expr, "failed with", err)
+				plog.Error("Instant query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-			} else {
-				response[InstantQueryType] = instantResponse
+				continue
 			}
+			response[InstantQueryType] = instantResponse
 		}
 
+		// This is a special case
+		// If exemplar query returns error, we want to only log it and continue with other results processing
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
-				plog.Error("Exemplar query", query.Expr, "failed with", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				plog.Error("Exemplar query failed", "query", query.Expr, "err", err)
 			} else {
 				response[ExemplarQueryType] = exemplarResponse
 			}
@@ -230,7 +231,7 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 		case []apiv1.ExemplarQueryResult:
 			nextFrames = exemplarToDataFrames(v, query, nextFrames)
 		default:
-			plog.Error("Query", query.Expr, "returned unexpected result type", v)
+			plog.Error("Query returned unexpected result type", "type", v, "query", query.Expr)
 			continue
 		}
 

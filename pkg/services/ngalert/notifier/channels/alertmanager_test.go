@@ -7,15 +7,15 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestNewAlertmanagerNotifier(t *testing.T) {
@@ -56,7 +56,8 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			decryptFn := ossencryption.ProvideService().GetDecryptedValue
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
 			sn, err := NewAlertmanagerNotifier(m, tmpl, decryptFn)
 			if c.expectedInitError != "" {
 				require.Equal(t, c.expectedInitError, err.Error())
@@ -136,7 +137,8 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			decryptFn := ossencryption.ProvideService().GetDecryptedValue
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
 			sn, err := NewAlertmanagerNotifier(m, tmpl, decryptFn)
 			require.NoError(t, err)
 

@@ -12,7 +12,7 @@ Dockerfile
 docs
 dump.rdb
 node_modules
-/local
+**/node_modules
 /tmp
 *.yml
 !.yarnrc.yml

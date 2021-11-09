@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,11 +13,11 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -25,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,7 +35,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
-	fakeInstanceStore := &fakeInstanceStore{}
+	fakeInstanceStore := &FakeInstanceStore{}
 	fakeAdminConfigStore := newFakeAdminConfigStore(t)
 
 	// create alert rule with one second interval
@@ -43,7 +46,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
-	sched, mockedClock := setupScheduler(t, fakeRuleStore, fakeInstanceStore, fakeAdminConfigStore)
+	sched, mockedClock := setupScheduler(t, fakeRuleStore, fakeInstanceStore, fakeAdminConfigStore, nil)
 
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
@@ -97,7 +100,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
-	fakeInstanceStore := &fakeInstanceStore{}
+	fakeInstanceStore := &FakeInstanceStore{}
 	fakeAdminConfigStore := newFakeAdminConfigStore(t)
 
 	// First, let's create an admin configuration that holds an alertmanager.
@@ -105,7 +108,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
-	sched, mockedClock := setupScheduler(t, fakeRuleStore, fakeInstanceStore, fakeAdminConfigStore)
+	sched, mockedClock := setupScheduler(t, fakeRuleStore, fakeInstanceStore, fakeAdminConfigStore, nil)
 
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
@@ -154,14 +157,14 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	// However, sometimes this does not happen.
 
 	// Create two alert rules with one second interval.
-	//alertRuleOrgOne := CreateTestAlertRule(t, fakeRuleStore, 1, 1)
-	//alertRuleOrgTwo := CreateTestAlertRule(t, fakeRuleStore, 1, 2)
+	// alertRuleOrgOne := CreateTestAlertRule(t, fakeRuleStore, 1, 1)
+	// alertRuleOrgTwo := CreateTestAlertRule(t, fakeRuleStore, 1, 2)
 	// Eventually, our Alertmanager should have received at least two alerts.
-	//var count int
-	//require.Eventuallyf(t, func() bool {
+	// var count int
+	// require.Eventuallyf(t, func() bool {
 	//	count := fakeAM.AlertsCount()
 	//	return count == 2 && fakeAM.AlertNamesCompare([]string{alertRuleOrgOne.Title, alertRuleOrgTwo.Title})
-	//}, 20*time.Second, 200*time.Millisecond, "Alertmanager never received an '%s' from org 1 or '%s' from org 2, the alert count was: %d", alertRuleOrgOne.Title, alertRuleOrgTwo.Title, count)
+	// }, 20*time.Second, 200*time.Millisecond, "Alertmanager never received an '%s' from org 1 or '%s' from org 2, the alert count was: %d", alertRuleOrgOne.Title, alertRuleOrgTwo.Title, count)
 
 	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
 	fakeAM2 := NewFakeExternalAlertmanager(t)
@@ -237,17 +240,17 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-	) (*schedule, *fakeRuleStore, *fakeInstanceStore, *fakeAdminConfigStore) {
+	) (*schedule, *fakeRuleStore, *FakeInstanceStore, *fakeAdminConfigStore, prometheus.Gatherer) {
 		ruleStore := newFakeRuleStore(t)
-		instanceStore := &fakeInstanceStore{}
+		instanceStore := &FakeInstanceStore{}
 		adminConfigStore := newFakeAdminConfigStore(t)
 
-		sch, _ := setupScheduler(t, ruleStore, instanceStore, adminConfigStore)
-
+		registry := prometheus.NewPedanticRegistry()
+		sch, _ := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, registry)
 		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
 			evalAppliedChan <- t
 		}
-		return sch, ruleStore, instanceStore, adminConfigStore
+		return sch, ruleStore, instanceStore, adminConfigStore, registry
 	}
 
 	// normal states do not include NoData and Error because currently it is not possible to perform any sensible test
@@ -262,8 +265,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		t.Run(fmt.Sprintf("when rule evaluation happens (evaluation state %s)", evalState), func(t *testing.T) {
 			evalChan := make(chan *evalContext)
 			evalAppliedChan := make(chan time.Time)
-
-			sch, ruleStore, instanceStore, _ := createSchedule(evalAppliedChan)
+			sch, ruleStore, instanceStore, _, reg := createSchedule(evalAppliedChan)
 
 			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), evalState)
 
@@ -339,8 +341,25 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				require.Equal(t, s.Labels, data.Labels(cmd.Labels))
 			})
 			t.Run("it reports metrics", func(t *testing.T) {
-				// TODO fix it when we update the way we use metrics
-				t.Skip()
+				// duration metric has 0 values because of mocked clock that do not advance
+				expectedMetric := fmt.Sprintf(
+					`# HELP grafana_alerting_rule_evaluation_duration_seconds The duration for a rule to execute.
+        	            	# TYPE grafana_alerting_rule_evaluation_duration_seconds summary
+        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.5"} 0
+        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.9"} 0
+        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.99"} 0
+        	            	grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
+        	            	grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
+							# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
+        	            	# TYPE grafana_alerting_rule_evaluation_failures_total counter
+        	            	grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 0
+        	            	# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
+        	            	# TYPE grafana_alerting_rule_evaluations_total counter
+        	            	grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+				`, rule.OrgID)
+
+				err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_evaluation_duration_seconds", "grafana_alerting_rule_evaluations_total", "grafana_alerting_rule_evaluation_failures_total")
+				require.NoError(t, err)
 			})
 		})
 	}
@@ -350,7 +369,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			stopChan := make(chan struct{})
 			stoppedChan := make(chan error)
 
-			sch, _, _, _ := createSchedule(make(chan time.Time))
+			sch, _, _, _, _ := createSchedule(make(chan time.Time))
 
 			go func() {
 				err := sch.ruleRoutine(context.Background(), models.AlertRuleKey{}, make(chan *evalContext), stopChan)
@@ -364,7 +383,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		t.Run("when context is cancelled", func(t *testing.T) {
 			stoppedChan := make(chan error)
-			sch, _, _, _ := createSchedule(make(chan time.Time))
+			sch, _, _, _, _ := createSchedule(make(chan time.Time))
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
@@ -382,7 +401,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan := make(chan *evalContext)
 		evalAppliedChan := make(chan time.Time)
 
-		sch, ruleStore, _, _ := createSchedule(evalAppliedChan)
+		sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan)
 
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
@@ -436,7 +455,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan := make(chan *evalContext)
 		evalAppliedChan := make(chan time.Time)
 
-		sch, ruleStore, _, _ := createSchedule(evalAppliedChan)
+		sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan)
 
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
@@ -520,7 +539,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalChan := make(chan *evalContext)
 			evalAppliedChan := make(chan time.Time)
 
-			sch, ruleStore, _, _ := createSchedule(evalAppliedChan)
+			sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan)
 			sch.senders[orgID] = s
 			// eval.Alerting makes state manager to create notifications for alertmanagers
 			rule := CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting)
@@ -553,13 +572,17 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	})
 }
 
-func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore) (*schedule, *clock.Mock) {
+func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock) {
 	t.Helper()
 
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
-	m := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
-	decryptFn := ossencryption.ProvideService().GetDecryptedValue
+	if registry == nil {
+		registry = prometheus.NewPedanticRegistry()
+	}
+	m := metrics.NewNGAlert(registry)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	decryptFn := secretsService.GetDecryptedValue
 	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, decryptFn, nil, log.New("testlogger"))
 	require.NoError(t, err)
 
