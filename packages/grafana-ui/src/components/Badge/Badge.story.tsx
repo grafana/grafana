@@ -1,5 +1,5 @@
 import React from 'react';
-import { Story, Meta } from '@storybook/react';
+import { Story } from '@storybook/react';
 import { Badge, BadgeProps } from '@grafana/ui';
 import { iconOptions } from '../../utils/storybook/knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -16,7 +16,7 @@ export default {
     color: { control: 'select' },
     text: { control: 'text' },
   },
-} as Meta;
+};
 
 const Template: Story<BadgeProps> = (args) => <Badge {...args} />;
 
