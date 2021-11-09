@@ -398,46 +398,59 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 }
 
 func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
-	pluginSettings, err := hs.SQLStore.GetPluginSettings(ctx, orgID)
-	if err != nil {
+	pluginSettings := make(map[string]*models.PluginSettingInfoDTO)
+
+	// fill settings from database
+	if pss, err := hs.SQLStore.GetPluginSettings(ctx, orgID); err != nil {
 		return nil, err
+	} else {
+		for _, ps := range pss {
+			pluginSettings[ps.PluginId] = ps
+		}
 	}
 
-	pluginMap := make(map[string]*models.PluginSettingInfoDTO)
-	for _, plug := range pluginSettings {
-		pluginMap[plug.PluginId] = plug
-	}
-
-	for _, pluginDef := range hs.pluginStore.Plugins() {
-		// ignore entries that already exist
-		if _, ok := pluginMap[pluginDef.ID]; ok {
+	// fill settings from app plugins
+	for _, plugin := range hs.pluginStore.Plugins(plugins.App) {
+		// ignore settings that already exist
+		if _, exists := pluginSettings[plugin.ID]; exists {
 			continue
 		}
 
-		// enabled by default
-		opt := &models.PluginSettingInfoDTO{
-			PluginId: pluginDef.ID,
+		// add new setting which is enabled depending on if AutoEnabled: true
+		pluginSetting := &models.PluginSettingInfoDTO{
+			PluginId: plugin.ID,
+			OrgId:    orgID,
+			Enabled:  plugin.AutoEnabled,
+			Pinned:   plugin.AutoEnabled,
+		}
+
+		pluginSettings[plugin.ID] = pluginSetting
+	}
+
+	// fill settings from all remaining plugins (including potential app child plugins)
+	for _, plugin := range hs.pluginStore.Plugins() {
+		// ignore settings that already exist
+		if _, exists := pluginSettings[plugin.ID]; exists {
+			continue
+		}
+
+		// add new setting which is enabled by default
+		pluginSetting := &models.PluginSettingInfoDTO{
+			PluginId: plugin.ID,
 			OrgId:    orgID,
 			Enabled:  true,
 		}
 
-		// apps are disabled by default unless autoEnabled: true
-		if p := hs.pluginStore.Plugin(pluginDef.ID); p != nil && p.IsApp() {
-			opt.Enabled = p.AutoEnabled
-			opt.Pinned = p.AutoEnabled
-		}
-
-		// if it's included in app, check app settings
-		if pluginDef.IncludedInAppID != "" {
-			// app components are by default disabled
-			opt.Enabled = false
-
-			if appSettings, ok := pluginMap[pluginDef.IncludedInAppID]; ok {
-				opt.Enabled = appSettings.Enabled
+		// if plugin is included in an app, check app settings
+		if plugin.IncludedInAppID != "" {
+			// app child plugins are disabled unless app is enabled
+			pluginSetting.Enabled = false
+			if p, exists := pluginSettings[plugin.IncludedInAppID]; exists {
+				pluginSetting.Enabled = p.Enabled
 			}
 		}
-		pluginMap[pluginDef.ID] = opt
+		pluginSettings[plugin.ID] = pluginSetting
 	}
 
-	return pluginMap, nil
+	return pluginSettings, nil
 }
