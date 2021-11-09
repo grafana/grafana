@@ -1522,7 +1522,9 @@ const dashWithTemplateDependenciesAndPanels: any = {
           text: ['A'],
           value: ['A'],
         },
-        datasource: '${ds}',
+        datasource: {
+          uid: '${ds}',
+        },
         definition: '*',
         description: null,
         error: null,
@@ -1603,7 +1605,9 @@ const dashWithTemplateDependenciesAndPanels: any = {
           text: 'AB',
           value: 'AB',
         },
-        datasource: '${ds}',
+        datasource: {
+          uid: '${ds}',
+        },
         definition: '$query_with_ds.*',
         description: null,
         error: null,
