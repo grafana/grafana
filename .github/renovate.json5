@@ -14,8 +14,6 @@
     "d3-scale-chromatic", // we should bump this once we move to esm modules
     "eslint", // wait until `eslint-plugin-react-hooks>4.2.0` is released
     "globby", // we should bump this once we move to esm modules
-    "less", // update this together with "less-loader" when we move to webpack5 in grafana-toolkit
-    "less-loader", // update this together with "less" when we move to webpack5 in grafana-toolkit
     "slate",
     "slate-plain-serializer",
     "systemjs",
@@ -34,6 +32,8 @@
         "copy-webpack-plugin", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
         "css-loader", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
         "html-loader", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
+        "less", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
+        "less-loader", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
       ]
     }
   ],
