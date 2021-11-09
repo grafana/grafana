@@ -196,7 +196,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     splits: coreConfig.ySplits,
     values: coreConfig.yValues,
     grid: { show: false },
-    ticks: false,
+    ticks: { show: false },
     gap: 16,
     theme,
   });

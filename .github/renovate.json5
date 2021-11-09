@@ -31,6 +31,7 @@
       "ignoreDeps": [
         "copy-webpack-plugin", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
         "css-loader", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
+        "html-loader", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
       ]
     }
   ],
