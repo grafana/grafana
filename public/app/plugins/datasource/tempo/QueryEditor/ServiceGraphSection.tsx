@@ -1,11 +1,11 @@
 import React from 'react';
-import LokiDatasource from '../../loki/datasource';
 import useAsync from 'react-use/lib/useAsync';
 import { getDS } from './utils';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { AdHocVariableFilter } from '../../../../features/variables/types';
 import { TempoQuery } from '../datasource';
 import { AdHocFilter } from '../../../../features/variables/adhoc/picker/AdHocFilter';
+import { PrometheusDatasource } from '../../prometheus/datasource';
 
 export function ServiceGraphSection({
   graphDatasourceUid,
@@ -21,7 +21,7 @@ export function ServiceGraphSection({
     return null;
   }
 
-  const ds = dsState.value as LokiDatasource;
+  const ds = dsState.value as PrometheusDatasource;
 
   if (!graphDatasourceUid) {
     return <div className="text-warning">Please set up a service graph datasource in the datasource settings.</div>;
