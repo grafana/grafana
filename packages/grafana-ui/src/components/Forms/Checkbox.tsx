@@ -4,12 +4,13 @@ import { getLabelStyles } from './Label';
 import { stylesFactory, useStyles2 } from '../../themes';
 import { css, cx } from '@emotion/css';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { ComponentSize } from '../../types/size';
 
-export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
+export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value' | 'size'> {
   label?: string;
   description?: string;
   value?: boolean;
-  size?: number;
+  size?: ComponentSize;
 }
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
@@ -43,11 +44,11 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   }
 );
 
-export function getCheckboxStyles(checkboxSize?: number) {
+export function getCheckboxStyles(size?: ComponentSize) {
   return stylesFactory((theme: GrafanaTheme2) => {
     const labelStyles = getLabelStyles(theme);
     const labelPadding = 1;
-    const cbSize = checkboxSize ? checkboxSize : 2;
+    const { padding, checkPadding, checkWidth, checkHeight } = getPropertiesForCheckboxSize(size);
 
     return {
       wrapper: css`
@@ -91,10 +92,10 @@ export function getCheckboxStyles(checkboxSize?: number) {
             content: '';
             position: absolute;
             z-index: 2;
-            left: ${2.5 * cbSize}px;
+            left: ${checkPadding};
             top: 1px;
-            width: ${3 * cbSize}px;
-            height: ${6 * cbSize}px;
+            width: ${checkWidth};
+            height: ${checkHeight};
             border: solid ${theme.colors.primary.contrastText};
             border-width: 0 3px 3px 0;
             transform: rotate(45deg);
@@ -118,8 +119,8 @@ export function getCheckboxStyles(checkboxSize?: number) {
         position: relative; /* Checkbox should be layered on top of the invisible input so it recieves :hover */
         z-index: 2;
         display: inline-block;
-        width: ${theme.spacing(cbSize)};
-        height: ${theme.spacing(cbSize)};
+        width: ${theme.spacing(padding)};
+        height: ${theme.spacing(padding)};
         border-radius: ${theme.shape.borderRadius()};
         background: ${theme.components.input.background};
         border: 1px solid ${theme.components.input.borderColor};
@@ -145,12 +146,39 @@ export function getCheckboxStyles(checkboxSize?: number) {
         labelStyles.description,
         css`
           line-height: ${theme.typography.bodySmall.lineHeight};
-          padding-left: ${theme.spacing(cbSize + labelPadding)};
+          padding-left: ${theme.spacing(padding + labelPadding)};
           margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
         `
       ),
     };
   });
+}
+
+function getPropertiesForCheckboxSize(size?: ComponentSize) {
+  switch (size) {
+    case 'md':
+      return {
+        padding: 4,
+        checkPadding: `10px`,
+        checkWidth: `12px`,
+        checkHeight: `26px`,
+      };
+    case 'lg':
+      return {
+        padding: 6,
+        checkPadding: `15px`,
+        checkWidth: `18px`,
+        checkHeight: `36px`,
+      };
+    case 'sm':
+    default:
+      return {
+        padding: 2,
+        checkPadding: `5px`,
+        checkWidth: `6px`,
+        checkHeight: `12px`,
+      };
+  }
 }
 
 Checkbox.displayName = 'Checkbox';
