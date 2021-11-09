@@ -95,13 +95,18 @@ export const RolePickerMenu = ({
         selectedGroupOptions.push(role);
       }
     }
+    for (const role of selectedBuiltInRoles) {
+      if (getRoleGroup(role) === group) {
+        selectedGroupOptions.push(role);
+      }
+    }
     return selectedGroupOptions;
   };
 
   const groupSelected = (group: string) => {
     const selectedGroupOptions = getSelectedGroupOptions(group);
     const groupOptions = optionGroups.find((g) => g.value === group);
-    return selectedGroupOptions.length > 0 && selectedGroupOptions.length === groupOptions!.options.length;
+    return selectedGroupOptions.length > 0 && selectedGroupOptions.length >= groupOptions!.options.length;
   };
 
   const groupPartiallySelected = (group: string) => {
@@ -128,7 +133,8 @@ export const RolePickerMenu = ({
       }
     } else {
       if (group) {
-        setSelectedOptions([...selectedOptions, ...group.options]);
+        const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
+        setSelectedOptions([...restOptions, ...group.options]);
       }
     }
   };
