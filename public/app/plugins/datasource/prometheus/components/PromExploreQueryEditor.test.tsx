@@ -6,6 +6,16 @@ import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
 import { LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
 
+// the monaco-based editor uses lazy-loading and that does not work
+// well with this test, and we do not need the monaco-related
+// functionality in this test anyway, so we mock it out.
+jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
+  const fakeQueryField = () => <div>prometheus query field</div>;
+  return {
+    MonacoQueryFieldWrapper: fakeQueryField,
+  };
+});
+
 const setup = (renderMethod: any, propOverrides?: object) => {
   const datasourceMock: unknown = {
     languageProvider: {

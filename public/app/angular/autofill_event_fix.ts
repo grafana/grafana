@@ -1,4 +1,4 @@
-﻿import coreModule from '../core/core_module';
+﻿import coreModule from './core_module';
 
 /** @ngInject */
 export function autofillEventFix($compile: any) {

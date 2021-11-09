@@ -23,7 +23,7 @@ type DashboardProvisioner interface {
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(string, dashboards.Store) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(context.Context, string, dashboards.Store) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -34,10 +34,10 @@ type Provisioner struct {
 }
 
 // New returns a new DashboardProvisioner
-func New(configDirectory string, store dashboards.Store) (DashboardProvisioner, error) {
+func New(ctx context.Context, configDirectory string, store dashboards.Store) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger}
-	configs, err := cfgReader.readConfig()
+	configs, err := cfgReader.readConfig(ctx)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}

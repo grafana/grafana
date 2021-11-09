@@ -17,7 +17,12 @@ export function getDataSourceRef(ds: DataSourceInstanceSettings): DataSourceRef 
   return { uid: ds.uid, type: ds.type };
 }
 
-function isDataSourceRef(ref: DataSourceRef | string | null): ref is DataSourceRef {
+/**
+ * Returns true if the argument is a DataSourceRef
+ *
+ * @public
+ */
+export function isDataSourceRef(ref: DataSourceRef | string | null): ref is DataSourceRef {
   return typeof ref === 'object' && (typeof ref?.uid === 'string' || typeof ref?.uid === 'undefined');
 }
 
@@ -118,14 +123,11 @@ export const updateDatasourcePluginSecureJsonDataOption = <J, S extends {} = Key
   val: any
 ) => {
   const config = props.options;
-  if (!config.secureJsonData) {
-    return;
-  }
 
   props.onOptionsChange({
     ...config,
     secureJsonData: {
-      ...config.secureJsonData,
+      ...(config.secureJsonData ? config.secureJsonData : ({} as S)),
       [key]: val,
     },
   });
@@ -136,14 +138,10 @@ export const updateDatasourcePluginResetOption = <J, S extends {} = KeyValue>(
   key: string
 ) => {
   const config = props.options;
-  if (!config.secureJsonData) {
-    return;
-  }
-
   props.onOptionsChange({
     ...config,
     secureJsonData: {
-      ...config.secureJsonData,
+      ...(config.secureJsonData ? config.secureJsonData : ({} as S)),
       [key]: '',
     },
     secureJsonFields: {

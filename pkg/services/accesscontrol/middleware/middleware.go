@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -44,6 +45,12 @@ func Deny(c *models.ReqContext, evaluator accesscontrol.Evaluator, err error) {
 			"accessErrorID", id,
 			"permissions", evaluator.String(),
 		)
+	}
+
+	if !c.IsApiRequest() {
+		// TODO(emil): I'd like to show a message after this redirect, not sure how that can be done?
+		c.Redirect(setting.AppSubUrl + "/")
+		return
 	}
 
 	// If the user triggers an error in the access control system, we
