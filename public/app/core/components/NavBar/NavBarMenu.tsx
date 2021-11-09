@@ -48,22 +48,25 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
                     text={link.text}
                     url={link.url}
                   />
-                  {link.children?.map((childLink, childIndex) => (
-                    <NavBarMenuItem
-                      key={childIndex}
-                      icon={childLink.icon as IconName}
-                      isActive={activeItem === childLink}
-                      isDivider={childLink.divider}
-                      onClick={() => {
-                        childLink.onClick?.();
-                        onClose();
-                      }}
-                      styleOverrides={styles.item}
-                      target={childLink.target}
-                      text={childLink.text}
-                      url={childLink.url}
-                    />
-                  ))}
+                  {link.children?.map(
+                    (childLink, childIndex) =>
+                      !childLink.divider && (
+                        <NavBarMenuItem
+                          key={childIndex}
+                          icon={childLink.icon as IconName}
+                          isActive={activeItem === childLink}
+                          isDivider={childLink.divider}
+                          onClick={() => {
+                            childLink.onClick?.();
+                            onClose();
+                          }}
+                          styleOverrides={styles.item}
+                          target={childLink.target}
+                          text={childLink.text}
+                          url={childLink.url}
+                        />
+                      )
+                  )}
                 </div>
               ))}
             </ul>
@@ -111,6 +114,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border-bottom: 1px solid ${theme.colors.border.weak};
   `,
   sectionHeader: css`
+    color: ${theme.colors.text.primary};
     font-size: ${theme.typography.h5.fontSize};
     padding: ${theme.spacing(1)} ${theme.spacing(2)};
   `,

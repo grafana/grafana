@@ -1,4 +1,4 @@
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 const hitTypes = {
