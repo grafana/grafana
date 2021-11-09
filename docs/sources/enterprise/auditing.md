@@ -172,19 +172,19 @@ For example, creating an API key produces an audit log like this:
 
 #### Alerts and notification channels management
 
-| Action                                                                | Distinguishing fields                                                                                  |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Save alert manager configuration                                      | `{"action": "create", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/alerts"}`           |
-| Reset alert manager configuration                                     | `{"action": "delete", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/alerts"}`           |
-| Create silence                                                        | `{"action": "create", "requestUri": "/api/alertmanager/<recipient>\*/api/v2/silences"}`                |
-| Delete silence                                                        | `{"action": "delete", "requestUri": "/api/alertmanager/<recipient>\*/api/v2/silences/<silence id>"}`   |
-| Create alert                                                          | `{"action": "create", "requestUri": "/api/ruler/<recipient>\*/api/v2/alerts"}`                         |
-| Create or update rule group                                           | `{"action": "create-update", "requestUri": "/api/ruler/<recipient>\*/api/v1/rules/<namespace>"}`       |
-| Delete rule group                                                     | `{"action": "delete", "requestUri": "/api/ruler/<recipient>\*/api/v1/rules/<namespace>/<group name>"}` |
-| Delete namespace                                                      | `{"action": "delete", "requestUri": "/api/ruler/<recipient>\*/api/v1/rules/<namespace>"}`              |
-| Test Grafana managed receivers                                        | `{"action": "test", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/receivers/test"}`     |
-| Create or update the NGalert configuration of the user's organization | `{"action": "create-update", "requestUri": "/api/v1/ngalert/admin_config"}`                            |
-| Delete the NGalert configuration of the user's organization           | `{"action": "delete", "requestUri": "/api/v1/ngalert/admin_config"}`                                   |
+| Action                            | Distinguishing fields                                                                                  |
+| ----------------------------------| ------------------------------------------------------------------------------------------------------ |
+| Save alert manager configuration  | `{"action": "create", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/alerts"}`           |
+| Reset alert manager configuration | `{"action": "delete", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/alerts"}`           |
+| Create silence                    | `{"action": "create", "requestUri": "/api/alertmanager/<recipient>\*/api/v2/silences"}`                |
+| Delete silence                    | `{"action": "delete", "requestUri": "/api/alertmanager/<recipient>\*/api/v2/silences/<silence id>"}`   |
+| Create alert                      | `{"action": "create", "requestUri": "/api/ruler/<recipient>\*/api/v2/alerts"}`                         |
+| Create or update rule group       | `{"action": "create-update", "requestUri": "/api/ruler/<recipient>\*/api/v1/rules/<namespace>"}`       |
+| Delete rule group                 | `{"action": "delete", "requestUri": "/api/ruler/<recipient>\*/api/v1/rules/<namespace>/<group name>"}` |
+| Delete namespace                  | `{"action": "delete", "requestUri": "/api/ruler/<recipient>\*/api/v1/rules/<namespace>"}`              |
+| Test Grafana managed receivers    | `{"action": "test", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/receivers/test"}`     |
+| Create or update the NGalert configuration of the user's organization | `{"action": "create-update", "requestUri": "/api/v1/ngalert/admin_config"}` |
+| Delete the NGalert configuration of the user's organization           | `{"action": "delete", "requestUri": "/api/v1/ngalert/admin_config"}`        |
 
 \* `recipient` is `grafana` for requests handled by Grafana or the numeric data source ID for requests forwarded to a data source.
 
