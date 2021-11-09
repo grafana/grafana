@@ -39,13 +39,16 @@ describe('LayerHeader', () => {
   function renderScenario(overrides: Partial<LayerHeaderProps>) {
     const props: any = {
       layer: {
+        UID: '1',
         options: { name: 'Layer 1' },
       },
       layers: [
         {
+          UID: '1',
           options: { name: 'Layer 1' },
         },
         {
+          UID: '2',
           options: { name: 'Layer 2' },
         },
       ],
