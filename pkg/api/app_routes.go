@@ -17,6 +17,7 @@ import (
 )
 
 var pluginProxyTransport *http.Transport
+var applog = log.New("app.routes")
 
 func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 	pluginProxyTransport = &http.Transport{
@@ -51,7 +52,8 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 			for _, method := range strings.Split(route.Method, ",") {
 				r.Handle(strings.TrimSpace(method), url, handlers)
 			}
-			log.Debug("Plugins: Adding proxy route", "url", url)
+
+			applog.Debug("Plugins: Adding proxy route", "url", url)
 		}
 	}
 }
