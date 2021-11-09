@@ -58,8 +58,8 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 	)
 
 	expander.Funcs(text_template.FuncMap{
-		"graphLink": buildExploreLink(true, false),
-		"tableLink": buildExploreLink(false, true),
+		"graphLink": graphLink,
+		"tableLink": tableLink,
 
 		// This function is a no-op for now.
 		"strvalue": func(value templateCaptureValue) string {
@@ -87,19 +87,36 @@ func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[str
 	return m
 }
 
-func buildExploreLink(showGraph, showTable bool) func(string) string {
-	return func(rawQuery string) string {
-		var query struct {
-			Datasource string `json:"datasource"`
-			Expr       string `json:"expr"`
-		}
-
-		if err := json.Unmarshal([]byte(rawQuery), &query); err != nil {
-			return ""
-		}
-
-		escapedExpression := url.QueryEscape(query.Expr)
-		return fmt.Sprintf(
-			`/explore?left=["now-1h","now",%q,{"datasource":%q,"expr":%q,"instant":%v,"range":%v}]`, query.Datasource, query.Datasource, escapedExpression, showTable, showGraph)
+func graphLink(rawQuery string) string {
+	var query struct {
+		Datasource string `json:"datasource"`
+		Expr       string `json:"expr"`
 	}
+
+	if err := json.Unmarshal([]byte(rawQuery), &query); err != nil {
+		return ""
+	}
+
+	escapedExpression := url.QueryEscape(query.Expr)
+	escapedDatasource := url.QueryEscape(query.Datasource)
+
+	return fmt.Sprintf(
+		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":false,"range":true}]`, escapedDatasource, escapedExpression)
+}
+
+func tableLink(rawQuery string) string {
+	var query struct {
+		Datasource string `json:"datasource"`
+		Expr       string `json:"expr"`
+	}
+
+	if err := json.Unmarshal([]byte(rawQuery), &query); err != nil {
+		return ""
+	}
+
+	escapedExpression := url.QueryEscape(query.Expr)
+	escapedDatasource := url.QueryEscape(query.Datasource)
+
+	return fmt.Sprintf(
+		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":true,"range":false}]`, escapedDatasource, escapedExpression)
 }
