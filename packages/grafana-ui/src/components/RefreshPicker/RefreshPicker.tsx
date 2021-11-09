@@ -102,7 +102,7 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
   const intervalsOrDefault = intervals || defaultIntervals;
   const options = intervalsOrDefault.map((interval) => {
     const duration: { [key: string]: string | number } = parseDuration(interval);
-    let key = Object.keys(duration)[0];
+    const key = Object.keys(duration)[0];
     const value = duration[key];
     duration[key] = Number(value);
 
