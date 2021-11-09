@@ -17,7 +17,9 @@ export function PluginDetailsHeaderDependencies({
 }: Props): React.ReactElement | null {
   const styles = useStyles2(getStyles);
   const pluginDependencies = plugin.details?.pluginDependencies;
-  const grafanaDependency = latestCompatibleVersion?.grafanaDependency || plugin.details?.grafanaDependency;
+  const grafanaDependency = plugin.isInstalled
+    ? plugin.details?.grafanaDependency
+    : latestCompatibleVersion?.grafanaDependency || plugin.details?.grafanaDependency;
   const hasNoDependencyInfo = !grafanaDependency && (!pluginDependencies || !pluginDependencies.length);
 
   if (hasNoDependencyInfo) {
