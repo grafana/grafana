@@ -915,17 +915,6 @@ describe('exitViewPanel', () => {
 
       expect(dashboard.startRefresh).not.toHaveBeenCalled();
     });
-
-    describe('and there is a change that affects all panels', () => {
-      it('then startRefresh is not called', () => {
-        const { dashboard, panel } = getTestContext();
-        dashboard.setChangeAffectsAllPanels();
-
-        dashboard.exitViewPanel(panel);
-
-        expect(dashboard.startRefresh).toHaveBeenCalled();
-      });
-    });
   });
 });
 
@@ -977,42 +966,7 @@ describe('exitPanelEditor', () => {
       dashboard.exitPanelEditor();
       expect(timeSrvMock.resumeAutoRefresh).toHaveBeenCalled();
     });
-
-    describe('and there is a change that affects all panels', () => {
-      it('then startRefresh is called', () => {
-        const { dashboard } = getTestContext();
-        dashboard.setChangeAffectsAllPanels();
-
-        dashboard.exitPanelEditor();
-
-        expect(dashboard.startRefresh).toHaveBeenCalled();
-      });
-    });
   });
-});
-
-describe('setChangeAffectsAllPanels', () => {
-  it.each`
-    panelInEdit  | panelInView  | expected
-    ${null}      | ${null}      | ${false}
-    ${undefined} | ${undefined} | ${false}
-    ${null}      | ${{}}        | ${true}
-    ${undefined} | ${{}}        | ${true}
-    ${{}}        | ${null}      | ${true}
-    ${{}}        | ${undefined} | ${true}
-    ${{}}        | ${{}}        | ${true}
-  `(
-    'when called and panelInEdit:{$panelInEdit} and panelInView:{$panelInView}',
-    ({ panelInEdit, panelInView, expected }) => {
-      const dashboard = new DashboardModel({});
-      dashboard.panelInEdit = panelInEdit;
-      dashboard.panelInView = panelInView;
-
-      dashboard.setChangeAffectsAllPanels();
-
-      expect(dashboard['hasChangesThatAffectsAllPanels']).toEqual(expected);
-    }
-  );
 });
 
 describe('initEditPanel', () => {

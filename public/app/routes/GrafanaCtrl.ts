@@ -118,10 +118,6 @@ export function grafanaAppDirective() {
 
       $('.preloader').remove();
 
-      appEvents.on(CoreEvents.toggleSidemenuMobile, () => {
-        body.toggleClass('sidemenu-open--xs');
-      });
-
       appEvents.on(CoreEvents.toggleSidemenuHidden, () => {
         body.toggleClass('sidemenu-hidden');
       });
