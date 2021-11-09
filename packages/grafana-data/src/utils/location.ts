@@ -36,12 +36,25 @@ const assureBaseUrl = (url: string): string => {
   return url;
 };
 
-const updateSearchParams = (href: string, searchParams: string) => {
-  const curURL = new URL(href);
-  const urlSearchParams = new URLSearchParams(searchParams);
-  urlSearchParams.forEach((val, key) => curURL.searchParams.set(key, val));
+/**
+ * Update URL or search param string `init` with new params `partial`.
+ */
+const updateSearchParams = (init: string, partial: string) => {
+  const urlSearchParams = new URLSearchParams(partial);
 
-  return curURL.href;
+  // Check if full URL
+  try {
+    const curURL = new URL(init);
+    urlSearchParams.forEach((val, key) => curURL.searchParams.set(key, val));
+    return curURL.href;
+  } catch {
+    // assume search params
+    const newSearchParams = new URLSearchParams(init);
+    urlSearchParams.forEach((v, k) => {
+      newSearchParams.set(k, v);
+    });
+    return '?' + newSearchParams.toString();
+  }
 };
 
 interface LocationUtilDependencies {

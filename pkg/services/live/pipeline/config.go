@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/services/encryption"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/pattern"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/centrifugal/centrifuge"
 )
@@ -53,6 +51,10 @@ type RemoteWriteOutputConfig struct {
 	SampleMilliseconds int64  `json:"sampleMilliseconds"`
 }
 
+type LokiOutputConfig struct {
+	UID string `json:"uid"`
+}
+
 type FrameOutputterConfig struct {
 	Type                    string                     `json:"type"`
 	ManagedStreamConfig     *ManagedStreamOutputConfig `json:"managedStream,omitempty"`
@@ -61,12 +63,14 @@ type FrameOutputterConfig struct {
 	ConditionalOutputConfig *ConditionalOutputConfig   `json:"conditional,omitempty"`
 	ThresholdOutputConfig   *ThresholdOutputConfig     `json:"threshold,omitempty"`
 	RemoteWriteOutputConfig *RemoteWriteOutputConfig   `json:"remoteWrite,omitempty"`
+	LokiOutputConfig        *LokiOutputConfig          `json:"loki,omitempty"`
 	ChangeLogOutputConfig   *ChangeLogOutputConfig     `json:"changeLog,omitempty"`
 }
 
 type DataOutputterConfig struct {
 	Type                     string                    `json:"type"`
 	RedirectDataOutputConfig *RedirectDataOutputConfig `json:"redirect,omitempty"`
+	LokiOutputConfig         *LokiOutputConfig         `json:"loki,omitempty"`
 }
 
 type MultipleSubscriberConfig struct {
@@ -202,12 +206,6 @@ func (r RemoteWriteBackend) Valid() (bool, string) {
 	if r.Settings.Endpoint == "" {
 		return false, "endpoint required"
 	}
-	if r.Settings.User == "" {
-		return false, "user required"
-	}
-	if string(r.SecureSettings["password"]) == "" && r.Settings.Password == "" {
-		return false, "password required"
-	}
 	return true, ""
 }
 
@@ -215,7 +213,7 @@ type RemoteWriteSettings struct {
 	// Endpoint to send streaming frames to.
 	Endpoint string `json:"endpoint"`
 	// User is a user for remote write request.
-	User string `json:"user"`
+	User string `json:"user,omitempty"`
 	// Password is a plain text non-encrypted password.
 	// TODO: remove after integrating with the database.
 	Password string `json:"password,omitempty"`
@@ -424,6 +422,22 @@ func (f *StorageRuleBuilder) extractFrameConditionChecker(config *FrameCondition
 	}
 }
 
+func (f *StorageRuleBuilder) getWritePassword(remoteWriteBackend RemoteWriteBackend) (string, error) {
+	var password string
+	hasSecurePassword := len(remoteWriteBackend.SecureSettings["password"]) > 0
+	if hasSecurePassword {
+		passwordBytes, err := f.EncryptionService.Decrypt(context.Background(), remoteWriteBackend.SecureSettings["password"], setting.SecretKey)
+		if err != nil {
+			return "", fmt.Errorf("password can't be decrypted: %w", err)
+		}
+		password = string(passwordBytes)
+	} else {
+		// Use plain text password (should be removed upon database integration).
+		password = remoteWriteBackend.Settings.Password
+	}
+	return password, nil
+}
+
 func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig, remoteWriteBackends []RemoteWriteBackend) (FrameOutputter, error) {
 	if config == nil {
 		return nil, nil
@@ -479,25 +493,32 @@ func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig,
 		if !ok {
 			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
-
-		var password string
-		hasSecurePassword := len(remoteWriteBackend.SecureSettings["password"]) > 0
-		if hasSecurePassword {
-			passwordBytes, err := f.EncryptionService.Decrypt(context.Background(), remoteWriteBackend.SecureSettings["password"], setting.SecretKey)
-			if err != nil {
-				return nil, fmt.Errorf("password can't be decrypted: %w", err)
-			}
-			password = string(passwordBytes)
-		} else {
-			// Use plain text password (should be removed upon database integration).
-			password = remoteWriteBackend.Settings.Password
+		password, err := f.getWritePassword(remoteWriteBackend)
+		if err != nil {
+			return nil, fmt.Errorf("error getting password: %w", err)
 		}
-
 		return NewRemoteWriteFrameOutput(
 			remoteWriteBackend.Settings.Endpoint,
 			remoteWriteBackend.Settings.User,
 			password,
 			config.RemoteWriteOutputConfig.SampleMilliseconds,
+		), nil
+	case FrameOutputTypeLoki:
+		if config.LokiOutputConfig == nil {
+			return nil, missingConfiguration
+		}
+		remoteWriteBackend, ok := f.getRemoteWriteBackend(config.LokiOutputConfig.UID, remoteWriteBackends)
+		if !ok {
+			return nil, fmt.Errorf("unknown loki backend uid: %s", config.LokiOutputConfig.UID)
+		}
+		password, err := f.getWritePassword(remoteWriteBackend)
+		if err != nil {
+			return nil, fmt.Errorf("error getting password: %w", err)
+		}
+		return NewLokiFrameOutput(
+			remoteWriteBackend.Settings.Endpoint,
+			remoteWriteBackend.Settings.User,
+			password,
 		), nil
 	case FrameOutputTypeChangeLog:
 		if config.ChangeLogOutputConfig == nil {
@@ -509,7 +530,7 @@ func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig,
 	}
 }
 
-func (f *StorageRuleBuilder) extractDataOutputter(config *DataOutputterConfig) (DataOutputter, error) {
+func (f *StorageRuleBuilder) extractDataOutputter(config *DataOutputterConfig, remoteWriteBackends []RemoteWriteBackend) (DataOutputter, error) {
 	if config == nil {
 		return nil, nil
 	}
@@ -520,6 +541,23 @@ func (f *StorageRuleBuilder) extractDataOutputter(config *DataOutputterConfig) (
 			return nil, missingConfiguration
 		}
 		return NewRedirectDataOutput(*config.RedirectDataOutputConfig), nil
+	case DataOutputTypeLoki:
+		if config.LokiOutputConfig == nil {
+			return nil, missingConfiguration
+		}
+		remoteWriteBackend, ok := f.getRemoteWriteBackend(config.LokiOutputConfig.UID, remoteWriteBackends)
+		if !ok {
+			return nil, fmt.Errorf("unknown loki backend uid: %s", config.LokiOutputConfig.UID)
+		}
+		password, err := f.getWritePassword(remoteWriteBackend)
+		if err != nil {
+			return nil, fmt.Errorf("error getting password: %w", err)
+		}
+		return NewLokiDataOutput(
+			remoteWriteBackend.Settings.Endpoint,
+			remoteWriteBackend.Settings.User,
+			password,
+		), nil
 	case DataOutputTypeBuiltin:
 		return NewBuiltinDataOutput(f.ChannelHandlerGetter), nil
 	case DataOutputTypeLocalSubscribers:
@@ -584,7 +622,7 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 
 		var dataOutputters []DataOutputter
 		for _, outConfig := range ruleConfig.Settings.DataOutputters {
-			out, err := f.extractDataOutputter(outConfig)
+			out, err := f.extractDataOutputter(outConfig, remoteWriteBackends)
 			if err != nil {
 				return nil, fmt.Errorf("error building data outputter for %s: %w", rule.Pattern, err)
 			}

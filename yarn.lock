@@ -2373,8 +2373,8 @@ __metadata:
     "@types/jest": 27.0.2
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
-    "@types/marked": 3.0.2
-    "@types/node": 14.17.27
+    "@types/marked": 4.0.0
+    "@types/node": 16.11.6
     "@types/papaparse": 5.2.0
     "@types/react": 17.0.30
     "@types/rollup-plugin-visualizer": 4.2.1
@@ -2386,7 +2386,7 @@ __metadata:
     date-fns: 2.21.3
     eventemitter3: 4.0.7
     lodash: 4.17.21
-    marked: 2.0.1
+    marked: 4.0.0
     moment: 2.29.1
     moment-timezone: 0.5.33
     ol: 6.7.0
@@ -2418,7 +2418,7 @@ __metadata:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.0.6
-    "@types/node": 14.17.27
+    "@types/node": 16.11.6
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
     execa: 5.1.1
@@ -2448,7 +2448,7 @@ __metadata:
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.0.6
-    "@types/node": 14.17.27
+    "@types/node": 16.11.6
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/uuid": 8.3.0
     babel-loader: 8.2.2
@@ -2601,7 +2601,7 @@ __metadata:
     "@types/inquirer": ^8.0.0
     "@types/jest": 27.0.2
     "@types/lodash": 4.14.149
-    "@types/node": ^14.0.0
+    "@types/node": ^16.0.0
     "@types/prettier": ^2.4.0
     "@types/react-dev-utils": ^9.0.4
     "@types/rimraf": ^3.0.0
@@ -2730,7 +2730,7 @@ __metadata:
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/mock-raf": 1.0.2
-    "@types/node": 14.17.27
+    "@types/node": 16.11.6
     "@types/papaparse": 5.2.0
     "@types/prismjs": 1.16.0
     "@types/react": 17.0.30
@@ -2772,7 +2772,7 @@ __metadata:
     is-hotkey: 0.1.6
     jquery: 3.5.1
     lodash: 4.17.21
-    memoize-one: 5.1.1
+    memoize-one: 6.0.0
     mock-raf: 1.0.1
     moment: 2.29.1
     monaco-editor: 0.27.0
@@ -2923,7 +2923,7 @@ __metadata:
     json-markup: ^1.1.0
     lodash: 4.17.21
     lru-memoize: ^1.1.0
-    memoize-one: ^5.0.0
+    memoize-one: 6.0.0
     moment: 2.29.1
     moment-timezone: 0.5.33
     prop-types: 15.7.2
@@ -7856,10 +7856,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/marked@npm:3.0.2":
-  version: 3.0.2
-  resolution: "@types/marked@npm:3.0.2"
-  checksum: 48c3c190f97bffafbaacfc2ebcb8b87bfee12977b302ebf5ca028258f8131ffa1d3042455eaac4087bc816a3d5e0c8f65f4250e792b9dd18a533d49e99742d35
+"@types/marked@npm:4.0.0":
+  version: 4.0.0
+  resolution: "@types/marked@npm:4.0.0"
+  checksum: e9d085ac163744ee9abf34cc53cda37bf4c9147dc0b555c2cb349ea5f3b51c82df7083b86f1ddc8001c11fe6f2ffaf93d2d816826f8148ba8a25a81a3e3d661c
   languageName: node
   linkType: hard
 
@@ -7926,7 +7926,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:>=13.7.0":
+"@types/node@npm:*, @types/node@npm:16.11.6, @types/node@npm:>=13.7.0, @types/node@npm:^16.0.0":
   version: 16.11.6
   resolution: "@types/node@npm:16.11.6"
   checksum: 6e19634766ff589d3d2f361c2196b671f8f133cdadc5ad347a621c360d8994b6c4fbccfb2ad9c60c588c593831a96497c9c6b77d2b7e91be723384b94f6368e7
@@ -7940,14 +7940,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:14.17.27":
-  version: 14.17.27
-  resolution: "@types/node@npm:14.17.27"
-  checksum: 4f7eeaa329f4b2b9ff4bb0bb4582ad92e328a4e66f62d5b96ac4e3b51210ed092bb56726c30643beb860f6df633a29e08ed94adad2d573c85b4794d0bf0bbc06
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^14.0.0, @types/node@npm:^14.0.10, @types/node@npm:^14.14.31":
+"@types/node@npm:^14.0.10, @types/node@npm:^14.14.31":
   version: 14.17.32
   resolution: "@types/node@npm:14.17.32"
   checksum: c3ec45db5d8ca6ed80bcc2fe3cd9f15c1518d43cf048dd5444d1fcbe308d302a42721cb3f19548ac2e7b8b7db4f7f6cd4bf9ed58ab1d30a0bf61758350edd9d5
@@ -17880,7 +17873,7 @@ __metadata:
     "@types/logfmt": ^1.2.1
     "@types/lru-cache": ^5.1.0
     "@types/mousetrap": 1.6.3
-    "@types/node": 14.17.27
+    "@types/node": 16.11.6
     "@types/ol": ^6.5.1
     "@types/papaparse": 5.2.0
     "@types/pluralize": ^0.0.29
@@ -17978,7 +17971,7 @@ __metadata:
     glob: 7.1.6
     history: 4.10.1
     hoist-non-react-statics: 3.3.2
-    html-loader: 2.1.2
+    html-loader: 3.0.1
     html-webpack-harddisk-plugin: 2.0.0
     html-webpack-plugin: 5.3.2
     http-server: 14.0.0
@@ -18002,7 +17995,7 @@ __metadata:
     lodash: 4.17.21
     logfmt: ^1.3.2
     lru-cache: 6.0.0
-    memoize-one: 5.1.1
+    memoize-one: 6.0.0
     mini-css-extract-plugin: 2.4.2
     module-alias: 2.2.2
     moment: 2.29.1
@@ -18604,19 +18597,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-loader@npm:2.1.2":
-  version: 2.1.2
-  resolution: "html-loader@npm:2.1.2"
+"html-loader@npm:3.0.1":
+  version: 3.0.1
+  resolution: "html-loader@npm:3.0.1"
   dependencies:
-    html-minifier-terser: ^5.1.1
+    html-minifier-terser: ^6.0.2
     parse5: ^6.0.1
   peerDependencies:
     webpack: ^5.0.0
-  checksum: ed0b9033121b5ee5f85c3fbc5e17208f207cc33785417c014dc942a579410089de923d9c509a2d42821f3488efe984d2b898f277469e47eabf1a37cfbc48c302
+  checksum: 9963912f20c14ac2303d262778ea230e66bb7953db004ae55787a55ae4baecc350ce6ddb89ff8bdf5d3cf715ee8460545c2d2109304be3246bbad2123f7c9a57
   languageName: node
   linkType: hard
 
-"html-minifier-terser@npm:^5.0.1, html-minifier-terser@npm:^5.1.1":
+"html-minifier-terser@npm:^5.0.1":
   version: 5.1.1
   resolution: "html-minifier-terser@npm:5.1.1"
   dependencies:
@@ -22459,12 +22452,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:2.0.1":
-  version: 2.0.1
-  resolution: "marked@npm:2.0.1"
+"marked@npm:4.0.0":
+  version: 4.0.0
+  resolution: "marked@npm:4.0.0"
   bin:
-    marked: bin/marked
-  checksum: 2144b5f0c5f9446aa1ef15350ff8c5b2e27ef32f64f31047fc06cb68afad52b9d4b8587353c24f9150ec181061866c2e2a93f458963999af487887f9a1ef4e32
+    marked: bin/marked.js
+  checksum: 1889c1b58cba6ea764435ef2fefef037733899dcb1d54300453b355ac70ada0109132631b0a2c3ee0ce633b930a1bc6d6ee1bd1dea38cf901dd30099fa68e143
   languageName: node
   linkType: hard
 
@@ -22617,10 +22610,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"memoize-one@npm:5.1.1":
-  version: 5.1.1
-  resolution: "memoize-one@npm:5.1.1"
-  checksum: 51a8e96cd94614909e1656843ecb9307440fbfa64994be12978bb30bc190f8e66010cb7a35d3ee641a52302ce701dcea990b636ea2ef3c1cf94a50b4651f5446
+"memoize-one@npm:6.0.0":
+  version: 6.0.0
+  resolution: "memoize-one@npm:6.0.0"
+  checksum: f185ea69f7cceae5d1cb596266dcffccf545e8e7b4106ec6aa93b71ab9d16460dd118ac8b12982c55f6d6322fcc1485de139df07eacffaae94888b9b3ad7675f
   languageName: node
   linkType: hard
 

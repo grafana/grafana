@@ -26,7 +26,7 @@ import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin, importDataSourcePlugin } from './plugin_loader';
 import { importPanelPluginFromMeta } from './importPanelPlugin';
-import { getNotFoundNav } from 'app/core/nav_model_srv';
+import { getNotFoundNav } from 'app/angular/services/nav_model_srv';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
