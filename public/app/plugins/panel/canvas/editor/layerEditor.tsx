@@ -7,6 +7,7 @@ import { LayerElementListEditor } from './LayerElementListEditor';
 import { GroupState } from 'app/features/canvas/runtime/group';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { ElementState } from 'app/features/canvas/runtime/element';
+import { PlacementEditor } from './PlacementEditor';
 
 export interface LayerEditorProps {
   scene: Scene;
@@ -77,6 +78,21 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
 
       optionBuilder.addBackground(builder as any, ctx);
       optionBuilder.addBorder(builder as any, ctx);
+
+      const currentLayer = scene.currentLayer;
+      if (currentLayer && !currentLayer.isRoot()) {
+        builder.addCustomEditor({
+          category: ['Layout'],
+          id: 'content',
+          path: '__', // not used
+          name: 'Anchor',
+          editor: PlacementEditor,
+          settings: {
+            scene: opts.scene,
+            element: currentLayer,
+          },
+        });
+      }
     },
   };
 }
