@@ -18,7 +18,7 @@ import {
 } from '../types';
 import * as api from '../api';
 import { fetchRemotePlugins } from '../state/actions';
-import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginType, dateTimeFormatTimeAgo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('@grafana/runtime', () => {
@@ -139,21 +139,28 @@ describe('Plugin details page', () => {
       await waitFor(() => expect(queryByText(expected, options)).toBeInTheDocument());
     });
 
-    it('should display the correct version in the header for a local plugin', async () => {
+    it('should display the installed version if a plugin is installed', async () => {
       const installedVersion = '1.3.443';
       const { queryByText } = renderPluginDetails({ id, installedVersion });
 
       await waitFor(() => expect(queryByText(installedVersion)).toBeInTheDocument());
     });
 
-    it('should display the correct version in the header for remote plugin', async () => {
+    it('should display the latest compatible version in the header if a plugin is not installed', async () => {
       const details: CatalogPluginDetails = {
         links: [],
-        versions: [{ version: '1.2.443', createdAt: '', isCompatible: true, grafanaDependency: '>=8.0.0' }],
+        versions: [
+          { version: '1.3.0', createdAt: '', isCompatible: false, grafanaDependency: '>=9.0.0' },
+          { version: '1.2.0', createdAt: '', isCompatible: false, grafanaDependency: '>=8.3.0' },
+          { version: '1.1.1', createdAt: '', isCompatible: true, grafanaDependency: '>=8.0.0' },
+          { version: '1.1.0', createdAt: '', isCompatible: true, grafanaDependency: '>=8.0.0' },
+          { version: '1.0.0', createdAt: '', isCompatible: true, grafanaDependency: '>=7.0.0' },
+        ],
       };
 
       const { queryByText } = renderPluginDetails({ id, details });
-      await waitFor(() => expect(queryByText('1.2.443')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText('1.1.1')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(/>=8.0.0/i)).toBeInTheDocument());
     });
 
     it('should display description in the header', async () => {
@@ -188,19 +195,32 @@ describe('Plugin details page', () => {
     });
 
     it('should display version history in case it is available', async () => {
+      const versions = [
+        {
+          version: '1.2.0',
+          createdAt: '2018-04-06T20:23:41.000Z',
+          isCompatible: false,
+          grafanaDependency: '>=8.3.0',
+        },
+        {
+          version: '1.1.0',
+          createdAt: '2017-04-06T20:23:41.000Z',
+          isCompatible: true,
+          grafanaDependency: '>=8.0.0',
+        },
+        {
+          version: '1.0.0',
+          createdAt: '2016-04-06T20:23:41.000Z',
+          isCompatible: true,
+          grafanaDependency: '>=7.0.0',
+        },
+      ];
       const { queryByText, getByRole } = renderPluginDetails(
         {
           id,
           details: {
             links: [],
-            versions: [
-              {
-                version: '1.0.0',
-                createdAt: '2016-04-06T20:23:41.000Z',
-                isCompatible: true,
-                grafanaDependency: '>=8.0.0',
-              },
-            ],
+            versions,
           },
         },
         { pageId: PluginTabIds.VERSIONS }
@@ -209,26 +229,20 @@ describe('Plugin details page', () => {
       // Check if version information is available
       await waitFor(() => expect(queryByText(/version history/i)).toBeInTheDocument());
 
-      expect(
-        getByRole('columnheader', {
-          name: /version/i,
-        })
-      ).toBeInTheDocument();
-      expect(
-        getByRole('columnheader', {
-          name: /last updated/i,
-        })
-      ).toBeInTheDocument();
-      expect(
-        getByRole('cell', {
-          name: /1\.0\.0/i,
-        })
-      ).toBeInTheDocument();
-      expect(
-        getByRole('cell', {
-          name: /5 years ago/i,
-        })
-      ).toBeInTheDocument();
+      // Check the column headers
+      expect(getByRole('columnheader', { name: /version/i })).toBeInTheDocument();
+      expect(getByRole('columnheader', { name: /last updated/i })).toBeInTheDocument();
+
+      // Check the data
+      for (const version of versions) {
+        expect(getByRole('cell', { name: new RegExp(version.version, 'i') })).toBeInTheDocument();
+        expect(
+          getByRole('cell', { name: new RegExp(dateTimeFormatTimeAgo(version.createdAt), 'i') })
+        ).toBeInTheDocument();
+
+        // Check the latest compatible version
+        expect(queryByText('1.1.0 (latest compatible version)')).toBeInTheDocument();
+      }
     });
 
     it("should display an install button for a plugin that isn't installed", async () => {
