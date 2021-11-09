@@ -7,6 +7,8 @@ import './services/ng_react';
 import './services/segment_srv';
 import './services/popover_srv';
 import './services/timer';
+import './services/AngularLoader';
+
 import './dropdown_typeahead';
 import './autofill_event_fix';
 import './metric_segment';
