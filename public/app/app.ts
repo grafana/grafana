@@ -25,7 +25,6 @@ import {
   standardTransformersRegistry,
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
-import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import {
   registerEchoBackend,
   setBackendSrv,
@@ -59,6 +58,7 @@ import { ApplicationInsightsBackend } from './core/services/echo/backends/analyt
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { getAllOptionEditors } from './core/components/editors/registry';
 import { backendSrv } from './core/services/backend_srv';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -114,16 +114,9 @@ export class GrafanaApp {
 
       // disable tool tip animation
       $.fn.tooltip.defaults.animation = false;
-
       this.angularApp.init();
 
-      // Preload selected app plugins
-      const promises: Array<Promise<any>> = [];
-      for (const modulePath of config.pluginsToPreload) {
-        promises.push(importPluginModule(modulePath));
-      }
-
-      await Promise.all(promises);
+      await preloadPlugins(config.pluginsToPreload);
 
       ReactDOM.render(
         React.createElement(AppWrapper, {

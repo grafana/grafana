@@ -178,20 +178,16 @@ for (const flotDep of flotDeps) {
 }
 
 export async function importPluginModule(path: string): Promise<any> {
-  try {
-    const builtIn = builtInPlugins[path];
-    if (builtIn) {
-      // for handling dynamic imports
-      if (typeof builtIn === 'function') {
-        return await builtIn();
-      } else {
-        return builtIn;
-      }
+  const builtIn = builtInPlugins[path];
+  if (builtIn) {
+    // for handling dynamic imports
+    if (typeof builtIn === 'function') {
+      return await builtIn();
+    } else {
+      return builtIn;
     }
-    return grafanaRuntime.SystemJS.import(path);
-  } catch (error: any) {
-    console.error('Failed to load plugin: ', path, error);
   }
+  return grafanaRuntime.SystemJS.import(path);
 }
 
 export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
