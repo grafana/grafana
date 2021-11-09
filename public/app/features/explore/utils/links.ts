@@ -11,7 +11,7 @@ import {
   SplitOpen,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { getLinkSrv } from '../../../angular/panel/panellinks/link_srv';
+import { getLinkSrv } from '../../panel/panellinks/link_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
 /**
