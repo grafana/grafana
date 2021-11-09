@@ -180,7 +180,7 @@ export const ResourcePicker = (props: Props) => {
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     cardsWrapper: css`
-      height: calc(100vh - 550px);
+      height: 30vh;
       min-height: 50px;
       margin-top: 5px;
       max-width: 680px;
