@@ -15,8 +15,7 @@ import (
 
 const lokiFlushInterval = 15 * time.Second
 
-// LokiFrameOutput passes processing control to the rule defined
-// for a configured channel.
+// LokiFrameOutput can output frame encoded to JSON to Loki.
 type LokiFrameOutput struct {
 	lokiWriter *lokiWriter
 }

@@ -5,8 +5,7 @@ import (
 	"time"
 )
 
-// LokiDataOutput passes processing control to the rule defined
-// for a configured channel.
+// LokiDataOutput can output raw data to Loki (as string value).
 type LokiDataOutput struct {
 	lokiWriter *lokiWriter
 }
