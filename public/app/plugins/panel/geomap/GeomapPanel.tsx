@@ -394,6 +394,18 @@ export class GeomapPanel extends Component<Props, State> {
     return true;
   };
 
+  private generateLayerName = (): string => {
+    let newLayerName = `Layer ${this.counter}`;
+
+    for (const otherLayer of this.layers) {
+      if (newLayerName === otherLayer.options.name) {
+        newLayerName += '-1';
+      }
+    }
+
+    return newLayerName;
+  };
+
   async initLayer(map: Map, options: MapLayerOptions, isBasemap?: boolean): Promise<MapLayerState> {
     if (isBasemap && (!options?.type || config.geomapDisableCustomBaseLayer)) {
       options = DEFAULT_BASEMAP_CONFIG;
@@ -425,7 +437,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     if (!options.name) {
-      options.name = `Layer ${this.counter}`;
+      options.name = this.generateLayerName();
     }
     const UID = `lyr-${this.counter++}`;
 

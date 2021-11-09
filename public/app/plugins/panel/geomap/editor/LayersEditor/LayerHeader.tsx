@@ -46,7 +46,7 @@ export const LayerHeader = ({ layer, layers, onChange }: LayerHeaderProps) => {
     }
 
     for (const otherLayer of layers) {
-      if (otherLayer !== layer && newName === otherLayer.options.name) {
+      if (otherLayer.UID !== layer.UID && newName === otherLayer.options.name) {
         setValidationError('Layer name already exists');
         return;
       }
