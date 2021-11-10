@@ -410,10 +410,27 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
   // for example `something{^}`
 
   // there are some false positives that can end up in this situation, that we want
-  // to eliminate, for example: `something{a~^}`
-  // basically, if this subtree contains any error-node, we stop
+  // to eliminate:
+  // `something{a~^}` (if this subtree contains any error-node, we stop)
   if (subTreeHasError(node)) {
     return null;
+  }
+
+  // next false positive:
+  // `something{a="1"^}`
+  const child = walk(node, [['firstChild', 'LabelMatchList']]);
+  if (child !== null) {
+    // means the label-matching part contains at least one label already.
+    //
+    // in this case, we will need to have a `,` character at the end,
+    // to be able to suggest adding the next label.
+    // the area between the end-of-the-child-node and the cursor-pos
+    // must contain a `,` in this case.
+    const textToCheck = text.slice(child.to, pos);
+
+    if (!textToCheck.includes(',')) {
+      return null;
+    }
   }
 
   const metricNameNode = walk(node, [

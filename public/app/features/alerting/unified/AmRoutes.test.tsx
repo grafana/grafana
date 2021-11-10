@@ -79,6 +79,7 @@ const ui = {
   editRouteButton: byLabelText('Edit route'),
   deleteRouteButton: byLabelText('Delete route'),
   newPolicyButton: byRole('button', { name: /New policy/ }),
+  newPolicyCTAButton: byRole('button', { name: /New specific policy/ }),
 
   receiverSelect: byTestId('am-receiver-select'),
   groupSelect: byTestId('am-group-select'),
@@ -505,6 +506,25 @@ describe('AmRoutes', () => {
     expect(ui.deleteRouteButton.query()).not.toBeInTheDocument();
     expect(ui.saveButton.query()).not.toBeInTheDocument();
 
+    expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
+    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
+  });
+
+  it('Prometheus Alertmanager has no CTA button if there are no specific policies', async () => {
+    mocks.api.fetchStatus.mockResolvedValue({
+      ...someCloudAlertManagerStatus,
+      config: {
+        ...someCloudAlertManagerConfig.alertmanager_config,
+        route: {
+          ...someCloudAlertManagerConfig.alertmanager_config.route,
+          routes: undefined,
+        },
+      },
+    });
+    await renderAmRoutes(dataSources.promAlertManager.name);
+    const rootRouteContainer = await ui.rootRouteContainer.find();
+    expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
+    expect(ui.newPolicyCTAButton.query()).not.toBeInTheDocument();
     expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
     expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
   });

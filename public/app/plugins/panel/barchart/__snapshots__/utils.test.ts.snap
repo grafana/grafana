@@ -4,6 +4,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -30,6 +31,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -138,6 +140,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -164,6 +167,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -272,6 +276,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -298,6 +303,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -406,6 +412,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -432,6 +439,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -540,6 +548,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -566,6 +575,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -674,6 +684,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -700,6 +711,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -808,6 +820,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -834,6 +847,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -942,6 +956,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -968,6 +983,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {

@@ -46,6 +46,7 @@ interface State extends OverlayProps {
 export interface GeomapLayerActions {
   selectLayer: (uid: string) => void;
   deleteLayer: (uid: string) => void;
+  updateLayer: (uid: string, updatedLayer: MapLayerState<any>) => void;
   addlayer: (type: string) => void;
   reorder: (src: number, dst: number) => void;
 }
@@ -92,7 +93,7 @@ export class GeomapPanel extends Component<Props, State> {
 
   shouldComponentUpdate(nextProps: Props) {
     if (!this.map) {
-      return true; // not yet initalized
+      return true; // not yet initialized
     }
 
     // Check for resize
@@ -151,6 +152,21 @@ export class GeomapPanel extends Component<Props, State> {
       }
       this.layers = layers;
       this.doOptionsUpdate(0);
+    },
+    updateLayer: (uid: string, updatedLayer: MapLayerState<any>) => {
+      const selected = this.layers.findIndex((v) => v.UID === uid);
+      const layers: MapLayerState[] = [];
+      for (const lyr of this.layers) {
+        if (lyr.UID === uid) {
+          this.map?.removeLayer(lyr.layer);
+          this.map?.addLayer(updatedLayer.layer);
+          layers.push(updatedLayer);
+        } else {
+          layers.push(lyr);
+        }
+      }
+      this.layers = layers;
+      this.doOptionsUpdate(selected);
     },
     addlayer: (type: string) => {
       const item = geomapLayerRegistry.getIfExists(type);
@@ -361,7 +377,7 @@ export class GeomapPanel extends Component<Props, State> {
       }
       layers[selected] = info;
 
-      // initalize with new data
+      // initialize with new data
       if (info.handler.update) {
         info.handler.update(this.props.data);
       }
@@ -376,6 +392,18 @@ export class GeomapPanel extends Component<Props, State> {
     this.doOptionsUpdate(selected);
 
     return true;
+  };
+
+  private generateLayerName = (): string => {
+    let newLayerName = `Layer ${this.counter}`;
+
+    for (const otherLayer of this.layers) {
+      if (newLayerName === otherLayer.options.name) {
+        newLayerName += '-1';
+      }
+    }
+
+    return newLayerName;
   };
 
   async initLayer(map: Map, options: MapLayerOptions, isBasemap?: boolean): Promise<MapLayerState> {
@@ -408,7 +436,11 @@ export class GeomapPanel extends Component<Props, State> {
       handler.update(this.props.data);
     }
 
+    if (!options.name) {
+      options.name = this.generateLayerName();
+    }
     const UID = `lyr-${this.counter++}`;
+
     return {
       UID,
       isBasemap,
@@ -427,7 +459,7 @@ export class GeomapPanel extends Component<Props, State> {
     let view = new View({
       center: [0, 0],
       zoom: 1,
-      showFullExtent: true, // alows zooming so the full range is visiable
+      showFullExtent: true, // allows zooming so the full range is visible
     });
 
     // With shared views, all panels use the same view instance

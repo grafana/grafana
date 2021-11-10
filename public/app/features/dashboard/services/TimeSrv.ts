@@ -353,6 +353,23 @@ export class TimeSrv {
       to: toUtc(to),
     });
   }
+
+  // isRefreshOutsideThreshold function calculates the difference between last refresh and now
+  // if the difference is outside 5% of the current set time range then the function will return true
+  // if the difference is within 5% of the current set time range then the function will return false
+  // if the current time range is absolute (i.e. not using relative strings like now-5m) then the function will return false
+  isRefreshOutsideThreshold(lastRefresh: number, threshold = 0.05) {
+    const timeRange = this.timeRange();
+
+    if (dateMath.isMathString(timeRange.raw.from)) {
+      const totalRange = timeRange.to.diff(timeRange.from);
+      const msSinceLastRefresh = Date.now() - lastRefresh;
+      const msThreshold = totalRange * threshold;
+      return msSinceLastRefresh >= msThreshold;
+    }
+
+    return false;
+  }
 }
 
 let singleton: TimeSrv | undefined;
