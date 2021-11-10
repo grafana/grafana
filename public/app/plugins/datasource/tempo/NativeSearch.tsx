@@ -33,7 +33,7 @@ interface Props {
 }
 
 const PRISM_LANGUAGE = 'tempo';
-const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
+const durationPlaceholder = 'e.g. 1.2s, 100ms';
 const plugins = [
   BracesPlugin(),
   SlatePrism({

@@ -1,4 +1,4 @@
-package tsdb
+package legacydata
 
 import (
 	"strconv"
@@ -13,10 +13,10 @@ func TestTimeRange(t *testing.T) {
 	now := time.Now()
 
 	t.Run("Can parse 5m, now", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "5m",
 			To:   "now",
-			now:  now,
+			Now:  now,
 		}
 
 		t.Run("5m ago ", func(t *testing.T) {
@@ -37,10 +37,10 @@ func TestTimeRange(t *testing.T) {
 	})
 
 	t.Run("Can parse 5h, now-10m", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "5h",
 			To:   "now-10m",
-			now:  now,
+			Now:  now,
 		}
 
 		t.Run("5h ago ", func(t *testing.T) {
@@ -66,10 +66,10 @@ func TestTimeRange(t *testing.T) {
 	now, err := time.Parse(time.RFC3339Nano, "2020-03-26T15:12:56.000Z")
 	require.Nil(t, err)
 	t.Run("Can parse now-1M/M, now-1M/M", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "now-1M/M",
 			To:   "now-1M/M",
-			now:  now,
+			Now:  now,
 		}
 
 		t.Run("from now-1M/M ", func(t *testing.T) {
@@ -92,10 +92,10 @@ func TestTimeRange(t *testing.T) {
 	})
 
 	t.Run("Can parse now-3d, now+3w", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "now-3d",
 			To:   "now+3w",
-			now:  now,
+			Now:  now,
 		}
 
 		t.Run("now-3d ", func(t *testing.T) {
@@ -118,10 +118,10 @@ func TestTimeRange(t *testing.T) {
 	})
 
 	t.Run("Can parse 1960-02-01T07:00:00.000Z, 1965-02-03T08:00:00.000Z", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "1960-02-01T07:00:00.000Z",
 			To:   "1965-02-03T08:00:00.000Z",
-			now:  now,
+			Now:  now,
 		}
 
 		t.Run("1960-02-01T07:00:00.000Z ", func(t *testing.T) {
@@ -146,7 +146,7 @@ func TestTimeRange(t *testing.T) {
 	t.Run("Can parse negative unix epochs", func(t *testing.T) {
 		from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 		to := time.Date(1965, 2, 3, 8, 0, 0, 0, time.UTC)
-		tr := NewTimeRange(strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+		tr := NewDataTimeRange(strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
 
 		res, err := tr.ParseFrom()
 		require.Nil(t, err)
@@ -159,10 +159,10 @@ func TestTimeRange(t *testing.T) {
 
 	t.Run("can parse unix epochs", func(t *testing.T) {
 		var err error
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "1474973725473",
 			To:   "1474975757930",
-			now:  now,
+			Now:  now,
 		}
 
 		res, err := tr.ParseFrom()
@@ -176,10 +176,10 @@ func TestTimeRange(t *testing.T) {
 
 	t.Run("Cannot parse asdf", func(t *testing.T) {
 		var err error
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "asdf",
 			To:   "asdf",
-			now:  now,
+			Now:  now,
 		}
 
 		_, err = tr.ParseFrom()
@@ -193,10 +193,10 @@ func TestTimeRange(t *testing.T) {
 	require.Nil(t, err)
 
 	t.Run("Can parse now-1M/M, now-1M/M with America/Chicago timezone", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "now-1M/M",
 			To:   "now-1M/M",
-			now:  now,
+			Now:  now,
 		}
 		location, err := time.LoadLocation("America/Chicago")
 		require.Nil(t, err)
@@ -221,10 +221,10 @@ func TestTimeRange(t *testing.T) {
 	})
 
 	t.Run("Can parse now-3h, now+2h with America/Chicago timezone", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "now-3h",
 			To:   "now+2h",
-			now:  now,
+			Now:  now,
 		}
 		location, err := time.LoadLocation("America/Chicago")
 		require.Nil(t, err)
@@ -249,10 +249,10 @@ func TestTimeRange(t *testing.T) {
 	})
 
 	t.Run("Can parse now-1w/w, now-1w/w without timezone and week start on Monday", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "now-1w/w",
 			To:   "now-1w/w",
-			now:  now,
+			Now:  now,
 		}
 		weekstart := time.Monday
 		require.Nil(t, err)
@@ -277,10 +277,10 @@ func TestTimeRange(t *testing.T) {
 	})
 
 	t.Run("Can parse now-1w/w, now-1w/w with America/Chicago timezone and week start on Monday", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "now-1w/w",
 			To:   "now-1w/w",
-			now:  now,
+			Now:  now,
 		}
 		weekstart := time.Monday
 		location, err := time.LoadLocation("America/Chicago")
@@ -306,10 +306,10 @@ func TestTimeRange(t *testing.T) {
 	})
 
 	t.Run("Can parse now-1w/w, now-1w/w with America/Chicago timezone and week start on Sunday", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "now-1w/w",
 			To:   "now-1w/w",
-			now:  now,
+			Now:  now,
 		}
 		weekstart := time.Sunday
 		location, err := time.LoadLocation("America/Chicago")
@@ -335,10 +335,10 @@ func TestTimeRange(t *testing.T) {
 	})
 
 	t.Run("Can parse now-1w/w, now-1w/w with America/Chicago timezone and week start on Saturday", func(t *testing.T) {
-		tr := TimeRange{
+		tr := DataTimeRange{
 			From: "now-1w/w",
 			To:   "now-1w/w",
-			now:  now,
+			Now:  now,
 		}
 		weekstart := time.Saturday
 		location, err := time.LoadLocation("America/Chicago")

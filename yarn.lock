@@ -2766,6 +2766,7 @@ __metadata:
     css-minimizer-webpack-plugin: ^3.1.1
     csstype: 3.0.9
     d3: 5.15.0
+    date-fns: 2.25.0
     emotion: 11.0.0
     enzyme: 3.11.0
     expose-loader: 3.0.0
