@@ -140,3 +140,34 @@ export interface SilenceFilterState {
   queryString?: string;
   silenceState?: string;
 }
+
+interface EvalMatch {
+  metric: string;
+  tags?: any;
+  value: number;
+}
+
+interface Data {
+  evalMatches: EvalMatch[];
+}
+
+export interface StateHistoryItem {
+  id: number;
+  alertId: number;
+  alertName: string;
+  dashboardId: number;
+  panelId: number;
+  userId: number;
+  newState: PromAlertingRuleState | GrafanaAlertState;
+  prevState: PromAlertingRuleState | GrafanaAlertState;
+  created: number;
+  updated: number;
+  time: number;
+  timeEnd: number;
+  text: string;
+  tags: any[];
+  login: string;
+  email: string;
+  avatarUrl: string;
+  data: Data;
+}

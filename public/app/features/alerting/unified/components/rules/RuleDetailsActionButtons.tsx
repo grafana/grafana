@@ -19,9 +19,10 @@ import { getAlertmanagerByUid } from '../../utils/alertmanager';
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
+  onShowStateHistory: () => void;
 }
 
-export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
+export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, onShowStateHistory }) => {
   const dispatch = useDispatch();
   const location = useLocation();
   const style = useStyles2(getStyles);
@@ -140,6 +141,14 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
       >
         Silence
       </LinkButton>
+    );
+  }
+
+  if (rule.annotations[Annotation.alertId]) {
+    leftButtons.push(
+      <Button className={style.button} size="xs" key="history" icon="history" onClick={() => onShowStateHistory()}>
+        Show state history
+      </Button>
     );
   }
 

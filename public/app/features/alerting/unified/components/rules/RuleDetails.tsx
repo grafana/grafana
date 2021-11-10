@@ -1,6 +1,6 @@
 import { CombinedRule } from 'app/types/unified-alerting';
-import React, { FC } from 'react';
-import { useStyles2 } from '@grafana/ui';
+import React, { FC, useState } from 'react';
+import { Modal, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { AlertLabels } from '../AlertLabels';
@@ -10,12 +10,16 @@ import { RuleDetailsDataSources } from './RuleDetailsDataSources';
 import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
 import { RuleDetailsExpression } from './RuleDetailsExpression';
 import { RuleDetailsAnnotations } from './RuleDetailsAnnotations';
+import { RuleStateHistory } from './RuleStateHistory';
+import { Annotation } from '../../utils/constants';
 
 interface Props {
   rule: CombinedRule;
 }
 
 export const RuleDetails: FC<Props> = ({ rule }) => {
+  const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
+
   const styles = useStyles2(getStyles);
   const {
     promRule,
@@ -26,7 +30,11 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
 
   return (
     <div>
-      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
+      <RuleDetailsActionButtons
+        rule={rule}
+        rulesSource={rulesSource}
+        onShowStateHistory={() => setShowHistoryModal(true)}
+      />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {!!rule.labels && !!Object.keys(rule.labels).length && (
@@ -42,6 +50,15 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
         </div>
       </div>
       <RuleDetailsMatchingInstances promRule={promRule} />
+      <Modal
+        isOpen={showHistoryModal}
+        onDismiss={() => setShowHistoryModal(false)}
+        closeOnBackdropClick={true}
+        closeOnEscape={true}
+        title="State history"
+      >
+        <RuleStateHistory alertId={rule.annotations[Annotation.alertId]} />
+      </Modal>
     </div>
   );
 };
