@@ -76,12 +76,7 @@ const NewMuteTiming = (props: Props) => {
   }, [fetchConfig]);
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const { result, error: resultError } =
-    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
-
-  if (resultError) {
-    console.error(resultError);
-  }
+  const { result } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
 

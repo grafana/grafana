@@ -1,4 +1,10 @@
-import { AlertManagerCortexConfig, MatcherOperator, Route, Matcher } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerCortexConfig,
+  MatcherOperator,
+  Route,
+  Matcher,
+  TimeInterval,
+} from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 import { MatcherFieldValue } from '../types/silence-form';
 import { SelectableValue } from '@grafana/data';
@@ -192,4 +198,36 @@ export function getAllAlertmanagerDataSources() {
 
 export function getAlertmanagerByUid(uid?: string) {
   return getAllAlertmanagerDataSources().find((ds) => uid === ds.uid);
+}
+
+export function timeIntervalToString(timeInterval: TimeInterval): string {
+  const { times, weekdays, days_of_month, months, years } = timeInterval;
+  const timeString =
+    'Times: ' + times
+      ? times?.map(({ start_time, end_time }) => `${start_time} - ${end_time} UTC`).join(' and ')
+      : 'All';
+  const weekdayString =
+    'Weekdays: ' +
+    (weekdays
+      ?.map((day) => {
+        if (day.includes(':')) {
+          return day
+            .split(':')
+            .map((d) => {
+              const abbreviated = d.slice(0, 3);
+              return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
+            })
+            .join('-');
+        } else {
+          const abbreviated = day.slice(0, 3);
+          return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
+        }
+      })
+      .join(', ') ?? 'All');
+
+  const daysString = 'Days of the month: ' + (days_of_month?.join(', ') ?? 'All');
+  const monthsString = 'Months: ' + (months?.join(', ') ?? 'All');
+  const yearsString = 'Years: ' + (years?.join(', ') ?? 'All');
+
+  return [timeString, weekdayString, daysString, monthsString, yearsString].join(', ');
 }

@@ -1,40 +1,52 @@
 import { IconButton, LinkButton, Link } from '@grafana/ui';
-import { MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteMuteTimingAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
+import { AsyncRequestState, initialAsyncRequestState } from '../../utils/redux';
 import { DynamicTable, DynamicTableItemProps, DynamicTableColumnProps } from '../DynamicTable';
 
 interface Props {
   alertManagerSourceName: string;
-  muteTimings: MuteTimeInterval[];
+  muteTimingNames?: string[];
+  hideActions?: boolean;
 }
 
-export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTimings }) => {
-  const items = useMemo((): Array<DynamicTableItemProps<MuteTimeInterval>> => {
-    return muteTimings.map((mute) => {
-      return {
-        id: mute.name,
-        data: mute,
-      };
-    });
-  }, [muteTimings]);
+export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTimingNames, hideActions }) => {
+  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
+  const { result }: AsyncRequestState<AlertManagerCortexConfig> =
+    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
-  const columns = useColumns(alertManagerSourceName);
+  const items = useMemo((): Array<DynamicTableItemProps<MuteTimeInterval>> => {
+    const muteTimings = result?.alertmanager_config?.mute_time_intervals ?? [];
+    return muteTimings
+      .filter(({ name }) => (muteTimingNames ? muteTimingNames.includes(name) : true))
+      .map((mute) => {
+        return {
+          id: mute.name,
+          data: mute,
+        };
+      });
+  }, [result?.alertmanager_config?.mute_time_intervals, muteTimingNames]);
+
+  const columns = useColumns(alertManagerSourceName, hideActions);
 
   return (
     <div>
-      <h5>Mute timings</h5>
-      <DynamicTable items={items} cols={columns} />
-      <LinkButton variant="secondary" href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}>
-        Add mute timing
-      </LinkButton>
+      {!hideActions && <h5>Mute timings</h5>}
+      {items.length > 0 ? <DynamicTable items={items} cols={columns} /> : 'No mute timings configured'}
+      {!hideActions && (
+        <LinkButton variant="secondary" href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}>
+          Add mute timing
+        </LinkButton>
+      )}
     </div>
   );
 };
 
-function useColumns(alertManagerSourceName: string) {
+function useColumns(alertManagerSourceName: string, hideActions?: boolean) {
   const dispatch = useDispatch();
   return useMemo((): Array<DynamicTableColumnProps<MuteTimeInterval>> => {
     const columns: Array<DynamicTableColumnProps<MuteTimeInterval>> = [
@@ -51,7 +63,9 @@ function useColumns(alertManagerSourceName: string) {
         label: 'Time range',
         renderCell: ({ data }) => parseTimings(data.time_intervals),
       },
-      {
+    ];
+    if (!hideActions) {
+      columns.push({
         id: 'actions',
         label: 'Actions',
         renderCell: function renderActions({ data }) {
@@ -69,10 +83,10 @@ function useColumns(alertManagerSourceName: string) {
           );
         },
         size: '140px',
-      },
-    ];
+      });
+    }
     return columns;
-  }, [alertManagerSourceName, dispatch]);
+  }, [alertManagerSourceName, dispatch, hideActions]);
 }
 
 function parseTimings(timeIntervals: TimeInterval[]) {
