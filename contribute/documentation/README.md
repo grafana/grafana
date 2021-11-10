@@ -180,7 +180,7 @@ When you are ready for other people to review your work, perform the following t
 
 ### Understanding the PR review and approval workflow
 
-Need content here that describes where to post PR for review, of whom to select for a review, review SLA?, and what the review process is like. This doesn't have to be long.
+When a PR is added to the repo with a label associated with `docs`, it will be reviewed by a member of the technical writing team. Depending on the size of the PR and the priority of other work, the PR will either be immediately reviewed and merged (minor fixes typically follow this pattern) or the PR will be triaged and placed in the backlog of work or moved into further development.
 
 ## Join our community
 
