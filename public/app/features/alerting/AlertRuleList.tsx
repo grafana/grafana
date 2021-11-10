@@ -14,6 +14,7 @@ import { Button, LinkButton, Select, VerticalGroup, FilterInput } from '@grafana
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ShowModalReactEvent } from '../../types/events';
 import { AlertHowToModal } from './AlertHowToModal';
+import { UnifiedAlertingPromotion } from './components/UnifiedAlertingPromotion';
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -121,6 +122,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
               How to add an alert
             </Button>
           </div>
+          <UnifiedAlertingPromotion />
           <VerticalGroup spacing="none">
             {alertRules.map((rule) => {
               return (
