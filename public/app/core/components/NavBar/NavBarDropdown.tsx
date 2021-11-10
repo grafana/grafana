@@ -1,79 +1,166 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { IconName, useTheme2 } from '@grafana/ui';
-import { NavBarMenuItem } from './NavBarMenuItem';
+import { useTheme2 } from '@grafana/ui';
+import { DismissButton, useOverlay } from '@react-aria/overlays';
+import { FocusScope } from '@react-aria/focus';
+import { mergeProps } from '@react-aria/utils';
+import { useMenu, useMenuItem } from '@react-aria/menu';
+import { useTreeState } from '@react-stately/tree';
+import { useFocus } from '@react-aria/interactions';
 
 interface Props {
-  headerTarget?: HTMLAnchorElement['target'];
-  headerText: string;
-  headerUrl?: string;
-  isVisible?: boolean;
   items?: NavModelItem[];
   onHeaderClick?: () => void;
   reverseDirection?: boolean;
   subtitleText?: string;
+  enableAllItems: boolean;
 }
 
 const NavBarDropdown = ({
-  headerTarget,
-  headerText,
-  headerUrl,
-  isVisible,
   items = [],
   onHeaderClick,
   reverseDirection = false,
   subtitleText,
+  enableAllItems = false,
+  ...rest
 }: Props) => {
-  const filteredItems = items.filter((item) => !item.hideFromMenu);
   const theme = useTheme2();
-  const styles = getStyles(theme, reverseDirection, filteredItems, isVisible);
+  const styles = getStyles(theme, reverseDirection);
 
+  const disabledKeys = enableAllItems
+    ? []
+    : items?.map((item: any, index: number) => {
+        return `${item.id}-${index}`;
+      });
+
+  // Create menu state based on the incoming props
+  const state = useTreeState({ ...rest, disabledKeys });
+
+  const { selectionManager, collection, ...restState } = state;
+
+  // Get props for the menu element
+  const ref = React.useRef(null);
+  const { menuProps } = useMenu(rest, { ...restState, selectionManager, collection }, ref);
+
+  // Handle events that should cause the menu to close,
+  // e.g. blur, clicking outside, or pressing the escape key.
+  const overlayRef = React.useRef(null);
+  const { overlayProps } = useOverlay(
+    {
+      onClose: rest.onClose,
+      shouldCloseOnBlur: true,
+      isOpen: true,
+      isDismissable: true,
+    },
+    overlayRef
+  );
+
+  useEffect(() => {
+    if (enableAllItems && !selectionManager.isFocused) {
+      const firstKey = collection.getFirstKey();
+      selectionManager.setFocusedKey(firstKey);
+      selectionManager.setFocused(true);
+    } else if (!enableAllItems && selectionManager.isFocused) {
+      selectionManager.setFocused(false);
+      selectionManager.clearSelection();
+    }
+  }, [enableAllItems, selectionManager, collection]);
+
+  // Wrap in <FocusScope> so that focus is restored back to the
+  // trigger when the menu is closed. In addition, add hidden
+  // <DismissButton> components at the start and end of the list
+  // to allow screen reader users to dismiss the popup easily.
   return (
-    <ul className={`${styles.menu} navbar-dropdown`} role="menu">
-      <NavBarMenuItem
-        onClick={onHeaderClick}
-        styleOverrides={styles.header}
-        target={headerTarget}
-        text={headerText}
-        url={headerUrl}
-      />
-      {filteredItems.map((child, index) => (
-        <NavBarMenuItem
-          key={index}
-          isDivider={child.divider}
-          icon={child.icon as IconName}
-          onClick={child.onClick}
-          target={child.target}
-          text={child.text}
-          url={child.url}
-        />
-      ))}
-      {subtitleText && <li className={styles.subtitle}>{subtitleText}</li>}
-    </ul>
+    <FocusScope restoreFocus>
+      <div {...overlayProps} ref={overlayRef}>
+        <DismissButton onDismiss={rest.onClose} />
+        <ul
+          className={`${styles.menu} navbar-dropdown`}
+          {...mergeProps(menuProps, rest.domProps)}
+          ref={ref}
+          tabIndex={enableAllItems ? 0 : -1}
+        >
+          {[...state.collection].map((item) => (
+            <MenuItem key={item.key} item={item} state={state} onAction={rest.onAction} onClose={rest.onClose} />
+          ))}
+        </ul>
+
+        {subtitleText && <li className={styles.subtitle}>{subtitleText}</li>}
+        <DismissButton onDismiss={rest.onClose} />
+      </div>
+    </FocusScope>
   );
 };
 
+export function MenuItem({ item, state, onAction, onClose }: any) {
+  // Get props for the menu item element
+  const ref = React.useRef(null);
+
+  const { menuItemProps } = useMenuItem(
+    {
+      key: item.key,
+      onAction,
+      isDisabled: state.disabledKeys.has(item.key),
+      onClose,
+    },
+    state,
+    ref
+  );
+
+  // style to the focused menu item
+  const [isFocused, setFocused] = React.useState(false);
+  const { focusProps } = useFocus({ onFocusChange: setFocused });
+  const theme = useTheme2();
+
+  const styles = getStylesMenuItem(theme, isFocused);
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    switch (e.key) {
+      case 'Enter':
+      case ' ':
+        // Stop propagation, unless it would already be handled by useKeyboard.
+        if (!('continuePropagation' in e)) {
+          e.stopPropagation();
+        }
+        e.preventDefault();
+        // Alert: Hacky way to go to link
+        e.target?.querySelector('a')?.click();
+        e.target?.querySelector('button')?.click();
+        break;
+      default:
+        break;
+    }
+  };
+
+  return (
+    <li {...mergeProps(menuItemProps, focusProps)} onKeyDown={onKeyDown} ref={ref} className={styles.menuItem}>
+      {item.rendered}
+    </li>
+  );
+}
+
+const getStylesMenuItem = (theme: GrafanaTheme2, isFocused: boolean) => ({
+  menuItem: css`
+    background-color: ${isFocused ? theme.colors.action.hover : 'transparent'};
+    color: ${isFocused ? 'white' : theme.colors.text.primary};
+
+    &:focus-visible {
+      background-color: ${theme.colors.action.hover};
+      box-shadow: none;
+      color: ${theme.colors.text.primary};
+      outline: 2px solid ${theme.colors.primary.main};
+      // Need to add condition, header is 0, otherwise -2
+      outline-offset: -0px;
+      transition: none;
+    }
+  `,
+});
+
 export default NavBarDropdown;
 
-const getStyles = (
-  theme: GrafanaTheme2,
-  reverseDirection: Props['reverseDirection'],
-  filteredItems: Props['items'],
-  isVisible: Props['isVisible']
-) => {
-  const adjustHeightForBorder = filteredItems!.length === 0;
-
+const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirection']) => {
   return {
-    header: css`
-      background-color: ${theme.colors.background.secondary};
-      height: ${theme.components.sidemenu.width - (adjustHeightForBorder ? 2 : 1)}px;
-      font-size: ${theme.typography.h4.fontSize};
-      font-weight: ${theme.typography.h4.fontWeight};
-      padding: ${theme.spacing(1)} ${theme.spacing(2)};
-      white-space: nowrap;
-      width: 100%;
-    `,
     menu: css`
       background-color: ${theme.colors.background.primary};
       border: 1px solid ${theme.components.panel.borderColor};
@@ -84,12 +171,11 @@ const getStyles = (
       left: 100%;
       list-style: none;
       min-width: 140px;
-      opacity: ${isVisible ? 1 : 0};
       position: absolute;
       top: ${reverseDirection ? 'auto' : 0};
       transition: ${theme.transitions.create('opacity')};
-      visibility: ${isVisible ? 'visible' : 'hidden'};
       z-index: ${theme.zIndex.sidemenu};
+      list-style: none;
     `,
     subtitle: css`
       border-${reverseDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
