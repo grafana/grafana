@@ -5,7 +5,7 @@ We provide these guidelines to help our contributors make additions or correctio
 
 ## Welcome
 
-xxxxx
+Welcome. We're glad you're here to help make our technical documentation even better. We develop content that leads our users to success using Grafana products. Technical accuracy is our primary consideration, and we value the use of inclusive language. We regard your feedback as a gift - thanks for reading through these guidelines.
 
 
 ### Intended audience
