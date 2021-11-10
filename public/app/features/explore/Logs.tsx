@@ -321,7 +321,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
             <InlineField label="Time" transparent>
-              <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent id="show-tiime" />
+              <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent id="show-time" />
             </InlineField>
             <InlineField label="Unique labels" transparent>
               <InlineSwitch value={showLabels} onChange={this.onChangeLabels} transparent id="unique-labels" />
