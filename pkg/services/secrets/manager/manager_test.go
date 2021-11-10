@@ -146,33 +146,22 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	})
 }
 
-func TestSecretsService_GetCurrentProvider(t *testing.T) {
+func TestSecretsService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
-		cfg := `[security]
-			secret_key = sdDkslslld`
-
-		raw, err := ini.Load([]byte(cfg))
-		require.NoError(t, err)
-		settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
-
-		svc := ProvideSecretsService(
-			database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
-			bus.New(),
-			ossencryption.ProvideService(),
-			settings,
-		)
-
+		svc := SetupTestService(t, database.ProvideSecretsStore(sqlstore.InitTestDB(t)))
 		assert.Equal(t, "secretKey", svc.currentProvider)
 	})
 
 	t.Run("When encryption_provider value is set, should use it as a current provider", func(t *testing.T) {
-		cfg := `[security]
+		rawCfg := `[security]
 			secret_key = sdDkslslld
 			encryption_provider = awskms.second_key`
 
-		raw, err := ini.Load([]byte(cfg))
+		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
-		settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+		cfg := &setting.Cfg{Raw: raw, FeatureToggles: map[string]bool{envelopeEncryptionFeatureToggle: true}}
+		settings := &setting.OSSImpl{Cfg: cfg}
 
 		svc := ProvideSecretsService(
 			database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
@@ -183,4 +172,65 @@ func TestSecretsService_GetCurrentProvider(t *testing.T) {
 
 		assert.Equal(t, "awskms.second_key", svc.currentProvider)
 	})
+
+	t.Run("Should use encrypt/decrypt methods of the current provider", func(t *testing.T) {
+		rawCfg := `
+		[security]
+		secret_key = sdDkslslld
+		encryption_provider = fake-provider.some-key
+
+		[security.encryption.fake-provider.some-key]
+		`
+
+		raw, err := ini.Load([]byte(rawCfg))
+		require.NoError(t, err)
+
+		cfg := &setting.Cfg{Raw: raw, FeatureToggles: map[string]bool{envelopeEncryptionFeatureToggle: true}}
+		settings := &setting.OSSImpl{Cfg: cfg}
+
+		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+		fake := fakeProvider{}
+		providerID := "fake-provider.some-key"
+
+		svcEncrypt := ProvideSecretsService(
+			secretStore,
+			bus.New(),
+			ossencryption.ProvideService(),
+			settings,
+		)
+
+		svcEncrypt.RegisterProvider(providerID, &fake)
+		require.NoError(t, err)
+		assert.Equal(t, providerID, svcEncrypt.CurrentProviderID())
+		assert.Equal(t, 2, len(svcEncrypt.GetProviders()))
+		encrypted, _ := svcEncrypt.Encrypt(context.Background(), []byte{}, secrets.WithoutScope())
+		assert.True(t, fake.encryptCalled)
+
+		// secret service tries to find a DEK in a cache first before calling provider's decrypt
+		// to bypass the cache, we set up one more secrets service to test decrypting
+		svcDecrypt := ProvideSecretsService(
+			secretStore,
+			bus.New(),
+			ossencryption.ProvideService(),
+			settings,
+		)
+		svcDecrypt.RegisterProvider(providerID, &fake)
+		_, _ = svcDecrypt.Decrypt(context.Background(), encrypted)
+		assert.True(t, fake.decryptCalled, "fake provider's decrypt should be called")
+	})
+}
+
+type fakeProvider struct {
+	encryptCalled bool
+	decryptCalled bool
+}
+
+func (p *fakeProvider) Encrypt(_ context.Context, _ []byte) ([]byte, error) {
+	p.encryptCalled = true
+	return []byte{}, nil
+}
+
+func (p *fakeProvider) Decrypt(_ context.Context, _ []byte) ([]byte, error) {
+	p.decryptCalled = true
+	return []byte{}, nil
 }

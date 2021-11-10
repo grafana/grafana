@@ -20,45 +20,37 @@ type FileStorage struct {
 	EncryptionService encryption.Service
 }
 
-func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error) {
-	cfgfile := filepath.Join(f.DataPath, "pipeline", "remote-write-backends.json")
-	var backends []RemoteWriteBackend
-	// Safe to ignore gosec warning G304.
-	// nolint:gosec
-	backendBytes, err := ioutil.ReadFile(cfgfile)
+func (f *FileStorage) ListWriteConfigs(_ context.Context, orgID int64) ([]WriteConfig, error) {
+	writeConfigs, err := f.readWriteConfigs()
 	if err != nil {
-		return backends, fmt.Errorf("can't read %s file: %w", cfgfile, err)
+		return nil, fmt.Errorf("can't read write configs: %w", err)
 	}
-	var remoteWriteBackends RemoteWriteBackends
-	err = json.Unmarshal(backendBytes, &remoteWriteBackends)
-	if err != nil {
-		return nil, fmt.Errorf("can't unmarshal remote-write-backends.json data: %w", err)
-	}
-	for _, b := range remoteWriteBackends.Backends {
+	var orgConfigs []WriteConfig
+	for _, b := range writeConfigs.Configs {
 		if b.OrgId == orgID || (orgID == 1 && b.OrgId == 0) {
-			backends = append(backends, b)
+			orgConfigs = append(orgConfigs, b)
 		}
 	}
-	return backends, nil
+	return orgConfigs, nil
 }
 
-func (f *FileStorage) GetRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendGetCmd) (RemoteWriteBackend, bool, error) {
-	remoteWriteBackends, err := f.readRemoteWriteBackends()
+func (f *FileStorage) GetWriteConfig(_ context.Context, orgID int64, cmd WriteConfigGetCmd) (WriteConfig, bool, error) {
+	writeConfigs, err := f.readWriteConfigs()
 	if err != nil {
-		return RemoteWriteBackend{}, false, fmt.Errorf("can't remote write backends: %w", err)
+		return WriteConfig{}, false, fmt.Errorf("can't read write configs: %w", err)
 	}
-	for _, existingBackend := range remoteWriteBackends.Backends {
+	for _, existingBackend := range writeConfigs.Configs {
 		if uidMatch(orgID, cmd.UID, existingBackend) {
 			return existingBackend, true, nil
 		}
 	}
-	return RemoteWriteBackend{}, false, nil
+	return WriteConfig{}, false, nil
 }
 
-func (f *FileStorage) CreateRemoteWriteBackend(ctx context.Context, orgID int64, cmd RemoteWriteBackendCreateCmd) (RemoteWriteBackend, error) {
-	remoteWriteBackends, err := f.readRemoteWriteBackends()
+func (f *FileStorage) CreateWriteConfig(ctx context.Context, orgID int64, cmd WriteConfigCreateCmd) (WriteConfig, error) {
+	writeConfigs, err := f.readWriteConfigs()
 	if err != nil {
-		return RemoteWriteBackend{}, fmt.Errorf("can't read remote write backends: %w", err)
+		return WriteConfig{}, fmt.Errorf("can't read write configs: %w", err)
 	}
 	if cmd.UID == "" {
 		cmd.UID = util.GenerateShortUID()
@@ -66,10 +58,10 @@ func (f *FileStorage) CreateRemoteWriteBackend(ctx context.Context, orgID int64,
 
 	secureSettings, err := f.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
-		return RemoteWriteBackend{}, fmt.Errorf("error encrypting data: %w", err)
+		return WriteConfig{}, fmt.Errorf("error encrypting data: %w", err)
 	}
 
-	backend := RemoteWriteBackend{
+	backend := WriteConfig{
 		OrgId:          orgID,
 		UID:            cmd.UID,
 		Settings:       cmd.Settings,
@@ -78,30 +70,30 @@ func (f *FileStorage) CreateRemoteWriteBackend(ctx context.Context, orgID int64,
 
 	ok, reason := backend.Valid()
 	if !ok {
-		return RemoteWriteBackend{}, fmt.Errorf("invalid remote write backend: %s", reason)
+		return WriteConfig{}, fmt.Errorf("invalid write config: %s", reason)
 	}
-	for _, existingBackend := range remoteWriteBackends.Backends {
+	for _, existingBackend := range writeConfigs.Configs {
 		if uidMatch(orgID, backend.UID, existingBackend) {
-			return RemoteWriteBackend{}, fmt.Errorf("backend already exists in org: %s", backend.UID)
+			return WriteConfig{}, fmt.Errorf("backend already exists in org: %s", backend.UID)
 		}
 	}
-	remoteWriteBackends.Backends = append(remoteWriteBackends.Backends, backend)
-	err = f.saveRemoteWriteBackends(orgID, remoteWriteBackends)
+	writeConfigs.Configs = append(writeConfigs.Configs, backend)
+	err = f.saveWriteConfigs(orgID, writeConfigs)
 	return backend, err
 }
 
-func (f *FileStorage) UpdateRemoteWriteBackend(ctx context.Context, orgID int64, cmd RemoteWriteBackendUpdateCmd) (RemoteWriteBackend, error) {
-	remoteWriteBackends, err := f.readRemoteWriteBackends()
+func (f *FileStorage) UpdateWriteConfig(ctx context.Context, orgID int64, cmd WriteConfigUpdateCmd) (WriteConfig, error) {
+	writeConfigs, err := f.readWriteConfigs()
 	if err != nil {
-		return RemoteWriteBackend{}, fmt.Errorf("can't read remote write backends: %w", err)
+		return WriteConfig{}, fmt.Errorf("can't read write configs: %w", err)
 	}
 
 	secureSettings, err := f.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
-		return RemoteWriteBackend{}, fmt.Errorf("error encrypting data: %w", err)
+		return WriteConfig{}, fmt.Errorf("error encrypting data: %w", err)
 	}
 
-	backend := RemoteWriteBackend{
+	backend := WriteConfig{
 		OrgId:          orgID,
 		UID:            cmd.UID,
 		Settings:       cmd.Settings,
@@ -110,35 +102,35 @@ func (f *FileStorage) UpdateRemoteWriteBackend(ctx context.Context, orgID int64,
 
 	ok, reason := backend.Valid()
 	if !ok {
-		return RemoteWriteBackend{}, fmt.Errorf("invalid channel rule: %s", reason)
+		return WriteConfig{}, fmt.Errorf("invalid channel rule: %s", reason)
 	}
 
 	index := -1
 
-	for i, existingBackend := range remoteWriteBackends.Backends {
+	for i, existingBackend := range writeConfigs.Configs {
 		if uidMatch(orgID, backend.UID, existingBackend) {
 			index = i
 			break
 		}
 	}
 	if index > -1 {
-		remoteWriteBackends.Backends[index] = backend
+		writeConfigs.Configs[index] = backend
 	} else {
-		return f.CreateRemoteWriteBackend(ctx, orgID, RemoteWriteBackendCreateCmd(cmd))
+		return f.CreateWriteConfig(ctx, orgID, WriteConfigCreateCmd(cmd))
 	}
 
-	err = f.saveRemoteWriteBackends(orgID, remoteWriteBackends)
+	err = f.saveWriteConfigs(orgID, writeConfigs)
 	return backend, err
 }
 
-func (f *FileStorage) DeleteRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendDeleteCmd) error {
-	remoteWriteBackends, err := f.readRemoteWriteBackends()
+func (f *FileStorage) DeleteWriteConfig(_ context.Context, orgID int64, cmd WriteConfigDeleteCmd) error {
+	writeConfigs, err := f.readWriteConfigs()
 	if err != nil {
-		return fmt.Errorf("can't read remote write backends: %w", err)
+		return fmt.Errorf("can't read write configs: %w", err)
 	}
 
 	index := -1
-	for i, existingBackend := range remoteWriteBackends.Backends {
+	for i, existingBackend := range writeConfigs.Configs {
 		if uidMatch(orgID, cmd.UID, existingBackend) {
 			index = i
 			break
@@ -146,12 +138,12 @@ func (f *FileStorage) DeleteRemoteWriteBackend(_ context.Context, orgID int64, c
 	}
 
 	if index > -1 {
-		remoteWriteBackends.Backends = removeRemoteWriteBackendByIndex(remoteWriteBackends.Backends, index)
+		writeConfigs.Configs = removeWriteConfigByIndex(writeConfigs.Configs, index)
 	} else {
-		return fmt.Errorf("remote write backend not found")
+		return fmt.Errorf("write config not found")
 	}
 
-	return f.saveRemoteWriteBackends(orgID, remoteWriteBackends)
+	return f.saveWriteConfigs(orgID, writeConfigs)
 }
 
 func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error) {
@@ -198,7 +190,7 @@ func patternMatch(orgID int64, pattern string, existingRule ChannelRule) bool {
 	return pattern == existingRule.Pattern && (existingRule.OrgId == orgID || (existingRule.OrgId == 0 && orgID == 1))
 }
 
-func uidMatch(orgID int64, uid string, existingBackend RemoteWriteBackend) bool {
+func uidMatch(orgID int64, uid string, existingBackend WriteConfig) bool {
 	return uid == existingBackend.UID && (existingBackend.OrgId == orgID || (existingBackend.OrgId == 0 && orgID == 1))
 }
 
@@ -306,44 +298,44 @@ func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, cmd Chan
 	return f.saveChannelRules(orgID, channelRules)
 }
 
-func removeRemoteWriteBackendByIndex(s []RemoteWriteBackend, index int) []RemoteWriteBackend {
+func removeWriteConfigByIndex(s []WriteConfig, index int) []WriteConfig {
 	return append(s[:index], s[index+1:]...)
 }
 
-func (f *FileStorage) remoteWriteFilePath() string {
-	return filepath.Join(f.DataPath, "pipeline", "remote-write-backends.json")
+func (f *FileStorage) writeConfigsFilePath() string {
+	return filepath.Join(f.DataPath, "pipeline", "write-configs.json")
 }
 
-func (f *FileStorage) readRemoteWriteBackends() (RemoteWriteBackends, error) {
-	filePath := f.remoteWriteFilePath()
+func (f *FileStorage) readWriteConfigs() (WriteConfigs, error) {
+	filePath := f.writeConfigsFilePath()
 	// Safe to ignore gosec warning G304.
 	// nolint:gosec
 	bytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return RemoteWriteBackends{}, fmt.Errorf("can't read %s file: %w", filePath, err)
+		return WriteConfigs{}, fmt.Errorf("can't read %s file: %w", filePath, err)
 	}
-	var remoteWriteBackends RemoteWriteBackends
-	err = json.Unmarshal(bytes, &remoteWriteBackends)
+	var writeConfigs WriteConfigs
+	err = json.Unmarshal(bytes, &writeConfigs)
 	if err != nil {
-		return RemoteWriteBackends{}, fmt.Errorf("can't unmarshal %s data: %w", filePath, err)
+		return WriteConfigs{}, fmt.Errorf("can't unmarshal %s data: %w", filePath, err)
 	}
-	return remoteWriteBackends, nil
+	return writeConfigs, nil
 }
 
-func (f *FileStorage) saveRemoteWriteBackends(_ int64, remoteWriteBackends RemoteWriteBackends) error {
-	filePath := f.remoteWriteFilePath()
+func (f *FileStorage) saveWriteConfigs(_ int64, writeConfigs WriteConfigs) error {
+	filePath := f.writeConfigsFilePath()
 	// Safe to ignore gosec warning G304.
 	// nolint:gosec
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		return fmt.Errorf("can't open channel remote write backends file: %w", err)
+		return fmt.Errorf("can't open channel write configs file: %w", err)
 	}
 	defer func() { _ = file.Close() }()
 	enc := json.NewEncoder(file)
 	enc.SetIndent("", "  ")
-	err = enc.Encode(remoteWriteBackends)
+	err = enc.Encode(writeConfigs)
 	if err != nil {
-		return fmt.Errorf("can't save remote write backends to file: %w", err)
+		return fmt.Errorf("can't save write configs to file: %w", err)
 	}
 	return nil
 }
