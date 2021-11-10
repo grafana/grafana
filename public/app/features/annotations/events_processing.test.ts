@@ -1,4 +1,4 @@
-import { dedupAnnotations } from '../events_processing';
+import { dedupAnnotations } from './events_processing';
 
 describe('Annotations deduplication', () => {
   it('should remove duplicated annotations', () => {
