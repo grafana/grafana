@@ -22,6 +22,15 @@ export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig
   return config;
 }
 
+export function removeMuteTimingFromRoute(muteTiming: string, route: Route): Route {
+  const newRoute: Route = {
+    ...route,
+    mute_time_intervals: route.mute_time_intervals?.filter((muteName) => muteName !== muteTiming) ?? [],
+    routes: route.routes?.map((subRoute) => removeMuteTimingFromRoute(muteTiming, subRoute)),
+  };
+  return newRoute;
+}
+
 function isReceiverUsedInRoute(receiver: string, route: Route): boolean {
   return (
     (route.receiver === receiver || route.routes?.some((route) => isReceiverUsedInRoute(receiver, route))) ?? false
