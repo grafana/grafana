@@ -56,7 +56,7 @@ To request a change, complete the following steps:
 
 ### Edit a topic
 
-If you want to recommend a small change, such as suggesting alternative wording to language within a topic, you can edit the topic directly in GitHub. You are not required to fork and clone the repo to use this approach.
+If you want to recommend a small change, such as suggesting a correction to a topic, you can edit the topic directly in GitHub. You are not required to fork and clone the repo to use this approach.
 
 Other small changes might include:
 
