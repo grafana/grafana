@@ -75,7 +75,7 @@
     "react-hook-form": "7.5.3",
     "react-inlinesvg": "2.3.0",
     "react-popper": "2.2.4",
-    "react-router-dom": "^5.2.0",
+    "react-router-dom": "^6.0.0",
     "react-select": "4.3.0",
     "react-select-event": "^5.1.0",
     "react-table": "7.7.0",
