@@ -75,9 +75,9 @@ describe('ApiKeysPage', () => {
       setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
       expect(screen.getByRole('table')).toBeInTheDocument();
       expect(screen.getAllByRole('row').length).toBe(4);
-      expect(screen.getByRole('row', { name: /first admin 2021-01-01 00:00:00 cancel delete/i })).toBeInTheDocument();
-      expect(screen.getByRole('row', { name: /second editor 2021-01-02 00:00:00 cancel delete/i })).toBeInTheDocument();
-      expect(screen.getByRole('row', { name: /third viewer no expiration date cancel delete/i })).toBeInTheDocument();
+      expect(screen.getByRole('row', { name: /first admin 2021-01-01 00:00:00/i })).toBeInTheDocument();
+      expect(screen.getByRole('row', { name: /second editor 2021-01-02 00:00:00/i })).toBeInTheDocument();
+      expect(screen.getByRole('row', { name: /third viewer no expiration date/i })).toBeInTheDocument();
     });
   });
 
@@ -118,27 +118,24 @@ describe('ApiKeysPage', () => {
         { id: 3, name: 'Third', role: OrgRole.Viewer, secondsToLive: 0, expiration: undefined },
       ];
       const { deleteApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
-      const firstRow = screen.getByRole('row', { name: /first admin 2021-01-01 00:00:00 cancel delete/i });
-      const secondRow = screen.getByRole('row', { name: /second editor 2021-01-02 00:00:00 cancel delete/i });
+      const firstRow = screen.getByRole('row', { name: /first admin 2021-01-01 00:00:00/i });
+      const secondRow = screen.getByRole('row', { name: /second editor 2021-01-02 00:00:00/i });
 
       deleteApiKeyMock.mockClear();
-      expect(within(firstRow).getByRole('cell', { name: /cancel delete/i })).toBeInTheDocument();
-      userEvent.click(within(firstRow).getByRole('cell', { name: /cancel delete/i }));
+      expect(within(firstRow).getByLabelText('Delete API key')).toBeInTheDocument();
+      userEvent.click(within(firstRow).getByLabelText('Delete API key'));
+
       expect(within(firstRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
-      // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-      userEvent.click(within(firstRow).getByRole('button', { name: /delete$/i }), undefined, {
-        skipPointerEventsCheck: true,
-      });
+      userEvent.click(within(firstRow).getByRole('button', { name: /delete$/i }));
       expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
       expect(deleteApiKeyMock).toHaveBeenCalledWith(1, false);
 
       toggleShowExpired();
 
       deleteApiKeyMock.mockClear();
-      expect(within(secondRow).getByRole('cell', { name: /cancel delete/i })).toBeInTheDocument();
-      userEvent.click(within(secondRow).getByRole('cell', { name: /cancel delete/i }));
+      expect(within(secondRow).getByLabelText('Delete API key')).toBeInTheDocument();
+      userEvent.click(within(secondRow).getByLabelText('Delete API key'));
       expect(within(secondRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
-      // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
       userEvent.click(within(secondRow).getByRole('button', { name: /delete$/i }), undefined, {
         skipPointerEventsCheck: true,
       });

@@ -4,13 +4,14 @@ import { satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PluginType } from '@grafana/data';
 
 import { ExternallyManagedButton } from './ExternallyManagedButton';
 import { InstallControlsButton } from './InstallControlsButton';
 import { CatalogPlugin, PluginStatus } from '../../types';
-import { isGrafanaAdmin, getExternalManageLink } from '../../helpers';
+import { getExternalManageLink } from '../../helpers';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';
+import { isGrafanaAdmin } from '../../permissions';
 
 interface Props {
   plugin: CatalogPlugin;
@@ -34,7 +35,7 @@ export const InstallControls = ({ plugin }: Props) => {
       : PluginStatus.UNINSTALL
     : PluginStatus.INSTALL;
 
-  if (plugin.isCore || plugin.isDisabled) {
+  if (plugin.isCore || plugin.isDisabled || plugin.type === PluginType.renderer) {
     return null;
   }
 

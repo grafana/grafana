@@ -44,6 +44,10 @@ var FrameOutputsRegistry = []EntityInfo{
 		Type:        FrameOutputTypeRemoteWrite,
 		Description: "output to remote write endpoint",
 	},
+	{
+		Type:        FrameOutputTypeLoki,
+		Description: "output frame as JSON to Loki",
+	},
 }
 
 var ConvertersRegistry = []EntityInfo{
@@ -58,7 +62,9 @@ var ConvertersRegistry = []EntityInfo{
 	{
 		Type:        ConverterTypeInfluxAuto,
 		Description: "accept influx line protocol",
-		Example:     AutoInfluxConverterConfig{},
+		Example: AutoInfluxConverterConfig{
+			FrameFormat: "labels_column",
+		},
 	},
 	{
 		Type:        ConverterTypeJsonFrame,
@@ -87,5 +93,9 @@ var DataOutputsRegistry = []EntityInfo{
 	{
 		Type:        DataOutputTypeRedirect,
 		Description: "redirect data processing to another channel rule",
+	},
+	{
+		Type:        DataOutputTypeLoki,
+		Description: "output data to Loki as logs",
 	},
 }

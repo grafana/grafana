@@ -25,6 +25,7 @@ export const VersionHistoryTable: React.FC<VersionsTableProps> = ({ versions, on
         <tr key={version.id}>
           <td>
             <Checkbox
+              aria-label={`Toggle selection of version ${version.version}`}
               className={css`
                 display: inline;
               `}

@@ -38,7 +38,7 @@ Once created, you can modify the library panel using any dashboard on which it a
 
 To add a library panel to a dashboard:
 
-1. Hover over the **+** option on the left menu, then select **Create** from the drop down options. The Add panel dialog opens.
+1. Hover over the **+** option on the left menu, then select **Create** from the drop-down options. The Add panel dialog opens.
    {{< figure src="/static/img/docs/library-panels/add-library-panel-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
 1. Click the **Add a panel from the panel library** option. You will see a list of your library panels.
 1. Filter the list or search to find the panel you want to add.
@@ -71,7 +71,7 @@ Before you delete a library panel, verify that it is no longer in use on any das
 
 To delete a library panel:
 
-1. Hover over **Dashboard** on the left menu, and select Library panels from the drop down options.
+1. Hover over **Dashboard** on the left menu, and select Library panels from the drop-down options.
 1. Select a library panel that is being used in different dashboards. You will see a list of all the dashboards.
 1. Select the panel you want to delete.
 1. Click the delete icon next to the library panel name.

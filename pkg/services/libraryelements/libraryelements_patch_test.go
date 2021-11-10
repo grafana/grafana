@@ -97,6 +97,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.FolderID = newFolder.Id
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -117,6 +118,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Name = "New Name"
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Model["title"] = "Text - Library Panel"
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -138,6 +140,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.UID = cmd.UID
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Model["title"] = "Text - Library Panel"
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -209,6 +212,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -234,6 +238,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -259,28 +264,29 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	// Test is disabled currently due to flaky comparison
-	// scenarioWithPanel(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
-	// 	func(t *testing.T, sc scenarioContext) {
-	// 		cmd := patchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(models.PanelElement)}
-	// 		sc.reqContext.UserId = 2
-	// 		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-	// 		resp := sc.service.patchHandler(sc.reqContext, cmd)
-	// 		var result = validateAndUnMarshalResponse(t, resp)
-	// 		sc.initialResult.Result.Meta.UpdatedBy.ID = int64(2)
-	// 		sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-	// 		sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
-	// 		sc.initialResult.Result.Version = 2
-	// 		if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
-	// 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-	// 		}
-	// 	})
+	scenarioWithPanel(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			cmd := patchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(models.PanelElement)}
+			sc.reqContext.UserId = 2
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			var result = validateAndUnMarshalResponse(t, resp)
+			sc.initialResult.Result.Meta.UpdatedBy.ID = int64(2)
+			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
+			sc.initialResult.Result.Version = 2
+			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
@@ -363,6 +369,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)

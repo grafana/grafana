@@ -20,9 +20,7 @@ exports[`Explore should render component 1`] = `
       <SecondaryActions
         addQueryRowButtonDisabled={false}
         addQueryRowButtonHidden={false}
-        loadingLogsVolumeAvailable={false}
         onClickAddQueryRowButton={[Function]}
-        onClickLoadLogsVolume={[Function]}
         onClickQueryInspectorButton={[Function]}
         onClickRichHistoryButton={[Function]}
         queryInspectorButtonActive={false}

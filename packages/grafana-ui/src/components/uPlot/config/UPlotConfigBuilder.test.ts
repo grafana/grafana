@@ -349,6 +349,7 @@ describe('UPlotConfigBuilder', () => {
       Object {
         "axes": Array [
           Object {
+            "filter": undefined,
             "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
             "gap": 5,
             "grid": Object {
@@ -360,6 +361,7 @@ describe('UPlotConfigBuilder', () => {
             "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
             "labelGap": 8,
             "labelSize": 20,
+            "rotate": undefined,
             "scale": "scale-x",
             "show": true,
             "side": 2,

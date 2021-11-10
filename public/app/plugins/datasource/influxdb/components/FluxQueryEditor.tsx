@@ -167,7 +167,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
     const helpTooltip = (
       <div>
         Type: <i>ctrl+space</i> to show template variable suggestions <br />
-        Many queries can be copied from chronograph
+        Many queries can be copied from Chronograf
       </div>
     );
 

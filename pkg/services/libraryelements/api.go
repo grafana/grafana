@@ -35,12 +35,15 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLi
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
 func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Response {
-	err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	id, err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
 
-	return response.Success("Library element deleted")
+	return response.JSON(200, DeleteLibraryElementResponse{
+		Message: "Library element deleted",
+		ID:      id,
+	})
 }
 
 // getHandler handles GET  /api/library-elements/:uid.

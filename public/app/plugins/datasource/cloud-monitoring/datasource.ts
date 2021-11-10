@@ -31,7 +31,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   ) {
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
-    this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
+    this.api = new API(`/api/datasources/${this.id}/resources/cloudmonitoring/v3/projects/`);
     this.variables = new CloudMonitoringVariableSupport(this);
     this.intervalMs = 0;
   }
@@ -55,14 +55,14 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       {
         refId: 'annotationQuery',
         type: 'annotationQuery',
-        datasourceId: this.id,
+        datasource: this.getRef(),
         view: 'FULL',
         crossSeriesReducer: 'REDUCE_NONE',
         perSeriesAligner: 'ALIGN_NONE',
         metricType: this.templateSrv.replace(annotation.target.metricType, options.scopedVars || {}),
         title: this.templateSrv.replace(annotation.target.title, options.scopedVars || {}),
         text: this.templateSrv.replace(annotation.target.text, options.scopedVars || {}),
-        tags: this.templateSrv.replace(annotation.target.tags, options.scopedVars || {}),
+        tags: (annotation.target.tags || []).map((t: string) => this.templateSrv.replace(t, options.scopedVars || {})),
         projectName: this.templateSrv.replace(
           annotation.target.projectName ? annotation.target.projectName : this.getDefaultProject(),
           options.scopedVars || {}
@@ -108,7 +108,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     scopedVars: ScopedVars
   ): Record<string, any> {
     return {
-      datasourceId: this.id,
+      datasource: this.getRef(),
       refId,
       intervalMs: this.intervalMs,
       type: 'timeSeriesQuery',
@@ -133,7 +133,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       targets: [
         {
           refId,
-          datasourceId: this.id,
+          datasource: this.getRef(),
           queryType: QueryType.METRICS,
           metricQuery: {
             projectName: this.templateSrv.replace(projectName),
@@ -212,7 +212,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
             {
               refId: 'getGCEDefaultProject',
               type: 'getGCEDefaultProject',
-              datasourceId: this.id,
+              datasource: this.getRef(),
             },
           ],
         })
@@ -293,7 +293,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         value: projectId,
         label: name,
       }),
-      baseUrl: `${this.instanceSettings.url!}/cloudresourcemanager/v1/`,
+      baseUrl: `/api/datasources/${this.id}/resources/cloudresourcemanager/v1/`,
     });
   }
 

@@ -88,10 +88,11 @@ export class QueryGroup extends PureComponent<Props, State> {
     });
 
     try {
-      const ds = await this.dataSourceSrv.get(options.dataSource.name);
-      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
+      const ds = await this.dataSourceSrv.get(options.dataSource);
+      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
       const defaultDataSource = await this.dataSourceSrv.get();
-      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource: dsSettings?.name }));
+      const datasource = ds.getRef();
+      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource }));
       this.setState({ queries, dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
       console.log('failed to load data source', error);
@@ -111,7 +112,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
     const { dsSettings } = this.state;
-    const queries = updateQueries(newSettings, this.state.queries, expressionDatasource.name, dsSettings);
+    const queries = updateQueries(newSettings, this.state.queries, dsSettings);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({
@@ -119,6 +120,7 @@ export class QueryGroup extends PureComponent<Props, State> {
       dataSource: {
         name: newSettings.name,
         uid: newSettings.uid,
+        type: newSettings.meta.id,
         default: newSettings.isDefault,
       },
     });
@@ -139,12 +141,10 @@ export class QueryGroup extends PureComponent<Props, State> {
   newQuery(): Partial<DataQuery> {
     const { dsSettings, defaultDataSource } = this.state;
 
-    if (!dsSettings?.meta.mixed) {
-      return { datasource: dsSettings?.name };
-    }
+    const ds = !dsSettings?.meta.mixed ? dsSettings : defaultDataSource;
 
     return {
-      datasource: defaultDataSource?.name,
+      datasource: { uid: ds?.uid, type: ds?.type },
     };
   }
 
@@ -182,7 +182,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           <div className={styles.dataSourceRowItem}>
             <DataSourcePicker
               onChange={this.onChangeDataSource}
-              current={options.dataSource.name}
+              current={options.dataSource}
               metrics={true}
               mixed={true}
               dashboard={true}
@@ -258,7 +258,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onAddQuery = (query: Partial<DataQuery>) => {
     const { dsSettings, queries } = this.state;
-    this.onQueriesChange(addQuery(queries, query, dsSettings?.name));
+    this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
   };
 
@@ -305,8 +305,12 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderExtraActions() {
-    return GroupActionComponents.getAllExtraRenderAction().map((c) => {
-      return React.createElement(c, { onAddQuery: this.onAddQuery, onChangeDataSource: this.onChangeDataSource });
+    return GroupActionComponents.getAllExtraRenderAction().map((c, index) => {
+      return React.createElement(c, {
+        onAddQuery: this.onAddQuery,
+        onChangeDataSource: this.onChangeDataSource,
+        key: index,
+      });
     });
   }
 

@@ -4,7 +4,32 @@ import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/dat
 import { PluginListItem } from './PluginListItem';
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
+/**
+ * The whole Icon component needs to be mock
+ * currently is using react-inlinesvg that does not render the icon svg in the test.
+ *
+ * There is solution to mock the library on __mocks__
+ * https://github.com/gilbarbara/react-inlinesvg/issues/145
+ * But unfortunately that causes conflict with DashboardSearch.test.tsx
+ */
+
+jest.mock('@grafana/ui', () => {
+  const IconMock = ({ title }: { title: string }) => {
+    return (
+      <svg>
+        <title> {title} </title>
+      </svg>
+    );
+  };
+  IconMock.displayName = 'Icon';
+  return Object.assign({}, jest.requireActual('@grafana/ui'), { Icon: IconMock });
+});
+
 describe('PluginListItem', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   const plugin: CatalogPlugin = {
     description: 'The test plugin',
     downloads: 5,
@@ -49,21 +74,21 @@ describe('PluginListItem', () => {
     const datasourcePlugin = { ...plugin, type: PluginType.datasource };
     render(<PluginListItem plugin={datasourcePlugin} pathName="" />);
 
-    expect(screen.getByLabelText(/datasource plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/datasource plugin/i)).toBeInTheDocument();
   });
 
   it('renders a panel plugin with correct icon', () => {
     const panelPlugin = { ...plugin, type: PluginType.panel };
     render(<PluginListItem plugin={panelPlugin} pathName="" />);
 
-    expect(screen.getByLabelText(/panel plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/panel plugin/i)).toBeInTheDocument();
   });
 
   it('renders an app plugin with correct icon', () => {
     const appPlugin = { ...plugin, type: PluginType.app };
     render(<PluginListItem plugin={appPlugin} pathName="" />);
 
-    expect(screen.getByLabelText(/app plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/app plugin/i)).toBeInTheDocument();
   });
 
   it('renders a disabled plugin with a badge to indicate its error', () => {
@@ -92,21 +117,21 @@ describe('PluginListItem', () => {
     const datasourcePlugin = { ...plugin, type: PluginType.datasource };
     render(<PluginListItem plugin={datasourcePlugin} pathName="" displayMode={PluginListDisplayMode.List} />);
 
-    expect(screen.getByLabelText(/datasource plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/datasource plugin/i)).toBeInTheDocument();
   });
 
   it('renders a panel plugin with correct icon', () => {
     const panelPlugin = { ...plugin, type: PluginType.panel };
     render(<PluginListItem plugin={panelPlugin} pathName="" displayMode={PluginListDisplayMode.List} />);
 
-    expect(screen.getByLabelText(/panel plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/panel plugin/i)).toBeInTheDocument();
   });
 
   it('renders an app plugin with correct icon', () => {
     const appPlugin = { ...plugin, type: PluginType.app };
     render(<PluginListItem plugin={appPlugin} pathName="" displayMode={PluginListDisplayMode.List} />);
 
-    expect(screen.getByLabelText(/app plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/app plugin/i)).toBeInTheDocument();
   });
 
   it('renders a disabled plugin with a badge to indicate its error', () => {

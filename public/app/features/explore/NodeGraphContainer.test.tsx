@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';
 import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
 import { ExploreId } from '../../types';
-jest.mock('../../plugins/panel/nodeGraph/layout.worker.js');
 
 describe('NodeGraphContainer', () => {
   it('is collapsed if shown with traces', () => {
@@ -39,7 +38,7 @@ describe('NodeGraphContainer', () => {
 
 const emptyFrame = new MutableDataFrame();
 
-export const nodes = new MutableDataFrame({
+const nodes = new MutableDataFrame({
   fields: toFields([
     ['id', ['3fa414edcef6ad90']],
     ['title', ['tempo-querier']],
@@ -50,7 +49,7 @@ export const nodes = new MutableDataFrame({
   ]),
 });
 
-export function toFields(fields: Array<[string, any[]]>) {
+function toFields(fields: Array<[string, any[]]>) {
   return fields.map(([name, values]) => {
     return { name, values };
   });

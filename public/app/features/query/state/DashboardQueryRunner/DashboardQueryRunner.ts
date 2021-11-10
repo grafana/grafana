@@ -16,7 +16,7 @@ import { AnnotationsWorker } from './AnnotationsWorker';
 import { getAnnotationsByPanelId } from './utils';
 import { DashboardModel } from '../../../dashboard/state';
 import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
-import { RefreshEvent } from '../../../../types/events';
+import { RefreshEvent } from '@grafana/runtime';
 import { config } from 'app/core/config';
 import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
 
@@ -31,7 +31,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     private readonly dashboard: DashboardModel,
     private readonly timeSrv: TimeSrv = getTimeSrv(),
     private readonly workers: DashboardQueryRunnerWorker[] = [
-      config.featureToggles.ngalert ? new UnifiedAlertStatesWorker() : new AlertStatesWorker(),
+      config.unifiedAlertingEnabled ? new UnifiedAlertStatesWorker() : new AlertStatesWorker(),
       new SnapshotWorker(),
       new AnnotationsWorker(),
     ]

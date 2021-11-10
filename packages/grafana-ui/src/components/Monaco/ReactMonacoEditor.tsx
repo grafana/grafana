@@ -1,5 +1,8 @@
-import React from 'react';
-import MonacoEditor, { loader as monacoEditorLoader, EditorProps as MonacoEditorProps } from '@monaco-editor/react';
+import React, { useEffect } from 'react';
+import MonacoEditor, { loader as monacoEditorLoader, useMonaco } from '@monaco-editor/react';
+import defineThemes from './theme';
+import { useTheme2 } from '../../themes';
+import type { ReactMonacoEditorProps } from './types';
 
 let initalized = false;
 function initMonaco() {
@@ -13,9 +16,30 @@ function initMonaco() {
     },
   });
   initalized = true;
+  monacoEditorLoader.init().then((monaco) => {
+    // this call makes sure the themes exist.
+    // they will not have the correct colors,
+    // but we need them to exist since the beginning,
+    // because if we start a monaco instance with
+    // a theme that does not exist, it will not work well.
+    defineThemes(monaco);
+  });
 }
 
-export const ReactMonacoEditor = (props: MonacoEditorProps) => {
+export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
+  const theme = useTheme2();
+  const monaco = useMonaco();
+
+  useEffect(() => {
+    // monaco can be null at the beginning, because it is loaded in asynchronously
+    if (monaco !== null) {
+      defineThemes(monaco, theme);
+    }
+  }, [monaco, theme]);
+
   initMonaco();
-  return <MonacoEditor {...props} />;
+
+  const monacoTheme = theme.isDark ? 'grafana-dark' : 'grafana-light';
+
+  return <MonacoEditor theme={monacoTheme} {...props} />;
 };

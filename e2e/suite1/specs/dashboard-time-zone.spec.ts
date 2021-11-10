@@ -1,5 +1,14 @@
 import { e2e } from '@grafana/e2e';
-import { addDays, addHours, differenceInCalendarDays, differenceInMinutes, format, isBefore, parse } from 'date-fns';
+import {
+  addDays,
+  addHours,
+  differenceInCalendarDays,
+  differenceInMinutes,
+  format,
+  isBefore,
+  parseISO,
+  toDate,
+} from 'date-fns';
 
 e2e.scenario({
   describeName: 'Dashboard time zone support',
@@ -10,9 +19,9 @@ e2e.scenario({
   scenario: () => {
     e2e.flows.openDashboard({ uid: '5SdHCasdf' });
 
-    const fromTimeZone = 'Coordinated Universal Time';
+    const fromTimeZone = 'UTC';
     const toTimeZone = 'America/Chicago';
-    const offset = -5;
+    const offset = offsetBetweenTimeZones(toTimeZone, fromTimeZone);
 
     const panelsToCheck = [
       'Random walk series',
@@ -44,8 +53,7 @@ e2e.scenario({
     e2e.components.TimeZonePicker.container()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.singleValue().should('be.visible').should('have.text', fromTimeZone);
-
+        e2e.components.Select.singleValue().should('be.visible').should('have.text', 'Coordinated Universal Time');
         e2e.components.Select.input().should('be.visible').click();
       });
 
@@ -79,14 +87,27 @@ const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => 
     return false;
   }
 
-  const reference = format(new Date(), 'YYYY-MM-DD');
+  const reference = format(new Date(), 'yyyy-LL-dd');
 
-  const utcDate = parse(`${reference} ${inUtc}`);
-  const utcDateWithOffset = addHours(parse(`${reference} ${inUtc}`), offset);
+  const utcDate = toDate(parseISO(`${reference} ${inUtc}`));
+  const utcDateWithOffset = addHours(toDate(parseISO(`${reference} ${inUtc}`)), offset);
   const dayDifference = differenceInCalendarDays(utcDate, utcDateWithOffset); // if the utcDate +/- offset is the day before/after then we need to adjust reference
   const dayOffset = isBefore(utcDateWithOffset, utcDate) ? dayDifference * -1 : dayDifference;
-  const tzDate = addDays(parse(`${reference} ${inTz}`), dayOffset); // adjust tzDate with any dayOffset
+  const tzDate = addDays(toDate(parseISO(`${reference} ${inTz}`)), dayOffset); // adjust tzDate with any dayOffset
   const diff = Math.abs(differenceInMinutes(utcDate, tzDate)); // use Math.abs if tzDate is in future
 
   return diff <= Math.abs(offset * 60);
+};
+
+const offsetBetweenTimeZones = (timeZone1: string, timeZone2: string, when: Date = new Date()): number => {
+  const t1 = convertDateToAnotherTimeZone(when, timeZone1);
+  const t2 = convertDateToAnotherTimeZone(when, timeZone2);
+  return (t1.getTime() - t2.getTime()) / (1000 * 60 * 60);
+};
+
+const convertDateToAnotherTimeZone = (date: Date, timeZone: string): Date => {
+  const dateString = date.toLocaleString('en-US', {
+    timeZone: timeZone,
+  });
+  return new Date(dateString);
 };

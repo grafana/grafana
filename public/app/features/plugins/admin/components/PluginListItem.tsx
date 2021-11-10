@@ -30,7 +30,7 @@ export function PluginListItem({ plugin, pathName, displayMode = PluginListDispl
         <PluginListItemBadges plugin={plugin} />
       </div>
       <div className={styles.pluginType}>
-        {plugin.type && <Icon name={PluginIconName[plugin.type]} aria-label={`${plugin.type} plugin icon`} />}
+        {plugin.type && <Icon name={PluginIconName[plugin.type]} title={`${plugin.type} plugin`} />}
       </div>
     </a>
   );

@@ -4,6 +4,7 @@ import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeOptions, displayModes } from './types';
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/types';
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
+import { BarGaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   .useFieldConfig()
@@ -30,4 +31,5 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
       });
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
-  .setMigrationHandler(barGaugePanelMigrationHandler);
+  .setMigrationHandler(barGaugePanelMigrationHandler)
+  .setSuggestionsSupplier(new BarGaugeSuggestionsSupplier());

@@ -76,14 +76,16 @@ func AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error {
 		} else if cmd.SecondsToLive < 0 {
 			return models.ErrInvalidApiKeyExpiration
 		}
+
 		t := models.ApiKey{
-			OrgId:   cmd.OrgId,
-			Name:    cmd.Name,
-			Role:    cmd.Role,
-			Key:     cmd.Key,
-			Created: updated,
-			Updated: updated,
-			Expires: expires,
+			OrgId:            cmd.OrgId,
+			Name:             cmd.Name,
+			Role:             cmd.Role,
+			Key:              cmd.Key,
+			Created:          updated,
+			Updated:          updated,
+			Expires:          expires,
+			ServiceAccountId: cmd.ServiceAccountId,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {

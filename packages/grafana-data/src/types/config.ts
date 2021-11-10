@@ -50,9 +50,9 @@ export interface FeatureToggles {
   tempoServiceGraph: boolean;
   tempoSearch: boolean;
   recordedQueries: boolean;
-  prometheusMonaco: boolean;
   newNavigation: boolean;
   fullRangeLogsVolume: boolean;
+  autoLoadFullRangeLogsVolume: boolean;
 }
 
 /**

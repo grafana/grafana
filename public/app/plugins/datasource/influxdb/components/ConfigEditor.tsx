@@ -22,12 +22,12 @@ const versions = [
   {
     label: 'InfluxQL',
     value: InfluxVersion.InfluxQL,
-    description: 'The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x',
+    description: 'The InfluxDB SQL-like query language.',
   },
   {
     label: 'Flux',
     value: InfluxVersion.Flux,
-    description: 'Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+ (beta)',
+    description: 'Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+',
   },
 ] as Array<SelectableValue<InfluxVersion>>;
 

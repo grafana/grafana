@@ -4,6 +4,7 @@ import { CanvasPanel, InstanceState } from './CanvasPanel';
 import { PanelOptions } from './models.gen';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
+import { getElementsEditor } from './editor/elementsEditor';
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setNoPadding() // extend to panel edges
@@ -14,7 +15,7 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
     builder.addBooleanSwitch({
       path: 'inlineEditing',
       name: 'Inline editing',
-      description: 'Enable editing while the panel is in dashboard mode',
+      description: 'Enable editing the panel directly',
       defaultValue: true,
     });
 
@@ -28,8 +29,13 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
             scene: state.scene,
           })
         );
-      } else {
-        console.log('NO Single seleciton', selection?.length);
+      } else if (selection?.length > 1) {
+        builder.addNestedOptions(
+          getElementsEditor({
+            category: [`Current selection`],
+            scene: state.scene,
+          })
+        );
       }
 
       builder.addNestedOptions(getLayerEditor(state));

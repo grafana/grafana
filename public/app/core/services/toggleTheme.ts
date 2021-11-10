@@ -1,4 +1,4 @@
-import { ThemeChangedEvent } from 'app/types/events';
+import { ThemeChangedEvent } from '@grafana/runtime';
 import appEvents from '../app_events';
 import { config } from '../config';
 import { PreferencesService } from './PreferencesService';

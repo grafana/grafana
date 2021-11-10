@@ -61,7 +61,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field, 
             title={column.render('Header')}
           >
             {showTypeIcons && (
-              <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" style={{ marginRight: '8px' }} />
+              <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" className={tableStyles.typeIcon} />
             )}
             <div>{column.render('Header')}</div>
             <div>

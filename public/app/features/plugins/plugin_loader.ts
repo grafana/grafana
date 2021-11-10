@@ -5,6 +5,7 @@ import kbn from 'app/core/utils/kbn';
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import angular from 'angular';
 import jquery from 'jquery';
+import * as tslib from 'tslib';
 
 // Experimental module exports
 import prismjs from 'prismjs';
@@ -21,11 +22,12 @@ import * as redux from 'redux';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
-import { coreModule, appEvents, contextSrv } from 'app/core/core';
+import { coreModule } from 'app/angular/core_module';
+import { appEvents, contextSrv } from 'app/core/core';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { promiseToDigest } from 'app/angular/promiseToDigest';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
@@ -81,10 +83,12 @@ grafanaRuntime.SystemJS.config({
 
 function exposeToPlugin(name: string, component: any) {
   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
+    console.log('registerDynamic callback', name);
     module.exports = component;
   });
 }
 
+exposeToPlugin('tslib', tslib);
 exposeToPlugin('@grafana/data', grafanaData);
 exposeToPlugin('@grafana/ui', grafanaUI);
 exposeToPlugin('@grafana/runtime', grafanaRuntime);

@@ -1,10 +1,11 @@
-import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { FC, ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 export interface OptionsPaneCategoryProps {
   id: string;
@@ -18,28 +19,47 @@ export interface OptionsPaneCategoryProps {
   children: ReactNode;
 }
 
+const CATEGORY_PARAM_NAME = 'showCategory';
+
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
     const initialIsExpanded = isOpenDefault !== false;
-
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: initialIsExpanded,
     });
 
-    // `savedState` can be undefined by typescript, so we have to handle that case
-    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
     const styles = useStyles2(getStyles);
+    const [queryParams, updateQueryParams] = useQueryParams();
+    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
+    const manualClickTime = useRef(0);
+    const ref = useRef<HTMLDivElement>(null);
+    const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
 
     useEffect(() => {
-      if (!isExpanded && forceOpen && forceOpen > 0) {
-        setIsExpanded(true);
+      if (manualClickTime.current) {
+        // ignore changes since the click handled the expected behavior
+        if (Date.now() - manualClickTime.current < 200) {
+          return;
+        }
       }
-    }, [forceOpen, isExpanded]);
+      if (isOpenFromUrl || forceOpen) {
+        if (!isExpanded) {
+          setIsExpanded(true);
+        }
+        if (isOpenFromUrl) {
+          ref.current?.scrollIntoView();
+        }
+      }
+    }, [forceOpen, isExpanded, isOpenFromUrl]);
 
     const onToggle = useCallback(() => {
+      manualClickTime.current = Date.now();
+      updateQueryParams({
+        [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
+      });
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-    }, [setSavedState, setIsExpanded, isExpanded]);
+    }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
@@ -78,6 +98,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
         className={boxStyles}
         data-testid="options-category"
         aria-label={selectors.components.OptionsGroup.group(id)}
+        ref={ref}
       >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
