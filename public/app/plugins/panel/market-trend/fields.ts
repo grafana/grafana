@@ -1,6 +1,5 @@
 import { ArrayVector, DataFrame, Field, getFieldDisplayName, GrafanaTheme2, outerJoinDataFrames } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
-import { cloneDeep } from 'lodash';
 import { prepareGraphableFields } from '../timeseries/utils';
 import { MarketOptions, CandlestickFieldMap } from './models.gen';
 
