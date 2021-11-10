@@ -1,7 +1,7 @@
 
 # Contribute to Grafana documentation
 
-This guide...
+This document provides guidelines for Grafana open source community members to follow when contributing technical content.
 
 ## Welcome
 
@@ -148,7 +148,6 @@ Each template provides additional usage and formatting guidelines. We recommend 
 Remove any unused content before you commit your changes.
 :::
 
-
 #### View a local build
 
 Prior to pushing your changes, you can view a local build of the documentation so that you can review your work.
@@ -171,9 +170,9 @@ When you are ready for other people to review your work, perform the following t
 
 1/ [Add](https://git-scm.com/docs/git-add) your changes, which prepares your content for the next commit.
 
-1/ [Commit](xxx) your changes.
+1/ [Commit](https://git-scm.com/docs/git-commit) your changes.
 
-1/ [Push](https://docs.github.com/en/get-started/using-git/pushing-commits-to-a-remote-repository) your changes to Github.
+1/ [Push](https://git-scm.com/docs/git-push) your changes to Github.
 
 1/ [Create a PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) in Github.
 
@@ -189,7 +188,7 @@ For general discussions on documentation, you’re welcome to join the `#docs` c
 
 ## Reference: Top five writing tips
 
-Consult the following guidelines before you begin writing. 
+While we can't provide a comprehensive style guide to this document, we thought providing a few writing tips to help the writing process.
 
 ### Consider the audience
 
@@ -199,15 +198,34 @@ Pretend you are explaining your topic to a brand new Grafana user or developer.
 
 ### Write clear and concise sentences and paragraphs
 
-xxx.
+Use the following sentence structure when you write: *subject*—*verb*—*object*. If you are telling a user to do something, write an imperative sentence. For example “Enter the refresh rate time interval and click Save.”
+
+- You can also start a sentence with an *if* clause, which positions the condition before the action.
+- Limit the number of words in a sentence to 20..
 
 ### Use active voice
 
-xxx.
+Active voice makes the performer of the action the subject
+of the sentence. When you write in passive voice, the recipient of the action (and not the performer) becomes the subject of the sentence. 
+
+Active-voice sentences are more direct and clearly identify *who* is doing *what*. Not all tasks are completed by a user; sometimes the system can also be a performer (and by extension, the subject of the sentence). When you write in active voice you clearly make that distinction, which results in more engaging and less wordy content.
+
+|  Use (active) | Avoid (passive)  | 
+|---|---|
+| After you upgrade the software, restart the computer. | After the software has been upgraded, the computer can be restarted. |
+| Click **OK** to save the dashboard. | The dashboard is saved when the **OK** button is clicked. |
+| Create a dashboard. | A dashboard is created by you. |.
 
 ### Avoid obscure non-English words and abbreviations
 
-xxx.
+Users might be unfamiliar with some non-English words and abbreviations such as *per*, *vs*, and *via*. Latin abbreviations in particular, like *i.e.*, *e.g.*, and *etc.*, are vague.
+
+|  Use  | Don’t use  | 
+|---|---|
+| through | via |
+| that is | i.e. |
+| according to | per, as per |
+| and so on | etc. |
 
 ### Write self-contained topics
 
