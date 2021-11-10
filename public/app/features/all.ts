@@ -1,4 +1,3 @@
-import './annotations/all';
 import './plugins/all';
 import './dashboard';
 import './manage-dashboards';

@@ -1,7 +1,6 @@
 import { chain } from 'lodash';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv } from '@grafana/runtime';
-import coreModule from 'app/angular/core_module';
 import { getConfig } from 'app/core/config';
 import {
   DataFrame,
@@ -15,7 +14,6 @@ import {
   KeyValue,
   LinkModel,
   locationUtil,
-  PanelPlugin,
   ScopedVars,
   textUtil,
   urlUtil,
@@ -23,7 +21,7 @@ import {
   VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import { getVariablesUrlParams } from '../../../features/variables/getAllVariableValuesForUrl';
+import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 
 const timeRangeVars = [
   {
@@ -242,20 +240,6 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
   return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
 };
 
-export const getPanelOptionsVariableSuggestions = (plugin: PanelPlugin, data?: DataFrame[]): VariableSuggestion[] => {
-  const dataVariables = plugin.meta.skipDataQuery ? [] : getDataFrameVars(data || []);
-  return [
-    ...dataVariables, // field values
-    ...getTemplateSrv()
-      .getVariables()
-      .map((variable) => ({
-        value: variable.name as string,
-        label: variable.name,
-        origin: VariableOrigin.Template,
-      })),
-  ];
-};
-
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: T) => LinkModel<T>;
   getAnchorInfo: (link: any) => any;
@@ -263,8 +247,6 @@ export interface LinkService {
 }
 
 export class LinkSrv implements LinkService {
-  constructor() {}
-
   getLinkUrl(link: any) {
     let url = locationUtil.assureBaseUrl(getTemplateSrv().replace(link.url || ''));
     let params: { [key: string]: any } = {};
@@ -353,14 +335,15 @@ export class LinkSrv implements LinkService {
   }
 }
 
-let singleton: LinkService;
+let singleton: LinkService | undefined;
 
 export function setLinkSrv(srv: LinkService) {
   singleton = srv;
 }
 
 export function getLinkSrv(): LinkService {
+  if (!singleton) {
+    singleton = new LinkSrv();
+  }
   return singleton;
 }
-
-coreModule.service('linkSrv', LinkSrv);
