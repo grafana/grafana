@@ -25,6 +25,7 @@ import {
   standardTransformersRegistry,
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
 import {
   locationService,
   registerEchoBackend,
@@ -59,7 +60,6 @@ import { ApplicationInsightsBackend } from './core/services/echo/backends/analyt
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { getAllOptionEditors } from './core/components/editors/registry';
 import { backendSrv } from './core/services/backend_srv';
-import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { AngularApp } from './angular';
 
@@ -124,6 +124,7 @@ export class GrafanaApp {
       // Init angular
       this.angularApp.init();
 
+      // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);
 
       ReactDOM.render(
