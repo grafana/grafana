@@ -18,7 +18,6 @@ import (
 	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/inhibit"
 	"github.com/prometheus/alertmanager/nflog"
@@ -333,7 +332,7 @@ func (am *Alertmanager) templateFromPaths(paths ...string) (*template.Template, 
 	return tmpl, nil
 }
 
-func (am *Alertmanager) buildMuteTimesMap(muteTimeIntervals []config.MuteTimeInterval) map[string][]timeinterval.TimeInterval {
+func (am *Alertmanager) buildMuteTimesMap(muteTimeIntervals []apimodels.InternalMuteTimeInterval) map[string][]timeinterval.TimeInterval {
 	muteTimes := make(map[string][]timeinterval.TimeInterval, len(muteTimeIntervals))
 	for _, ti := range muteTimeIntervals {
 		muteTimes[ti.Name] = ti.TimeIntervals
