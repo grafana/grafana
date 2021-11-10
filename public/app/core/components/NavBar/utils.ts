@@ -7,6 +7,8 @@ import appEvents from '../../app_events';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
 
+export const SEARCH_ITEM_ID = 'search';
+
 export const getForcedLoginUrl = (url: string) => {
   const queryParams = new URLSearchParams(url.split('?')[1]);
   queryParams.append('forceLogin', 'true');
@@ -73,35 +75,61 @@ export const enrichConfigItems = (
   return items;
 };
 
-export const isLinkActive = (pathname: string, link: NavModelItem) => {
-  // strip out any query params
-  const linkPathname = link.url?.split('?')[0];
+export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
+  return Boolean(itemToCheck === searchItem || itemToCheck.children?.some((child) => child === searchItem));
+};
+
+const stripQueryParams = (url?: string) => {
+  return url?.split('?')[0] ?? '';
+};
+
+const isBetterMatch = (newMatch: NavModelItem, currentMatch?: NavModelItem) => {
+  const currentMatchUrl = stripQueryParams(currentMatch?.url);
+  const newMatchUrl = stripQueryParams(newMatch.url);
+  return newMatchUrl && newMatchUrl.length > currentMatchUrl?.length;
+};
+
+export const getActiveItem = (
+  navTree: NavModelItem[],
+  pathname: string,
+  currentBestMatch?: NavModelItem
+): NavModelItem | undefined => {
   const newNavigationEnabled = getConfig().featureToggles.newNavigation;
-  if (linkPathname) {
-    const dashboardLinkMatch = newNavigationEnabled ? '/dashboards' : '/';
-    if (linkPathname === pathname) {
-      // exact match
-      return true;
-    } else if (linkPathname !== '/' && pathname.startsWith(linkPathname)) {
-      // partial match
-      return true;
-    } else if (linkPathname === '/alerting/list' && pathname.startsWith('/alerting/notification/')) {
-      // alert channel match
-      // TODO refactor routes such that we don't need this custom logic
-      return true;
-    } else if (linkPathname === dashboardLinkMatch && pathname.startsWith('/d/')) {
-      // dashboard match
-      // TODO refactor routes such that we don't need this custom logic
-      return true;
+  const dashboardLinkMatch = newNavigationEnabled ? '/dashboards' : '/';
+
+  for (const link of navTree) {
+    const linkPathname = stripQueryParams(link.url);
+    if (linkPathname) {
+      if (linkPathname === pathname) {
+        // exact match
+        currentBestMatch = link;
+        break;
+      } else if (linkPathname !== '/' && pathname.startsWith(linkPathname)) {
+        // partial match
+        if (isBetterMatch(link, currentBestMatch)) {
+          currentBestMatch = link;
+        }
+      } else if (linkPathname === '/alerting/list' && pathname.startsWith('/alerting/notification/')) {
+        // alert channel match
+        // TODO refactor routes such that we don't need this custom logic
+        currentBestMatch = link;
+        break;
+      } else if (linkPathname === dashboardLinkMatch && pathname.startsWith('/d/')) {
+        // dashboard match
+        // TODO refactor routes such that we don't need this custom logic
+        if (isBetterMatch(link, currentBestMatch)) {
+          currentBestMatch = link;
+        }
+      }
+    }
+    if (link.children) {
+      currentBestMatch = getActiveItem(link.children, pathname, currentBestMatch);
+    }
+    if (stripQueryParams(currentBestMatch?.url) === pathname) {
+      return currentBestMatch;
     }
   }
-
-  // child match
-  if (link.children?.some((childLink) => isLinkActive(pathname, childLink))) {
-    return true;
-  }
-
-  return false;
+  return currentBestMatch;
 };
 
 export const isSearchActive = (location: Location<unknown>) => {

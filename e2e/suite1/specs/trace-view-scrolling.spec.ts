@@ -19,7 +19,7 @@ describe('Trace view', () => {
 
     e2e().wait(500);
 
-    e2e.components.RefreshPicker.runButton().should('be.visible').click();
+    e2e.components.RefreshPicker.runButtonV2().should('be.visible').click();
 
     e2e().wait('@longTrace');
 
