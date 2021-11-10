@@ -20,30 +20,15 @@ import (
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.Runner) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		debug := cmd.Bool("debug")
 
-		configOptions := strings.Split(cmd.String("configOverrides"), " ")
-		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-			Config:   cmd.ConfigFile(),
-			HomePath: cmd.HomePath(),
-			Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
-		})
+		cfg, err := initCfg(cmd)
 		if err != nil {
 			return errutil.Wrap("failed to load configuration", err)
 		}
 
-		if debug {
-			cfg.LogConfigSources()
-		}
-
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{})
+		r, err := runner.Initialize(cfg)
 		if err != nil {
-			return errutil.Wrap("failed to initialize SQL store", err)
-		}
-
-		r, err := runner.Initialize(cfg, sqlStore)
-		if err != nil {
-			return errutil.Wrap("failed to initialize SQL store", err)
+			return errutil.Wrap("failed to initialize runner", err)
 		}
 
 		if err := command(cmd, r); err != nil {
@@ -58,20 +43,10 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.
 func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SQLStore) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		debug := cmd.Bool("debug")
 
-		configOptions := strings.Split(cmd.String("configOverrides"), " ")
-		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-			Config:   cmd.ConfigFile(),
-			HomePath: cmd.HomePath(),
-			Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
-		})
+		cfg, err := initCfg(cmd)
 		if err != nil {
 			return errutil.Wrap("failed to load configuration", err)
-		}
-
-		if debug {
-			cfg.LogConfigSources()
 		}
 
 		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{})
@@ -86,6 +61,25 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		logger.Info("\n\n")
 		return nil
 	}
+}
+
+func initCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
+	configOptions := strings.Split(cmd.String("configOverrides"), " ")
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+		Config:   cmd.ConfigFile(),
+		HomePath: cmd.HomePath(),
+		Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if cmd.Bool("debug") {
+		cfg.LogConfigSources()
+	}
+
+	return cfg, nil
 }
 
 func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {

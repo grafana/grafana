@@ -65,7 +65,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         )}
         {onRemove && buttonContent && (
           <div className={styles.buttonWrapper}>
-            <Button variant="secondary" onClick={onRemove} type="button">
+            <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
               {buttonContent}
             </Button>
           </div>

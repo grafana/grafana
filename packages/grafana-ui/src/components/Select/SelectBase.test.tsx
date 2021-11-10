@@ -202,10 +202,10 @@ describe('SelectBase', () => {
       expect(selectEl).toBeInTheDocument();
 
       await selectOptionInTest(selectEl, 'Option 2');
-      expect(spy).toHaveBeenCalledWith({
-        label: 'Option 2',
-        value: 2,
-      });
+      expect(spy).toHaveBeenCalledWith(
+        { label: 'Option 2', value: 2 },
+        { action: 'select-option', name: undefined, option: undefined }
+      );
     });
   });
 });

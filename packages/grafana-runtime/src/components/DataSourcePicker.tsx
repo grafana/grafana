@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@grafana/ui';
+import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@grafana/ui';
 import {
   DataSourceInstanceSettings,
   DataSourceRef,
@@ -40,6 +40,7 @@ export interface DataSourcePickerProps {
   noDefault?: boolean;
   width?: number;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
+  onClear?: () => void;
 }
 
 /**
@@ -80,7 +81,12 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     }
   }
 
-  onChange = (item: SelectableValue<string>) => {
+  onChange = (item: SelectableValue<string>, actionMeta: ActionMeta) => {
+    if (actionMeta.action === 'clear' && this.props.onClear) {
+      this.props.onClear();
+      return;
+    }
+
     const dsSettings = this.dataSourceSrv.getInstanceSettings(item.value);
 
     if (dsSettings) {
@@ -142,11 +148,12 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   render() {
-    const { autoFocus, onBlur, openMenuOnFocus, placeholder, width } = this.props;
+    const { autoFocus, onBlur, onClear, openMenuOnFocus, placeholder, width } = this.props;
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
     const styles = getStyles();
+    const isClearable = typeof onClear === 'function';
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
@@ -156,7 +163,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           menuShouldPortal
           className={styles.select}
           isMulti={false}
-          isClearable={false}
+          isClearable={isClearable}
           backspaceRemovesValue={false}
           onChange={this.onChange}
           options={options}
