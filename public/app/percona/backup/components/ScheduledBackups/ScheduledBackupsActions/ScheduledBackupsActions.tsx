@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { IconButton, Spinner, Switch, useStyles } from '@grafana/ui';
+import { IconButton, Spinner, Switch, Tooltip, useStyles } from '@grafana/ui';
 import { getStyles } from './ScheduledBackupsActions.styles';
 import { ScheduledBackupsActionsProps } from './ScheduledBackupsActions.types';
 
@@ -24,9 +24,15 @@ export const ScheduledBackupsActions: FC<ScheduledBackupsActionsProps> = ({
       ) : (
         <>
           <Switch value={backup.enabled} onClick={handleToggle} data-testid="toggle-scheduled-backpup" />
-          <IconButton data-testid="edit-scheduled-backpup-button" name="pen" onClick={handleEdit} />
-          <IconButton data-testid="delete-scheduled-backpup-button" name="times" onClick={handleDelete} />
-          <IconButton data-testid="copy-alert-scheduled-backup-button" name="copy" onClick={handleCopy} />
+          <Tooltip placement="top" content="Edit">
+            <IconButton data-testid="edit-scheduled-backpup-button" name="pen" onClick={handleEdit} />
+          </Tooltip>
+          <Tooltip placement="top" content="Delete">
+            <IconButton data-testid="delete-scheduled-backpup-button" name="times" size="xl" onClick={handleDelete} />
+          </Tooltip>
+          <Tooltip placement="top" content="Copy">
+            <IconButton data-testid="copy-scheduled-backup-button" name="copy" onClick={handleCopy} />
+          </Tooltip>
         </>
       )}
     </div>
