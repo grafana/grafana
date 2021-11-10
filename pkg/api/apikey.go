@@ -75,13 +75,17 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	var err error
 	var serviceAccount *models.User = &models.User{Id: -1}
 	if hs.Cfg.FeatureToggles["service-accounts"] {
+		//Every new API key must have an associated service account
 		if cmd.CreateNewServiceAccount {
+			//Create a new service account for the new API key
 			serviceAccount, err = hs.SQLStore.CloneUserToServiceAccount(c.Req.Context(), c.SignedInUser)
 			if err != nil {
 				return response.Error(500, "Unable to clone user to service account", err)
 			}
 			cmd.ServiceAccountId = serviceAccount.Id
 		} else {
+			//Link the new API key to an existing service account
+
 			//Check if user and service account are in the same org
 			query := models.GetUserByIdQuery{Id: serviceAccount.Id}
 			err = bus.DispatchCtx(c.Req.Context(), &query)
