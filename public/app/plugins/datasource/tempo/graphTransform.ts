@@ -130,9 +130,9 @@ function findTraceDuration(view: DataFrameView<Row>): number {
   return traceEndTime - traceStartTime;
 }
 
-const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
-const totalsMetric = 'traces_service_graph_request_total';
-const failedMetric = 'traces_service_graph_request_failed_total';
+export const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
+export const totalsMetric = 'traces_service_graph_request_total';
+export const failedMetric = 'traces_service_graph_request_failed_total';
 
 export const serviceMapMetrics = [
   secondsMetric,
@@ -151,7 +151,10 @@ export const serviceMapMetrics = [
  * @param responses
  * @param range
  */
-export function mapPromMetricsToServiceMap(responses: DataQueryResponse[], range: TimeRange): [DataFrame, DataFrame] {
+export function mapPromMetricsToServiceMap(
+  responses: DataQueryResponse[],
+  range: TimeRange
+): { nodes: DataFrame; edges: DataFrame } {
   const frames = getMetricFrames(responses);
 
   // First just collect data from the metrics into a map with nodes and edges as keys
@@ -172,7 +175,7 @@ function createServiceMapDataFrames() {
 
   const nodes = createDF('Nodes', [
     { name: Fields.id },
-    { name: Fields.title },
+    { name: Fields.title, config: { displayName: 'Service name' } },
     { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
@@ -289,7 +292,7 @@ function convertToDataFrames(
   nodesMap: Record<string, ServiceMapStatistics>,
   edgesMap: Record<string, EdgeObject>,
   range: TimeRange
-): [DataFrame, DataFrame] {
+): { nodes: DataFrame; edges: DataFrame } {
   const rangeMs = range.to.valueOf() - range.from.valueOf();
   const [nodes, edges] = createServiceMapDataFrames();
   for (const nodeId of Object.keys(nodesMap)) {
@@ -316,5 +319,5 @@ function convertToDataFrames(
     });
   }
 
-  return [nodes, edges];
+  return { nodes, edges };
 }

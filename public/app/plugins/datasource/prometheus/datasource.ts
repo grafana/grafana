@@ -15,8 +15,17 @@ import {
   rangeUtil,
   ScopedVars,
   TimeRange,
+  DataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, FetchResponse, getBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
+import {
+  BackendSrvRequest,
+  FetchError,
+  FetchResponse,
+  getBackendSrv,
+  DataSourceWithBackend,
+  BackendDataSourceResponse,
+  toDataQueryResponse,
+} from '@grafana/runtime';
 
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -28,7 +37,6 @@ import { getInitHints, getQueryHints } from './query_hints';
 import { getOriginalMetricName, renderTemplate, transform, transformV2 } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
-  isFetchErrorResponse,
   PromDataErrorResponse,
   PromDataSuccessResponse,
   PromExemplarData,
@@ -51,6 +59,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   editorSrc: string;
   ruleMappings: { [index: string]: string };
   url: string;
+  id: number;
   directUrl: string;
   access: 'direct' | 'proxy';
   basicAuth: any;
@@ -74,6 +83,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
+    this.id = instanceSettings.id;
     this.url = instanceSettings.url!;
     this.access = instanceSettings.access;
     this.basicAuth = instanceSettings.basicAuth;
@@ -645,106 +655,126 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     };
   }
 
-  createAnnotationQueryOptions = (options: any): DataQueryRequest<PromQuery> => {
-    const annotation = options.annotation;
-    const interval =
-      annotation && annotation.step && typeof annotation.step === 'string'
-        ? annotation.step
-        : ANNOTATION_QUERY_STEP_DEFAULT;
-    return {
-      ...options,
-      interval,
-    };
-  };
-
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
     const annotation = options.annotation;
-    const { expr = '', tagKeys = '', titleFormat = '', textFormat = '' } = annotation;
+    const { expr = '' } = annotation;
 
     if (!expr) {
       return Promise.resolve([]);
     }
 
-    const start = this.getPrometheusTime(options.range.from, false);
-    const end = this.getPrometheusTime(options.range.to, true);
-    const queryOptions = this.createAnnotationQueryOptions(options);
-
-    // Unsetting min interval for accurate event resolution
-    const minStep = '1s';
+    const step = options.annotation.step || ANNOTATION_QUERY_STEP_DEFAULT;
     const queryModel = {
       expr,
-      interval: minStep,
+      range: true,
+      instant: false,
+      exemplar: false,
+      interval: step,
+      queryType: PromQueryType.timeSeriesQuery,
       refId: 'X',
-      requestId: `prom-query-${annotation.name}`,
+      datasource: this.getRef(),
     };
 
-    const query = this.createQuery(queryModel, queryOptions, start, end);
-    const response = await lastValueFrom(this.performTimeSeriesQuery(query, query.start, query.end));
-    const eventList: AnnotationEvent[] = [];
-    const splitKeys = tagKeys.split(',');
+    return await lastValueFrom(
+      getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: '/api/ds/query',
+          method: 'POST',
+          data: {
+            from: (this.getPrometheusTime(options.range.from, false) * 1000).toString(),
+            to: (this.getPrometheusTime(options.range.to, true) * 1000).toString(),
+            queries: [queryModel],
+          },
+          requestId: `prom-query-${annotation.name}`,
+        })
+        .pipe(
+          map((rsp: FetchResponse<BackendDataSourceResponse>) => {
+            return this.processsAnnotationResponse(options, rsp.data);
+          })
+        )
+    );
+  }
 
-    if (isFetchErrorResponse(response) && response.cancelled) {
+  processsAnnotationResponse = (options: any, data: BackendDataSourceResponse) => {
+    const frames: DataFrame[] = toDataQueryResponse({ data: data }).data;
+    if (!frames || !frames.length) {
       return [];
     }
 
-    const step = Math.floor(query.step ?? 15) * 1000;
+    const annotation = options.annotation;
+    const { tagKeys = '', titleFormat = '', textFormat = '' } = annotation;
 
-    response?.data?.data?.result?.forEach((series) => {
-      const tags = Object.entries(series.metric)
-        .filter(([k]) => splitKeys.includes(k))
-        .map(([_k, v]: [string, string]) => v);
+    const step = rangeUtil.intervalToSeconds(annotation.step || ANNOTATION_QUERY_STEP_DEFAULT) * 1000;
+    const tagKeysArray = tagKeys.split(',');
+    const frame = frames[0];
+    const timeField = frame.fields[0];
+    const valueField = frame.fields[1];
+    const labels = valueField?.labels || {};
 
-      series.values.forEach((value: any[]) => {
-        let timestampValue;
-        // rewrite timeseries to a common format
-        if (annotation.useValueForTime) {
-          timestampValue = Math.floor(parseFloat(value[1]));
-          value[1] = 1;
-        } else {
-          timestampValue = Math.floor(parseFloat(value[0])) * 1000;
-        }
-        value[0] = timestampValue;
-      });
+    const tags = Object.keys(labels)
+      .filter((label) => tagKeysArray.includes(label))
+      .map((label) => labels[label]);
 
-      const activeValues = series.values.filter((value) => parseFloat(value[1]) >= 1);
-      const activeValuesTimestamps = activeValues.map((value) => value[0]);
+    const timeValueTuple: Array<[number, number]> = [];
 
-      // Instead of creating singular annotation for each active event we group events into region if they are less
-      // then `step` apart.
-      let latestEvent: AnnotationEvent | null = null;
+    let idx = 0;
+    valueField.values.toArray().forEach((value: string) => {
+      let timeStampValue: number;
+      let valueValue: number;
+      const time = timeField.values.get(idx);
 
-      for (const timestamp of activeValuesTimestamps) {
-        // We already have event `open` and we have new event that is inside the `step` so we just update the end.
-        if (latestEvent && (latestEvent.timeEnd ?? 0) + step >= timestamp) {
-          latestEvent.timeEnd = timestamp;
-          continue;
-        }
-
-        // Event exists but new one is outside of the `step` so we "finish" the current region.
-        if (latestEvent) {
-          eventList.push(latestEvent);
-        }
-
-        // We start a new region.
-        latestEvent = {
-          time: timestamp,
-          timeEnd: timestamp,
-          annotation,
-          title: renderTemplate(titleFormat, series.metric),
-          tags,
-          text: renderTemplate(textFormat, series.metric),
-        };
+      // If we want to use value as a time, we use value as timeStampValue and valueValue will be 1
+      if (options.annotation.useValueForTime) {
+        timeStampValue = Math.floor(parseFloat(value));
+        valueValue = 1;
+      } else {
+        timeStampValue = Math.floor(parseFloat(time));
+        valueValue = parseFloat(value);
       }
 
-      if (latestEvent) {
-        // finish up last point if we have one
-        latestEvent.timeEnd = activeValuesTimestamps[activeValuesTimestamps.length - 1];
-        eventList.push(latestEvent);
-      }
+      idx++;
+      timeValueTuple.push([timeStampValue, valueValue]);
     });
 
+    const activeValues = timeValueTuple.filter((value) => value[1] >= 1);
+    const activeValuesTimestamps = activeValues.map((value) => value[0]);
+
+    // Instead of creating singular annotation for each active event we group events into region if they are less
+    // or equal to `step` apart.
+    const eventList: AnnotationEvent[] = [];
+    let latestEvent: AnnotationEvent | null = null;
+
+    for (const timestamp of activeValuesTimestamps) {
+      // We already have event `open` and we have new event that is inside the `step` so we just update the end.
+      if (latestEvent && (latestEvent.timeEnd ?? 0) + step >= timestamp) {
+        latestEvent.timeEnd = timestamp;
+        continue;
+      }
+
+      // Event exists but new one is outside of the `step` so we add it to eventList.
+      if (latestEvent) {
+        eventList.push(latestEvent);
+      }
+
+      // We start a new region.
+      latestEvent = {
+        time: timestamp,
+        timeEnd: timestamp,
+        annotation,
+        title: renderTemplate(titleFormat, labels),
+        tags,
+        text: renderTemplate(textFormat, labels),
+      };
+    }
+
+    if (latestEvent) {
+      // Finish up last point if we have one
+      latestEvent.timeEnd = activeValuesTimestamps[activeValuesTimestamps.length - 1];
+      eventList.push(latestEvent);
+    }
+
     return eventList;
-  }
+  };
 
   getExemplars(query: PromQueryRequest) {
     const url = '/api/v1/query_exemplars';

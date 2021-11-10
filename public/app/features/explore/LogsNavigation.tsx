@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useRef } from 'react';
 import { isEqual } from 'lodash';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { LogsNavigationPages } from './LogsNavigationPages';

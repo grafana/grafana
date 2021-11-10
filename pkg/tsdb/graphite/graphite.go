@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -297,7 +298,7 @@ func epochMStoGraphiteTime(tr backend.TimeRange) (string, string) {
 /**
  * Graphite should always return timestamp as a number but values might be nil when data is missing
  */
-func parseDataTimePoint(dataTimePoint plugins.DataTimePoint) (time.Time, *float64, error) {
+func parseDataTimePoint(dataTimePoint legacydata.DataTimePoint) (time.Time, *float64, error) {
 	if !dataTimePoint[1].Valid {
 		return time.Time{}, nil, errors.New("failed to parse data point timestamp")
 	}

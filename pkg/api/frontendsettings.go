@@ -1,12 +1,12 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -14,6 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+type PreloadPlugin struct {
+	Path    string `json:"path"`
+	Version string `json:"version"`
+}
 
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]interface{}, error) {
 	orgDataSources := make([]*models.DataSource, 0)
@@ -63,7 +68,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 		meta, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
 		if !exists {
-			log.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
+			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
 		dsMap["preload"] = meta.Preload
@@ -145,15 +150,18 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
-	enabledPlugins, err := hs.enabledPlugins(c.OrgId)
+	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return nil, err
 	}
 
-	pluginsToPreload := []string{}
+	pluginsToPreload := []*PreloadPlugin{}
 	for _, app := range enabledPlugins[plugins.App] {
 		if app.Preload {
-			pluginsToPreload = append(pluginsToPreload, app.Module)
+			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
+				Path:    app.Module,
+				Version: app.Info.Version,
+			})
 		}
 	}
 
@@ -171,7 +179,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 
 		module, _ := dsM["module"].(string)
 		if preload, _ := dsM["preload"].(bool); preload && module != "" {
-			pluginsToPreload = append(pluginsToPreload, module)
+			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
+				Path:    module,
+				Version: dsM["info"].(map[string]interface{})["version"].(string),
+			})
 		}
 	}
 
@@ -182,7 +193,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		}
 
 		if panel.Preload {
-			pluginsToPreload = append(pluginsToPreload, panel.Module)
+			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
+				Path:    panel.Module,
+				Version: panel.Info.Version,
+			})
 		}
 
 		panels[panel.ID] = map[string]interface{}{
@@ -360,10 +374,10 @@ func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (*plugins
 	return nil, false
 }
 
-func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
+func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledPlugins, error) {
 	ep := make(EnabledPlugins)
 
-	pluginSettingMap, err := hs.pluginSettings(orgID)
+	pluginSettingMap, err := hs.pluginSettings(ctx, orgID)
 	if err != nil {
 		return ep, err
 	}
@@ -396,47 +410,60 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 	return ep, nil
 }
 
-func (hs *HTTPServer) pluginSettings(orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
-	pluginSettings, err := hs.SQLStore.GetPluginSettings(orgID)
-	if err != nil {
+func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
+	pluginSettings := make(map[string]*models.PluginSettingInfoDTO)
+
+	// fill settings from database
+	if pss, err := hs.SQLStore.GetPluginSettings(ctx, orgID); err != nil {
 		return nil, err
+	} else {
+		for _, ps := range pss {
+			pluginSettings[ps.PluginId] = ps
+		}
 	}
 
-	pluginMap := make(map[string]*models.PluginSettingInfoDTO)
-	for _, plug := range pluginSettings {
-		pluginMap[plug.PluginId] = plug
-	}
-
-	for _, pluginDef := range hs.pluginStore.Plugins() {
-		// ignore entries that already exist
-		if _, ok := pluginMap[pluginDef.ID]; ok {
+	// fill settings from app plugins
+	for _, plugin := range hs.pluginStore.Plugins(plugins.App) {
+		// ignore settings that already exist
+		if _, exists := pluginSettings[plugin.ID]; exists {
 			continue
 		}
 
-		// enabled by default
-		opt := &models.PluginSettingInfoDTO{
-			PluginId: pluginDef.ID,
+		// add new setting which is enabled depending on if AutoEnabled: true
+		pluginSetting := &models.PluginSettingInfoDTO{
+			PluginId: plugin.ID,
+			OrgId:    orgID,
+			Enabled:  plugin.AutoEnabled,
+			Pinned:   plugin.AutoEnabled,
+		}
+
+		pluginSettings[plugin.ID] = pluginSetting
+	}
+
+	// fill settings from all remaining plugins (including potential app child plugins)
+	for _, plugin := range hs.pluginStore.Plugins() {
+		// ignore settings that already exist
+		if _, exists := pluginSettings[plugin.ID]; exists {
+			continue
+		}
+
+		// add new setting which is enabled by default
+		pluginSetting := &models.PluginSettingInfoDTO{
+			PluginId: plugin.ID,
 			OrgId:    orgID,
 			Enabled:  true,
 		}
 
-		// apps are disabled by default unless autoEnabled: true
-		if p := hs.pluginStore.Plugin(pluginDef.ID); p != nil && p.IsApp() {
-			opt.Enabled = p.AutoEnabled
-			opt.Pinned = p.AutoEnabled
-		}
-
-		// if it's included in app, check app settings
-		if pluginDef.IncludedInAppID != "" {
-			// app components are by default disabled
-			opt.Enabled = false
-
-			if appSettings, ok := pluginMap[pluginDef.IncludedInAppID]; ok {
-				opt.Enabled = appSettings.Enabled
+		// if plugin is included in an app, check app settings
+		if plugin.IncludedInAppID != "" {
+			// app child plugins are disabled unless app is enabled
+			pluginSetting.Enabled = false
+			if p, exists := pluginSettings[plugin.IncludedInAppID]; exists {
+				pluginSetting.Enabled = p.Enabled
 			}
 		}
-		pluginMap[pluginDef.ID] = opt
+		pluginSettings[plugin.ID] = pluginSetting
 	}
 
-	return pluginMap, nil
+	return pluginSettings, nil
 }

@@ -22,7 +22,6 @@ import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
-  DataSourceRef,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
@@ -89,10 +88,10 @@ export class QueryGroup extends PureComponent<Props, State> {
     });
 
     try {
-      const ds = await this.dataSourceSrv.get(options.dataSource.name);
-      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
+      const ds = await this.dataSourceSrv.get(options.dataSource);
+      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
       const defaultDataSource = await this.dataSourceSrv.get();
-      const datasource: DataSourceRef = { type: ds.type, uid: ds.uid };
+      const datasource = ds.getRef();
       const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource }));
       this.setState({ queries, dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
@@ -113,7 +112,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
     const { dsSettings } = this.state;
-    const queries = updateQueries(newSettings, this.state.queries, expressionDatasource.name, dsSettings);
+    const queries = updateQueries(newSettings, this.state.queries, dsSettings);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({

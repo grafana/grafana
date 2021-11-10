@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.5.5'
-build_image = 'grafana/build-container:1.4.3'
+build_image = 'grafana/build-container:1.4.5'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -374,8 +374,6 @@ def test_backend_step(edition):
             'lint-backend',
         ],
         'commands': [
-            # First make sure that there are no tests with FocusConvey
-            '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
             './bin/grabpl test-backend --edition {}'.format(edition),
         ],
     }
@@ -424,7 +422,19 @@ def lint_frontend_step():
         ],
     }
 
-def test_a11y_frontend_step(edition, port=3001):
+def test_a11y_frontend_step(ver_mode, edition, port=3001):
+    commands = [
+        'yarn wait-on http://$HOST:$PORT',
+    ]
+    if ver_mode == 'pr':
+        commands.extend([
+            'yarn run test:accessibility-pr',
+        ])
+    else:
+        commands.extend([
+            'yarn run test:accessibility --json > pa11y-ci-results.json',
+        ])
+
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
         'image': 'buildkite/puppeteer',
@@ -437,29 +447,7 @@ def test_a11y_frontend_step(edition, port=3001):
             'PORT': port,
         },
         'failure': 'ignore',
-        'commands': [
-            'yarn wait-on http://$HOST:$PORT',
-            'yarn run test:accessibility --json > pa11y-ci-results.json',
-        ],
-    }
-
-def test_a11y_frontend_step_pr(edition, port=3001):
-    return {
-        'name': 'test-a11y-frontend-pr' + enterprise2_suffix(edition),
-        'image': 'buildkite/puppeteer',
-        'depends_on': [
-          'end-to-end-tests-server' + enterprise2_suffix(edition),
-        ],
-         'environment': {
-            'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
-            'PORT': port,
-        },
-        'failure': 'ignore',
-        'commands': [
-            'yarn wait-on http://$HOST:$PORT',
-            'yarn run test:accessibility-pr',
-        ],
+        'commands': commands,
     }
 
 def frontend_metrics_step(edition):
