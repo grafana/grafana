@@ -7,7 +7,7 @@ export async function preloadPlugins(pluginsToPreload: string[] = []): Promise<v
 async function preloadPlugin(path: string): Promise<void> {
   try {
     await importPluginModule(path);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Failed to load plugin: ${path}`, error);
   }
 }
