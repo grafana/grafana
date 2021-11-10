@@ -9,7 +9,7 @@ import { graphDirective, GraphElement } from '../graph';
 import { dateTime, EventBusSrv } from '@grafana/data';
 import { DashboardModel } from '../../../../features/dashboard/state';
 
-jest.mock('app/features/annotations/all', () => ({
+jest.mock('../event_manager', () => ({
   EventManager: () => {
     return {
       on: () => {},
@@ -23,6 +23,7 @@ jest.mock('app/core/core', () => ({
     directive: () => {},
   },
   appEvents: {
+    subscribe: () => {},
     on: () => {},
   },
 }));

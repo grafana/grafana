@@ -672,7 +672,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       interval: step,
       queryType: PromQueryType.timeSeriesQuery,
       refId: 'X',
-      datasourceId: this.id,
+      datasource: this.getRef(),
     };
 
     return await lastValueFrom(

@@ -527,14 +527,16 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 	}
 
 	r, err := zip.OpenReader(archiveFile)
+	if err != nil {
+		return err
+	}
+
 	defer func() {
 		if err := r.Close(); err != nil {
 			i.log.Warn("failed to close zip file", "err", err)
 		}
 	}()
-	if err != nil {
-		return err
-	}
+
 	for _, zf := range r.File {
 		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
 		// nolint:gosec

@@ -355,11 +355,27 @@ func TestExpandTemplate(t *testing.T) {
 		text:     "{{ query \"metric{instance='a'}\" | first | label \"instance\" }}",
 		expected: "",
 	}, {
-		name:     "check that graphLink returns an empty string",
+		name:     "graphLink",
+		text:     `{{ graphLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`,
+		expected: `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true}]`,
+	}, {
+		name:     "graphLink should escape both the expression and the datasource",
+		text:     `{{ graphLink "{\"expr\": \"process_open_fds > 0\", \"datasource\": \"gdev prometheus\"}" }}`,
+		expected: `/explore?left=["now-1h","now","gdev+prometheus",{"datasource":"gdev+prometheus","expr":"process_open_fds+%3E+0","instant":false,"range":true}]`,
+	}, {
+		name:     "check that graphLink returns an empty string when the query is not formatted correctly",
 		text:     "{{ graphLink \"up\" }}",
 		expected: "",
 	}, {
-		name:     "check that tableLink returns an empty string",
+		name:     "tableLink",
+		text:     `{{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`,
+		expected: `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false}]`,
+	}, {
+		name:     "tableLink should escape both the expression and the datasource",
+		text:     `{{ tableLink "{\"expr\": \"process_open_fds > 0\", \"datasource\": \"gdev prometheus\"}" }}`,
+		expected: `/explore?left=["now-1h","now","gdev+prometheus",{"datasource":"gdev+prometheus","expr":"process_open_fds+%3E+0","instant":true,"range":false}]`,
+	}, {
+		name:     "check that tableLink returns an empty string  when the query is not formatted correctly",
 		text:     "{{ tableLink \"up\" }}",
 		expected: "",
 	}, {

@@ -48,7 +48,7 @@ go.sum @grafana/backend-platform
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
 # Grafana live
-/pkg/service/live/ @grafana/grafana-edge-squad
+/pkg/services/live/ @grafana/grafana-edge-squad
 
 # Unified Alerting
 /pkg/services/ngalert @grafana/alerting-squad
@@ -63,7 +63,6 @@ go.sum @grafana/backend-platform
 /pkg/plugins @grafana/plugins-platform-backend
 /pkg/services/datasourceproxy @grafana/plugins-platform-backend
 /pkg/services/datasources @grafana/plugins-platform-backend
-/public/app/features/plugins @grafana/plugins-platform-frontend
 
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
@@ -90,6 +89,7 @@ go.sum @grafana/backend-platform
 /public/app/features/dimensions/ @grafana/grafana-edge-squad
 /public/app/features/live/ @grafana/grafana-edge-squad
 /public/app/features/explore/ @grafana/observability-squad
+/public/app/features/plugins @grafana/plugins-platform-frontend
 /public/app/plugins/panel/alertlist @grafana/alerting-squad
 /public/app/plugins/panel/barchart @grafana/grafana-bi-squad
 /public/app/plugins/panel/heatmap @grafana/grafana-bi-squad
