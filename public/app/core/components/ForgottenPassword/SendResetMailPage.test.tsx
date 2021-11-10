@@ -9,10 +9,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     post: postMock,
   }),
-}));
-
-jest.mock('app/core/config', () => {
-  return {
+  config: {
     buildInfo: {
       version: 'v1.0',
       commit: '1',
@@ -24,8 +21,8 @@ jest.mock('app/core/config', () => {
       licenseUrl: '',
     },
     appSubUrl: '',
-  };
-});
+  },
+}));
 
 describe('VerifyEmail Page', () => {
   it('renders correctly', () => {

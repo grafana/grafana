@@ -10,10 +10,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     post: postMock,
   }),
-}));
-
-jest.mock('app/core/config', () => {
-  return {
+  config: {
     loginError: false,
     buildInfo: {
       version: 'v1.0',
@@ -26,8 +23,9 @@ jest.mock('app/core/config', () => {
       licenseUrl: '',
     },
     appSubUrl: '',
-  };
-});
+  },
+}));
+
 const props: Props = {
   ...getRouteComponentProps({
     queryParams: { code: 'some code' },

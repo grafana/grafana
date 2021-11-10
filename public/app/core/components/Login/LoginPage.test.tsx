@@ -8,10 +8,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     post: postMock,
   }),
-}));
-
-jest.mock('app/core/config', () => {
-  return {
+  config: {
     loginError: false,
     buildInfo: {
       version: 'v1.0',
@@ -24,12 +21,9 @@ jest.mock('app/core/config', () => {
       licenseUrl: '',
     },
     appSubUrl: '',
-    getConfig: () => ({
-      appSubUrl: '',
-      verifyEmailEnabled: false,
-    }),
-  };
-});
+    verifyEmailEnabled: false,
+  },
+}));
 
 describe('Login Page', () => {
   it('renders correctly', () => {
