@@ -1,13 +1,15 @@
+import { PreloadPlugin } from '@grafana/data';
 import { importPluginModule } from './plugin_loader';
 
-export async function preloadPlugins(pluginsToPreload: string[] = []): Promise<void> {
+export async function preloadPlugins(pluginsToPreload: PreloadPlugin[] = []): Promise<void> {
   await Promise.all(pluginsToPreload.map(preloadPlugin));
 }
 
-async function preloadPlugin(path: string): Promise<void> {
+async function preloadPlugin(plugin: PreloadPlugin): Promise<void> {
+  const { path, version } = plugin;
   try {
-    await importPluginModule(path);
+    await importPluginModule(path, version);
   } catch (error: unknown) {
-    console.error(`Failed to load plugin: ${path}`, error);
+    console.error(`Failed to load plugin: ${path} (version: ${version})`, error);
   }
 }

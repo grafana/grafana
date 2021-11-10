@@ -69,8 +69,6 @@ interface Props extends Themeable2 {
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
-  loadingLogsVolumeAvailable: boolean;
-  onClickLoadLogsVolume: () => void;
 }
 
 interface State {
@@ -270,8 +268,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logsQueries,
       clearCache,
       addResultsToCache,
-      onClickLoadLogsVolume,
-      loadingLogsVolumeAvailable,
     } = this.props;
 
     const {
@@ -351,18 +347,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
             </InlineField>
           </InlineFieldRow>
           <div>
-            {loadingLogsVolumeAvailable && (
-              <Button
-                variant="secondary"
-                aria-label="Load volume button"
-                title="Execute a query to show full range logs volume"
-                onClick={onClickLoadLogsVolume}
-                icon="graph-bar"
-                className={styles.headerButton}
-              >
-                Load volume
-              </Button>
-            )}
             <Button
               variant="secondary"
               disabled={isFlipping}

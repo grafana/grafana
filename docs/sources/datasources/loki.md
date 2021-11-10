@@ -66,7 +66,7 @@ You can use the Loki query editor to create log and metric queries.
 
 ### Log browser
 
-With Loki log browser you can easily navigate trough your list of labels and values and construct the query of your choice. Log browser has multi-step selection:
+With Loki log browser you can easily navigate through your list of labels and values and construct the query of your choice. Log browser has multi-step selection:
 
 1. Choose the labels you would like to consider for your search.
 2. Pick the values for selected labels. Log browser supports facetting and therefore it shows you only possible label combinations.
