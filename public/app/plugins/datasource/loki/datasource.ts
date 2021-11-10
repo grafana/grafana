@@ -374,6 +374,18 @@ export class LokiDatasource
   }
 
   async importAbstractQueries(abstractQueries: AbstractQuery[]): Promise<LokiQuery[]> {
+    await this.languageProvider.start();
+    const existingKeys = this.languageProvider.labelKeys;
+
+    if (existingKeys && existingKeys.length) {
+      abstractQueries = abstractQueries.map((abstractQuery) => {
+        abstractQuery.labelMatchers = abstractQuery.labelMatchers.filter((labelMatcher) => {
+          return existingKeys.includes(labelMatcher.name);
+        });
+        return abstractQuery;
+      });
+    }
+
     return abstractQueries.map((abstractQuery) => this.languageProvider.importAbstractQuery(abstractQuery));
   }
 
