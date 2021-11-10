@@ -38,7 +38,7 @@ The two type of messages that are gossiped between instances are:
 - Notification logs: Who (which instance) notifier what (which alert)
 - Silences: If an alert should fire or not
 
-These two states are persisted to the database periodically and when Grafana is successfully shutdown.
+These two states are persisted to the database periodically and when Grafana is gracefully shutdown.
 
 ## Setup
 
@@ -47,7 +47,7 @@ To enable high availability support, we need to set the configuration [option `h
 The idea here is that you:
 
 - Set `ha_peers` to the set of hosts for each grafana instance in the cluster (using a format of `host:port`) e.g. `ha_peers=10.0.0.5:9094,10.0.0.6:9094,10.0.0.7:9094`
-- Set `ha_listen_address` to the instance (or the [Pod's](https://kubernetes.io/docs/concepts/workloads/pods/) IP (using a format of `host:port`) in the case of using Kubernetes) by default is it set to listen all interfaces (`0.0.0.0`).
+- Set `ha_listen_address` to the instance (or the [Pod's](https://kubernetes.io/docs/concepts/workloads/pods/) IP (using a format of `host:port`) in the case of using Kubernetes) by default it is set to listen all interfaces (`0.0.0.0`).
 
 ## Kubernetes
 
