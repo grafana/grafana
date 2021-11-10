@@ -38,7 +38,7 @@ import { DEFAULT_GRAPHITE_VERSION } from './versions';
 import { reduceError } from './utils';
 import { default as GraphiteQueryModel } from './graphite_query';
 
-const GRAPHITE_TO_COMPARATORS = {
+const GRAPHITE_TAG_COMPARATORS = {
   '=': AbstractLabelOperator.Equal,
   '!=': AbstractLabelOperator.NotEqual,
   '=~': AbstractLabelOperator.EqualRegEx,
@@ -136,7 +136,7 @@ export class GraphiteDatasource
       graphiteQuery.tags.forEach((tag) => {
         labels.push({
           name: tag.key,
-          operator: GRAPHITE_TO_COMPARATORS[tag.operator],
+          operator: GRAPHITE_TAG_COMPARATORS[tag.operator],
           value: tag.value,
         });
       });

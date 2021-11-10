@@ -13,7 +13,7 @@ import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQue
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import Prism, { Grammar } from 'prismjs';
-import { extractLabelMatchers, toPromLikeQuery } from '../../../features/explore/utils/query';
+import { extractLabelMatchers, toPromLikeQuery } from 'app/features/explore/utils/query';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';

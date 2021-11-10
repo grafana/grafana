@@ -54,7 +54,7 @@ export interface DataQuery {
 }
 
 /**
- * Abstract representation of any label-based query language
+ * Abstract representation of any label-based query
  * @internal
  */
 export interface AbstractQuery extends DataQuery {
