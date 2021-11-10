@@ -12,10 +12,6 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
-type ExactJsonConverterConfig struct {
-	Fields []Field `json:"fields"`
-}
-
 // ExactJsonConverter can convert JSON to a single data.Frame according to
 // user-defined field configuration and value extraction rules.
 type ExactJsonConverter struct {
