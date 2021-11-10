@@ -10,7 +10,7 @@ Welcome. We're glad you're here to help make our technical documentation even be
 
 ### Intended audience
 
-The intended audience for this documentation includes Grafana open source community contributors.
+We write these guidelines for contributors who are interested in improving our technical content.
 
 ## Understanding the structure of Grafana documentation
 
