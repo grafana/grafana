@@ -239,6 +239,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = quotaSection.NewKey("enabled", "true")
 			require.NoError(t, err)
+			dashboardQuota := o.DashboardOrgQuota
+			if dashboardQuota == "" {
+				dashboardQuota = "100"
+			}
+			_, err = quotaSection.NewKey("org_dashboard", dashboardQuota)
+			require.NoError(t, err)
 		}
 		if o.DisableAnonymous {
 			anonSect, err := cfg.GetSection("auth.anonymous")
@@ -296,6 +302,7 @@ type GrafanaOpts struct {
 	NGAlertAlertmanagerConfigPollInterval time.Duration
 	AnonymousUserRole                     models.RoleType
 	EnableQuota                           bool
+	DashboardOrgQuota                     string
 	DisableAnonymous                      bool
 	CatalogAppEnabled                     bool
 	ViewersCanEdit                        bool
