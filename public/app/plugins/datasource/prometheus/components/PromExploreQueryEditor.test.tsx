@@ -15,12 +15,6 @@ jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
     MonacoQueryFieldWrapper: fakeQueryField,
   };
 });
-jest.mock('./PromExploreExtraField', () => {
-  return {
-    // PromExploreExtraField: jest.fn((props) =>  <div data-test-id="PromExploreExtraField" {...props} />),
-    PromExploreExtraField: jest.fn(() => null),
-  };
-});
 
 const setup = (propOverrides?: object) => {
   const datasourceMock: unknown = {
@@ -31,6 +25,7 @@ const setup = (propOverrides?: object) => {
       start: () => Promise.resolve([]),
     },
     getInitHints: () => [],
+    exemplarsAvailable: true,
   };
   const datasource: PrometheusDatasource = datasourceMock as PrometheusDatasource;
   const onRunQuery = jest.fn();
@@ -106,7 +101,7 @@ describe('PromExploreQueryEditor', () => {
     expect(screen.getByTestId(extraFieldTestIds.extraFieldEditor)).toBeInTheDocument();
   });
 
-  it('should correctly set default value for expr if it is undefined', async () => {
+  it('should set default value for expr if it is undefined', async () => {
     const onChange = jest.fn();
     const query = { expr: undefined, exemplar: false, instant: false, range: true };
     render(setup({ onChange, query }));
@@ -114,7 +109,7 @@ describe('PromExploreQueryEditor', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ expr: '' }));
   });
 
-  it('should correctly set default value for exemplars if it is undefined', async () => {
+  it('should set default value for exemplars if it is undefined', async () => {
     const onChange = jest.fn();
     const query = { expr: '', instant: false, range: true };
     render(setup({ onChange, query }));
@@ -122,7 +117,7 @@ describe('PromExploreQueryEditor', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ exemplar: true }));
   });
 
-  it('should correctly set default value for instant and range if expr is falsy', async () => {
+  it('should set default value for instant and range if expr is falsy', async () => {
     const onChange = jest.fn();
     let query = { expr: '', exemplar: true };
     render(setup({ onChange, query }));
