@@ -141,7 +141,10 @@ export const RolePickerMenu = ({
     } else {
       if (group) {
         const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
-        setSelectedOptions([...restOptions, ...group.options]);
+        const optionsToSelect = group.options.filter(
+          (option) => !selectedBuiltInRoles.find((role) => role.uid === option.uid)
+        );
+        setSelectedOptions([...restOptions, ...optionsToSelect]);
       }
     }
   };
