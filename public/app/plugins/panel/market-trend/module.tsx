@@ -60,6 +60,10 @@ function addFieldPicker(
   let placeholderText = 'Auto ';
   if (current?.config) {
     placeholderText += '= ' + getFieldDisplayName(current);
+
+    if (current === data?.open && info.key !== 'open') {
+      placeholderText += ` (${info.defaults.join(',')})`;
+    }
   } else {
     placeholderText += `(${info.defaults.join(',')})`;
   }

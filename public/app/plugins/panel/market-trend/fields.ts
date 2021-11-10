@@ -43,7 +43,7 @@ export const candlestickFieldsInfo: CandlestickFieldsInfoType = {
   high: {
     key: 'high',
     name: 'High',
-    defaults: ['high', 'l', 'max'],
+    defaults: ['high', 'h', 'max'],
     description: 'The maximum value within the period',
   },
   low: {
@@ -56,13 +56,13 @@ export const candlestickFieldsInfo: CandlestickFieldsInfoType = {
     key: 'close',
     name: 'Close',
     defaults: ['close', 'c'],
-    description: 'The starting value within time bucket',
+    description: 'The value at the end of the measured period',
   },
   volume: {
     key: 'volume',
     name: 'Volume',
     defaults: ['volume', 'v'],
-    description: 'The total value for this whole field',
+    description: 'Activity within the measured period',
   },
 };
 
@@ -166,8 +166,12 @@ export function prepareCandlestickFields(
     data.frame.fields.push(data.open);
   }
 
-  if (false) {
-    // TODO filter????
+  // Use the open field for min/max if nothing is set
+  if (!data.high && !fieldMap.high) {
+    data.high = data.open;
+  }
+  if (!data.low && !fieldMap.low) {
+    data.low = data.open;
   }
 
   return data;
