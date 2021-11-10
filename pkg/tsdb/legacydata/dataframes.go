@@ -1,4 +1,4 @@
-package plugins
+package legacydata
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ type conditionStub struct {
 	noData   bool
 }
 
-func (c *conditionStub) Eval(context *EvalContext, reqHandler plugins.DataRequestHandler) (*ConditionResult, error) {
+func (c *conditionStub) Eval(context *EvalContext, reqHandler legacydata.RequestHandler) (*ConditionResult, error) {
 	return &ConditionResult{Firing: c.firing, EvalMatches: c.matches, Operator: c.operator, NoDataFound: c.noData}, nil
 }
 

@@ -7,18 +7,18 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // DefaultEvalHandler is responsible for evaluating the alert rule.
 type DefaultEvalHandler struct {
 	log             log.Logger
 	alertJobTimeout time.Duration
-	requestHandler  plugins.DataRequestHandler
+	requestHandler  legacydata.RequestHandler
 }
 
 // NewEvalHandler is the `DefaultEvalHandler` constructor.
-func NewEvalHandler(requestHandler plugins.DataRequestHandler) *DefaultEvalHandler {
+func NewEvalHandler(requestHandler legacydata.RequestHandler) *DefaultEvalHandler {
 	return &DefaultEvalHandler{
 		log:             log.New("alerting.evalHandler"),
 		alertJobTimeout: time.Second * 5,
