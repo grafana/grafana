@@ -190,16 +190,18 @@ export const RolePickerMenu = ({
     <div className={cx(styles.menu, customStyles.menuWrapper)}>
       <div className={customStyles.menu} aria-label="Role picker menu">
         <CustomScrollbar autoHide={false} autoHeightMax="250px" hideHorizontalTrack>
-          <div className={customStyles.groupHeader}>Built-in roles</div>
-          <RadioButtonGroup
-            className={customStyles.builtInRoleSelector}
-            options={BuiltinRoleOption}
-            value={selectedBuiltInRole}
-            onChange={onSelectedBuiltinRoleChange}
-            fullWidth={true}
-          />
+          <div className={customStyles.menuSection}>
+            <div className={customStyles.groupHeader}>Built-in roles</div>
+            <RadioButtonGroup
+              className={customStyles.builtInRoleSelector}
+              options={BuiltinRoleOption}
+              value={selectedBuiltInRole}
+              onChange={onSelectedBuiltinRoleChange}
+              fullWidth={true}
+            />
+          </div>
           {showGroups && !!optionGroups.length ? (
-            <div>
+            <div className={customStyles.menuSection}>
               <div className={customStyles.groupHeader}>Fixed roles</div>
               <div className={styles.optionBody}>
                 {optionGroups.map((option, i) => (
@@ -215,7 +217,7 @@ export const RolePickerMenu = ({
               </div>
             </div>
           ) : (
-            <div>
+            <div className={customStyles.menuSection}>
               <div className={customStyles.groupHeader}>Fixed roles</div>
               <div className={styles.optionBody}>
                 {fixedRoles.map((option, i) => (
@@ -511,6 +513,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius(1)};
       background-color: ${theme.colors.background.primary};
       z-index: ${theme.zIndex.modal};
+    `,
+    menuSection: css`
+      margin-bottom: ${theme.spacing(2)};
     `,
     menuOptionCheckbox: css`
       display: flex;
