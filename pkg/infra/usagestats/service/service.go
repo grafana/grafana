@@ -23,7 +23,7 @@ type UsageStats struct {
 	SocialService social.Service
 	kvStore       *kvstore.NamespacedKVStore
 
-	log log.Logger
+	log log.MultiLoggers
 
 	oauthProviders           map[string]bool
 	externalMetrics          []usagestats.MetricsFunc

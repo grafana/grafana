@@ -58,7 +58,7 @@ type CacheStorage interface {
 
 // RemoteCache allows Grafana to cache data outside its own process
 type RemoteCache struct {
-	log      log.Logger
+	log      log.MultiLoggers
 	client   CacheStorage
 	SQLStore *sqlstore.SQLStore
 	Cfg      *setting.Cfg

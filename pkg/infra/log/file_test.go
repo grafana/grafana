@@ -10,7 +10,7 @@ import (
 )
 
 func (w *FileLogWriter) WriteLine(line string) error {
-	n, err := w.mw.Write([]byte(line))
+	n, err := w.Write([]byte(line))
 	if err != nil {
 		return err
 	}
