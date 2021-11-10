@@ -72,7 +72,7 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       }
       const ctx = { ...context, options: currentOptions };
 
-      if (layer.registerOptionsUI) {
+      if (layer?.registerOptionsUI) {
         layer.registerOptionsUI(builder, ctx);
       }
 

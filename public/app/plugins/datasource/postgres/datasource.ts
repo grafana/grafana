@@ -82,7 +82,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     const queryModel = new PostgresQueryModel(target, this.templateSrv, scopedVars);
     return {
       refId: target.refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: queryModel.render(this.interpolateVariable as any),
       format: target.format,
     };
@@ -97,7 +97,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
 
     const query = {
       refId: options.annotation.name,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
       format: 'table',
     };
@@ -137,7 +137,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
 
     const interpolatedQuery = {
       refId: refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql,
       format: 'table',
     };

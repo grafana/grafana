@@ -50,11 +50,11 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			srv.deleteExpiredSnapshots()
 			srv.deleteExpiredDashboardVersions()
 			srv.cleanUpOldAnnotations(ctxWithTimeout)
-			srv.expireOldUserInvites()
-			srv.deleteStaleShortURLs()
+			srv.expireOldUserInvites(ctx)
+			srv.deleteStaleShortURLs(ctx)
 			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
 				time.Minute*10, func(context.Context) {
-					srv.deleteOldLoginAttempts()
+					srv.deleteOldLoginAttempts(ctx)
 				})
 			if err != nil {
 				srv.log.Error("failed to lock and execute cleanup of old login attempts", "error", err)
@@ -143,7 +143,7 @@ func (srv *CleanUpService) deleteExpiredDashboardVersions() {
 	}
 }
 
-func (srv *CleanUpService) deleteOldLoginAttempts() {
+func (srv *CleanUpService) deleteOldLoginAttempts(ctx context.Context) {
 	if srv.Cfg.DisableBruteForceLoginProtection {
 		return
 	}
@@ -151,31 +151,31 @@ func (srv *CleanUpService) deleteOldLoginAttempts() {
 	cmd := models.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
 		srv.log.Error("Problem deleting expired login attempts", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
 	}
 }
 
-func (srv *CleanUpService) expireOldUserInvites() {
+func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
 	maxInviteLifetime := srv.Cfg.UserInviteMaxLifetime
 
 	cmd := models.ExpireTempUsersCommand{
 		OlderThan: time.Now().Add(-maxInviteLifetime),
 	}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
 		srv.log.Error("Problem expiring user invites", "error", err.Error())
 	} else {
 		srv.log.Debug("Expired user invites", "rows affected", cmd.NumExpired)
 	}
 }
 
-func (srv *CleanUpService) deleteStaleShortURLs() {
+func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	cmd := models.DeleteShortUrlCommand{
 		OlderThan: time.Now().Add(-time.Hour * 24 * 7),
 	}
-	if err := srv.ShortURLService.DeleteStaleShortURLs(context.Background(), &cmd); err != nil {
+	if err := srv.ShortURLService.DeleteStaleShortURLs(ctx, &cmd); err != nil {
 		srv.log.Error("Problem deleting stale short urls", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted short urls", "rows affected", cmd.NumDeleted)
