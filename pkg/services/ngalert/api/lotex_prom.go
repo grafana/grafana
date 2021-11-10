@@ -82,7 +82,7 @@ func (p *LotexProm) getEndpoints(ctx *models.ReqContext) (*promEndpoints, error)
 	}
 
 	if ds.Url == "" {
-		return nil, fmt.Errorf("HTTP URL is empty")
+		return nil, fmt.Errorf("URL for this data source is empty")
 	}
 
 	routes, ok := dsTypeToLotexRoutes[ds.Type]
