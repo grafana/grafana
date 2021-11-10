@@ -25,7 +25,6 @@ import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
 import { PromMetricsMetadata, PromQuery } from './types';
-import { LokiQuery } from '../loki/types';
 import { extractLabelMatchers, toPromLikeQuery } from 'app/features/explore/utils/query';
 
 const DEFAULT_KEYS = ['job', 'instance'];
@@ -418,7 +417,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return toPromLikeQuery(labelBasedQuery);
   }
 
-  exportToAbstractQuery(query: LokiQuery): AbstractQuery {
+  exportToAbstractQuery(query: PromQuery): AbstractQuery {
     const promQuery = query.expr;
     if (!promQuery || promQuery.length === 0) {
       return { refId: query.refId, labelMatchers: [] };
