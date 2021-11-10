@@ -1,4 +1,12 @@
-import { ArrayVector, DataFrame, Field, getFieldDisplayName, GrafanaTheme2, outerJoinDataFrames } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  Field,
+  FieldType,
+  getFieldDisplayName,
+  GrafanaTheme2,
+  outerJoinDataFrames,
+} from '@grafana/data';
 import { findField } from 'app/features/dimensions';
 import { prepareGraphableFields } from '../timeseries/utils';
 import { MarketOptions, CandlestickFieldMap } from './models.gen';
@@ -35,19 +43,19 @@ export const candlestickFieldsInfo: CandlestickFieldsInfoType = {
   high: {
     key: 'high',
     name: 'High',
-    defaults: ['high', 'l'],
+    defaults: ['high', 'l', 'max'],
     description: 'The maximum value within the period',
   },
   low: {
     key: 'low',
     name: 'Low',
-    defaults: ['low', 'l'],
+    defaults: ['low', 'l', 'min'],
     description: 'The minimum value within the period',
   },
   close: {
     key: 'close',
     name: 'Close',
-    defaults: ['close', 'v'],
+    defaults: ['close', 'c'],
     description: 'The starting value within time bucket',
   },
   volume: {
@@ -80,8 +88,8 @@ function findFieldOrAuto(frame: DataFrame, info: FieldPickerInfo, options: Candl
   const field = findField(frame, (options as any)[info.key]);
   if (!field) {
     for (const field of frame.fields) {
-      const name = getFieldDisplayName(field, frame);
-      if (info.defaults.includes(name)) {
+      const name = getFieldDisplayName(field, frame).toLowerCase();
+      if (info.defaults.includes(name) || info.defaults.includes(field.name)) {
         return field;
       }
     }
@@ -120,6 +128,14 @@ export function prepareCandlestickFields(
     if (field) {
       (data as any)[info.key] = field;
       used.add(field);
+    }
+  }
+
+  // Use first numeric value as open
+  if (!data.open && !data.close) {
+    data.open = data.frame.fields.find((f) => f.type === FieldType.number);
+    if (data.open) {
+      used.add(data.open);
     }
   }
 
