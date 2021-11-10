@@ -46,6 +46,8 @@ import {
   MetricRequest,
   StartQueryRequest,
   TSDBResponse,
+  Dimensions,
+  MetricFindSuggestData,
 } from './types';
 import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
@@ -476,7 +478,12 @@ export class CloudWatchDatasource
               (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
             []
           ) as string[];
-          regionsAffected.forEach((region) => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
+          regionsAffected.forEach((region) => {
+            const actualRegion = this.getActualRegion(region);
+            if (actualRegion) {
+              this.debouncedAlert(this.datasourceName, actualRegion);
+            }
+          });
         }
 
         return throwError(() => err);
@@ -484,7 +491,7 @@ export class CloudWatchDatasource
     );
   }
 
-  transformSuggestDataFromDataframes(suggestData: TSDBResponse): Array<{ text: any; label: any; value: any }> {
+  transformSuggestDataFromDataframes(suggestData: TSDBResponse): MetricFindSuggestData[] {
     const frames = toDataQueryResponse({ data: suggestData }).data as DataFrame[];
     const table = toLegacyResponseData(frames[0]) as TableData;
 
@@ -495,7 +502,7 @@ export class CloudWatchDatasource
     }));
   }
 
-  doMetricQueryRequest(subtype: string, parameters: any): Promise<Array<{ text: any; label: any; value: any }>> {
+  doMetricQueryRequest(subtype: string, parameters: any): Promise<MetricFindSuggestData[]> {
     const range = this.timeSrv.timeRange();
     return lastValueFrom(
       this.awsRequest(DS_QUERY_ENDPOINT, {
