@@ -613,12 +613,12 @@ type Route struct {
 	// Deprecated. Remove before v1.0 release.
 	Match map[string]string `yaml:"match,omitempty" json:"match,omitempty"`
 	// Deprecated. Remove before v1.0 release.
-	MatchRE           config.MatchRegexps `yaml:"match_re,omitempty" json:"match_re,omitempty"`
-	Matchers          config.Matchers     `yaml:"matchers,omitempty" json:"matchers,omitempty"`
-	ObjectMatchers    ObjectMatchers      `yaml:"object_matchers,omitempty" json:"object_matchers,omitempty"`
-	MuteTimeIntervals []string            `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
-	Continue          bool                `yaml:"continue" json:"continue,omitempty"`
-	Routes            []*Route            `yaml:"routes,omitempty" json:"routes,omitempty"`
+	MatchRE                  config.MatchRegexps         `yaml:"match_re,omitempty" json:"match_re,omitempty"`
+	Matchers                 config.Matchers             `yaml:"matchers,omitempty" json:"matchers,omitempty"`
+	ObjectMatchers           ObjectMatchers              `yaml:"object_matchers,omitempty" json:"object_matchers,omitempty"`
+	InternalMuteTimeInterval []timeinterval.TimeInterval `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
+	Continue                 bool                        `yaml:"continue" json:"continue,omitempty"`
+	Routes                   []*Route                    `yaml:"routes,omitempty" json:"routes,omitempty"`
 
 	GroupWait      *model.Duration `yaml:"group_wait,omitempty" json:"group_wait,omitempty"`
 	GroupInterval  *model.Duration `yaml:"group_interval,omitempty" json:"group_interval,omitempty"`
