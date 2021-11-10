@@ -15,9 +15,6 @@ SH_FILES ?= $(shell find ./scripts -name *.sh)
 
 all: deps build
 
-drone-version:
-    DRONE_VERSION := $(shell drone -v | cut -d' ' -f3)
-
 ##@ Dependencies
 
 deps-go: ## Install backend dependencies.
@@ -154,9 +151,6 @@ clean: ## Clean up intermediate build artifacts.
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 drone: $(DRONE)
-	@if [ "$(DRONE_VERSION)" != "1.4.0" ]; then\
-		echo "WARN: You are using drone-cli ${DRONE_VERSION}. Please update your LOCAL version to 1.4.0. Using latest bingo version...";\
-	fi
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
