@@ -36,6 +36,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       onBlur={() => {}}
       history={history}
       data={data}
+      data-testid={testIds.editor}
       ExtraFieldElement={
         <PromExploreExtraField query={query} onChange={onChange} datasource={datasource} onRunQuery={onRunQuery} />
       }
@@ -44,3 +45,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
 };
 
 export default memo(PromExploreQueryEditor);
+
+export const testIds = {
+  editor: 'prom-editor-explore',
+};
