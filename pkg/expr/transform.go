@@ -212,6 +212,7 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	req.PluginContext.DataSourceInstanceSettings = dsInstanceSettings
+	req.PluginContext.PluginID = getDsInfo.Result.Type
 
 	return s.dataService.QueryData(ctx, req)
 }
