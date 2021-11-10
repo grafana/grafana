@@ -27,6 +27,7 @@ export const RolePicker = ({
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
+  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
   const [builtInRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +72,8 @@ export const RolePicker = ({
     setOpen(false);
     setQuery('');
     setSelectedRoles(appliedRoles);
-  }, [appliedRoles]);
+    setSelectedBuiltInRole(builtInRole);
+  }, [appliedRoles, builtInRole]);
 
   const onInputChange = (query?: string) => {
     if (query) {
@@ -83,6 +85,10 @@ export const RolePicker = ({
 
   const onSelect = (roles: Role[]) => {
     setSelectedRoles(roles);
+  };
+
+  const onBuiltInRoleSelect = (role: OrgRole) => {
+    setSelectedBuiltInRole(role);
   };
 
   const onUpdate = (newBuiltInRole: OrgRole, newRoles: string[]) => {
@@ -105,8 +111,8 @@ export const RolePicker = ({
     <div data-testid="role-picker" style={{ position: 'relative' }}>
       <ClickOutsideWrapper onClick={onClose}>
         <RolePickerInput
-          builtInRole={builtInRole}
-          builtInRoles={builtInRoles[builtInRole]}
+          builtInRole={selectedBuiltInRole}
+          builtInRoles={builtInRoles[selectedBuiltInRole]}
           appliedRoles={selectedRoles}
           query={query}
           onQueryChange={onInputChange}
@@ -118,9 +124,10 @@ export const RolePicker = ({
         {isOpen && (
           <RolePickerMenu
             options={getOptions()}
-            builtInRole={builtInRole}
+            builtInRole={selectedBuiltInRole}
             builtInRoles={builtInRoles}
             appliedRoles={appliedRoles}
+            onBuiltInRoleSelect={onBuiltInRoleSelect}
             onSelect={onSelect}
             onUpdate={onUpdate}
             showGroups={query.length === 0}

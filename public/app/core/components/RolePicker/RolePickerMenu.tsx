@@ -34,6 +34,7 @@ interface RolePickerMenuProps {
   appliedRoles: Role[];
   showGroups?: boolean;
   onSelect: (roles: Role[]) => void;
+  onBuiltInRoleSelect?: (role: OrgRole) => void;
   onUpdate: (newBuiltInRole: OrgRole, newRoles: string[]) => void;
   onClear?: () => void;
 }
@@ -45,6 +46,7 @@ export const RolePickerMenu = ({
   appliedRoles,
   showGroups,
   onSelect,
+  onBuiltInRoleSelect,
   onUpdate,
   onClear,
 }: RolePickerMenuProps): JSX.Element => {
@@ -90,6 +92,12 @@ export const RolePickerMenu = ({
   useEffect(() => {
     onSelect(selectedOptions);
   }, [selectedOptions, onSelect]);
+
+  useEffect(() => {
+    if (onBuiltInRoleSelect) {
+      onBuiltInRoleSelect(selectedBuiltInRole);
+    }
+  }, [selectedBuiltInRole, onBuiltInRoleSelect]);
 
   const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
   const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
