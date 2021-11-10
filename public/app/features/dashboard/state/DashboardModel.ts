@@ -18,7 +18,6 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 // Utils & Services
 import { contextSrv } from 'app/core/services/context_srv';
-import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { GridPos, PanelModel } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
@@ -47,6 +46,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 import { isOnTheSameGridRow } from './utils';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
 import {
@@ -264,7 +264,7 @@ export class DashboardModel {
     copy.panels = this.getPanelSaveModels();
 
     //  sort by keys
-    copy = sortByKeys(copy);
+    copy = sortedDeepCloneWithoutNulls(copy);
     copy.getVariables = () => {
       return copy.templating.list;
     };
