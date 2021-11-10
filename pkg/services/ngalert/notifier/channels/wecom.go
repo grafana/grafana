@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -16,7 +15,7 @@ import (
 
 // NewWeComNotifier is the constructor for WeCom notifier.
 func NewWeComNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
-	url := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString(), setting.SecretKey)
+	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find webhook url in settings"}
 	}
