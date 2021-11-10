@@ -28,7 +28,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
     };
   }
 
-  const displayValue = field.display!(cell.value);
+  const displayValue = field.display!(cell.value, cell.row.index);
   let barGaugeMode = BarGaugeDisplayMode.Gradient;
 
   if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {

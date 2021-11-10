@@ -2,15 +2,17 @@
 import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 
 // Types
-import { Field, FieldType } from '../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 import { getValueMappingResult } from '../utils/valueMappings';
 import { dateTime, dateTimeParse } from '../datetime';
-import { KeyValue, TimeZone } from '../types';
+import { FieldColorModeId, KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
+import { fieldMatchers } from '../transformations/matchers';
+import { FieldMatcherID } from '../transformations/matchers/ids';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -22,6 +24,11 @@ interface DisplayProcessorOptions {
    * Will pick 'dark' if not defined
    */
   theme: GrafanaTheme2;
+
+  /**
+   * Used if need to use another field for color
+   */
+  frame?: DataFrame;
 }
 
 // Reasonable units for time
@@ -71,7 +78,17 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
 
-  return (value: any) => {
+  let colorFromField: Field | null = null;
+
+  // Special logic if color is derived from another field we need to use another fields display processor
+  if (field.config.color?.mode === FieldColorModeId.Field) {
+    const fromFieldName = field.config.color.fromField;
+    if (fromFieldName && options.frame) {
+      colorFromField = getFieldToDeriveColorFrom(fromFieldName, options.frame);
+    }
+  }
+
+  return (value: any, index?: number) => {
     const { mappings } = config;
     const isStringUnit = unit === 'string';
 
@@ -86,6 +103,11 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     let color: string | undefined;
     let percent: number | undefined;
 
+    if (index != null && colorFromField) {
+      const display = colorFromField.display!(colorFromField.values.get(index));
+      color = display.color;
+    }
+
     if (mappings && mappings.length > 0) {
       const mappingResult = getValueMappingResult(mappings, value);
 
@@ -94,7 +116,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
           text = mappingResult.text;
         }
 
-        if (mappingResult.color != null) {
+        if (color == null && mappingResult.color != null) {
           color = options.theme.visualization.getColorByName(mappingResult.color);
         }
       }
@@ -146,4 +168,15 @@ export function getRawDisplayProcessor(): DisplayProcessor {
     text: `${value}`,
     numeric: (null as unknown) as number,
   });
+}
+
+function getFieldToDeriveColorFrom(fromField: string, frame: DataFrame): Field | null {
+  const matcher = fieldMatchers.get(FieldMatcherID.byName).get(fromField);
+  for (const f of frame.fields) {
+    if (matcher(f, frame, [frame])) {
+      return f;
+    }
+  }
+
+  return null;
 }

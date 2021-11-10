@@ -10,7 +10,7 @@ import { getTextColorForBackground, getCellLinks } from '../../utils';
 export const DefaultCell: FC<TableCellProps> = (props) => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
-  const displayValue = field.display!(cell.value);
+  const displayValue = field.display!(cell.value, cell.row.index);
 
   let value: string | ReactElement;
   if (React.isValidElement(cell.value)) {

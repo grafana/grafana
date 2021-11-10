@@ -184,6 +184,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         field: field,
         theme: options.theme,
         timeZone: options.timeZone,
+        frame: newFrame,
       });
 
       // Wrap the display with a cache to avoid double calls
@@ -213,7 +214,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
   const cache = new Map<any, DisplayValue>();
 
-  return (value: any) => {
+  return (value: any, index?: number) => {
     let v = cache.get(value);
 
     if (!v) {
@@ -222,7 +223,7 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
         cache.clear();
       }
 
-      v = disp(value);
+      v = disp(value, index);
 
       // convert to hex6 or hex8 so downstream we can cheaply test for alpha (and set new alpha)
       // via a simple length check (in colorManipulator) rather using slow parsing via tinycolor
