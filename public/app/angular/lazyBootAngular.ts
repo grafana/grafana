@@ -1,4 +1,4 @@
-import { auto } from 'angular';
+import angular, { auto } from 'angular';
 
 let injector: auto.IInjectorService | undefined;
 
@@ -11,7 +11,10 @@ export async function getAngularInjector(): Promise<auto.IInjectorService> {
   }
 
   const { AngularApp } = await import(/* webpackChunkName: "AngularApp" */ './index');
-  if (injector) {
+  // Remove this logic once AngularApp is loaded asynchronously everywhere
+  if (!injector) {
+    const $injector = angular.element('#ngRoot').injector();
+    injector = $injector;
     return injector;
   }
 
