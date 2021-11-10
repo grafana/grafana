@@ -341,7 +341,7 @@ export const RolePickerSubMenu = ({
       <div className={customStyles.subMenuButtonRow}>
         <HorizontalGroup justify="flex-end">
           <Button size="sm" fill="text" onClick={onClearInternal}>
-            Clear all
+            Clear
           </Button>
         </HorizontalGroup>
       </div>
