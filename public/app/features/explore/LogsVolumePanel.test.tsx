@@ -27,7 +27,7 @@ function renderPanel(logsVolumeData?: DataQueryResponse) {
 describe('LogsVolumePanel', () => {
   it('shows loading message', () => {
     renderPanel({ state: LoadingState.Loading, error: undefined, data: [] });
-    expect(screen.getByText('Logs volume is loading...')).toBeInTheDocument();
+    expect(screen.getByText('Log volume is loading...')).toBeInTheDocument();
   });
 
   it('shows no volume data', () => {
@@ -42,12 +42,12 @@ describe('LogsVolumePanel', () => {
 
   it('shows error message', () => {
     renderPanel({ state: LoadingState.Error, error: { data: { message: 'Test error message' } }, data: [] });
-    expect(screen.getByText('Failed to load volume logs for this query')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load log volume for this query')).toBeInTheDocument();
     expect(screen.getByText('Test error message')).toBeInTheDocument();
   });
 
   it('does not show the panel when there is no volume data', () => {
     renderPanel(undefined);
-    expect(screen.queryByText('Logs volume')).not.toBeInTheDocument();
+    expect(screen.queryByText('Log volume')).not.toBeInTheDocument();
   });
 });

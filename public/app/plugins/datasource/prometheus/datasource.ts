@@ -685,7 +685,7 @@ export class PrometheusDatasource
       interval: step,
       queryType: PromQueryType.timeSeriesQuery,
       refId: 'X',
-      datasourceId: this.id,
+      datasource: this.getRef(),
     };
 
     return await lastValueFrom(

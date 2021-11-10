@@ -61,6 +61,7 @@ import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContext
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { queryLogsVolume } from 'app/core/logs_model';
+import config from 'app/core/config';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -124,6 +125,10 @@ export class LokiDatasource
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+    if (!config.featureToggles.fullRangeLogsVolume) {
+      return undefined;
+    }
+
     const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
     if (!isLogsVolumeAvailable) {
       return undefined;
@@ -136,6 +141,7 @@ export class LokiDatasource
         return {
           ...target,
           instant: false,
+          volumeQuery: true,
           expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
         };
       });
@@ -248,9 +254,12 @@ export class LokiDatasource
       };
     }
 
+    const hint: { hint?: 'logvolhist' } = target.volumeQuery ? { hint: 'logvolhist' } : {};
+
     return {
       ...DEFAULT_QUERY_PARAMS,
       ...range,
+      ...hint,
       query,
       limit,
     };

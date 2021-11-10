@@ -1,4 +1,5 @@
 import { dateMath, dateTime, TimeRange } from '@grafana/data';
+import { BehaviorSubject } from 'rxjs';
 import { PanelChrome } from './PanelChrome';
 
 // target is 20hz (50ms), but we poll at 100ms to smooth out jitter
@@ -15,7 +16,7 @@ class LiveTimer {
 
   budget = 1;
   threshold = 1.5; // trial and error appears about right
-  ok = true;
+  ok = new BehaviorSubject(true);
   lastUpdate = Date.now();
 
   isLive = false; // the dashboard time range ends in "now"
@@ -69,11 +70,16 @@ class LiveTimer {
   measure = () => {
     const now = Date.now();
     this.budget = (now - this.lastUpdate) / interval;
-    this.ok = this.budget <= this.threshold;
+
+    const oldOk = this.ok.getValue();
+    const newOk = this.budget <= this.threshold;
+    if (oldOk !== newOk) {
+      this.ok.next(newOk);
+    }
     this.lastUpdate = now;
 
     // For live dashboards, listen to changes
-    if (this.ok && this.isLive && this.timeRange) {
+    if (this.isLive && this.ok.getValue() && this.timeRange) {
       // when the time-range is relative fire events
       let tr: TimeRange | undefined = undefined;
       for (const listener of this.listeners) {
