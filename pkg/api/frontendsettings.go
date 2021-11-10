@@ -15,6 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type PreloadPlugin struct {
+	Path    string `json:"path"`
+	Version string `json:"version"`
+}
+
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugins) (map[string]interface{}, error) {
 	orgDataSources := make([]*models.DataSource, 0)
 
@@ -129,10 +134,13 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
-	pluginsToPreload := []string{}
+	pluginsToPreload := []*PreloadPlugin{}
 	for _, app := range enabledPlugins.Apps {
 		if app.Preload {
-			pluginsToPreload = append(pluginsToPreload, app.Module)
+			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
+				Path:    app.Module,
+				Version: app.Info.Version,
+			})
 		}
 	}
 
@@ -148,9 +156,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			defaultDS = n
 		}
 
-		meta := dsM["meta"].(*plugins.DataSourcePlugin)
-		if meta.Preload {
-			pluginsToPreload = append(pluginsToPreload, meta.Module)
+		module, _ := dsM["module"].(string)
+		if preload, _ := dsM["preload"].(bool); preload && module != "" {
+			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
+				Path:    module,
+				Version: dsM["info"].(map[string]interface{})["version"].(string),
+			})
 		}
 	}
 
@@ -161,7 +172,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		}
 
 		if panel.Preload {
-			pluginsToPreload = append(pluginsToPreload, panel.Module)
+			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
+				Path:    panel.Module,
+				Version: panel.Info.Version,
+			})
 		}
 
 		panels[panel.Id] = map[string]interface{}{
