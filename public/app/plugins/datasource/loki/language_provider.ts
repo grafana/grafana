@@ -3,7 +3,12 @@ import { chain, difference } from 'lodash';
 import LRU from 'lru-cache';
 
 // Services & Utils
-import { parseSelector, processLabels } from 'app/plugins/datasource/prometheus/language_utils';
+import {
+  extractLabelMatchers,
+  parseSelector,
+  processLabels,
+  toPromLikeQuery,
+} from 'app/plugins/datasource/prometheus/language_utils';
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
@@ -13,7 +18,6 @@ import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQue
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import Prism, { Grammar } from 'prismjs';
-import { extractLabelMatchers, toPromLikeQuery } from 'app/features/explore/utils/query';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';

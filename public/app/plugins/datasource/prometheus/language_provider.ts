@@ -15,17 +15,18 @@ import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput
 
 import {
   addLimitInfo,
+  extractLabelMatchers,
   fixSummariesMetadata,
   parseSelector,
   processHistogramMetrics,
   processLabels,
   roundSecToMin,
+  toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
 import { PromMetricsMetadata, PromQuery } from './types';
-import { extractLabelMatchers, toPromLikeQuery } from 'app/features/explore/utils/query';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
