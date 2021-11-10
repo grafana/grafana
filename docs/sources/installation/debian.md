@@ -10,11 +10,11 @@ weight = 200
 
 This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your Debian or Ubuntu system, and also describes the installation package details.
 
-**Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
+## Note on upgrading
 
-## Hosted Grafana
+While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
-You can run Grafana on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-dashboards-grafana) and get Grafana without the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
+> **Note:** You can use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more.[Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
 
 ## 1. Download and install
 

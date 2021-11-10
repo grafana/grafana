@@ -236,9 +236,9 @@ export class CloudWatchDatasource
           return {
             intervalMs: options.intervalMs,
             maxDataPoints: options.maxDataPoints,
-            datasourceId: this.id,
             type: 'timeSeriesQuery',
             ...item,
+            datasource: this.getRef(),
           };
         }
       );
@@ -520,7 +520,7 @@ export class CloudWatchDatasource
             refId: 'metricFindQuery',
             intervalMs: 1, // dummy
             maxDataPoints: 1, // dummy
-            datasourceId: this.id,
+            datasource: this.getRef(),
             type: 'metricFindQuery',
             subtype: subtype,
             ...parameters,
@@ -556,7 +556,7 @@ export class CloudWatchDatasource
           refId: (param as StartQueryRequest).refId || 'A',
           intervalMs: 1, // dummy
           maxDataPoints: 1, // dummy
-          datasourceId: this.id,
+          datasourceId: this.getRef(),
           type: 'logAction',
           subtype: subtype,
           ...param,
@@ -801,7 +801,7 @@ export class CloudWatchDatasource
         queries: [
           {
             refId: 'annotationQuery',
-            datasourceId: this.id,
+            datasource: this.getRef(),
             type: 'annotationQuery',
             ...parameters,
           },

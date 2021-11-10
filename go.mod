@@ -16,8 +16,10 @@ replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.4.0
+	github.com/Azure/azure-sdk-for-go v57.1.0+incompatible
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.19.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.10.0
+	github.com/Azure/go-autorest/autorest v0.11.20
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
@@ -25,7 +27,7 @@ require (
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v1.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
-	github.com/centrifugal/centrifuge v0.18.4
+	github.com/centrifugal/centrifuge v0.18.8
 	github.com/cortexproject/cortex v1.10.1-0.20211014125347-85c378182d0d
 	github.com/crewjam/saml v0.4.6-0.20210521115923-29c6295245bd
 	github.com/davecgh/go-spew v1.1.1
@@ -130,6 +132,13 @@ require (
 require (
 	cloud.google.com/go v0.94.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v0.7.0 // indirect
+	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
+	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
+	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
+	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
+	github.com/Azure/go-autorest/logger v0.2.1 // indirect
+	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/FZambia/eagle v0.0.1 // indirect
 	github.com/FZambia/sentinel v1.1.0 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
@@ -143,7 +152,6 @@ require (
 	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/centrifugal/protocol v0.7.3 // indirect
-	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
@@ -170,6 +178,7 @@ require (
 	github.com/go-openapi/validate v0.20.2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.1.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -178,7 +187,6 @@ require (
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.1.0 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
 	github.com/grafana/grafana-google-sdk-go v0.0.0-20211019132340-3ff525a010d5
@@ -191,12 +199,11 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/memberlist v0.2.4 // indirect
 	github.com/hashicorp/yamux v0.0.0-20210826001029-26ff87cf9493 // indirect
-	github.com/igm/sockjs-go/v3 v3.0.0 // indirect
+	github.com/igm/sockjs-go/v3 v3.0.1 // indirect
 	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
-	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/klauspost/cpuid/v2 v2.0.5 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
@@ -206,7 +213,7 @@ require (
 	github.com/miekg/dns v1.1.43 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
-	github.com/mna/redisc v1.2.1 // indirect
+	github.com/mna/redisc v1.3.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de // indirect
@@ -232,7 +239,6 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/smartystreets/assertions v1.0.1 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

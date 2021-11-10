@@ -74,7 +74,7 @@ func sameHostOriginCheck() func(r *http.Request) bool {
 	return func(r *http.Request) bool {
 		err := checkSameHost(r)
 		if err != nil {
-			log.Warn("Origin check failure", "origin", r.Header.Get("origin"), "error", err)
+			logger.Warn("Origin check failure", "origin", r.Header.Get("origin"), "error", err)
 			return false
 		}
 		return true

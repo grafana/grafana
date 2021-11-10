@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -49,7 +48,7 @@ func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, 
 		orgID:      model.OrgID,
 		URL:        url,
 		User:       model.Settings.Get("username").MustString(),
-		Password:   fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString(), setting.SecretKey),
+		Password:   fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString()),
 		HTTPMethod: model.Settings.Get("httpMethod").MustString("POST"),
 		MaxAlerts:  model.Settings.Get("maxAlerts").MustInt(0),
 		log:        log.New("alerting.notifier.webhook"),

@@ -6,6 +6,7 @@ type SystemStats struct {
 	Users                     int64
 	ActiveUsers               int64
 	DailyActiveUsers          int64
+	MonthlyActiveUsers        int64
 	Orgs                      int64
 	Playlists                 int64
 	Alerts                    int64
@@ -94,6 +95,7 @@ type AdminStats struct {
 	DailyActiveEditors  int64 `json:"dailyActiveEditors"`
 	DailyActiveViewers  int64 `json:"dailyActiveViewers"`
 	DailyActiveSessions int64 `json:"dailyActiveSessions"`
+	MonthlyActiveUsers  int64 `json:"monthlyActiveUsers"`
 }
 
 type GetAdminStatsQuery struct {

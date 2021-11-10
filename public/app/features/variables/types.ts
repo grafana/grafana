@@ -1,5 +1,6 @@
 import { ComponentType } from 'react';
 import {
+  BusEventWithPayload,
   DataQuery,
   DataSourceJsonData,
   DataSourceRef,
@@ -151,3 +152,19 @@ export type VariableQueryEditorType<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > = ComponentType<VariableQueryProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
+
+export interface VariablesChangedEvent {
+  panelIds?: number[];
+}
+
+export class VariablesChanged extends BusEventWithPayload<VariablesChangedEvent> {
+  static type = 'variables-changed';
+}
+
+export class VariablesFinishedProcessingTimeRangeChange extends BusEventWithPayload<VariablesChangedEvent> {
+  static type = 'variables-finished-processing-time-range-change';
+}
+
+export class VariablesChangedInUrl extends BusEventWithPayload<VariablesChangedEvent> {
+  static type = 'variables-changed-in-url';
+}

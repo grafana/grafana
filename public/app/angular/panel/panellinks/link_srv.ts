@@ -1,7 +1,7 @@
 import { chain } from 'lodash';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv } from '@grafana/runtime';
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import { getConfig } from 'app/core/config';
 import {
   DataFrame,

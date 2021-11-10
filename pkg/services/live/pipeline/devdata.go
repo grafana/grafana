@@ -99,16 +99,27 @@ type DevRuleBuilder struct {
 func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
-			Pattern:   "plugin/testdata/random-20Hz-stream",
+			Pattern: "plugin/testdata/random-20Hz-stream",
+			DataOutputters: []DataOutputter{
+				NewLokiDataOutput(
+					os.Getenv("GF_LIVE_LOKI_ENDPOINT"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_LOKI_USER"),
+						Password: os.Getenv("GF_LIVE_LOKI_PASSWORD"),
+					},
+				),
+			},
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
-				NewRemoteWriteFrameOutput(RemoteWriteConfig{
-					Endpoint:           os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:               os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password:           os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-					SampleMilliseconds: 1000,
-				}),
+				NewRemoteWriteFrameOutput(
+					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+						Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					},
+					1000,
+				),
 			},
 			Subscribers: []Subscriber{
 				NewBuiltinSubscriber(f.ChannelHandlerGetter),
@@ -289,11 +300,14 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			}),
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
-				NewRemoteWriteFrameOutput(RemoteWriteConfig{
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-				}),
+				NewRemoteWriteFrameOutput(
+					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+						Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					},
+					0,
+				),
 				NewChangeLogFrameOutput(f.FrameStorage, ChangeLogOutputConfig{
 					FieldName: "value3",
 					Channel:   "stream/json/exact/value3/changes",
@@ -323,11 +337,14 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			Pattern: "stream/json/exact/value3/changes",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
-				NewRemoteWriteFrameOutput(RemoteWriteConfig{
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-				}),
+				NewRemoteWriteFrameOutput(
+					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+						Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					},
+					0,
+				),
 			},
 		},
 		{
