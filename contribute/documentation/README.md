@@ -142,7 +142,7 @@ We have provided documentation templates that align with each topic type:
 - [Task](../templates/doc-task-template.md)
 - [Reference](../templates/doc-reference-template.md)
 
-Each template provides additional usage and formatting guidelines. We recommend that you make a copy of whichever template you are using, and add content.
+Each template provides additional usage and formatting guidelines. We recommend that you make a copy of whichever template you are using, then add content.
 
 :::note
 Remove any unused content before you commit your changes.
