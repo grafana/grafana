@@ -479,16 +479,13 @@ export const getStyles = (theme: GrafanaTheme2) => {
       min-width: auto;
     `,
     menu: css`
-      // overflow: hidden;
-      // width: 50%;
-      width: 260px;
+      min-width: 260px;
 
       & > div {
         padding-top: ${theme.spacing(1)};
       }
     `,
     subMenu: css`
-      // overflow: hidden;
       min-width: 260px;
       display: flex;
       flex-direction: column;
