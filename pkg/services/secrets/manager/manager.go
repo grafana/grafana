@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	grafana "github.com/grafana/grafana/pkg/services/secrets/defaultprovider"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"xorm.io/xorm"
 )
 
 const (
@@ -60,7 +60,7 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 	return s.EncryptWithDBSession(ctx, payload, opt, nil)
 }
 
-func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *sqlstore.DBSession) ([]byte, error) {
+func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
 	if !s.settings.IsFeatureToggleEnabled(envelopeEncryptionFeatureToggle) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
@@ -142,7 +142,7 @@ func (s *SecretsService) EncryptJsonData(ctx context.Context, kv map[string]stri
 	return s.EncryptJsonDataWithDBSession(ctx, kv, opt, nil)
 }
 
-func (s *SecretsService) EncryptJsonDataWithDBSession(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions, sess *sqlstore.DBSession) (map[string][]byte, error) {
+func (s *SecretsService) EncryptJsonDataWithDBSession(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions, sess *xorm.Session) (map[string][]byte, error) {
 	encrypted := make(map[string][]byte)
 	for key, value := range kv {
 		encryptedData, err := s.EncryptWithDBSession(ctx, []byte(value), opt, sess)
@@ -191,7 +191,7 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 // newDataKey creates a new random DEK, caches it and returns its value
-func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string, sess *sqlstore.DBSession) ([]byte, error) {
+func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string, sess *xorm.Session) ([]byte, error) {
 	// 1. Create new DEK
 	dataKey, err := newRandomDataKey()
 	if err != nil {

@@ -3,7 +3,7 @@ package secrets
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"xorm.io/xorm"
 )
 
 // Service is an envelope encryption service in charge of encrypting/decrypting secrets.
@@ -27,7 +27,7 @@ type Store interface {
 	GetDataKey(ctx context.Context, name string) (*DataKey, error)
 	GetAllDataKeys(ctx context.Context) ([]*DataKey, error)
 	CreateDataKey(ctx context.Context, dataKey DataKey) error
-	CreateDataKeyWithDBSession(ctx context.Context, dataKey DataKey, sess *sqlstore.DBSession) error
+	CreateDataKeyWithDBSession(ctx context.Context, dataKey DataKey, sess *xorm.Session) error
 	DeleteDataKey(ctx context.Context, name string) error
 }
 

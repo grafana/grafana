@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"xorm.io/xorm"
 )
 
 type simpleSecret struct {
@@ -21,7 +22,7 @@ type simpleSecret struct {
 	isBase64Encoded bool
 }
 
-func (s simpleSecret) migrate(secretsSrv *manager.SecretsService, sess *sqlstore.DBSession) error {
+func (s simpleSecret) migrate(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var rows []struct {
 		Id     int
 		Secret string
@@ -74,7 +75,7 @@ type jsonSecret struct {
 	tableName string
 }
 
-func (s jsonSecret) migrate(secretsSrv *manager.SecretsService, sess *sqlstore.DBSession) error {
+func (s jsonSecret) migrate(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var rows []struct {
 		Id             int
 		SecureJsonData map[string][]byte
@@ -116,7 +117,7 @@ func (s jsonSecret) migrate(secretsSrv *manager.SecretsService, sess *sqlstore.D
 
 type alertingSecret struct{}
 
-func (s alertingSecret) migrate(secretsSrv *manager.SecretsService, sess *sqlstore.DBSession) error {
+func (s alertingSecret) migrate(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var results []struct {
 		Id                        int
 		AlertmanagerConfiguration []byte
@@ -178,7 +179,7 @@ func MigrateSecrets(_ utils.CommandLine, runner runner.Runner) error {
 	}
 
 	toMigrate := []interface {
-		migrate(*manager.SecretsService, *sqlstore.DBSession) error
+		migrate(*manager.SecretsService, *xorm.Session) error
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted", isBase64Encoded: false},
 		simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token", isBase64Encoded: true},
@@ -191,7 +192,7 @@ func MigrateSecrets(_ utils.CommandLine, runner runner.Runner) error {
 
 	return runner.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		for _, m := range toMigrate {
-			if err := m.migrate(runner.SecretsService, sess); err != nil {
+			if err := m.migrate(runner.SecretsService, sess.Session); err != nil {
 				return err
 			}
 		}

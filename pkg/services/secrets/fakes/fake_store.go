@@ -3,9 +3,8 @@ package fakes
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"xorm.io/xorm"
 )
 
 type FakeSecretsStore struct {
@@ -37,7 +36,7 @@ func (f FakeSecretsStore) CreateDataKey(_ context.Context, dataKey secrets.DataK
 	return nil
 }
 
-func (f FakeSecretsStore) CreateDataKeyWithDBSession(_ context.Context, dataKey secrets.DataKey, _ *sqlstore.DBSession) error {
+func (f FakeSecretsStore) CreateDataKeyWithDBSession(_ context.Context, dataKey secrets.DataKey, _ *xorm.Session) error {
 	f.store[dataKey.Name] = &dataKey
 	return nil
 }
