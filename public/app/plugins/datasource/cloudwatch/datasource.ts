@@ -604,7 +604,7 @@ export class CloudWatchDatasource
     return this.doMetricQueryRequest('namespaces', null);
   }
 
-  async getMetrics(namespace: string, region?: string) {
+  async getMetrics(namespace: string | undefined, region?: string) {
     if (!namespace) {
       return [];
     }
@@ -615,7 +615,20 @@ export class CloudWatchDatasource
     });
   }
 
-  async getDimensionKeys(namespace: string, region: string) {
+  async getAllMetrics(region: string): Promise<Array<{ metricName: string; namespace: string }>> {
+    const values = await this.doMetricQueryRequest('all_metrics', {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+    });
+
+    return values.map((v) => ({ metricName: v.label, namespace: v.text }));
+  }
+
+  async getDimensionKeys(
+    namespace: string | undefined,
+    region: string,
+    dimensionFilters: Dimensions = {},
+    metricName = ''
+  ) {
     if (!namespace) {
       return [];
     }
@@ -623,13 +636,15 @@ export class CloudWatchDatasource
     return this.doMetricQueryRequest('dimension_keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
+      dimensionFilters: this.convertDimensionFormat(dimensionFilters, {}),
+      metricName,
     });
   }
 
   async getDimensionValues(
     region: string,
-    namespace: string,
-    metricName: string,
+    namespace: string | undefined,
+    metricName: string | undefined,
     dimensionKey: string,
     filterDimensions: {}
   ) {
@@ -813,7 +828,7 @@ export class CloudWatchDatasource
     const dimensions = {};
 
     try {
-      await this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions);
+      await this.getDimensionValues(region ?? '', namespace, metricName, 'ServiceName', dimensions);
       return {
         status: 'success',
         message: 'Data source is working',
@@ -858,12 +873,16 @@ export class CloudWatchDatasource
     return Math.round(date.valueOf() / 1000);
   }
 
-  convertDimensionFormat(dimensions: { [key: string]: string | string[] }, scopedVars: ScopedVars) {
+  convertDimensionFormat(dimensions: Dimensions, scopedVars: ScopedVars) {
     return Object.entries(dimensions).reduce((result, [key, value]) => {
       key = this.replace(key, scopedVars, true, 'dimension keys');
 
       if (Array.isArray(value)) {
         return { ...result, [key]: value };
+      }
+
+      if (!value) {
+        return { ...result, [key]: null };
       }
 
       const valueVar = this.templateSrv

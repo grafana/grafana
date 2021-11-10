@@ -276,6 +276,8 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, model *
 		data, err = e.handleGetNamespaces(ctx, model, pluginCtx)
 	case "metrics":
 		data, err = e.handleGetMetrics(ctx, model, pluginCtx)
+	case "all_metrics":
+		data, err = e.handleGetAllMetrics(ctx, model, pluginCtx)
 	case "dimension_keys":
 		data, err = e.handleGetDimensions(ctx, model, pluginCtx)
 	case "dimension_values":
@@ -434,15 +436,87 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	return result, nil
 }
 
+// handleGetAllMetrics returns a slice of suggstData structs containing metric and its namespace
+func (e *cloudWatchExecutor) handleGetAllMetrics(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
+	result := make([]suggestData, 0)
+	for namespace, metrics := range metricsMap {
+		for _, metric := range metrics {
+			result = append(result, suggestData{Text: namespace, Value: metric})
+		}
+	}
+
+	return result, nil
+}
+
 func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
+	metricName := parameters.Get("metricName").MustString("")
+	dimensionFilters := parameters.Get("dimensionFilters").MustMap()
 
 	var dimensionValues []string
 	if !isCustomMetrics(namespace) {
-		var exists bool
-		if dimensionValues, exists = dimensionsMap[namespace]; !exists {
-			return nil, fmt.Errorf("unable to find dimension %q", namespace)
+		if len(dimensionFilters) != 0 {
+			var dimensions []*cloudwatch.DimensionFilter
+			addDimension := func(key string, value string) {
+				filter := &cloudwatch.DimensionFilter{
+					Name: aws.String(key),
+				}
+				// if value is not specified or a wildcard is used, simply don't use the value field
+				if value != "" && value != "*" {
+					filter.Value = aws.String(value)
+				}
+				dimensions = append(dimensions, filter)
+			}
+			for k, v := range dimensionFilters {
+				// due to legacy, value can be a string, a string slice or nil
+				if vv, ok := v.(string); ok {
+					addDimension(k, vv)
+				} else if vv, ok := v.([]interface{}); ok {
+					for _, v := range vv {
+						addDimension(k, v.(string))
+					}
+				} else if v == nil {
+					addDimension(k, "")
+				}
+			}
+
+			input := &cloudwatch.ListMetricsInput{
+				Namespace:  aws.String(namespace),
+				Dimensions: dimensions,
+			}
+
+			if metricName != "" {
+				input.MetricName = aws.String(metricName)
+			}
+
+			metrics, err := e.listMetrics(region, input, pluginCtx)
+
+			if err != nil {
+				return nil, errutil.Wrap("unable to call AWS API", err)
+			}
+
+			dupCheck := make(map[string]bool)
+			for _, metric := range metrics {
+				for _, dim := range metric.Dimensions {
+					if _, exists := dupCheck[*dim.Name]; exists {
+						continue
+					}
+
+					// keys in the dimension filter should not be included
+					if _, ok := dimensionFilters[*dim.Name]; ok {
+						continue
+					}
+
+					dupCheck[*dim.Name] = true
+					dimensionValues = append(dimensionValues, *dim.Name)
+				}
+			}
+		} else {
+			var exists bool
+			if dimensionValues, exists = dimensionsMap[namespace]; !exists {
+				return nil, fmt.Errorf("unable to find dimension %q", namespace)
+			}
 		}
 	} else {
 		var err error
@@ -468,19 +542,26 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	dimensionsJson := parameters.Get("dimensions").MustMap()
 
 	var dimensions []*cloudwatch.DimensionFilter
+	addDimension := func(key string, value string) {
+		filter := &cloudwatch.DimensionFilter{
+			Name: aws.String(key),
+		}
+		// if value is not specified or a wildcard is used, simply don't use the value field
+		if value != "" && value != "*" {
+			filter.Value = aws.String(value)
+		}
+		dimensions = append(dimensions, filter)
+	}
 	for k, v := range dimensionsJson {
+		// due to legacy, value can be a string, a string slice or nil
 		if vv, ok := v.(string); ok {
-			dimensions = append(dimensions, &cloudwatch.DimensionFilter{
-				Name:  aws.String(k),
-				Value: aws.String(vv),
-			})
+			addDimension(k, vv)
 		} else if vv, ok := v.([]interface{}); ok {
 			for _, v := range vv {
-				dimensions = append(dimensions, &cloudwatch.DimensionFilter{
-					Name:  aws.String(k),
-					Value: aws.String(v.(string)),
-				})
+				addDimension(k, v.(string))
 			}
+		} else if v == nil {
+			addDimension(k, "")
 		}
 	}
 
