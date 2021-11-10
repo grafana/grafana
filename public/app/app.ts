@@ -126,8 +126,8 @@ export class GrafanaApp {
 
       // Preload selected app plugins
       const promises: Array<Promise<any>> = [];
-      for (const modulePath of config.pluginsToPreload) {
-        promises.push(importPluginModule(modulePath));
+      for (const plugin of config.pluginsToPreload) {
+        promises.push(importPluginModule(plugin.path, plugin.version));
       }
 
       await Promise.all(promises);
