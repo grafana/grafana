@@ -3,7 +3,8 @@ import { useStyles, useTheme } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
-import { Cell, Column } from 'react-table';
+import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
+import { Cell, Column, Row } from 'react-table';
 import { cx } from 'emotion';
 import { Table } from '../Table/Table';
 import { Severity } from '../Severity';
@@ -38,12 +39,13 @@ export const Alerts: FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [generateToken] = useCancelToken();
   const columns = React.useMemo(
-    () => [
+    (): Array<Column<Alert>> => [
       {
         Header: summaryColumn,
         accessor: 'summary',
         width: '30%',
-      } as Column,
+        Cell: ({ row, value }) => <ExpandableCell row={row} value={value} />,
+      },
       {
         Header: severityColumn,
         accessor: 'severity',
@@ -54,12 +56,12 @@ export const Alerts: FC = () => {
           />
         ),
         width: '5%',
-      } as Column,
+      },
       {
         Header: stateColumn,
         accessor: 'status',
         width: '5%',
-      } as Column,
+      },
       {
         Header: labelsColumn,
         accessor: ({ labels }: Alert) => (
@@ -72,21 +74,21 @@ export const Alerts: FC = () => {
           </div>
         ),
         width: '40%',
-      } as Column,
+      },
       {
         Header: activeSinceColumn,
         accessor: 'activeSince',
         width: '10%',
-      } as Column,
+      },
       {
         Header: lastNotifiedColumn,
         accessor: 'lastNotified',
         width: '10%',
-      } as Column,
+      },
       {
         Header: actionsColumn,
         accessor: (alert: Alert) => <AlertsActions alert={alert} getAlerts={getAlerts} />,
-      } as Column,
+      },
     ],
     [theme]
   );
@@ -120,6 +122,8 @@ export const Alerts: FC = () => {
     setPageindex(pageIndex);
   }, []);
 
+  const renderSelectedSubRow = React.useCallback((row: Row<Alert>) => <pre>{row.original.rule?.expr}</pre>, []);
+
   useEffect(() => {
     getAlerts();
   }, [pageSize, pageIndex]);
@@ -137,6 +141,7 @@ export const Alerts: FC = () => {
       pendingRequest={pendingRequest}
       emptyMessage={noData}
       getCellProps={getCellProps}
+      renderExpandedRow={renderSelectedSubRow}
     />
   );
 };
