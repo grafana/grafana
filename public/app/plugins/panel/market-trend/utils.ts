@@ -71,7 +71,33 @@ export function drawMarkers(opts: RendererOpts) {
 
     let [idx0, idx1] = u.series[0].idxs!;
 
-    let colWidth = u.bbox.width / (idx1 - idx0);
+    let dataX = u.data[0];
+    let dataY = oData;
+
+    let colWidth = u.bbox.width;
+
+    if (dataX.length > 1) {
+      // prior index with non-undefined y data
+      let prevIdx = null;
+
+      // scan full dataset for smallest adjacent delta
+      // will not work properly for non-linear x scales, since does not do expensive valToPosX calcs till end
+      for (let i = 0, minDelta = Infinity; i < dataX.length; i++) {
+        if (dataY[i] !== undefined) {
+          if (prevIdx != null) {
+            let delta = Math.abs(dataX[i] - dataX[prevIdx]);
+
+            if (delta < minDelta) {
+              minDelta = delta;
+              colWidth = Math.abs(u.valToPos(dataX[i], 'x') - u.valToPos(dataX[prevIdx], 'x'));
+            }
+          }
+
+          prevIdx = i;
+        }
+      }
+    }
+
     let barWidth = Math.round(0.6 * colWidth);
 
     let stickWidth = 2;
