@@ -177,7 +177,15 @@ export const RolePickerMenu = ({
 
   const onSelectedBuiltinRoleChange = (newRole: OrgRole) => {
     setSelectedBuiltInRole(newRole);
-    setSelectedBuiltInRoles(builtInRoles[newRole]);
+
+    let roles = builtInRoles[newRole];
+    if (newRole === OrgRole.Admin) {
+      roles = roles.concat(builtInRoles[OrgRole.Editor]);
+      roles = roles.concat(builtInRoles[OrgRole.Viewer]);
+    } else if (newRole === OrgRole.Editor) {
+      roles = roles.concat(builtInRoles[OrgRole.Viewer]);
+    }
+    setSelectedBuiltInRoles(roles);
   };
 
   const onClearInternal = async () => {
