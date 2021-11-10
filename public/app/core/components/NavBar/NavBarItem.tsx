@@ -60,7 +60,7 @@ const NavBarItem = ({
   }
 
   return (
-    <div className={cx(styles.container, 'dropdown', className, { dropup: reverseMenuDirection })}>
+    <div className={cx(styles.container, className)}>
       {element}
       {showMenu && (
         <NavBarDropdown
@@ -82,38 +82,16 @@ export default NavBarItem;
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   container: css`
     position: relative;
+    color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
 
-    @keyframes dropdown-anim {
-      0% {
-        opacity: 0;
-      }
-      100% {
+    &:hover {
+      background-color: ${theme.colors.action.hover};
+      color: ${theme.colors.text.primary};
+
+      // TODO don't use a hardcoded class here, use isVisible in NavBarDropdown
+      .navbar-dropdown {
         opacity: 1;
-      }
-    }
-
-    ${theme.breakpoints.up('md')} {
-      color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
-
-      &:hover {
-        background-color: ${theme.colors.action.hover};
-        color: ${theme.colors.text.primary};
-
-        .dropdown-menu {
-          animation: dropdown-anim 150ms ease-in-out 100ms forwards;
-          display: flex;
-          // important to overlap it otherwise it can be hidden
-          // again by the mouse getting outside the hover space
-          left: ${theme.components.sidemenu.width - 1}px;
-          margin: 0;
-          opacity: 0;
-          top: 0;
-          z-index: ${theme.zIndex.sidemenu};
-        }
-
-        &.dropup .dropdown-menu {
-          top: auto;
-        }
+        visibility: visible;
       }
     }
   `,
@@ -146,10 +124,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       outline: 2px solid ${theme.colors.primary.main};
       outline-offset: -2px;
       transition: none;
-    }
-
-    .sidemenu-open--xs & {
-      display: none;
     }
   `,
   icon: css`
