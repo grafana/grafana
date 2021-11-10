@@ -122,6 +122,16 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 		return grafanads.DataSourceModel(c.OrgId), nil
 	}
 
+	// use datasourceId if it exists
+	id := query.Get("datasourceId").MustInt64(0)
+	if id > 0 {
+		ds, err = hs.DataSourceCache.GetDatasource(id, c.SignedInUser, c.SkipCache)
+		if err != nil {
+			return nil, hs.handleGetDataSourceError(err, id)
+		}
+		return ds, nil
+	}
+
 	if uid != "" {
 		ds, err = hs.DataSourceCache.GetDatasourceByUID(uid, c.SignedInUser, c.SkipCache)
 		if err != nil {
@@ -130,16 +140,7 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 		return ds, nil
 	}
 
-	// Fallback to the datasourceId
-	id, err := query.Get("datasourceId").Int64()
-	if err != nil {
-		return nil, response.Error(http.StatusBadRequest, "Query missing data source ID/UID", nil)
-	}
-	ds, err = hs.DataSourceCache.GetDatasource(id, c.SignedInUser, c.SkipCache)
-	if err != nil {
-		return nil, hs.handleGetDataSourceError(err, id)
-	}
-	return ds, nil
+	return nil, response.Error(http.StatusBadRequest, "Query missing data source ID/UID", nil)
 }
 
 func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {

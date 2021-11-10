@@ -27,16 +27,18 @@ import {
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import {
+  locationService,
   registerEchoBackend,
   setBackendSrv,
+  setDataSourceSrv,
   setEchoSrv,
+  setLocationSrv,
   setPanelRenderer,
   setQueryRunnerFactory,
 } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
-import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
 import { getScrollbarWidth, getStandardFieldConfigs } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
@@ -47,7 +49,6 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { configureStore } from './store/configureStore';
 import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { AngularApp } from './angular';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -59,6 +60,8 @@ import { ApplicationInsightsBackend } from './core/services/echo/backends/analyt
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { getAllOptionEditors } from './core/components/editors/registry';
 import { backendSrv } from './core/services/backend_srv';
+import { DatasourceSrv } from './features/plugins/datasource_srv';
+import { AngularApp } from './angular';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -89,6 +92,7 @@ export class GrafanaApp {
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
+      setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       // Important that extensions are initialized before store
       initExtensions();
@@ -112,9 +116,12 @@ export class GrafanaApp {
       // intercept anchor clicks and forward it to custom history instead of relying on browser's history
       document.addEventListener('click', interceptLinkClicks);
 
-      // disable tool tip animation
-      $.fn.tooltip.defaults.animation = false;
+      // Init DataSourceSrv
+      const dataSourceSrv = new DatasourceSrv();
+      dataSourceSrv.init(config.datasources, config.defaultDatasource);
+      setDataSourceSrv(dataSourceSrv);
 
+      // Init angular
       this.angularApp.init();
 
       // Preload selected app plugins

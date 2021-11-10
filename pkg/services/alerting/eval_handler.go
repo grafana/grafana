@@ -52,11 +52,14 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 		// calculating Firing based on operator
 		if cr.Operator == "or" {
 			firing = firing || cr.Firing
-			noDataFound = noDataFound || cr.NoDataFound
 		} else {
 			firing = firing && cr.Firing
-			noDataFound = noDataFound && cr.NoDataFound
 		}
+
+		// We cannot evaluate the expression when one or more conditions are missing data
+		// and so noDataFound should be true if at least one condition returns no data,
+		// irrespective of the operator.
+		noDataFound = noDataFound || cr.NoDataFound
 
 		if i > 0 {
 			conditionEvals = "[" + conditionEvals + " " + strings.ToUpper(cr.Operator) + " " + strconv.FormatBool(cr.Firing) + "]"
