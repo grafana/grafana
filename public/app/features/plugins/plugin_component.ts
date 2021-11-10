@@ -8,7 +8,7 @@ import { DataSourceApi, PanelEvents } from '@grafana/data';
 import { importDataSourcePlugin, importAppPlugin } from './plugin_loader';
 import { importPanelPlugin } from './importPanelPlugin';
 import DatasourceSrv from './datasource_srv';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 
 /** @ngInject */
 function pluginDirectiveLoader(

@@ -15,6 +15,7 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { AngularRoot } from './angular/AngularRoot';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -57,6 +58,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   bootstrapNgApp() {
     const injector = this.props.app.angularApp.bootstrap();
     this.setState({ ngInjector: injector });
+    $('.preloader').remove();
   }
 
   renderRoute = (route: RouteDescriptor) => {
@@ -89,8 +91,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   render() {
     navigationLogger('AppWrapper', false, 'rendering');
 
-    // @ts-ignore
-    const appSeed = `<grafana-app ng-cloak></app-notifications-list></grafana-app>`;
     const newNavigationEnabled = config.featureToggles.newNavigation;
 
     return (
@@ -108,17 +108,10 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                         <Banner key={index.toString()} />
                       ))}
 
-                      <div
-                        id="ngRoot"
-                        ref={this.container}
-                        dangerouslySetInnerHTML={{
-                          __html: appSeed,
-                        }}
-                      />
-
+                      <AngularRoot ref={this.container} />
                       <AppNotificationList />
                       <SearchWrapper />
-                      {this.state.ngInjector && this.container && this.renderRoutes()}
+                      {this.state.ngInjector && this.renderRoutes()}
                       {bodyRenderHooks.map((Hook, index) => (
                         <Hook key={index.toString()} />
                       ))}

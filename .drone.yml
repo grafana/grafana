@@ -222,7 +222,7 @@ steps:
     PORT: 3001
   failure: ignore
   image: buildkite/puppeteer
-  name: test-a11y-frontend-pr
+  name: test-a11y-frontend
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
@@ -3430,6 +3430,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 9d81fed439c5f96f91a1ec63edb355994a95bfabb80d0d585c1cb0f3259f5116
+hmac: 602cb0cf445a9932937cae8a2a396572f53f94c457e426564ad845b1ee54205c
 
 ...

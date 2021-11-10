@@ -54,7 +54,8 @@ export const LogLevelColor = {
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
 
-const SECOND = 1000;
+const MILLISECOND = 1;
+const SECOND = 1000 * MILLISECOND;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
@@ -633,7 +634,8 @@ export function queryLogsVolume<T extends DataQuery>(
   logsVolumeRequest: DataQueryRequest<T>,
   options: LogsVolumeQueryOptions<T>
 ): Observable<DataQueryResponse> {
-  const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars);
+  const timespan = options.range.to.valueOf() - options.range.from.valueOf();
+  const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
   logsVolumeRequest.interval = intervalInfo.interval;
   logsVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
   if (intervalInfo.intervalMs !== undefined) {
@@ -692,11 +694,15 @@ export function queryLogsVolume<T extends DataQuery>(
   });
 }
 
-function getIntervalInfo(scopedVars: ScopedVars): { interval: string; intervalMs?: number } {
+function getIntervalInfo(scopedVars: ScopedVars, timespanMs: number): { interval: string; intervalMs?: number } {
   if (scopedVars.__interval) {
     let intervalMs: number = scopedVars.__interval_ms.value;
     let interval = '';
-    if (intervalMs > HOUR) {
+    // below 5 seconds we force the resolution to be per 1ms as interval in scopedVars is not less than 10ms
+    if (timespanMs < SECOND * 5) {
+      intervalMs = MILLISECOND;
+      interval = '1ms';
+    } else if (intervalMs > HOUR) {
       intervalMs = DAY;
       interval = '1d';
     } else if (intervalMs > MINUTE) {
