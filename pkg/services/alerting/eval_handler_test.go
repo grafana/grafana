@@ -181,7 +181,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		require.True(t, context.NoDataFound)
 	})
 
-	t.Run("Should not return no data if at least one condition has no data and using AND", func(t *testing.T) {
+	t.Run("Should return no data if at least one condition has no data and using AND", func(t *testing.T) {
 		context := NewEvalContext(context.TODO(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{operator: "and", noData: true},
@@ -190,7 +190,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		}, &validations.OSSPluginRequestValidator{})
 
 		handler.Eval(context)
-		require.False(t, context.NoDataFound)
+		require.True(t, context.NoDataFound)
 	})
 
 	t.Run("Should return no data if at least one condition has no data and using OR", func(t *testing.T) {
