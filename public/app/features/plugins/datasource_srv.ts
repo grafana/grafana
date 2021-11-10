@@ -6,6 +6,7 @@ import {
   getDataSourceSrv as getDataSourceService,
   TemplateSrv,
   getTemplateSrv,
+  getLegacyAngularInjector,
 } from '@grafana/runtime';
 // Types
 import {
@@ -25,7 +26,6 @@ import {
 import { DataSourceVariableModel } from '../variables/types';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import appEvents from 'app/core/app_events';
-import { getAngularInjector } from 'app/angular/lazyBootAngular';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -161,7 +161,7 @@ export class DatasourceSrv implements DataSourceService {
       let instance: DataSourceApi<any, any>;
 
       if (useAngular) {
-        instance = (await getAngularInjector()).instantiate(dsPlugin.DataSourceClass, {
+        instance = getLegacyAngularInjector().instantiate(dsPlugin.DataSourceClass, {
           instanceSettings: dsConfig,
         });
       } else {
