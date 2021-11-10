@@ -2,7 +2,7 @@ import { logger } from '@percona/platform-core';
 import React, { FC, useContext, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
-import { IconButton, Switch, Spinner, useStyles } from '@grafana/ui';
+import { IconButton, Switch, Spinner, useStyles, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 
@@ -92,9 +92,15 @@ export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => 
       ) : (
         <>
           <Switch value={!disabled} onClick={toggleAlertRule} data-testid="toggle-alert-rule" />
-          <IconButton data-testid="edit-alert-rule-button" name="pen" onClick={handleEditClick} />
-          <IconButton data-testid="delete-alert-rule-button" name="times" onClick={handleDeleteClick} />
-          <IconButton data-testid="copy-alert-rule-button" name="copy" onClick={handleCopyClick} />
+          <Tooltip placement="top" content="Edit">
+            <IconButton data-testid="edit-alert-rule-button" name="pen" onClick={handleEditClick} />
+          </Tooltip>
+          <Tooltip placement="top" content="Delete">
+            <IconButton data-testid="delete-alert-rule-button" name="times" size="xl" onClick={handleDeleteClick} />
+          </Tooltip>
+          <Tooltip placement="top" content="Copy">
+            <IconButton data-testid="copy-alert-rule-button" name="copy" onClick={handleCopyClick} />
+          </Tooltip>
         </>
       )}
       <DeleteModal

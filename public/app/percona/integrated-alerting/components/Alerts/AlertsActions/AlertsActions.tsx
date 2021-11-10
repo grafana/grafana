@@ -2,7 +2,7 @@ import { logger } from '@percona/platform-core';
 import React, { FC, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
-import { Spinner, useStyles } from '@grafana/ui';
+import { Spinner, Tooltip, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
@@ -51,9 +51,11 @@ export const AlertsActions: FC<AlertsActionsProps> = ({ alert, getAlerts }) => {
       {pendingRequest ? (
         <Spinner />
       ) : (
-        <button data-testid="silence-alert-button" onClick={toggleAlert} className={styles.button} title={title}>
-          <ToggleIcon />
-        </button>
+        <Tooltip placement="top" content="Toggle">
+          <button data-testid="silence-alert-button" onClick={toggleAlert} className={styles.button} title={title}>
+            <ToggleIcon />
+          </button>
+        </Tooltip>
       )}
     </div>
   );
