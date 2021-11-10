@@ -24,7 +24,7 @@ export interface AutoJsonConverterConfig {
   fieldTips?: { [key: string]: Field };
 }
 export interface ConverterConfig {
-  type: string;
+  type: Omit<keyof ConverterConfig, 'type'>;
   jsonAuto?: AutoJsonConverterConfig;
   jsonExact?: ExactJsonConverterConfig;
   influxAuto?: AutoInfluxConverterConfig;
@@ -40,7 +40,7 @@ export interface DropFieldsFrameProcessorConfig {
   fieldNames: string[];
 }
 export interface FrameProcessorConfig {
-  type: string;
+  type: Omit<keyof FrameProcessorConfig, 'type'>;
   dropFields?: DropFieldsFrameProcessorConfig;
   keepFields?: KeepFieldsFrameProcessorConfig;
   multiple?: MultipleFrameProcessorConfig;
@@ -71,7 +71,7 @@ export interface MultipleFrameConditionCheckerConfig {
   conditions: FrameConditionCheckerConfig[];
 }
 export interface FrameConditionCheckerConfig {
-  type: string;
+  type: Omit<keyof FrameConditionCheckerConfig, 'type'>;
   multiple?: MultipleFrameConditionCheckerConfig;
   numberCompare?: NumberCompareFrameConditionConfig;
 }
@@ -84,7 +84,7 @@ export interface RedirectOutputConfig {
 }
 export interface ManagedStreamOutputConfig {}
 export interface FrameOutputterConfig {
-  type: string;
+  type: Omit<keyof FrameOutputterConfig, 'type'>;
   managedStream?: ManagedStreamOutputConfig;
   multiple?: MultipleOutputterConfig;
   redirect?: RedirectOutputConfig;
@@ -110,7 +110,7 @@ export interface RedirectDataOutputConfig {
   channel: string;
 }
 export interface DataOutputterConfig {
-  type: string;
+  type: Omit<keyof DataOutputterConfig, 'type'>;
   redirect?: RedirectDataOutputConfig;
   loki?: LokiOutputConfig;
 }
