@@ -1,4 +1,4 @@
-import { AlertRulesListResponseRule, AlertRuleSeverity } from '../AlertRules/AlertRules.types';
+import { AlertRulesListResponseRule, AlertRuleSeverity, AlertRule } from '../AlertRules/AlertRules.types';
 
 export enum AlertStatus {
   STATUS_INVALID = 'Invalid',
@@ -17,9 +17,10 @@ export interface Alert {
   activeSince: string;
   labels: string[];
   lastNotified: string;
-  severity: AlertRuleSeverity[keyof AlertRuleSeverity];
+  severity: AlertRuleSeverity;
   status: AlertStatus[keyof AlertStatus];
   summary: string;
+  rule?: AlertRule;
 }
 
 interface AlertsTotals {

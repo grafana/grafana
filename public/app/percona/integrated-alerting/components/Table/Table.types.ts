@@ -28,7 +28,7 @@ export interface TableProps {
   autoResetExpanded?: boolean;
   onPaginationChanged?: (pageSize: number, pageIndex: number) => void;
   children?: (rows: Row[], table: TableInstance) => React.ReactNode;
-  renderExpandedRow?: (row: Row<any>) => JSX.Element;
+  renderExpandedRow?: (row: Row<any>) => React.ReactNode;
   getHeaderProps?: (column: HeaderGroup) => TableHeaderProps;
   getRowProps?: (row: Row<any>) => TableRowProps;
   getColumnProps?: (column: ColumnInstance) => TableCellProps;
