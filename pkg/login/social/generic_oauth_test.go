@@ -2,19 +2,17 @@ package social
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/inconshreveable/log15"
 	"github.com/mattn/go-isatty"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"testing"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 	"golang.org/x/oauth2"
 )
 
