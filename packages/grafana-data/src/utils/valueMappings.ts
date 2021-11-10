@@ -1,4 +1,12 @@
-import { MappingType, SpecialValueMatch, ThresholdsConfig, ValueMap, ValueMapping, ValueMappingResult } from '../types';
+import {
+  MappingType,
+  SpecialValueMatch,
+  ThresholdsConfig,
+  ValueMap,
+  ValueMapping,
+  ValueMappingResult,
+  SpecialValueOptions,
+} from '../types';
 import { getActiveThreshold } from '../field';
 import { stringToJsRegex } from '../text/string';
 
@@ -56,7 +64,7 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
         }
 
       case MappingType.SpecialValue:
-        switch (vm.options.match) {
+        switch ((vm.options as SpecialValueOptions).match) {
           case SpecialValueMatch.Null: {
             if (value == null) {
               return vm.options.result;
