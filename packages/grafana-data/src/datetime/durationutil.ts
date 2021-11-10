@@ -124,7 +124,7 @@ export function isValidDuration(durationString: string): boolean {
 export function isValidGoDuration(durationString: string): boolean {
   const timeUnits = ['h', 'm', 's', 'ms', 'us', 'µs', 'ns'];
   for (const value of durationString.trim().split(' ')) {
-    const match = value.match(/(\d+)(.+)/);
+    const match = value.match(/([0-9]*[.]?[0-9]+)(.+)/);
     if (match === null || match.length !== 3) {
       return false;
     }

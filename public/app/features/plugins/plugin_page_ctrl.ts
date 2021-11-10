@@ -3,7 +3,7 @@ import { find } from 'lodash';
 
 import { getPluginSettings } from './PluginSettingsCache';
 import { PluginMeta, AppEvents } from '@grafana/data';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 import { promiseToDigest } from '../../angular/promiseToDigest';
 import { NavModelSrv } from 'app/angular/services/nav_model_srv';
 

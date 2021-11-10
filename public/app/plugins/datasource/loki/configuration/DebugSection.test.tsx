@@ -1,7 +1,7 @@
 import React from 'react';
 import { DebugSection } from './DebugSection';
 import { mount } from 'enzyme';
-import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from '../../../../angular/panel/panellinks/link_srv';
+import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from '../../../../features/panel/panellinks/link_srv';
 import { dateTime } from '@grafana/data';
 
 // We do not need more here and TimeSrv is hard to setup fully.

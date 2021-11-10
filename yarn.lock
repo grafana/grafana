@@ -2508,6 +2508,8 @@ __metadata:
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.0.6
     "@sentry/browser": 5.25.0
+    "@testing-library/react": ^12.1.2
+    "@testing-library/user-event": ^13.5.0
     "@types/angular": 1.6.56
     "@types/history": ^4.7.8
     "@types/jest": 27.0.2
@@ -2764,6 +2766,7 @@ __metadata:
     css-minimizer-webpack-plugin: ^3.1.1
     csstype: 3.0.9
     d3: 5.15.0
+    date-fns: 2.25.0
     emotion: 11.0.0
     enzyme: 3.11.0
     expose-loader: 3.0.0
@@ -6845,7 +6848,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/react@npm:12.1.2":
+"@testing-library/react@npm:12.1.2, @testing-library/react@npm:^12.1.2":
   version: 12.1.2
   resolution: "@testing-library/react@npm:12.1.2"
   dependencies:
@@ -6866,6 +6869,17 @@ __metadata:
   peerDependencies:
     "@testing-library/dom": ">=7.21.4"
   checksum: 0d17c47728aec71343fc4a8d8b594224c3031513ab59d5797695c53fdfcebef87797a7935ede68c0af896127b2a995e2feb20e64cbd0cd2b2af3f5240241af91
+  languageName: node
+  linkType: hard
+
+"@testing-library/user-event@npm:^13.5.0":
+  version: 13.5.0
+  resolution: "@testing-library/user-event@npm:13.5.0"
+  dependencies:
+    "@babel/runtime": ^7.12.5
+  peerDependencies:
+    "@testing-library/dom": ">=7.21.4"
+  checksum: 16319de685fbb7008f1ba667928f458b2d08196918002daca56996de80ef35e6d9de26e9e1ece7d00a004692b95a597cf9142fff0dc53f2f51606a776584f549
   languageName: node
   linkType: hard
 
@@ -12355,6 +12369,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"comlink@npm:4.3.1":
+  version: 4.3.1
+  resolution: "comlink@npm:4.3.1"
+  checksum: 557360a6558708c55aff74a25f834bfb9bfca8a42444682c4d5aead57681534a0206202be2a2760b4de124c3ba6d485b08978b6d5469cb3d26bf1438ee28a4f1
+  languageName: node
+  linkType: hard
+
 "comma-separated-tokens@npm:^1.0.0":
   version: 1.0.8
   resolution: "comma-separated-tokens@npm:1.0.8"
@@ -17829,6 +17850,7 @@ __metadata:
     centrifuge: 2.7.5
     classnames: 2.2.6
     clipboard: 2.0.4
+    comlink: 4.3.1
     common-tags: ^1.8.0
     copy-webpack-plugin: 9.0.1
     core-js: 3.10.0
@@ -17994,7 +18016,6 @@ __metadata:
     webpack-dev-server: 4.3.1
     webpack-merge: 5.8.0
     whatwg-fetch: 3.1.0
-    worker-loader: ^3.0.8
   languageName: unknown
   linkType: soft
 
@@ -33908,18 +33929,6 @@ __metadata:
   dependencies:
     errno: ~0.1.7
   checksum: eab917530e1feddf157ec749e9c91b73a886142daa7fdf3490bccbf7b548b2576c43ab8d0a98e72ac755cbc101ca8647a7b1ff2485fddb9e8f53c40c77f5a719
-  languageName: node
-  linkType: hard
-
-"worker-loader@npm:^3.0.8":
-  version: 3.0.8
-  resolution: "worker-loader@npm:3.0.8"
-  dependencies:
-    loader-utils: ^2.0.0
-    schema-utils: ^3.0.0
-  peerDependencies:
-    webpack: ^4.0.0 || ^5.0.0
-  checksum: 84f4a7eeb2a1d8b9704425837e017c91eedfae67ac89e0b866a2dcf283323c1dcabe0258196278b7d5fd0041392da895c8a0c59ddf3a94f1b2e003df68ddfec3
   languageName: node
   linkType: hard
 

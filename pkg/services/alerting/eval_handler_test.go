@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ type conditionStub struct {
 	noData   bool
 }
 
-func (c *conditionStub) Eval(context *EvalContext, reqHandler plugins.DataRequestHandler) (*ConditionResult, error) {
+func (c *conditionStub) Eval(context *EvalContext, reqHandler legacydata.RequestHandler) (*ConditionResult, error) {
 	return &ConditionResult{Firing: c.firing, EvalMatches: c.matches, Operator: c.operator, NoDataFound: c.noData}, nil
 }
 
@@ -181,7 +181,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		require.True(t, context.NoDataFound)
 	})
 
-	t.Run("Should not return no data if at least one condition has no data and using AND", func(t *testing.T) {
+	t.Run("Should return no data if at least one condition has no data and using AND", func(t *testing.T) {
 		context := NewEvalContext(context.TODO(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{operator: "and", noData: true},
@@ -190,7 +190,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		}, &validations.OSSPluginRequestValidator{})
 
 		handler.Eval(context)
-		require.False(t, context.NoDataFound)
+		require.True(t, context.NoDataFound)
 	})
 
 	t.Run("Should return no data if at least one condition has no data and using OR", func(t *testing.T) {
