@@ -112,7 +112,7 @@ async function getLocalPluginReadme(id: string): Promise<string> {
 }
 
 export async function getLocalPlugins(): Promise<LocalPlugin[]> {
-  const installed = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
+  const installed = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0, catalog: 1 });
   return installed;
 }
 

@@ -258,6 +258,7 @@ type Cfg struct {
 	PluginSettings                   PluginSettings
 	PluginsAllowUnsigned             []string
 	PluginCatalogURL                 string
+	PluginCatalogHidePlugins         []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 	DisableSanitizeHtml              bool
@@ -935,6 +936,12 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
 	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
+
+	catalogHidePlugins := pluginsSection.Key("plugin_catalog_hide_plugins").MustString("")
+	for _, plug := range strings.Split(catalogHidePlugins, ",") {
+		plug = strings.TrimSpace(plug)
+		cfg.PluginCatalogHidePlugins = append(cfg.PluginCatalogHidePlugins, plug)
+	}
 
 	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
