@@ -199,7 +199,7 @@ export const RolePickerMenu = ({
   return (
     <div className={cx(styles.menu, customStyles.menuWrapper)}>
       <div className={customStyles.menu} aria-label="Role picker menu">
-        <CustomScrollbar autoHide={false} autoHeightMax="250px" hideHorizontalTrack>
+        <CustomScrollbar autoHide={false} autoHeightMax="300px" hideHorizontalTrack>
           <div className={customStyles.menuSection}>
             <div className={customStyles.groupHeader}>Built-in roles</div>
             <RadioButtonGroup
@@ -328,7 +328,7 @@ export const RolePickerSubMenu = ({
 
   return (
     <div className={customStyles.subMenu} aria-label="Role picker submenu">
-      <CustomScrollbar autoHide={false} autoHeightMax="250px" hideHorizontalTrack>
+      <CustomScrollbar autoHide={false} autoHeightMax="300px" hideHorizontalTrack>
         <div className={styles.optionBody}>
           {options.map((option, i) => (
             <RoleMenuOption
