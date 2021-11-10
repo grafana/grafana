@@ -17,6 +17,8 @@ spec.json: $(GO_PKG_FILES)
 	-w $$(pwd) quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 	generate spec -m -o spec.json -i ${HOME}/grafana/pkg/api/docs/tags.json
 
+validate: spec.json
+	swagger validate spec.json
 ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
