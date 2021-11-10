@@ -1,9 +1,27 @@
 import { GraphFieldConfig } from '@grafana/schema';
-import { FieldConfigProperty, PanelPlugin, SelectableValue } from '@grafana/data';
+import {
+  Field,
+  FieldConfigProperty,
+  FieldType,
+  getFieldDisplayName,
+  PanelOptionsEditorBuilder,
+  PanelPlugin,
+  SelectableValue,
+} from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { MarketTrendPanel } from './MarketTrendPanel';
-import { defaultColors, MarketOptions, MarketTrendMode, ColorStrategy, PriceStyle } from './models.gen';
+import {
+  defaultColors,
+  MarketOptions,
+  MarketTrendMode,
+  ColorStrategy,
+  PriceStyle,
+  defaultPanelOptions,
+  CandlestickFieldMap,
+} from './models.gen';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
+import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
+import { config } from '@grafana/runtime';
 
 const modeOptions = [
   { label: 'Price & Volume', value: MarketTrendMode.PriceVolume },
@@ -30,9 +48,39 @@ function getMarketFieldConfig() {
   return v;
 }
 
+const numericFieldFilter = (f: Field) => f.type === FieldType.number;
+
+function addFieldPicker(
+  builder: PanelOptionsEditorBuilder<MarketOptions>,
+  info: FieldPickerInfo,
+  mappings: CandlestickFieldMap,
+  data?: CandlestickData
+) {
+  const current = (data as any)[info.key] as Field;
+  let placeholderText = 'Auto ';
+  if (current?.config) {
+    placeholderText += '= ' + getFieldDisplayName(current);
+  } else {
+    placeholderText += `(${info.defaults.join(',')})`;
+  }
+
+  builder.addFieldNamePicker({
+    path: `fields.${info.key}`,
+    name: info.name,
+    description: info.description,
+    settings: {
+      filter: numericFieldFilter,
+      placeholderText,
+    },
+  });
+}
+
 export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTrendPanel)
   .useFieldConfig(getMarketFieldConfig())
-  .setPanelOptions((builder) => {
+  .setPanelOptions((builder, context) => {
+    const opts = context.options ?? defaultPanelOptions;
+    const info = prepareCandlestickFields(context.data, config.theme2, opts);
+
     builder
       .addRadio({
         path: 'mode',
@@ -71,30 +119,18 @@ export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTre
         path: 'colors.down',
         name: 'Down color',
         defaultValue: defaultColors.down,
-      })
-      .addFieldNamePicker({
-        path: 'fieldMap.open',
-        name: 'Open field',
-      })
-      .addFieldNamePicker({
-        path: 'fieldMap.high',
-        name: 'High field',
-        showIf: (opts) => opts.mode !== MarketTrendMode.Volume,
-      })
-      .addFieldNamePicker({
-        path: 'fieldMap.low',
-        name: 'Low field',
-        showIf: (opts) => opts.mode !== MarketTrendMode.Volume,
-      })
-      .addFieldNamePicker({
-        path: 'fieldMap.close',
-        name: 'Close field',
-      })
-      .addFieldNamePicker({
-        path: 'fieldMap.volume',
-        name: 'Volume field',
-        showIf: (opts) => opts.mode !== MarketTrendMode.Price,
       });
+
+    addFieldPicker(builder, candlestickFieldsInfo.open, opts.fields, info);
+    if (opts.mode !== MarketTrendMode.Volume) {
+      addFieldPicker(builder, candlestickFieldsInfo.high, opts.fields, info);
+      addFieldPicker(builder, candlestickFieldsInfo.low, opts.fields, info);
+    }
+    addFieldPicker(builder, candlestickFieldsInfo.close, opts.fields, info);
+
+    if (opts.mode !== MarketTrendMode.Price) {
+      addFieldPicker(builder, candlestickFieldsInfo.volume, opts.fields, info);
+    }
 
     // commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
