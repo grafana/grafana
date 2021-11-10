@@ -335,12 +335,15 @@ export class LinkSrv implements LinkService {
   }
 }
 
-let singleton: LinkService = new LinkSrv();
+let singleton: LinkService | undefined;
 
 export function setLinkSrv(srv: LinkService) {
   singleton = srv;
 }
 
 export function getLinkSrv(): LinkService {
+  if (!singleton) {
+    singleton = new LinkSrv();
+  }
   return singleton;
 }

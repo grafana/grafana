@@ -70,12 +70,15 @@ export class DashboardSrv {
 // Code below is to export the service to React components
 //
 
-let singletonInstance: DashboardSrv = new DashboardSrv();
+let singletonInstance: DashboardSrv;
 
 export function setDashboardSrv(instance: DashboardSrv) {
   singletonInstance = instance;
 }
 
 export function getDashboardSrv(): DashboardSrv {
+  if (!singletonInstance) {
+    singletonInstance = new DashboardSrv();
+  }
   return singletonInstance;
 }
