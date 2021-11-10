@@ -14,7 +14,7 @@ import (
 )
 
 // NewWeComNotifier is the constructor for WeCom notifier.
-func NewWeComNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
+func NewWeComNotifier(model *NotificationChannelConfig, t *template.Template) (*WeComNotifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find webhook url in settings"}

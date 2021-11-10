@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -95,8 +93,7 @@ func TestWeComNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			decryptFn := ossencryption.ProvideService().GetDecryptedValue
-			pn, err := NewWeComNotifier(m, tmpl, decryptFn)
+			pn, err := NewWeComNotifier(m, tmpl)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
