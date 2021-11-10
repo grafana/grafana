@@ -67,7 +67,7 @@ export const RolePickerInput = ({
         }
       >
         <div>
-          <ValueContainer iconName={'user'}>{builtInRole}</ValueContainer>
+          <ValueContainer>{builtInRole}</ValueContainer>
         </div>
       </Tooltip>
       {!!numberOfRoles && <ValueContainer>{`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}</ValueContainer>}
@@ -84,13 +84,11 @@ export const RolePickerInput = ({
         }
       >
         <div>
-          <ValueContainer iconName={'user'}>{builtInRole}</ValueContainer>
+          <ValueContainer>{builtInRole}</ValueContainer>
         </div>
       </Tooltip>
       {appliedRoles.map((role) => (
-        <ValueContainer key={role.uid} iconName={'user'}>
-          {role.displayName}
-        </ValueContainer>
+        <ValueContainer key={role.uid}>{role.displayName}</ValueContainer>
       ))}
 
       {!disabled && (
