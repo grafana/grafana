@@ -26,6 +26,7 @@ export const RolePicker = ({
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
   const [builtInRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +42,9 @@ export const RolePicker = ({
 
         const builtInUids = builtInRoles[builtInRole].map((r) => r.uid);
         const roles = await getRoles();
-        setAppliedRoles(roles.filter((role) => !builtInUids.includes(role.uid)));
+        const applied = roles.filter((role) => !builtInUids.includes(role.uid));
+        setAppliedRoles(applied);
+        setSelectedRoles(applied);
       } catch (e) {
         // TODO handle error
         console.error('Error loading options');
@@ -67,7 +70,8 @@ export const RolePicker = ({
   const onClose = useCallback(() => {
     setOpen(false);
     setQuery('');
-  }, []);
+    setSelectedRoles(appliedRoles);
+  }, [appliedRoles]);
 
   const onInputChange = (query?: string) => {
     if (query) {
@@ -75,6 +79,10 @@ export const RolePicker = ({
     } else {
       setQuery('');
     }
+  };
+
+  const onSelect = (roles: Role[]) => {
+    setSelectedRoles(roles);
   };
 
   const onUpdate = (newBuiltInRole: OrgRole, newRoles: string[]) => {
@@ -99,7 +107,7 @@ export const RolePicker = ({
         <RolePickerInput
           builtInRole={builtInRole}
           builtInRoles={builtInRoles[builtInRole]}
-          appliedRoles={appliedRoles}
+          appliedRoles={selectedRoles}
           query={query}
           onQueryChange={onInputChange}
           onOpen={onOpen}
@@ -113,6 +121,7 @@ export const RolePicker = ({
             builtInRole={builtInRole}
             builtInRoles={builtInRoles}
             appliedRoles={appliedRoles}
+            onSelect={onSelect}
             onUpdate={onUpdate}
             showGroups={query.length === 0}
           />

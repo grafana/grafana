@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import {
   Button,
@@ -33,6 +33,7 @@ interface RolePickerMenuProps {
   options: Role[];
   appliedRoles: Role[];
   showGroups?: boolean;
+  onSelect: (roles: Role[]) => void;
   onUpdate: (newBuiltInRole: OrgRole, newRoles: string[]) => void;
   onClear?: () => void;
 }
@@ -43,6 +44,7 @@ export const RolePickerMenu = ({
   options,
   appliedRoles,
   showGroups,
+  onSelect,
   onUpdate,
   onClear,
 }: RolePickerMenuProps): JSX.Element => {
@@ -83,6 +85,11 @@ export const RolePickerMenu = ({
     }
     return groups.sort((a, b) => (a.name < b.name ? -1 : 1));
   }, [options]);
+
+  // Call onSelect() on every selectedOptions change
+  useEffect(() => {
+    onSelect(selectedOptions);
+  }, [selectedOptions, onSelect]);
 
   const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
   const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
