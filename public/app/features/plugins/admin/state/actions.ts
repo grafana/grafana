@@ -14,6 +14,7 @@ import {
 import { STATE_PREFIX } from '../constants';
 import { mergeLocalsAndRemotes, updatePanels } from '../helpers';
 import { CatalogPlugin, RemotePlugin } from '../types';
+import { invalidatePluginInCache } from '../../pluginCacheBuster';
 
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
   try {
@@ -64,6 +65,10 @@ export const install = createAsyncThunk(
       await installPlugin(id, version);
       await updatePanels();
 
+      if (isUpdating) {
+        invalidatePluginInCache(id);
+      }
+
       return { id, changes } as Update<CatalogPlugin>;
     } catch (e) {
       return thunkApi.rejectWithValue('Unknown error.');
@@ -75,6 +80,8 @@ export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id
   try {
     await uninstallPlugin(id);
     await updatePanels();
+
+    invalidatePluginInCache(id);
 
     return {
       id,
