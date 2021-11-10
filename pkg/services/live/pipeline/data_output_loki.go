@@ -10,9 +10,9 @@ type LokiDataOutput struct {
 	lokiWriter *lokiWriter
 }
 
-func NewLokiDataOutput(endpoint, user, password string) *LokiDataOutput {
+func NewLokiDataOutput(endpoint string, basicAuth *BasicAuth) *LokiDataOutput {
 	return &LokiDataOutput{
-		lokiWriter: newLokiWriter(endpoint, user, password),
+		lokiWriter: newLokiWriter(endpoint, basicAuth),
 	}
 }
 

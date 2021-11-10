@@ -441,10 +441,10 @@ func (hs *HTTPServer) registerRoutes() {
 				liveRoute.Post("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPostHTTP), reqOrgAdmin)
 				liveRoute.Put("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPutHTTP), reqOrgAdmin)
 				liveRoute.Delete("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesDeleteHTTP), reqOrgAdmin)
-				liveRoute.Get("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsListHTTP), reqOrgAdmin)
-				liveRoute.Post("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsPostHTTP), reqOrgAdmin)
-				liveRoute.Put("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsPutHTTP), reqOrgAdmin)
-				liveRoute.Delete("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsDeleteHTTP), reqOrgAdmin)
+				liveRoute.Get("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsListHTTP), reqOrgAdmin)
+				liveRoute.Post("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsPostHTTP), reqOrgAdmin)
+				liveRoute.Put("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsPutHTTP), reqOrgAdmin)
+				liveRoute.Delete("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsDeleteHTTP), reqOrgAdmin)
 			}
 		})
 

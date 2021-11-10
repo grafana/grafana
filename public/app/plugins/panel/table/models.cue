@@ -28,13 +28,7 @@ Panel: {
                     showTypeIcons: bool | *false
                     sortBy?: [...ui.TableSortByFieldState]
                 }
-                PanelFieldConfig: {
-                    width?: int
-                    minWidth?: int
-                    align?: string | *"auto"
-                    displayMode?: string | *"auto" // TODO? TableCellDisplayMode
-                    filterable?: bool
-                }
+                PanelFieldConfig: ui.TableFieldOptions
             },
         ]
     ]

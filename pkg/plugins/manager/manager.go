@@ -228,7 +228,7 @@ func (m *PluginManager) Renderer() *plugins.Plugin {
 func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	plugin := m.Plugin(req.PluginContext.PluginID)
 	if plugin == nil {
-		return &backend.QueryDataResponse{}, nil
+		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.QueryDataResponse
