@@ -180,7 +180,7 @@ export async function importPluginModule(path: string, version?: string): Promis
     if (typeof builtIn === 'function') {
       return await builtIn();
     } else {
-      return Promise.resolve(builtIn);
+      return builtIn;
     }
   }
   return grafanaRuntime.SystemJS.import(path);
