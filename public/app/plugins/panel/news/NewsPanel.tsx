@@ -164,7 +164,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     }
   `,
   title: css`
-    max-width: calc(100% - 70px);
     font-size: 16px;
     margin-bottom: ${theme.spacing(0.5)};
   `,

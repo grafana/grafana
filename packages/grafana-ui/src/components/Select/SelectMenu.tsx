@@ -47,7 +47,12 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
     return (
       <div
         ref={ref}
-        className={cx(styles.option, isFocused && styles.optionFocused, isSelected && styles.optionSelected)}
+        className={cx(
+          styles.option,
+          isFocused && styles.optionFocused,
+          isSelected && styles.optionSelected,
+          data.isDisabled && styles.optionDisabled
+        )}
         {...innerProps}
         aria-label="Select option"
       >

@@ -1,21 +1,22 @@
 package alerting
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type FakeCondition struct{}
 
-func (f *FakeCondition) Eval(context *EvalContext, reqHandler plugins.DataRequestHandler) (*ConditionResult, error) {
+func (f *FakeCondition) Eval(context *EvalContext, reqHandler legacydata.RequestHandler) (*ConditionResult, error) {
 	return &ConditionResult{}, nil
 }
 
@@ -89,10 +90,10 @@ func TestAlertRuleModel(t *testing.T) {
 	})
 
 	firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
-	err := sqlStore.CreateAlertNotificationCommand(&firstNotification)
+	err := sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 	require.Nil(t, err)
 	secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
-	err = sqlStore.CreateAlertNotificationCommand(&secondNotification)
+	err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 	require.Nil(t, err)
 
 	t.Run("Testing alert rule with notification id and uid", func(t *testing.T) {

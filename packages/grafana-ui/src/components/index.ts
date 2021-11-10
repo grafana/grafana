@@ -252,6 +252,7 @@ export { LegacyForms, LegacyInputStatus };
 export * from './uPlot/config';
 export { ScaleDistribution } from '@grafana/schema';
 export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
+export { UPLOT_AXIS_FONT_SIZE } from './uPlot/config/UPlotAxisBuilder';
 export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
