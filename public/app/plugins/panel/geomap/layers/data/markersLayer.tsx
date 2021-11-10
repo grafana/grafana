@@ -114,15 +114,25 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         }
 
         const makeIconStyle = (cfg: StyleMakerConfig) => {
-          return new style.Style({
+          const icon = new style.Style({
             image: new style.Icon({
               src: uri,
               color: cfg.color,
               opacity: cfg.opacity,
               // scale based on field value
-              scale: (DEFAULT_SIZE + cfg.size) / (DEFAULT_SIZE * 2 + cfg.size),
+              scale: (DEFAULT_SIZE + cfg.size) / 100,
             }),
           });
+          // transparent bounding box for featureAtPixel detection
+          const boundingBox = new style.Style({
+            image: new style.RegularShape({
+              fill: new style.Fill({ color: 'rgba(0,0,0,0)' }),
+              points: 4,
+              radius: cfg.size,
+              angle: Math.PI / 4,
+            }),
+          });
+          return [icon, boundingBox]
         };
 
         const marker = getMarkerFromPath(config.markerSymbol?.fixed);

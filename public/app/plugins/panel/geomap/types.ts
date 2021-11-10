@@ -88,4 +88,4 @@ export interface StyleMakerConfig {
   opacity?: number;
 }
 
-export type StyleMaker = (config: StyleMakerConfig) => Style;
+export type StyleMaker = (config: StyleMakerConfig) => Style | Style[];

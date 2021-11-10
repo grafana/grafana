@@ -12,9 +12,6 @@ const getUri = (url: string, size: number): Promise<string> => {
       if (!svg) {
         return '';
       }
-      //set dims so ol featureAtPixel works for tooltip
-      svg.setAttribute('width', size.toString());
-      svg.setAttribute('height', size.toString());
       //set to white so ol color tint works
       svg.setAttribute('fill', '#fff');
       const svgString = new XMLSerializer().serializeToString(svg);
