@@ -147,8 +147,9 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
       })
       .addFieldNamePicker({
-        path: 'colorField',
-        name: 'Color field',
+        path: 'colorByField',
+        name: 'Color by field',
+        description: 'Use the color value for a sibling field to color each bar value.',
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);

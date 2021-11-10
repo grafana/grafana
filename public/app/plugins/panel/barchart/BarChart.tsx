@@ -1,19 +1,20 @@
 import React, { useRef } from 'react';
 import { cloneDeep } from 'lodash';
-import { DataFrame, Field, FieldType, TimeRange } from '@grafana/data';
+import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { GraphNG, GraphNGProps, PlotLegend, UPlotConfigBuilder, usePanelContext, useTheme2 } from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
-import { BarChartOptions } from './types';
+import { BarChartDisplayValues, BarChartOptions } from './types';
 import { isLegendOrdered, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
-import { findField } from 'app/features/dimensions';
 
 /**
  * @alpha
  */
 export interface BarChartProps
   extends BarChartOptions,
-    Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
+    Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {
+  data: BarChartDisplayValues;
+}
 
 const propsToDiff: Array<string | PropDiffFn> = [
   'orientation',
@@ -27,18 +28,6 @@ const propsToDiff: Array<string | PropDiffFn> = [
   'legend',
   (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
 ];
-
-function findFieldInFrames(frames?: DataFrame[], name?: string): Field | undefined {
-  if (frames?.length) {
-    for (const frame of frames) {
-      const f = findField(frame, name);
-      if (f) {
-        return f;
-      }
-    }
-  }
-  return undefined;
-}
 
 export const BarChart: React.FC<BarChartProps> = (props) => {
   const theme = useTheme2();
@@ -67,6 +56,16 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
     return field!.values.get(valueIdx);
   };
 
+  // Color by value
+  let getColor: ((seriesIdx: number, valueIdx: number) => string) | undefined = undefined;
+  if (props.data.colorByField) {
+    const colorByField = props.data.colorByField;
+    const disp = colorByField.display!;
+    getColor = (seriesIdx: number, valueIdx: number) => {
+      return disp(colorByField.values.get(valueIdx)).color!;
+    };
+  }
+
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const {
       timeZone,
@@ -80,20 +79,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       text,
       valueRotation,
       valueMaxLength,
-      colorField,
     } = props;
-
-    let getColor;
-
-    if (colorField != null) {
-      let f = findFieldInFrames(allFrames, colorField);
-
-      if (f) {
-        getColor = (seriesIdx: number, valueIdx: number) => {
-          return f?.display!(f.values.get(valueIdx)).color;
-        };
-      }
-    }
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -122,7 +108,6 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       // My heart is bleeding with the clone deep here, but nested options...
       {...cloneDeep(props)}
       theme={theme}
-      frames={props.frames}
       prepConfig={prepConfig}
       propsToDiff={propsToDiff}
       preparePlotFrame={preparePlotFrame}
