@@ -26,7 +26,9 @@ const defaultOptions: GeoJSONMapperConfig = {
 };
 
 export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
-  fillColor: '#1F60C4',
+  fillColor: {
+    fixed: '#1F60C4',
+  },
   strokeWidth: 1,
   rule: {
     property: '',
@@ -69,7 +71,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     const defaultStyle = new Style({
       stroke: new Stroke({
-        color: DEFAULT_STYLE_RULE.fillColor,
+        color: DEFAULT_STYLE_RULE.fillColor.fixed,
         width: DEFAULT_STYLE_RULE.strokeWidth,
       }),
     });
@@ -81,6 +83,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           for (const style of config.styles) {
             //check if there is no style rule or if the rule matches feature property
             if (!style.rule || checkFeatureMatchesStyleRule(style.rule, feature as Feature<Geometry>)) {
+              console.log('style', style);
               return getGeoMapStyle(style, feature);
             }
           }

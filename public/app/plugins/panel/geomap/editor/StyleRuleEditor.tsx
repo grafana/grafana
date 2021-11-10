@@ -1,9 +1,12 @@
 import React, { ChangeEvent, FC, useCallback } from 'react';
-import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { ComparisonOperation, FeatureStyleConfig } from '../types';
-import { Button, ColorPicker, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors';
+import { ColorDimensionConfig } from 'app/features/dimensions';
+import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonMapper';
 
 export interface StyleRuleEditorSettings {
   options: SelectableValue[];
@@ -12,7 +15,7 @@ export interface StyleRuleEditorSettings {
 export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, any, StyleRuleEditorSettings>> = (
   props
 ) => {
-  const { value, onChange, item } = props;
+  const { value, onChange, item, context } = props;
   const settings: StyleRuleEditorSettings = item.settings;
 
   const styles = useStyles2(getStyles);
@@ -65,8 +68,8 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   );
 
   const onChangeColor = useCallback(
-    (c: string) => {
-      onChange({ ...value, fillColor: c });
+    (c: ColorDimensionConfig | undefined) => {
+      onChange({ ...value, fillColor: c ?? DEFAULT_STYLE_RULE.fillColor });
     },
     [onChange, value]
   );
@@ -81,6 +84,8 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   const onDelete = useCallback(() => {
     onChange(undefined);
   }, [onChange]);
+
+  const itemSettings: StandardEditorsRegistryItem = {} as any;
 
   return (
     <div className={styles.rule}>
@@ -115,7 +120,12 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
       </InlineFieldRow>
       <InlineFieldRow className={styles.row}>
         <InlineField label="Style" labelWidth={LABEL_WIDTH} className={styles.color}>
-          <ColorPicker color={value?.fillColor} onChange={onChangeColor} />
+          <ColorDimensionEditor
+            value={value.fillColor}
+            context={context}
+            onChange={onChangeColor}
+            item={itemSettings}
+          />
         </InlineField>
         <InlineField label="Stroke" className={styles.inline} grow={true}>
           <NumberInput

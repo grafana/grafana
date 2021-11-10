@@ -1,4 +1,5 @@
 import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
+import { ColorDimensionConfig } from 'app/features/dimensions';
 import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
 import { Style } from 'ol/style';
@@ -46,7 +47,7 @@ export interface GeomapPanelOptions {
   layers: MapLayerOptions[];
 }
 export interface FeatureStyleConfig {
-  fillColor: string; //eventually be ColorDimensionConfig
+  fillColor: ColorDimensionConfig;
   strokeWidth?: number;
   rule?: FeatureRuleConfig;
 }
