@@ -83,7 +83,6 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           for (const style of config.styles) {
             //check if there is no style rule or if the rule matches feature property
             if (!style.rule || checkFeatureMatchesStyleRule(style.rule, feature as Feature<Geometry>)) {
-              console.log('style', style);
               return getGeoMapStyle(style, feature);
             }
           }

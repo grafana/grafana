@@ -66,7 +66,9 @@ export interface TextDimensionConfig extends BaseDimensionConfig<string> {
 }
 
 /** Use the color value from field configs */
-export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
+export interface ColorDimensionConfig extends BaseDimensionConfig<string> {
+  mode?: 'fixed';
+}
 
 /** Places that use the value */
 export interface ResourceDimensionOptions {

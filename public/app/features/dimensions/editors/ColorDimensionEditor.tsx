@@ -14,9 +14,10 @@ const fixedColorOption: SelectableValue<string> = {
 };
 
 export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, any, any>> = (props) => {
-  const { value, context, onChange } = props;
+  const { value, context, onChange, item } = props;
 
   const defaultColor = 'dark-green';
+  const settings = item?.settings ?? {};
 
   const styles = useStyles2(getStyles);
   const fieldName = value?.field;
@@ -55,16 +56,19 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
   );
 
   const selectedOption = isFixed ? fixedColorOption : selectOptions.find((v) => v.value === fieldName);
+  const mode = settings?.mode;
   return (
     <>
       <div className={styles.container}>
-        <Select
-          menuShouldPortal
-          value={selectedOption}
-          options={selectOptions}
-          onChange={onSelectChange}
-          noOptionsMessage="No fields found"
-        />
+        {mode !== 'fixed' && (
+          <Select
+            menuShouldPortal
+            value={selectedOption}
+            options={selectOptions}
+            onChange={onSelectChange}
+            noOptionsMessage="No fields found"
+          />
+        )}
         {isFixed && (
           <div className={styles.picker}>
             <ColorPicker color={value?.fixed ?? defaultColor} onChange={onColorChange} enableNamedColors={true} />

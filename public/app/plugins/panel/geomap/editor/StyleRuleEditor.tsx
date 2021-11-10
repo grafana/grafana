@@ -85,7 +85,11 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
     onChange(undefined);
   }, [onChange]);
 
-  const itemSettings: StandardEditorsRegistryItem = {} as any;
+  const itemSettings: StandardEditorsRegistryItem = {
+    settings: {
+      mode: 'fixed',
+    },
+  } as any;
 
   return (
     <div className={styles.rule}>

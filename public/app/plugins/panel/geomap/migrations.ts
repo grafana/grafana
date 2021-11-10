@@ -118,6 +118,22 @@ export const mapMigrationHandler = (panel: PanelModel): Partial<GeomapPanelOptio
           return { ...panel.options, layers: Object.assign([], ...panel.options.layers, { 0: layer }) };
         }
       }
+      const layers = panel.options.layers.slice();
+      for (const layer of layers) {
+        if (layer?.type === 'geojson-value-mapper') {
+          const styles = layer?.config?.styles;
+          if (styles) {
+            for (const style of styles) {
+              if (typeof style.fillColor === 'string') {
+                style.fillColor = {
+                  fixed: style.fillColor,
+                };
+              }
+            }
+          }
+        }
+        return { ...panel.options, layers: Object.assign([], layers) };
+      }
     }
   }
   return panel.options;

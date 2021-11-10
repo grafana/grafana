@@ -270,4 +270,168 @@ describe('geomap migrations', () => {
       }
     `);
   });
+  it('updates rule style color to colordimension', () => {
+    const panel = {
+      id: 2,
+      gridPos: {
+        h: 9,
+        w: 12,
+        x: 0,
+        y: 0,
+      },
+      type: 'geomap',
+      title: 'Panel Title',
+      fieldConfig: {
+        defaults: {
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+          mappings: [],
+          color: {
+            mode: 'thresholds',
+          },
+        },
+        overrides: [],
+      },
+      options: {
+        view: {
+          id: 'zero',
+          lat: 0,
+          lon: 0,
+          zoom: 1,
+        },
+        basemap: {
+          type: 'default',
+          config: {},
+        },
+        layers: [
+          {
+            config: {
+              styles: [
+                {
+                  fillColor: '#1b2ebe5e',
+                  rule: {
+                    operation: 'eq',
+                    property: 'Style',
+                    value: 1,
+                  },
+                  strokeWidth: 1,
+                },
+                {
+                  fillColor: '#9bb55e80',
+                  rule: {
+                    operation: 'eq',
+                    property: 'Test',
+                    value: 0,
+                  },
+                  strokeWidth: 1,
+                },
+              ],
+            },
+            location: {
+              mode: 'auto',
+            },
+            type: 'geojson-value-mapper',
+          },
+        ],
+      },
+      pluginVersion: '8.3.0-pre',
+      datasource: null,
+    } as PanelModel;
+    panel.options = mapMigrationHandler(panel);
+
+    expect(panel).toMatchInlineSnapshot(`
+      Object {
+        "datasource": null,
+        "fieldConfig": Object {
+          "defaults": Object {
+            "color": Object {
+              "mode": "thresholds",
+            },
+            "mappings": Array [],
+            "thresholds": Object {
+              "mode": "absolute",
+              "steps": Array [
+                Object {
+                  "color": "green",
+                  "value": null,
+                },
+                Object {
+                  "color": "red",
+                  "value": 80,
+                },
+              ],
+            },
+          },
+          "overrides": Array [],
+        },
+        "gridPos": Object {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 0,
+        },
+        "id": 2,
+        "options": Object {
+          "basemap": Object {
+            "config": Object {},
+            "type": "default",
+          },
+          "layers": Array [
+            Object {
+              "config": Object {
+                "styles": Array [
+                  Object {
+                    "fillColor": Object {
+                      "fixed": "#1b2ebe5e",
+                    },
+                    "rule": Object {
+                      "operation": "eq",
+                      "property": "Style",
+                      "value": 1,
+                    },
+                    "strokeWidth": 1,
+                  },
+                  Object {
+                    "fillColor": Object {
+                      "fixed": "#9bb55e80",
+                    },
+                    "rule": Object {
+                      "operation": "eq",
+                      "property": "Test",
+                      "value": 0,
+                    },
+                    "strokeWidth": 1,
+                  },
+                ],
+              },
+              "location": Object {
+                "mode": "auto",
+              },
+              "type": "geojson-value-mapper",
+            },
+          ],
+          "view": Object {
+            "id": "zero",
+            "lat": 0,
+            "lon": 0,
+            "zoom": 1,
+          },
+        },
+        "pluginVersion": "8.3.0-pre",
+        "title": "Panel Title",
+        "type": "geomap",
+      }
+    `);
+  });
 });
