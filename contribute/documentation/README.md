@@ -1,7 +1,7 @@
 
 # Contribute to Grafana documentation
 
-This document provides guidelines for Grafana open source community members to follow when contributing technical content.
+We provide these guidelines to help our contributors make additions or corrections to our documentation.
 
 ## Welcome
 
