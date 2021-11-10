@@ -1,8 +1,9 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
-import { Button, useStyles, IconButton } from '@grafana/ui';
+import { Button, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Table } from '../Table/Table';
 import { AddAlertRuleModal } from './AddAlertRuleModal';
@@ -71,21 +72,7 @@ export const AlertRules: FC = () => {
       {
         Header: summaryColumn,
         accessor: 'summary',
-        // TODO replace with ExpandableCell after the PR below is merged
-        // https://github.com/percona-platform/grafana/pull/83
-        Cell: ({ row, value }) => {
-          const restProps = row.getToggleRowExpandedProps ? row.getToggleRowExpandedProps() : {};
-          return (
-            <div className={styles.nameWrapper} {...restProps}>
-              <span>{value}</span>
-              {row.isExpanded ? (
-                <IconButton data-testid="hide-alert-rule-details" name="arrow-up" />
-              ) : (
-                <IconButton data-testid="show-alert-rule-details" name="arrow-down" />
-              )}
-            </div>
-          );
-        },
+        Cell: ({ row, value }) => <ExpandableCell row={row} value={value} />,
         width: '25%',
       } as Column,
       {

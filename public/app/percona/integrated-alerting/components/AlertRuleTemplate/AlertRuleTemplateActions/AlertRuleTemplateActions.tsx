@@ -1,5 +1,5 @@
 import React, { FC, useState, useMemo } from 'react';
-import { IconButton, useStyles } from '@grafana/ui';
+import { IconButton, Tooltip, useStyles } from '@grafana/ui';
 import { EditAlertRuleTemplateModal } from '../EditAlertRuleTemplateModal/EditAlertRuleTemplateModal';
 import { getStyles } from './AlertRuleTemplateActions.styles';
 import { AlertRuleTemplateActionsProps } from './AlertRuleTemplateActions.types';
@@ -17,18 +17,23 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
 
   return (
     <div className={styles.actionsWrapper}>
-      <IconButton
-        data-testid="edit-template-button"
-        name="pen"
-        disabled={isActionDisabled}
-        onClick={() => setEditModalVisible(true)}
-      />
-      <IconButton
-        data-testid="delete-template-button"
-        name="times"
-        disabled={isActionDisabled}
-        onClick={() => setDeleteModalVisible(true)}
-      />
+      <Tooltip placement="top" content="Edit">
+        <IconButton
+          data-testid="edit-template-button"
+          name="pen"
+          disabled={isActionDisabled}
+          onClick={() => setEditModalVisible(true)}
+        />
+      </Tooltip>
+      <Tooltip placement="top" content="Delete">
+        <IconButton
+          data-testid="delete-template-button"
+          name="times"
+          size="xl"
+          disabled={isActionDisabled}
+          onClick={() => setDeleteModalVisible(true)}
+        />
+      </Tooltip>
       <EditAlertRuleTemplateModal
         yaml={yaml}
         name={name}

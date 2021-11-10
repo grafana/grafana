@@ -57,11 +57,11 @@ describe('AlertRules', () => {
     const wrapper = await getMount(<AlertRules />);
 
     wrapper.update();
-    wrapper.find(dataTestId('show-alert-rule-details')).at(0).find('button').simulate('click');
+    wrapper.find(dataTestId('show-details')).at(0).find('button').simulate('click');
 
     expect(wrapper.find(dataTestId('alert-rules-details'))).toHaveLength(1);
 
-    wrapper.find(dataTestId('hide-alert-rule-details')).at(0).find('button').simulate('click');
+    wrapper.find(dataTestId('hide-details')).at(0).find('button').simulate('click');
 
     expect(wrapper.find(dataTestId('alert-rules-details'))).toHaveLength(0);
   });

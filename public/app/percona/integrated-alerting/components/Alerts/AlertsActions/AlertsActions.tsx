@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { Spinner, useStyles } from '@grafana/ui';
+import { Spinner, Tooltip, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { AppEvents } from '@grafana/data';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -48,9 +48,11 @@ export const AlertsActions: FC<AlertsActionsProps> = ({ alert, getAlerts }) => {
       {pendingRequest ? (
         <Spinner />
       ) : (
-        <button data-testid="silence-alert-button" onClick={toggleAlert} className={styles.button} title={title}>
-          <ToggleIcon />
-        </button>
+        <Tooltip placement="top" content="Toggle">
+          <button data-testid="silence-alert-button" onClick={toggleAlert} className={styles.button} title={title}>
+            <ToggleIcon />
+          </button>
+        </Tooltip>
       )}
     </div>
   );

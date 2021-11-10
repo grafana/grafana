@@ -4,5 +4,6 @@ export const getStyles = () => ({
   actionsWrapper: css`
     display: flex;
     justify-content: space-between;
+    align-items: center;
   `,
 });
