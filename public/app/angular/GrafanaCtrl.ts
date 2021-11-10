@@ -5,27 +5,16 @@ import $ from 'jquery';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
-import {
-  setDataSourceSrv,
-  setLegacyAngularInjector,
-  setLocationSrv,
-  locationService,
-  setAppEvents,
-  setAngularLoader,
-} from '@grafana/runtime';
+import { setLegacyAngularInjector, setAppEvents, setAngularLoader } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/angular/core_module';
-import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularLoader } from 'app/angular/services/AngularLoader';
 
 // Types
 import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
-import { setLinkSrv, LinkSrv } from 'app/angular/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { IRootScopeService, IAngularEvent, auto } from 'angular';
 import { AppEvent } from '@grafana/data';
 import { initGrafanaLive } from 'app/features/live';
@@ -39,22 +28,12 @@ export class GrafanaCtrl {
     utilSrv: UtilSrv,
     $rootScope: GrafanaRootScope,
     contextSrv: ContextSrv,
-    linkSrv: LinkSrv,
-    datasourceSrv: DatasourceSrv,
-    dashboardSrv: DashboardSrv,
     angularLoader: AngularLoader,
     $injector: auto.IInjectorService
   ) {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
-    setDataSourceSrv(datasourceSrv);
-    setLinkSrv(linkSrv);
-    setDashboardSrv(dashboardSrv);
     setLegacyAngularInjector($injector);
-
-    datasourceSrv.init(config.datasources, config.defaultDatasource);
-
-    setLocationSrv(locationService);
     setAppEvents(appEvents);
 
     initGrafanaLive();
@@ -63,8 +42,6 @@ export class GrafanaCtrl {
       $scope.contextSrv = contextSrv;
       $scope.appSubUrl = config.appSubUrl;
       $scope._ = _;
-
-      profiler.init(config, $rootScope);
       utilSrv.init();
     };
 
@@ -115,8 +92,6 @@ export function grafanaAppDirective() {
       const body = $('body');
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = () => {};
-
-      $('.preloader').remove();
 
       appEvents.on(CoreEvents.toggleSidemenuHidden, () => {
         body.toggleClass('sidemenu-hidden');
