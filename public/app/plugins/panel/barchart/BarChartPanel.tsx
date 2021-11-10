@@ -70,6 +70,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       valueMaxLength={valueMaxLength}
     >
       {(config, alignedFrame) => {
+        // can we just get a callback when hovered? tell me x and y index?
         return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;
       }}
     </BarChart>
