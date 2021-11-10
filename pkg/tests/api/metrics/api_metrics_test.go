@@ -56,40 +56,20 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 				},
 			},
 		}
+		result := getCWMetrics(t, 1, addr)
 
-		req := dtos.MetricRequest{
-			Queries: []*simplejson.Json{
-				simplejson.NewFromAny(map[string]interface{}{
-					"type":         "metricFindQuery",
-					"subtype":      "metrics",
-					"region":       "us-east-1",
-					"namespace":    "custom",
-					"datasourceId": 1,
-				}),
-			},
+		type suggestData struct {
+			Text  string
+			Value string
+			Label string
 		}
-		result := makeCWRequest(t, req, addr)
-
-		dataFrames := data.Frames{
-			&data.Frame{
-				RefID: "A",
-				Fields: []*data.Field{
-					data.NewField("text", nil, []string{"Test_MetricName"}),
-					data.NewField("value", nil, []string{"Test_MetricName"}),
-				},
-				Meta: &data.FrameMeta{
-					Custom: map[string]interface{}{
-						"rowCount": float64(1),
-					},
-				},
-			},
+		expect := []suggestData{
+			{Text: "Test_MetricName", Value: "Test_MetricName", Label: "Test_MetricName"},
 		}
-
-		expect := backend.NewQueryDataResponse()
-		expect.Responses["A"] = backend.DataResponse{
-			Frames: dataFrames,
-		}
-		assert.Equal(t, *expect, result)
+		actual := []suggestData{}
+		err := json.Unmarshal(result, &actual)
+		require.NoError(t, err)
+		assert.Equal(t, expect, actual)
 	})
 }
 
@@ -139,6 +119,28 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 		}
 		assert.Equal(t, *expect, tr)
 	})
+}
+
+func getCWMetrics(t *testing.T, datasourceId int, addr string) []byte {
+	t.Helper()
+
+	u := fmt.Sprintf("http://%s/api/datasources/%v/resources/metrics?region=us-east-1&namespace=custom", addr, datasourceId)
+	t.Logf("Making GET request to %s", u)
+	// nolint:gosec
+	resp, err := http.Get(u)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	t.Cleanup(func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	})
+
+	buf := bytes.Buffer{}
+	_, err = io.Copy(&buf, resp.Body)
+	require.NoError(t, err)
+	require.Equal(t, 200, resp.StatusCode)
+
+	return buf.Bytes()
 }
 
 func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) backend.QueryDataResponse {
