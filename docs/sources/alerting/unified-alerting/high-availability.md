@@ -9,7 +9,7 @@ weight = 450
 
 The Grafana alerting systems has two main components, the `Scheduler` and the internal `Alertmanager`. The `Scheduler` is responsible for the evaluation of your [alert rules]({{< relref "/fundamentals/evaluate-grafana-alerts.md" >}}) while the internal Alertmanager takes care of the **routing** and **grouping**.
 
-When it comes to a highly available setup, the operational mode of the scheduler is unaffected. All alerts will be evaluated on every instance. The operational change happens in the Alertmanager, it is in charge of also **deduplicating** the alert notifications between Grafana instances.
+When it comes to a highly available setup, the operational mode of the scheduler is unaffected. All alerts will be evaluated in every instance. The operational change happens in the Alertmanager, it is in charge of also **deduplicating** the alert notifications between Grafana instances.
 
 ```
   .─────.
@@ -33,16 +33,16 @@ When it comes to a highly available setup, the operational mode of the scheduler
 
 The coordination between Grafana instances happens via [Gossip](https://en.wikipedia.org/wiki/Gossip_protocol). Alerts are not gossiped between instances. It is expected that each scheduler delivers the same alerts to each Alertmanager.
 
-The two type of messages that are gossiped between instances are:
+The two types of messages that are gossiped between instances are:
 
-- Notification logs: Who (which instance) notifier what (which alert)
+- Notification logs: Who (which instance) notified what (which alert)
 - Silences: If an alert should fire or not
 
-These two states are persisted to the database periodically and when Grafana is gracefully shutdown.
+These two states are persisted in the database periodically and when Grafana is gracefully shutdown.
 
 ## Setup
 
-To enable high availability support, we need to set the configuration [option `ha_peers` within the `[unified_alerting]` section]({{< relref "../../administration/configuration.md#unified_alerting" >}}). Setting this option to at least 1 peer will trigger the high availability mode for Grafana 8 Alerts. Communication happens using the port 9094 on both UDP and TCP, so please make sure each instance has access on these.
+To enable high availability support, you need to set the configuration [option `ha_peers` within the `[unified_alerting]` section]({{< relref "../../administration/configuration.md#unified_alerting" >}}). Setting this option to at least 1 peer will trigger the high availability mode for Grafana 8 Alerts. Communication happens using port 9094 on both UDP and TCP, so please make sure each instance has access on these.
 
 The idea here is that you:
 
