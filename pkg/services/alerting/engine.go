@@ -11,10 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	tlog "github.com/opentracing/opentracing-go/log"
@@ -28,7 +28,7 @@ type AlertEngine struct {
 	RenderService    rendering.Service
 	Bus              bus.Bus
 	RequestValidator models.PluginRequestValidator
-	DataService      plugins.DataRequestHandler
+	DataService      legacydata.RequestHandler
 	Cfg              *setting.Cfg
 
 	execQueue         chan *Job
@@ -48,7 +48,7 @@ func (e *AlertEngine) IsDisabled() bool {
 
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
-	dataService plugins.DataRequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Service,
+	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Service,
 	cfg *setting.Cfg) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:               cfg,
@@ -97,7 +97,7 @@ func (e *AlertEngine) alertingTicker(grafanaCtx context.Context) error {
 		case tick := <-e.ticker.C:
 			// TEMP SOLUTION update rules ever tenth tick
 			if tickIndex%10 == 0 {
-				e.scheduler.Update(e.ruleReader.fetch())
+				e.scheduler.Update(e.ruleReader.fetch(grafanaCtx))
 			}
 
 			e.scheduler.Tick(tick, e.execQueue)
@@ -246,8 +246,8 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 }
 
 func (e *AlertEngine) registerUsageMetrics() {
-	e.usageStatsService.RegisterMetricsFunc(func() (map[string]interface{}, error) {
-		alertingUsageStats, err := e.QueryUsageStats()
+	e.usageStatsService.RegisterMetricsFunc(func(ctx context.Context) (map[string]interface{}, error) {
+		alertingUsageStats, err := e.QueryUsageStats(ctx)
 		if err != nil {
 			return nil, err
 		}

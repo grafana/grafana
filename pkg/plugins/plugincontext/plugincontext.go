@@ -15,21 +15,20 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginStore plugins.Store,
-	dataSourceCache datasources.CacheService, encryptionService encryption.Service,
+	dataSourceCache datasources.CacheService, secretsService secrets.Service,
 	pluginSettingsService *pluginsettings.Service) *Provider {
 	return &Provider{
 		Bus:                   bus,
 		CacheService:          cacheService,
 		pluginStore:           pluginStore,
 		DataSourceCache:       dataSourceCache,
-		EncryptionService:     encryptionService,
+		SecretsService:        secretsService,
 		PluginSettingsService: pluginSettingsService,
 		logger:                log.New("plugincontext"),
 	}
@@ -40,7 +39,7 @@ type Provider struct {
 	CacheService          *localcache.CacheService
 	pluginStore           plugins.Store
 	DataSourceCache       datasources.CacheService
-	EncryptionService     encryption.Service
+	SecretsService        secrets.Service
 	PluginSettingsService *pluginsettings.Service
 	logger                log.Logger
 }
@@ -48,7 +47,7 @@ type Provider struct {
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
-func (p *Provider) Get(pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
+func (p *Provider) Get(ctx context.Context, pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
 	pc := backend.PluginContext{}
 	plugin := p.pluginStore.Plugin(pluginID)
 	if plugin == nil {
@@ -59,7 +58,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 	decryptedSecureJSONData := map[string]string{}
 	var updated time.Time
 
-	ps, err := p.getCachedPluginSettings(pluginID, user)
+	ps, err := p.getCachedPluginSettings(ctx, pluginID, user)
 	if err != nil {
 		// models.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
@@ -104,7 +103,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 const pluginSettingsCacheTTL = 5 * time.Second
 const pluginSettingsCachePrefix = "plugin-setting-"
 
-func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedInUser) (*models.PluginSetting, error) {
+func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string, user *models.SignedInUser) (*models.PluginSetting, error) {
 	cacheKey := pluginSettingsCachePrefix + pluginID
 
 	if cached, found := p.CacheService.Get(cacheKey); found {
@@ -115,7 +114,7 @@ func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedI
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: user.OrgId}
-	if err := p.Bus.Dispatch(&query); err != nil {
+	if err := p.Bus.DispatchCtx(ctx, &query); err != nil {
 		return nil, err
 	}
 
@@ -125,7 +124,7 @@ func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedI
 
 func (p *Provider) decryptSecureJsonDataFn() func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, err := p.EncryptionService.DecryptJsonData(context.Background(), m, setting.SecretKey)
+		decryptedJsonData, err := p.SecretsService.DecryptJsonData(context.Background(), m)
 		if err != nil {
 			p.logger.Error("Failed to decrypt secure json data", "error", err)
 		}

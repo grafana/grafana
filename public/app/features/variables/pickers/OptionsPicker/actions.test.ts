@@ -459,7 +459,7 @@ function createMultiVariable(extend?: Partial<QueryVariableModel>): QueryVariabl
     options: [],
     query: 'options-query',
     name: 'Constant',
-    datasource: 'datasource',
+    datasource: { uid: 'datasource' },
     definition: '',
     sort: VariableSort.alphabeticalAsc,
     refresh: VariableRefresh.never,

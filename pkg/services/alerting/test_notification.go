@@ -6,12 +6,10 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NotificationTestCommand initiates an test
@@ -31,51 +29,21 @@ var (
 )
 
 func (s *AlertNotificationService) HandleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCommand) error {
-	notifier := newNotificationService(nil, nil)
+	notificationSvc := newNotificationService(nil, nil)
 
-	model := &models.AlertNotification{
+	model := models.AlertNotification{
+		Id:       cmd.ID,
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
 	}
 
-	secureSettingsMap := map[string]string{}
-
-	if cmd.ID > 0 {
-		query := &models.GetAlertNotificationsQuery{
-			OrgId: cmd.OrgID,
-			Id:    cmd.ID,
-		}
-		if err := bus.Dispatch(query); err != nil {
-			return err
-		}
-
-		if query.Result.SecureSettings != nil {
-			var err error
-			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	for k, v := range cmd.SecureSettings {
-		secureSettingsMap[k] = v
-	}
-
-	var err error
-	model.SecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, secureSettingsMap, setting.SecretKey)
+	notifier, err := s.createNotifier(ctx, &model, cmd.SecureSettings)
 	if err != nil {
 		return err
 	}
 
-	notifiers, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue)
-	if err != nil {
-		logger.Error("Failed to create notifier", "error", err.Error())
-		return err
-	}
-
-	return notifier.sendNotifications(createTestEvalContext(cmd), notifierStateSlice{{notifier: notifiers}})
+	return notificationSvc.sendNotifications(createTestEvalContext(cmd), notifierStateSlice{{notifier: notifier}})
 }
 
 func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {

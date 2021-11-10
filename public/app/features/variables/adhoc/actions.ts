@@ -16,7 +16,7 @@ import {
 import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
-import { DataSourceRef } from '@grafana/data';
+import { DataSourceRef, getDataSourceRef } from '@grafana/data';
 
 export interface AdHocTableOptions {
   datasource: DataSourceRef;
@@ -111,19 +111,20 @@ export const changeVariableDatasource = (datasource?: DataSourceRef): ThunkResul
 };
 
 export const initAdHocVariableEditor = (): ThunkResult<void> => (dispatch) => {
-  const dataSources = getDatasourceSrv().getMetricSources();
+  const dataSources = getDatasourceSrv().getList({ metrics: true, variables: false });
   const selectable = dataSources.reduce(
-    (all: Array<{ text: string; value: string | null }>, ds) => {
+    (all: Array<{ text: string; value: DataSourceRef | null }>, ds) => {
       if (ds.meta.mixed) {
         return all;
       }
 
-      const text = ds.value === null ? `${ds.name} (default)` : ds.name;
-      all.push({ text: text, value: ds.value });
+      const text = ds.isDefault ? `${ds.name} (default)` : ds.name;
+      const value = getDataSourceRef(ds);
+      all.push({ text, value });
 
       return all;
     },
-    [{ text: '', value: '' }]
+    [{ text: '', value: {} }]
   );
 
   dispatch(

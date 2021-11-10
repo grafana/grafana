@@ -1,6 +1,6 @@
 import React from 'react';
 import angular from 'angular';
-import { find, isEmpty, isString, set } from 'lodash';
+import { find, findLast, isEmpty, isString, set } from 'lodash';
 import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
 import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
 import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
@@ -222,9 +222,9 @@ export class CloudWatchDatasource
           return {
             intervalMs: options.intervalMs,
             maxDataPoints: options.maxDataPoints,
-            datasourceId: this.id,
             type: 'timeSeriesQuery',
             ...item,
+            datasource: this.getRef(),
           };
         }
       );
@@ -446,9 +446,11 @@ export class CloudWatchDatasource
           return { data: [] };
         }
 
+        const lastError = findLast(res.results, (v) => !!v.error);
+
         return {
           data: dataframes,
-          error: Object.values(res.results).reduce((acc, curr) => (curr.error ? { message: curr.error } : acc), null),
+          error: lastError ? { message: lastError.error } : null,
         };
       }),
       catchError((err) => {
@@ -504,7 +506,7 @@ export class CloudWatchDatasource
             refId: 'metricFindQuery',
             intervalMs: 1, // dummy
             maxDataPoints: 1, // dummy
-            datasourceId: this.id,
+            datasource: this.getRef(),
             type: 'metricFindQuery',
             subtype: subtype,
             ...parameters,
@@ -539,7 +541,7 @@ export class CloudWatchDatasource
         refId: 'A',
         intervalMs: 1, // dummy
         maxDataPoints: 1, // dummy
-        datasourceId: this.id,
+        datasource: this.getRef(),
         type: 'logAction',
         subtype: subtype,
         ...param,
@@ -771,7 +773,7 @@ export class CloudWatchDatasource
         queries: [
           {
             refId: 'annotationQuery',
-            datasourceId: this.id,
+            datasource: this.getRef(),
             type: 'annotationQuery',
             ...parameters,
           },

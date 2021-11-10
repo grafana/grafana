@@ -1,6 +1,8 @@
 package plugindashboards
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -32,7 +34,7 @@ type Service struct {
 func (s *Service) updateAppDashboards() {
 	s.logger.Debug("Looking for app dashboard updates")
 
-	pluginSettings, err := s.sqlStore.GetPluginSettings(0)
+	pluginSettings, err := s.sqlStore.GetPluginSettings(context.Background(), 0)
 	if err != nil {
 		s.logger.Error("Failed to get all plugin settings", "error", err)
 		return
@@ -46,13 +48,13 @@ func (s *Service) updateAppDashboards() {
 
 		if pluginDef := s.pluginStore.Plugin(pluginSetting.PluginId); pluginDef != nil {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				s.syncPluginDashboards(pluginDef, pluginSetting.OrgId)
+				s.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgId)
 			}
 		}
 	}
 }
 
-func (s *Service) syncPluginDashboards(pluginDef *plugins.Plugin, orgID int64) {
+func (s *Service) syncPluginDashboards(ctx context.Context, pluginDef *plugins.Plugin, orgID int64) {
 	s.logger.Info("Syncing plugin dashboards to DB", "pluginId", pluginDef.ID)
 
 	// Get plugin dashboards
@@ -88,7 +90,7 @@ func (s *Service) syncPluginDashboards(pluginDef *plugins.Plugin, orgID int64) {
 
 	// update version in plugin_setting table to mark that we have processed the update
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginDef.ID, OrgId: orgID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		s.logger.Error("Failed to read plugin setting by ID", "error", err)
 		return
 	}
@@ -100,7 +102,7 @@ func (s *Service) syncPluginDashboards(pluginDef *plugins.Plugin, orgID int64) {
 		PluginVersion: pluginDef.Info.Version,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
 		s.logger.Error("Failed to update plugin setting version", "error", err)
 	}
 }
@@ -109,10 +111,10 @@ func (s *Service) handlePluginStateChanged(event *models.PluginStateChangedEvent
 	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {
-		s.syncPluginDashboards(s.pluginStore.Plugin(event.PluginId), event.OrgId)
+		s.syncPluginDashboards(context.TODO(), s.pluginStore.Plugin(event.PluginId), event.OrgId)
 	} else {
 		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 			return err
 		}
 

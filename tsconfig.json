@@ -5,7 +5,7 @@
     "outDir": "public/dist",
     "rootDirs": ["public/"],
     "allowJs": true,
-    "strictNullChecks": true,
+    "strict": true,
     "resolveJsonModule": true,
     "useUnknownInCatchVariables": false
   },
