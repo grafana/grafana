@@ -1,5 +1,5 @@
 import { Button } from '@grafana/ui';
-import React from 'react';
+import React, { Fragment } from 'react';
 import Stack from './Stack';
 
 interface EditorListProps<T> {
@@ -30,13 +30,13 @@ function EditorList<T>({ items, renderItem, onChange }: EditorListProps<T>) {
   return (
     <Stack>
       {items.map((item, index) => (
-        <div key={index}>
+        <Fragment key={index}>
           {renderItem(
             item,
             (newItem) => onChangeItem(index, newItem),
             () => onDeleteItem(index)
           )}
-        </div>
+        </Fragment>
       ))}
       <Button onClick={onAddItem} variant="secondary" size="md" icon="plus" aria-label="Add" />
     </Stack>
