@@ -12,7 +12,6 @@ xxxxx
 
 The intended audience for this documentation includes Grafana open source community contributors.
 
-
 ## Understanding the structure of Grafana documentation
 
 All Grafana Enterprise and OSS documentation is located in the [Grafana open source project](https://github.com/grafana/grafana) GitHub repository: https://github.com/grafana/grafana/tree/main/docs/sources.
@@ -24,23 +23,13 @@ All Grafana Enterprise and OSS documentation is located in the [Grafana open sou
 The `_index.md` file is required.
 :::
 
-
-++++++++   OLD   +++++++
-
-The Grafana documentation is organized into topics, called _sections_. You can take a look at the current build at [grafana.com/docs/](https://grafana.com/docs/).
-
-Each top-level section is located under the [docs/sources](/docs/sources) directory. Subsections are added by creating a subdirectory in the directory of the parent section.
-
-+++++++++++++++++++++++++
-
 ## Ways to contribute
 
 We're thrilled that you are considering contributing to the documentation. You can contribute content in the following ways:
 
-- Request a change
-- Edit a topic
-- Write a topic
-- Write a collection of topics
+- [Request a change](#request-a-change)
+- [Edit a topic](#edit-a-topic)
+- [Write a topic](write-a-topic)
 
 ### Request a change
 
@@ -63,10 +52,7 @@ To request a change, complete the following steps:
 
 1/ Add the **type/docs** label.
 
-1/ Click **Submit new issue**. 
-
-Process question: What happens next?
-
+1/ Click **Submit new issue**.
 
 ### Edit a topic
 
@@ -79,6 +65,7 @@ Other small changes might include:
 - Providing an example
 
 Before you begin:
+
 - Create a GitHub account. 
 
 To edit a topic, complete the following steps:
@@ -101,20 +88,17 @@ To edit a topic, complete the following steps:
 
 1/ Click **Create pull request**.
 
-How much to describe the build process? What happends next?
-
-
 ### Write a topic
 
-At Grafana Labs, we use the principles of topic-based authoring when we write technical documentation. Topic-based authoring considers three *types* of documentation: concept, task, and reference. Before you begin writing, establish what topic type you want to write.
+At Grafana Labs, we use the principles of topic-based authoring when we write technical documentation. Topic-based authoring provides guidelines for writing three *types* of technical documentation: concept, task, and reference. Before you begin writing, establish the topic type you want to write.
 
 #### Understanding topic types
 
-Technical content can be divided into three topic types: concept, task, and reference.
+Technical content is divided into three topic types: concept, task, and reference.
 
 - **Concept**: A concept topic explains *what* a feature (or idea) is, and why it is important.
 - **Task**: A task topic explains *how* to complete an end user procedure in the system. Task topics contain steps.
-- **Reference** A reference topic contains lookup information that a user might consult when they complete a task. Documenting a list of values with descriptions is a common kind of reference topic.
+- **Reference** A reference topic contains lookup information that a user might consult when they complete a task. Documenting a list of values with descriptions is a common form of reference topic.
 
 **Example**
 
@@ -138,18 +122,32 @@ Suppose you are writing content for a site called _Doggie handbook_. You might o
 - List of dog equipment you will need
 - Table of breeds that includes breed name, size range, short or long hair, and type of dog
 
+#### Prepare your environment
+
+Before you begin writing, we recommend that you fork and clone the Grafana repository so that you can use a text editor locally to create branches, commit your changes, and create a PR.
+
+While this document doesn't include git commands or descriptions of Github operations, you might find these links useful.
+
+- [Install git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git): We store all source code, including documentation, in Git repositories.
+- [Fork a repo](https://docs.github.com/en/get-started/quickstart/fork-a-repo): Locate the repo you want to clone, and fork it.
+- [Clone a repo](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository): Clone the repository to your local machine.
+- [Create a branch](https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging): Before you make change, create a branch. Do not push changes against the `main` branch.
+- [Create a PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request): After you add, commit, and push your changes, create a PR in Github.
 
 #### Use a documentation template to contribute a topic
 
 We have provided documentation templates that align with each topic type:
 
-- [Concept](link)
-- [Task](link)
-- [Reference](link)
+- [Concept](../templates/doc-concept-template.md)
+- [Task](../templates/doc-task-template.md)
+- [Reference](../templates/doc-reference-template.md)
 
 Each template provides additional usage and formatting guidelines. We recommend that you make a copy of whichever template you are using, and add content.
 
-After you push your changes and create a PR, the docs build system automatically conducts a series of tests to ensure that the content doesn't conflict with other content.
+:::note
+Remove any unused content before you commit your changes.
+:::
+
 
 #### View a local build
 
@@ -157,7 +155,7 @@ Prior to pushing your changes, you can view a local build of the documentation s
 
 To view a local build:
 
-1/ Install Docker.
+1/ Install [Docker](https://www.docker.com/products/docker-desktop).
 
 1/ Run Docker.
 
@@ -167,103 +165,52 @@ To view a local build:
 
 1/ Open `localhost:3002` to review your changes.
 
-Introduction to the templates, where they are located, etc, that written in MD (refer to or include common md elements we use), refer them to the commented text for specific usage guidelines, mention how to preview docs locally to check work.
+## Push changes and create a PR
 
-+++++++
-What about adding a new topic directory and creating the index file as the overview OR could be providing a new subtopic.
-+++++
+When you are ready for other people to review your work, perform the following tasks.
 
+1/ [Add](https://git-scm.com/docs/git-add) your changes, which prepares your content for the next commit.
 
+1/ [Commit](xxx) your changes.
 
-#### The writing process
+1/ [Push](https://docs.github.com/en/get-started/using-git/pushing-commits-to-a-remote-repository) your changes to Github.
 
-We recommend that you fork and clone the Grafana repository so that you can use a text editor locally to create branches, commit your changes, and create a PR.
+1/ [Create a PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) in Github.
 
-While this document doesn't address git and GitHub specific operations, you might find these links useful.
+   The docs build system automatically conducts a series of tests to ensure that the content doesn't conflict with other content in the docs repository.
 
-- [Install git]()
-- [Fork a repo]()
-- [Clone a repo]()
-- [Create branches]()
-- [Create a PR]()
+### Understanding the PR review and approval workflow
 
-### Write a collection of topics
-
-Not sure if this needs more than to say 'use your topic writing skills and get with us to determine IA for bulk content'. 
-
-
-## Understanding the PR review and approval workflow
-
-Describe where to post PR for review, and what the review process is like. This doesn't have to be long.
+Need content here that describes where to post PR for review, of whom to select for a review, review SLA?, and what the review process is like. This doesn't have to be long.
 
 ## Join our community
 
-From here, but expand on this, if possible: https://github.com/grafana/grafana/blob/main/contribute/documentation.md
+For general discussions on documentation, you’re welcome to join the `#docs` channel on our [public Grafana Slack](http://slack.raintank.io) team.
 
 ## Reference: Top five writing tips
 
-xxxx.
+Consult the following guidelines before you begin writing. 
 
-
-
-++++++++++++++++++++++++++++++++++
-# Templates
-
-Templates are both a starting point and an instruction manual for writing something new. They are intended to make life easier by providing a jumping-off point, something besides a blank page to start from. They are not intended to be a limitation. If the template does not work perfectly for your use case, you can adjust or change it. We will work it out in code review.
-
-## Create a template
-
-Feel free to add templates to the `templates` folder. Try to make them as generic as possible and include clear instructions for when and how to use the template. Assume that the template user is a brand new contributor and write accordingly.
-
-## Use a template
-
-1. Read the template. Make sure you understand what it is for and how it is intended to be used.
-1. Copy and rename the template. Move it to where you actually need it.
-   You might also want to copy the content of the template and paste it into a different file. This is acceptable use.
-1. Replace the template content with your own. Delete whatever is unnecessary.
-
-## Documentation templates
-
-In an ideal world, each topic will correspond to an information _type_ ([task](doc-task-template.md), [reference](doc-reference-template.md), [concept](doc-concept-template.md)) and contain only that type of information.
-
-However, this is not always practical. For example, you have a series of short topics, you can group them into one topic.
-
-Try to _chunk_ your content. This means you should organize the document so that the same kinds of content are grouped together.
-
-### Chunking example
-
-If I was writing content for a site called _Doggie handbook_, I might organize it like this.
-
-**Concept**
-
-- What a dog is
-- Brief history of dogs
-- Why you might want a dog
-- Tasks dogs can be trained to do
-
-**Tasks**
-
-- Feed the dog
-- Groom the dog
-- Train the dog
-
-**Reference**
-
-- List of dog equipment you will need
-- Table of breeds that includes breed name, size range, short or long hair, and type of dog
-
-### Audience
+### Consider the audience
 
 Write for an audience that is computer literate and has general technical knowledge, but is not necessarily familiar with Grafana or the finer points of observability.
 
 Pretend you are explaining your topic to a brand new Grafana user or developer.
 
-### Self-contained
+### Write clear and concise sentences and paragraphs
+
+xxx.
+
+### Use active voice
+
+xxx.
+
+### Avoid obscure non-English words and abbreviations
+
+xxx.
+
+### Write self-contained topics
 
 Thanks to search engines, every page in the documentation might be a reader's entry point. This means that each page needs to be self-contained and make sense on its own. The reader should not need to read other topics in order to perform the task or understand the concept.
 
 However, try to be helpful and link to related information. Using the _Doggie handbook_ example, the concept topic that explains what dogs can be trained to do might link to the Train the dog task.
-
-## Code templates
-
-This is a placeholder for future templates.
