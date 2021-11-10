@@ -1,5 +1,5 @@
 
-# Contribute to Grafana documentation
+# Contribute to our documentation
 
 We provide these guidelines to help our contributors make additions or corrections to our documentation.
 
