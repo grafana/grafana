@@ -78,15 +78,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
 
-  let colorFromField: Field | null = null;
-
-  // Special logic if color is derived from another field we need to use another fields display processor
-  if (field.config.color?.mode === FieldColorModeId.Field) {
-    const fromFieldName = field.config.color.fromField;
-    if (fromFieldName && options.frame) {
-      colorFromField = getFieldToDeriveColorFrom(fromFieldName, options.frame);
-    }
-  }
+  let colorFromField = getColorFromField(field, options.frame);
 
   return (value: any, index?: number) => {
     const { mappings } = config;
@@ -170,11 +162,18 @@ export function getRawDisplayProcessor(): DisplayProcessor {
   });
 }
 
-function getFieldToDeriveColorFrom(fromField: string, frame: DataFrame): Field | null {
-  const matcher = fieldMatchers.get(FieldMatcherID.byName).get(fromField);
-  for (const f of frame.fields) {
-    if (matcher(f, frame, [frame])) {
-      return f;
+function getColorFromField(field: Field, frame: DataFrame): Field | null {
+  // Special logic if color is derived from another field we need to use another fields display processor
+  if (field.config.color?.mode === FieldColorModeId.Field) {
+    const fromFieldName = field.config.color.fromField;
+    if (fromFieldName && frame) {
+      const matcher = fieldMatchers.get(FieldMatcherID.byName).get(fromField);
+      for (const f of frame.fields) {
+        if (matcher(f, frame, [frame])) {
+          // Only return it if it's different from main field
+          return f === field ? null : f;
+        }
+      }
     }
   }
 
