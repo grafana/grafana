@@ -37,7 +37,6 @@ const useStyles = stylesFactory((theme: GrafanaTheme2) => ({
         borderRadius: 0,
       },
 
-      //
       position: 'relative',
       zIndex: 1,
 
