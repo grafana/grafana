@@ -128,6 +128,11 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         ],
       },
     ]),
+
+    new webpack.DefinePlugin({
+      'process.env.VERSION': JSON.stringify(packageJson.version),
+    }),
+
     new ForkTsCheckerWebpackPlugin({
       typescript: { configFile: path.join(process.cwd(), 'tsconfig.json') },
       issue: {
