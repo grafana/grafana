@@ -196,7 +196,7 @@
     "postcss": "8.3.6",
     "postcss-loader": "6.2.0",
     "postcss-reporter": "7.0.2",
-    "postcss-scss": "^4.0.2",
+    "postcss-scss": "4.0.2",
     "prettier": "2.2.1",
     "raw-loader": "4.0.2",
     "react-refresh": "^0.10.0",
