@@ -6,27 +6,18 @@ let onmessage: jest.MockedFunction<any>;
 let postMessage: jest.MockedFunction<any>;
 let terminate: jest.MockedFunction<any>;
 
-jest.mock('./layout.worker.js', () => {
-  console.log('Mocking layout.worker.js');
+jest.mock('./createLayoutWorker', () => {
   return {
     __esModule: true,
-    default: class Worker {
-      constructor() {
-        onmessage = jest.fn();
-        postMessage = jest.fn();
-        terminate = jest.fn();
-      }
-      onmessage(...args: any[]) {
-        return onmessage(...args);
-      }
-
-      postMessage(...args: any[]) {
-        return postMessage(...args);
-      }
-
-      terminate(...args: any[]) {
-        return terminate(...args);
-      }
+    createWorker: () => {
+      onmessage = jest.fn();
+      postMessage = jest.fn();
+      terminate = jest.fn();
+      return {
+        onmessage: onmessage,
+        postMessage: postMessage,
+        terminate: terminate,
+      };
     },
   };
 });
