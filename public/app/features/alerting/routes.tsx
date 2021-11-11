@@ -33,20 +33,14 @@ const alertingRoutes = [
     path: '/alerting/routes/mute-timing/new',
     roles: () => ['Admin', 'Editor'],
     component: SafeDynamicImport(
-      () =>
-        import(
-          /* webpackChunkName: "NewMuteTiming" */ 'app/features/alerting/unified/components/amroutes/NewMuteTiming'
-        )
+      () => import(/* webpackChunkName: "NewMuteTiming" */ 'app/features/alerting/unified/MuteTimings')
     ),
   },
   {
     path: '/alerting/routes/mute-timing/:id/edit',
     oles: () => ['Admin', 'Editor'],
     component: SafeDynamicImport(
-      () =>
-        import(
-          /* webpackChunkName: "NewMuteTiming" */ 'app/features/alerting/unified/components/amroutes/NewMuteTiming'
-        )
+      () => import(/* webpackChunkName: "NewMuteTiming" */ 'app/features/alerting/unified/MuteTimings')
     ),
   },
   {

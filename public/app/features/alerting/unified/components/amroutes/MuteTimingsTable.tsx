@@ -71,7 +71,7 @@ function useColumns(alertManagerSourceName: string, hideActions?: boolean) {
         renderCell: function renderActions({ data }) {
           return (
             <div>
-              <Link href={makeAMLink(`alerting/routes/mute-timing/${btoa(data.name)}/edit`, alertManagerSourceName)}>
+              <Link href={makeAMLink(`/alerting/routes/mute-timing/${btoa(data.name)}/edit`, alertManagerSourceName)}>
                 <IconButton name="edit" title="Edit mute timing" />
               </Link>
               <IconButton
@@ -94,7 +94,7 @@ function parseTimings(timeIntervals: TimeInterval[]) {
     const { times, weekdays, days_of_month, months, years } = interval;
     const timeString = times
       ? times?.map(({ start_time, end_time }) => `${start_time} - ${end_time}`).join(' and ')
-      : '';
+      : 'All hours';
     const weekdayString =
       weekdays
         ?.map((day) => {
@@ -111,7 +111,7 @@ function parseTimings(timeIntervals: TimeInterval[]) {
             return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
           }
         })
-        .join(', ') ?? '';
+        .join(', ') ?? 'Every day';
 
     const daysString = 'Days of the month: ' + (days_of_month?.join(', ') ?? 'All');
     const monthsString = 'Months: ' + (months?.join(', ') ?? 'All');
@@ -119,7 +119,7 @@ function parseTimings(timeIntervals: TimeInterval[]) {
 
     return (
       <React.Fragment key={JSON.stringify(interval) + index}>
-        {`${timeString} ${weekdayString && 'on ' + weekdayString}`}
+        {`${timeString} ${weekdayString}`}
         <br />
         {[daysString, monthsString, yearsString].join(' | ')}
       </React.Fragment>

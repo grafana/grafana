@@ -5,7 +5,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
-import { MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerConfig, MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { omitBy, isUndefined } from 'lodash';
 import { AlertManagerPicker } from '../AlertManagerPicker';
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
@@ -13,7 +13,9 @@ import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from '.
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
 
-interface Props {}
+interface Props {
+  muteTiming?: string;
+}
 
 type MuteTimingFields = {
   name: string;
@@ -27,13 +29,35 @@ type MuteTimingFields = {
   years: string;
 };
 
-const defaultValues: MuteTimingFields = {
-  name: '',
-  times: [{ start_time: '', end_time: '' }],
-  weekdays: '',
-  days_of_month: '',
-  months: '',
-  years: '',
+const getDefaultValues = (config: AlertmanagerConfig, muteTiming?: string): MuteTimingFields => {
+  const defaultValues = {
+    name: '',
+    times: [{ start_time: '', end_time: '' }],
+    weekdays: '',
+    days_of_month: '',
+    months: '',
+    years: '',
+  };
+
+  if (muteTiming) {
+    const mute = config?.mute_time_intervals?.find(({ name }) => name === muteTiming);
+    if (mute) {
+      // TODO: make form handle multiple time intervals
+      const intervals = mute.time_intervals[0];
+      return {
+        name: mute.name,
+        times: intervals.times ?? defaultValues.times,
+        weekdays: intervals?.weekdays?.join(', ') ?? defaultValues.weekdays,
+        days_of_month: intervals?.days_of_month?.join(', ') ?? defaultValues.days_of_month,
+        months: intervals?.months?.join(', ') ?? defaultValues.months,
+        years: intervals?.years?.join(', ') ?? defaultValues.years,
+      };
+    } else {
+      return defaultValues;
+    }
+  } else {
+    return defaultValues;
+  }
 };
 
 const convertStringToArray = (str: string) => {
@@ -55,15 +79,10 @@ const createMuteTiming = (fields: MuteTimingFields): MuteTimeInterval => {
   };
 };
 
-const NewMuteTiming = (props: Props) => {
+const MuteTimingForm = ({ muteTiming }: Props) => {
   const dispatch = useDispatch();
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const styles = useStyles2(getStyles);
-  const formApi = useForm({ defaultValues });
-  const { fields: timeRanges = [], append, remove } = useFieldArray<MuteTimingFields>({
-    name: 'times',
-    control: formApi.control,
-  });
 
   const fetchConfig = useCallback(() => {
     if (alertManagerSourceName) {
@@ -79,7 +98,12 @@ const NewMuteTiming = (props: Props) => {
   const { result } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-
+  const defaultValues = getDefaultValues(config, muteTiming);
+  const formApi = useForm({ defaultValues });
+  const { fields: timeRanges = [], append, remove } = useFieldArray<MuteTimingFields>({
+    name: 'times',
+    control: formApi.control,
+  });
   const onSubmit = (values: MuteTimingFields) => {
     const muteTiming = createMuteTiming(values);
 
@@ -216,4 +240,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export default NewMuteTiming;
+export default MuteTimingForm;
