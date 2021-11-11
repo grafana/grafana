@@ -26,6 +26,7 @@
     "@rollup/plugin-commonjs": "21.0.1",
     "@rollup/plugin-json": "4.1.0",
     "@rollup/plugin-node-resolve": "13.0.6",
+    "@swc/helpers": "0.2.13",
     "@types/rollup-plugin-visualizer": "4.2.1",
     "rimraf": "3.0.1",
     "rollup": "2.58.3",

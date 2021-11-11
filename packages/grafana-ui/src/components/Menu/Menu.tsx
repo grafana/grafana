@@ -11,6 +11,7 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   ariaLabel?: string;
   onOpen?: (focusOnItem: (itemId: number) => void) => void;
+  onClose?: () => void;
   onKeyDown?: React.KeyboardEventHandler;
 }
 
@@ -20,7 +21,7 @@ type MenuItemElement = HTMLAnchorElement & HTMLButtonElement;
 
 /** @internal */
 export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
-  ({ header, children, ariaLabel, onOpen, onKeyDown, ...otherProps }, forwardedRef) => {
+  ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
 
     const [focusedItem, setFocusedItem] = useState(UNFOCUSED);
@@ -39,7 +40,7 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
     useEffectOnce(() => {
       const firstMenuItem = localRef?.current?.querySelector(`[data-role="menuitem"]`) as MenuItemElement | null;
       if (firstMenuItem) {
-        firstMenuItem.tabIndex = 0;
+        setFocusedItem(0);
       }
       onOpen?.(setFocusedItem);
     });
@@ -67,6 +68,14 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
           event.preventDefault();
           event.stopPropagation();
           setFocusedItem(menuItemsCount - 1);
+          break;
+        case 'Escape':
+          event.preventDefault();
+          event.stopPropagation();
+          onClose?.();
+          break;
+        case 'Tab':
+          onClose?.();
           break;
         default:
           break;

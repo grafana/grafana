@@ -10,12 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// DataRequestHandler is a data request handler interface.
-type DataRequestHandler interface {
-	// HandleRequest handles a data request.
-	HandleRequest(context.Context, *models.DataSource, DataQuery) (DataResponse, error)
-}
-
 // Store is the storage for plugins.
 type Store interface {
 	// Plugin finds a plugin by its ID.

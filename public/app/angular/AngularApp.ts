@@ -92,6 +92,9 @@ export class AngularApp {
     registerAngularDirectives();
     registerComponents();
     initAngularRoutingBridge();
+
+    // disable tool tip animation
+    $.fn.tooltip.defaults.animation = false;
   }
 
   useModule(module: angular.IModule) {

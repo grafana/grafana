@@ -2,6 +2,8 @@ package state
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"math"
 	"net/url"
 	"strconv"
@@ -56,14 +58,11 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 	)
 
 	expander.Funcs(text_template.FuncMap{
-		// These three functions are no-ops for now.
+		"graphLink": graphLink,
+		"tableLink": tableLink,
+
+		// This function is a no-op for now.
 		"strvalue": func(value templateCaptureValue) string {
-			return ""
-		},
-		"graphLink": func() string {
-			return ""
-		},
-		"tableLink": func() string {
 			return ""
 		},
 	})
@@ -86,4 +85,35 @@ func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[str
 		}
 	}
 	return m
+}
+
+type query struct {
+	Datasource string `json:"datasource"`
+	Expr       string `json:"expr"`
+}
+
+func graphLink(rawQuery string) string {
+	var q query
+	if err := json.Unmarshal([]byte(rawQuery), &q); err != nil {
+		return ""
+	}
+
+	escapedExpression := url.QueryEscape(q.Expr)
+	escapedDatasource := url.QueryEscape(q.Datasource)
+
+	return fmt.Sprintf(
+		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":false,"range":true}]`, escapedDatasource, escapedExpression)
+}
+
+func tableLink(rawQuery string) string {
+	var q query
+	if err := json.Unmarshal([]byte(rawQuery), &q); err != nil {
+		return ""
+	}
+
+	escapedExpression := url.QueryEscape(q.Expr)
+	escapedDatasource := url.QueryEscape(q.Datasource)
+
+	return fmt.Sprintf(
+		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":true,"range":false}]`, escapedDatasource, escapedExpression)
 }
