@@ -43,6 +43,19 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         </InlineField>
       </ConnectionConfig>
 
+      <InlineField
+        label="CloudWatch Logs timeout"
+        labelWidth={28}
+        tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes"
+      >
+        <Input
+          width={60}
+          placeholder="15m"
+          value={options.jsonData.logsTimeout || ''}
+          onChange={onUpdateDatasourceJsonDataOption(props, 'logsTimeout')}
+        />
+      </InlineField>
+
       <XrayLinkConfig
         onChange={(uid) => updateDatasourcePluginJsonDataOption(props, 'tracingDatasourceUid', uid)}
         datasourceUid={options.jsonData.tracingDatasourceUid}

@@ -85,6 +85,7 @@ export class CloudWatchDatasource
   datasourceName: string;
   languageProvider: CloudWatchLanguageProvider;
   tracingDataSourceUid?: string;
+  logsTimeout: string;
 
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
@@ -109,6 +110,7 @@ export class CloudWatchDatasource
     this.datasourceName = instanceSettings.name;
     this.languageProvider = new CloudWatchLanguageProvider(this);
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
+    this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
@@ -174,7 +176,7 @@ export class CloudWatchDatasource
       },
       queryParams,
       {
-        timeout: 15 * 60 * 1000,
+        timeout: rangeUtil.intervalToMs(this.logsTimeout),
       }
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
