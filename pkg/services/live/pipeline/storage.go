@@ -2,6 +2,7 @@ package pipeline
 
 import "context"
 
+// Storage describes all methods to manage Live pipeline persistent data.
 type Storage interface {
 	ListWriteConfigs(_ context.Context, orgID int64) ([]WriteConfig, error)
 	GetWriteConfig(_ context.Context, orgID int64, cmd WriteConfigGetCmd) (WriteConfig, bool, error)
