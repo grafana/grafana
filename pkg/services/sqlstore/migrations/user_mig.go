@@ -126,6 +126,10 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration("Add index user.login/user.email", NewAddIndexMigration(userV2, &Index{
 		Cols: []string{"login", "email"},
 	}))
+
+	mg.AddMigration("Add is_service_account column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "is_service_account", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 }
 
 type AddMissingUserSaltAndRandsMigration struct {
