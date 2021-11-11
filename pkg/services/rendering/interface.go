@@ -19,6 +19,13 @@ const (
 	RenderPNG RenderType = "png"
 )
 
+type Theme string
+
+const (
+	ThemeLight Theme = "light"
+	ThemeDark  Theme = "dark"
+)
+
 type Opts struct {
 	Width             int
 	Height            int
@@ -63,6 +70,6 @@ type Service interface {
 	Version() string
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error)
-	RenderErrorImage(error error) (*RenderResult, error)
+	RenderErrorImage(theme Theme, error error) (*RenderResult, error)
 	GetRenderUser(key string) (*RenderUser, bool)
 }

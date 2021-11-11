@@ -156,9 +156,18 @@ func (rs *RenderingService) Version() string {
 	return rs.version
 }
 
-func (rs *RenderingService) RenderErrorImage(_ error) (*RenderResult, error) {
-	imgUrl := "public/img/rendering_error.png"
-	imgPath := filepath.Join(setting.HomePath, imgUrl)
+func (rs *RenderingService) RenderErrorImage(theme Theme, err error) (*RenderResult, error) {
+	if theme == "" {
+		theme = ThemeDark
+	}
+	imgUrl := "public/img/rendering_%s_%s.png"
+	if errors.Is(err, ErrTimeout) {
+		imgUrl = fmt.Sprintf(imgUrl, "timeout", theme)
+	} else {
+		imgUrl = fmt.Sprintf(imgUrl, "error", theme)
+	}
+
+	imgPath := filepath.Join(rs.Cfg.HomePath, imgUrl)
 	if _, err := os.Stat(imgPath); errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	}

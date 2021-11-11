@@ -1,6 +1,9 @@
 package rendering
 
 import (
+	"errors"
+	"github.com/stretchr/testify/assert"
+	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,5 +59,39 @@ func TestGetUrl(t *testing.T) {
 			url := rs.getURL(path)
 			require.Equal(t, "https://localhost:3000/"+path+"&render=1", url)
 		})
+	})
+}
+
+func TestRenderErrorImage(t *testing.T) {
+	path, err := filepath.Abs("../../../")
+	require.NoError(t, err)
+
+	rs := RenderingService{
+		Cfg: &setting.Cfg{
+			HomePath: path,
+		},
+	}
+	t.Run("No theme set returns error image with dark theme", func(t *testing.T) {
+		result, err := rs.RenderErrorImage("", nil)
+		require.NoError(t, err)
+		assert.Equal(t, result.FilePath, path+"/public/img/rendering_error_dark.png")
+	})
+
+	t.Run("Timeout error returns timeout error image", func(t *testing.T) {
+		result, err := rs.RenderErrorImage(ThemeLight, ErrTimeout)
+		require.NoError(t, err)
+		assert.Equal(t, result.FilePath, path+"/public/img/rendering_timeout_light.png")
+	})
+
+	t.Run("Generic error returns error image", func(t *testing.T) {
+		result, err := rs.RenderErrorImage(ThemeLight, errors.New("an error"))
+		require.NoError(t, err)
+		assert.Equal(t, result.FilePath, path+"/public/img/rendering_error_light.png")
+	})
+
+	t.Run("Unknown image path returns error", func(t *testing.T) {
+		result, err := rs.RenderErrorImage("abc", errors.New("random error"))
+		assert.Error(t, err)
+		assert.Nil(t, result)
 	})
 }
