@@ -42,15 +42,14 @@ These two states are persisted in the database periodically and when Grafana is 
 
 ## Enable high availability
 
-To enable high availability support, you need to set the configuration [option `ha_peers` within the `[unified_alerting]` section]({{< relref "../../administration/configuration.md#unified_alerting" >}}). Setting this option to at least 1 peer will trigger the high availability mode for Grafana 8 Alerts. Communication happens using port 9094 on both UDP and TCP, so please make sure each instance has access on these.
+To enable high availability support, you need to add at least 1 Grafana instance to the [`[ha_peer]` configuration option]({{<relref"../../administration/configuration.md#unified_alerting">}}) within the `[unified_alerting]` section:
 
-The idea here is that you:
-
-- Set `ha_peers` to the set of hosts for each grafana instance in the cluster (using a format of `host:port`) e.g. `ha_peers=10.0.0.5:9094,10.0.0.6:9094,10.0.0.7:9094`
-- Set `ha_listen_address` to the instance (or the [Pod's](https://kubernetes.io/docs/concepts/workloads/pods/) IP (using a format of `host:port`) in the case of using Kubernetes) by default it is set to listen all interfaces (`0.0.0.0`).
+1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the `[unified_alerting]` section.
+2. Set `[ha_peers]` to the set of hosts for each grafana instance in the cluster (using a format of host:port) e.g. `ha_peers=10.0.0.5:9094,10.0.0.6:9094,10.0.0.7:9094`
+3. Communication occurs using port 9094 on both UDP and TCP, you need to make sure each instance has access on these.
+4. Set `[ha_listen_address]` to the instance IP address using a format of host:port (or the [Pod's](https://kubernetes.io/docs/concepts/workloads/pods/) IP in the case of using Kubernetes) by default it is set to listen to all interfaces (`0.0.0.0`).
 
 ## Kubernetes
-
 
 If you are using Kubernetes, you can expose the pod IP [through an environment variable](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/) via the container definition such as:
 
