@@ -77,7 +77,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         defaultValue: VizOrientation.Auto,
       })
       .addSliderInput({
-        path: 'valueRotation',
+        path: 'xTickLabelRotation',
         name: 'Rotate bar labels',
         defaultValue: 0,
         settings: {
@@ -92,7 +92,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
       })
       .addNumberInput({
-        path: 'valueMaxLength',
+        path: 'xTickLabelMaxLength',
         name: 'Bar label max length',
         description: 'Bar labels will be truncated to the length provided',
         settings: {
