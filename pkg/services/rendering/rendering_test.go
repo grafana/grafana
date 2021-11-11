@@ -2,11 +2,11 @@ package rendering
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
