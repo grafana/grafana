@@ -1,4 +1,4 @@
-import { CascaderValueType, CascaderOption as RCCascaderOption } from 'rc-cascader/lib/Cascader';
+import { CascaderValueType, DataNode as RCCascaderOption } from 'rc-cascader/lib/interface';
 import { CascaderOption } from './Cascader';
 
 type onChangeType = ((values: string[], options: CascaderOption[]) => void) | undefined;
