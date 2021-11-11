@@ -3,10 +3,7 @@ import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/da
 import { Alert, Select, stylesFactory, useTheme2 } from '@grafana/ui';
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 import { css } from '@emotion/css';
-
-export interface GazetteerPathEditorConfigSettings {
-  options?: Array<SelectableValue<string>>;
-}
+import { GazetteerPathEditorConfigSettings } from '../types';
 
 const defaultPaths: Array<SelectableValue<string>> = [
   {

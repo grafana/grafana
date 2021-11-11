@@ -27,9 +27,7 @@ const defaultOptions: GeoJSONMapperConfig = {
 };
 
 export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
-  fillColor: {
-    fixed: '#1F60C4',
-  },
+  fillColor: '#1F60C4',
   strokeWidth: 1,
   rule: {
     property: '',
