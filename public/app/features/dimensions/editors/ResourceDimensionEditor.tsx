@@ -5,13 +5,15 @@ import {
   StandardEditorProps,
   StandardEditorsRegistryItem,
 } from '@grafana/data';
-import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal, Input, useStyles2 } from '@grafana/ui';
+import SVG from 'react-inlinesvg';
+import { css } from '@emotion/css';
+
+import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 import { ResourcePicker } from './ResourcePicker';
 import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
-import SVG from 'react-inlinesvg';
-import { css } from '@emotion/css';
+
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
   { label: 'Field', value: ResourceDimensionMode.Field, description: 'Use a string field result' },

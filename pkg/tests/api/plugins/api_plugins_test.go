@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -110,7 +109,7 @@ func makePostRequest(t *testing.T, URL string) (int, map[string]interface{}) {
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		_ = resp.Body.Close()
-		log.Warn("Failed to close response body", "err", err)
+		fmt.Printf("Failed to close response body err: %s", err)
 	})
 	b, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)

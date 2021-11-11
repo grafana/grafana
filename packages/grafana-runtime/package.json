@@ -39,6 +39,8 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "21.0.1",
     "@rollup/plugin-node-resolve": "13.0.6",
+    "@testing-library/react": "^12.1.2",
+    "@testing-library/user-event": "^13.5.0",
     "@types/angular": "1.6.56",
     "@types/history": "^4.7.8",
     "@types/jest": "27.0.2",

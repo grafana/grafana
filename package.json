@@ -13,8 +13,6 @@
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "test": "jest --notify --watch",
-    "test:accessibility": "pa11y-ci --config .pa11yci.conf.js",
-    "test:accessibility-pr": "pa11y-ci --config .pa11yci-pr.conf.js",
     "test:accessibility-report": "./scripts/generate-a11y-report.sh",
     "lint": "yarn run lint:ts && yarn run lint:sass",
     "lint:ts": "eslint . --ext .js,.tsx,.ts --cache",
@@ -112,7 +110,7 @@
     "@types/logfmt": "^1.2.1",
     "@types/lru-cache": "^5.1.0",
     "@types/mousetrap": "1.6.3",
-    "@types/node": "14.17.27",
+    "@types/node": "16.11.6",
     "@types/papaparse": "5.2.0",
     "@types/pluralize": "^0.0.29",
     "@types/prismjs": "1.16.0",
@@ -174,7 +172,7 @@
     "fs-extra": "10.0.0",
     "gaze": "1.1.3",
     "glob": "7.1.6",
-    "html-loader": "2.1.2",
+    "html-loader": "3.0.1",
     "html-webpack-harddisk-plugin": "2.0.0",
     "html-webpack-plugin": "5.3.2",
     "http-server": "14.0.0",
@@ -192,7 +190,6 @@
     "mutationobserver-shim": "0.3.3",
     "ngtemplate-loader": "2.1.0",
     "nodemon": "2.0.2",
-    "pa11y-ci": "pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4",
     "postcss": "8.3.6",
     "postcss-loader": "6.1.1",
     "postcss-reporter": "7.0.2",
@@ -225,8 +222,7 @@
     "webpack-cleanup-plugin": "0.5.1",
     "webpack-cli": "4.9.0",
     "webpack-dev-server": "4.3.1",
-    "webpack-merge": "5.8.0",
-    "worker-loader": "^3.0.8"
+    "webpack-merge": "5.8.0"
   },
   "dependencies": {
     "@emotion/css": "11.1.3",
@@ -243,6 +239,8 @@
     "@opentelemetry/exporter-collector": "0.23.0",
     "@opentelemetry/semantic-conventions": "1.0.0",
     "@popperjs/core": "2.5.4",
+    "@react-aria/focus": "3.5.0",
+    "@react-aria/overlays": "3.7.2",
     "@reduxjs/toolkit": "1.6.1",
     "@sentry/browser": "5.25.0",
     "@sentry/types": "5.24.2",
@@ -267,6 +265,7 @@
     "centrifuge": "2.7.5",
     "classnames": "2.2.6",
     "clipboard": "2.0.4",
+    "comlink": "4.3.1",
     "common-tags": "^1.8.0",
     "core-js": "3.10.0",
     "d3": "5.15.0",
@@ -294,7 +293,7 @@
     "lodash": "4.17.21",
     "logfmt": "^1.3.2",
     "lru-cache": "6.0.0",
-    "memoize-one": "5.1.1",
+    "memoize-one": "6.0.0",
     "moment": "2.29.1",
     "moment-timezone": "0.5.33",
     "monaco-editor": "0.27.0",
@@ -373,7 +372,7 @@
     ]
   },
   "engines": {
-    "node": ">= 14"
+    "node": ">= 16"
   },
   "packageManager": "yarn@3.1.0"
 }
