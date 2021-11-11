@@ -38,7 +38,7 @@ export function runWithRetry(
   const timeoutFunction = options.timeoutFunc
     ? options.timeoutFunc
     : (retry: number, startTime: number) => {
-        return Date.now() >= startTime + (options.timeout || defaultTimeout);
+        return Date.now() >= startTime + (options.timeout === undefined ? defaultTimeout : options.timeout);
       };
 
   const retryWaitFunction = options.retryWaitFunc

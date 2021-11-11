@@ -173,7 +173,9 @@ export class CloudWatchDatasource
         });
       },
       queryParams,
-      5000
+      {
+        timeout: 15 * 60 * 1000,
+      }
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
         // This queries for the results
@@ -556,7 +558,7 @@ export class CloudWatchDatasource
           refId: (param as StartQueryRequest).refId || 'A',
           intervalMs: 1, // dummy
           maxDataPoints: 1, // dummy
-          datasourceId: this.getRef(),
+          datasource: this.getRef(),
           type: 'logAction',
           subtype: subtype,
           ...param,
