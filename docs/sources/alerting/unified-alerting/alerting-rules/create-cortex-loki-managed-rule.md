@@ -15,7 +15,7 @@ For Cortex and Loki data sources to work with Grafana 8.0 alerting, enable the r
 
 **Loki** - The `local` rule storage type, default for the Loki data source, supports only viewing of rules. To edit rules, configure one of the other rule storage types.
 
-**Cortex** - When configuring a Grafana Prometheus data source to point to Cortex, use the legacy `/api/prom` prefix, not `/prometheus`. Currently, we support only single-binary mode and you cannot provide a separate URL for the ruler API.
+**Cortex** - When configuring a Grafana Prometheus data source to point to Cortex, use the [legacy `/api/prom` prefix](https://cortexmetrics.io/docs/api/#path-prefixes), not `/prometheus`. The Prometheus data source supports both Cortex and Prometheus, and Grafana expects that both the [Query API](https://cortexmetrics.io/docs/api/#querier--query-frontend) and [Ruler API](https://cortexmetrics.io/docs/api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
 
 > **Note:** If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
 
