@@ -5,7 +5,7 @@ import (
 )
 
 type ConverterConfig struct {
-	Type                      string                     `json:"type"`
+	Type                      string                     `json:"type" ts_type:"Omit<keyof ConverterConfig, 'type'>"`
 	AutoJsonConverterConfig   *AutoJsonConverterConfig   `json:"jsonAuto,omitempty"`
 	ExactJsonConverterConfig  *ExactJsonConverterConfig  `json:"jsonExact,omitempty"`
 	AutoInfluxConverterConfig *AutoInfluxConverterConfig `json:"influxAuto,omitempty"`
@@ -13,7 +13,7 @@ type ConverterConfig struct {
 }
 
 type FrameProcessorConfig struct {
-	Type                      string                          `json:"type"`
+	Type                      string                          `json:"type" ts_type:"Omit<keyof FrameProcessorConfig, 'type'>"`
 	DropFieldsProcessorConfig *DropFieldsFrameProcessorConfig `json:"dropFields,omitempty"`
 	KeepFieldsProcessorConfig *KeepFieldsFrameProcessorConfig `json:"keepFields,omitempty"`
 	MultipleProcessorConfig   *MultipleFrameProcessorConfig   `json:"multiple,omitempty"`
@@ -46,18 +46,18 @@ type MultipleSubscriberConfig struct {
 }
 
 type SubscriberConfig struct {
-	Type                     string                    `json:"type"`
+	Type                     string                    `json:"type" ts_type:"Omit<keyof SubscriberConfig, 'type'>"`
 	MultipleSubscriberConfig *MultipleSubscriberConfig `json:"multiple,omitempty"`
 }
 
 type DataOutputterConfig struct {
-	Type                     string                    `json:"type"`
+	Type                     string                    `json:"type" ts_type:"Omit<keyof DataOutputterConfig, 'type'>"`
 	RedirectDataOutputConfig *RedirectDataOutputConfig `json:"redirect,omitempty"`
 	LokiOutputConfig         *LokiOutputConfig         `json:"loki,omitempty"`
 }
 
 type FrameOutputterConfig struct {
-	Type                    string                     `json:"type"`
+	Type                    string                     `json:"type" ts_type:"Omit<keyof FrameOutputterConfig, 'type'>"`
 	ManagedStreamConfig     *ManagedStreamOutputConfig `json:"managedStream,omitempty"`
 	MultipleOutputterConfig *MultipleOutputterConfig   `json:"multiple,omitempty"`
 	RedirectOutputConfig    *RedirectOutputConfig      `json:"redirect,omitempty"`
@@ -69,8 +69,8 @@ type FrameOutputterConfig struct {
 }
 
 type MultipleFrameConditionCheckerConfig struct {
-	Type       ConditionType                 `json:"type"`
-	Conditions []FrameConditionCheckerConfig `json:"conditions"`
+	ConditionType ConditionType                 `json:"conditionType"`
+	Conditions    []FrameConditionCheckerConfig `json:"conditions"`
 }
 
 type NumberCompareFrameConditionConfig struct {
@@ -80,7 +80,7 @@ type NumberCompareFrameConditionConfig struct {
 }
 
 type FrameConditionCheckerConfig struct {
-	Type                           string                               `json:"type"`
+	Type                           string                               `json:"type" ts_type:"Omit<keyof FrameConditionCheckerConfig, 'type'>"`
 	MultipleConditionCheckerConfig *MultipleFrameConditionCheckerConfig `json:"multiple,omitempty"`
 	NumberCompareConditionConfig   *NumberCompareFrameConditionConfig   `json:"numberCompare,omitempty"`
 }
@@ -95,7 +95,7 @@ type Field struct {
 	Type   data.FieldType    `json:"type"`
 	Value  string            `json:"value"` // Can be JSONPath or Goja script.
 	Labels []Label           `json:"labels,omitempty"`
-	Config *data.FieldConfig `json:"config,omitempty"`
+	Config *data.FieldConfig `json:"config,omitempty" ts_type:"FieldConfig"`
 }
 
 type ExactJsonConverterConfig struct {

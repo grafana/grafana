@@ -1,43 +1,13 @@
 /* Do not change, this code is generated from Golang structs */
 
+import { FieldConfig } from '@grafana/data';
+
 export interface JsonFrameConverterConfig {}
 export interface AutoInfluxConverterConfig {
   frameFormat: string;
 }
 export interface ExactJsonConverterConfig {
   fields: Field[];
-}
-export interface DataLink {
-  title?: string;
-  targetBlank?: boolean;
-  url?: string;
-}
-export interface Threshold {
-  value?: number;
-  color?: string;
-  state?: string;
-}
-export interface ThresholdsConfig {
-  mode: string;
-  steps: Threshold[];
-}
-export interface FieldConfig {
-  displayName?: string;
-  displayNameFromDS?: string;
-  path?: string;
-  description?: string;
-  filterable?: boolean;
-  writeable?: boolean;
-  unit?: string;
-  decimals?: number;
-  min?: number;
-  max?: number;
-  mappings?: any[];
-  thresholds?: ThresholdsConfig;
-  color?: { [key: string]: any };
-  links?: DataLink[];
-  noValue?: string;
-  custom?: { [key: string]: any };
 }
 export interface Label {
   name: string;
@@ -54,7 +24,7 @@ export interface AutoJsonConverterConfig {
   fieldTips?: { [key: string]: Field };
 }
 export interface ConverterConfig {
-  type: string;
+  type: Omit<keyof ConverterConfig, 'type'>;
   jsonAuto?: AutoJsonConverterConfig;
   jsonExact?: ExactJsonConverterConfig;
   influxAuto?: AutoInfluxConverterConfig;
@@ -70,7 +40,7 @@ export interface DropFieldsFrameProcessorConfig {
   fieldNames: string[];
 }
 export interface FrameProcessorConfig {
-  type: string;
+  type: Omit<keyof FrameProcessorConfig, 'type'>;
   dropFields?: DropFieldsFrameProcessorConfig;
   keepFields?: KeepFieldsFrameProcessorConfig;
   multiple?: MultipleFrameProcessorConfig;
@@ -97,11 +67,11 @@ export interface NumberCompareFrameConditionConfig {
   value: number;
 }
 export interface MultipleFrameConditionCheckerConfig {
-  type: string;
+  conditionType: string;
   conditions: FrameConditionCheckerConfig[];
 }
 export interface FrameConditionCheckerConfig {
-  type: string;
+  type: Omit<keyof FrameConditionCheckerConfig, 'type'>;
   multiple?: MultipleFrameConditionCheckerConfig;
   numberCompare?: NumberCompareFrameConditionConfig;
 }
@@ -114,7 +84,7 @@ export interface RedirectOutputConfig {
 }
 export interface ManagedStreamOutputConfig {}
 export interface FrameOutputterConfig {
-  type: string;
+  type: Omit<keyof FrameOutputterConfig, 'type'>;
   managedStream?: ManagedStreamOutputConfig;
   multiple?: MultipleOutputterConfig;
   redirect?: RedirectOutputConfig;
@@ -129,7 +99,7 @@ export interface MultipleOutputterConfig {
 }
 
 export interface SubscriberConfig {
-  type: string;
+  type: Omit<keyof SubscriberConfig, 'type'>;
   multiple?: MultipleSubscriberConfig;
 }
 export interface MultipleSubscriberConfig {
@@ -140,7 +110,7 @@ export interface RedirectDataOutputConfig {
   channel: string;
 }
 export interface DataOutputterConfig {
-  type: string;
+  type: Omit<keyof DataOutputterConfig, 'type'>;
   redirect?: RedirectDataOutputConfig;
   loki?: LokiOutputConfig;
 }

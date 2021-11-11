@@ -139,7 +139,7 @@ func (f *StorageRuleBuilder) extractFrameConditionChecker(config *FrameCondition
 			}
 			conditions = append(conditions, cond)
 		}
-		return NewMultipleFrameConditionChecker(config.MultipleConditionCheckerConfig.Type, conditions...), nil
+		return NewMultipleFrameConditionChecker(config.MultipleConditionCheckerConfig.ConditionType, conditions...), nil
 	default:
 		return nil, fmt.Errorf("unknown condition type: %s", config.Type)
 	}
