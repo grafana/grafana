@@ -168,6 +168,8 @@ export class DatasourceSrv implements DataSourceService {
         instance = new dsPlugin.DataSourceClass(instanceSettings);
       }
 
+      instance.components = dsPlugin.components;
+
       // Some old plugins does not extend DataSourceApi so we need to manually patch them
       if (!(instance instanceof DataSourceApi)) {
         const anyInstance = instance as any;
