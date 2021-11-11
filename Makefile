@@ -158,7 +158,7 @@ drone: $(DRONE)
 		echo "WARN: You are using drone-cli ${DRONE_VERSION}. Please update your LOCAL version to 1.4.0. Using latest bingo version...";\
 	fi
 	$(DRONE) starlark --format
-	$(DRONE) lint .drone.yml
+	$(DRONE) lint --trusted .drone.yml
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
 
 help: ## Display this help.

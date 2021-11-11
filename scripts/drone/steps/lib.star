@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.5.5'
+grabpl_version = 'test-build-docker'
 build_image = 'grafana/build-container:1.4.5'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -35,7 +35,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     download_grabpl_cmds = [
         'mkdir -p bin',
-        'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+        'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/grabpl'.format(
             grabpl_version
         ),
         'chmod +x bin/grabpl',
@@ -645,23 +645,58 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     if ubuntu:
         ubuntu_sfx = '-ubuntu'
 
-    settings = {
-        'dry_run': not publish,
-        'edition': edition,
-        'ubuntu': ubuntu,
-    }
+    dry_run = not publish
+    edition = edition
+    ubuntu = ubuntu
+
+    environment = {}
 
     if publish:
-        settings['username'] = from_secret('docker_user')
-        settings['password'] = from_secret('docker_password')
+        environment['DOCKER_USER'] = from_secret('docker_user')
+        environment['DOCKER_PASS'] = from_secret('docker_password')
     if archs:
-        settings['archs'] = ','.join(archs)
+        archs = ','.join(archs)
     return {
         'name': 'build-docker-images' + ubuntu_sfx,
-        'image': grafana_docker_image,
+        'image': build_image,
         'depends_on': ['copy-packages-for-docker'],
-        'settings': settings,
+        'commands': [
+            './bin/grabpl build-docker-new --dry-run {} --edition {} --ubuntu {} --archs {}'.format(dry_run, edition, ubuntu, archs),
+        ],
+        'environment': environment,
+        'volumes': [
+            {
+                'name': 'docker',
+                'path': '/var/run/docker.sock',
+            }
+        ]
     }
+#
+# def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
+#     if ver_mode == 'test-release':
+#         publish = False
+#
+#     ubuntu_sfx = ''
+#     if ubuntu:
+#         ubuntu_sfx = '-ubuntu'
+#
+#     settings = {
+#         'dry_run': not publish,
+#         'edition': edition,
+#         'ubuntu': ubuntu,
+#     }
+#
+#     if publish:
+#         settings['username'] = from_secret('docker_user')
+#         settings['password'] = from_secret('docker_password')
+#     if archs:
+#         settings['archs'] = ','.join(archs)
+#     return {
+#         'name': 'build-docker-images' + ubuntu_sfx,
+#         'image': grafana_docker_image,
+#         'depends_on': ['copy-packages-for-docker'],
+#         'settings': settings,
+#     }
 
 def postgres_integration_tests_step():
     return {
@@ -850,7 +885,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     else:
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
         ])
     steps = [
         {
@@ -921,7 +956,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
         download_grabpl_cmds = [
             '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
         ]
         clone_cmds = [
             'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
