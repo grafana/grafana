@@ -1,4 +1,4 @@
-import { LiveChannelScope, LiveChannelSupport, SelectableValue } from '@grafana/data';
+import { LiveChannelScope, SelectableValue } from '@grafana/data';
 import {
   grafanaLiveCoreFeatures,
   GrafanaLiveDataSourceScope,
@@ -25,11 +25,6 @@ export class GrafanaLiveChannelConfigService implements GrafanaLiveChannelConfig
 
   doesScopeExist = (liveChannelScope: LiveChannelScope): liveChannelScope is ExistingLiveChannelScope =>
     Boolean(this.scopes[liveChannelScope]);
-
-  getChannelSupport = async (
-    liveChannelScope: ExistingLiveChannelScope,
-    namespace: string
-  ): Promise<LiveChannelSupport | undefined> => this.getScope(liveChannelScope).getChannelSupport(namespace);
 
   getNamespaces = async (liveChannelScope: ExistingLiveChannelScope): Promise<Array<SelectableValue<string>>> =>
     this.getScope(liveChannelScope).listNamespaces();

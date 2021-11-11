@@ -1,17 +1,9 @@
-import { LiveChannelScope, LiveChannelSupport, SelectableValue } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { LiveChannelScope, SelectableValue } from '@grafana/data';
 import { config } from 'app/core/config';
-import { loadPlugin } from 'app/features/plugins/PluginPage';
-import { LiveMeasurementsSupport } from '../measurements/measurementsSupport';
 import { CoreGrafanaLiveFeature } from './types';
 
 export abstract class GrafanaLiveScope {
   constructor(protected scope: LiveChannelScope) {}
-
-  /**
-   * Load the real namespaces
-   */
-  abstract getChannelSupport(namespace: string): Promise<LiveChannelSupport | undefined>;
 
   /**
    * List the possible values within this scope
@@ -20,7 +12,6 @@ export abstract class GrafanaLiveScope {
 }
 
 class GrafanaLiveCoreScope extends GrafanaLiveScope {
-  readonly features = new Map<string, LiveChannelSupport>();
   readonly namespaces: Array<SelectableValue<string>> = [];
 
   constructor() {
@@ -28,23 +19,11 @@ class GrafanaLiveCoreScope extends GrafanaLiveScope {
   }
 
   register(feature: CoreGrafanaLiveFeature) {
-    this.features.set(feature.name, feature.support);
     this.namespaces.push({
       value: feature.name,
       label: feature.name,
       description: feature.description,
     });
-  }
-
-  /**
-   * Load the real namespaces
-   */
-  async getChannelSupport(namespace: string) {
-    const v = this.features.get(namespace);
-    if (v) {
-      return Promise.resolve(v);
-    }
-    throw new Error('unknown feature: ' + namespace);
   }
 
   /**
@@ -64,17 +43,6 @@ export class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
   }
 
   /**
-   * Load the real namespaces
-   */
-  async getChannelSupport(namespace: string) {
-    const ds = await getDataSourceSrv().get(namespace);
-    if (ds.channelSupport) {
-      return ds.channelSupport;
-    }
-    return new LiveMeasurementsSupport(); // default support?
-  }
-
-  /**
    * List the possible values within this scope
    */
   async listNamespaces() {
@@ -84,17 +52,14 @@ export class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
 
     const names: Array<SelectableValue<string>> = [];
 
-    for (const [key, ds] of Object.entries(config.datasources)) {
+    for (const ds of Object.values(config.datasources)) {
       if (ds.meta.live) {
         try {
-          const s = await this.getChannelSupport(key); // ds.name or ID?
-          if (s) {
-            names.push({
-              label: ds.name,
-              value: ds.type,
-              description: ds.type,
-            });
-          }
+          names.push({
+            label: ds.name,
+            value: ds.type,
+            description: ds.type,
+          });
         } catch (err) {
           err.isHandled = true;
         }
@@ -113,20 +78,6 @@ export class GrafanaLivePluginScope extends GrafanaLiveScope {
   }
 
   /**
-   * Load the real namespaces
-   */
-  async getChannelSupport(namespace: string) {
-    const plugin = await loadPlugin(namespace);
-    if (!plugin) {
-      throw new Error('Unknown streaming plugin: ' + namespace);
-    }
-    if (plugin.channelSupport) {
-      return plugin.channelSupport; // explicit
-    }
-    throw new Error('Plugin does not support streaming: ' + namespace);
-  }
-
-  /**
    * List the possible values within this scope
    */
   async listNamespaces() {
@@ -135,20 +86,13 @@ export class GrafanaLivePluginScope extends GrafanaLiveScope {
     }
     const names: Array<SelectableValue<string>> = [];
     // TODO add list to config
-    for (const [key, panel] of Object.entries(config.panels)) {
+    for (const panel of Object.values(config.panels)) {
       if (panel.live) {
-        try {
-          const s = await this.getChannelSupport(key); // ds.name or ID?
-          if (s) {
-            names.push({
-              label: panel.name,
-              value: key,
-              description: panel.info?.description,
-            });
-          }
-        } catch (err) {
-          err.isHandled = true;
-        }
+        names.push({
+          label: panel.name,
+          value: panel.type,
+          description: panel.info?.description,
+        });
       }
     }
     return (this.names = names);
@@ -160,10 +104,6 @@ export class GrafanaLiveStreamScope extends GrafanaLiveScope {
 
   constructor() {
     super(LiveChannelScope.Stream);
-  }
-
-  async getChannelSupport(namespace: string) {
-    return new LiveMeasurementsSupport();
   }
 
   /**
