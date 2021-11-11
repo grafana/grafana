@@ -4,7 +4,7 @@ import {
   ScaleDimensionConfig,
   TextDimensionConfig,
 } from 'app/features/dimensions';
-import { Image, Style } from 'ol/style';
+import { Style } from 'ol/style';
 
 // StyleConfig is saved in panel json and is used to configure how items get rendered
 export interface StyleConfig {
@@ -35,5 +35,7 @@ export interface StyleConfigValues {
   offset?: [number, number];
 }
 
-// Point values use an image as the marker
-export type StyleImageMaker = (values: StyleConfigValues) => Image;
+/**
+ * Given values create a style
+ */
+export type StyleMaker = (values: StyleConfigValues) => Style | Style[];
