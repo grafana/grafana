@@ -1,4 +1,4 @@
-import { AnnotationsSrv } from '../annotations_srv';
+import { AnnotationsSrv } from './annotations_srv';
 
 describe('AnnotationsSrv', () => {
   const annotationsSrv = new AnnotationsSrv();

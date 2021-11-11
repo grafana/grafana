@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 var (
@@ -29,8 +29,8 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timeRange plugins.DataTimeRange, interval time.Duration) Interval
-	CalculateSafeInterval(timeRange plugins.DataTimeRange, resolution int64) Interval
+	Calculate(timeRange legacydata.DataTimeRange, interval time.Duration) Interval
+	CalculateSafeInterval(timeRange legacydata.DataTimeRange, resolution int64) Interval
 }
 
 type CalculatorOptions struct {
@@ -55,7 +55,7 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInterval time.Duration) Interval {
+func (ic *intervalCalculator) Calculate(timerange legacydata.DataTimeRange, minInterval time.Duration) Interval {
 	to := timerange.MustGetTo().UnixNano()
 	from := timerange.MustGetFrom().UnixNano()
 	calculatedInterval := time.Duration((to - from) / DefaultRes)
@@ -68,7 +68,7 @@ func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInte
 	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
 
-func (ic *intervalCalculator) CalculateSafeInterval(timerange plugins.DataTimeRange, safeRes int64) Interval {
+func (ic *intervalCalculator) CalculateSafeInterval(timerange legacydata.DataTimeRange, safeRes int64) Interval {
 	to := timerange.MustGetTo().UnixNano()
 	from := timerange.MustGetFrom().UnixNano()
 	safeInterval := time.Duration((to - from) / safeRes)
