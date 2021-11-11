@@ -62,6 +62,27 @@ exports[`Render should disable access key id field 1`] = `
       />
     </InlineField>
   </ConnectionConfig>
+  <h3
+    className="page-heading"
+  >
+    CloudWatch Logs
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <InlineField
+      label="Timeout"
+      labelWidth={28}
+      tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. You can use interval syntax, ie 30s, 5m, 2000ms"
+    >
+      <Input
+        onChange={[Function]}
+        placeholder="15m"
+        value=""
+        width={60}
+      />
+    </InlineField>
+  </div>
   <XrayLinkConfig
     onChange={[Function]}
   />
@@ -125,6 +146,27 @@ exports[`Render should render component 1`] = `
       />
     </InlineField>
   </ConnectionConfig>
+  <h3
+    className="page-heading"
+  >
+    CloudWatch Logs
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <InlineField
+      label="Timeout"
+      labelWidth={28}
+      tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. You can use interval syntax, ie 30s, 5m, 2000ms"
+    >
+      <Input
+        onChange={[Function]}
+        placeholder="15m"
+        value=""
+        width={60}
+      />
+    </InlineField>
+  </div>
   <XrayLinkConfig
     onChange={[Function]}
   />
@@ -193,6 +235,27 @@ exports[`Render should show access key and secret access key fields 1`] = `
       />
     </InlineField>
   </ConnectionConfig>
+  <h3
+    className="page-heading"
+  >
+    CloudWatch Logs
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <InlineField
+      label="Timeout"
+      labelWidth={28}
+      tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. You can use interval syntax, ie 30s, 5m, 2000ms"
+    >
+      <Input
+        onChange={[Function]}
+        placeholder="15m"
+        value=""
+        width={60}
+      />
+    </InlineField>
+  </div>
   <XrayLinkConfig
     onChange={[Function]}
   />
@@ -261,6 +324,27 @@ exports[`Render should show arn role field 1`] = `
       />
     </InlineField>
   </ConnectionConfig>
+  <h3
+    className="page-heading"
+  >
+    CloudWatch Logs
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <InlineField
+      label="Timeout"
+      labelWidth={28}
+      tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. You can use interval syntax, ie 30s, 5m, 2000ms"
+    >
+      <Input
+        onChange={[Function]}
+        placeholder="15m"
+        value=""
+        width={60}
+      />
+    </InlineField>
+  </div>
   <XrayLinkConfig
     onChange={[Function]}
   />
@@ -329,6 +413,27 @@ exports[`Render should show credentials profile name field 1`] = `
       />
     </InlineField>
   </ConnectionConfig>
+  <h3
+    className="page-heading"
+  >
+    CloudWatch Logs
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <InlineField
+      label="Timeout"
+      labelWidth={28}
+      tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. You can use interval syntax, ie 30s, 5m, 2000ms"
+    >
+      <Input
+        onChange={[Function]}
+        placeholder="15m"
+        value=""
+        width={60}
+      />
+    </InlineField>
+  </div>
   <XrayLinkConfig
     onChange={[Function]}
   />
