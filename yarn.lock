@@ -17930,7 +17930,7 @@ __metadata:
     ngtemplate-loader: 2.1.0
     nodemon: 2.0.2
     ol: 6.7.0
-    pa11y-ci: "git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4"
+    pa11y-ci: "pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4"
     papaparse: 5.3.0
     pluralize: ^8.0.0
     postcss: 8.3.6
@@ -24479,9 +24479,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pa11y-ci@git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4":
+"pa11y-ci@pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4":
   version: 2.4.2
-  resolution: "pa11y-ci@git://github.com/pa11y/pa11y-ci#commit=5c842cf1b9fe2867b70ff5354851d985be8d71c4"
+  resolution: "pa11y-ci@https://github.com/pa11y/pa11y-ci.git#commit=5c842cf1b9fe2867b70ff5354851d985be8d71c4"
   dependencies:
     async: ~2.6.3
     chalk: ~1.1.3
