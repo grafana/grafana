@@ -7,7 +7,6 @@ const { DefinePlugin } = require('webpack');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const getBabelConfig = require('./babel.config');
 
 module.exports = merge(common, {
   devtool: 'inline-source-map',
@@ -46,7 +45,6 @@ module.exports = merge(common, {
         test: /\.tsx?$/,
         use: {
           loader: 'babel-loader',
-          options: getBabelConfig({ BABEL_ENV: 'dev', REACT_REFRESH: true }),
         },
         exclude: /node_modules/,
         include: [path.resolve(__dirname, '../../public/'), path.resolve(__dirname, '../../packages/')],

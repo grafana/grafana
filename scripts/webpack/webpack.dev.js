@@ -8,7 +8,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const getBabelConfig = require('./babel.config');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = (env = {}) =>
@@ -34,7 +33,6 @@ module.exports = (env = {}) =>
           test: /\.tsx?$/,
           use: {
             loader: 'babel-loader',
-            options: getBabelConfig({ BABEL_ENV: 'dev' }),
           },
           exclude: /node_modules/,
         },
