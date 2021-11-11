@@ -1,12 +1,9 @@
 import React, { ChangeEvent, FC, useCallback } from 'react';
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ComparisonOperation, FeatureStyleConfig } from '../types';
-import { Button, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import { Button, ColorPicker, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
-import { ColorDimensionEditor } from 'app/features/dimensions/editors';
-import { ColorDimensionConfig } from 'app/features/dimensions';
-import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonMapper';
 
 export interface StyleRuleEditorSettings {
   options: SelectableValue[];
@@ -15,7 +12,7 @@ export interface StyleRuleEditorSettings {
 export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, any, StyleRuleEditorSettings>> = (
   props
 ) => {
-  const { value, onChange, item, context } = props;
+  const { value, onChange, item } = props;
   const settings: StyleRuleEditorSettings = item.settings;
 
   const styles = useStyles2(getStyles);
@@ -68,8 +65,8 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   );
 
   const onChangeColor = useCallback(
-    (c: ColorDimensionConfig | undefined) => {
-      onChange({ ...value, fillColor: c ?? DEFAULT_STYLE_RULE.fillColor });
+    (c: string) => {
+      onChange({ ...value, fillColor: c });
     },
     [onChange, value]
   );
@@ -115,25 +112,11 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
             aria-label={'Comparison value'}
           />
         </InlineField>
-        <Button size="md" icon="trash-alt" onClick={onDelete} variant="secondary" aria-label={'Delete style rule'} />
       </InlineFieldRow>
       <InlineFieldRow className={styles.row}>
-        <InlineField label="Color" labelWidth={LABEL_WIDTH}>
-          <ColorDimensionEditor
-            value={value.fillColor}
-            context={context}
-            onChange={onChangeColor}
-            item={
-              {
-                settings: {
-                  forceFixed: true,
-                },
-              } as any
-            }
-          />
+        <InlineField label="Style" labelWidth={LABEL_WIDTH} className={styles.color}>
+          <ColorPicker color={value?.fillColor} onChange={onChangeColor} />
         </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow className={styles.row}>
         <InlineField label="Stroke" className={styles.inline} grow={true}>
           <NumberInput
             value={value?.strokeWidth ?? 1}
@@ -144,6 +127,14 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
             onChange={onChangeStrokeWidth}
           />
         </InlineField>
+        <Button
+          size="md"
+          icon="trash-alt"
+          onClick={() => onDelete()}
+          variant="secondary"
+          aria-label={'Delete style rule'}
+          className={styles.button}
+        ></Button>
       </InlineFieldRow>
     </div>
   );

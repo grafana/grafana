@@ -13,23 +13,16 @@ const fixedColorOption: SelectableValue<string> = {
   value: '_____fixed_____',
 };
 
-export interface ColorDimensionSettings {
-  forceFixed?: boolean;
-}
-
-export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, ColorDimensionSettings, any>> = (
-  props
-) => {
-  const { value, context, onChange, item } = props;
+export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, any, any>> = (props) => {
+  const { value, context, onChange } = props;
 
   const defaultColor = 'dark-green';
-  const settings = item?.settings ?? {};
 
   const styles = useStyles2(getStyles);
   const fieldName = value?.field;
-  const isFixed = Boolean(!fieldName || settings.forceFixed);
+  const isFixed = Boolean(!fieldName);
   const names = useFieldDisplayNames(context.data);
-  let selectOptions = useSelectOptions(names, fieldName, fixedColorOption);
+  const selectOptions = useSelectOptions(names, fieldName, fixedColorOption);
 
   const onSelectChange = useCallback(
     (selection: SelectableValue<string>) => {
@@ -60,10 +53,6 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
     },
     [onChange]
   );
-
-  if (settings.forceFixed) {
-    selectOptions = [fixedColorOption];
-  }
 
   const selectedOption = isFixed ? fixedColorOption : selectOptions.find((v) => v.value === fieldName);
   return (
