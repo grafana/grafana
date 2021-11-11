@@ -8,11 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/pkg/errors"
 )
 
 func (ss *SQLStore) addUserQueryAndCommandHandlers() {
@@ -181,6 +183,24 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 	}
 
 	return user, nil
+}
+
+func (ss *SQLStore) CloneUserToServiceAccount(ctx context.Context, siUser *models.SignedInUser) (*models.User, error) {
+	cmd := models.CreateUserCommand{
+		Login:            "Service-Account-" + uuid.New().String(),
+		Email:            uuid.New().String(),
+		Password:         "Password-" + uuid.New().String(),
+		Name:             siUser.Name + "-Service-Account-" + uuid.New().String(),
+		OrgId:            siUser.OrgId,
+		IsServiceAccount: true,
+	}
+
+	newuser, err := ss.CreateUser(ctx, cmd)
+	if err != nil {
+		return nil, errors.Errorf("Failed to create user: %v", err)
+	}
+
+	return newuser, err
 }
 
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
