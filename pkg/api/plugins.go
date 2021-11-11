@@ -29,7 +29,6 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
 	coreFilter := c.Query("core")
-	catalogFilter := c.Query("catalog")
 
 	// For users with viewer role we only return core plugins
 	if !c.HasRole(models.ROLE_ADMIN) {
@@ -59,10 +58,6 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		}
 
 		if pluginDef.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
-			continue
-		}
-
-		if catalogFilter == "1" && hidePluginInCatalog(hs.Cfg, pluginDef.ID) {
 			continue
 		}
 
@@ -105,16 +100,6 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 
 	sort.Sort(result)
 	return response.JSON(200, result)
-}
-
-func hidePluginInCatalog(cfg *setting.Cfg, pluginID string) bool {
-	for _, p := range cfg.PluginCatalogHidePlugins {
-		if p == pluginID {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Response {

@@ -17,7 +17,7 @@ import {
 
 export function loadPlugins(): ThunkResult<void> {
   return async (dispatch) => {
-    const plugins = await getBackendSrv().get('api/plugins', { embedded: 0, catalog: 1 });
+    const plugins = await getBackendSrv().get('api/plugins', { embedded: 0 });
     dispatch(pluginsLoaded(plugins));
   };
 }
