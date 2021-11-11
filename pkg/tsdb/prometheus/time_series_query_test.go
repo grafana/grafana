@@ -405,19 +405,6 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, res[0].Fields[1].At(1), 0.003535405)
 	})
 
-	t.Run("empty exemplars response shouldn't be included in result", func(t *testing.T) {
-		value := make(map[TimeSeriesQueryType]interface{})
-		exemplars := []apiv1.ExemplarQueryResult{}
-
-		value[ExemplarQueryType] = exemplars
-		query := &PrometheusQuery{
-			LegendFormat: "legend {{app}}",
-		}
-		res, err := parseTimeSeriesResponse(value, query)
-		require.NoError(t, err)
-		require.Len(t, res, 0)
-	})
-
 	t.Run("matrix response should be parsed normally", func(t *testing.T) {
 		values := []p.SamplePair{
 			{Value: 1, Timestamp: 1000},
