@@ -19,7 +19,7 @@ import { AccessControlAction, Organization, OrgRole, UserDTO, UserOrg } from 'ap
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
 import { contextSrv } from 'app/core/core';
-import { UserRolePicker } from '../../core/components/RolePicker/UserRolePicker';
+import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { config } from '@grafana/runtime';
 
 interface Props {
