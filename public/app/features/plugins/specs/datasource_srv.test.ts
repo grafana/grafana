@@ -37,7 +37,7 @@ jest.mock('../plugin_loader', () => ({
 }));
 
 describe('datasource_srv', () => {
-  const dataSourceSrv = new DatasourceSrv({} as any, {} as any, templateSrv);
+  const dataSourceSrv = new DatasourceSrv(templateSrv);
   const dataSourceInit = {
     mmm: {
       type: 'test-db',

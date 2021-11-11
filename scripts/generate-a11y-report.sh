@@ -16,7 +16,7 @@ if [ -d "$report" ] ; then
 fi
 
 
-# Run e2e grafana instance 
+# Run e2e grafana instance
 
 if [ "$BASE_URL" != "" ]; then
     echo -e "BASE_URL set, skipping starting server"
@@ -27,10 +27,10 @@ else
 fi
 
 # Run accessibility command
-yarn run -s test:accessibility --json > pa11y-ci-results.json
+yarn dlx --quiet pa11y-ci@git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4 --config .pa11yci.conf.js --json > pa11y-ci-results.json
 
 # Generate HTML report
-pa11y-ci-reporter-html
+yarn dlx pa11y-ci-reporter-html@3.0.1 pa11y-ci-reporter-html
 
 # Start local server
 yarn http-server pa11y-ci-report -p 1234
