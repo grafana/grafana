@@ -300,7 +300,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   };
 
   shouldRunExemplarQuery(target: PromQuery): boolean {
-    /* We want to run exemplar query only for histogram metrics: 
+    /* We want to run exemplar query only for histogram metrics:
     1. If we haven't processd histogram metrics yet, we need to check if expr includes "_bucket" which means that it is probably histogram metric (can rarely lead to false positive).
     2. If we have processed histogram metrics, check if it is part of query expr.
     */
@@ -790,7 +790,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
 
-  async getTagValues(options: any = {}) {
+  async getTagValues(options: { key?: string } = {}) {
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }

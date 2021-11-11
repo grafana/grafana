@@ -428,11 +428,11 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
     ]
     if ver_mode == 'pr':
         commands.extend([
-            'yarn run test:accessibility-pr',
+            'yarn dlx pa11y-ci@git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4 pa11y-ci --config .pa11yci-pr.conf.js',
         ])
     else:
         commands.extend([
-            'yarn run test:accessibility --json > pa11y-ci-results.json',
+            'yarn dlx --quiet pa11y-ci@git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4 pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json',
         ])
 
     return {

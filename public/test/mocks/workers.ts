@@ -1,15 +1,21 @@
 const { layout } = jest.requireActual('../../app/plugins/panel/nodeGraph/layout.worker.js');
 
 class LayoutMockWorker {
+  timeout: number | undefined;
   constructor() {}
-
   postMessage(data: any) {
     const { nodes, edges, config } = data;
-    setTimeout(() => {
+    this.timeout = setTimeout(() => {
+      this.timeout = undefined;
       layout(nodes, edges, config);
       // @ts-ignore
       this.onmessage({ data: { nodes, edges } });
-    }, 1);
+    }, 1) as any;
+  }
+  terminate() {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+    }
   }
 }
 
