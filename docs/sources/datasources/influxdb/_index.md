@@ -120,6 +120,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 
 - $m = replaced with measurement name
 - $measurement = replaced with measurement name
+- $1 - $9 = replaced with part of measurement name (if you separate your measurement name with dots)
 - $col = replaced with column name
 - $tag_exampletag = replaced with the value of the `exampletag` tag. The syntax is `$tag*yourTagName`(must start with`$tag*`). To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
 - You can also use [[tag_hostname]] pattern replacement syntax. For example, in the ALIAS BY field using this text `Host: [[tag_hostname]]` would substitute in the `hostname` tag value for each legend value and an example legend value would be: `Host: server1`.
