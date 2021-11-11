@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
@@ -110,6 +110,20 @@ export const RolePicker = ({
     return roleOptions;
   };
 
+  const inheritedBuiltinRoles = useMemo(() => {
+    let roles = builtInRoles[builtInRole];
+    if (!roles) {
+      return [];
+    }
+    if (builtInRole === OrgRole.Admin) {
+      roles = roles.concat(builtInRoles[OrgRole.Editor]);
+      roles = roles.concat(builtInRoles[OrgRole.Viewer]);
+    } else if (builtInRole === OrgRole.Editor) {
+      roles = roles.concat(builtInRoles[OrgRole.Viewer]);
+    }
+    return roles;
+  }, [builtInRole, builtInRoles]);
+
   if (isLoading) {
     return null;
   }
@@ -119,7 +133,7 @@ export const RolePicker = ({
       <ClickOutsideWrapper onClick={onClickOutside}>
         <RolePickerInput
           builtInRole={selectedBuiltInRole}
-          builtInRoles={builtInRoles[selectedBuiltInRole]}
+          builtInRoles={inheritedBuiltinRoles}
           appliedRoles={selectedRoles}
           query={query}
           onQueryChange={onInputChange}
