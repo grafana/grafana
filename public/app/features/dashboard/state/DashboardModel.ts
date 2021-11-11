@@ -18,7 +18,6 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 // Utils & Services
 import { contextSrv } from 'app/core/services/context_srv';
-import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { GridPos, PanelModel } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
@@ -47,6 +46,14 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 import { isOnTheSameGridRow } from './utils';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { Subscription } from 'rxjs';
+import { appEvents } from '../../../core/core';
+import {
+  VariablesChanged,
+  VariablesChangedInUrl,
+  VariablesFinishedProcessingTimeRangeChange,
+} from '../../variables/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -100,7 +107,9 @@ export class DashboardModel {
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
-  private hasChangesThatAffectsAllPanels: boolean;
+  private panelsAffectedByVariableChange: number[] | null;
+  private appEventsSubscription: Subscription;
+  private lastRefresh: number;
 
   // ------------------
   // not persisted
@@ -123,7 +132,9 @@ export class DashboardModel {
     panelInView: true,
     getVariablesFromState: true,
     formatDate: true,
-    hasChangesThatAffectsAllPanels: true,
+    appEventsSubscription: true,
+    panelsAffectedByVariableChange: true,
+    lastRefresh: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -167,7 +178,19 @@ export class DashboardModel {
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
-    this.hasChangesThatAffectsAllPanels = false;
+    this.panelsAffectedByVariableChange = null;
+    this.appEventsSubscription = new Subscription();
+    this.lastRefresh = Date.now();
+    this.appEventsSubscription.add(appEvents.subscribe(VariablesChanged, this.variablesChangedHandler.bind(this)));
+    this.appEventsSubscription.add(
+      appEvents.subscribe(
+        VariablesFinishedProcessingTimeRangeChange,
+        this.variablesFinishedProcessingTimeRangeChangeHandler.bind(this)
+      )
+    );
+    this.appEventsSubscription.add(
+      appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
+    );
   }
 
   addBuiltInAnnotationQuery() {
@@ -241,7 +264,7 @@ export class DashboardModel {
     copy.panels = this.getPanelSaveModels();
 
     //  sort by keys
-    copy = sortByKeys(copy);
+    copy = sortedDeepCloneWithoutNulls(copy);
     copy.getVariables = () => {
       return copy.templating.list;
     };
@@ -355,17 +378,22 @@ export class DashboardModel {
     dispatch(onTimeRangeUpdated(timeRange));
   }
 
-  startRefresh() {
+  startRefresh(affectedPanelIds?: number[]) {
     this.events.publish(new RefreshEvent());
+    this.lastRefresh = Date.now();
 
     if (this.panelInEdit) {
-      this.panelInEdit.refresh();
-      return;
+      if (!affectedPanelIds || affectedPanelIds.includes(this.panelInEdit.id)) {
+        this.panelInEdit.refresh();
+        return;
+      }
     }
 
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {
-        panel.refresh();
+        if (!affectedPanelIds || affectedPanelIds.includes(panel.id)) {
+          panel.refresh();
+        }
       }
     }
   }
@@ -403,29 +431,23 @@ export class DashboardModel {
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
-    this.refreshIfChangeAffectsAllPanels();
+    this.refreshIfPanelsAffectedByVariableChange();
   }
 
   exitPanelEditor() {
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
-    this.refreshIfChangeAffectsAllPanels();
     getTimeSrv().resumeAutoRefresh();
+    this.refreshIfPanelsAffectedByVariableChange();
   }
 
-  setChangeAffectsAllPanels() {
-    if (this.panelInEdit || this.panelInView) {
-      this.hasChangesThatAffectsAllPanels = true;
-    }
-  }
-
-  private refreshIfChangeAffectsAllPanels() {
-    if (!this.hasChangesThatAffectsAllPanels) {
+  private refreshIfPanelsAffectedByVariableChange() {
+    if (!this.panelsAffectedByVariableChange) {
       return;
     }
 
-    this.hasChangesThatAffectsAllPanels = false;
-    this.startRefresh();
+    this.startRefresh(this.panelsAffectedByVariableChange);
+    this.panelsAffectedByVariableChange = null;
   }
 
   private ensureListExist(data: any) {
@@ -916,6 +938,7 @@ export class DashboardModel {
   }
 
   destroy() {
+    this.appEventsSubscription.unsubscribe();
     this.events.removeAllListeners();
     for (const panel of this.panels) {
       panel.destroy();
@@ -1194,5 +1217,41 @@ export class DashboardModel {
         filters: cloneDeep(variable.filters),
       };
     });
+  }
+
+  private variablesChangedHandler(event: VariablesChanged) {
+    this.variablesChangedBaseHandler(event, true);
+  }
+
+  private variablesFinishedProcessingTimeRangeChangeHandler(event: VariablesFinishedProcessingTimeRangeChange) {
+    this.variablesChangedBaseHandler(event);
+  }
+
+  private variablesChangedBaseHandler(
+    event: VariablesChanged | VariablesFinishedProcessingTimeRangeChange,
+    processRepeats = false
+  ) {
+    if (processRepeats) {
+      this.processRepeats();
+    }
+
+    if (!event.payload.panelIds || getTimeSrv().isRefreshOutsideThreshold(this.lastRefresh)) {
+      // passing undefined in panelIds means we want to update all panels
+      this.startRefresh(undefined);
+      return;
+    }
+
+    if (this.panelInEdit || this.panelInView) {
+      this.panelsAffectedByVariableChange = event.payload.panelIds.filter(
+        (id) => id !== (this.panelInEdit?.id ?? this.panelInView?.id)
+      );
+    }
+
+    this.startRefresh(event.payload.panelIds);
+  }
+
+  private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
+    this.templateVariableValueUpdated();
+    this.startRefresh(event.payload.panelIds);
   }
 }
