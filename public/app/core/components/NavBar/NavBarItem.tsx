@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { IconName, Link, useTheme2 } from '@grafana/ui';
-import { MenuButton } from './TestMenu';
+import { MenuButton } from './NavBarItemButton';
 import { Item } from '@react-stately/collections';
 import { NavBarMenuItem } from './NavBarMenuItem';
 
