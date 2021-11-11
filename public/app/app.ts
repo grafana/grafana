@@ -25,7 +25,7 @@ import {
   standardTransformersRegistry,
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
-import { importPluginModule } from 'app/features/plugins/plugin_loader';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
 import {
   locationService,
   registerEchoBackend,
@@ -125,12 +125,7 @@ export class GrafanaApp {
       this.angularApp.init();
 
       // Preload selected app plugins
-      const promises: Array<Promise<any>> = [];
-      for (const modulePath of config.pluginsToPreload) {
-        promises.push(importPluginModule(modulePath));
-      }
-
-      await Promise.all(promises);
+      await preloadPlugins(config.pluginsToPreload);
 
       ReactDOM.render(
         React.createElement(AppWrapper, {

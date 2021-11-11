@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,13 +16,13 @@ func TestIntervalCalculator_Calculate(t *testing.T) {
 
 	testCases := []struct {
 		name      string
-		timeRange plugins.DataTimeRange
+		timeRange legacydata.DataTimeRange
 		expected  string
 	}{
-		{"from 5m to now", plugins.NewDataTimeRange("5m", "now"), "200ms"},
-		{"from 15m to now", plugins.NewDataTimeRange("15m", "now"), "500ms"},
-		{"from 30m to now", plugins.NewDataTimeRange("30m", "now"), "1s"},
-		{"from 1h to now", plugins.NewDataTimeRange("1h", "now"), "2s"},
+		{"from 5m to now", legacydata.NewDataTimeRange("5m", "now"), "200ms"},
+		{"from 15m to now", legacydata.NewDataTimeRange("15m", "now"), "500ms"},
+		{"from 30m to now", legacydata.NewDataTimeRange("30m", "now"), "1s"},
+		{"from 1h to now", legacydata.NewDataTimeRange("1h", "now"), "2s"},
 	}
 
 	for _, tc := range testCases {
@@ -38,14 +38,14 @@ func TestIntervalCalculator_CalculateSafeInterval(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		timeRange      plugins.DataTimeRange
+		timeRange      legacydata.DataTimeRange
 		safeResolution int64
 		expected       string
 	}{
-		{"from 5m to now", plugins.NewDataTimeRange("5m", "now"), 11000, "20ms"},
-		{"from 15m to now", plugins.NewDataTimeRange("15m", "now"), 11000, "100ms"},
-		{"from 30m to now", plugins.NewDataTimeRange("30m", "now"), 11000, "200ms"},
-		{"from 24h to now", plugins.NewDataTimeRange("24h", "now"), 11000, "10s"},
+		{"from 5m to now", legacydata.NewDataTimeRange("5m", "now"), 11000, "20ms"},
+		{"from 15m to now", legacydata.NewDataTimeRange("15m", "now"), 11000, "100ms"},
+		{"from 30m to now", legacydata.NewDataTimeRange("30m", "now"), 11000, "200ms"},
+		{"from 24h to now", legacydata.NewDataTimeRange("24h", "now"), 11000, "10s"},
 	}
 
 	for _, tc := range testCases {

@@ -56,6 +56,11 @@ interface ScenarioContext {
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
+const defaultPanelConfig: grafanaData.DataConfigSource = {
+  getFieldOverrideOptions: () => undefined,
+  getTransformations: () => undefined,
+  getDataSupport: () => ({ annotations: false, alertStates: false }),
+};
 
 function describeQueryRunnerScenario(
   description: string,
@@ -64,11 +69,6 @@ function describeQueryRunnerScenario(
 ) {
   describe(description, () => {
     let setupFn = () => {};
-    const defaultPanelConfig: grafanaData.DataConfigSource = {
-      getFieldOverrideOptions: () => undefined,
-      getTransformations: () => undefined,
-      getDataSupport: () => ({ annotations: false, alertStates: false }),
-    };
     const ctx: ScenarioContext = {
       maxDataPoints: 200,
       scopedVars: {
@@ -363,6 +363,35 @@ describe('PanelQueryRunner', () => {
       }),
       // @ts-ignore
       getTransformations: () => [{}],
+      getDataSupport: () => ({ annotations: false, alertStates: false }),
+    }
+  );
+
+  const snapshotData: grafanaData.DataFrameDTO[] = [
+    {
+      fields: [
+        { name: 'time', type: grafanaData.FieldType.time, values: [1000] },
+        { name: 'value', type: grafanaData.FieldType.number, values: [1] },
+      ],
+    },
+  ];
+  describeQueryRunnerScenario(
+    'getData with snapshot data',
+    (ctx) => {
+      it('should return snapshotted data', async () => {
+        ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
+          next: (data: grafanaData.PanelData) => {
+            expect(data.state).toBe(grafanaData.LoadingState.Done);
+            expect(data.series).toEqual(snapshotData);
+            expect(data.timeRange).toEqual(grafanaData.getDefaultTimeRange());
+            return data;
+          },
+        });
+      });
+    },
+    {
+      ...defaultPanelConfig,
+      snapshotData,
     }
   );
 });
