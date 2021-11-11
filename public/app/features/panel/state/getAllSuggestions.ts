@@ -13,6 +13,7 @@ export const panelsToCheckFirst = [
   'status-history',
   'text',
   'dashlist',
+  'logs',
 ];
 
 export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): Promise<VisualizationSuggestion[]> {
@@ -27,5 +28,7 @@ export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): P
     }
   }
 
-  return builder.getList();
+  return builder.getList().sort((a, b) => {
+    return (b.score ?? 0) - (a.score ?? 0);
+  });
 }

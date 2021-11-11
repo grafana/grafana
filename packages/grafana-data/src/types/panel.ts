@@ -1,7 +1,7 @@
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
-import { LoadingState } from './data';
+import { LoadingState, PreferredVisualisationType } from './data';
 import { DataFrame, FieldType } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 import { EventBus } from '../events';
@@ -203,6 +203,8 @@ export interface VisualizationSuggestion<TOptions = any, TFieldConfig = any> {
   transformations?: DataTransformerConfig[];
   /** Tweak for small preview */
   previewModifier?: (suggestion: VisualizationSuggestion) => void;
+  /** A value between 0-100 how suitable suggestion is */
+  score?: number;
 }
 
 /**
@@ -213,12 +215,15 @@ export interface PanelDataSummary {
   rowCountTotal: number;
   rowCountMax: number;
   frameCount: number;
+  fieldCount: number;
   numberFieldCount: number;
   timeFieldCount: number;
   stringFieldCount: number;
   hasNumberField?: boolean;
   hasTimeField?: boolean;
   hasStringField?: boolean;
+  /** The first frame that set's this value */
+  preferredVisualisationType?: PreferredVisualisationType;
 }
 
 /**
@@ -252,11 +257,19 @@ export class VisualizationSuggestionsBuilder {
     let stringFieldCount = 0;
     let rowCountTotal = 0;
     let rowCountMax = 0;
+    let fieldCount = 0;
+    let preferredVisualisationType: PreferredVisualisationType | undefined;
 
     for (const frame of frames) {
       rowCountTotal += frame.length;
 
+      if (frame.meta?.preferredVisualisationType) {
+        preferredVisualisationType = frame.meta.preferredVisualisationType;
+      }
+
       for (const field of frame.fields) {
+        fieldCount++;
+
         switch (field.type) {
           case FieldType.number:
             numberFieldCount += 1;
@@ -281,6 +294,8 @@ export class VisualizationSuggestionsBuilder {
       stringFieldCount,
       rowCountTotal,
       rowCountMax,
+      fieldCount,
+      preferredVisualisationType,
       frameCount: frames.length,
       hasData: rowCountTotal > 0,
       hasTimeField: timeFieldCount > 0,
