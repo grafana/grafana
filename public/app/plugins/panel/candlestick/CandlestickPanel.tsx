@@ -18,9 +18,9 @@ import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBu
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { candlestickFieldsInfo, prepareCandlestickFields } from './fields';
 
-interface MarketPanelProps extends PanelProps<CandlestickOptions> {}
+interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
-export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
+export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
   data,
   timeRange,
   timeZone,

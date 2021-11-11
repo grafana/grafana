@@ -1,7 +1,6 @@
 import { GraphFieldConfig } from '@grafana/schema';
 import {
   Field,
-  FieldConfigProperty,
   FieldType,
   getFieldDisplayName,
   PanelOptionsEditorBuilder,
@@ -38,15 +37,6 @@ const colorStrategy = [
   { label: 'Since Prior Close', value: 'inter' },
 ] as Array<SelectableValue<ColorStrategy>>;
 
-function getMarketFieldConfig() {
-  const v = getGraphFieldConfig(defaultGraphConfig);
-  v.standardOptions![FieldConfigProperty.Unit] = {
-    settings: {},
-    defaultValue: 'currencyUSD',
-  };
-  return v;
-}
-
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 
 function addFieldPicker(
@@ -78,7 +68,7 @@ function addFieldPicker(
 }
 
 export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(MarketTrendPanel)
-  .useFieldConfig(getMarketFieldConfig())
+  .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
     const info = prepareCandlestickFields(context.data, config.theme2, opts);
