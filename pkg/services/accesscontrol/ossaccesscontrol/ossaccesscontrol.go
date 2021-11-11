@@ -13,11 +13,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessControlService {
+func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
 	s := &OSSAccessControlService{
 		cfg:           cfg,
-		usageStats:    usageStats,
 		log:           log.New("accesscontrol"),
+		provider:      provider,
+		usageStats:    usageStats,
 		scopeResolver: accesscontrol.NewScopeResolver(),
 	}
 	s.registerUsageMetrics()
@@ -27,8 +28,9 @@ func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessC
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
 	cfg           *setting.Cfg
-	usageStats    usagestats.Service
 	log           log.Logger
+	provider      accesscontrol.PermissionsProvider
+	usageStats    usagestats.Service
 	registrations accesscontrol.RegistrationList
 	scopeResolver accesscontrol.ScopeResolver
 }
