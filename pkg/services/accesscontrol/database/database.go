@@ -59,7 +59,7 @@ func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}
 		INNER JOIN team_member as tm ON tm.team_id = tr.team_id
 		WHERE tm.user_id = ? AND tr.org_id = ?
 	`
-	params := []interface{}{userID, orgID, globalOrgId, userID, orgID}
+	params := []interface{}{userID, orgID, globalOrgID, userID, orgID}
 
 	if len(roles) != 0 {
 		q += `
@@ -72,7 +72,7 @@ func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}
 		}
 
 		q += `AND (br.org_id = ? OR br.org_id = ?)`
-		params = append(params, orgID, globalOrgId)
+		params = append(params, orgID, globalOrgID)
 	}
 
 	q += `)`
