@@ -17,7 +17,6 @@ import {
   ColorStrategy,
   PriceStyle,
   defaultPanelOptions,
-  CandlestickFieldMap,
 } from './models.gen';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
@@ -53,10 +52,9 @@ const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 function addFieldPicker(
   builder: PanelOptionsEditorBuilder<MarketOptions>,
   info: FieldPickerInfo,
-  mappings: CandlestickFieldMap,
-  data?: CandlestickData
+  data: CandlestickData
 ) {
-  const current = (data as any)[info.key] as Field;
+  const current = data[info.key] as Field;
   let placeholderText = 'Auto ';
   if (current?.config) {
     placeholderText += '= ' + getFieldDisplayName(current);
@@ -125,15 +123,15 @@ export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTre
         defaultValue: defaultColors.down,
       });
 
-    addFieldPicker(builder, candlestickFieldsInfo.open, opts.fields, info);
+    addFieldPicker(builder, candlestickFieldsInfo.open, info);
     if (opts.mode !== MarketTrendMode.Volume) {
-      addFieldPicker(builder, candlestickFieldsInfo.high, opts.fields, info);
-      addFieldPicker(builder, candlestickFieldsInfo.low, opts.fields, info);
+      addFieldPicker(builder, candlestickFieldsInfo.high, info);
+      addFieldPicker(builder, candlestickFieldsInfo.low, info);
     }
-    addFieldPicker(builder, candlestickFieldsInfo.close, opts.fields, info);
+    addFieldPicker(builder, candlestickFieldsInfo.close, info);
 
     if (opts.mode !== MarketTrendMode.Price) {
-      addFieldPicker(builder, candlestickFieldsInfo.volume, opts.fields, info);
+      addFieldPicker(builder, candlestickFieldsInfo.volume, info);
     }
 
     // commonOptionsBuilder.addTooltipOptions(builder);

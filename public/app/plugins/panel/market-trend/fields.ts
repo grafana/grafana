@@ -13,7 +13,7 @@ import { MarketOptions, CandlestickFieldMap } from './models.gen';
 
 export interface FieldPickerInfo {
   /** property name */
-  key: string;
+  key: keyof CandlestickFieldMap;
 
   /** The display name */
   name: string;
@@ -25,15 +25,7 @@ export interface FieldPickerInfo {
   description: string;
 }
 
-interface CandlestickFieldsInfoType {
-  open: FieldPickerInfo;
-  high: FieldPickerInfo;
-  low: FieldPickerInfo;
-  close: FieldPickerInfo;
-  volume: FieldPickerInfo;
-}
-
-export const candlestickFieldsInfo: CandlestickFieldsInfoType = {
+export const candlestickFieldsInfo: Record<keyof CandlestickFieldMap, FieldPickerInfo> = {
   open: {
     key: 'open',
     name: 'Open',
@@ -85,7 +77,7 @@ export interface CandlestickData {
 }
 
 function findFieldOrAuto(frame: DataFrame, info: FieldPickerInfo, options: CandlestickFieldMap): Field | undefined {
-  const field = findField(frame, (options as any)[info.key]);
+  const field = findField(frame, options[info.key]);
   if (!field) {
     for (const field of frame.fields) {
       const name = getFieldDisplayName(field, frame).toLowerCase();
@@ -126,7 +118,7 @@ export function prepareCandlestickFields(
   for (const info of Object.values(candlestickFieldsInfo)) {
     const field = findFieldOrAuto(data.frame, info, fieldMap);
     if (field) {
-      (data as any)[info.key] = field;
+      data[info.key] = field;
       used.add(field);
     }
   }
