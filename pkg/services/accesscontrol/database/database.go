@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	globalOrgId = 0
+	globalOrgID = 0
 )
 
 func ProvideService(sqlStore *sqlstore.SQLStore) *AccessControlStore {
