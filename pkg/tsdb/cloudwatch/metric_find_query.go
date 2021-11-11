@@ -450,7 +450,7 @@ func (e *cloudWatchExecutor) handleGetAllMetrics(ctx context.Context, parameters
 
 // handleGetDimensions returns a slice of suggestData structs with dimension keys.
 // If a dimension filters parameter is specified, a new api call to list metrics will be issued to load dimension keys for the given filter.
-// If no dimension filter is specified, dimension keys will be retrived from the hard coded map in this file.
+// If no dimension filter is specified, dimension keys will be retrieved from the hard coded map in this file.
 func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
