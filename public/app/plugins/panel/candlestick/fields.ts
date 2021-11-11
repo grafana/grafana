@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
 import { prepareGraphableFields } from '../timeseries/utils';
-import { MarketOptions, CandlestickFieldMap } from './models.gen';
+import { CandlestickOptions, CandlestickFieldMap } from './models.gen';
 
 export interface FieldPickerInfo {
   /** property name */
@@ -92,7 +92,7 @@ function findFieldOrAuto(frame: DataFrame, info: FieldPickerInfo, options: Candl
 export function prepareCandlestickFields(
   series: DataFrame[] | undefined,
   theme: GrafanaTheme2,
-  options: MarketOptions
+  options: CandlestickOptions
 ): CandlestickData {
   if (!series?.length) {
     return { warn: 'No data' } as CandlestickData;

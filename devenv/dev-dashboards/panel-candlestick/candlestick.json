@@ -166,7 +166,7 @@
           }
         ],
         "title": "Price & Volume",
-        "type": "market-trend"
+        "type": "candlestick"
       },
       {
         "fieldConfig": {
@@ -265,7 +265,7 @@
             }
           }
         ],
-        "type": "market-trend"
+        "type": "candlestick"
       },
       {
         "fieldConfig": {
@@ -364,7 +364,7 @@
             }
           }
         ],
-        "type": "market-trend"
+        "type": "candlestick"
       },
       {
         "fieldConfig": {
@@ -495,7 +495,7 @@
             }
           }
         ],
-        "type": "market-trend"
+        "type": "candlestick"
       }
     ],
     "refresh": false,

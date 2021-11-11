@@ -35,27 +35,27 @@ export interface CandlestickFieldMap {
   volume?: string;
 }
 
-export interface MarketTrendColors {
+export interface CandlestickColors {
   up: string;
   down: string;
   flat: string;
 }
 
-export const defaultColors: MarketTrendColors = {
+export const defaultColors: CandlestickColors = {
   up: 'green',
   down: 'red',
   flat: 'gray',
 };
 
-export interface MarketOptions extends OptionsWithLegend {
+export interface CandlestickOptions extends OptionsWithLegend {
   mode: MarketTrendMode;
   priceStyle: PriceStyle;
   colorStrategy: ColorStrategy;
   fields: CandlestickFieldMap;
-  colors: MarketTrendColors;
+  colors: CandlestickColors;
 }
 
-export const defaultPanelOptions: MarketOptions = {
+export const defaultPanelOptions: CandlestickOptions = {
   mode: MarketTrendMode.PriceVolume,
   priceStyle: PriceStyle.Candles,
   colorStrategy: ColorStrategy.Intra,

@@ -9,10 +9,10 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { MarketTrendPanel } from './MarketTrendPanel';
+import { MarketTrendPanel } from './CandlestickPanel';
 import {
   defaultColors,
-  MarketOptions,
+  CandlestickOptions,
   MarketTrendMode,
   ColorStrategy,
   PriceStyle,
@@ -50,7 +50,7 @@ function getMarketFieldConfig() {
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 
 function addFieldPicker(
-  builder: PanelOptionsEditorBuilder<MarketOptions>,
+  builder: PanelOptionsEditorBuilder<CandlestickOptions>,
   info: FieldPickerInfo,
   data: CandlestickData
 ) {
@@ -77,7 +77,7 @@ function addFieldPicker(
   });
 }
 
-export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTrendPanel)
+export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(MarketTrendPanel)
   .useFieldConfig(getMarketFieldConfig())
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;

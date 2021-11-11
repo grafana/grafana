@@ -13,12 +13,12 @@ import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPl
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { drawMarkers, FieldIndices } from './utils';
-import { CandlestickFieldMap, defaultColors, MarketOptions, MarketTrendMode } from './models.gen';
+import { CandlestickFieldMap, defaultColors, CandlestickOptions, MarketTrendMode } from './models.gen';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { candlestickFieldsInfo, prepareCandlestickFields } from './fields';
 
-interface MarketPanelProps extends PanelProps<MarketOptions> {}
+interface MarketPanelProps extends PanelProps<CandlestickOptions> {}
 
 export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
   data,
