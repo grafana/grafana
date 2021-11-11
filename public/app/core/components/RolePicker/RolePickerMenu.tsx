@@ -50,9 +50,26 @@ export const RolePickerMenu = ({
   onUpdate,
   onClear,
 }: RolePickerMenuProps): JSX.Element => {
+  const getInheritedBuiltinRoles = useCallback(
+    (newRole: OrgRole) => {
+      let roles = builtInRoles[newRole];
+      if (!roles) {
+        return [];
+      }
+      if (newRole === OrgRole.Admin) {
+        roles = roles.concat(builtInRoles[OrgRole.Editor]);
+        roles = roles.concat(builtInRoles[OrgRole.Viewer]);
+      } else if (newRole === OrgRole.Editor) {
+        roles = roles.concat(builtInRoles[OrgRole.Viewer]);
+      }
+      return roles.filter((role) => !role.name?.startsWith('managed:'));
+    },
+    [builtInRoles]
+  );
+
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
-  const [selectedBuiltInRoles, setSelectedBuiltInRoles] = useState<Role[]>(builtInRoles[builtInRole]);
+  const [selectedBuiltInRoles, setSelectedBuiltInRoles] = useState<Role[]>(getInheritedBuiltinRoles(builtInRole));
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [openedMenuGroup, setOpenedMenuGroup] = useState('');
   const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
@@ -177,15 +194,7 @@ export const RolePickerMenu = ({
 
   const onSelectedBuiltinRoleChange = (newRole: OrgRole) => {
     setSelectedBuiltInRole(newRole);
-
-    let roles = builtInRoles[newRole];
-    if (newRole === OrgRole.Admin) {
-      roles = roles.concat(builtInRoles[OrgRole.Editor]);
-      roles = roles.concat(builtInRoles[OrgRole.Viewer]);
-    } else if (newRole === OrgRole.Editor) {
-      roles = roles.concat(builtInRoles[OrgRole.Viewer]);
-    }
-    setSelectedBuiltInRoles(roles);
+    setSelectedBuiltInRoles(getInheritedBuiltinRoles(newRole));
   };
 
   const onClearInternal = async () => {
