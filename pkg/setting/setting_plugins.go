@@ -38,8 +38,8 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
 	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
 
-	catalogHidePlugins := pluginsSection.Key("plugin_catalog_hide_plugins").MustString("")
-	for _, plug := range strings.Split(catalogHidePlugins, ",") {
+	catalogHiddenPlugins := pluginsSection.Key("plugin_catalog_hidden_plugins").MustString("")
+	for _, plug := range strings.Split(catalogHiddenPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginCatalogHiddenPlugins = append(cfg.PluginCatalogHiddenPlugins, plug)
 	}
