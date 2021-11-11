@@ -2,7 +2,7 @@ import { extend } from 'lodash';
 import coreModule from 'app/angular/core_module';
 // @ts-ignore
 import Drop from 'tether-drop';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 
 /** @ngInject */
 function popoverSrv(this: any, $compile: any, $rootScope: GrafanaRootScope, $timeout: any) {

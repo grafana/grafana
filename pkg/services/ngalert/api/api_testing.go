@@ -8,22 +8,22 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type TestingApiSrv struct {
 	*AlertingProxy
-	Cfg             *setting.Cfg
-	DataService     *tsdb.Service
-	DatasourceCache datasources.CacheService
-	log             log.Logger
+	Cfg               *setting.Cfg
+	ExpressionService *expr.Service
+	DatasourceCache   datasources.CacheService
+	log               log.Logger
 }
 
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
@@ -32,7 +32,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 		if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
 			return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
 		}
-		return conditionEval(c, *body.GrafanaManagedCondition, srv.DatasourceCache, srv.DataService, srv.Cfg, srv.log)
+		return conditionEval(c, *body.GrafanaManagedCondition, srv.DatasourceCache, srv.ExpressionService, srv.Cfg, srv.log)
 	}
 
 	if body.Type() != apimodels.LoTexRulerBackend {
@@ -86,7 +86,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 	}
 
 	evaluator := eval.Evaluator{Cfg: srv.Cfg, Log: srv.log}
-	evalResults, err := evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.DataService)
+	evalResults, err := evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.ExpressionService)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
 	}

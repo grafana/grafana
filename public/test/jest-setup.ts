@@ -3,6 +3,7 @@ import { EventBusSrv } from '@grafana/data';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import $ from 'jquery';
 import 'mutationobserver-shim';
+import './mocks/workers';
 
 const testAppEvents = new EventBusSrv();
 const global = window as any;

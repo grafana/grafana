@@ -7,6 +7,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -22,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,20 +38,20 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
-	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
+	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, secretsService secrets.Service, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:             cfg,
-		DataSourceCache: dataSourceCache,
-		RouteRegister:   routeRegister,
-		SQLStore:        sqlStore,
-		KVStore:         kvStore,
-		DataService:     dataService,
-		DataProxy:       dataProxy,
-		QuotaService:    quotaService,
-		SecretsService:  secretsService,
-		Metrics:         m,
-		Log:             log.New("ngalert"),
+		Cfg:               cfg,
+		DataSourceCache:   dataSourceCache,
+		RouteRegister:     routeRegister,
+		SQLStore:          sqlStore,
+		KVStore:           kvStore,
+		ExpressionService: expressionService,
+		DataProxy:         dataProxy,
+		QuotaService:      quotaService,
+		SecretsService:    secretsService,
+		Metrics:           m,
+		Log:               log.New("ngalert"),
 	}
 
 	if ng.IsDisabled() {
@@ -67,19 +67,19 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
-	Cfg             *setting.Cfg
-	DataSourceCache datasources.CacheService
-	RouteRegister   routing.RouteRegister
-	SQLStore        *sqlstore.SQLStore
-	KVStore         kvstore.KVStore
-	DataService     *tsdb.Service
-	DataProxy       *datasourceproxy.DataSourceProxyService
-	QuotaService    *quota.QuotaService
-	SecretsService  secrets.Service
-	Metrics         *metrics.NGAlert
-	Log             log.Logger
-	schedule        schedule.ScheduleService
-	stateManager    *state.Manager
+	Cfg               *setting.Cfg
+	DataSourceCache   datasources.CacheService
+	RouteRegister     routing.RouteRegister
+	SQLStore          *sqlstore.SQLStore
+	KVStore           kvstore.KVStore
+	ExpressionService *expr.Service
+	DataProxy         *datasourceproxy.DataSourceProxyService
+	QuotaService      *quota.QuotaService
+	SecretsService    secrets.Service
+	Metrics           *metrics.NGAlert
+	Log               log.Logger
+	schedule          schedule.ScheduleService
+	stateManager      *state.Manager
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -136,7 +136,7 @@ func (ng *AlertNG) init() error {
 		appUrl = nil
 	}
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store)
-	scheduler := schedule.NewScheduler(schedCfg, ng.DataService, appUrl, stateManager)
+	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
@@ -145,7 +145,7 @@ func (ng *AlertNG) init() error {
 		Cfg:                  ng.Cfg,
 		DatasourceCache:      ng.DataSourceCache,
 		RouteRegister:        ng.RouteRegister,
-		DataService:          ng.DataService,
+		ExpressionService:    ng.ExpressionService,
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/require"
 )
 
@@ -52,16 +52,16 @@ func TestSimpleReducer(t *testing.T) {
 
 	t.Run("median should ignore null values", func(t *testing.T) {
 		reducer := newSimpleReducer("median")
-		series := plugins.DataTimeSeries{
+		series := legacydata.DataTimeSeries{
 			Name: "test time series",
 		}
 
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(3)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(float64(1)), null.FloatFrom(4)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(float64(2)), null.FloatFrom(5)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(float64(3)), null.FloatFrom(6)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(3)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFrom(float64(1)), null.FloatFrom(4)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFrom(float64(2)), null.FloatFrom(5)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFrom(float64(3)), null.FloatFrom(6)})
 
 		result := reducer.Reduce(series)
 		require.Equal(t, true, result.Valid)
@@ -75,25 +75,25 @@ func TestSimpleReducer(t *testing.T) {
 
 	t.Run("avg with only nulls", func(t *testing.T) {
 		reducer := newSimpleReducer("avg")
-		series := plugins.DataTimeSeries{
+		series := legacydata.DataTimeSeries{
 			Name: "test time series",
 		}
 
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
 		require.Equal(t, false, reducer.Reduce(series).Valid)
 	})
 
 	t.Run("count_non_null", func(t *testing.T) {
 		t.Run("with null values and real values", func(t *testing.T) {
 			reducer := newSimpleReducer("count_non_null")
-			series := plugins.DataTimeSeries{
+			series := legacydata.DataTimeSeries{
 				Name: "test time series",
 			}
 
-			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
-			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
-			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(3), null.FloatFrom(3)})
-			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(3), null.FloatFrom(4)})
+			series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
+			series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
+			series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFrom(3), null.FloatFrom(3)})
+			series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFrom(3), null.FloatFrom(4)})
 
 			require.Equal(t, true, reducer.Reduce(series).Valid)
 			require.Equal(t, 2.0, reducer.Reduce(series).Float64)
@@ -101,12 +101,12 @@ func TestSimpleReducer(t *testing.T) {
 
 		t.Run("with null values", func(t *testing.T) {
 			reducer := newSimpleReducer("count_non_null")
-			series := plugins.DataTimeSeries{
+			series := legacydata.DataTimeSeries{
 				Name: "test time series",
 			}
 
-			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
-			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
+			series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
+			series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
 
 			require.Equal(t, false, reducer.Reduce(series).Valid)
 		})
@@ -114,14 +114,14 @@ func TestSimpleReducer(t *testing.T) {
 
 	t.Run("avg of number values and null values should ignore nulls", func(t *testing.T) {
 		reducer := newSimpleReducer("avg")
-		series := plugins.DataTimeSeries{
+		series := legacydata.DataTimeSeries{
 			Name: "test time series",
 		}
 
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(3), null.FloatFrom(1)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(3)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(3), null.FloatFrom(4)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFrom(3), null.FloatFrom(1)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(3)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFrom(3), null.FloatFrom(4)})
 
 		require.Equal(t, float64(3), reducer.Reduce(series).Float64)
 	})
@@ -179,12 +179,12 @@ func TestSimpleReducer(t *testing.T) {
 
 	t.Run("diff with only nulls", func(t *testing.T) {
 		reducer := newSimpleReducer("diff")
-		series := plugins.DataTimeSeries{
+		series := legacydata.DataTimeSeries{
 			Name: "test time series",
 		}
 
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
 
 		require.Equal(t, false, reducer.Reduce(series).Valid)
 	})
@@ -242,12 +242,12 @@ func TestSimpleReducer(t *testing.T) {
 
 	t.Run("diff_abs with only nulls", func(t *testing.T) {
 		reducer := newSimpleReducer("diff_abs")
-		series := plugins.DataTimeSeries{
+		series := legacydata.DataTimeSeries{
 			Name: "test time series",
 		}
 
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
 
 		require.Equal(t, false, reducer.Reduce(series).Valid)
 	})
@@ -305,12 +305,12 @@ func TestSimpleReducer(t *testing.T) {
 
 	t.Run("percent_diff with only nulls", func(t *testing.T) {
 		reducer := newSimpleReducer("percent_diff")
-		series := plugins.DataTimeSeries{
+		series := legacydata.DataTimeSeries{
 			Name: "test time series",
 		}
 
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
 
 		require.Equal(t, false, reducer.Reduce(series).Valid)
 	})
@@ -368,12 +368,12 @@ func TestSimpleReducer(t *testing.T) {
 
 	t.Run("percent_diff_abs with only nulls", func(t *testing.T) {
 		reducer := newSimpleReducer("percent_diff_abs")
-		series := plugins.DataTimeSeries{
+		series := legacydata.DataTimeSeries{
 			Name: "test time series",
 		}
 
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
 
 		require.Equal(t, false, reducer.Reduce(series).Valid)
 	})
@@ -396,12 +396,12 @@ func TestSimpleReducer(t *testing.T) {
 
 func testReducer(reducerType string, datapoints ...float64) float64 {
 	reducer := newSimpleReducer(reducerType)
-	series := plugins.DataTimeSeries{
+	series := legacydata.DataTimeSeries{
 		Name: "test time series",
 	}
 
 	for idx := range datapoints {
-		series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(datapoints[idx]), null.FloatFrom(1234134)})
+		series.Points = append(series.Points, legacydata.DataTimePoint{null.FloatFrom(datapoints[idx]), null.FloatFrom(1234134)})
 	}
 
 	return reducer.Reduce(series).Float64

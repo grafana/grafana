@@ -27,7 +27,7 @@ describe('ElasticDetails', () => {
     const onChangeMock = jest.fn();
     const wrapper = mount(<ElasticDetails onChange={onChangeMock} value={createDefaultConfigOptions()} />);
     const selectEl = wrapper.find({ label: 'Pattern' }).find(Select);
-    selectEl.props().onChange({ value: 'Daily', label: 'Daily' });
+    selectEl.props().onChange({ value: 'Daily', label: 'Daily' }, { action: 'select-option', option: undefined });
 
     expect(onChangeMock.mock.calls[0][0].jsonData.interval).toBe('Daily');
     expect(onChangeMock.mock.calls[0][0].database).toBe('[logstash-]YYYY.MM.DD');
@@ -40,7 +40,7 @@ describe('ElasticDetails', () => {
     const wrapper = mount(<ElasticDetails onChange={onChangeMock} value={options} />);
 
     const selectEl = wrapper.find({ label: 'Pattern' }).find(Select);
-    selectEl.props().onChange({ value: 'Monthly', label: 'Monthly' });
+    selectEl.props().onChange({ value: 'Monthly', label: 'Monthly' }, { action: 'select-option', option: undefined });
 
     expect(onChangeMock.mock.calls[0][0].jsonData.interval).toBe('Monthly');
     expect(onChangeMock.mock.calls[0][0].database).toBe('[logstash-]YYYY.MM');
@@ -78,7 +78,12 @@ describe('ElasticDetails', () => {
         });
 
         const selectEl = wrapper.find({ label: 'Version' }).find(Select);
-        selectEl.props().onChange({ value: tc.version, label: tc.version.toString() });
+        selectEl
+          .props()
+          .onChange(
+            { value: tc.version, label: tc.version.toString() },
+            { action: 'select-option', option: undefined }
+          );
 
         expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(
           tc.expectedMaxConcurrentShardRequests
