@@ -33,7 +33,7 @@ func NewLotexRuler(proxy *AlertingProxy, log log.Logger) *LotexRuler {
 }
 
 func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
@@ -51,7 +51,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) res
 }
 
 func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
@@ -74,7 +74,7 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response
 }
 
 func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
@@ -96,7 +96,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 }
 
 func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
@@ -119,10 +119,11 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 }
 
 func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
+
 	return r.withReq(
 		ctx,
 		http.MethodGet,
@@ -137,7 +138,7 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respon
 }
 
 func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
@@ -150,11 +151,16 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 	return r.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
 }
 
-func (r *LotexRuler) getPrefix(ctx *models.ReqContext) (string, error) {
+func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error) {
 	ds, err := r.DataProxy.DataSourceCache.GetDatasource(ctx.ParamsInt64(":Recipient"), ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return "", err
 	}
+	// Validate URL
+	if ds.Url == "" {
+		return "", fmt.Errorf("URL for this data source is empty")
+	}
+
 	prefix, ok := dsTypeToRulerPrefix[ds.Type]
 	if !ok {
 		return "", fmt.Errorf("unexpected datasource type. expecting loki or prometheus")
