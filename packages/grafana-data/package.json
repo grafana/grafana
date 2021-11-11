@@ -42,7 +42,6 @@
     "@rollup/plugin-commonjs": "21.0.1",
     "@rollup/plugin-json": "4.1.0",
     "@rollup/plugin-node-resolve": "13.0.6",
-    "@swc/core": "1.2.103",
     "@swc/helpers": "0.2.13",
     "@testing-library/dom": "8.10.1",
     "@testing-library/jest-dom": "5.11.9",
