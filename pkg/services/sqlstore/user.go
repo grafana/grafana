@@ -522,7 +522,8 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
-		query.Result = cached.(*models.SignedInUser)
+		cachedUser := cached.(models.SignedInUser)
+		query.Result = &cachedUser
 		return nil
 	}
 
@@ -532,7 +533,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 	}
 
 	cacheKey = newSignedInUserCacheKey(query.Result.OrgId, query.UserId)
-	ss.CacheService.Set(cacheKey, query.Result, time.Second*5)
+	ss.CacheService.Set(cacheKey, *query.Result, time.Second*5)
 	return nil
 }
 
