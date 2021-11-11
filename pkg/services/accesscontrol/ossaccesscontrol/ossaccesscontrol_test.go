@@ -146,7 +146,7 @@ func TestUsageMetrics(t *testing.T) {
 			}
 
 			s := ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
-			report, err := s.UsageStats.GetUsageReport(context.Background())
+			report, err := s.usageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
 			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
@@ -259,9 +259,9 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := &OSSAccessControlService{
-				Cfg:        setting.NewCfg(),
-				UsageStats: &usagestats.UsageStatsMock{T: t},
-				Log:        log.New("accesscontrol-test"),
+				cfg:        setting.NewCfg(),
+				usageStats: &usagestats.UsageStatsMock{T: t},
+				log:        log.New("accesscontrol-test"),
 			}
 
 			for i, run := range tc.runs {
@@ -378,12 +378,12 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ac := &OSSAccessControlService{
-				Cfg:           setting.NewCfg(),
-				UsageStats:    &usagestats.UsageStatsMock{T: t},
-				Log:           log.New("accesscontrol-test"),
+				cfg:           setting.NewCfg(),
+				usageStats:    &usagestats.UsageStatsMock{T: t},
+				log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
 			}
-			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			ac.cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 			// Test
 			err := ac.DeclareFixedRoles(tt.registrations...)
@@ -464,12 +464,12 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 
 			// Setup
 			ac := &OSSAccessControlService{
-				Cfg:           setting.NewCfg(),
-				UsageStats:    &usagestats.UsageStatsMock{T: t},
-				Log:           log.New("accesscontrol-test"),
+				cfg:           setting.NewCfg(),
+				usageStats:    &usagestats.UsageStatsMock{T: t},
+				log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
 			}
-			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			ac.cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 			ac.registrations.Append(tt.registrations...)
 
 			// Test
@@ -551,13 +551,13 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			// Setup
 			ac := &OSSAccessControlService{
-				Cfg:           setting.NewCfg(),
-				UsageStats:    &usagestats.UsageStatsMock{T: t},
-				Log:           log.New("accesscontrol-test"),
+				cfg:           setting.NewCfg(),
+				usageStats:    &usagestats.UsageStatsMock{T: t},
+				log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
 				scopeResolver: accesscontrol.NewScopeResolver(),
 			}
-			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			ac.cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
 			err := ac.DeclareFixedRoles(registration)

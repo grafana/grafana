@@ -15,9 +15,9 @@ import (
 
 func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		Cfg:           cfg,
-		UsageStats:    usageStats,
-		Log:           log.New("accesscontrol"),
+		cfg:           cfg,
+		usageStats:    usageStats,
+		log:           log.New("accesscontrol"),
 		scopeResolver: accesscontrol.NewScopeResolver(),
 	}
 	s.registerUsageMetrics()
@@ -26,24 +26,24 @@ func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessC
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
-	Cfg           *setting.Cfg
-	UsageStats    usagestats.Service
-	Log           log.Logger
+	cfg           *setting.Cfg
+	usageStats    usagestats.Service
+	log           log.Logger
 	registrations accesscontrol.RegistrationList
 	scopeResolver accesscontrol.ScopeResolver
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
-	if ac.Cfg == nil {
+	if ac.cfg == nil {
 		return true
 	}
 
-	_, exists := ac.Cfg.FeatureToggles["accesscontrol"]
+	_, exists := ac.cfg.FeatureToggles["accesscontrol"]
 	return !exists
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {
-	ac.UsageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
+	ac.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 		return map[string]interface{}{
 			"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
 		}, nil
@@ -136,7 +136,7 @@ func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
 		// needs to be increased. Hence, we don't overwrite a role with a
 		// greater version.
 		if storedRole.Version >= role.Version {
-			ac.Log.Debug("the has already been stored in a greater version, skipping registration", "role", role.Name)
+			ac.log.Debug("the has already been stored in a greater version, skipping registration", "role", role.Name)
 			return
 		}
 	}
@@ -152,7 +152,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 		if ok {
 			for _, assignedRole := range assignments {
 				if assignedRole == role.Name {
-					ac.Log.Debug("the role has already been assigned", "rolename", role.Name, "build_in_role", builtInRole)
+					ac.log.Debug("the role has already been assigned", "rolename", role.Name, "build_in_role", builtInRole)
 					alreadyAssigned = true
 				}
 			}
