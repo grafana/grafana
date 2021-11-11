@@ -2,6 +2,7 @@ import { Fill, RegularShape, Stroke, Circle, Style, Icon } from 'ol/style';
 import { Registry, RegistryItem } from '@grafana/data';
 import { StyleConfigValues, StyleMaker } from './types';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
+import tinycolor from 'tinycolor2';
 
 const DEFAULT_SIZE = 5;
 
@@ -28,11 +29,16 @@ const MarkerShapePath = {
   x: 'img/icons/marker/x-mark.svg',
 };
 
-function getStrokeAndFill(cfg: StyleConfigValues) {
-  return {
-    stroke: cfg.lineColor ? new Stroke({ color: cfg.lineColor, width: cfg.lineWidth ?? 1 }) : undefined,
-    fill: cfg.fillColor ? new Fill({ color: cfg.fillColor }) : undefined,
-  };
+export function getFillColor(cfg: StyleConfigValues) {
+  const opacity = cfg.opacity == null ? 0.8 : cfg.opacity;
+  if (opacity === 1) {
+    return new Fill({ color: cfg.color });
+  }
+  if (opacity > 0) {
+    const color = tinycolor(cfg.color).setAlpha(opacity).toRgbString();
+    return new Fill({ color });
+  }
+  return undefined;
 }
 
 export const circleMarker: SymbolMaker = {
@@ -42,11 +48,37 @@ export const circleMarker: SymbolMaker = {
   make: (cfg: StyleConfigValues) => {
     return new Style({
       image: new Circle({
-        ...getStrokeAndFill(cfg),
+        stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
+        fill: getFillColor(cfg),
         radius: cfg.size ?? DEFAULT_SIZE,
       }),
     });
   },
+};
+
+// Square and cross
+const errorMarker = (cfg: StyleConfigValues) => {
+  const radius = cfg.size ?? DEFAULT_SIZE;
+  const stroke = new Stroke({ color: '#F00', width: 1 });
+  return [
+    new Style({
+      image: new RegularShape({
+        stroke,
+        points: 4,
+        radius,
+        angle: Math.PI / 4,
+      }),
+    }),
+    new Style({
+      image: new RegularShape({
+        stroke,
+        points: 4,
+        radius,
+        radius2: 0,
+        angle: 0,
+      }),
+    }),
+  ];
 };
 
 const makers: SymbolMaker[] = [
@@ -59,7 +91,8 @@ const makers: SymbolMaker[] = [
       const radius = cfg.size ?? DEFAULT_SIZE;
       return new Style({
         image: new RegularShape({
-          ...getStrokeAndFill(cfg),
+          stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
+          fill: getFillColor(cfg),
           points: 4,
           radius,
           angle: Math.PI / 4,
@@ -75,7 +108,8 @@ const makers: SymbolMaker[] = [
       const radius = cfg.size ?? DEFAULT_SIZE;
       return new Style({
         image: new RegularShape({
-          ...getStrokeAndFill(cfg),
+          stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
+          fill: getFillColor(cfg),
           points: 3,
           radius,
           rotation: Math.PI / 4,
@@ -92,7 +126,8 @@ const makers: SymbolMaker[] = [
       const radius = cfg.size ?? DEFAULT_SIZE;
       return new Style({
         image: new RegularShape({
-          ...getStrokeAndFill(cfg),
+          stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
+          fill: getFillColor(cfg),
           points: 5,
           radius,
           radius2: radius * 0.4,
@@ -109,7 +144,7 @@ const makers: SymbolMaker[] = [
       const radius = cfg.size ?? DEFAULT_SIZE;
       return new Style({
         image: new RegularShape({
-          ...getStrokeAndFill(cfg),
+          stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
           points: 4,
           radius,
           radius2: 0,
@@ -126,7 +161,7 @@ const makers: SymbolMaker[] = [
       const radius = cfg.size ?? DEFAULT_SIZE;
       return new Style({
         image: new RegularShape({
-          ...getStrokeAndFill(cfg),
+          stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
           points: 4,
           radius,
           radius2: 0,
@@ -137,8 +172,40 @@ const makers: SymbolMaker[] = [
   },
 ];
 
+async function prepareSVG(url: string): Promise<string> {
+  return fetch(url, { method: 'GET' })
+    .then((res) => {
+      return res.text();
+    })
+    .then((text) => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'image/svg+xml');
+      const svg = doc.getElementsByTagName('svg')[0];
+      if (!svg) {
+        return '';
+      }
+      // open layers requires a white fill becaues it uses tint to set color
+      svg.setAttribute('fill', '#fff');
+      const svgString = new XMLSerializer().serializeToString(svg);
+      const svgURI = encodeURIComponent(svgString);
+      return `data:image/svg+xml,${svgURI}`;
+    })
+    .catch((error) => {
+      console.error(error);
+      return '';
+    });
+}
+
 // Really just a cache for the various symbol styles
 const markerMakers = new Registry<SymbolMaker>(() => makers);
+
+export function getMarkerAsPath(shape?: string): string | undefined {
+  const marker = markerMakers.getIfExists(shape);
+  if (marker?.aliasIds?.length) {
+    return marker.aliasIds[0];
+  }
+  return undefined;
+}
 
 // Will prepare symbols as necessary
 export async function getMarkerMaker(symbol?: string): Promise<StyleMaker> {
@@ -146,30 +213,47 @@ export async function getMarkerMaker(symbol?: string): Promise<StyleMaker> {
     return circleMarker.make;
   }
 
-  const maker = markerMakers.getIfExists(symbol);
+  let maker = markerMakers.getIfExists(symbol);
   if (maker) {
     return maker.make;
   }
 
-  // TODO: prepare the svg
+  // Prepare svg as icon
   if (symbol.endsWith('.svg')) {
-    const absolute = getPublicOrAbsoluteUrl(symbol);
-
-    const svg = (cfg: StyleConfigValues) => {
-      const radius = cfg.size ?? DEFAULT_SIZE;
-      return new Style({
-        image: new Icon({
-          src: absolute,
-          color: cfg.fillColor,
-          //  opacity,
-          scale: (DEFAULT_SIZE + radius) / 100,
-        }),
-      });
+    const src = await prepareSVG(getPublicOrAbsoluteUrl(symbol));
+    maker = {
+      id: symbol,
+      name: symbol,
+      aliasIds: [],
+      make: src
+        ? (cfg: StyleConfigValues) => {
+            const radius = cfg.size ?? DEFAULT_SIZE;
+            return [
+              new Style({
+                image: new Icon({
+                  src,
+                  color: cfg.color,
+                  opacity: cfg.opacity ?? 1,
+                  scale: (DEFAULT_SIZE + radius) / 100,
+                }),
+              }),
+              // transparent bounding box for featureAtPixel detection
+              new Style({
+                image: new RegularShape({
+                  fill: new Fill({ color: 'rgba(0,0,0,0)' }),
+                  points: 4,
+                  radius: cfg.size,
+                  angle: Math.PI / 4,
+                }),
+              }),
+            ];
+          }
+        : errorMarker,
     };
-
-    return svg;
+    markerMakers.register(maker);
+    return maker.make;
   }
 
   // defatult to showing a circle
-  return circleMarker.make;
+  return errorMarker;
 }

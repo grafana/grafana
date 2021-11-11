@@ -25,8 +25,8 @@ export interface StyleConfig {
 
 // Applying the config to real data gives the values
 export interface StyleConfigValues {
-  fillColor: string;
-  lineColor?: string;
+  color: string;
+  opacity?: number;
   lineWidth?: number;
   size?: number;
   symbol?: string; // the point symbol

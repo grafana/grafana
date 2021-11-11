@@ -1,8 +1,7 @@
 import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
-import { ColorDimensionConfig, ResourceDimensionConfig, ScaleDimensionConfig } from 'app/features/dimensions';
+import { ColorDimensionConfig } from 'app/features/dimensions';
 import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
-import { Style } from 'ol/style';
 import { MapCenterID } from './view';
 
 export interface ControlsOptions {
@@ -48,6 +47,7 @@ export interface GeomapPanelOptions {
 }
 export interface FeatureStyleConfig {
   fillColor: ColorDimensionConfig;
+  opacity?: number;
   strokeWidth?: number;
   rule?: FeatureRuleConfig;
 }
@@ -79,25 +79,3 @@ export interface MapLayerState<TConfig = any> {
   onChange: (cfg: MapLayerOptions<TConfig>) => void;
   isBasemap?: boolean;
 }
-export interface StyleMakerConfig {
-  color: string;
-  fillColor: string;
-  size: number;
-  markerPath?: string;
-  text?: string;
-}
-
-// StyleConfig is used to define style for featues
-export interface StyleConfig {
-  color: ColorDimensionConfig;
-  opacity?: number; // defaults to 80%
-
-  // For non-points
-  stroke?: number;
-
-  // Used for points
-  size?: ScaleDimensionConfig;
-  symbol?: ResourceDimensionConfig;
-}
-
-export type StyleMaker = (config: StyleMakerConfig) => Style;

@@ -11,7 +11,6 @@ import Feature from 'ol/Feature';
 import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
-import * as style from 'ol/style';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import {
   ColorDimensionConfig,
@@ -21,15 +20,13 @@ import {
   ResourceDimensionConfig,
   ResourceDimensionMode,
   ResourceFolderName,
-  getPublicOrAbsoluteUrl,
 } from 'app/features/dimensions';
 import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { getMarkerFromPath } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
-import { StyleMaker, StyleMakerConfig } from '../../types';
+import { getMarkerMaker } from '../../style/markers';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -99,6 +96,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
+    const markerMaker = await getMarkerMaker(config.markerSymbol?.fixed);
+
     return {
       init: () => vectorLayer,
       legend: legend,
@@ -106,24 +105,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         if (!data.series?.length) {
           return; // ignore empty
         }
-
-        const markerPath =
-          getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
-
-        const marker = getMarkerFromPath(config.markerSymbol?.fixed);
-
-        const makeIconStyle = (cfg: StyleMakerConfig) => {
-          return new style.Style({
-            image: new style.Icon({
-              src: markerPath,
-              color: cfg.color,
-              //  opacity,
-              scale: (DEFAULT_SIZE + cfg.size) / 100,
-            }),
-          });
-        };
-
-        const shape: StyleMaker = marker?.make ?? makeIconStyle;
 
         const features: Feature<Point>[] = [];
 
@@ -142,7 +123,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             colorDim: colorDim,
             sizeDim: sizeDim,
             opacity: opacity,
-            styleMaker: shape,
+            styleMaker: markerMaker,
           };
 
           const frameFeatures = getFeatures(frame, info, featureDimensionConfig);

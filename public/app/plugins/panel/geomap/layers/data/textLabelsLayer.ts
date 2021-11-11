@@ -2,7 +2,6 @@ import { GrafanaTheme2, MapLayerOptions, MapLayerRegistryItem, PanelData, Plugin
 import Map from 'ol/Map';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
-import * as style from 'ol/style';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import {
   ColorDimensionConfig,
@@ -14,11 +13,10 @@ import {
   TextDimensionMode,
 } from 'app/features/dimensions';
 import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
-import { Fill, Stroke } from 'ol/style';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
 import { Feature } from 'ol';
 import { Point } from 'ol/geom';
-import { StyleMaker, StyleMakerConfig } from '../../types';
+import { textMarkerMaker } from '../../style/text';
 
 interface TextLabelsConfig {
   labelText: TextDimensionConfig;
@@ -62,23 +60,6 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
       ...options?.config,
     };
 
-    const fontFamily = theme.typography.fontFamily;
-
-    const getTextStyle = (text: string, fillColor: string, fontSize: number) => {
-      return new style.Text({
-        text: text,
-        fill: new Fill({ color: fillColor }),
-        stroke: new Stroke({ color: fillColor }),
-        font: `normal ${fontSize}px ${fontFamily}`,
-      });
-    };
-
-    const getStyle: StyleMaker = (cfg: StyleMakerConfig) => {
-      return new style.Style({
-        text: getTextStyle(cfg.text ?? defaultOptions.labelText.fixed, cfg.fillColor, cfg.size),
-      });
-    };
-
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
@@ -105,7 +86,7 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
             sizeDim: sizeDim,
             textDim: textDim,
             opacity: opacity,
-            styleMaker: getStyle,
+            styleMaker: textMarkerMaker,
           };
 
           const frameFeatures = getFeatures(frame, info, featureDimensionConfig);
