@@ -24,6 +24,7 @@ const searchItem: NavModelItem = {
   id: SEARCH_ITEM_ID,
   onClick: onOpenSearch,
   text: 'Search dashboards',
+  icon: 'search',
 };
 
 export const NavBar: FC = React.memo(() => {
@@ -58,7 +59,7 @@ export const NavBar: FC = React.memo(() => {
       </div>
 
       <NavBarSection>
-        <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
+        <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false} id="home">
           <Branding.MenuLogo />
         </NavBarItem>
         <NavBarItem
@@ -66,6 +67,8 @@ export const NavBar: FC = React.memo(() => {
           isActive={activeItem === searchItem}
           label={searchItem.text}
           onClick={searchItem.onClick}
+          id="search"
+          link={searchItem}
         >
           <Icon name="search" size="xl" />
         </NavBarItem>
@@ -80,6 +83,9 @@ export const NavBar: FC = React.memo(() => {
             menuItems={link.children}
             target={link.target}
             url={link.url}
+            link={link}
+            id={link.id}
+            index={index}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -101,6 +107,9 @@ export const NavBar: FC = React.memo(() => {
             reverseMenuDirection
             target={link.target}
             url={link.url}
+            link={link}
+            id={link.id}
+            index={index}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
