@@ -78,7 +78,6 @@ grafanaRuntime.SystemJS.config({
 
 function exposeToPlugin(name: string, component: any) {
   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
-    console.log('registerDynamic callback', name);
     module.exports = component;
   });
 }
@@ -184,7 +183,7 @@ export async function importPluginModule(path: string, version?: string): Promis
     if (typeof builtIn === 'function') {
       return await builtIn();
     } else {
-      return Promise.resolve(builtIn);
+      return builtIn;
     }
   }
   return grafanaRuntime.SystemJS.import(path);

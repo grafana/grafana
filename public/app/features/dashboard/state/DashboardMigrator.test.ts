@@ -1801,6 +1801,16 @@ describe('DashboardModel', () => {
               },
             ],
           },
+          {
+            type: 'row',
+            id: 5,
+            panels: [
+              {
+                id: 6,
+                datasource: 'prom',
+              },
+            ],
+          },
         ],
       });
     });
@@ -1823,6 +1833,10 @@ describe('DashboardModel', () => {
 
     it('should update target datasource props to refs', () => {
       expect(model.panels[2].targets[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+
+    it('should update datasources in panels collapsed rows', () => {
+      expect(model.panels[3].panels[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
     });
   });
 });
