@@ -71,7 +71,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     if install_deps:
         common_cmds.extend([
             './bin/grabpl gen-version {}'.format(args),
-            'yarn install --immutable',
+            'YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable',
         ])
     if edition in ('enterprise', 'enterprise2'):
         source_commit = ''

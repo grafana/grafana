@@ -33,7 +33,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  - YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
@@ -292,7 +292,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  - YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
   image: grafana/build-container:1.4.5
   name: initialize
 - image: grafana/drone-downstream
@@ -754,7 +754,7 @@ steps:
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - ./bin/grabpl gen-version ${DRONE_TAG}
-  - yarn install --immutable
+  - YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
@@ -1128,7 +1128,7 @@ steps:
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - ./bin/grabpl gen-version ${DRONE_TAG}
-  - yarn install --immutable
+  - YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
   depends_on:
   - clone
   image: grafana/build-container:1.4.5
@@ -1683,7 +1683,7 @@ steps:
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   - ./bin/grabpl gen-version v7.3.0-test
-  - yarn install --immutable
+  - YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
@@ -2046,7 +2046,7 @@ steps:
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   - ./bin/grabpl gen-version v7.3.0-test
-  - yarn install --immutable
+  - YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
   depends_on:
   - clone
   image: grafana/build-container:1.4.5
@@ -2598,7 +2598,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  - YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
@@ -2933,7 +2933,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  - YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
   depends_on:
   - clone
   image: grafana/build-container:1.4.5
@@ -3430,6 +3430,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 602cb0cf445a9932937cae8a2a396572f53f94c457e426564ad845b1ee54205c
+hmac: 9219309ce9a712b7d00e898cf185dd378eb41d1f370efb27cb753c036cdbbfe3
 
 ...
