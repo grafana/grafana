@@ -60,7 +60,7 @@ export const RolePickerInput = ({
       <Tooltip
         content={
           <>
-            {builtInRoles.map((role) => (
+            {builtInRoles?.map((role) => (
               <p key={role.uid}>{role.displayName}</p>
             ))}
           </>
@@ -77,7 +77,7 @@ export const RolePickerInput = ({
       <Tooltip
         content={
           <>
-            {builtInRoles.map((role) => (
+            {builtInRoles?.map((role) => (
               <p key={role.uid}>{role.displayName}</p>
             ))}
           </>

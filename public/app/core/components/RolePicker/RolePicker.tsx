@@ -41,11 +41,13 @@ export const RolePicker = ({
         const builtInRoles = await getBuiltinRoles();
         setBuiltinRoles(builtInRoles);
 
-        const builtInUids = builtInRoles[builtInRole].map((r) => r.uid);
-        const roles = await getRoles();
-        const applied = roles.filter((role) => !builtInUids.includes(role.uid));
-        setAppliedRoles(applied);
-        setSelectedRoles(applied);
+        if (builtInRoles[builtInRole]) {
+          const builtInUids = builtInRoles[builtInRole].map((r) => r.uid);
+          const roles = await getRoles();
+          const applied = roles.filter((role) => !builtInUids.includes(role.uid));
+          setAppliedRoles(applied);
+          setSelectedRoles(applied);
+        }
       } catch (e) {
         // TODO handle error
         console.error('Error loading options');
@@ -75,6 +77,9 @@ export const RolePicker = ({
     setSelectedBuiltInRole(builtInRole);
   }, [appliedRoles, builtInRole]);
 
+  // Only call onClose if menu is open. Prevent unnecessary calls for multiple pickers on the page.
+  const onClickOutside = () => isOpen && onClose();
+
   const onInputChange = (query?: string) => {
     if (query) {
       setQuery(query);
@@ -94,6 +99,8 @@ export const RolePicker = ({
   const onUpdate = (newBuiltInRole: OrgRole, newRoles: string[]) => {
     onBuiltinRoleChange(newBuiltInRole);
     onRolesChange(newRoles);
+    setOpen(false);
+    setQuery('');
   };
 
   const getOptions = () => {
@@ -109,7 +116,7 @@ export const RolePicker = ({
 
   return (
     <div data-testid="role-picker" style={{ position: 'relative' }}>
-      <ClickOutsideWrapper onClick={onClose}>
+      <ClickOutsideWrapper onClick={onClickOutside}>
         <RolePickerInput
           builtInRole={selectedBuiltInRole}
           builtInRoles={builtInRoles[selectedBuiltInRole]}

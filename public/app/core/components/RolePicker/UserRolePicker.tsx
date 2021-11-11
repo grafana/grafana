@@ -8,24 +8,34 @@ export interface Props {
   userId: number;
   orgId?: number;
   onBuiltinRoleChange: (newRole: OrgRole) => void;
+  getRoleOptions?: () => Promise<Role[]>;
+  getBuiltinRoles?: () => Promise<{ [key: string]: Role[] }>;
   disabled?: boolean;
 }
 
-export const UserRolePicker: FC<Props> = ({ builtInRole, userId, orgId, onBuiltinRoleChange, disabled }) => {
+export const UserRolePicker: FC<Props> = ({
+  builtInRole,
+  userId,
+  orgId,
+  onBuiltinRoleChange,
+  getRoleOptions,
+  getBuiltinRoles,
+  disabled,
+}) => {
   return (
     <RolePicker
       builtInRole={builtInRole}
       onRolesChange={(roles) => updateUserRoles(roles, userId, orgId)}
       onBuiltinRoleChange={onBuiltinRoleChange}
-      getRoleOptions={async () => getRolesOptions(orgId)}
-      getRoles={async () => getUserRoles(userId, orgId)}
-      getBuiltinRoles={async () => getBuiltinRoles(orgId)}
+      getRoleOptions={() => (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId))}
+      getRoles={() => fetchUserRoles(userId, orgId)}
+      getBuiltinRoles={() => (getBuiltinRoles ? getBuiltinRoles() : fetchBuiltinRoles(orgId))}
       disabled={disabled}
     />
   );
 };
 
-export const getRolesOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
+export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
   let rolesUrl = '/api/access-control/roles';
   if (orgId) {
     rolesUrl += `?targetOrgId=${orgId}`;
@@ -37,7 +47,7 @@ export const getRolesOptions = async (orgId?: number, query?: string): Promise<R
   return roles;
 };
 
-export const getBuiltinRoles = (orgId?: number): Promise<{ [key: string]: Role[] }> => {
+export const fetchBuiltinRoles = (orgId?: number): Promise<{ [key: string]: Role[] }> => {
   let builtinRolesUrl = '/api/access-control/builtin-roles';
   if (orgId) {
     builtinRolesUrl += `?targetOrgId=${orgId}`;
@@ -45,7 +55,7 @@ export const getBuiltinRoles = (orgId?: number): Promise<{ [key: string]: Role[]
   return getBackendSrv().get(builtinRolesUrl);
 };
 
-export const getUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
+export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
   let userRolesUrl = `/api/access-control/users/${userId}/roles`;
   if (orgId) {
     userRolesUrl += `?targetOrgId=${orgId}`;
