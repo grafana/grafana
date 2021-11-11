@@ -41,19 +41,14 @@ export function getFillColor(cfg: StyleConfigValues) {
   return undefined;
 }
 
-export const circleMarker: SymbolMaker = {
-  id: RegularShapeId.circle,
-  name: 'Circle',
-  aliasIds: [MarkerShapePath.circle],
-  make: (cfg: StyleConfigValues) => {
-    return new Style({
-      image: new Circle({
-        stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
-        fill: getFillColor(cfg),
-        radius: cfg.size ?? DEFAULT_SIZE,
-      }),
-    });
-  },
+export const circleMarker = (cfg: StyleConfigValues) => {
+  return new Style({
+    image: new Circle({
+      stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
+      fill: getFillColor(cfg),
+      radius: cfg.size ?? DEFAULT_SIZE,
+    }),
+  });
 };
 
 // Square and cross
@@ -82,7 +77,12 @@ const errorMarker = (cfg: StyleConfigValues) => {
 };
 
 const makers: SymbolMaker[] = [
-  circleMarker,
+  {
+    id: RegularShapeId.circle,
+    name: 'Circle',
+    aliasIds: [MarkerShapePath.circle],
+    make: circleMarker,
+  },
   {
     id: RegularShapeId.square,
     name: 'Square',
@@ -210,7 +210,7 @@ export function getMarkerAsPath(shape?: string): string | undefined {
 // Will prepare symbols as necessary
 export async function getMarkerMaker(symbol?: string): Promise<StyleMaker> {
   if (!symbol) {
-    return circleMarker.make;
+    return circleMarker;
   }
 
   let maker = markerMakers.getIfExists(symbol);

@@ -6,21 +6,40 @@ import {
 } from 'app/features/dimensions';
 import { Style } from 'ol/style';
 
+export enum GeometryTypeId {
+  Point = 'point',
+  Line = 'line',
+  Polygon = 'polygon',
+  Any = '*any*',
+}
+
 // StyleConfig is saved in panel json and is used to configure how items get rendered
 export interface StyleConfig {
   color?: ColorDimensionConfig;
   opacity?: number; // defaults to 80%
 
   // For non-points
-  stroke?: number;
+  lineWidth?: number;
 
-  // Used for points
+  // Used for points and dynamic text
   size?: ScaleDimensionConfig;
   symbol?: ResourceDimensionConfig;
 
-  // when labels are shown
+  // Can show markers and text together!
   text?: TextDimensionConfig;
-  offset?: [number, number];
+  textConfig?: TextStyleConfig;
+}
+
+/**
+ * Static options for text display.  See:
+ * https://openlayers.org/en/latest/apidoc/module-ol_style_Text.html
+ */
+export interface TextStyleConfig {
+  fontSize?: number;
+  offsetX?: number;
+  offsetY?: number;
+  align?: 'left' | 'right' | 'center';
+  baseline?: 'bottom' | 'top' | 'middle';
 }
 
 // Applying the config to real data gives the values
@@ -30,9 +49,11 @@ export interface StyleConfigValues {
   lineWidth?: number;
   size?: number;
   symbol?: string; // the point symbol
-  text?: string;
   rotation?: number;
-  offset?: [number, number];
+  text?: string;
+
+  // Pass though (not value dependant)
+  textConfig?: TextStyleConfig;
 }
 
 /**
