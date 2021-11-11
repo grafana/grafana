@@ -306,7 +306,7 @@
     "pluralize": "^8.0.0",
     "prismjs": "1.25.0",
     "prop-types": "15.7.2",
-    "rc-cascader": "1.5.0",
+    "rc-cascader": "2.1.4",
     "rc-drawer": "4.4.0",
     "rc-slider": "9.6.4",
     "rc-time-picker": "3.7.3",
