@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { useMenuTriggerState } from '@react-stately/menu';
 
-import { useFocusWithin } from '@react-aria/interactions';
+import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
 import { useMenuTrigger } from '@react-aria/menu';
 import { useButton } from '@react-aria/button';
 
@@ -34,51 +34,54 @@ export function MenuButton(props: any) {
     },
   });
 
+  const { hoverProps } = useHover({
+    onHoverChange: (isHovering) => {
+      if (isHovering) {
+        state.open();
+      }
+      if (!isHovering) {
+        state.close();
+      }
+    },
+  });
+
   const [enableAllItems, setEnableAllItems] = useState(false);
 
-  // Get props for the button based on the trigger props from useMenuTrigger
-  const { buttonProps } = useButton(
-    {
-      ...menuTriggerProps,
-      onKeyDown: (e) => {
-        switch (e.key) {
-          case 'Enter':
-          case ' ':
-            e.continuePropagation();
-            link?.onClick();
-            break;
-          case 'ArrowRight':
-            setEnableAllItems(true);
-            // Stop propagation, unless it would already be handled by useKeyboard.
-            if (!('continuePropagation' in e)) {
-              e.stopPropagation();
-            }
-            e.preventDefault();
-            break;
-          case 'ArrowLeft':
-            setEnableAllItems(false);
-            // Stop propagation, unless it would already be handled by useKeyboard.
-            if (!('continuePropagation' in e)) {
-              e.stopPropagation();
-            }
-            e.preventDefault();
-            break;
-
-          case 'Tab':
-            e.continuePropagation();
-            setEnableAllItems(false);
-            break;
-
-          default:
-            break;
-        }
-      },
+  const { keyboardProps } = useKeyboard({
+    onKeyDown: (e) => {
+      console.log(e.key);
+      switch (e.key) {
+        case 'Enter':
+        case ' ':
+          link?.onClick();
+          break;
+        case 'ArrowRight':
+          setEnableAllItems(true);
+          break;
+        case 'ArrowLeft':
+          setEnableAllItems(false);
+          break;
+        case 'Tab':
+          setEnableAllItems(false);
+          break;
+        default:
+          break;
+      }
     },
-    ref
-  );
+  });
+
+  // Get props for the button based on the trigger props from useMenuTrigger
+  const { buttonProps } = useButton(menuTriggerProps, ref);
 
   let element = (
-    <button className={styles.element} {...buttonProps} ref={ref} onClick={link?.onClick} aria-label={link?.label}>
+    <button
+      className={styles.element}
+      {...buttonProps}
+      {...keyboardProps}
+      ref={ref}
+      onClick={link?.onClick}
+      aria-label={link?.label}
+    >
       <span className={styles.icon}>
         {link?.icon && <Icon name={link.icon as IconName} size="xl" />}
         {link?.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -91,6 +94,7 @@ export function MenuButton(props: any) {
       !link.target && link.url.startsWith('/') ? (
         <Link
           {...buttonProps}
+          {...keyboardProps}
           ref={ref}
           href={link.url}
           target={link.target}
@@ -103,7 +107,7 @@ export function MenuButton(props: any) {
           </span>
         </Link>
       ) : (
-        <a href={link.url} target={link.target} onClick={link?.onClick} {...buttonProps} ref={ref}>
+        <a href={link.url} target={link.target} onClick={link?.onClick} {...buttonProps} {...keyboardProps} ref={ref}>
           <span className={styles.icon}>
             {link?.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link?.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -111,9 +115,8 @@ export function MenuButton(props: any) {
         </a>
       );
   }
-
   return (
-    <li className={cx(styles.element, 'dropdown')} {...focusWithinProps}>
+    <li className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
       {element}
       {state.isOpen && (
         <NavBarDropdown

@@ -62,14 +62,14 @@ export function NavBarMenuItem({
   }
   if (isMobile) {
     return isDivider ? (
-      <li data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} />
+      <li data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
     ) : (
       <li>{element}</li>
     );
   }
 
   return isDivider ? (
-    <React.Fragment data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1}></React.Fragment>
+    <div data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
   ) : (
     <React.Fragment>{element}</React.Fragment>
   );

@@ -72,7 +72,7 @@ const NavBarItem = ({
   return showMenu ? (
     <div className={cx(styles.container, className)}>
       <MenuButton link={link} isActive={isActive} reverseDirection={reverseMenuDirection}>
-        <Item key={id}>
+        <Item key={id} textValue={link.text}>
           <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
         </Item>
         {filteredItems?.map((item, index) => {
@@ -94,20 +94,7 @@ const NavBarItem = ({
       </MenuButton>
     </div>
   ) : (
-    <div className={cx(styles.container, className)}>
-      {element}
-      {/*{showMenu && (
-        <NavBarDropdown
-          headerTarget={target}
-          headerText={label}
-          headerUrl={url}
-          items={menuItems}
-          onHeaderClick={onClick}
-          reverseDirection={reverseMenuDirection}
-          subtitleText={menuSubTitle}
-        />
-      )}*/}
-    </div>
+    <div className={cx(styles.container, className)}>{element}</div>
   );
 };
 
