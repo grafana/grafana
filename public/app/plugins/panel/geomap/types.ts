@@ -1,5 +1,4 @@
 import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
-import { ColorDimensionConfig } from 'app/features/dimensions';
 import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
 import { MapCenterID } from './view';

@@ -70,7 +70,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     const defaultStyle = new Style({
       stroke: new Stroke({
-        color: DEFAULT_STYLE_RULE.fillColor.fixed,
+        color: DEFAULT_STYLE_RULE.fillColor,
         width: DEFAULT_STYLE_RULE.strokeWidth,
       }),
     });
@@ -80,7 +80,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       style: (feature: FeatureLike) => {
         const type = feature.getGeometry()?.getType();
         if (type === 'Point') {
-          return circleMarker({color:DEFAULT_STYLE_RULE.fillColor.fixed});
+          return circleMarker({color:DEFAULT_STYLE_RULE.fillColor});
         }
 
         if (feature && config?.styles?.length) {
