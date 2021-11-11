@@ -121,7 +121,7 @@ export const RolePicker = ({
     } else if (builtInRole === OrgRole.Editor) {
       roles = roles.concat(builtInRoles[OrgRole.Viewer]);
     }
-    return roles;
+    return roles.filter((role) => !role.name?.startsWith('managed:'));
   }, [builtInRole, builtInRoles]);
 
   if (isLoading) {
