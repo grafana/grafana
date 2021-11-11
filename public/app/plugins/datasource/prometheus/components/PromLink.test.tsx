@@ -5,9 +5,17 @@ import { PromQuery } from '../types';
 import { PrometheusDatasource } from '../datasource';
 import PromLink from './PromLink';
 
+jest.mock('@grafana/data', () => ({
+  ...(jest.requireActual('@grafana/data') as any),
+  rangeUtil: {
+    intervalToSeconds: jest.fn(() => 15),
+  },
+}));
+
 const getPanelData = (panelDataOverrides?: Partial<PanelData>) => {
   const panelData = {
     request: {
+      scopedVars: [{ __interval: { text: '15s', value: '15s' } }],
       targets: [
         { refId: 'A', datasource: 'prom1' },
         { refId: 'B', datasource: 'prom2' },
@@ -30,6 +38,19 @@ const getDataSource = (datasourceOverrides?: Partial<PrometheusDatasource>) => {
     getPrometheusTime: () => 123,
     createQuery: () => ({ expr: 'up', step: 15 }),
     directUrl: 'prom1',
+    getRateIntervalScopedVariable: jest.fn(() => ({ __rate_interval: { text: '60s', value: '60s' } })),
+  };
+
+  return (Object.assign(datasource, datasourceOverrides) as unknown) as PrometheusDatasource;
+};
+
+const getDataSourceWithCustomQueryParameters = (datasourceOverrides?: Partial<PrometheusDatasource>) => {
+  const datasource = {
+    getPrometheusTime: () => 124,
+    createQuery: () => ({ expr: 'up', step: 20 }),
+    directUrl: 'prom3',
+    getRateIntervalScopedVariable: jest.fn(() => ({ __rate_interval: { text: '60s', value: '60s' } })),
+    customQueryParameters: new URLSearchParams('g0.foo=1'),
   };
 
   return (Object.assign(datasource, datasourceOverrides) as unknown) as PrometheusDatasource;
@@ -75,5 +96,20 @@ describe('PromLink', () => {
       </div>
     );
     expect(screen.getByText('Prometheus')).toHaveAttribute('href', 'about:blank');
+  });
+  it('should add custom query parameters when it is configured', async () => {
+    render(
+      <div>
+        <PromLink
+          datasource={getDataSourceWithCustomQueryParameters()}
+          panelData={getPanelData()}
+          query={{} as PromQuery}
+        />
+      </div>
+    );
+    expect(screen.getByText('Prometheus')).toHaveAttribute(
+      'href',
+      'prom3/graph?g0.foo=1&g0.expr=up&g0.range_input=0s&g0.end_input=undefined&g0.step_input=20&g0.tab=0'
+    );
   });
 });

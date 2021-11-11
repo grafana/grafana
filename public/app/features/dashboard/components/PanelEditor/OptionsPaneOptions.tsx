@@ -35,6 +35,7 @@ export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
   const optionRadioFilters = useMemo(getOptionRadioFilters, []);
+
   const allOptions = isPanelModelLibraryPanel(panel)
     ? [libraryPanelOptions, panelFrameOptions, ...vizOptions]
     : [panelFrameOptions, ...vizOptions];
@@ -173,6 +174,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(1)};
     background: ${theme.colors.background.primary};
     border: 1px solid ${theme.components.panel.borderColor};
+    border-top-left-radius: ${theme.shape.borderRadius(1.5)};
     border-bottom: none;
   `,
   closeButton: css`

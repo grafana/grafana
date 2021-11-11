@@ -29,7 +29,7 @@ interface OwnProps {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export class UnConnectedExploreToolbar extends PureComponent<Props> {
+class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
     this.props.changeDatasource(this.props.exploreId, dsSettings.uid, { importQueries: true });
   };
@@ -213,7 +213,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
 }
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
-  const { syncedTimes, autoLoadLogsVolume } = state.explore;
+  const { syncedTimes } = state.explore;
   const exploreItem: ExploreItemState = state.explore[exploreId]!;
   const {
     datasourceInstance,
@@ -242,7 +242,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     isPaused,
     syncedTimes,
     containerWidth,
-    autoLoadLogsVolume,
   };
 };
 

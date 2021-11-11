@@ -1,4 +1,5 @@
-import { OptionsWithTooltip, OptionsWithLegend, HideableFieldConfig, VisibilityMode } from '@grafana/schema';
+import { DashboardCursorSync } from '@grafana/data';
+import { HideableFieldConfig, OptionsWithLegend, OptionsWithTooltip, VisibilityMode } from '@grafana/schema';
 
 /**
  * @alpha
@@ -15,6 +16,8 @@ export interface TimelineOptions extends OptionsWithLegend, OptionsWithTooltip {
   mergeValues?: boolean;
   // only used in "changes" mode (state-timeline)
   alignValue?: TimelineValueAlignment;
+
+  sync?: DashboardCursorSync;
 }
 
 export type TimelineValueAlignment = 'center' | 'left' | 'right';

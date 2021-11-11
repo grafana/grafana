@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/tools/txtar"
 )
@@ -27,9 +29,9 @@ func TestGenerate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	for _, c := range cases {
-		t.Run(c.Name+" apply default value", func(t *testing.T) {
+		t.Run(c.Name+" apply defaults", func(t *testing.T) {
+			ctx := cuecontext.New()
 			scmInstance := ctx.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
 			if scmInstance.Err() != nil {
 				t.Fatal(scmInstance.Err())
@@ -40,15 +42,17 @@ func TestGenerate(t *testing.T) {
 				t.Fatal(err)
 			}
 			b := []byte(out.Value.(string))
+			b, _ = JsonRemarshal(b)
 
-			if s := cmp.Diff(string(b), c.Full); s != "" {
+			if s := cmp.Diff(c.Full, string(b)); s != "" {
 				t.Fatal(s)
 			}
 		})
 	}
 
 	for _, c := range cases {
-		t.Run(c.Name+" trim default value", func(t *testing.T) {
+		t.Run(c.Name+" trim defaults", func(t *testing.T) {
+			ctx := cuecontext.New()
 			scmInstance := ctx.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
 			if scmInstance.Err() != nil {
 				t.Fatal(scmInstance.Err())
@@ -59,11 +63,30 @@ func TestGenerate(t *testing.T) {
 				t.Fatal(err)
 			}
 			b := []byte(out.Value.(string))
-			if s := cmp.Diff(string(b), c.Trimmed); s != "" {
+			b, _ = JsonRemarshal(b)
+
+			if s := cmp.Diff(c.Trimmed, string(b)); s != "" {
 				t.Fatal(s)
 			}
 		})
 	}
+}
+
+func JsonRemarshal(bytes []byte) ([]byte, error) {
+	var ifce interface{}
+	err := json.Unmarshal(bytes, &ifce)
+	if err != nil {
+		return []byte{}, err
+	}
+	output, err := json.Marshal(ifce)
+	outputstring := string(output)
+	if err != nil {
+		return []byte{}, err
+	}
+	outputstring = strings.Replace(outputstring, "\\u003c", "<", -1)
+	outputstring = strings.Replace(outputstring, "\\u003e", ">", -1)
+	outputstring = strings.Replace(outputstring, "\\u0026", "&", -1)
+	return []byte(outputstring), nil
 }
 
 func loadCases(dir string) ([]Case, error) {
@@ -96,7 +119,7 @@ func loadCases(dir string) ([]Case, error) {
 		}
 
 		cases = append(cases, Case{
-			Name:    fi.Name(),
+			Name:    strings.TrimSuffix(fi.Name(), filepath.Ext(fi.Name())),
 			CUE:     string(a.Files[0].Data),
 			Full:    fullBuffer.String(),
 			Trimmed: trimBuffer.String(),

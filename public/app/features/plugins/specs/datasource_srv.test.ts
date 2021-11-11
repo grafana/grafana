@@ -37,7 +37,7 @@ jest.mock('../plugin_loader', () => ({
 }));
 
 describe('datasource_srv', () => {
-  const dataSourceSrv = new DatasourceSrv({} as any, {} as any, templateSrv);
+  const dataSourceSrv = new DatasourceSrv(templateSrv);
   const dataSourceInit = {
     mmm: {
       type: 'test-db',
@@ -125,7 +125,7 @@ describe('datasource_srv', () => {
       it('should work with variable', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasource}');
         expect(ds?.name).toBe('${datasource}');
-        expect(ds?.uid).toBe('uid-code-BBB');
+        expect(ds?.uid).toBe('${datasource}');
       });
 
       it('should not set isDefault when being fetched via variable', () => {
@@ -136,7 +136,7 @@ describe('datasource_srv', () => {
       it('should work with variable', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasourceDefault}');
         expect(ds?.name).toBe('${datasourceDefault}');
-        expect(ds?.uid).toBe('uid-code-BBB');
+        expect(ds?.uid).toBe('${datasourceDefault}');
       });
     });
 
@@ -221,6 +221,7 @@ describe('datasource_srv', () => {
             },
             "name": "-- Mixed --",
             "type": "test-db",
+            "uid": "-- Mixed --",
           },
           Object {
             "meta": Object {
@@ -230,6 +231,7 @@ describe('datasource_srv', () => {
             },
             "name": "-- Dashboard --",
             "type": "dashboard",
+            "uid": "-- Dashboard --",
           },
           Object {
             "meta": Object {
@@ -239,6 +241,7 @@ describe('datasource_srv', () => {
             },
             "name": "-- Grafana --",
             "type": "grafana",
+            "uid": "-- Grafana --",
           },
         ]
       `);

@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/encryption"
+
 	"github.com/centrifugal/centrifuge"
 	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
@@ -26,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/database"
@@ -43,8 +45,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/macaron.v1"
 )
 
 var (
@@ -61,18 +63,19 @@ type CoreGrafanaScope struct {
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	logsService *cloudwatch.LogsService, pluginManager *manager.PluginManager, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore,
+	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
+	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, encService encryption.Service,
 	usageStatsService usagestats.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
 		LogsService:           logsService,
-		PluginManager:         pluginManager,
+		pluginStore:           pluginStore,
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
+		EncryptionService:     encService,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -180,18 +183,36 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 		} else {
 			storage := &pipeline.FileStorage{
-				DataPath: cfg.DataPath,
+				DataPath:          cfg.DataPath,
+				EncryptionService: g.EncryptionService,
 			}
-			g.channelRuleStorage = storage
+			g.pipelineStorage = storage
 			builder = &pipeline.StorageRuleBuilder{
 				Node:                 node,
 				ManagedStream:        g.ManagedStreamRunner,
 				FrameStorage:         pipeline.NewFrameStorage(),
-				RuleStorage:          storage,
+				Storage:              storage,
 				ChannelHandlerGetter: g,
+				EncryptionService:    g.EncryptionService,
 			}
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
+
+		// Pre-build/validate channel rules for all organizations on start.
+		// This can be unreasonable to have in production scenario with many
+		// organizations.
+		query := &models.SearchOrgsQuery{}
+		err := sqlstore.SearchOrgs(context.TODO(), query)
+		if err != nil {
+			return nil, fmt.Errorf("can't get org list: %w", err)
+		}
+		for _, org := range query.Result {
+			_, _, err := channelRuleGetter.Get(org.Id, "")
+			if err != nil {
+				return nil, fmt.Errorf("error building channel rules for org %d: %w", org.Id, err)
+			}
+		}
+
 		g.Pipeline, err = pipeline.New(channelRuleGetter)
 		if err != nil {
 			return nil, err
@@ -317,7 +338,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.pushWebsocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
-		newCtx = livecontext.SetContextStreamID(newCtx, macaron.Params(ctx.Req)[":streamId"])
+		newCtx = livecontext.SetContextStreamID(newCtx, web.Params(ctx.Req)[":streamId"])
 		r := ctx.Req.WithContext(newCtx)
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
@@ -345,10 +366,11 @@ type GrafanaLive struct {
 	Cfg                   *setting.Cfg
 	RouteRegister         routing.RouteRegister
 	LogsService           *cloudwatch.LogsService
-	PluginManager         *manager.PluginManager
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
+	EncryptionService     encryption.Service
+	pluginStore           plugins.Store
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
@@ -366,7 +388,7 @@ type GrafanaLive struct {
 
 	ManagedStreamRunner *managedstream.Runner
 	Pipeline            *pipeline.Pipeline
-	channelRuleStorage  pipeline.RuleStorage
+	pipelineStorage     pipeline.Storage
 
 	contextGetter    *liveplugin.ContextGetter
 	runStreamManager *runstream.Manager
@@ -377,15 +399,14 @@ type GrafanaLive struct {
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
-	plugin, ok := g.PluginManager.BackendPluginManager.Get(pluginID)
-	if !ok {
+	plugin := g.pluginStore.Plugin(pluginID)
+	if plugin == nil {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	streamHandler, ok := plugin.(backend.StreamHandler)
-	if !ok {
-		return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
+	if plugin.SupportsStreaming() {
+		return plugin, nil
 	}
-	return streamHandler, nil
+	return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
@@ -413,10 +434,6 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 	}
 
 	return eGroup.Wait()
-}
-
-func (g *GrafanaLive) ChannelRuleStorage() pipeline.RuleStorage {
-	return g.channelRuleStorage
 }
 
 func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []glob.Glob) func(r *http.Request) bool {
@@ -537,28 +554,47 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 
 	var reply models.SubscribeReply
 	var status backend.SubscribeStreamStatus
+	var ruleFound bool
 
-	var subscribeRuleFound bool
 	if g.Pipeline != nil {
 		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
 		if err != nil {
 			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
-		if ok && rule.Subscriber != nil {
-			subscribeRuleFound = true
-			var err error
-			reply, status, err = rule.Subscriber.Subscribe(client.Context(), pipeline.Vars{
-				OrgID:   orgID,
-				Channel: channel,
-			})
-			if err != nil {
-				logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-				return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		ruleFound = ok
+		if ok {
+			if rule.SubscribeAuth != nil {
+				ok, err := rule.SubscribeAuth.CanSubscribe(client.Context(), user)
+				if err != nil {
+					logger.Error("Error checking subscribe permissions", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+					return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+				}
+				if !ok {
+					// using HTTP error codes for WS errors too.
+					code, text := subscribeStatusToHTTPError(backend.SubscribeStreamStatusPermissionDenied)
+					return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+				}
+			}
+			if len(rule.Subscribers) > 0 {
+				var err error
+				for _, sub := range rule.Subscribers {
+					reply, status, err = sub.Subscribe(client.Context(), pipeline.Vars{
+						OrgID:   orgID,
+						Channel: channel,
+					})
+					if err != nil {
+						logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+						return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+					}
+					if status != backend.SubscribeStreamStatusOK {
+						break
+					}
+				}
 			}
 		}
 	}
-	if !subscribeRuleFound {
+	if !ruleFound {
 		handler, addr, err := g.GetChannelHandler(user, channel)
 		if err != nil {
 			if errors.Is(err, live.ErrInvalidChannelID) {
@@ -615,6 +651,42 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 		return centrifuge.PublishReply{}, centrifuge.ErrorPermissionDenied
 	}
 
+	if g.Pipeline != nil {
+		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
+		if err != nil {
+			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+		}
+		if ok {
+			if rule.PublishAuth != nil {
+				ok, err := rule.PublishAuth.CanPublish(client.Context(), user)
+				if err != nil {
+					logger.Error("Error checking publish permissions", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+					return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+				}
+				if !ok {
+					// using HTTP error codes for WS errors too.
+					code, text := publishStatusToHTTPError(backend.PublishStreamStatusPermissionDenied)
+					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+				}
+			} else {
+				if !user.HasRole(models.ROLE_ADMIN) {
+					// using HTTP error codes for WS errors too.
+					code, text := publishStatusToHTTPError(backend.PublishStreamStatusPermissionDenied)
+					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+				}
+			}
+			_, err := g.Pipeline.ProcessInput(client.Context(), user.OrgId, channel, e.Data)
+			if err != nil {
+				logger.Error("Error processing input", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+				return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+			}
+			return centrifuge.PublishReply{
+				Result: &centrifuge.PublishResult{},
+			}, nil
+		}
+	}
+
 	handler, addr, err := g.GetChannelHandler(user, channel)
 	if err != nil {
 		if errors.Is(err, live.ErrInvalidChannelID) {
@@ -633,6 +705,7 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 		logger.Error("Error calling channel handler publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
+
 	if status != backend.PublishStreamStatusOK {
 		// using HTTP error codes for WS errors too.
 		code, text := publishStatusToHTTPError(status)
@@ -666,7 +739,7 @@ func subscribeStatusToHTTPError(status backend.SubscribeStreamStatus) (int, stri
 	case backend.SubscribeStreamStatusPermissionDenied:
 		return http.StatusForbidden, http.StatusText(http.StatusForbidden)
 	default:
-		log.Warn("unknown subscribe status", "status", status)
+		logger.Warn("unknown subscribe status", "status", status)
 		return http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)
 	}
 }
@@ -678,7 +751,7 @@ func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) 
 	case backend.PublishStreamStatusPermissionDenied:
 		return http.StatusForbidden, http.StatusText(http.StatusForbidden)
 	default:
-		log.Warn("unknown publish status", "status", status)
+		logger.Warn("unknown publish status", "status", status)
 		return http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)
 	}
 }
@@ -812,6 +885,38 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 	}
 
 	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserId, "channel", cmd.Channel)
+	user := ctx.SignedInUser
+	channel := cmd.Channel
+
+	if g.Pipeline != nil {
+		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
+		if err != nil {
+			logger.Error("Error getting channel rule", "user", user, "channel", channel, "error", err)
+			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+		}
+		if ok {
+			if rule.PublishAuth != nil {
+				ok, err := rule.PublishAuth.CanPublish(ctx.Req.Context(), user)
+				if err != nil {
+					logger.Error("Error checking publish permissions", "user", user, "channel", channel, "error", err)
+					return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+				}
+				if !ok {
+					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
+				}
+			} else {
+				if !user.HasRole(models.ROLE_ADMIN) {
+					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
+				}
+			}
+			_, err := g.Pipeline.ProcessInput(ctx.Req.Context(), user.OrgId, channel, cmd.Data)
+			if err != nil {
+				logger.Error("Error processing input", "user", user, "channel", channel, "error", err)
+				return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+			}
+			return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
+		}
+	}
 
 	channelHandler, addr, err := g.GetChannelHandler(ctx.SignedInUser, cmd.Channel)
 	if err != nil {
@@ -824,6 +929,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		logger.Error("Error calling OnPublish", "error", err, "channel", cmd.Channel)
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 	}
+
 	if status != backend.PublishStreamStatusOK {
 		code, text := publishStatusToHTTPError(status)
 		return response.Error(code, text, nil)
@@ -863,7 +969,7 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 
 // HandleInfoHTTP special http response for
 func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
-	path := macaron.Params(ctx.Req)["*"]
+	path := web.Params(ctx.Req)["*"]
 	if path == "grafana/dashboards/gitops" {
 		return response.JSON(200, util.DynMap{
 			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.SignedInUser.OrgId),
@@ -876,7 +982,7 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
 
 // HandleChannelRulesListHTTP ...
 func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.Response {
-	result, err := g.channelRuleStorage.ListChannelRules(c.Req.Context(), c.OrgId)
+	result, err := g.pipelineStorage.ListChannelRules(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
 	}
@@ -899,19 +1005,35 @@ type DryRunRuleStorage struct {
 	ChannelRules []pipeline.ChannelRule
 }
 
-func (s *DryRunRuleStorage) CreateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
-	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+func (s *DryRunRuleStorage) GetWriteConfig(_ context.Context, _ int64, _ pipeline.WriteConfigGetCmd) (pipeline.WriteConfig, bool, error) {
+	return pipeline.WriteConfig{}, false, errors.New("not implemented by dry run rule storage")
 }
 
-func (s *DryRunRuleStorage) UpdateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
-	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+func (s *DryRunRuleStorage) CreateWriteConfig(_ context.Context, _ int64, _ pipeline.WriteConfigCreateCmd) (pipeline.WriteConfig, error) {
+	return pipeline.WriteConfig{}, errors.New("not implemented by dry run rule storage")
 }
 
-func (s *DryRunRuleStorage) DeleteChannelRule(_ context.Context, _ int64, _ string) error {
+func (s *DryRunRuleStorage) UpdateWriteConfig(_ context.Context, _ int64, _ pipeline.WriteConfigUpdateCmd) (pipeline.WriteConfig, error) {
+	return pipeline.WriteConfig{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) DeleteWriteConfig(_ context.Context, _ int64, _ pipeline.WriteConfigDeleteCmd) error {
 	return errors.New("not implemented by dry run rule storage")
 }
 
-func (s *DryRunRuleStorage) ListRemoteWriteBackends(_ context.Context, _ int64) ([]pipeline.RemoteWriteBackend, error) {
+func (s *DryRunRuleStorage) CreateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRuleCreateCmd) (pipeline.ChannelRule, error) {
+	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) UpdateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRuleUpdateCmd) (pipeline.ChannelRule, error) {
+	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) DeleteChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRuleDeleteCmd) error {
+	return errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) ListWriteConfigs(_ context.Context, _ int64) ([]pipeline.WriteConfig, error) {
 	return nil, nil
 }
 
@@ -937,7 +1059,7 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) respon
 		Node:                 g.node,
 		ManagedStream:        g.ManagedStreamRunner,
 		FrameStorage:         pipeline.NewFrameStorage(),
-		RuleStorage:          storage,
+		Storage:              storage,
 		ChannelHandlerGetter: g,
 	}
 	channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
@@ -952,12 +1074,12 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) respon
 	if !ok {
 		return response.Error(http.StatusNotFound, "No rule found", nil)
 	}
-	channelFrames, ok, err := pipe.DataToChannelFrames(c.Req.Context(), *rule, c.OrgId, req.Channel, []byte(req.Data))
+	if rule.Converter == nil {
+		return response.Error(http.StatusNotFound, "No converter found", nil)
+	}
+	channelFrames, err := pipe.DataToChannelFrames(c.Req.Context(), *rule, c.OrgId, req.Channel, []byte(req.Data))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error converting data", err)
-	}
-	if !ok {
-		return response.Error(http.StatusNotFound, "No converter found", nil)
 	}
 	return response.JSON(http.StatusOK, ConvertDryRunResponse{
 		ChannelFrames: channelFrames,
@@ -970,17 +1092,17 @@ func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
-	var rule pipeline.ChannelRule
-	err = json.Unmarshal(body, &rule)
+	var cmd pipeline.ChannelRuleCreateCmd
+	err = json.Unmarshal(body, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
 	}
-	result, err := g.channelRuleStorage.CreateChannelRule(c.Req.Context(), c.OrgId, rule)
+	rule, err := g.pipelineStorage.CreateChannelRule(c.Req.Context(), c.OrgId, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
-		"rule": result,
+		"rule": rule,
 	})
 }
 
@@ -990,15 +1112,15 @@ func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.R
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
-	var rule pipeline.ChannelRule
-	err = json.Unmarshal(body, &rule)
+	var cmd pipeline.ChannelRuleUpdateCmd
+	err = json.Unmarshal(body, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
 	}
-	if rule.Pattern == "" {
+	if cmd.Pattern == "" {
 		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
 	}
-	rule, err = g.channelRuleStorage.UpdateChannelRule(c.Req.Context(), c.OrgId, rule)
+	rule, err := g.pipelineStorage.UpdateChannelRule(c.Req.Context(), c.OrgId, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update channel rule", err)
 	}
@@ -1013,15 +1135,15 @@ func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) respons
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
-	var rule pipeline.ChannelRule
-	err = json.Unmarshal(body, &rule)
+	var cmd pipeline.ChannelRuleDeleteCmd
+	err = json.Unmarshal(body, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
 	}
-	if rule.Pattern == "" {
+	if cmd.Pattern == "" {
 		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
 	}
-	err = g.channelRuleStorage.DeleteChannelRule(c.Req.Context(), c.OrgId, rule.Pattern)
+	err = g.pipelineStorage.DeleteChannelRule(c.Req.Context(), c.OrgId, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete channel rule", err)
 	}
@@ -1031,22 +1153,112 @@ func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) respons
 // HandlePipelineEntitiesListHTTP ...
 func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
-		"subscribers": pipeline.SubscribersRegistry,
-		"outputs":     pipeline.OutputsRegistry,
-		"converters":  pipeline.ConvertersRegistry,
-		"processors":  pipeline.ProcessorsRegistry,
+		"subscribers":     pipeline.SubscribersRegistry,
+		"dataOutputs":     pipeline.DataOutputsRegistry,
+		"converters":      pipeline.ConvertersRegistry,
+		"frameProcessors": pipeline.FrameProcessorsRegistry,
+		"frameOutputs":    pipeline.FrameOutputsRegistry,
 	})
 }
 
-// HandleRemoteWriteBackendsListHTTP ...
-func (g *GrafanaLive) HandleRemoteWriteBackendsListHTTP(c *models.ReqContext) response.Response {
-	result, err := g.channelRuleStorage.ListRemoteWriteBackends(c.Req.Context(), c.OrgId)
+// HandleWriteConfigsListHTTP ...
+func (g *GrafanaLive) HandleWriteConfigsListHTTP(c *models.ReqContext) response.Response {
+	backends, err := g.pipelineStorage.ListWriteConfigs(c.Req.Context(), c.OrgId)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get write configs", err)
+	}
+	result := make([]pipeline.WriteConfigDto, 0, len(backends))
+	for _, b := range backends {
+		result = append(result, pipeline.WriteConfigToDto(b))
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
-		"remoteWriteBackends": result,
+		"writeConfigs": result,
 	})
+}
+
+// HandleWriteConfigsPostHTTP ...
+func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var cmd pipeline.WriteConfigCreateCmd
+	err = json.Unmarshal(body, &cmd)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding write config create command", err)
+	}
+	result, err := g.pipelineStorage.CreateWriteConfig(c.Req.Context(), c.OrgId, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create write config", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"writeConfig": pipeline.WriteConfigToDto(result),
+	})
+}
+
+// HandleWriteConfigsPutHTTP ...
+func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var cmd pipeline.WriteConfigUpdateCmd
+	err = json.Unmarshal(body, &cmd)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding write config update command", err)
+	}
+	if cmd.UID == "" {
+		return response.Error(http.StatusBadRequest, "UID required", nil)
+	}
+	existingBackend, ok, err := g.pipelineStorage.GetWriteConfig(c.Req.Context(), c.OrgId, pipeline.WriteConfigGetCmd{
+		UID: cmd.UID,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get write config", err)
+	}
+	if ok {
+		if cmd.SecureSettings == nil {
+			cmd.SecureSettings = map[string]string{}
+		}
+		secureJSONData, err := g.EncryptionService.DecryptJsonData(c.Req.Context(), existingBackend.SecureSettings, setting.SecretKey)
+		if err != nil {
+			logger.Error("Error decrypting secure settings", "error", err)
+			return response.Error(http.StatusInternalServerError, "Error decrypting secure settings", err)
+		}
+		for k, v := range secureJSONData {
+			if _, ok := cmd.SecureSettings[k]; !ok {
+				cmd.SecureSettings[k] = v
+			}
+		}
+	}
+	result, err := g.pipelineStorage.UpdateWriteConfig(c.Req.Context(), c.OrgId, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update write config", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"writeConfig": pipeline.WriteConfigToDto(result),
+	})
+}
+
+// HandleWriteConfigsDeleteHTTP ...
+func (g *GrafanaLive) HandleWriteConfigsDeleteHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var cmd pipeline.WriteConfigDeleteCmd
+	err = json.Unmarshal(body, &cmd)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding write config delete command", err)
+	}
+	if cmd.UID == "" {
+		return response.Error(http.StatusBadRequest, "UID required", nil)
+	}
+	err = g.pipelineStorage.DeleteWriteConfig(c.Req.Context(), c.OrgId, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete write config", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{})
 }
 
 // Write to the standard log15 logger
@@ -1105,7 +1317,7 @@ func (g *GrafanaLive) resetLiveStats() {
 func (g *GrafanaLive) registerUsageMetrics() {
 	g.usageStatsService.RegisterSendReportCallback(g.resetLiveStats)
 
-	g.usageStatsService.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+	g.usageStatsService.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 		liveUsersAvg := 0
 		liveClientsAvg := 0
 

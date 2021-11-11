@@ -8,6 +8,7 @@ import { PanelPlugin } from '@grafana/data';
 import { addOrientationOption, addStandardDataReduceOptions, StatPanelOptions } from './types';
 import { StatPanel } from './StatPanel';
 import { statPanelChangedHandler } from './StatMigrations';
+import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   .useFieldConfig()
@@ -77,4 +78,5 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   })
   .setNoPadding()
   .setPanelChangeHandler(statPanelChangedHandler)
+  .setSuggestionsSupplier(new StatSuggestionsSupplier())
   .setMigrationHandler(sharedSingleStatMigrationHandler);

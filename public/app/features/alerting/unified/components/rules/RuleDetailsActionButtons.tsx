@@ -9,11 +9,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { appEvents } from 'app/core/core';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { Annotation } from '../../utils/constants';
-import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
-import { createExploreLink, createViewLink } from '../../utils/misc';
+import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
+import { createExploreLink, createViewLink, makeSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { deleteRuleAction } from '../../state/actions';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { getAlertmanagerByUid } from '../../utils/alertmanager';
 
 interface Props {
   rule: CombinedRule;
@@ -26,6 +27,10 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
+
+  const alertmanagerSourceName = isGrafanaRulesSource(rulesSource)
+    ? rulesSource
+    : getAlertmanagerByUid(rulesSource.jsonData.alertmanagerUid)?.name;
 
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
@@ -121,6 +126,21 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         );
       }
     }
+  }
+
+  if (alertmanagerSourceName) {
+    leftButtons.push(
+      <LinkButton
+        className={style.button}
+        size="xs"
+        key="silence"
+        icon="bell-slash"
+        target="__blank"
+        href={makeSilenceLink(alertmanagerSourceName, rule)}
+      >
+        Silence
+      </LinkButton>
+    );
   }
 
   if (!isViewMode) {

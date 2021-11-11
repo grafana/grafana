@@ -12,10 +12,14 @@
 export const Components = {
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
-    fromField: 'TimePicker from field',
-    toField: 'TimePicker to field',
+    fromField: 'Time Range from field',
+    toField: 'Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',
-    calendar: 'TimePicker calendar',
+    calendar: {
+      label: 'Time Range calendar',
+      openButton: 'Open time range calendar',
+      closeButton: 'Close time range Calendar',
+    },
     absoluteTimeRangeTitle: 'data-testid-absolute-time-range-narrow',
   },
   DataSource: {
@@ -133,8 +137,16 @@ export const Components = {
     active: () => '[class*="-activeTabStyle"]',
   },
   RefreshPicker: {
+    /**
+     * @deprecated use runButtonV2 from Grafana 8.3 instead
+     */
     runButton: 'RefreshPicker run button',
+    /**
+     * @deprecated use intervalButtonV2 from Grafana 8.3 instead
+     */
     intervalButton: 'RefreshPicker interval button',
+    runButtonV2: 'data-testid RefreshPicker run button',
+    intervalButtonV2: 'data-testid RefreshPicker interval button',
   },
   QueryTab: {
     content: 'Query editor tab content',
@@ -199,16 +211,24 @@ export const Components = {
   },
   FolderPicker: {
     container: 'Folder picker select container',
+    input: 'Select a folder',
   },
   ReadonlyFolderPicker: {
     container: 'data-testid Readonly folder picker select container',
   },
   DataSourcePicker: {
     container: 'Data source picker select container',
+    /**
+     * @deprecated use inputV2 instead
+     */
     input: () => 'input[id="data-source-picker"]',
+    inputV2: 'Select a data source',
   },
   TimeZonePicker: {
     container: 'Time zone picker select container',
+  },
+  WeekStartPicker: {
+    container: 'Choose starting day of the week',
   },
   TraceViewer: {
     spanBar: () => '[data-test-id="SpanBar--wrapper"]',
@@ -249,5 +269,8 @@ export const Components = {
   },
   PanelAlertTabContent: {
     content: 'Unified alert editor tab content',
+  },
+  VisualizationPreview: {
+    card: (name: string) => `data-testid suggestion-${name}`,
   },
 };

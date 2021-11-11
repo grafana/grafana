@@ -37,7 +37,7 @@ Additionally, there's now support for disable the sending of `OK` alert notifica
 Grafana v5.3 included built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) which enables you to visualize your Stackdriver metrics in Grafana.
 One important feature missing was support for templating queries. This is now included together with a brand new templating query editor for Stackdriver.
 
-The Stackdriver templating query editor lets you choose from a set of different Query Types. This will in turn reveal additional drop downs to help you
+The Stackdriver templating query editor lets you choose from a set of different Query Types. This will in turn reveal additional drop-downs to help you
 find, filter and select the templating values you're interested in, see screenshot for details. The templating query editor also supports chaining multiple variables
 making it easy to define variables that's dependent on other variables.
 

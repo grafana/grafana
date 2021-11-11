@@ -5,21 +5,21 @@ import (
 	"net/http"
 	"time"
 
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, accesscontrol.Evaluator) macaron.Handler {
-	return func(fallback macaron.Handler, evaluator accesscontrol.Evaluator) macaron.Handler {
+func Middleware(ac accesscontrol.AccessControl) func(web.Handler, accesscontrol.Evaluator) web.Handler {
+	return func(fallback web.Handler, evaluator accesscontrol.Evaluator) web.Handler {
 		if ac.IsDisabled() {
 			return fallback
 		}
 
 		return func(c *models.ReqContext) {
-			injected, err := evaluator.Inject(macaron.Params(c.Req))
+			injected, err := evaluator.Inject(buildScopeParams(c))
 			if err != nil {
 				c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
 				return
@@ -47,6 +47,12 @@ func Deny(c *models.ReqContext, evaluator accesscontrol.Evaluator, err error) {
 		)
 	}
 
+	if !c.IsApiRequest() {
+		// TODO(emil): I'd like to show a message after this redirect, not sure how that can be done?
+		c.Redirect(setting.AppSubUrl + "/")
+		return
+	}
+
 	// If the user triggers an error in the access control system, we
 	// don't want the user to be aware of that, so the user gets the
 	// same information from the system regardless of if it's an
@@ -68,4 +74,11 @@ func newID() string {
 		id = fmt.Sprintf("%d", time.Now().UnixNano())
 	}
 	return "ACE" + id
+}
+
+func buildScopeParams(c *models.ReqContext) accesscontrol.ScopeParams {
+	return accesscontrol.ScopeParams{
+		OrgID:     c.OrgId,
+		URLParams: web.Params(c.Req),
+	}
 }

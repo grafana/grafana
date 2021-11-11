@@ -45,9 +45,11 @@ For example:
 ;http_port = 3000
 ```
 
-## Configure with environment variables
+## Override configuration with environment variables
 
-All options in the configuration file can be overridden using environment variables using the syntax:
+Do not use environment variables to _add_ new configuration settings. Instead, use environmental variables to _override_ existing options.
+
+To override an option:
 
 ```bash
 GF_<SectionName>_<KeyName>
@@ -1580,7 +1582,7 @@ We do _not_ recommend using this option. For more information, refer to [Plugin 
 
 ### plugin_admin_enabled
 
-Available to Grafana administrators only, the plugin admin app is set to `false` by default. Set it to `true` to enable the app.
+Available to Grafana administrators only, the plugin admin app is set to `true` by default. Set it to `false` to disable the app.
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
 
@@ -1782,6 +1784,10 @@ Set this to `true` to have date formats automatically derived from your browser 
 ### default_timezone
 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
+
+### default_week_start
+
+Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
 ## [expressions]
 

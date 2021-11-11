@@ -2,13 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 import { ErrorBoundaryAlert } from '@grafana/ui';
-import {
-  AUTO_LOAD_LOGS_VOLUME_SETTING_KEY,
-  lastSavedUrl,
-  resetExploreAction,
-  richHistoryUpdatedAction,
-  storeAutoLoadLogsVolumeAction,
-} from './state/main';
+import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
 import { getRichHistory } from '../../core/utils/richHistory';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -16,7 +10,6 @@ import { Branding } from '../../core/components/Branding/Branding';
 
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from 'app/types';
-import store from '../../core/store';
 
 interface RouteProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {}
 interface OwnProps {}
@@ -25,14 +18,12 @@ const mapStateToProps = (state: StoreState) => {
   return {
     navModel: getNavModel(state.navIndex, 'explore'),
     exploreState: state.explore,
-    autoLoadLogsVolume: state.explore.autoLoadLogsVolume,
   };
 };
 
 const mapDispatchToProps = {
   resetExploreAction,
   richHistoryUpdatedAction,
-  storeAutoLoadLogsVolumeAction,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -52,7 +43,6 @@ class WrapperUnconnected extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { autoLoadLogsVolume } = this.props;
     const { left, right } = this.props.queryParams;
     const hasSplit = Boolean(left) && Boolean(right);
     const datasourceTitle = hasSplit
@@ -60,10 +50,6 @@ class WrapperUnconnected extends PureComponent<Props> {
       : `${this.props.exploreState.left.datasourceInstance?.name}`;
     const documentTitle = `${this.props.navModel.main.text} - ${datasourceTitle} - ${Branding.AppTitle}`;
     document.title = documentTitle;
-
-    if (prevProps.autoLoadLogsVolume !== autoLoadLogsVolume) {
-      store.set(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, autoLoadLogsVolume);
-    }
   }
 
   render() {

@@ -2,6 +2,8 @@ import { AlertManagerCortexConfig, MatcherOperator, Route, Matcher } from 'app/p
 import { Labels } from 'app/types/unified-alerting-dto';
 import { MatcherFieldValue } from '../types/silence-form';
 import { SelectableValue } from '@grafana/data';
+import { getAllDataSources } from './config';
+import { DataSourceType } from './datasource';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -173,4 +175,12 @@ export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolea
       return nameMatches && valueMatches;
     });
   });
+}
+
+export function getAllAlertmanagerDataSources() {
+  return getAllDataSources().filter((ds) => ds.type === DataSourceType.Alertmanager);
+}
+
+export function getAlertmanagerByUid(uid?: string) {
+  return getAllAlertmanagerDataSources().find((ds) => uid === ds.uid);
 }

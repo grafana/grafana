@@ -1,6 +1,7 @@
 import { mergeMap, throttleTime } from 'rxjs/operators';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
+  AbsoluteTimeRange,
   DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
@@ -32,12 +33,12 @@ import { notifyApp } from '../../../core/actions';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { richHistoryUpdatedAction, stateSave, storeAutoLoadLogsVolumeAction } from './main';
+import { localStorageFullAction, richHistoryLimitExceededAction, richHistoryUpdatedAction, stateSave } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
-import { config } from '@grafana/runtime';
+import deepEqual from 'fast-deep-equal';
 
 //
 // Actions and Payloads
@@ -117,6 +118,8 @@ export interface StoreLogsVolumeDataProvider {
 const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
   'explore/storeLogsVolumeDataProviderAction'
 );
+
+const cleanLogsVolumeAction = createAction<{ exploreId: ExploreId }>('explore/cleanLogsVolumeAction');
 
 export interface StoreLogsVolumeDataSubscriptionPayload {
   exploreId: ExploreId;
@@ -318,11 +321,10 @@ export const runQueries = (
       dispatch(clearCache(exploreId));
     }
 
-    const { richHistory, autoLoadLogsVolume } = getState().explore;
+    const { richHistory } = getState().explore;
     const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
-      queries,
       containerWidth,
       isLive: live,
       range,
@@ -336,6 +338,11 @@ export const runQueries = (
       logsVolumeDataProvider,
     } = exploreItemState;
     let newQuerySub;
+
+    const queries = exploreItemState.queries.map((query) => ({
+      ...query,
+      datasource: query.datasource || datasourceInstance?.getRef(),
+    }));
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);
 
@@ -415,17 +422,25 @@ export const runQueries = (
             if (!data.error && firstResponse) {
               // Side-effect: Saving history in localstorage
               const nextHistory = updateHistory(history, datasourceId, queries);
-              const nextRichHistory = addToRichHistory(
+              const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(
                 richHistory || [],
                 datasourceId,
                 datasourceName,
                 queries,
                 false,
                 '',
-                ''
+                '',
+                !getState().explore.localStorageFull,
+                !getState().explore.richHistoryLimitExceededWarningShown
               );
               dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
               dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+              if (localStorageFull) {
+                dispatch(localStorageFullAction());
+              }
+              if (limitExceeded) {
+                dispatch(richHistoryLimitExceededAction());
+              }
 
               // We save queries to the URL here so that only successfully run queries change the URL.
               dispatch(stateSave({ replace: options?.replaceUrl }));
@@ -454,7 +469,15 @@ export const runQueries = (
           }
         );
 
-      if (config.featureToggles.fullRangeLogsVolume && hasLogsVolumeSupport(datasourceInstance)) {
+      if (live) {
+        dispatch(
+          storeLogsVolumeDataProviderAction({
+            exploreId,
+            logsVolumeDataProvider: undefined,
+          })
+        );
+        dispatch(cleanLogsVolumeAction({ exploreId }));
+      } else if (hasLogsVolumeSupport(datasourceInstance)) {
         const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
         dispatch(
           storeLogsVolumeDataProviderAction({
@@ -462,7 +485,9 @@ export const runQueries = (
             logsVolumeDataProvider,
           })
         );
-        if (autoLoadLogsVolume && logsVolumeDataProvider) {
+        const { logsVolumeData, absoluteRange } = getState().explore[exploreId]!;
+        if (!canReuseLogsVolumeData(logsVolumeData, queries, absoluteRange)) {
+          dispatch(cleanLogsVolumeAction({ exploreId }));
           dispatch(loadLogsVolumeData(exploreId));
         }
       } else {
@@ -478,6 +503,29 @@ export const runQueries = (
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
   };
 };
+
+/**
+ * Checks if after changing the time range the existing data can be used to show logs volume.
+ * It can happen if queries are the same and new time range is within existing data time range.
+ */
+function canReuseLogsVolumeData(
+  logsVolumeData: DataQueryResponse | undefined,
+  queries: DataQuery[],
+  selectedTimeRange: AbsoluteTimeRange
+): boolean {
+  if (logsVolumeData && logsVolumeData.data[0]) {
+    // check if queries are the same
+    if (!deepEqual(logsVolumeData.data[0].meta?.custom?.targets, queries)) {
+      return false;
+    }
+    const dataRange = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.absoluteRange;
+    // if selected range is within loaded logs volume
+    if (dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
@@ -526,23 +574,6 @@ export function addResultsToCache(exploreId: ExploreId): ThunkResult<void> {
 export function clearCache(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(clearCacheAction({ exploreId }));
-  };
-}
-
-/**
- * Uses storeLogsVolumeDataProviderAction to update the state and load logs volume when auto-load
- * is enabled and logs volume hasn't been loaded yet.
- */
-export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: boolean): ThunkResult<void> {
-  return (dispatch, getState) => {
-    dispatch(storeAutoLoadLogsVolumeAction(autoLoadLogsVolume));
-    const state = getState().explore[exploreId]!;
-
-    // load logs volume automatically after switching
-    const logsVolumeData = state.logsVolumeData;
-    if (!logsVolumeData?.data && autoLoadLogsVolume) {
-      dispatch(loadLogsVolumeData(exploreId));
-    }
   };
 }
 
@@ -683,7 +714,12 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       ...state,
       logsVolumeDataProvider,
       logsVolumeDataSubscription: undefined,
-      // clear previous data, with a new provider the previous data becomes stale
+    };
+  }
+
+  if (cleanLogsVolumeAction.match(action)) {
+    return {
+      ...state,
       logsVolumeData: undefined,
     };
   }

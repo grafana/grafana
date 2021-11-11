@@ -114,7 +114,7 @@ describe('getDataSourceUsingUidOrId', () => {
   it('should return empty response data', async () => {
     // @ts-ignore
     delete window.location;
-    window.location = {} as any;
+    window.location = {} as Location;
 
     const uidResponse = {
       ok: false,
@@ -190,11 +190,11 @@ describe('initDataSourceSettings', () => {
 
   describe('when pageId is a valid', () => {
     it('then initDataSourceSettingsSucceeded should be dispatched', async () => {
-      const thunkMock = (): ThunkResult<void> => (dispatch: ThunkDispatch, getState) => {};
       const dataSource = { type: 'app' };
       const dataSourceMeta = { id: 'some id' };
       const dependencies: InitDataSourceSettingDependencies = {
-        loadDataSource: jest.fn(thunkMock) as any,
+        loadDataSource: jest.fn((): ThunkResult<void> => (dispatch: ThunkDispatch, getState) => dataSource) as any,
+        loadDataSourceMeta: jest.fn((): ThunkResult<void> => (dispatch: ThunkDispatch, getState) => {}),
         getDataSource: jest.fn().mockReturnValue(dataSource),
         getDataSourceMeta: jest.fn().mockReturnValue(dataSourceMeta),
         importDataSourcePlugin: jest.fn().mockReturnValue({} as GenericDataSourcePlugin),
@@ -211,6 +211,9 @@ describe('initDataSourceSettings', () => {
       expect(dependencies.loadDataSource).toHaveBeenCalledTimes(1);
       expect(dependencies.loadDataSource).toHaveBeenCalledWith(256);
 
+      expect(dependencies.loadDataSourceMeta).toHaveBeenCalledTimes(1);
+      expect(dependencies.loadDataSourceMeta).toHaveBeenCalledWith(dataSource);
+
       expect(dependencies.getDataSource).toHaveBeenCalledTimes(1);
       expect(dependencies.getDataSource).toHaveBeenCalledWith({}, 256);
 
@@ -224,8 +227,10 @@ describe('initDataSourceSettings', () => {
 
   describe('when plugin loading fails', () => {
     it('then initDataSourceSettingsFailed should be dispatched', async () => {
+      const dataSource = { type: 'app' };
       const dependencies: InitDataSourceSettingDependencies = {
-        loadDataSource: jest.fn().mockImplementation(() => {
+        loadDataSource: jest.fn((): ThunkResult<void> => (dispatch: ThunkDispatch, getState) => dataSource) as any,
+        loadDataSourceMeta: jest.fn().mockImplementation(() => {
           throw new Error('Error loading plugin');
         }),
         getDataSource: jest.fn(),
@@ -243,6 +248,9 @@ describe('initDataSourceSettings', () => {
       expect(dispatchedActions).toEqual([initDataSourceSettingsFailed(new Error('Error loading plugin'))]);
       expect(dependencies.loadDataSource).toHaveBeenCalledTimes(1);
       expect(dependencies.loadDataSource).toHaveBeenCalledWith(301);
+
+      expect(dependencies.loadDataSourceMeta).toHaveBeenCalledTimes(1);
+      expect(dependencies.loadDataSourceMeta).toHaveBeenCalledWith(dataSource);
     });
   });
 });

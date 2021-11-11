@@ -10,14 +10,8 @@ Make sure you have the following dependencies installed before setting up your d
 
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
-
-Additionally you'll need:
-
-- [Node.js](https://nodejs.org) (see `volta.node` property in [package.json](../package.json) for the correct version).
-- [Yarn](https://yarnpkg.com) (see `volta.yarn` property in [package.json](../package.json) for the correct version).
-
-We recommend using [Volta](https://github.com/volta-cli/volta) to manage your JS toolchain.
-Refer to the [Volta Getting Started Guide](https://docs.volta.sh/guide/getting-started) for setup instructions for your operating system.
+- [Node.js (Long Term Support)](https://nodejs.org)
+- [Yarn](https://yarnpkg.com)
 
 ### macOS
 
@@ -26,6 +20,8 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
+brew install node@16
+npm install -g yarn
 ```
 
 ### Windows
@@ -52,7 +48,7 @@ Grafana consists of two components; the _frontend_, and the _backend_.
 Before we can build the frontend assets, we need to install the dependencies:
 
 ```
-yarn install --pure-lockfile
+yarn install --immutable
 ```
 
 After the command has finished, we can start building our source code:
@@ -216,7 +212,7 @@ ulimit -a
 To change the number of open files allowed, run:
 
 ```
-ulimit -S -n 2048
+ulimit -S -n 4096
 ```
 
 The number of files needed may be different on your environment. To determine the number of open files needed by `make run`, run:

@@ -56,7 +56,12 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
       className={styles.container}
     >
       <Card.Figure align={'center'} className={styles.checkbox}>
-        <SearchCheckbox editable={editable} checked={item.checked} onClick={handleCheckboxClick} />
+        <SearchCheckbox
+          aria-label="Select dashboard"
+          editable={editable}
+          checked={item.checked}
+          onClick={handleCheckboxClick}
+        />
       </Card.Figure>
       <Card.Meta separator={''}>
         <span className={styles.metaContainer}>

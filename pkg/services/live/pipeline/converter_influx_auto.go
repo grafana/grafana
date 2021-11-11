@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/convert"
 )
 
+// AutoInfluxConverterConfig ...
 type AutoInfluxConverterConfig struct {
 	FrameFormat string `json:"frameFormat"`
 }
@@ -18,6 +19,7 @@ type AutoInfluxConverter struct {
 	converter *convert.Converter
 }
 
+// NewAutoInfluxConverter creates new AutoInfluxConverter.
 func NewAutoInfluxConverter(config AutoInfluxConverterConfig) *AutoInfluxConverter {
 	return &AutoInfluxConverter{config: config, converter: convert.NewConverter()}
 }

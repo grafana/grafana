@@ -81,51 +81,65 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
     onClose();
   };
 
+  // Start with an empty row
+  useEffect(() => {
+    if (!value?.length) {
+      onAddValueMapping({ value: MappingType.ValueToText });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
-      <table className={styles.editTable}>
-        <thead>
-          <tr>
-            <th style={{ width: '1%' }}></th>
-            <th style={{ width: '40%', textAlign: 'left' }} colSpan={2}>
-              Condition
-            </th>
-            <th style={{ textAlign: 'left' }}>Display text</th>
-            <th style={{ width: '10%' }}>Color</th>
-            <th style={{ width: '1%' }}></th>
-          </tr>
-        </thead>
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="sortable-field-mappings" direction="vertical">
-            {(provided) => (
-              <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                {rows.map((row, index) => (
-                  <ValueMappingEditRow
-                    key={index.toString()}
-                    mapping={row}
-                    index={index}
-                    onChange={onChangeMapping}
-                    onRemove={onRemoveRow}
-                    onDuplicate={onDuplicateMapping}
-                  />
-                ))}
-                {provided.placeholder}
-              </tbody>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </table>
-      <ValuePicker
-        label="Add a new mapping"
-        variant="secondary"
-        size="md"
-        icon="plus"
-        menuPlacement="auto"
-        isFullWidth={false}
-        options={mappingTypes}
-        onChange={onAddValueMapping}
-      />
-      <Modal.ButtonRow>
+      <div className={styles.tableWrap}>
+        <table className={styles.editTable}>
+          <thead>
+            <tr>
+              <th style={{ width: '1%' }}></th>
+              <th style={{ width: '40%', textAlign: 'left' }} colSpan={2}>
+                Condition
+              </th>
+              <th style={{ textAlign: 'left' }}>Display text</th>
+              <th style={{ width: '10%' }}>Color</th>
+              <th style={{ width: '1%' }}></th>
+            </tr>
+          </thead>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="sortable-field-mappings" direction="vertical">
+              {(provided) => (
+                <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                  {rows.map((row, index) => (
+                    <ValueMappingEditRow
+                      key={index.toString()}
+                      mapping={row}
+                      index={index}
+                      onChange={onChangeMapping}
+                      onRemove={onRemoveRow}
+                      onDuplicate={onDuplicateMapping}
+                    />
+                  ))}
+                  {provided.placeholder}
+                </tbody>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </table>
+      </div>
+
+      <Modal.ButtonRow
+        leftItems={
+          <ValuePicker
+            label="Add a new mapping"
+            variant="secondary"
+            size="md"
+            icon="plus"
+            menuPlacement="auto"
+            minWidth={40}
+            options={mappingTypes}
+            onChange={onAddValueMapping}
+          />
+        }
+      >
         <Button variant="secondary" fill="outline" onClick={onClose}>
           Cancel
         </Button>
@@ -138,6 +152,12 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
+  tableWrap: css`
+    max-height: calc(80vh - 170px);
+    min-height: 40px;
+    overflow: auto;
+  `,
+
   editTable: css({
     width: '100%',
     marginBottom: theme.spacing(2),

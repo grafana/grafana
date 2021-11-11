@@ -20,7 +20,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:         "A",
-						DatasourceUID: DatasourceUID,
+						DatasourceUID: OldDatasourceUID,
 						JSON: json.RawMessage(`{
 							"expression": "B",
 							"reducer": "mean",
@@ -41,7 +41,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:         "A",
-						DatasourceUID: DatasourceUID,
+						DatasourceUID: OldDatasourceUID,
 						JSON: json.RawMessage(`{
 								"expression": "$B",
 								"type": "math"
@@ -49,7 +49,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID:         "B",
-						DatasourceUID: DatasourceUID,
+						DatasourceUID: OldDatasourceUID,
 						JSON: json.RawMessage(`{
 								"expression": "$A",
 								"type": "math"
@@ -65,7 +65,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:         "A",
-						DatasourceUID: DatasourceUID,
+						DatasourceUID: OldDatasourceUID,
 						JSON: json.RawMessage(`{
 								"expression": "$A",
 								"type": "math"
@@ -81,7 +81,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:         "A",
-						DatasourceUID: DatasourceUID,
+						DatasourceUID: OldDatasourceUID,
 						JSON: json.RawMessage(`{
 								"expression": "$B",
 								"type": "math"
@@ -97,7 +97,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:         "A",
-						DatasourceUID: DatasourceUID,
+						DatasourceUID: OldDatasourceUID,
 						JSON: json.RawMessage(`{
 							"type": "classic_conditions",
 							"conditions": [
@@ -128,7 +128,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID:         "B",
-						DatasourceUID: DatasourceUID,
+						DatasourceUID: OldDatasourceUID,
 						JSON: json.RawMessage(`{
 							"expression": "C",
 							"reducer": "mean",
@@ -149,7 +149,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:         "A",
-						DatasourceUID: DatasourceUID,
+						DatasourceUID: OldDatasourceUID,
 						JSON: json.RawMessage(`{
 							"type": "classic_conditions",
 							"conditions": [
@@ -180,7 +180,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID:         "B",
-						DatasourceUID: DatasourceUID,
+						DatasourceUID: OldDatasourceUID,
 						JSON: json.RawMessage(`{
 							"expression": "A",
 							"reducer": "mean",
@@ -194,6 +194,31 @@ func TestServicebuildPipeLine(t *testing.T) {
 				},
 			},
 			expectErrContains: "classic conditions may not be the input for other expressions",
+		},
+		{
+			name: "Queries with new datasource ref object",
+			req: &Request{
+				Queries: []Query{
+					{
+						RefID: "A",
+						Datasource: DataSourceRef{
+							UID: DatasourceUID,
+						},
+						JSON: json.RawMessage(`{
+							"expression": "B",
+							"reducer": "mean",
+							"type": "reduce"
+						}`),
+					},
+					{
+						RefID: "B",
+						Datasource: DataSourceRef{
+							UID: "Fake",
+						},
+					},
+				},
+			},
+			expectedOrder: []string{"B", "A"},
 		},
 	}
 	s := Service{}

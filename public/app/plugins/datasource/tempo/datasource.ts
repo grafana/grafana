@@ -19,7 +19,7 @@ import Prism from 'prismjs';
 import { LokiOptions, LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
-import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
+import { failedMetric, mapPromMetricsToServiceMap, serviceMapMetrics, totalsMetric } from './graphTransform';
 import {
   transformTrace,
   transformTraceList,
@@ -27,6 +27,7 @@ import {
   createTableFrameFromSearch,
 } from './resultTransformer';
 import { tokenizer } from './syntax';
+import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
 export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch';
@@ -39,6 +40,7 @@ export interface TempoJsonData extends DataSourceJsonData {
   search?: {
     hide?: boolean;
   };
+  nodeGraph?: NodeGraphOptions;
 }
 
 export type TempoQuery = {
@@ -52,7 +54,10 @@ export type TempoQuery = {
   minDuration?: string;
   maxDuration?: string;
   limit?: number;
+  serviceMapQuery?: string;
 } & DataQuery;
+
+export const DEFAULT_LIMIT = 20;
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
@@ -62,6 +67,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   search?: {
     hide?: boolean;
   };
+  nodeGraph?: NodeGraphOptions;
   uploadedJson?: string | ArrayBuffer | null = null;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
@@ -69,6 +75,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
     this.search = instanceSettings.jsonData.search;
+    this.nodeGraph = instanceSettings.jsonData.nodeGraph;
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
@@ -135,7 +142,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         if (!otelTraceData.batches) {
           subQueries.push(of({ error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] }));
         } else {
-          subQueries.push(of(transformFromOTEL(otelTraceData.batches)));
+          subQueries.push(of(transformFromOTEL(otelTraceData.batches, this.nodeGraph?.enabled)));
         }
       } else {
         subQueries.push(of({ data: [], state: LoadingState.Done }));
@@ -154,7 +161,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             if (response.error) {
               return response;
             }
-            return transformTrace(response);
+            return transformTrace(response, this.nodeGraph?.enabled);
           })
         )
       );
@@ -238,7 +245,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     // Set default limit
     if (!tempoQuery.limit) {
-      tempoQuery.limit = 100;
+      tempoQuery.limit = DEFAULT_LIMIT;
     }
 
     // Validate query inputs and remove spaces if valid
@@ -262,6 +269,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const tagsQueryObject = tagsQuery.reduce((tagQuery, item) => ({ ...tagQuery, ...item }), {});
     return { ...tagsQueryObject, ...tempoQuery };
   }
+
+  async getServiceGraphLabels() {
+    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
+    return ds.getTagKeys!();
+  }
+
+  async getServiceGraphLabelValues(key: string) {
+    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
+    return ds.getTagValues!({ key });
+  }
 }
 
 function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
@@ -277,12 +294,39 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
     // Just collect all the responses first before processing into node graph data
     toArray(),
     map((responses: DataQueryResponse[]) => {
+      const errorRes = responses.find((res) => !!res.error);
+      if (errorRes) {
+        throw new Error(errorRes.error!.message);
+      }
+
+      const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
+      nodes.fields[0].config = {
+        links: [
+          makePromLink('Total requests', totalsMetric, datasourceUid),
+          makePromLink('Failed requests', failedMetric, datasourceUid),
+        ],
+      };
+
       return {
-        data: mapPromMetricsToServiceMap(responses, request.range),
+        data: [nodes, edges],
         state: LoadingState.Done,
       };
     })
   );
+}
+
+function makePromLink(title: string, metric: string, datasourceUid: string) {
+  return {
+    url: '',
+    title,
+    internal: {
+      query: {
+        expr: metric,
+      } as PromQuery,
+      datasourceUid,
+      datasourceName: 'Prometheus',
+    },
+  };
 }
 
 function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
@@ -291,7 +335,9 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
     targets: serviceMapMetrics.map((metric) => {
       return {
         refId: metric,
-        expr: `delta(${metric}[$__range])`,
+        // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
+        // service map at the same time anyway
+        expr: `delta(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
         instant: true,
       };
     }),

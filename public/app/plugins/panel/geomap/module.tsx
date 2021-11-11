@@ -1,18 +1,19 @@
+import React from 'react';
 import { PanelPlugin } from '@grafana/data';
-import { BaseLayerEditor } from './editor/BaseLayerEditor';
-import { DataLayersEditor } from './editor/DataLayersEditor';
-import { GeomapPanel } from './GeomapPanel';
+import { GeomapInstanceState, GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
-import { mapPanelChangedHandler } from './migrations';
-import { defaultMarkersConfig } from './layers/data/markersLayer';
-import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
+import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
+import { getLayerEditor } from './editor/layerEditor';
+import { LayersEditor } from './editor/LayersEditor/LayersEditor';
+import { config } from '@grafana/runtime';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
+  .setMigrationHandler(mapMigrationHandler)
   .useFieldConfig()
-  .setPanelOptions((builder) => {
+  .setPanelOptions((builder, context) => {
     let category = ['Map view'];
     builder.addCustomEditor({
       category,
@@ -32,23 +33,49 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
-    builder.addCustomEditor({
-      category: ['Base layer'],
-      id: 'basemap',
-      path: 'basemap',
-      name: 'Base layer',
-      editor: BaseLayerEditor,
-      defaultValue: DEFAULT_BASEMAP_CONFIG,
-    });
+    const state = context.instanceState as GeomapInstanceState;
+    if (!state?.layers) {
+      // TODO? show spinner?
+    } else {
+      builder.addCustomEditor({
+        category: ['Data layer'],
+        id: 'layers',
+        path: '',
+        name: '',
+        editor: LayersEditor,
+      });
 
-    builder.addCustomEditor({
-      category: ['Data layer'],
-      id: 'layers',
-      path: 'layers',
-      name: 'Data layer',
-      editor: DataLayersEditor,
-      defaultValue: [defaultMarkersConfig],
-    });
+      const selected = state.layers[state.selected];
+      if (state.selected && selected) {
+        builder.addNestedOptions(
+          getLayerEditor({
+            state: selected,
+            category: ['Data layer'],
+            basemaps: false,
+          })
+        );
+      }
+
+      const baselayer = state.layers[0];
+      if (config.geomapDisableCustomBaseLayer) {
+        builder.addCustomEditor({
+          category: ['Base layer'],
+          id: 'layers',
+          path: '',
+          name: '',
+          // eslint-disable-next-line react/display-name
+          editor: () => <div>The base layer is configured by the server admin.</div>,
+        });
+      } else if (baselayer) {
+        builder.addNestedOptions(
+          getLayerEditor({
+            state: baselayer,
+            category: ['Base layer'],
+            basemaps: true,
+          })
+        );
+      }
+    }
 
     // The controls section
     category = ['Map controls'];

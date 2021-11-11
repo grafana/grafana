@@ -3,10 +3,8 @@ import {
   addResultsToCache,
   cancelQueries,
   cancelQueriesAction,
-  changeAutoLogsVolume,
   clearCache,
   importQueries,
-  loadLogsVolumeData,
   queryReducer,
   runQueries,
   scanStartAction,
@@ -35,16 +33,6 @@ import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 import Mock = jest.Mock;
 
-jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  config: {
-    ...((jest.requireActual('@grafana/runtime') as unknown) as any).config,
-    featureToggles: {
-      fullRangeLogsVolume: true,
-    },
-  },
-}));
-
 const t = toUtc();
 const testRange = {
   from: t,
@@ -63,6 +51,7 @@ const defaultInitialState = {
     [ExploreId.left]: {
       datasourceInstance: {
         query: jest.fn(),
+        getRef: jest.fn(),
         meta: {
           id: 'something',
         },
@@ -159,8 +148,8 @@ describe('importing queries', () => {
         importQueries(
           ExploreId.left,
           [
-            { datasource: 'postgres1', refId: 'refId_A' },
-            { datasource: 'postgres1', refId: 'refId_B' },
+            { datasource: { type: 'postgresql' }, refId: 'refId_A' },
+            { datasource: { type: 'postgresql' }, refId: 'refId_B' },
           ],
           { name: 'Postgres1', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
           { name: 'Postgres2', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>
@@ -323,6 +312,7 @@ describe('reducer', () => {
   describe('logs volume', () => {
     let dispatch: ThunkDispatch,
       getState: () => StoreState,
+      unsubscribes: Function[],
       mockLogsVolumeDataProvider: () => Observable<DataQueryResponse>;
 
     beforeEach(() => {
@@ -338,9 +328,9 @@ describe('reducer', () => {
         explore: {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
-            autoLoadLogsVolume: false,
             datasourceInstance: {
               query: jest.fn(),
+              getRef: jest.fn(),
               meta: {
                 id: 'something',
               },
@@ -354,68 +344,9 @@ describe('reducer', () => {
 
       dispatch = store.dispatch;
       getState = store.getState;
-    });
 
-    it('should not load logs volume automatically after running the query if auto-loading is disabled', async () => {
       setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = false;
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-    });
-
-    it('should load logs volume automatically after running the query if auto-loading is enabled', async () => {
-      setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = true;
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('when auto-load is enabled after running the query it should load logs volume data after changing auto-load option', async () => {
-      setupQueryResponse(getState());
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-
-      await dispatch(changeAutoLogsVolume(ExploreId.left, true));
-
-      expect(getState().explore.autoLoadLogsVolume).toEqual(true);
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('should allow loading logs volume on demand if auto-load is disabled', async () => {
-      setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = false;
-
-      await dispatch(runQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-
-      await dispatch(loadLogsVolumeData(ExploreId.left));
-
-      expect(getState().explore.autoLoadLogsVolume).toEqual(false);
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('should cancel any unfinished logs volume queries', async () => {
-      setupQueryResponse(getState());
-      let unsubscribes: Function[] = [];
+      unsubscribes = [];
 
       mockLogsVolumeDataProvider = () => {
         return ({
@@ -428,27 +359,27 @@ describe('reducer', () => {
           },
         } as unknown) as Observable<DataQueryResponse>;
       };
+    });
 
+    it('should cancel any unfinished logs volume queries', async () => {
       await dispatch(runQueries(ExploreId.left));
-      // no subscriptions created yet
-      expect(unsubscribes).toHaveLength(0);
-
-      await dispatch(loadLogsVolumeData(ExploreId.left));
+      // first query is run automatically
       // loading in progress - one subscription created, not cleaned up yet
       expect(unsubscribes).toHaveLength(1);
       expect(unsubscribes[0]).not.toBeCalled();
 
       setupQueryResponse(getState());
       await dispatch(runQueries(ExploreId.left));
-      // new query was run - first subscription is cleaned up, no new subscriptions yet
-      expect(unsubscribes).toHaveLength(1);
+      // a new query is run while log volume query is not resolve yet...
       expect(unsubscribes[0]).toBeCalled();
-
-      await dispatch(loadLogsVolumeData(ExploreId.left));
-      // new subscription is created, only the old was was cleaned up
+      // first subscription is cleaned up, a new subscription is created automatically
       expect(unsubscribes).toHaveLength(2);
-      expect(unsubscribes[0]).toBeCalled();
       expect(unsubscribes[1]).not.toBeCalled();
+    });
+
+    it('should load logs volume after running the query', async () => {
+      await dispatch(runQueries(ExploreId.left));
+      expect(unsubscribes).toHaveLength(1);
     });
   });
 });

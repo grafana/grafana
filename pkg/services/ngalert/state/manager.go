@@ -151,7 +151,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 	return states
 }
 
-//Set the current state based on evaluation results
+// Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
 	currentState := st.getOrCreate(alertRule, result)
 
@@ -235,12 +235,12 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 
 func (st *Manager) createAlertAnnotation(ctx context.Context, new eval.State, alertRule *ngModels.AlertRule, result eval.Result, oldState eval.State) {
 	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String())
-	dashUid, ok := alertRule.Annotations["__dashboardUid__"]
+	dashUid, ok := alertRule.Annotations[ngModels.DashboardUIDAnnotation]
 	if !ok {
 		return
 	}
 
-	panelUid := alertRule.Annotations["__panelId__"]
+	panelUid := alertRule.Annotations[ngModels.PanelIDAnnotation]
 
 	panelId, err := strconv.ParseInt(panelUid, 10, 64)
 	if err != nil {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -21,10 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/pkg/errors"
-	"gopkg.in/macaron.v1"
 	"gopkg.in/yaml.v3"
 )
 
@@ -40,7 +40,7 @@ func toMacaronPath(path string) string {
 }
 
 func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
-	recipient := macaron.Params(ctx.Req)[":Recipient"]
+	recipient := web.Params(ctx.Req)[":Recipient"]
 	if recipient == apimodels.GrafanaBackend.String() {
 		return apimodels.GrafanaBackend, nil
 	}
@@ -77,7 +77,7 @@ func replacedResponseWriter(ctx *models.ReqContext) (*models.ReqContext, *respon
 	resp := response.CreateNormalResponse(make(http.Header), nil, 0)
 	cpy := *ctx
 	cpyMCtx := *cpy.Context
-	cpyMCtx.Resp = macaron.NewResponseWriter(ctx.Req.Method, &safeMacaronWrapper{resp})
+	cpyMCtx.Resp = web.NewResponseWriter(ctx.Req.Method, &safeMacaronWrapper{resp})
 	cpy.Context = &cpyMCtx
 	return &cpy, resp
 }
@@ -223,7 +223,7 @@ func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.Sign
 	return refIDs, nil
 }
 
-func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, dataService *tsdb.Service, cfg *setting.Cfg, log log.Logger) response.Response {
+func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, expressionService *expr.Service, cfg *setting.Cfg, log log.Logger) response.Response {
 	evalCond := ngmodels.Condition{
 		Condition: cmd.Condition,
 		OrgID:     c.SignedInUser.OrgId,
@@ -239,7 +239,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 	}
 
 	evaluator := eval.Evaluator{Cfg: cfg, Log: log}
-	evalResults, err := evaluator.ConditionEval(&evalCond, now, dataService)
+	evalResults, err := evaluator.ConditionEval(&evalCond, now, expressionService)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
 	}

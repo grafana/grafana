@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 	"gopkg.in/yaml.v3"
 )
 
@@ -140,7 +140,7 @@ func (am *LotexAM) RouteDeleteSilence(ctx *models.ReqContext) response.Response 
 		ctx,
 		http.MethodDelete,
 		"silence",
-		[]string{macaron.Params(ctx.Req)[":SilenceId"]},
+		[]string{web.Params(ctx.Req)[":SilenceId"]},
 		nil,
 		messageExtractor,
 		nil,
@@ -188,7 +188,7 @@ func (am *LotexAM) RouteGetSilence(ctx *models.ReqContext) response.Response {
 		ctx,
 		http.MethodGet,
 		"silence",
-		[]string{macaron.Params(ctx.Req)[":SilenceId"]},
+		[]string{web.Params(ctx.Req)[":SilenceId"]},
 		nil,
 		jsonExtractor(&apimodels.GettableSilence{}),
 		nil,

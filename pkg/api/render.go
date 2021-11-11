@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
@@ -59,7 +59,7 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 		OrgID:             c.OrgId,
 		UserID:            c.UserId,
 		OrgRole:           c.OrgRole,
-		Path:              macaron.Params(c.Req)["*"] + queryParams,
+		Path:              web.Params(c.Req)["*"] + queryParams,
 		Timezone:          queryReader.Get("tz", ""),
 		Encoding:          queryReader.Get("encoding", ""),
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,

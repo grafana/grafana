@@ -2,6 +2,7 @@ import React from 'react';
 import { identityOverrideProcessor, standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../field';
 import { PanelPlugin } from './PanelPlugin';
 import { FieldConfigProperty } from '../types';
+import { PanelOptionsEditorBuilder } from '..';
 
 describe('PanelPlugin', () => {
   describe('declarative options', () => {
@@ -70,8 +71,12 @@ describe('PanelPlugin', () => {
         });
       });
 
-      expect(panel.optionEditors).toBeDefined();
-      expect(panel.optionEditors!.list()).toHaveLength(1);
+      const supplier = panel.getPanelOptionsSupplier();
+      expect(supplier).toBeDefined();
+
+      const builder = new PanelOptionsEditorBuilder();
+      supplier(builder, { data: [] });
+      expect(builder.getItems()).toHaveLength(1);
     });
   });
 
