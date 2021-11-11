@@ -212,7 +212,7 @@ steps:
   name: build-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn dlx pa11y-ci@pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4 pa11y-ci
+  - npx --yes pa11y-ci@pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4 pa11y-ci
     --config .pa11yci-pr.conf.js
   depends_on:
   - end-to-end-tests-server
@@ -507,7 +507,7 @@ steps:
   name: publish-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn dlx --quiet pa11y-ci@pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4
+  - npx --yes --silent pa11y-ci@pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4
     pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
   depends_on:
   - end-to-end-tests-server
@@ -3432,6 +3432,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 61c3033e6120e8f9a6fb44b7a96085bad8a1bd81d18c86865eb1222725daa2ec
+hmac: 21deac9ddabcb7bdf63d39c11548e16a252c03cbc29effc9f607530eacad223d
 
 ...
