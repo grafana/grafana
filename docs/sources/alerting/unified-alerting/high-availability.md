@@ -1,13 +1,13 @@
 +++
-title = "High Availability"
+title = " Configure high availability"
 description = "High Availability"
 keywords = ["grafana", "alerting", "tutorials", "ha", "high availability"]
 weight = 450
 +++
 
-# High Availability - How does it work?
+# High availability
 
-The Grafana alerting systems has two main components, the `Scheduler` and the internal `Alertmanager`. The `Scheduler` is responsible for the evaluation of your [alert rules]({{< relref "/fundamentals/evaluate-grafana-alerts.md" >}}) while the internal Alertmanager takes care of the **routing** and **grouping**.
+The Grafana alerting systems has two main components, the `Scheduler` and the internal `Alertmanager`. The `Scheduler` is responsible for the evaluation of your [alert rules]({{< relref "./fundamentals/evaluate-grafana-alerts.md" >}}) while the internal Alertmanager takes care of the **routing** and **grouping**.
 
 When it comes to a highly available setup, the operational mode of the scheduler is unaffected. All alerts will be evaluated in every instance. The operational change happens in the Alertmanager, it is in charge of also **deduplicating** the alert notifications between Grafana instances.
 
@@ -40,7 +40,7 @@ The two types of messages that are gossiped between instances are:
 
 These two states are persisted in the database periodically and when Grafana is gracefully shutdown.
 
-## Setup
+## Enable high availability
 
 To enable high availability support, you need to set the configuration [option `ha_peers` within the `[unified_alerting]` section]({{< relref "../../administration/configuration.md#unified_alerting" >}}). Setting this option to at least 1 peer will trigger the high availability mode for Grafana 8 Alerts. Communication happens using port 9094 on both UDP and TCP, so please make sure each instance has access on these.
 
@@ -51,9 +51,8 @@ The idea here is that you:
 
 ## Kubernetes
 
-### Grafana Pod IP
 
-If using Kubernetes, you can expose the pod IP [through an environment variable](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/) via the container definition such as:
+If you are using Kubernetes, you can expose the pod IP [through an environment variable](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/) via the container definition such as:
 
 ```bash
 env:
