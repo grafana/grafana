@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -25,7 +26,9 @@ const (
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
 
-var Tracer trace.Tracer
+var (
+	Tracer trace.Tracer
+)
 
 func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 	ts := &TracingService{
@@ -87,10 +90,46 @@ func (ts *TracingService) parseJaegerSettings() error {
 }
 
 func (ts *TracingService) initJaegerCfg() (*tracesdk.TracerProvider, error) {
+	var sampler tracesdk.Sampler
 	// Create the Jaeger exporter
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ts.address)))
 	if err != nil {
 		return nil, err
+	}
+
+	switch ts.samplerType {
+	case "const":
+		switch ts.samplerParam {
+		case 1:
+			tracesdk.AlwaysSample()
+		case 0:
+			tracesdk.NeverSample()
+		default:
+			return &tracesdk.TracerProvider{}, errors.New("wrong sampler parameter for const sampler")
+		}
+		sampler = NewRateLimitingSampler(ts.samplerParam)
+	case "probabilistic":
+		sampler = tracesdk.TraceIDRatioBased(ts.samplerParam)
+	case "rateLimiting":
+		sampler = NewRateLimitingSampler(ts.samplerParam)
+	case "remote":
+		initSampler, err := NewProbabilisticSampler(ts.samplerParam)
+		if err != nil {
+			return nil, err
+		}
+		options := []SamplerOption{
+			// SamplerOptions.Metrics(metrics),
+			SamplerOptions.InitialSampler(initSampler),
+			SamplerOptions.SamplingServerURL(ts.samplingServerURL),
+			// SamplerOptions.MaxOperations(int(ts.samplerParam)),
+			// SamplerOptions.OperationNameLateBinding(sc.OperationNameLateBinding),
+			// SamplerOptions.SamplingRefreshInterval(sc.SamplingRefreshInterval),
+		}
+		// options = append(options, sc.Options...)
+		// NewRemotelyControlledSampler(serviceName, options...),
+		sampler = NewRemotelyControlledSampler("grafana", options...)
+	default:
+		return &tracesdk.TracerProvider{}, errors.New("wrong sampler type")
 	}
 
 	tp := tracesdk.NewTracerProvider(
@@ -103,7 +142,7 @@ func (ts *TracingService) initJaegerCfg() (*tracesdk.TracerProvider, error) {
 			semconv.ServiceNameKey.String("grafana"),
 			attribute.String("environment", "production"),
 		)),
-		tracesdk.WithSampler(tracesdk.TraceIDRatioBased(ts.samplerParam)),
+		tracesdk.WithSampler(sampler),
 	)
 
 	return tp, nil
@@ -157,15 +196,15 @@ func splitTagSettings(input string) map[string]string {
 	return res
 }
 
-type jaegerLogWrapper struct {
-	logger log.Logger
-}
+// type jaegerLogWrapper struct {
+// 	logger log.Logger
+// }
 
-func (jlw *jaegerLogWrapper) Error(msg string) {
-	jlw.logger.Error(msg)
-}
+// func (jlw *jaegerLogWrapper) Error(msg string) {
+// 	jlw.logger.Error(msg)
+// }
 
-func (jlw *jaegerLogWrapper) Infof(format string, args ...interface{}) {
-	msg := fmt.Sprintf(format, args...)
-	jlw.logger.Info(msg)
-}
+// func (jlw *jaegerLogWrapper) Infof(format string, args ...interface{}) {
+// 	msg := fmt.Sprintf(format, args...)
+// 	jlw.logger.Info(msg)
+// }
