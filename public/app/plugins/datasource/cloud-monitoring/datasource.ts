@@ -67,7 +67,6 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         metricType: this.templateSrv.replace(annotation.target.metricType, options.scopedVars || {}),
         title: this.templateSrv.replace(annotation.target.title, options.scopedVars || {}),
         text: this.templateSrv.replace(annotation.target.text, options.scopedVars || {}),
-        tags: (annotation.target.tags || []).map((t: string) => this.templateSrv.replace(t, options.scopedVars || {})),
         projectName: this.templateSrv.replace(
           annotation.target.projectName ? annotation.target.projectName : this.getDefaultProject(),
           options.scopedVars || {}
