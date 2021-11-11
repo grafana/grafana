@@ -18019,7 +18019,7 @@ __metadata:
     postcss: 8.3.6
     postcss-loader: 6.2.0
     postcss-reporter: 7.0.2
-    postcss-scss: ^4.0.2
+    postcss-scss: 4.0.2
     prettier: 2.2.1
     prismjs: 1.25.0
     prop-types: 15.7.2
@@ -25846,7 +25846,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-scss@npm:^4.0.2":
+"postcss-scss@npm:4.0.2, postcss-scss@npm:^4.0.2":
   version: 4.0.2
   resolution: "postcss-scss@npm:4.0.2"
   peerDependencies:
