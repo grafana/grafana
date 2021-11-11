@@ -95,4 +95,27 @@ describe('Candlestick data', () => {
       }
     `);
   });
+
+  it('will create open from previous close', () => {
+    const info = prepareCandlestickFields(
+      [
+        toDataFrame({
+          fields: [
+            {
+              name: 'time',
+              values: [1, 2, 3, 4, 5],
+            },
+            {
+              name: 'close',
+              values: [1, 2, 3, 4, 5],
+            },
+          ],
+        }),
+      ],
+      options,
+      theme
+    );
+    expect(info.open!.values.toArray()).toEqual([1, 1, 2, 3, 4]);
+    expect(info.close!.values.toArray()).toEqual([1, 2, 3, 4, 5]);
+  });
 });
