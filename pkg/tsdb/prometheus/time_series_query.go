@@ -229,6 +229,12 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 		case *model.Scalar:
 			nextFrames = scalarToDataFrames(v, query, nextFrames)
 		case []apiv1.ExemplarQueryResult:
+			// If we have empty exemplar results, we don't want to return empty frame.
+			// This is important for alerting as empty exemplar result triggers No Data alert.
+			// We want to continue with processing of other results.
+			if len(v) == 0 {
+				continue
+			}
 			nextFrames = exemplarToDataFrames(v, query, nextFrames)
 		default:
 			plog.Error("Query returned unexpected result type", "type", v, "query", query.Expr)
