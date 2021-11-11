@@ -57,36 +57,26 @@ export const RolePickerInput = ({
 
   return !isFocused ? (
     <div className={styles.selectedRoles} onMouseDown={onInputClick}>
-      <Tooltip
-        content={
-          <>
-            {builtInRoles?.map((role) => (
-              <p key={role.uid}>{role.displayName}</p>
-            ))}
-          </>
-        }
-      >
-        <div>
-          <ValueContainer>{builtInRole}</ValueContainer>
-        </div>
-      </Tooltip>
-      {!!numberOfRoles && <ValueContainer>{`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}</ValueContainer>}
+      <ValueContainer>{builtInRole}</ValueContainer>
+      {!!numberOfRoles && (
+        <Tooltip
+          content={
+            <>
+              {appliedRoles?.map((role) => (
+                <p key={role.uid}>{role.displayName}</p>
+              ))}
+            </>
+          }
+        >
+          <div>
+            <ValueContainer>{`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}</ValueContainer>
+          </div>
+        </Tooltip>
+      )}
     </div>
   ) : (
     <div className={styles.wrapper} onMouseDown={onInputClick}>
-      <Tooltip
-        content={
-          <>
-            {builtInRoles?.map((role) => (
-              <p key={role.uid}>{role.displayName}</p>
-            ))}
-          </>
-        }
-      >
-        <div>
-          <ValueContainer>{builtInRole}</ValueContainer>
-        </div>
-      </Tooltip>
+      <ValueContainer>{builtInRole}</ValueContainer>
       {appliedRoles.map((role) => (
         <ValueContainer key={role.uid}>{role.displayName}</ValueContainer>
       ))}
