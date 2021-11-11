@@ -8,15 +8,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type FakeCondition struct{}
 
-func (f *FakeCondition) Eval(context *EvalContext, reqHandler plugins.DataRequestHandler) (*ConditionResult, error) {
+func (f *FakeCondition) Eval(context *EvalContext, reqHandler legacydata.RequestHandler) (*ConditionResult, error) {
 	return &ConditionResult{}, nil
 }
 

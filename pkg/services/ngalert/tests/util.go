@@ -3,11 +3,8 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"testing"
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -16,17 +13,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 // SetupTestEnv initializes a store to used by the tests.
 func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
@@ -54,8 +50,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.
 func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
-	d := rand.Intn(1000)
-	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
+	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
 	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:        orgID,
 		NamespaceUID: "namespace",
@@ -68,7 +63,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 						Annotations: map[string]string{"testAnnoKey": "testAnnoValue"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						Title:     fmt.Sprintf("an alert definition %d", d),
+						Title:     fmt.Sprintf("an alert definition %s", util.GenerateShortUID()),
 						Condition: "A",
 						Data: []models.AlertQuery{
 							{

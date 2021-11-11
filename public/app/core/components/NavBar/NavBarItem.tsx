@@ -86,6 +86,7 @@ const NavBarItem = ({
                 target={item.target}
                 text={item.text}
                 url={item.url}
+                styleOverrides={styles.item}
               />
             </Item>
           );
@@ -171,11 +172,15 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], adjustHeig
   `,
   header: css`
     background-color: ${theme.colors.background.secondary};
+    color: ${theme.colors.text.primary};
     height: ${theme.components.sidemenu.width - (adjustHeightForBorder ? 2 : 1)}px;
     font-size: ${theme.typography.h4.fontSize};
     font-weight: ${theme.typography.h4.fontWeight};
     padding: ${theme.spacing(1)} ${theme.spacing(2)};
     white-space: nowrap;
     width: 100%;
+  `,
+  item: css`
+    color: ${theme.colors.text.primary};
   `,
 });
