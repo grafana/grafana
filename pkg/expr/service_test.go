@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -27,9 +27,9 @@ func TestService(t *testing.T) {
 		Frames: []*data.Frame{dsDF},
 	}
 	s := Service{
-		cfg:               setting.NewCfg(),
-		dataService:       me,
-		encryptionService: ossencryption.ProvideService(),
+		cfg:            setting.NewCfg(),
+		dataService:    me,
+		secretsService: fakes.NewFakeSecretsService(),
 	}
 	bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetDataSourceQuery) error {
 		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test", JsonData: simplejson.New()}
