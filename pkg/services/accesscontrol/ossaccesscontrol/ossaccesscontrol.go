@@ -82,9 +82,25 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	builtinRoles := ac.GetUserBuiltInRoles(user)
+	permissions := ac.getFixedPermissions(ctx, user)
+
+	resolved := make([]*accesscontrol.Permission, 0, len(permissions))
+	for _, p := range permissions {
+		// if the permission has a keyword in its scope it will be resolved
+		permission, err := ac.scopeResolver.ResolveKeyword(user, *p)
+		if err != nil {
+			return nil, err
+		}
+		resolved = append(resolved, permission)
+	}
+
+	return resolved, nil
+}
+
+func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user *models.SignedInUser) []*accesscontrol.Permission {
 	permissions := make([]*accesscontrol.Permission, 0)
-	for _, builtin := range builtinRoles {
+
+	for _, builtin := range ac.GetUserBuiltInRoles(user) {
 		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
 			for _, name := range roleNames {
 				role, exists := accesscontrol.FixedRoles[name]
@@ -92,18 +108,14 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 					continue
 				}
 				for _, p := range role.Permissions {
-					// if the permission has a keyword in its scope it will be resolved
-					permission, err := ac.scopeResolver.ResolveKeyword(user, p)
-					if err != nil {
-						return nil, err
-					}
-					permissions = append(permissions, permission)
+					permissions = append(permissions, &p)
+
 				}
 			}
 		}
 	}
 
-	return permissions, nil
+	return permissions
 }
 
 func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
