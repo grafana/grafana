@@ -23,12 +23,14 @@ import {
   DataSourceJsonData,
   DataSourceRef,
   DataTransformerConfig,
+  getDefaultTimeRange,
   LoadingState,
   PanelData,
   rangeUtil,
   ScopedVars,
   TimeRange,
   TimeZone,
+  toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
@@ -86,6 +88,15 @@ export class PanelQueryRunner {
     const fastCompare = (a: DataFrame, b: DataFrame) => {
       return compareDataFrameStructures(a, b, true);
     };
+
+    if (this.dataConfigSource.snapshotData) {
+      const snapshotPanelData: PanelData = {
+        state: LoadingState.Done,
+        series: this.dataConfigSource.snapshotData.map((v) => toDataFrame(v)),
+        timeRange: getDefaultTimeRange(), // Don't need real time range for snapshots
+      };
+      return of(snapshotPanelData);
+    }
 
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),

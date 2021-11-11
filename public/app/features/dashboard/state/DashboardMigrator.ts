@@ -708,12 +708,11 @@ export class DashboardMigrator {
         variable.datasource = migrateDatasourceNameToRef(variable.datasource);
       }
 
-      // Mutate panel models
-      for (const panel of this.dashboard.panels) {
+      panelUpgrades.push((panel) => {
         panel.datasource = migrateDatasourceNameToRef(panel.datasource);
 
         if (!panel.targets) {
-          continue;
+          return panel;
         }
 
         for (const target of panel.targets) {
@@ -722,7 +721,9 @@ export class DashboardMigrator {
             target.datasource = targetRef;
           }
         }
-      }
+
+        return panel;
+      });
     }
 
     if (panelUpgrades.length === 0) {

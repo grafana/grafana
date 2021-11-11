@@ -17,18 +17,29 @@ type AccessControl interface {
 	// GetUserRoles returns user roles.
 	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
 
-	// CloneUserToServiceAccount Creates a new service account and assigns it the same roles as the user has
-	CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error)
-
-	// LinkAPIKeyToServiceAccount Connects an APIkey to a service account.  Multiple API keys may be linked to one account.
-	LinkAPIKeyToServiceAccount(ctx context.Context, ApiKey *models.ApiKey, serviceAccount *models.User) error
-
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 
 	// DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
+}
+
+type PermissionsProvider interface {
+	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
+}
+
+type ResourceStore interface {
+	// SetUserResourcePermissions sets permissions for managed user role on a resource
+	SetUserResourcePermissions(ctx context.Context, orgID, userID int64, cmd SetResourcePermissionsCommand) ([]ResourcePermission, error)
+	// SetTeamResourcePermissions sets permissions for managed team role on a resource
+	SetTeamResourcePermissions(ctx context.Context, orgID, teamID int64, cmd SetResourcePermissionsCommand) ([]ResourcePermission, error)
+	// SetBuiltinResourcePermissions sets permissions for managed builtin role on a resource
+	SetBuiltinResourcePermissions(ctx context.Context, orgID int64, builtinRole string, cmd SetResourcePermissionsCommand) ([]ResourcePermission, error)
+	// RemoveResourcePermission remove permission for resource
+	RemoveResourcePermission(ctx context.Context, orgID int64, cmd RemoveResourcePermissionCommand) error
+	// GetResourcesPermissions will return all permission for all supplied resource ids
+	GetResourcesPermissions(ctx context.Context, orgID int64, query GetResourcesPermissionsQuery) ([]ResourcePermission, error)
 }
 
 func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
