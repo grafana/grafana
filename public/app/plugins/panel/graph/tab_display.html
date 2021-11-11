@@ -1,4 +1,17 @@
 <div class="gf-form-group">
+  <div class="grafana-info-box">
+    <h5>Migration</h5>
+    <p>
+      This visualization type is deprecated. Please migrate to the new time series type. 
+    </p>
+    <p>
+      <button class="btn btn-primary" ng-click="ctrl.migrateToReact()">
+        Migrate
+      </button>
+    </p>
+    <p>Some features like colored time regions and negative transforms are not supported in the new panel.</p>    
+  </div>
+
   <gf-form-switch
     class="gf-form"
     label="Bars"
