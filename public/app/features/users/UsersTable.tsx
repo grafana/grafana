@@ -1,9 +1,11 @@
-import React, { FC, useState } from 'react';
-import { AccessControlAction, OrgUser } from 'app/types';
+import React, { FC, useEffect, useState } from 'react';
+import { AccessControlAction, OrgUser, Role } from 'app/types';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
+import { config } from '@grafana/runtime';
+import { fetchBuiltinRoles, fetchRoleOptions, UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 
 export interface Props {
   users: OrgUser[];
@@ -15,8 +17,29 @@ const UsersTable: FC<Props> = (props) => {
   const { users, onRoleChange, onRemoveUser } = props;
   const canUpdateRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
   const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
+  const rolePickerDisabled = !canUpdateRole;
 
   const [showRemoveModal, setShowRemoveModal] = useState<string | boolean>(false);
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
+
+  useEffect(() => {
+    async function fetchOptions() {
+      try {
+        let options = await fetchRoleOptions();
+        setRoleOptions(options);
+        const builtInRoles = await fetchBuiltinRoles();
+        setBuiltinRoles(builtInRoles);
+      } catch (e) {
+        console.error('Error loading options');
+      }
+    }
+    fetchOptions();
+  }, []);
+
+  const getRoleOptions = async () => roleOptions;
+  const getBuiltinRoles = async () => builtinRoles;
+
   return (
     <table className="filter-table form-inline">
       <thead>
@@ -56,12 +79,23 @@ const UsersTable: FC<Props> = (props) => {
               <td className="width-1">{user.lastSeenAtAge}</td>
 
               <td className="width-8">
-                <OrgRolePicker
-                  aria-label="Role"
-                  value={user.role}
-                  disabled={!canUpdateRole}
-                  onChange={(newRole) => onRoleChange(newRole, user)}
-                />
+                {config.licenseInfo.hasLicense ? (
+                  <UserRolePicker
+                    userId={user.userId}
+                    builtInRole={user.role}
+                    onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
+                    getRoleOptions={getRoleOptions}
+                    getBuiltinRoles={getBuiltinRoles}
+                    disabled={rolePickerDisabled}
+                  />
+                ) : (
+                  <OrgRolePicker
+                    aria-label="Role"
+                    value={user.role}
+                    disabled={!canUpdateRole}
+                    onChange={(newRole) => onRoleChange(newRole, user)}
+                  />
+                )}
               </td>
 
               {canRemoveFromOrg && (
