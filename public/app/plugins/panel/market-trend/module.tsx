@@ -81,7 +81,7 @@ export const plugin = new PanelPlugin<MarketOptions, GraphFieldConfig>(MarketTre
   .useFieldConfig(getMarketFieldConfig())
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
-    const info = prepareCandlestickFields(context.data, config.theme2, opts);
+    const info = prepareCandlestickFields(context.data, opts, config.theme2);
 
     builder
       .addRadio({
