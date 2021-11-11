@@ -31,7 +31,7 @@ type AccessControl interface {
 	DeclareFixedRoles(...RoleRegistration) error
 }
 
-type Store interface {
+type PermissionsProvider interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
