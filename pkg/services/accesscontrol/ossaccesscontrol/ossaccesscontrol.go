@@ -86,6 +86,16 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 
 	permissions := ac.getFixedPermissions(ctx, user)
 
+	dbPermissions, err := ac.provider.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
+		OrgID:  user.OrgId,
+		UserID: user.UserId,
+		Roles:  ac.GetUserBuiltInRoles(user),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	permissions = append(permissions, dbPermissions...)
 	resolved := make([]*accesscontrol.Permission, 0, len(permissions))
 	for _, p := range permissions {
 		// if the permission has a keyword in its scope it will be resolved
