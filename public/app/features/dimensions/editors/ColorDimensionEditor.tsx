@@ -13,7 +13,13 @@ const fixedColorOption: SelectableValue<string> = {
   value: '_____fixed_____',
 };
 
-export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, any, any>> = (props) => {
+export interface ColorDimensionSettings {
+  forceFixed?: boolean;
+}
+
+export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, ColorDimensionSettings, any>> = (
+  props
+) => {
   const { value, context, onChange, item } = props;
 
   const defaultColor = 'dark-green';
@@ -21,9 +27,9 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
 
   const styles = useStyles2(getStyles);
   const fieldName = value?.field;
-  const isFixed = Boolean(!fieldName);
+  const isFixed = Boolean(!fieldName || settings.forceFixed);
   const names = useFieldDisplayNames(context.data);
-  const selectOptions = useSelectOptions(names, fieldName, fixedColorOption);
+  let selectOptions = useSelectOptions(names, fieldName, fixedColorOption);
 
   const onSelectChange = useCallback(
     (selection: SelectableValue<string>) => {
@@ -55,20 +61,21 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
     [onChange]
   );
 
+  if (settings.forceFixed) {
+    selectOptions = [fixedColorOption];
+  }
+
   const selectedOption = isFixed ? fixedColorOption : selectOptions.find((v) => v.value === fieldName);
-  const mode = settings?.mode;
   return (
     <>
       <div className={styles.container}>
-        {mode !== 'fixed' && (
-          <Select
-            menuShouldPortal
-            value={selectedOption}
-            options={selectOptions}
-            onChange={onSelectChange}
-            noOptionsMessage="No fields found"
-          />
-        )}
+        <Select
+          menuShouldPortal
+          value={selectedOption}
+          options={selectOptions}
+          onChange={onSelectChange}
+          noOptionsMessage="No fields found"
+        />
         {isFixed && (
           <div className={styles.picker}>
             <ColorPicker color={value?.fixed ?? defaultColor} onChange={onColorChange} enableNamedColors={true} />

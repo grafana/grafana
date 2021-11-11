@@ -1,5 +1,5 @@
 import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
-import { ColorDimensionConfig } from 'app/features/dimensions';
+import { ColorDimensionConfig, ResourceDimensionConfig, ScaleDimensionConfig } from 'app/features/dimensions';
 import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
 import { Style } from 'ol/style';
@@ -85,6 +85,19 @@ export interface StyleMakerConfig {
   size: number;
   markerPath?: string;
   text?: string;
+}
+
+// StyleConfig is used to define style for featues
+export interface StyleConfig {
+  color: ColorDimensionConfig;
+  opacity?: number; // defaults to 80%
+
+  // For non-points
+  stroke?: number;
+
+  // Used for points
+  size?: ScaleDimensionConfig;
+  symbol?: ResourceDimensionConfig;
 }
 
 export type StyleMaker = (config: StyleMakerConfig) => Style;

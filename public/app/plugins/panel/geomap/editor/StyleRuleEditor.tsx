@@ -1,5 +1,5 @@
 import React, { ChangeEvent, FC, useCallback } from 'react';
-import { GrafanaTheme2, SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ComparisonOperation, FeatureStyleConfig } from '../types';
 import { Button, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -85,12 +85,6 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
     onChange(undefined);
   }, [onChange]);
 
-  const itemSettings: StandardEditorsRegistryItem = {
-    settings: {
-      mode: 'fixed',
-    },
-  } as any;
-
   return (
     <div className={styles.rule}>
       <InlineFieldRow className={styles.row}>
@@ -121,16 +115,25 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
             aria-label={'Comparison value'}
           />
         </InlineField>
+        <Button size="md" icon="trash-alt" onClick={onDelete} variant="secondary" aria-label={'Delete style rule'} />
       </InlineFieldRow>
       <InlineFieldRow className={styles.row}>
-        <InlineField label="Style" labelWidth={LABEL_WIDTH} className={styles.color}>
+        <InlineField label="Color" labelWidth={LABEL_WIDTH}>
           <ColorDimensionEditor
             value={value.fillColor}
             context={context}
             onChange={onChangeColor}
-            item={itemSettings}
+            item={
+              {
+                settings: {
+                  forceFixed: true,
+                },
+              } as any
+            }
           />
         </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow className={styles.row}>
         <InlineField label="Stroke" className={styles.inline} grow={true}>
           <NumberInput
             value={value?.strokeWidth ?? 1}
@@ -141,14 +144,6 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
             onChange={onChangeStrokeWidth}
           />
         </InlineField>
-        <Button
-          size="md"
-          icon="trash-alt"
-          onClick={() => onDelete()}
-          variant="secondary"
-          aria-label={'Delete style rule'}
-          className={styles.button}
-        ></Button>
       </InlineFieldRow>
     </div>
   );
