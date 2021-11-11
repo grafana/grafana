@@ -10026,13 +10026,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ansi-styles@npm:^2.2.1":
-  version: 2.2.1
-  resolution: "ansi-styles@npm:2.2.1"
-  checksum: ebc0e00381f2a29000d1dac8466a640ce11943cef3bda3cd0020dc042e31e1058ab59bf6169cd794a54c3a7338a61ebc404b7c91e004092dd20e028c432c9c2c
-  languageName: node
-  linkType: hard
-
 "ansi-styles@npm:^3.2.0, ansi-styles@npm:^3.2.1":
   version: 3.2.1
   resolution: "ansi-styles@npm:3.2.1"
@@ -11801,19 +11794,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:~1.1.3":
-  version: 1.1.3
-  resolution: "chalk@npm:1.1.3"
-  dependencies:
-    ansi-styles: ^2.2.1
-    escape-string-regexp: ^1.0.2
-    has-ansi: ^2.0.0
-    strip-ansi: ^3.0.0
-    supports-color: ^2.0.0
-  checksum: 9d2ea6b98fc2b7878829eec223abcf404622db6c48396a9b9257f6d0ead2acf18231ae368d6a664a83f272b0679158da12e97b5229f794939e555cc574478acd
-  languageName: node
-  linkType: hard
-
 "chance@npm:^1.0.10":
   version: 1.1.8
   resolution: "chance@npm:1.1.8"
@@ -12443,6 +12423,13 @@ __metadata:
   version: 2.19.0
   resolution: "commander@npm:2.19.0"
   checksum: d52ffb0b31528784005356f879591b5a4875d3e88806c115fb30a8de0994d2fa9ca3f72a3cb880cdaf1bfb9df185f928cfcbbc656fa831f9c6109a209569ef6d
+  languageName: node
+  linkType: hard
+
+"commander@npm:~8.0.0":
+  version: 8.0.0
+  resolution: "commander@npm:8.0.0"
+  checksum: 4b652188473fbc5cbacc5a95c53ed854278cb28a94bd6743c2013c00c11433fa60bdf41835b7e4fb3751ca6c8836dc9c09a68b587736dbd59a72a47a91fd5cd0
   languageName: node
   linkType: hard
 
@@ -15471,7 +15458,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"escape-string-regexp@npm:1.0.5, escape-string-regexp@npm:^1.0.2, escape-string-regexp@npm:^1.0.5":
+"escape-string-regexp@npm:1.0.5, escape-string-regexp@npm:^1.0.5":
   version: 1.0.5
   resolution: "escape-string-regexp@npm:1.0.5"
   checksum: 6092fda75c63b110c706b6a9bfde8a612ad595b628f0bd2147eea1d3406723020810e591effc7db1da91d80a71a737a313567c5abb3813e8d9c71f4aa595b410
@@ -17930,7 +17917,7 @@ __metadata:
     ngtemplate-loader: 2.1.0
     nodemon: 2.0.2
     ol: 6.7.0
-    pa11y-ci: "pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4"
+    pa11y-ci: "pa11y/pa11y-ci#6b2d4f54efe445ad551472acc1877fe7542ac085"
     papaparse: 5.3.0
     pluralize: ^8.0.0
     postcss: 8.3.6
@@ -18112,15 +18099,6 @@ __metadata:
   version: 2.1.0
   resolution: "hard-rejection@npm:2.1.0"
   checksum: 7baaf80a0c7fff4ca79687b4060113f1529589852152fa935e6787a2bc96211e784ad4588fb3048136ff8ffc9dfcf3ae385314a5b24db32de20bea0d1597f9dc
-  languageName: node
-  linkType: hard
-
-"has-ansi@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "has-ansi@npm:2.0.0"
-  dependencies:
-    ansi-regex: ^2.0.0
-  checksum: 1b51daa0214440db171ff359d0a2d17bc20061164c57e76234f614c91dbd2a79ddd68dfc8ee73629366f7be45a6df5f2ea9de83f52e1ca24433f2cc78c35d8ec
   languageName: node
   linkType: hard
 
@@ -18371,6 +18349,18 @@ __metadata:
     minimalistic-assert: ^1.0.0
     minimalistic-crypto-utils: ^1.0.1
   checksum: bd30b6a68d7f22d63f10e1888aee497d7c2c5c0bb469e66bbdac99f143904d1dfe95f8131f95b3e86c86dd239963c9d972fcbe147e7cffa00e55d18585c43fe0
+  languageName: node
+  linkType: hard
+
+"hogan.js@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "hogan.js@npm:3.0.2"
+  dependencies:
+    mkdirp: 0.3.0
+    nopt: 1.0.10
+  bin:
+    hulk: ./bin/hulk
+  checksum: c7bbff84faa9ca265c39f4a2100546ba0388fcc9c5bac8526f488592ce3fcaa042eba6ac25db277f4478ec3855b9bc28ce59acffbf6e8a28d45a17df7590c6aa
   languageName: node
   linkType: hard
 
@@ -22971,6 +22961,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mkdirp@npm:0.3.0":
+  version: 0.3.0
+  resolution: "mkdirp@npm:0.3.0"
+  checksum: 3ec9cda8bd89b64892728e5092bc79e88382e444d4bbde040c2fb8d7034dc70682cfdd729e93241fd5243d2397324c420ef68c717d806db51bf96c0fc80f4b1d
+  languageName: node
+  linkType: hard
+
 "mkdirp@npm:0.5.1":
   version: 0.5.1
   resolution: "mkdirp@npm:0.5.1"
@@ -23610,6 +23607,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nopt@npm:1.0.10, nopt@npm:~1.0.10":
+  version: 1.0.10
+  resolution: "nopt@npm:1.0.10"
+  dependencies:
+    abbrev: 1
+  bin:
+    nopt: ./bin/nopt.js
+  checksum: f62575aceaa3be43f365bf37a596b89bbac2e796b001b6d2e2a85c2140a4e378ff919e2753ccba959c4fd344776fc88c29b393bc167fa939fb1513f126f4cd45
+  languageName: node
+  linkType: hard
+
 "nopt@npm:^4.0.1":
   version: 4.0.3
   resolution: "nopt@npm:4.0.3"
@@ -23630,17 +23638,6 @@ __metadata:
   bin:
     nopt: bin/nopt.js
   checksum: d35fdec187269503843924e0114c0c6533fb54bbf1620d0f28b4b60ba01712d6687f62565c55cc20a504eff0fbe5c63e22340c3fad549ad40469ffb611b04f2f
-  languageName: node
-  linkType: hard
-
-"nopt@npm:~1.0.10":
-  version: 1.0.10
-  resolution: "nopt@npm:1.0.10"
-  dependencies:
-    abbrev: 1
-  bin:
-    nopt: ./bin/nopt.js
-  checksum: f62575aceaa3be43f365bf37a596b89bbac2e796b001b6d2e2a85c2140a4e378ff919e2753ccba959c4fd344776fc88c29b393bc167fa939fb1513f126f4cd45
   languageName: node
   linkType: hard
 
@@ -24479,36 +24476,36 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pa11y-ci@pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4":
+"pa11y-ci@pa11y/pa11y-ci#6b2d4f54efe445ad551472acc1877fe7542ac085":
   version: 2.4.2
-  resolution: "pa11y-ci@https://github.com/pa11y/pa11y-ci.git#commit=5c842cf1b9fe2867b70ff5354851d985be8d71c4"
+  resolution: "pa11y-ci@https://github.com/pa11y/pa11y-ci.git#commit=6b2d4f54efe445ad551472acc1877fe7542ac085"
   dependencies:
     async: ~2.6.3
-    chalk: ~1.1.3
     cheerio: ~1.0.0-rc.10
     commander: ~6.2.1
     globby: ~6.1.0
     kleur: ~4.1.4
     lodash: ~4.17.21
     node-fetch: ~2.6.1
-    pa11y: ~6.0.1
+    pa11y: ~6.1.0
     protocolify: ~3.0.0
     puppeteer: ~9.1.1
     wordwrap: ~1.0.0
   bin:
     pa11y-ci: ./bin/pa11y-ci.js
-  checksum: 668c9119bd5195ab1013cafef4d5d9249ed13f9a049bb8e68088cebc50d495975b5398a201b34f126aff03e605d494aa59044d1a325a642970b28d472395203a
+  checksum: 87ae617f98c1c20b6220c02cf7e835cbe118be75a0c461a3994d4f912f8d19bb7e0f2754a81dc416a7937a22a9730081a8f660090d359c03fb94a14bffb79a32
   languageName: node
   linkType: hard
 
-"pa11y@npm:~6.0.1":
-  version: 6.0.1
-  resolution: "pa11y@npm:6.0.1"
+"pa11y@npm:~6.1.0":
+  version: 6.1.0
+  resolution: "pa11y@npm:6.1.0"
   dependencies:
     axe-core: ^4.0.2
     bfj: ~7.0.2
-    commander: ~6.2.1
+    commander: ~8.0.0
     envinfo: ~7.8.1
+    hogan.js: ^3.0.2
     html_codesniffer: ^2.5.1
     kleur: ~4.1.4
     node.extend: ~2.0.2
@@ -24517,7 +24514,7 @@ __metadata:
     semver: ~7.3.5
   bin:
     pa11y: bin/pa11y.js
-  checksum: 252ac02d7e076f2fb01be785a8f65538d66433ab950a5e7cd2ccb9324b6c3d5c0f77e2f738098194c244f677372fc405363d1370eacec3161664f501f8989efc
+  checksum: c3653ef7dbe428b73ef5f6010f2aa1843afa3ed4a5ec109438289cb5a598221b9d72beebdf1d9ebeaafa826497211cbd7d00629e21d7b4af970b76a44fc77e79
   languageName: node
   linkType: hard
 
@@ -31129,13 +31126,6 @@ __metadata:
   dependencies:
     has-flag: ^4.0.0
   checksum: c052193a7e43c6cdc741eb7f378df605636e01ad434badf7324f17fb60c69a880d8d8fcdcb562cf94c2350e57b937d7425ab5b8326c67c2adc48f7c87c1db406
-  languageName: node
-  linkType: hard
-
-"supports-color@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "supports-color@npm:2.0.0"
-  checksum: 602538c5812b9006404370b5a4b885d3e2a1f6567d314f8b4a41974ffe7d08e525bf92ae0f9c7030e3b4c78e4e34ace55d6a67a74f1571bc205959f5972f88f0
   languageName: node
   linkType: hard
 
