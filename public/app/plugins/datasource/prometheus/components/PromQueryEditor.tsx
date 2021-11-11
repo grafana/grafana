@@ -201,7 +201,12 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
               </InlineFormLabel>
             </div>
             {showExemplarField && (
-              <PromExemplarField onChange={this.onExemplarChange} datasource={datasource} query={this.query} />
+              <PromExemplarField
+                onChange={this.onExemplarChange}
+                datasource={datasource}
+                query={this.query}
+                data-testid={testIds.exemplar}
+              />
             )}
           </div>
         }
@@ -212,4 +217,5 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
 export const testIds = {
   editor: 'prom-editor',
+  exemplar: 'exemplar-editor',
 };
