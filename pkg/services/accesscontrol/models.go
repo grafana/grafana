@@ -125,6 +125,34 @@ func fallbackDisplayName(rName string) string {
 	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
 }
 
+type TeamRole struct {
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	TeamID int64 `json:"teamId" xorm:"team_id"`
+
+	Created time.Time
+}
+
+type UserRole struct {
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	UserID int64 `json:"userId" xorm:"user_id"`
+
+	Created time.Time
+}
+
+type BuiltinRole struct {
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	Role   string
+
+	Updated time.Time
+	Created time.Time
+}
+
 // Permission is the model for access control permissions.
 type Permission struct {
 	ID     int64  `json:"-" xorm:"pk autoincr 'id'"`
@@ -143,10 +171,56 @@ func (p Permission) OSSPermission() Permission {
 	}
 }
 
+type GetUserPermissionsQuery struct {
+	OrgID  int64 `json:"-"`
+	UserID int64 `json:"userId"`
+	Roles  []string
+}
+
 // ScopeParams holds the parameters used to fill in scope templates
 type ScopeParams struct {
 	OrgID     int64
 	URLParams map[string]string
+}
+
+type ResourcePermission struct {
+	ID          int64  `xorm:"id"`
+	ResourceID  string `xorm:"resource_id"`
+	RoleName    string
+	Action      string
+	Scope       string
+	UserId      int64
+	UserLogin   string
+	UserEmail   string
+	TeamId      int64
+	TeamEmail   string
+	Team        string
+	BuiltInRole string
+	Created     time.Time
+	Updated     time.Time
+}
+
+func (p *ResourcePermission) Managed() bool {
+	return strings.HasPrefix(p.RoleName, "managed:")
+}
+
+type SetResourcePermissionsCommand struct {
+	Actions    []string
+	Resource   string
+	ResourceID string
+}
+
+type RemoveResourcePermissionCommand struct {
+	Resource     string
+	Actions      []string
+	ResourceID   string
+	PermissionID int64
+}
+
+type GetResourcesPermissionsQuery struct {
+	Actions     []string
+	Resource    string
+	ResourceIDs []string
 }
 
 const (

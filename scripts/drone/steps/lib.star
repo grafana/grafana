@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.5.5'
-build_image = 'grafana/build-container:1.4.4'
+build_image = 'grafana/build-container:1.4.5'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -428,11 +428,11 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
     ]
     if ver_mode == 'pr':
         commands.extend([
-            'yarn run test:accessibility-pr',
+            'yarn dlx pa11y-ci@git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4 pa11y-ci --config .pa11yci-pr.conf.js',
         ])
     else:
         commands.extend([
-            'yarn run test:accessibility --json > pa11y-ci-results.json',
+            'yarn dlx --quiet pa11y-ci@git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4 pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json',
         ])
 
     return {

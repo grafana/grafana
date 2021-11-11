@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { css } from '@emotion/css';
+import SVG from 'react-inlinesvg';
 import { Button, Select, FilterInput, useTheme2, stylesFactory, Field, Modal, Label, Input } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+
 import { ResourceCards } from './ResourceCards';
-import SVG from 'react-inlinesvg';
-import { css } from '@emotion/css';
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
@@ -27,10 +28,22 @@ export interface ResourceItem {
 const sourceOptions = [
   { label: `Folder`, value: 'folder' },
   { label: 'URL', value: 'url' },
-  { label: 'Upload', value: 'upload' },
+  // { label: 'Upload', value: 'upload' }, TODO
 ];
 
-export function ResourcePicker(props: Props) {
+const getFolders = (mediaType: 'icon' | 'image') => {
+  if (mediaType === 'icon') {
+    return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Marker];
+  } else {
+    return [ResourceFolderName.BG];
+  }
+};
+
+const folderIfExists = (folders: Array<{ label: string; value: string }>, path: string) => {
+  return folders.filter((folder) => path.indexOf(folder.value) > -1)[0] ?? folders[0];
+};
+
+export const ResourcePicker = (props: Props) => {
   const { value, onChange, mediaType, folderName, setOpen } = props;
   const folders = getFolders(mediaType).map((v) => ({
     label: v,
@@ -91,11 +104,14 @@ export function ResourcePicker(props: Props) {
       setFilteredIndex(directoryIndex);
     }
   };
+
   const imgSrc = getPublicOrAbsoluteUrl(newValue!);
+
   let shortName = newValue?.substring(newValue.lastIndexOf('/') + 1, newValue.lastIndexOf('.'));
   if (shortName.length > 20) {
     shortName = shortName.substring(0, 20) + '...';
   }
+
   return (
     <div>
       <div className={styles.upper}>
@@ -159,12 +175,12 @@ export function ResourcePicker(props: Props) {
         )} */}
     </div>
   );
-}
+};
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     cardsWrapper: css`
-      height: calc(100vh - 550px);
+      height: 30vh;
       min-height: 50px;
       margin-top: 5px;
       max-width: 680px;
@@ -205,15 +221,3 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
   };
 });
-
-const getFolders = (mediaType: 'icon' | 'image') => {
-  if (mediaType === 'icon') {
-    return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Marker];
-  } else {
-    return [ResourceFolderName.BG];
-  }
-};
-
-const folderIfExists = (folders: Array<{ label: string; value: string }>, path: string) => {
-  return folders.filter((folder) => path.indexOf(folder.value) > -1)[0] ?? folders[0];
-};
