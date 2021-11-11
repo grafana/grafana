@@ -18019,6 +18019,7 @@ __metadata:
     postcss: 8.3.6
     postcss-loader: 6.2.0
     postcss-reporter: 7.0.2
+    postcss-scss: ^4.0.2
     prettier: 2.2.1
     prismjs: 1.25.0
     prop-types: 15.7.2
@@ -18074,7 +18075,7 @@ __metadata:
     style-loader: 3.3.1
     stylelint: 14.0.1
     stylelint-config-prettier: 9.0.3
-    stylelint-config-sass-guidelines: 8.0.0
+    stylelint-config-sass-guidelines: 9.0.1
     symbol-observable: 1.2.0
     terser-webpack-plugin: 5.2.5
     test: "link:./public/test"
@@ -25845,6 +25846,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss-scss@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "postcss-scss@npm:4.0.2"
+  peerDependencies:
+    postcss: ^8.3.3
+  checksum: b6506c1d9bc86f056e34c537447a35d2a90bc9f6afcffea9c5a8bf265334234592150c862351db9334e9b9109209ada023783ce22e56ca51221c1106591423d4
+  languageName: node
+  linkType: hard
+
 "postcss-selector-matches@npm:^4.0.0":
   version: 4.0.0
   resolution: "postcss-selector-matches@npm:4.0.0"
@@ -25886,13 +25896,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-sorting@npm:^5.0.1":
-  version: 5.0.1
-  resolution: "postcss-sorting@npm:5.0.1"
-  dependencies:
-    lodash: ^4.17.14
-    postcss: ^7.0.17
-  checksum: 0a410afab47e1ec10f1bd8768d7118cad93d00990a298816bb6c30f72f66ed05d29f152c8a04b943749fef134413171d6c91ef9915a1b95281573c1c7d13f76c
+"postcss-sorting@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "postcss-sorting@npm:7.0.1"
+  peerDependencies:
+    postcss: ^8.3.9
+  checksum: 79cca6703ef7c60ea913c3bfb91f85bd7adce35e60b834a40cadd1c7e18f37961d63f0e641387651ee3bf1df1996e952d8fe443f93a271aa2d23f239ea3145bc
   languageName: node
   linkType: hard
 
@@ -25962,7 +25971,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^7.0.0, postcss@npm:^7.0.14, postcss@npm:^7.0.17, postcss@npm:^7.0.2, postcss@npm:^7.0.23, postcss@npm:^7.0.26, postcss@npm:^7.0.31, postcss@npm:^7.0.32, postcss@npm:^7.0.36, postcss@npm:^7.0.5, postcss@npm:^7.0.6":
+"postcss@npm:^7.0.0, postcss@npm:^7.0.14, postcss@npm:^7.0.17, postcss@npm:^7.0.2, postcss@npm:^7.0.23, postcss@npm:^7.0.26, postcss@npm:^7.0.32, postcss@npm:^7.0.36, postcss@npm:^7.0.5, postcss@npm:^7.0.6":
   version: 7.0.39
   resolution: "postcss@npm:7.0.39"
   dependencies:
@@ -30797,43 +30806,44 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint-config-sass-guidelines@npm:8.0.0":
-  version: 8.0.0
-  resolution: "stylelint-config-sass-guidelines@npm:8.0.0"
+"stylelint-config-sass-guidelines@npm:9.0.1":
+  version: 9.0.1
+  resolution: "stylelint-config-sass-guidelines@npm:9.0.1"
   dependencies:
-    stylelint-order: ^4.0.0
-    stylelint-scss: ^3.18.0
+    postcss-scss: ^4.0.2
+    stylelint-order: ^5.0.0
+    stylelint-scss: ^4.0.0
   peerDependencies:
-    stylelint: ^13.7.0
-  checksum: 623bc33ba8cba037485ec13a6d88fbffbda75579507c6685e81a04b326fe70177b2252d45edd19cc27f070a96cd6b30532ef5ddf1505ef7a00dec606617ff4fa
+    postcss: ^8.3.3
+    stylelint: ^14.0.1
+  checksum: 9844e0858b1175b30786cbca873cc5856313475de4b3cf3e4a8504d19f2673899f0fe4d56bef5cf73c93d0ed6c7c8c3d5a3dd91b7a9586aa52ddab12ef52a64b
   languageName: node
   linkType: hard
 
-"stylelint-order@npm:^4.0.0":
-  version: 4.1.0
-  resolution: "stylelint-order@npm:4.1.0"
+"stylelint-order@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "stylelint-order@npm:5.0.0"
   dependencies:
-    lodash: ^4.17.15
-    postcss: ^7.0.31
-    postcss-sorting: ^5.0.1
+    postcss: ^8.3.11
+    postcss-sorting: ^7.0.1
   peerDependencies:
-    stylelint: ^10.0.1 || ^11.0.0 || ^12.0.0 || ^13.0.0
-  checksum: 95162ed46e2e90d923827a4bd4652d160cb225ead5520d13d83132337a72546c79d7d5d67833b87d054945dd74361a181a509273311fe7f56ac0f034959172c8
+    stylelint: ^14.0.0
+  checksum: fa3ace3cc65486b9f94165603bd04983636fda5ac959cd29bf87847a95b32f366b16faf612bd49e3b9f96073f8fe28a22a5c5727cc08c8f9d7327c89084b3f30
   languageName: node
   linkType: hard
 
-"stylelint-scss@npm:^3.18.0":
-  version: 3.21.0
-  resolution: "stylelint-scss@npm:3.21.0"
+"stylelint-scss@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "stylelint-scss@npm:4.0.0"
   dependencies:
     lodash: ^4.17.15
     postcss-media-query-parser: ^0.2.3
     postcss-resolve-nested-selector: ^0.1.1
-    postcss-selector-parser: ^6.0.2
+    postcss-selector-parser: ^6.0.6
     postcss-value-parser: ^4.1.0
   peerDependencies:
-    stylelint: ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^12.0.0 || ^13.0.0
-  checksum: 5c16263da4a913bd05871682a4fa90769abcb6a9e3f3d1c2386c7364b2308733af53a71c3ba17dd8646bb0d1a193a19cb3e6d7818bef60057c86f3287df1dc9c
+    stylelint: ^14.0.0
+  checksum: 98f835547b7f60dcd1f3725d4d67dafaae89fd38e7fb62fb59afba5e8511b8552ca658908ced7421a83b2a6ef4174f575625e4e56113ec9a54aa42435ceae5cc
   languageName: node
   linkType: hard
 
