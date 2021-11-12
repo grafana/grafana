@@ -101,10 +101,11 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 }
 
 func (ss *SQLStore) GetPlaylist(ctx context.Context, query *models.GetPlaylistByIdQuery) error {
+	if query.Id == 0 {
+		return models.ErrCommandValidationFailed
+	}
+	
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		if query.Id == 0 {
-			return models.ErrCommandValidationFailed
-		}
 
 		playlist := models.Playlist{}
 		_, err := sess.ID(query.Id).Get(&playlist)
