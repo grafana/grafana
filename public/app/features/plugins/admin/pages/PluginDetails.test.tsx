@@ -1,17 +1,24 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { render, RenderResult, waitFor } from '@testing-library/react';
+import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { config } from '@grafana/runtime';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
 import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { CatalogPlugin, PluginTabIds, ReducerState, RequestStatus } from '../types';
+import {
+  CatalogPlugin,
+  CatalogPluginDetails,
+  PluginTabIds,
+  PluginTabLabels,
+  ReducerState,
+  RequestStatus,
+} from '../types';
 import * as api from '../api';
 import { fetchRemotePlugins } from '../state/actions';
-import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginType, dateTimeFormatTimeAgo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('@grafana/runtime', () => {
@@ -122,16 +129,38 @@ describe('Plugin details page', () => {
     });
 
     it('should display the number of downloads in the header', async () => {
+      // depending on what locale you have the Intl.NumberFormat will return a format that contains
+      // whitespaces. In that case we don't want testing library to remove whitespaces.
       const downloads = 24324;
+      const options: SelectorMatcherOptions = { normalizer: getDefaultNormalizer({ collapseWhitespace: false }) };
+      const expected = new Intl.NumberFormat().format(downloads);
+
       const { queryByText } = renderPluginDetails({ id, downloads });
-      await waitFor(() => expect(queryByText(new Intl.NumberFormat().format(downloads))).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(expected, options)).toBeInTheDocument());
     });
 
-    it('should display the version in the header', async () => {
-      const version = '1.3.443';
-      const { queryByText } = renderPluginDetails({ id, version });
+    it('should display the installed version if a plugin is installed', async () => {
+      const installedVersion = '1.3.443';
+      const { queryByText } = renderPluginDetails({ id, installedVersion });
 
-      await waitFor(() => expect(queryByText(version)).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(installedVersion)).toBeInTheDocument());
+    });
+
+    it('should display the latest compatible version in the header if a plugin is not installed', async () => {
+      const details: CatalogPluginDetails = {
+        links: [],
+        versions: [
+          { version: '1.3.0', createdAt: '', isCompatible: false, grafanaDependency: '>=9.0.0' },
+          { version: '1.2.0', createdAt: '', isCompatible: false, grafanaDependency: '>=8.3.0' },
+          { version: '1.1.1', createdAt: '', isCompatible: true, grafanaDependency: '>=8.0.0' },
+          { version: '1.1.0', createdAt: '', isCompatible: true, grafanaDependency: '>=8.0.0' },
+          { version: '1.0.0', createdAt: '', isCompatible: true, grafanaDependency: '>=7.0.0' },
+        ],
+      };
+
+      const { queryByText } = renderPluginDetails({ id, details });
+      await waitFor(() => expect(queryByText('1.1.1')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(/>=8.0.0/i)).toBeInTheDocument());
     });
 
     it('should display description in the header', async () => {
@@ -166,17 +195,32 @@ describe('Plugin details page', () => {
     });
 
     it('should display version history in case it is available', async () => {
+      const versions = [
+        {
+          version: '1.2.0',
+          createdAt: '2018-04-06T20:23:41.000Z',
+          isCompatible: false,
+          grafanaDependency: '>=8.3.0',
+        },
+        {
+          version: '1.1.0',
+          createdAt: '2017-04-06T20:23:41.000Z',
+          isCompatible: true,
+          grafanaDependency: '>=8.0.0',
+        },
+        {
+          version: '1.0.0',
+          createdAt: '2016-04-06T20:23:41.000Z',
+          isCompatible: true,
+          grafanaDependency: '>=7.0.0',
+        },
+      ];
       const { queryByText, getByRole } = renderPluginDetails(
         {
           id,
           details: {
             links: [],
-            versions: [
-              {
-                version: '1.0.0',
-                createdAt: '2016-04-06T20:23:41.000Z',
-              },
-            ],
+            versions,
           },
         },
         { pageId: PluginTabIds.VERSIONS }
@@ -185,32 +229,27 @@ describe('Plugin details page', () => {
       // Check if version information is available
       await waitFor(() => expect(queryByText(/version history/i)).toBeInTheDocument());
 
-      expect(
-        getByRole('columnheader', {
-          name: /version/i,
-        })
-      ).toBeInTheDocument();
-      expect(
-        getByRole('columnheader', {
-          name: /last updated/i,
-        })
-      ).toBeInTheDocument();
-      expect(
-        getByRole('cell', {
-          name: /1\.0\.0/i,
-        })
-      ).toBeInTheDocument();
-      expect(
-        getByRole('cell', {
-          name: /5 years ago/i,
-        })
-      ).toBeInTheDocument();
+      // Check the column headers
+      expect(getByRole('columnheader', { name: /version/i })).toBeInTheDocument();
+      expect(getByRole('columnheader', { name: /last updated/i })).toBeInTheDocument();
+
+      // Check the data
+      for (const version of versions) {
+        expect(getByRole('cell', { name: new RegExp(version.version, 'i') })).toBeInTheDocument();
+        expect(
+          getByRole('cell', { name: new RegExp(dateTimeFormatTimeAgo(version.createdAt), 'i') })
+        ).toBeInTheDocument();
+
+        // Check the latest compatible version
+        expect(queryByText('1.1.0 (latest compatible version)')).toBeInTheDocument();
+      }
     });
 
     it("should display an install button for a plugin that isn't installed", async () => {
       const { queryByRole } = renderPluginDetails({ id, isInstalled: false });
 
-      await waitFor(() => expect(queryByRole('button', { name: /install/i })).toBeInTheDocument());
+      await waitFor(() => expect(queryByRole('button', { name: /^install/i })).toBeInTheDocument());
+      // Does not display "uninstall" button
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
 
@@ -218,6 +257,8 @@ describe('Plugin details page', () => {
       const { queryByRole } = renderPluginDetails({ id, isInstalled: true });
 
       await waitFor(() => expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument());
+      // Does not display "install" button
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
     it('should display update and uninstall buttons for a plugin with update', async () => {
@@ -225,10 +266,10 @@ describe('Plugin details page', () => {
 
       // Displays an "update" button
       await waitFor(() => expect(queryByRole('button', { name: /update/i })).toBeInTheDocument());
-
-      // Does not display "install" and "uninstall" buttons
-      expect(queryByRole('button', { name: /install/i })).toBeInTheDocument();
       expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument();
+
+      // Does not display "install" button
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
     it('should display an install button for enterprise plugins if license is valid', async () => {
@@ -326,7 +367,7 @@ describe('Plugin details page', () => {
       // @ts-ignore
       api.uninstallPlugin = jest.fn();
 
-      const { queryByText, queryByRole, getByRole } = renderPluginDetails({
+      const { queryByText, getByRole } = renderPluginDetails({
         id,
         name: 'Akumuli',
         isInstalled: true,
@@ -334,11 +375,19 @@ describe('Plugin details page', () => {
           pluginDependencies: [],
           grafanaDependency: '>=8.0.0',
           links: [],
+          versions: [
+            {
+              version: '1.0.0',
+              createdAt: '',
+              isCompatible: true,
+              grafanaDependency: '>=8.0.0',
+            },
+          ],
         },
       });
 
       // Wait for the install controls to be loaded
-      await waitFor(() => expect(queryByRole('button', { name: /install/i })).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       // Open the confirmation modal
       userEvent.click(getByRole('button', { name: /uninstall/i }));
@@ -454,7 +503,7 @@ describe('Plugin details page', () => {
     it("should not display an install button for a plugin that isn't installed", async () => {
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: false });
 
-      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       expect(queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
     });
@@ -462,7 +511,7 @@ describe('Plugin details page', () => {
     it('should not display an uninstall button for an already installed plugin', async () => {
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true });
 
-      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
@@ -470,7 +519,7 @@ describe('Plugin details page', () => {
     it('should not display update or uninstall buttons for a plugin with update', async () => {
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
 
-      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
@@ -480,7 +529,7 @@ describe('Plugin details page', () => {
       config.licenseInfo.hasValidLicense = true;
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
-      await waitFor(() => expect(queryByText('Overview')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       expect(queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
     });

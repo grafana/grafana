@@ -67,6 +67,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			Type:          string(pluginDef.Type),
 			Category:      pluginDef.Category,
 			Info:          &pluginDef.Info,
+			Dependencies:  &pluginDef.Dependencies,
 			LatestVersion: pluginDef.GrafanaComVersion,
 			HasUpdate:     pluginDef.GrafanaComHasUpdate,
 			DefaultNavUrl: pluginDef.DefaultNavURL,

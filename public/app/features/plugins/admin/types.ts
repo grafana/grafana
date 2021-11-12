@@ -52,7 +52,7 @@ export interface CatalogPlugin {
   publishedAt: string;
   type?: PluginType;
   updatedAt: string;
-  version: string;
+  installedVersion?: string;
   details?: CatalogPluginDetails;
   error?: PluginErrorCode;
 }
@@ -146,7 +146,6 @@ export type LocalPlugin = {
     version: string;
     updated: string;
   };
-  latestVersion: string;
   name: string;
   pinned: boolean;
   signature: PluginSignatureStatus;
@@ -154,6 +153,7 @@ export type LocalPlugin = {
   signatureType: PluginSignatureType;
   state: string;
   type: PluginType;
+  dependencies: PluginDependencies;
 };
 
 interface Rel {
@@ -171,6 +171,8 @@ export interface Build {
 export interface Version {
   version: string;
   createdAt: string;
+  isCompatible: boolean;
+  grafanaDependency: string | null;
 }
 
 export interface PluginDetails {
@@ -269,4 +271,6 @@ export type PluginVersion = {
   status: string;
   downloadSlug: string;
   links: Array<{ rel: string; href: string }>;
+  isCompatible: boolean;
+  grafanaDependency: string | null;
 };
