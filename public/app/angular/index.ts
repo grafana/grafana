@@ -31,6 +31,8 @@ import './components/info_popover';
 import './components/spectrum_picker';
 import './components/code_editor/code_editor';
 import './components/sql_part/sql_part_editor';
+import './components/HttpSettingsCtrl';
+import './components/TlsAuthSettingsCtrl';
 import './GrafanaCtrl';
 
 export { AngularApp } from './AngularApp';
