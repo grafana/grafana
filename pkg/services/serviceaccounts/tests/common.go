@@ -34,7 +34,7 @@ func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, se
 }
 
 func (s *ServiceAccountMock) IsDisabled() bool {
-	return true
+	return false
 }
 
 func SetupMockAccesscontrol(t *testing.T, userpermissionsfunc func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error), disableAccessControl bool) *accesscontrolmock.Mock {

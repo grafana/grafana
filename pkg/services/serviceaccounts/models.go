@@ -9,6 +9,7 @@ var (
 
 const (
 	ActionDelete = "serviceaccounts:delete"
+	ActionRead   = "serviceaccounts:read"
 )
 
 type Status struct {

@@ -86,6 +86,14 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		})
 	})
 }
+func TestServiceAccountsAPI_IsDisabled(t *testing.T) {
+	t.Helper()
+	svcmock := tests.ServiceAccountMock{}
+	t.Run("should be able to query for status availablity", func(t *testing.T) {
+		disabled := svcmock.IsDisabled()
+		require.Equal(t, disabled, false)
+	})
+}
 
 func serviceAccountDeletionScenario(t *testing.T, httpMethod string, endpoint string, user *tests.TestUser, fn func(httpmethod string, endpoint string, user *tests.TestUser)) {
 	t.Helper()
