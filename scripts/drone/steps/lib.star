@@ -428,16 +428,16 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
     ]
     if ver_mode == 'pr':
         commands.extend([
-            'npx --yes pa11y-ci@pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4 pa11y-ci --config .pa11yci-pr.conf.js',
+            'yarn pa11y-ci --config .pa11yci-pr.conf.js',
         ])
     else:
         commands.extend([
-            'npx --yes --silent pa11y-ci@pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4 pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json',
+            'yarn --silent pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json',
         ])
 
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'buildkite/puppeteer',
+        'image': 'hugohaggmark/docker-puppeteer:0.1.0',
         'depends_on': [
           'end-to-end-tests-server' + enterprise2_suffix(edition),
         ],

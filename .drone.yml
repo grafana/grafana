@@ -212,8 +212,7 @@ steps:
   name: build-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - npx --yes pa11y-ci@pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4 pa11y-ci
-    --config .pa11yci-pr.conf.js
+  - yarn pa11y-ci --config .pa11yci-pr.conf.js
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -222,7 +221,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: buildkite/puppeteer
+  image: hugohaggmark/docker-puppeteer:0.1.0
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
@@ -507,8 +506,7 @@ steps:
   name: publish-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - npx --yes --silent pa11y-ci@pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4
-    pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
+  - yarn --silent pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -517,7 +515,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: buildkite/puppeteer
+  image: hugohaggmark/docker-puppeteer:0.1.0
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
@@ -3432,6 +3430,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 21deac9ddabcb7bdf63d39c11548e16a252c03cbc29effc9f607530eacad223d
+hmac: 7171a35fea878e112e1377f0e16f49459db36f227d0a4dae253ef492656e25d3
 
 ...
