@@ -300,6 +300,23 @@ If your comments include ES2016 code, then SystemJS v0.20.19, which Grafana uses
 
 To fix this error, remove the ES2016 code from your comments.
 
+### I would like to dynamically import modules in my plugin
+
+Create a webpack.config.js with this content (in the root of _your_ plugin)
+
+```ts
+// webpack.config.js
+module.exports.getWebpackConfig = (config, options) => ({
+  ...config,
+  output: {
+    ...config.output,
+    publicPath: 'public/plugins/plugin-id/',
+  },
+});
+```
+
+The plugin id is the id written in the plugin.json file.
+
 ## Contribute to grafana-toolkit
 
 You can contribute to grafana-toolkit by helping develop it or by debugging it.
