@@ -17,7 +17,7 @@ export function queriesWithUpdatedReferences(
     const isClassicExpression = query.model.type === 'classic_conditions';
 
     if (isMathExpression) {
-      const oldExpression = new RegExp(`\\$${previousRefId}`, 'gm');
+      const oldExpression = new RegExp(`\\$\{?${previousRefId}\}?`, 'gm');
       const newExpression = `\${${newRefId}}`;
 
       return {

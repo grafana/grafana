@@ -65,6 +65,22 @@ describe('rule-editor', () => {
     },
   };
 
+  const mathExpressionWithBrackets = {
+    refId: 'B',
+    datasourceUid: '-100',
+    queryType: '',
+    model: {
+      refId: 'B',
+      type: 'math',
+      datasource: {
+        uid: '-100',
+        type: 'grafana-expression',
+      },
+      conditions: [],
+      expression: 'abs(${A}) + ${A}',
+    },
+  };
+
   const reduceExpression = {
     refId: 'B',
     datasourceUid: '-100',
@@ -117,6 +133,15 @@ describe('rule-editor', () => {
 
     it('should rewire math expressions', () => {
       const queries: AlertQuery[] = [dataSource, mathExpression];
+      const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'Query A');
+
+      const queryModel = rewiredQueries[1].model as ExpressionQuery;
+
+      expect(queryModel.expression).toBe('abs(${Query A}) + ${Query A}');
+    });
+
+    it('should rewire math expressions', () => {
+      const queries: AlertQuery[] = [dataSource, mathExpressionWithBrackets];
       const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'Query A');
 
       const queryModel = rewiredQueries[1].model as ExpressionQuery;
