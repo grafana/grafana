@@ -8,12 +8,12 @@ import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
 export const modelVersion = Object.freeze([1, 0]);
 
 export enum VizDisplayMode {
-  ValueVolume = 'value+volume',
-  Value = 'value',
+  CandlesVolume = 'candles+volume',
+  Candles = 'candles',
   Volume = 'volume',
 }
 
-export enum ValueStyle {
+export enum DrawStyle {
   Candles = 'candles',
   OHLCBars = 'ohlcbars',
 }
@@ -49,15 +49,15 @@ export const defaultColors: CandlestickColors = {
 
 export interface CandlestickOptions extends OptionsWithLegend {
   mode: VizDisplayMode;
-  valueStyle: ValueStyle;
+  drawStyle: DrawStyle;
   colorStrategy: ColorStrategy;
   fields: CandlestickFieldMap;
   colors: CandlestickColors;
 }
 
 export const defaultPanelOptions: CandlestickOptions = {
-  mode: VizDisplayMode.ValueVolume,
-  valueStyle: ValueStyle.Candles,
+  mode: VizDisplayMode.CandlesVolume,
+  drawStyle: DrawStyle.Candles,
   colorStrategy: ColorStrategy.Intra,
   colors: defaultColors,
   fields: {},

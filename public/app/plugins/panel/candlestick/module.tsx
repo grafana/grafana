@@ -14,25 +14,25 @@ import {
   CandlestickOptions,
   VizDisplayMode,
   ColorStrategy,
-  ValueStyle,
   defaultPanelOptions,
+  DrawStyle,
 } from './models.gen';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
 import { config } from '@grafana/runtime';
 
 const modeOptions = [
-  { label: 'Price & Volume', value: VizDisplayMode.ValueVolume },
-  { label: 'Price', value: VizDisplayMode.Value },
+  { label: 'Both', value: VizDisplayMode.CandlesVolume },
+  { label: 'Candles', value: VizDisplayMode.Candles },
   { label: 'Volume', value: VizDisplayMode.Volume },
 ] as Array<SelectableValue<VizDisplayMode>>;
 
-const priceStyle = [
-  { label: 'Candles', value: ValueStyle.Candles },
-  { label: 'OHLC Bars', value: ValueStyle.OHLCBars },
-] as Array<SelectableValue<ValueStyle>>;
+const drawStyles = [
+  { label: 'Candles', value: DrawStyle.Candles },
+  { label: 'OHLC Bars', value: DrawStyle.OHLCBars },
+] as Array<SelectableValue<DrawStyle>>;
 
-const colorStrategy = [
+const colorStrategies = [
   { label: 'Since Open', value: 'intra' },
   { label: 'Since Prior Close', value: 'inter' },
 ] as Array<SelectableValue<ColorStrategy>>;
@@ -78,18 +78,18 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
         path: 'mode',
         name: 'Mode',
         description: '',
-        defaultValue: VizDisplayMode.ValueVolume,
+        defaultValue: defaultPanelOptions.mode,
         settings: {
           options: modeOptions,
         },
       })
       .addRadio({
-        path: 'priceStyle',
-        name: 'Price style',
+        path: 'drawStyle',
+        name: 'Draw style',
         description: '',
-        defaultValue: ValueStyle.Candles,
+        defaultValue: defaultPanelOptions.drawStyle,
         settings: {
-          options: priceStyle,
+          options: drawStyles,
         },
         showIf: (opts) => opts.mode !== VizDisplayMode.Volume,
       })
@@ -97,9 +97,9 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
         path: 'colorStrategy',
         name: 'Color strategy',
         description: '',
-        defaultValue: ColorStrategy.Intra,
+        defaultValue: defaultPanelOptions.colorStrategy,
         settings: {
-          options: colorStrategy,
+          options: colorStrategies,
         },
       })
       .addColorPicker({
@@ -120,7 +120,7 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
     }
     addFieldPicker(builder, candlestickFieldsInfo.close, info);
 
-    if (opts.mode !== VizDisplayMode.Value) {
+    if (opts.mode !== VizDisplayMode.Candles) {
       addFieldPicker(builder, candlestickFieldsInfo.volume, info);
     }
 

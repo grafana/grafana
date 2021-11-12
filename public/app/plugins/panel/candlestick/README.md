@@ -1,6 +1,6 @@
 # Candlestick
 
-The candlestick panel is a style of financial chart typically used to describe price movements of a security, derivative, or currency.
+The candlestick panel shows a chart that is typically used to describe price movements of a security, derivative, or currency.
 
 This chart is **included** with Grafana.
 

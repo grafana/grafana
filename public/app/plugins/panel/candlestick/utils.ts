@@ -1,4 +1,4 @@
-import { VizDisplayMode, ColorStrategy, ValueStyle } from './models.gen';
+import { VizDisplayMode, ColorStrategy, DrawStyle } from './models.gen';
 import uPlot from 'uplot';
 import { colorManipulator } from '@grafana/data';
 
@@ -8,7 +8,7 @@ export type FieldIndices = Record<string, number>;
 
 interface RendererOpts {
   mode: VizDisplayMode;
-  valueStyle: ValueStyle;
+  drawStyle: DrawStyle;
   fields: FieldIndices;
   colorStrategy: ColorStrategy;
   upColor: string;
@@ -19,11 +19,11 @@ interface RendererOpts {
 }
 
 export function drawMarkers(opts: RendererOpts) {
-  let { mode, valueStyle, fields, colorStrategy, upColor, downColor, flatColor, volumeAlpha, flatAsUp = true } = opts;
+  let { mode, drawStyle, fields, colorStrategy, upColor, downColor, flatColor, volumeAlpha, flatAsUp = true } = opts;
 
   const drawPrice = mode !== VizDisplayMode.Volume && fields.high != null && fields.low != null;
-  const asCandles = drawPrice && valueStyle === ValueStyle.Candles;
-  const drawVolume = mode !== VizDisplayMode.Value && fields.volume != null;
+  const asCandles = drawPrice && drawStyle === DrawStyle.Candles;
+  const drawVolume = mode !== VizDisplayMode.Candles && fields.volume != null;
 
   function selectPath(priceDir: number, flatPath: Path2D, upPath: Path2D, downPath: Path2D, flatAsUp: boolean) {
     return priceDir > 0 ? upPath : priceDir < 0 ? downPath : flatAsUp ? upPath : flatPath;
