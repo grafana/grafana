@@ -48,7 +48,7 @@ func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlayli
 }
 
 func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		playlist := models.Playlist{
 			Id:       cmd.Id,
 			OrgId:    cmd.OrgId,
