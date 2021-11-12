@@ -47,6 +47,7 @@ export interface GeomapPanelOptions {
 }
 export interface FeatureStyleConfig {
   fillColor: string; //eventually be ColorDimensionConfig
+  opacity?: number;
   strokeWidth?: number;
   rule?: FeatureRuleConfig;
 }
@@ -84,6 +85,7 @@ export interface StyleMakerConfig {
   size: number;
   markerPath?: string;
   text?: string;
+  opacity?: number;
 }
 
-export type StyleMaker = (config: StyleMakerConfig) => Style;
+export type StyleMaker = (config: StyleMakerConfig) => Style | Style[];

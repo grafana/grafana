@@ -30,6 +30,7 @@ import { getMarkerFromPath } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
 import { StyleMaker, StyleMakerConfig } from '../../types';
+import { getSVGUri } from '../../utils/prepareSVG';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -99,6 +100,11 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
+    const markerPath =
+      getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
+    // double to match regularshapes using size as radius
+    const uri = await getSVGUri(markerPath, config.size.fixed * 2);
+
     return {
       init: () => vectorLayer,
       legend: legend,
@@ -107,21 +113,29 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           return; // ignore empty
         }
 
-        const markerPath =
-          getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/marker/circle.svg');
-
-        const marker = getMarkerFromPath(config.markerSymbol?.fixed);
-
         const makeIconStyle = (cfg: StyleMakerConfig) => {
-          return new style.Style({
+          const icon = new style.Style({
             image: new style.Icon({
-              src: markerPath,
+              src: uri,
               color: cfg.color,
-              //  opacity,
+              opacity: cfg.opacity,
+              // scale based on field value
               scale: (DEFAULT_SIZE + cfg.size) / 100,
             }),
           });
+          // transparent bounding box for featureAtPixel detection
+          const boundingBox = new style.Style({
+            image: new style.RegularShape({
+              fill: new style.Fill({ color: 'rgba(0,0,0,0)' }),
+              points: 4,
+              radius: cfg.size,
+              angle: Math.PI / 4,
+            }),
+          });
+          return [icon, boundingBox]
         };
+
+        const marker = getMarkerFromPath(config.markerSymbol?.fixed);
 
         const shape: StyleMaker = marker?.make ?? makeIconStyle;
 

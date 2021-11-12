@@ -15,11 +15,11 @@ export const FieldNamePicker: React.FC<StandardEditorProps<string, FieldNamePick
   const selectOptions = useSelectOptions(names, value);
 
   const onSelectChange = useCallback(
-    (selection: SelectableValue<string>) => {
-      if (!frameHasName(selection.value, names)) {
-        return;
+    (selection?: SelectableValue<string>) => {
+      if (selection && !frameHasName(selection.value, names)) {
+        return; // can not select name that does not exist?
       }
-      return onChange(selection.value!);
+      return onChange(selection?.value);
     },
     [names, onChange]
   );
@@ -35,8 +35,8 @@ export const FieldNamePicker: React.FC<StandardEditorProps<string, FieldNamePick
         onChange={onSelectChange}
         noOptionsMessage={settings.noFieldsMessage}
         width={settings.width}
+        isClearable={true}
       />
-      {settings.info && <settings.info name={value} field={names.fields.get(value)} />}
     </>
   );
 };

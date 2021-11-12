@@ -195,6 +195,12 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 			rangeQuery = true
 		}
 
+		// We never want to run exemplar query for alerting
+		exemplarQuery := model.ExemplarQuery
+		if queryContext.Headers["FromAlert"] == "true" {
+			exemplarQuery = false
+		}
+
 		qs = append(qs, &PrometheusQuery{
 			Expr:          expr,
 			Step:          interval,
@@ -204,7 +210,7 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 			RefId:         query.RefID,
 			InstantQuery:  model.InstantQuery,
 			RangeQuery:    rangeQuery,
-			ExemplarQuery: model.ExemplarQuery,
+			ExemplarQuery: exemplarQuery,
 			UtcOffsetSec:  model.UtcOffsetSec,
 		})
 	}

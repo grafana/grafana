@@ -186,23 +186,6 @@ function pluginDirectiveLoader(
           };
         });
       }
-      // App Page
-      case 'app-page': {
-        const appModel = scope.ctrl.appModel;
-        return importAppPlugin(appModel).then((appPlugin) => {
-          if (!appPlugin.angularPages) {
-            throw new Error('Plugin has no page components');
-          }
-
-          return {
-            baseUrl: appModel.baseUrl,
-            name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,
-            bindings: { appModel: '=' },
-            attrs: { 'app-model': 'ctrl.appModel' },
-            Component: appPlugin.angularPages[scope.ctrl.page.component],
-          };
-        });
-      }
       // Panel
       case 'panel': {
         return loadPanelComponentInfo(scope, attrs);
