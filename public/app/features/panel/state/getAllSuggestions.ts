@@ -1,4 +1,10 @@
-import { PanelData, VisualizationSuggestion, VisualizationSuggestionsBuilder, PanelModel } from '@grafana/data';
+import {
+  PanelData,
+  VisualizationSuggestion,
+  VisualizationSuggestionsBuilder,
+  PanelModel,
+  VisualizationSuggestionScore,
+} from '@grafana/data';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 export const panelsToCheckFirst = [
@@ -29,6 +35,6 @@ export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): P
   }
 
   return builder.getList().sort((a, b) => {
-    return (b.score ?? 0) - (a.score ?? 0);
+    return (b.score ?? VisualizationSuggestionScore.OK) - (a.score ?? VisualizationSuggestionScore.OK);
   });
 }

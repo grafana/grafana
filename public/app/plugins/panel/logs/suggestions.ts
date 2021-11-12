@@ -1,4 +1,4 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
 import { SuggestionName } from 'app/types/suggestions';
 import { Options } from './types';
 
@@ -14,7 +14,7 @@ export class LogsPanelSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {},
+      previewModifier: () => {},
     });
 
     const { dataSummary: ds } = builder;
@@ -25,7 +25,7 @@ export class LogsPanelSuggestionsSupplier {
     }
 
     if (ds.preferredVisualisationType === 'logs') {
-      list.append({ name: SuggestionName.Logs, score: 100 });
+      list.append({ name: SuggestionName.Logs, score: VisualizationSuggestionScore.Best });
     } else {
       list.append({ name: SuggestionName.Logs });
     }

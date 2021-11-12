@@ -204,7 +204,16 @@ export interface VisualizationSuggestion<TOptions = any, TFieldConfig = any> {
   /** Tweak for small preview */
   previewModifier?: (suggestion: VisualizationSuggestion) => void;
   /** A value between 0-100 how suitable suggestion is */
-  score?: number;
+  score?: VisualizationSuggestionScore;
+}
+
+export enum VisualizationSuggestionScore {
+  /** We are pretty sure this is the best possible option */
+  Best = 100,
+  /** Should be a really good option */
+  Good = 70,
+  /** Can be visualized but there are likely better options. If no score is set this score is assumed */
+  OK = 50,
 }
 
 /**
