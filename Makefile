@@ -152,7 +152,7 @@ clean: ## Clean up intermediate build artifacts.
 
 gen-ts:
 	@echo "generating TypeScript definitions"
-	go get github.com/tkrajina/typescriptify-golang-structs/typescriptify
+	go get github.com/tkrajina/typescriptify-golang-structs/typescriptify@v0.1.7
 	tscriptify -interface -package=github.com/grafana/grafana/pkg/services/live/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts pkg/services/live/pipeline/config.go
 	go mod tidy
 
