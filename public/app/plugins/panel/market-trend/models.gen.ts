@@ -3,7 +3,7 @@
 // It is currenty hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import { TimeSeriesOptions } from '../timeseries/types';
+import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
 
 export const modelVersion = Object.freeze([1, 0]);
 
@@ -27,8 +27,12 @@ export enum ColorStrategy {
   Inter = 'inter',
 }
 
-interface SemanticFieldMap {
-  [semanticName: string]: string;
+export interface CandlestickFieldMap {
+  open?: string;
+  high?: string;
+  low?: string;
+  close?: string;
+  volume?: string;
 }
 
 export interface MarketTrendColors {
@@ -43,10 +47,23 @@ export const defaultColors: MarketTrendColors = {
   flat: 'gray',
 };
 
-export interface MarketOptions extends TimeSeriesOptions {
+export interface MarketOptions extends OptionsWithLegend {
   mode: MarketTrendMode;
   priceStyle: PriceStyle;
   colorStrategy: ColorStrategy;
-  fieldMap: SemanticFieldMap;
+  fields: CandlestickFieldMap;
   colors: MarketTrendColors;
 }
+
+export const defaultPanelOptions: MarketOptions = {
+  mode: MarketTrendMode.PriceVolume,
+  priceStyle: PriceStyle.Candles,
+  colorStrategy: ColorStrategy.Intra,
+  colors: defaultColors,
+  fields: {},
+  legend: {
+    displayMode: LegendDisplayMode.List,
+    placement: 'bottom',
+    calcs: [],
+  },
+};
