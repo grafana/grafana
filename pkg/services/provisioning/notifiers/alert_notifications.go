@@ -9,7 +9,7 @@ import (
 )
 
 // Provision alert notifiers
-func Provision(ctx context.Context, configDirectory string, encryptionService encryption.Service) error {
+func Provision(ctx context.Context, configDirectory string, encryptionService encryption.Internal) error {
 	dc := newNotificationProvisioner(encryptionService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(ctx, configDirectory)
 }
@@ -20,7 +20,7 @@ type NotificationProvisioner struct {
 	cfgProvider *configReader
 }
 
-func newNotificationProvisioner(encryptionService encryption.Service, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(encryptionService encryption.Internal, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
 		log: log,
 		cfgProvider: &configReader{
@@ -30,8 +30,8 @@ func newNotificationProvisioner(encryptionService encryption.Service, log log.Lo
 	}
 }
 
-func (dc *NotificationProvisioner) apply(cfg *notificationsAsConfig) error {
-	if err := dc.deleteNotifications(cfg.DeleteNotifications); err != nil {
+func (dc *NotificationProvisioner) apply(ctx context.Context, cfg *notificationsAsConfig) error {
+	if err := dc.deleteNotifications(ctx, cfg.DeleteNotifications); err != nil {
 		return err
 	}
 
@@ -42,7 +42,7 @@ func (dc *NotificationProvisioner) apply(cfg *notificationsAsConfig) error {
 	return nil
 }
 
-func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*deleteNotificationConfig) error {
+func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, notificationToDelete []*deleteNotificationConfig) error {
 	for _, notification := range notificationToDelete {
 		dc.log.Info("Deleting alert notification", "name", notification.Name, "uid", notification.UID)
 
@@ -58,13 +58,13 @@ func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*d
 
 		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.UID, OrgId: notification.OrgID}
 
-		if err := bus.Dispatch(getNotification); err != nil {
+		if err := bus.DispatchCtx(ctx, getNotification); err != nil {
 			return err
 		}
 
 		if getNotification.Result != nil {
 			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
-			if err := bus.Dispatch(cmd); err != nil {
+			if err := bus.DispatchCtx(ctx, cmd); err != nil {
 				return err
 			}
 		}
@@ -140,7 +140,7 @@ func (dc *NotificationProvisioner) applyChanges(ctx context.Context, configPath 
 	}
 
 	for _, cfg := range configs {
-		if err := dc.apply(cfg); err != nil {
+		if err := dc.apply(ctx, cfg); err != nil {
 			return err
 		}
 	}

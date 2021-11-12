@@ -8,33 +8,141 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // FileStorage can load channel rules from a file on disk.
 type FileStorage struct {
-	DataPath string
+	DataPath       string
+	SecretsService secrets.Service
 }
 
-func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error) {
-	cfgfile := filepath.Join(f.DataPath, "pipeline", "remote-write-backends.json")
-	var backends []RemoteWriteBackend
-	// Safe to ignore gosec warning G304.
-	// nolint:gosec
-	backendBytes, err := ioutil.ReadFile(cfgfile)
+func (f *FileStorage) ListWriteConfigs(_ context.Context, orgID int64) ([]WriteConfig, error) {
+	writeConfigs, err := f.readWriteConfigs()
 	if err != nil {
-		return backends, fmt.Errorf("can't read %s file: %w", cfgfile, err)
+		return nil, fmt.Errorf("can't read write configs: %w", err)
 	}
-	var remoteWriteBackends RemoteWriteBackends
-	err = json.Unmarshal(backendBytes, &remoteWriteBackends)
-	if err != nil {
-		return nil, fmt.Errorf("can't unmarshal remote-write-backends.json data: %w", err)
-	}
-	for _, b := range remoteWriteBackends.Backends {
+	var orgConfigs []WriteConfig
+	for _, b := range writeConfigs.Configs {
 		if b.OrgId == orgID || (orgID == 1 && b.OrgId == 0) {
-			backends = append(backends, b)
+			orgConfigs = append(orgConfigs, b)
 		}
 	}
-	return backends, nil
+	return orgConfigs, nil
+}
+
+func (f *FileStorage) GetWriteConfig(_ context.Context, orgID int64, cmd WriteConfigGetCmd) (WriteConfig, bool, error) {
+	writeConfigs, err := f.readWriteConfigs()
+	if err != nil {
+		return WriteConfig{}, false, fmt.Errorf("can't read write configs: %w", err)
+	}
+	for _, existingBackend := range writeConfigs.Configs {
+		if uidMatch(orgID, cmd.UID, existingBackend) {
+			return existingBackend, true, nil
+		}
+	}
+	return WriteConfig{}, false, nil
+}
+
+func (f *FileStorage) CreateWriteConfig(ctx context.Context, orgID int64, cmd WriteConfigCreateCmd) (WriteConfig, error) {
+	writeConfigs, err := f.readWriteConfigs()
+	if err != nil {
+		return WriteConfig{}, fmt.Errorf("can't read write configs: %w", err)
+	}
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
+
+	secureSettings, err := f.SecretsService.EncryptJsonData(ctx, cmd.SecureSettings, secrets.WithoutScope())
+	if err != nil {
+		return WriteConfig{}, fmt.Errorf("error encrypting data: %w", err)
+	}
+
+	backend := WriteConfig{
+		OrgId:          orgID,
+		UID:            cmd.UID,
+		Settings:       cmd.Settings,
+		SecureSettings: secureSettings,
+	}
+
+	ok, reason := backend.Valid()
+	if !ok {
+		return WriteConfig{}, fmt.Errorf("invalid write config: %s", reason)
+	}
+	for _, existingBackend := range writeConfigs.Configs {
+		if uidMatch(orgID, backend.UID, existingBackend) {
+			return WriteConfig{}, fmt.Errorf("backend already exists in org: %s", backend.UID)
+		}
+	}
+	writeConfigs.Configs = append(writeConfigs.Configs, backend)
+	err = f.saveWriteConfigs(orgID, writeConfigs)
+	return backend, err
+}
+
+func (f *FileStorage) UpdateWriteConfig(ctx context.Context, orgID int64, cmd WriteConfigUpdateCmd) (WriteConfig, error) {
+	writeConfigs, err := f.readWriteConfigs()
+	if err != nil {
+		return WriteConfig{}, fmt.Errorf("can't read write configs: %w", err)
+	}
+
+	secureSettings, err := f.SecretsService.EncryptJsonData(ctx, cmd.SecureSettings, secrets.WithoutScope())
+	if err != nil {
+		return WriteConfig{}, fmt.Errorf("error encrypting data: %w", err)
+	}
+
+	backend := WriteConfig{
+		OrgId:          orgID,
+		UID:            cmd.UID,
+		Settings:       cmd.Settings,
+		SecureSettings: secureSettings,
+	}
+
+	ok, reason := backend.Valid()
+	if !ok {
+		return WriteConfig{}, fmt.Errorf("invalid channel rule: %s", reason)
+	}
+
+	index := -1
+
+	for i, existingBackend := range writeConfigs.Configs {
+		if uidMatch(orgID, backend.UID, existingBackend) {
+			index = i
+			break
+		}
+	}
+	if index > -1 {
+		writeConfigs.Configs[index] = backend
+	} else {
+		return f.CreateWriteConfig(ctx, orgID, WriteConfigCreateCmd(cmd))
+	}
+
+	err = f.saveWriteConfigs(orgID, writeConfigs)
+	return backend, err
+}
+
+func (f *FileStorage) DeleteWriteConfig(_ context.Context, orgID int64, cmd WriteConfigDeleteCmd) error {
+	writeConfigs, err := f.readWriteConfigs()
+	if err != nil {
+		return fmt.Errorf("can't read write configs: %w", err)
+	}
+
+	index := -1
+	for i, existingBackend := range writeConfigs.Configs {
+		if uidMatch(orgID, cmd.UID, existingBackend) {
+			index = i
+			break
+		}
+	}
+
+	if index > -1 {
+		writeConfigs.Configs = removeWriteConfigByIndex(writeConfigs.Configs, index)
+	} else {
+		return fmt.Errorf("write config not found")
+	}
+
+	return f.saveWriteConfigs(orgID, writeConfigs)
 }
 
 func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error) {
@@ -51,11 +159,18 @@ func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]Channe
 	return rules, nil
 }
 
-func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
+func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, cmd ChannelRuleCreateCmd) (ChannelRule, error) {
 	channelRules, err := f.readRules()
 	if err != nil {
-		return rule, fmt.Errorf("can't read channel rules: %w", err)
+		return ChannelRule{}, fmt.Errorf("can't read channel rules: %w", err)
 	}
+
+	rule := ChannelRule{
+		OrgId:    orgID,
+		Pattern:  cmd.Pattern,
+		Settings: cmd.Settings,
+	}
+
 	ok, reason := rule.Valid()
 	if !ok {
 		return rule, fmt.Errorf("invalid channel rule: %s", reason)
@@ -74,10 +189,20 @@ func patternMatch(orgID int64, pattern string, existingRule ChannelRule) bool {
 	return pattern == existingRule.Pattern && (existingRule.OrgId == orgID || (existingRule.OrgId == 0 && orgID == 1))
 }
 
-func (f *FileStorage) UpdateChannelRule(ctx context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
+func uidMatch(orgID int64, uid string, existingBackend WriteConfig) bool {
+	return uid == existingBackend.UID && (existingBackend.OrgId == orgID || (existingBackend.OrgId == 0 && orgID == 1))
+}
+
+func (f *FileStorage) UpdateChannelRule(ctx context.Context, orgID int64, cmd ChannelRuleUpdateCmd) (ChannelRule, error) {
 	channelRules, err := f.readRules()
 	if err != nil {
-		return rule, fmt.Errorf("can't read channel rules: %w", err)
+		return ChannelRule{}, fmt.Errorf("can't read channel rules: %w", err)
+	}
+
+	rule := ChannelRule{
+		OrgId:    orgID,
+		Pattern:  cmd.Pattern,
+		Settings: cmd.Settings,
 	}
 
 	ok, reason := rule.Valid()
@@ -96,7 +221,7 @@ func (f *FileStorage) UpdateChannelRule(ctx context.Context, orgID int64, rule C
 	if index > -1 {
 		channelRules.Rules[index] = rule
 	} else {
-		return f.CreateChannelRule(ctx, orgID, rule)
+		return f.CreateChannelRule(ctx, orgID, ChannelRuleCreateCmd(cmd))
 	}
 
 	err = f.saveChannelRules(orgID, channelRules)
@@ -149,7 +274,7 @@ func (f *FileStorage) saveChannelRules(orgID int64, rules ChannelRules) error {
 	return nil
 }
 
-func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, pattern string) error {
+func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, cmd ChannelRuleDeleteCmd) error {
 	channelRules, err := f.readRules()
 	if err != nil {
 		return fmt.Errorf("can't read channel rules: %w", err)
@@ -157,7 +282,7 @@ func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, pattern 
 
 	index := -1
 	for i, existingRule := range channelRules.Rules {
-		if patternMatch(orgID, pattern, existingRule) {
+		if patternMatch(orgID, cmd.Pattern, existingRule) {
 			index = i
 			break
 		}
@@ -170,4 +295,46 @@ func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, pattern 
 	}
 
 	return f.saveChannelRules(orgID, channelRules)
+}
+
+func removeWriteConfigByIndex(s []WriteConfig, index int) []WriteConfig {
+	return append(s[:index], s[index+1:]...)
+}
+
+func (f *FileStorage) writeConfigsFilePath() string {
+	return filepath.Join(f.DataPath, "pipeline", "write-configs.json")
+}
+
+func (f *FileStorage) readWriteConfigs() (WriteConfigs, error) {
+	filePath := f.writeConfigsFilePath()
+	// Safe to ignore gosec warning G304.
+	// nolint:gosec
+	bytes, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return WriteConfigs{}, fmt.Errorf("can't read %s file: %w", filePath, err)
+	}
+	var writeConfigs WriteConfigs
+	err = json.Unmarshal(bytes, &writeConfigs)
+	if err != nil {
+		return WriteConfigs{}, fmt.Errorf("can't unmarshal %s data: %w", filePath, err)
+	}
+	return writeConfigs, nil
+}
+
+func (f *FileStorage) saveWriteConfigs(_ int64, writeConfigs WriteConfigs) error {
+	filePath := f.writeConfigsFilePath()
+	// Safe to ignore gosec warning G304.
+	// nolint:gosec
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return fmt.Errorf("can't open channel write configs file: %w", err)
+	}
+	defer func() { _ = file.Close() }()
+	enc := json.NewEncoder(file)
+	enc.SetIndent("", "  ")
+	err = enc.Encode(writeConfigs)
+	if err != nil {
+		return fmt.Errorf("can't save write configs to file: %w", err)
+	}
+	return nil
 }

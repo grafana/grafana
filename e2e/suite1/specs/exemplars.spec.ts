@@ -46,6 +46,14 @@ describe('Exemplars', () => {
 
     e2e.components.DataSourcePicker.input().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
+
+    // we need to wait for the query-field being lazy-loaded, in two steps:
+    // 1. first we wait for the text 'Loading...' to appear
+    // 1. then we wait for the text 'Loading...' to disappear
+    const monacoLoadingText = 'Loading...';
+    e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
+    e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
+
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.fromField().clear().type('2021-07-10 17:10:00');
     e2e.components.TimePicker.toField().clear().type('2021-07-10 17:30:00');

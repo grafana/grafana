@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -16,6 +16,7 @@ export interface RadioButtonGroupProps<T> {
   size?: RadioButtonSize;
   fullWidth?: boolean;
   className?: string;
+  autoFocus?: boolean;
 }
 
 export function RadioButtonGroup<T>({
@@ -27,6 +28,7 @@ export function RadioButtonGroup<T>({
   size = 'md',
   className,
   fullWidth = false,
+  autoFocus = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue) => {
@@ -41,6 +43,13 @@ export function RadioButtonGroup<T>({
   const id = uniqueId('radiogroup-');
   const groupName = useRef(id);
   const styles = useStyles2(getStyles);
+
+  const activeButtonRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (autoFocus && activeButtonRef.current) {
+      activeButtonRef.current.focus();
+    }
+  }, [autoFocus]);
 
   return (
     <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}>
@@ -58,6 +67,7 @@ export function RadioButtonGroup<T>({
             name={groupName.current}
             description={o.description}
             fullWidth={fullWidth}
+            ref={value === o.value ? activeButtonRef : undefined}
           >
             {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
             {o.imgUrl && <img src={o.imgUrl} alt={o.label} className={styles.img} />}

@@ -113,7 +113,7 @@ FROM debian:stretch-20210208
 ENV GOVERSION=1.17 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=14.18.1-1nodesource1 \
+    NODEVERSION=16.13.0-1nodesource1 \
     YARNVERSION=1.22.15-1
 
 # Use ARG so as not to persist environment variable in image
@@ -148,7 +148,7 @@ RUN apt-get update && \
         unzip &&        \
     gem install -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
-    curl -fsL https://deb.nodesource.com/setup_14.x | bash - && \
+    curl -fsL https://deb.nodesource.com/setup_16.x | bash - && \
     apt-get update && apt-get install -yq nodejs=${NODEVERSION} && \
     curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \

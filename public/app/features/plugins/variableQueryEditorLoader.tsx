@@ -1,4 +1,4 @@
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import { importDataSourcePlugin } from './plugin_loader';
 import React from 'react';
 import ReactDOM from 'react-dom';

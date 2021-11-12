@@ -120,6 +120,7 @@ var metricsMap = map[string][]string{
 	"AWS/Polly":                   {"2XXCount", "4XXCount", "5XXCount", "RequestCharacters", "ResponseLatency"},
 	"AWS/RDS":                     {"ActiveTransactions", "AuroraBinlogReplicaLag", "AuroraGlobalDBDataTransferBytes", "AuroraGlobalDBReplicatedWriteIO", "AuroraGlobalDBReplicationLag", "AuroraReplicaLag", "AuroraReplicaLagMaximum", "AuroraReplicaLagMinimum", "AvailabilityPercentage", "BacktrackChangeRecordsCreationRate", "BacktrackChangeRecordsStored", "BacktrackWindowActual", "BacktrackWindowAlert", "BackupRetentionPeriodStorageUsed", "BinLogDiskUsage", "BlockedTransactions", "BufferCacheHitRatio", "BurstBalance", "CPUCreditBalance", "CPUCreditUsage", "CPUUtilization", "ClientConnections", "ClientConnectionsClosed", "ClientConnectionsNoTLS", "ClientConnectionsReceived", "ClientConnectionsSetupFailedAuth", "ClientConnectionsSetupSucceeded", "ClientConnectionsTLS", "CommitLatency", "CommitThroughput", "DDLLatency", "DDLThroughput", "DMLLatency", "DMLThroughput", "DatabaseConnectionRequests", "DatabaseConnectionRequestsWithTLS", "DatabaseConnections", "DatabaseConnectionsBorrowLatency", "DatabaseConnectionsCurrentlyBorrowed", "DatabaseConnectionsCurrentlyInTransaction", "DatabaseConnectionsCurrentlySessionPinned", "DatabaseConnectionsSetupFailed", "DatabaseConnectionsSetupSucceeded", "DatabaseConnectionsWithTLS", "Deadlocks", "DeleteLatency", "DeleteThroughput", "DiskQueueDepth", "EngineUptime", "FailedSQLServerAgentJobsCount", "FreeLocalStorage", "FreeStorageSpace", "FreeableMemory", "InsertLatency", "InsertThroughput", "LoginFailures", "MaxDatabaseConnectionsAllowed", "MaximumUsedTransactionIDs", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "OldestReplicationSlotLag", "Queries", "QueryDatabaseResponseLatency", "QueryRequests", "QueryRequestsNoTLS", "QueryRequestsTLS", "QueryResponseLatency", "RDSToAuroraPostgreSQLReplicaLag", "ReadIOPS", "ReadLatency", "ReadThroughput", "ReplicaLag", "ReplicationSlotDiskUsage", "ResultSetCacheHitRatio", "SelectLatency", "SelectThroughput", "ServerlessDatabaseCapacity", "SnapshotStorageUsed", "SwapUsage", "TotalBackupStorageBilled", "TransactionLogsDiskUsage", "TransactionLogsGeneration", "UpdateLatency", "UpdateThroughput", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 	"AWS/Redshift":                {"CommitQueueLength", "ConcurrencyScalingActiveClusters", "ConcurrencyScalingSeconds", "CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "MaxConfiguredConcurrencyScalingClusters", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "QueriesCompletedPerSecond", "QueryDuration", "QueryRuntimeBreakdown", "ReadIOPS", "ReadLatency", "ReadThroughput", "TotalTableCount", "WLMQueueLength", "WLMQueueWaitTime", "WLMQueriesCompletedPerSecond", "WLMQueryDuration", "WLMRunningQueries", "WriteIOPS", "WriteLatency", "WriteThroughput", "SchemaQuota", "NumExceededSchemaQuotas", "StorageUsed", "PercentageQuotaUsed"},
+	"AWS/Robomaker":               {"RealTimeFactor", "vCPU", "Memory", "SimulationUnit"},
 	"AWS/Route53":                 {"ChildHealthCheckHealthyCount", "ConnectionTime", "DNSQueries", "HealthCheckPercentageHealthy", "HealthCheckStatus", "SSLHandshakeTime", "TimeToFirstByte"},
 	"AWS/Route53Resolver":         {"InboundQueryVolume", "OutboundQueryVolume", "OutboundQueryAggregatedVolume"},
 	"AWS/S3":                      {"4xxErrors", "5xxErrors", "AllRequests", "BucketSizeBytes", "BytesDownloaded", "BytesUploaded", "DeleteRequests", "FirstByteLatency", "GetRequests", "HeadRequests", "ListRequests", "NumberOfObjects", "PostRequests", "PutRequests", "SelectRequests", "SelectReturnedBytes", "SelectScannedBytes", "TotalRequestLatency"},
@@ -229,6 +230,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Polly":                   {"Operation"},
 	"AWS/RDS":                     {"DBClusterIdentifier", "DBInstanceIdentifier", "DatabaseClass", "DbClusterIdentifier", "EngineName", "ProxyName", "Role", "SourceRegion", "Target", "TargetGroup", "TargetRole"},
 	"AWS/Redshift":                {"ClusterIdentifier", "NodeID", "service class", "stage", "latency", "wlmid"},
+	"AWS/Robomaker":               {"SimulationJobId"},
 	"AWS/Route53":                 {"HealthCheckId", "Region", "HostedZoneId"},
 	"AWS/Route53Resolver":         {"EndpointId"},
 	"AWS/S3":                      {"BucketName", "FilterId", "StorageType"},
@@ -274,6 +276,8 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, model *
 		data, err = e.handleGetNamespaces(ctx, model, pluginCtx)
 	case "metrics":
 		data, err = e.handleGetMetrics(ctx, model, pluginCtx)
+	case "all_metrics":
+		data, err = e.handleGetAllMetrics(ctx, model, pluginCtx)
 	case "dimension_keys":
 		data, err = e.handleGetDimensions(ctx, model, pluginCtx)
 	case "dimension_values":
@@ -432,15 +436,90 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	return result, nil
 }
 
+// handleGetAllMetrics returns a slice of suggestData structs with metric and its namespace
+func (e *cloudWatchExecutor) handleGetAllMetrics(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
+	result := make([]suggestData, 0)
+	for namespace, metrics := range metricsMap {
+		for _, metric := range metrics {
+			result = append(result, suggestData{Text: namespace, Value: metric})
+		}
+	}
+
+	return result, nil
+}
+
+// handleGetDimensions returns a slice of suggestData structs with dimension keys.
+// If a dimension filters parameter is specified, a new api call to list metrics will be issued to load dimension keys for the given filter.
+// If no dimension filter is specified, dimension keys will be retrieved from the hard coded map in this file.
 func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
+	metricName := parameters.Get("metricName").MustString("")
+	dimensionFilters := parameters.Get("dimensionFilters").MustMap()
 
 	var dimensionValues []string
 	if !isCustomMetrics(namespace) {
-		var exists bool
-		if dimensionValues, exists = dimensionsMap[namespace]; !exists {
-			return nil, fmt.Errorf("unable to find dimension %q", namespace)
+		if len(dimensionFilters) != 0 {
+			var dimensions []*cloudwatch.DimensionFilter
+			addDimension := func(key string, value string) {
+				filter := &cloudwatch.DimensionFilter{
+					Name: aws.String(key),
+				}
+				// if value is not specified or a wildcard is used, simply don't use the value field
+				if value != "" && value != "*" {
+					filter.Value = aws.String(value)
+				}
+				dimensions = append(dimensions, filter)
+			}
+			for k, v := range dimensionFilters {
+				// due to legacy, value can be a string, a string slice or nil
+				if vv, ok := v.(string); ok {
+					addDimension(k, vv)
+				} else if vv, ok := v.([]interface{}); ok {
+					for _, v := range vv {
+						addDimension(k, v.(string))
+					}
+				} else if v == nil {
+					addDimension(k, "")
+				}
+			}
+
+			input := &cloudwatch.ListMetricsInput{
+				Namespace:  aws.String(namespace),
+				Dimensions: dimensions,
+			}
+
+			if metricName != "" {
+				input.MetricName = aws.String(metricName)
+			}
+
+			metrics, err := e.listMetrics(region, input, pluginCtx)
+
+			if err != nil {
+				return nil, errutil.Wrap("unable to call AWS API", err)
+			}
+
+			dupCheck := make(map[string]bool)
+			for _, metric := range metrics {
+				for _, dim := range metric.Dimensions {
+					if _, exists := dupCheck[*dim.Name]; exists {
+						continue
+					}
+
+					// keys in the dimension filter should not be included
+					if _, ok := dimensionFilters[*dim.Name]; ok {
+						continue
+					}
+
+					dupCheck[*dim.Name] = true
+					dimensionValues = append(dimensionValues, *dim.Name)
+				}
+			}
+		} else {
+			var exists bool
+			if dimensionValues, exists = dimensionsMap[namespace]; !exists {
+				return nil, fmt.Errorf("unable to find dimension %q", namespace)
+			}
 		}
 	} else {
 		var err error
@@ -458,6 +537,8 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	return result, nil
 }
 
+// handleGetDimensionValues returns a slice of suggestData structs with dimension values.
+// A call to the list metrics api is issued to retrieve the dimension values. All parameters are used as input args to the list metrics call.
 func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
@@ -466,19 +547,26 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	dimensionsJson := parameters.Get("dimensions").MustMap()
 
 	var dimensions []*cloudwatch.DimensionFilter
+	addDimension := func(key string, value string) {
+		filter := &cloudwatch.DimensionFilter{
+			Name: aws.String(key),
+		}
+		// if value is not specified or a wildcard is used, simply don't use the value field
+		if value != "" && value != "*" {
+			filter.Value = aws.String(value)
+		}
+		dimensions = append(dimensions, filter)
+	}
 	for k, v := range dimensionsJson {
+		// due to legacy, value can be a string, a string slice or nil
 		if vv, ok := v.(string); ok {
-			dimensions = append(dimensions, &cloudwatch.DimensionFilter{
-				Name:  aws.String(k),
-				Value: aws.String(vv),
-			})
+			addDimension(k, vv)
 		} else if vv, ok := v.([]interface{}); ok {
 			for _, v := range vv {
-				dimensions = append(dimensions, &cloudwatch.DimensionFilter{
-					Name:  aws.String(k),
-					Value: aws.String(v.(string)),
-				})
+				addDimension(k, v.(string))
 			}
+		} else if v == nil {
+			addDimension(k, "")
 		}
 	}
 

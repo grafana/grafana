@@ -47,6 +47,7 @@ export interface GeomapPanelOptions {
 }
 export interface FeatureStyleConfig {
   fillColor: string; //eventually be ColorDimensionConfig
+  opacity?: number;
   strokeWidth?: number;
   rule?: FeatureRuleConfig;
 }
@@ -71,7 +72,7 @@ export interface GazetteerPathEditorConfigSettings {
 // Runtime model
 //-------------------
 export interface MapLayerState<TConfig = any> {
-  UID: string; // value changes with each initalization
+  UID: string; // value changes with each initialization
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
   layer: BaseLayer; // the openlayers instance
@@ -84,6 +85,7 @@ export interface StyleMakerConfig {
   size: number;
   markerPath?: string;
   text?: string;
+  opacity?: number;
 }
 
-export type StyleMaker = (config: StyleMakerConfig) => Style;
+export type StyleMaker = (config: StyleMakerConfig) => Style | Style[];
