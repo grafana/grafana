@@ -6,6 +6,7 @@ import {
   LiveChannelPresenceStatus,
   LiveChannelAddress,
   DataFrameJSON,
+  isValidLiveChannelAddress,
 } from '@grafana/data';
 import Centrifuge, {
   JoinLeaveContext,
@@ -46,6 +47,10 @@ export class CentrifugeLiveChannel<T = any> {
       timestamp: this.opened,
       state: LiveChannelConnectionState.Pending,
     };
+    if (!isValidLiveChannelAddress(addr)) {
+      this.currentStatus.state = LiveChannelConnectionState.Invalid;
+      this.currentStatus.error = 'invalid channel address';
+    }
   }
 
   // This should only be called when centrifuge is connected

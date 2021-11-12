@@ -117,6 +117,9 @@ export class CentrifugeService implements CentrifugeSrv {
     }
 
     channel = new CentrifugeLiveChannel(id, addr);
+    if (channel.currentStatus.state === LiveChannelConnectionState.Invalid) {
+      return channel;
+    }
     channel.shutdownCallback = () => {
       this.open.delete(id); // remove it from the list of open channels
     };
