@@ -1,4 +1,4 @@
-import { MarketTrendMode, ColorStrategy, PriceStyle } from './models.gen';
+import { VizDisplayMode, ColorStrategy, ValueStyle } from './models.gen';
 import uPlot from 'uplot';
 import { colorManipulator } from '@grafana/data';
 
@@ -7,8 +7,8 @@ const { alpha } = colorManipulator;
 export type FieldIndices = Record<string, number>;
 
 interface RendererOpts {
-  mode: MarketTrendMode;
-  priceStyle: PriceStyle;
+  mode: VizDisplayMode;
+  priceStyle: ValueStyle;
   fields: FieldIndices;
   colorStrategy: ColorStrategy;
   upColor: string;
@@ -21,9 +21,9 @@ interface RendererOpts {
 export function drawMarkers(opts: RendererOpts) {
   let { mode, priceStyle, fields, colorStrategy, upColor, downColor, flatColor, volumeAlpha, flatAsUp = true } = opts;
 
-  let drawPrice = mode !== MarketTrendMode.Volume && fields.high != null && fields.low != null;
-  let asCandles = drawPrice && priceStyle === PriceStyle.Candles;
-  let drawVolume = mode !== MarketTrendMode.Price && fields.volume != null;
+  let drawPrice = mode !== VizDisplayMode.Volume && fields.high != null && fields.low != null;
+  let asCandles = drawPrice && priceStyle === ValueStyle.Candles;
+  let drawVolume = mode !== VizDisplayMode.Price && fields.volume != null;
 
   function selectPath(priceDir: number, flatPath: Path2D, upPath: Path2D, downPath: Path2D, flatAsUp: boolean) {
     return priceDir > 0 ? upPath : priceDir < 0 ? downPath : flatAsUp ? upPath : flatPath;

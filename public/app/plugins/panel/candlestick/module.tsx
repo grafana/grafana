@@ -12,9 +12,9 @@ import { MarketTrendPanel } from './CandlestickPanel';
 import {
   defaultColors,
   CandlestickOptions,
-  MarketTrendMode,
+  VizDisplayMode,
   ColorStrategy,
-  PriceStyle,
+  ValueStyle,
   defaultPanelOptions,
 } from './models.gen';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
@@ -22,15 +22,15 @@ import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandles
 import { config } from '@grafana/runtime';
 
 const modeOptions = [
-  { label: 'Price & Volume', value: MarketTrendMode.PriceVolume },
-  { label: 'Price', value: MarketTrendMode.Price },
-  { label: 'Volume', value: MarketTrendMode.Volume },
-] as Array<SelectableValue<MarketTrendMode>>;
+  { label: 'Price & Volume', value: VizDisplayMode.PriceVolume },
+  { label: 'Price', value: VizDisplayMode.Price },
+  { label: 'Volume', value: VizDisplayMode.Volume },
+] as Array<SelectableValue<VizDisplayMode>>;
 
 const priceStyle = [
-  { label: 'Candles', value: PriceStyle.Candles },
-  { label: 'OHLC Bars', value: PriceStyle.OHLCBars },
-] as Array<SelectableValue<PriceStyle>>;
+  { label: 'Candles', value: ValueStyle.Candles },
+  { label: 'OHLC Bars', value: ValueStyle.OHLCBars },
+] as Array<SelectableValue<ValueStyle>>;
 
 const colorStrategy = [
   { label: 'Since Open', value: 'intra' },
@@ -78,7 +78,7 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
         path: 'mode',
         name: 'Mode',
         description: '',
-        defaultValue: MarketTrendMode.PriceVolume,
+        defaultValue: VizDisplayMode.PriceVolume,
         settings: {
           options: modeOptions,
         },
@@ -87,11 +87,11 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
         path: 'priceStyle',
         name: 'Price style',
         description: '',
-        defaultValue: PriceStyle.Candles,
+        defaultValue: ValueStyle.Candles,
         settings: {
           options: priceStyle,
         },
-        showIf: (opts) => opts.mode !== MarketTrendMode.Volume,
+        showIf: (opts) => opts.mode !== VizDisplayMode.Volume,
       })
       .addRadio({
         path: 'colorStrategy',
@@ -114,13 +114,13 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
       });
 
     addFieldPicker(builder, candlestickFieldsInfo.open, info);
-    if (opts.mode !== MarketTrendMode.Volume) {
+    if (opts.mode !== VizDisplayMode.Volume) {
       addFieldPicker(builder, candlestickFieldsInfo.high, info);
       addFieldPicker(builder, candlestickFieldsInfo.low, info);
     }
     addFieldPicker(builder, candlestickFieldsInfo.close, info);
 
-    if (opts.mode !== MarketTrendMode.Price) {
+    if (opts.mode !== VizDisplayMode.Price) {
       addFieldPicker(builder, candlestickFieldsInfo.volume, info);
     }
 

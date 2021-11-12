@@ -7,13 +7,13 @@ import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
 
 export const modelVersion = Object.freeze([1, 0]);
 
-export enum MarketTrendMode {
-  Price = 'price',
+export enum VizDisplayMode {
+  ValueVolume = 'value+volume',
+  Value = 'value',
   Volume = 'volume',
-  PriceVolume = 'pricevolume',
 }
 
-export enum PriceStyle {
+export enum ValueStyle {
   Candles = 'candles',
   OHLCBars = 'ohlcbars',
 }
@@ -48,16 +48,16 @@ export const defaultColors: CandlestickColors = {
 };
 
 export interface CandlestickOptions extends OptionsWithLegend {
-  mode: MarketTrendMode;
-  priceStyle: PriceStyle;
+  mode: VizDisplayMode;
+  valueStyle: ValueStyle;
   colorStrategy: ColorStrategy;
   fields: CandlestickFieldMap;
   colors: CandlestickColors;
 }
 
 export const defaultPanelOptions: CandlestickOptions = {
-  mode: MarketTrendMode.PriceVolume,
-  priceStyle: PriceStyle.Candles,
+  mode: VizDisplayMode.ValueVolume,
+  valueStyle: ValueStyle.Candles,
   colorStrategy: ColorStrategy.Intra,
   colors: defaultColors,
   fields: {},

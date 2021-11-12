@@ -155,8 +155,8 @@
             "displayMode": "list",
             "placement": "bottom"
           },
-          "mode": "pricevolume",
-          "priceStyle": "candles"
+          "mode": "value+volume",
+          "valueStyle": "candles"
         },
         "targets": [
           {
@@ -238,8 +238,8 @@
             "displayMode": "list",
             "placement": "bottom"
           },
-          "mode": "price",
-          "priceStyle": "candles"
+          "mode": "value",
+          "valueStyle": "candles"
         },
         "targets": [
           {
@@ -337,8 +337,8 @@
             "displayMode": "list",
             "placement": "bottom"
           },
-          "mode": "price",
-          "priceStyle": "ohlcbars"
+          "mode": "value",
+          "valueStyle": "ohlcbars"
         },
         "targets": [
           {
@@ -470,7 +470,7 @@
             "placement": "bottom"
           },
           "mode": "volume",
-          "priceStyle": "candles"
+          "valueStyle": "candles"
         },
         "targets": [
           {

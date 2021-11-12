@@ -13,7 +13,7 @@ import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPl
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { drawMarkers, FieldIndices } from './utils';
-import { defaultColors, CandlestickOptions, MarketTrendMode } from './models.gen';
+import { defaultColors, CandlestickOptions, VizDisplayMode } from './models.gen';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { prepareCandlestickFields } from './fields';
@@ -75,7 +75,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
     let shouldRenderVolume = false;
 
     // find volume field and set overrides
-    if (volume != null && mode !== MarketTrendMode.Price) {
+    if (volume != null && mode !== VizDisplayMode.Price) {
       let volumeField = info.volume!;
 
       if (volumeField != null) {
@@ -88,7 +88,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
         }
 
         // we only want to put volume on own shorter axis when rendered with price
-        if (mode !== MarketTrendMode.Volume) {
+        if (mode !== VizDisplayMode.Volume) {
           volumeField.config = { ...volumeField.config };
           volumeField.config.unit = 'short';
           volumeField.display = getDisplayProcessor({
@@ -132,7 +132,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
       }
     }
 
-    let shouldRenderPrice = mode !== MarketTrendMode.Volume && high != null && low != null;
+    let shouldRenderPrice = mode !== VizDisplayMode.Volume && high != null && low != null;
 
     if (!shouldRenderPrice && !shouldRenderVolume) {
       return doNothing;
