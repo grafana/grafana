@@ -6,15 +6,15 @@ import { css, cx } from '@emotion/css';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
-import { components, ContainerProps as BaseContainerProps, GroupTypeBase } from 'react-select';
+import { components, ContainerProps as BaseContainerProps, GroupBase } from 'react-select';
 
 // isFocus prop is actually available, but its not in the types for the version we have.
-export interface ContainerProps<Option, isMulti extends boolean, Group extends GroupTypeBase<Option>>
+export interface ContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>>
   extends BaseContainerProps<Option, isMulti, Group> {
   isFocused: boolean;
 }
 
-export const SelectContainer = <Option, isMulti extends boolean, Group extends GroupTypeBase<Option>>(
+export const SelectContainer = <Option, isMulti extends boolean, Group extends GroupBase<Option>>(
   props: ContainerProps<Option, isMulti, Group>
 ) => {
   const {

@@ -126,7 +126,6 @@
     "@types/react-loadable": "5.5.2",
     "@types/react-redux": "7.1.20",
     "@types/react-router-dom": "^5.1.7",
-    "@types/react-select": "5.0.0",
     "@types/react-test-renderer": "17.0.1",
     "@types/react-transition-group": "4.4.0",
     "@types/react-virtualized-auto-sizer": "1.0.0",

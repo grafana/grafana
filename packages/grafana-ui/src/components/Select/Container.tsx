@@ -6,9 +6,9 @@ import { css, cx } from '@emotion/css';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
-import { components, ContainerProps, GroupTypeBase } from 'react-select';
+import { components, ContainerProps, GroupBase } from 'react-select';
 
-export const SelectContainer = <Option, isMulti extends boolean, Group extends GroupTypeBase<Option>>(
+export const SelectContainer = <Option, isMulti extends boolean, Group extends GroupBase<Option>>(
   props: ContainerProps<Option, isMulti, Group> & { isFocused: boolean }
 ) => {
   const {

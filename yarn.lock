@@ -2761,7 +2761,6 @@ __metadata:
     "@types/react-color": 3.0.1
     "@types/react-dom": 16.9.9
     "@types/react-router-dom": ^5.1.7
-    "@types/react-select": 5.0.0
     "@types/react-table": 7.7.2
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.0
@@ -8417,15 +8416,6 @@ __metadata:
     "@types/history": "*"
     "@types/react": "*"
   checksum: b9d1c7b6ce073652c39712d2b02aeec7640036e369c04be2e57e4b0eb049b64ec9f34fb91cad680ab3f794e89576f77aacadb015b61eb21500a1779e5c955b86
-  languageName: node
-  linkType: hard
-
-"@types/react-select@npm:5.0.0":
-  version: 5.0.0
-  resolution: "@types/react-select@npm:5.0.0"
-  dependencies:
-    react-select: "*"
-  checksum: ed4fac9d000f8c92257f28741c55105248f68247dfdff853406ef5c30e2cc293716835b47caac7317e56525b1138a1733dba808af5764c37aa0d135ea0770ffc
   languageName: node
   linkType: hard
 
@@ -17894,7 +17884,6 @@ __metadata:
     "@types/react-loadable": 5.5.2
     "@types/react-redux": 7.1.20
     "@types/react-router-dom": ^5.1.7
-    "@types/react-select": 5.0.0
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.0
     "@types/react-virtualized-auto-sizer": 1.0.0
@@ -27590,7 +27579,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:*, react-select@npm:5.2.1":
+"react-select@npm:5.2.1":
   version: 5.2.1
   resolution: "react-select@npm:5.2.1"
   dependencies:

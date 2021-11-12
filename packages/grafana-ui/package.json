@@ -139,7 +139,6 @@
     "@types/react-color": "3.0.1",
     "@types/react-dom": "16.9.9",
     "@types/react-router-dom": "^5.1.7",
-    "@types/react-select": "5.0.0",
     "@types/react-table": "7.7.2",
     "@types/react-test-renderer": "17.0.1",
     "@types/react-transition-group": "4.4.0",
