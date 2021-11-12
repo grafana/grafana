@@ -100,14 +100,13 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
             <ThemeProvider>
               <ModalsProvider>
                 <GlobalStyles />
-                <div className="grafana-app">
-                  <Router history={locationService.getHistory()}>
+                <Router history={locationService.getHistory()}>
+                  {pageBanners.map((Banner, index) => (
+                    <Banner key={index.toString()} />
+                  ))}
+                  <div className="navbar-wrapper">
                     {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
                     <main className="main-view">
-                      {pageBanners.map((Banner, index) => (
-                        <Banner key={index.toString()} />
-                      ))}
-
                       <AngularRoot ref={this.container} />
                       <AppNotificationList />
                       <SearchWrapper />
@@ -116,8 +115,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                         <Hook key={index.toString()} />
                       ))}
                     </main>
-                  </Router>
-                </div>
+                  </div>
+                </Router>
                 <LiveConnectionWarning />
                 <ModalRoot />
               </ModalsProvider>

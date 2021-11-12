@@ -7,13 +7,18 @@ export function getPageStyles(theme: GrafanaTheme2) {
 
   return css`
     .grafana-app {
+      position: relative;
       display: flex;
-      align-items: stretch;
-      position: absolute;
-      width: 100%;
+      flex-direction: column;
+      flex-grow: 1;
       height: 100%;
-      top: 0;
-      left: 0;
+      flex: 1 1 0;
+    }
+
+    .navbar-wrapper {
+      display: flex;
+      flex-grow: 1;
+      min-height: 0;
     }
 
     .main-view {
