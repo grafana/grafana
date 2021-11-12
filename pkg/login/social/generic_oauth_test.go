@@ -707,6 +707,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 				}
 
 				userInfo, err := provider.UserInfo(ts.Client(), token)
+				assert.NoError(t, err)
 				assert.Equal(t, test.expectedResult, userInfo.Groups)
 			})
 		}
