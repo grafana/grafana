@@ -33,13 +33,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             },
         ]
 
-    download_grabpl_cmds = [
-        'mkdir -p bin',
-        'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
-            grabpl_version
-        ),
-        'chmod +x bin/grabpl',
-    ]
     common_cmds = [
         './bin/grabpl verify-drone',
         # Generate Go code, will install Wire
@@ -94,7 +87,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'environment': {
                     'GITHUB_TOKEN': from_secret(github_token),
                 },
-                'commands': download_grabpl_cmds + [
+                'commands': [
                     'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
                     'cd grafana-enterprise',
                     'git checkout {}'.format(committish),
@@ -104,7 +97,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'name': 'initialize',
                 'image': build_image,
                 'depends_on': [
-                    'clone',
+                    'grabpl',
                 ],
                 'commands': [
                     'mv bin/grabpl /tmp/',
@@ -125,11 +118,24 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         {
             'name': 'initialize',
             'image': build_image,
-            'commands': download_grabpl_cmds + common_cmds,
+            'commands': common_cmds,
         },
     ]
 
     return steps
+
+def download_grabpl():
+    return {
+        'name': 'grabpl',
+        'image': build_image,
+        'commands': [
+            'mkdir -p bin',
+            'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+                grabpl_version
+            ),
+            'chmod +x bin/grabpl',
+        ]
+    }
 
 def enterprise_downstream_step(edition):
     if edition in ('enterprise', 'enterprise2'):

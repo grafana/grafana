@@ -23,13 +23,16 @@ services:
   name: mysql
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
@@ -283,13 +286,16 @@ services:
   name: mysql
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
@@ -610,6 +616,12 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -657,13 +669,16 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
   image: grafana/build-container:1.4.5
@@ -745,13 +760,16 @@ services:
   name: mysql
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -1036,6 +1054,12 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -1103,13 +1127,16 @@ services:
   name: memcached
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
@@ -1132,7 +1159,7 @@ steps:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   - yarn install --immutable
   depends_on:
-  - clone
+  - grabpl
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
@@ -1502,6 +1529,12 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -1567,13 +1600,16 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -1674,13 +1710,16 @@ services:
   name: mysql
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
@@ -1953,6 +1992,12 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -2021,13 +2066,16 @@ services:
   name: memcached
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout main
@@ -2050,7 +2098,7 @@ steps:
   - ./bin/grabpl gen-version v7.3.0-test
   - yarn install --immutable
   depends_on:
-  - clone
+  - grabpl
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
@@ -2412,6 +2460,12 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -2478,13 +2532,16 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
@@ -2590,13 +2647,16 @@ services:
   name: mysql
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
@@ -2846,6 +2906,12 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -2909,13 +2975,16 @@ services:
   name: memcached
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
-  - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_BRANCH}
@@ -2937,7 +3006,7 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   depends_on:
-  - clone
+  - grabpl
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
@@ -3304,6 +3373,12 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
+  - chmod +x bin/grabpl
+  image: grafana/build-container:1.4.5
+  name: grabpl
+- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -3432,6 +3507,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 612011aafafad61d355de61b10daaffd947817161667385a216cb82d8c2a7b1d
+hmac: 6c34bf26eac31b422f60c92cba9b400136d4cd4ff53d01a3b320ab89a2efc1b9
 
 ...
