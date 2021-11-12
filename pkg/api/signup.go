@@ -29,7 +29,7 @@ func SignUp(c *models.ReqContext, form dtos.SignUpForm) response.Response {
 	}
 
 	existing := models.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	if err := bus.Dispatch(&existing); err == nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &existing); err == nil {
 		return response.Error(422, "User with same email address already exists", nil)
 	}
 

@@ -7,7 +7,7 @@ import { getAltSegmentsSelectables, getTagsSelectables, getTagsAsSegmentsSelecta
 import { GraphiteSegment } from '../types';
 import { createStore } from '../state/store';
 
-jest.mock('app/core/utils/promiseToDigest', () => ({
+jest.mock('app/angular/promiseToDigest', () => ({
   promiseToDigest: (scope: any) => {
     return (p: Promise<any>) => p;
   },

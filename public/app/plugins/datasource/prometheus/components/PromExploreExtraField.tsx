@@ -66,10 +66,10 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
     }
 
     return (
-      <div aria-label="Prometheus extra field" className="gf-form-inline">
+      <div aria-label="Prometheus extra field" className="gf-form-inline" data-testid={testIds.extraFieldEditor}>
         {/*Query type field*/}
         <div
-          data-testid="queryTypeField"
+          data-testid={testIds.queryTypeField}
           className={cx(
             'gf-form explore-input-margin',
             css`
@@ -82,13 +82,13 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
 
           <RadioButtonGroup
             options={rangeOptions}
-            value={query.range === query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+            value={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
             onChange={onQueryTypeChange}
           />
         </div>
         {/*Step field*/}
         <div
-          data-testid="stepField"
+          data-testid={testIds.stepField}
           className={cx(
             'gf-form',
             css`
@@ -120,3 +120,9 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
     );
   }
 );
+
+export const testIds = {
+  extraFieldEditor: 'prom-editor-extra-field',
+  stepField: 'prom-editor-extra-field-step',
+  queryTypeField: 'prom-editor-extra-field-query-type',
+};

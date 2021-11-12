@@ -1,6 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { PluginError, renderMarkdown } from '@grafana/data';
-import { API_ROOT, GRAFANA_API_ROOT } from './constants';
+import { API_ROOT, GCOM_API_ROOT } from './constants';
 import { mergeLocalAndRemote } from './helpers';
 import {
   PluginDetails,
@@ -28,26 +28,19 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     getPluginVersions(id),
     getLocalPluginReadme(id),
   ]);
-  const dependencies = remote?.json?.dependencies;
-  // Prepend semver range when we fallback to grafanaVersion (deprecated in favour of grafanaDependency)
-  // otherwise plugins cannot be installed.
-  const grafanaDependency = dependencies?.grafanaDependency
-    ? dependencies?.grafanaDependency
-    : dependencies?.grafanaVersion
-    ? `>=${dependencies?.grafanaVersion}`
-    : '';
+  const dependencies = local?.dependencies || remote?.json?.dependencies;
 
   return {
-    grafanaDependency,
+    grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
     pluginDependencies: dependencies?.plugins || [],
-    links: remote?.json?.info.links || local?.info.links || [],
+    links: local?.info.links || remote?.json?.info.links || [],
     readme: localReadme || remote?.readme,
     versions,
   };
 }
 
 export async function getRemotePlugins(): Promise<RemotePlugin[]> {
-  const res = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins`);
+  const res = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins`);
   return res.items;
 }
 
@@ -77,7 +70,7 @@ export async function getPluginErrors(): Promise<PluginError[]> {
 
 async function getRemotePlugin(id: string, isInstalled: boolean): Promise<RemotePlugin | undefined> {
   try {
-    return await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}`, {});
+    return await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}`, {});
   } catch (error) {
     // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
     error.isHandled = true;
@@ -87,11 +80,14 @@ async function getRemotePlugin(id: string, isInstalled: boolean): Promise<Remote
 
 async function getPluginVersions(id: string): Promise<Version[]> {
   try {
-    const versions: { items: PluginVersion[] } = await getBackendSrv().get(
-      `${GRAFANA_API_ROOT}/plugins/${id}/versions`
-    );
+    const versions: { items: PluginVersion[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/versions`);
 
-    return (versions.items || []).map(({ version, createdAt }) => ({ version, createdAt }));
+    return (versions.items || []).map((v) => ({
+      version: v.version,
+      createdAt: v.createdAt,
+      isCompatible: v.isCompatible,
+      grafanaDependency: v.grafanaDependency,
+    }));
   } catch (error) {
     // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
     error.isHandled = true;
@@ -117,14 +113,14 @@ export async function getLocalPlugins(): Promise<LocalPlugin[]> {
 }
 
 async function getOrg(slug: string): Promise<Org> {
-  const org = await getBackendSrv().get(`${GRAFANA_API_ROOT}/orgs/${slug}`);
-  return { ...org, avatarUrl: `${GRAFANA_API_ROOT}/orgs/${slug}/avatar` };
+  const org = await getBackendSrv().get(`${GCOM_API_ROOT}/orgs/${slug}`);
+  return { ...org, avatarUrl: `${GCOM_API_ROOT}/orgs/${slug}/avatar` };
 }
 
-export async function installPlugin(id: string, version: string) {
-  return await getBackendSrv().post(`${API_ROOT}/${id}/install`, {
-    version,
-  });
+export async function installPlugin(id: string) {
+  // This will install the latest compatible version based on the logic
+  // on the backend.
+  return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
 }
 
 export async function uninstallPlugin(id: string) {

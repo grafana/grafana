@@ -10,12 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// DataRequestHandler is a data request handler interface.
-type DataRequestHandler interface {
-	// HandleRequest handles a data request.
-	HandleRequest(context.Context, *models.DataSource, DataQuery) (DataResponse, error)
-}
-
 // Store is the storage for plugins.
 type Store interface {
 	// Plugin finds a plugin by its ID.
@@ -96,7 +90,7 @@ type PluginDashboardManager interface {
 	// LoadPluginDashboard loads a plugin dashboard.
 	LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error)
 	// ImportDashboard imports a dashboard.
-	ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
+	ImportDashboard(ctx context.Context, pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 		overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser) (PluginDashboardInfoDTO,
 		*models.Dashboard, error)
 }

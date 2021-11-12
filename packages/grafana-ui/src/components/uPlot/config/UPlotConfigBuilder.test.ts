@@ -349,6 +349,7 @@ describe('UPlotConfigBuilder', () => {
       Object {
         "axes": Array [
           Object {
+            "filter": undefined,
             "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
             "gap": 5,
             "grid": Object {

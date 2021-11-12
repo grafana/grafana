@@ -73,6 +73,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"icon":           {},
 		"live":           {},
 		"logs":           {},
+		"market-trend":   {},
 		"news":           {},
 		"nodeGraph":      {},
 		"piechart":       {},

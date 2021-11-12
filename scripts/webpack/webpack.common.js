@@ -1,7 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const webpack = require('webpack');
-
+const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 class CopyUniconsPlugin {
@@ -58,6 +58,7 @@ module.exports = {
     source: false,
   },
   plugins: [
+    new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
@@ -123,15 +124,6 @@ module.exports = {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         loader: 'file-loader',
         options: { name: 'static/img/[name].[hash:8].[ext]' },
-      },
-      {
-        test: /\.worker\.js$/,
-        use: {
-          loader: 'worker-loader',
-          options: {
-            inline: 'fallback',
-          },
-        },
       },
     ],
   },

@@ -32,7 +32,7 @@ func ProvideAuthInfoService(bus bus.Bus, store *sqlstore.SQLStore, userProtectio
 		logger:                log.New("login.authinfo"),
 	}
 
-	s.Bus.AddHandler(s.GetExternalUserInfoByLogin)
+	s.Bus.AddHandlerCtx(s.GetExternalUserInfoByLogin)
 	s.Bus.AddHandler(s.GetAuthInfo)
 	s.Bus.AddHandler(s.SetAuthInfo)
 	s.Bus.AddHandler(s.UpdateAuthInfo)

@@ -57,6 +57,12 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     optionSelected: css`
       background: ${theme.colors.action.selected};
     `,
+    optionDisabled: css`
+      label: grafana-select-option-disabled;
+      background-color: ${theme.colors.action.disabledBackground};
+      color: ${theme.colors.action.disabledText};
+      cursor: not-allowed;
+    `,
     singleValue: css`
       label: grafana-select-single-value;
       color: ${theme.components.input.text};
