@@ -212,7 +212,8 @@ steps:
   name: build-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn run test:accessibility-pr
+  - yarn dlx pa11y-ci@git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4
+    pa11y-ci --config .pa11yci-pr.conf.js
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -506,7 +507,8 @@ steps:
   name: publish-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn run test:accessibility --json > pa11y-ci-results.json
+  - yarn dlx --quiet pa11y-ci@git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4
+    pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -3430,6 +3432,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 602cb0cf445a9932937cae8a2a396572f53f94c457e426564ad845b1ee54205c
+hmac: 612011aafafad61d355de61b10daaffd947817161667385a216cb82d8c2a7b1d
 
 ...

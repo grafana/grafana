@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Badge,
   FileDropzone,
@@ -14,13 +14,15 @@ import {
 } from '@grafana/ui';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import React from 'react';
-import { LokiQueryField } from '../loki/components/LokiQueryField';
-import { LokiQuery } from '../loki/types';
-import { TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
-import LokiDatasource from '../loki/datasource';
-import { PrometheusDatasource } from '../prometheus/datasource';
+import { LokiQueryField } from '../../loki/components/LokiQueryField';
+import { LokiQuery } from '../../loki/types';
+import { TempoDatasource, TempoQuery, TempoQueryType } from '../datasource';
+import LokiDatasource from '../../loki/datasource';
+import { PrometheusDatasource } from '../../prometheus/datasource';
 import useAsync from 'react-use/lib/useAsync';
 import NativeSearch from './NativeSearch';
+import { getDS } from './utils';
+import { ServiceGraphSection } from './ServiceGraphSection';
 
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
 
@@ -188,34 +190,12 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             </InlineField>
           </InlineFieldRow>
         )}
-        {query.queryType === 'serviceMap' && <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} />}
+        {query.queryType === 'serviceMap' && (
+          <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} query={query} onChange={onChange} />
+        )}
       </>
     );
   }
-}
-
-function ServiceGraphSection({ graphDatasourceUid }: { graphDatasourceUid?: string }) {
-  const dsState = useAsync(() => getDS(graphDatasourceUid), [graphDatasourceUid]);
-  if (dsState.loading) {
-    return null;
-  }
-
-  const ds = dsState.value as LokiDatasource;
-
-  if (!graphDatasourceUid) {
-    return <div className="text-warning">Please set up a service graph datasource in the datasource settings.</div>;
-  }
-
-  if (graphDatasourceUid && !ds) {
-    return (
-      <div className="text-warning">
-        Service graph datasource is configured but the data source no longer exists. Please configure existing data
-        source to use the service graph functionality.
-      </div>
-    );
-  }
-
-  return null;
 }
 
 interface SearchSectionProps {
@@ -262,20 +242,6 @@ function SearchSection({ linkedDatasourceUid, onChange, onRunQuery, query }: Sea
   }
 
   return null;
-}
-
-async function getDS(uid?: string): Promise<DataSourceApi | undefined> {
-  if (!uid) {
-    return undefined;
-  }
-
-  const dsSrv = getDataSourceSrv();
-  try {
-    return await dsSrv.get(uid);
-  } catch (error) {
-    console.error('Failed to load data source', error);
-    return undefined;
-  }
 }
 
 export const TempoQueryField = withTheme2(TempoQueryFieldComponent);

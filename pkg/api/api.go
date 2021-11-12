@@ -258,6 +258,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
 			keysRoute.Get("/", routing.Wrap(GetAPIKeys))
 			keysRoute.Post("/", quota("api_key"), bind(models.AddApiKeyCommand{}), routing.Wrap(hs.AddAPIKey))
+			keysRoute.Post("/additional", quota("api_key"), bind(models.AddApiKeyCommand{}), routing.Wrap(hs.AdditionalAPIKey))
 			keysRoute.Delete("/:id", routing.Wrap(DeleteAPIKey))
 		}, reqOrgAdmin)
 
