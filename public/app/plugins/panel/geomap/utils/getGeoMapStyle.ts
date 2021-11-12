@@ -16,6 +16,5 @@ export const getGeoMapStyle = (config: FeatureStyleConfig, property: any) => {
           width: config.strokeWidth,
         })
       : undefined,
-    //handle a shape/marker too?
   });
 };

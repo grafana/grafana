@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
 import { prepareGraphableFields } from '../timeseries/utils';
-import { CandlestickOptions, CandlestickFieldMap } from './models.gen';
+import { MarketOptions, CandlestickFieldMap } from './models.gen';
 
 export interface FieldPickerInfo {
   /** property name */
@@ -74,6 +74,9 @@ export interface CandlestickData {
 
   // The stuff passed to GraphNG
   frame: DataFrame;
+
+  // The real names used
+  names: CandlestickFieldMap;
 }
 
 function findFieldOrAuto(frame: DataFrame, info: FieldPickerInfo, options: CandlestickFieldMap): Field | undefined {
@@ -91,8 +94,8 @@ function findFieldOrAuto(frame: DataFrame, info: FieldPickerInfo, options: Candl
 
 export function prepareCandlestickFields(
   series: DataFrame[] | undefined,
-  theme: GrafanaTheme2,
-  options: CandlestickOptions
+  options: MarketOptions,
+  theme: GrafanaTheme2
 ): CandlestickData {
   if (!series?.length) {
     return { warn: 'No data' } as CandlestickData;
@@ -101,10 +104,10 @@ export function prepareCandlestickFields(
   // All fields
   const fieldMap = options.fields ?? {};
   const aligned = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series, enforceSort: true });
-  if (!aligned) {
+  if (!aligned?.length) {
     return { warn: 'No data found' } as CandlestickData;
   }
-  const data: CandlestickData = { aligned, frame: aligned };
+  const data: CandlestickData = { aligned, frame: aligned, names: {} };
 
   // Apply same filter as everythign else in timeseries
   const norm = prepareGraphableFields([aligned], theme);
@@ -164,6 +167,14 @@ export function prepareCandlestickFields(
   }
   if (!data.low && !fieldMap.low) {
     data.low = data.open;
+  }
+
+  // Register the name of each mapped field
+  for (const info of Object.values(candlestickFieldsInfo)) {
+    const f = data[info.key];
+    if (f) {
+      data.names[info.key] = getFieldDisplayName(f, data.frame);
+    }
   }
 
   return data;

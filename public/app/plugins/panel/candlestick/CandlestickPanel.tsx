@@ -2,7 +2,7 @@
 // with some extra renderers passed to the <TimeSeries> component
 
 import React, { useMemo } from 'react';
-import { Field, getDisplayProcessor, getFieldDisplayName, PanelProps } from '@grafana/data';
+import { Field, getDisplayProcessor, PanelProps } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -13,10 +13,10 @@ import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPl
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { drawMarkers, FieldIndices } from './utils';
-import { CandlestickFieldMap, defaultColors, CandlestickOptions, MarketTrendMode } from './models.gen';
+import { defaultColors, CandlestickOptions, MarketTrendMode } from './models.gen';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { candlestickFieldsInfo, prepareCandlestickFields } from './fields';
+import { prepareCandlestickFields } from './fields';
 
 interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
@@ -39,7 +39,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
 
   const theme = useTheme2();
 
-  const info = useMemo(() => prepareCandlestickFields(data?.series, theme, options), [data, options, theme]);
+  const info = useMemo(() => prepareCandlestickFields(data?.series, options, theme), [data, options, theme]);
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
     let tweakScale = (opts: ScaleProps) => opts;
@@ -54,13 +54,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
     // Un-encoding the already parsed special fields
     // This takes currently matched fields and saves the name so they can be looked up by name later
     // ¯\_(ツ)_/¯  someday this can make more sense!
-    const fieldMap: CandlestickFieldMap = {};
-    for (const key of Object.keys(candlestickFieldsInfo)) {
-      const field = (info as any)[key];
-      if (field) {
-        (fieldMap as any)[key] = getFieldDisplayName(field, info.frame);
-      }
-    }
+    const fieldMap = info.names;
 
     if (!Object.keys(fieldMap).length) {
       return doNothing;

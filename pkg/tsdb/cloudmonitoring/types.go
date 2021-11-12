@@ -13,7 +13,7 @@ type (
 		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo) (
 			*backend.DataResponse, cloudMonitoringResponse, string, error)
 		parseResponse(dr *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
-		parseToAnnotations(dr *backend.DataResponse, data cloudMonitoringResponse, title, text, tags string) error
+		parseToAnnotations(dr *backend.DataResponse, data cloudMonitoringResponse, title, text string) error
 		buildDeepLink() string
 		getRefID() string
 	}
