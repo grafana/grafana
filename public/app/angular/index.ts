@@ -33,6 +33,7 @@ import './components/code_editor/code_editor';
 import './components/sql_part/sql_part_editor';
 import './components/HttpSettingsCtrl';
 import './components/TlsAuthSettingsCtrl';
+import './components/plugin_component';
 import './GrafanaCtrl';
 
 export { AngularApp } from './AngularApp';
