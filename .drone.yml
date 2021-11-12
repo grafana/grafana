@@ -211,9 +211,9 @@ steps:
   image: grafana/build-container:1.4.5
   name: build-storybook
 - commands:
+  - yarn -v
   - yarn wait-on http://$HOST:$PORT
-  - ls -la
-  - node_modules/.bin/pa11y-ci --config .pa11yci-pr.conf.js
+  - --config .pa11yci-pr.conf.js
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -506,8 +506,9 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: publish-storybook
 - commands:
+  - yarn -v
   - yarn wait-on http://$HOST:$PORT
-  - node_modules/.bin/pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
+  - --config .pa11yci.conf.js --json > pa11y-ci-results.json
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -3431,6 +3432,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: c434c20f0be0a9441f9eb56440c295178deeac9a20121addde1c2754f58a1ec7
+hmac: fe372644551875fedea78d1d951dca7bf21012d3646159899806fb28e20557b7
 
 ...

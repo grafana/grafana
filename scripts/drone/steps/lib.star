@@ -424,16 +424,16 @@ def lint_frontend_step():
 
 def test_a11y_frontend_step(ver_mode, edition, port=3001):
     commands = [
+        'yarn -v',
         'yarn wait-on http://$HOST:$PORT',
     ]
     if ver_mode == 'pr':
         commands.extend([
-            'ls -la',
-            'node_modules/.bin/pa11y-ci --config .pa11yci-pr.conf.js',
+            '--config .pa11yci-pr.conf.js',
         ])
     else:
         commands.extend([
-            'node_modules/.bin/pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json',
+            '--config .pa11yci.conf.js --json > pa11y-ci-results.json',
         ])
 
     return {
