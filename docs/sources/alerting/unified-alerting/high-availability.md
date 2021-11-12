@@ -7,7 +7,7 @@ weight = 450
 
 # High availability
 
-The Grafana alerting systems has two main components, the `Scheduler` and the internal `Alertmanager`. The `Scheduler` is responsible for the evaluation of your [alert rules]({{< relref "./fundamentals/evaluate-grafana-alerts.md" >}}) while the internal Alertmanager takes care of the **routing** and **grouping**.
+The Grafana alerting system has two main components: a `Scheduler` and an internal `Alertmanager`. The `Scheduler` is responsible for the evaluation of your [alert rules]({{< relref "./fundamentals/evaluate-grafana-alerts.md" >}}) while the internal Alertmanager takes care of the **routing** and **grouping**.
 
 When it comes to a highly available setup, the operational mode of the scheduler is unaffected. All alerts will be evaluated in every instance. The operational change happens in the Alertmanager, it is in charge of also **deduplicating** the alert notifications between Grafana instances.
 
@@ -31,7 +31,7 @@ When it comes to a highly available setup, the operational mode of the scheduler
    `───'
 ```
 
-The coordination between Grafana instances happens via [Gossip](https://en.wikipedia.org/wiki/Gossip_protocol). Alerts are not gossiped between instances. It is expected that each scheduler delivers the same alerts to each Alertmanager.
+The coordination between Grafana instances happens via [a Gossip protocol](https://en.wikipedia.org/wiki/Gossip_protocol). Alerts are not gossiped between instances. It is expected that each scheduler delivers the same alerts to each Alertmanager.
 
 The two types of messages that are gossiped between instances are:
 
@@ -42,11 +42,11 @@ These two states are persisted in the database periodically and when Grafana is 
 
 ## Enable high availability
 
-To enable high availability support, you need to add at least 1 Grafana instance to the [`[ha_peer]` configuration option]({{<relref"../../administration/configuration.md#unified_alerting">}}) within the `[unified_alerting]` section:
+To enable high availability support you need to add at least 1 Grafana instance to the [`[ha_peer]` configuration option]({{<relref"../../administration/configuration.md#unified_alerting">}}) within the `[unified_alerting]` section:
 
 1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the `[unified_alerting]` section.
 2. Set `[ha_peers]` to the set of hosts for each grafana instance in the cluster (using a format of host:port) e.g. `ha_peers=10.0.0.5:9094,10.0.0.6:9094,10.0.0.7:9094`
-3. Communication occurs using port 9094 on both UDP and TCP, you need to make sure each instance has access on these.
+3. Gossiping of notifications and silences uses both TCP and UDP port 9094. Each Grafana instance will need to be able to accept incoming connections on these ports.
 4. Set `[ha_listen_address]` to the instance IP address using a format of host:port (or the [Pod's](https://kubernetes.io/docs/concepts/workloads/pods/) IP in the case of using Kubernetes) by default it is set to listen to all interfaces (`0.0.0.0`).
 
 ## Kubernetes
