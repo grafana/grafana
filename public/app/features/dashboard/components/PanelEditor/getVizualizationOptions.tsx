@@ -1,7 +1,7 @@
 import React from 'react';
 import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet } from 'lodash';
-import { getDataLinksVariableSuggestions } from 'app/angular/panel/panellinks/link_srv';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue, setOptionImmutably } from './utils';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';

@@ -1,5 +1,3 @@
-// Libraries
-import coreModule from 'app/core/core_module';
 // Services & Utils
 import { importDataSourcePlugin } from './plugin_loader';
 import {
@@ -7,6 +5,8 @@ import {
   DataSourceSrv as DataSourceService,
   getDataSourceSrv as getDataSourceService,
   TemplateSrv,
+  getTemplateSrv,
+  getLegacyAngularInjector,
 } from '@grafana/runtime';
 // Types
 import {
@@ -17,8 +17,6 @@ import {
   DataSourceSelectItem,
   ScopedVars,
 } from '@grafana/data';
-import { auto } from 'angular';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 // Pretend Datasource
 import {
   dataSource as expressionDatasource,
@@ -27,6 +25,7 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 import { DataSourceVariableModel } from '../variables/types';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import appEvents from 'app/core/app_events';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -35,12 +34,7 @@ export class DatasourceSrv implements DataSourceService {
   private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
   private defaultName = ''; // actually UID
 
-  /** @ngInject */
-  constructor(
-    private $injector: auto.IInjectorService,
-    private $rootScope: GrafanaRootScope,
-    private templateSrv: TemplateSrv
-  ) {}
+  constructor(private templateSrv: TemplateSrv = getTemplateSrv()) {}
 
   init(settingsMapByName: Record<string, DataSourceInstanceSettings>, defaultName: string) {
     this.datasources = {};
@@ -150,13 +144,13 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // find the metadata
-    const dsConfig = this.settingsMapByUid[key] ?? this.settingsMapByName[key] ?? this.settingsMapById[key];
-    if (!dsConfig) {
+    const instanceSettings = this.settingsMapByUid[key] ?? this.settingsMapByName[key] ?? this.settingsMapById[key];
+    if (!instanceSettings) {
       return Promise.reject({ message: `Datasource ${key} was not found` });
     }
 
     try {
-      const dsPlugin = await importDataSourcePlugin(dsConfig.meta);
+      const dsPlugin = await importDataSourcePlugin(instanceSettings.meta);
       // check if its in cache now
       if (this.datasources[key]) {
         return this.datasources[key];
@@ -164,23 +158,35 @@ export class DatasourceSrv implements DataSourceService {
 
       // If there is only one constructor argument it is instanceSettings
       const useAngular = dsPlugin.DataSourceClass.length !== 1;
-      const instance: DataSourceApi = useAngular
-        ? this.$injector.instantiate(dsPlugin.DataSourceClass, {
-            instanceSettings: dsConfig,
-          })
-        : new dsPlugin.DataSourceClass(dsConfig);
+      let instance: DataSourceApi<any, any>;
+
+      if (useAngular) {
+        instance = getLegacyAngularInjector().instantiate(dsPlugin.DataSourceClass, {
+          instanceSettings,
+        });
+      } else {
+        instance = new dsPlugin.DataSourceClass(instanceSettings);
+      }
 
       instance.components = dsPlugin.components;
-      instance.meta = dsConfig.meta;
+
+      // Some old plugins does not extend DataSourceApi so we need to manually patch them
+      if (!(instance instanceof DataSourceApi)) {
+        const anyInstance = instance as any;
+        anyInstance.name = instanceSettings.name;
+        anyInstance.id = instanceSettings.id;
+        anyInstance.type = instanceSettings.type;
+        anyInstance.meta = instanceSettings.meta;
+        anyInstance.uid = instanceSettings.uid;
+        (instance as any).getRef = DataSourceApi.prototype.getRef;
+      }
 
       // store in instance cache
       this.datasources[key] = instance;
       this.datasources[instance.uid] = instance;
       return instance;
     } catch (err) {
-      if (this.$rootScope) {
-        this.$rootScope.appEvent(AppEvents.alertError, [dsConfig.name + ' plugin failed', err.toString()]);
-      }
+      appEvents.emit(AppEvents.alertError, [instanceSettings.name + ' plugin failed', err.toString()]);
       return Promise.reject({ message: `Datasource: ${key} was not found` });
     }
   }
@@ -321,5 +327,4 @@ export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
 };
 
-coreModule.service('datasourceSrv', DatasourceSrv);
 export default DatasourceSrv;

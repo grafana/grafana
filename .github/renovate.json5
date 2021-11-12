@@ -20,20 +20,11 @@
     "ts-loader", // we should remove ts-loader and use babel-loader instead
     "ora" // we should bump this once we move to esm modules
   ],
-  "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],
+  "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies"],
   "minor": {
     "enabled": false
   },
-  "packageRules": [
-    {
-      "matchPaths": ["grafana-toolkit/package.json"],
-      "ignoreDeps": [
-        "copy-webpack-plugin", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
-        "css-loader", // need to wait for Grafana 9 to upgrade toolkit to webpack 5
-      ]
-    }
-  ],
   "patch": {
     "enabled": false
   },

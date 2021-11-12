@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
-import { selectors } from '@grafana/e2e-selectors';
-import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory } from '@grafana/ui';
+import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory, useForceUpdate } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -14,7 +14,7 @@ import { AnnotationsSettings } from './AnnotationsSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 export interface Props {
@@ -26,44 +26,58 @@ export interface SettingsPage {
   id: string;
   title: string;
   icon: IconName;
-  render: () => React.ReactNode;
+  component: React.ReactNode;
 }
 
-export class DashboardSettings extends PureComponent<Props> {
-  onClose = () => {
-    locationService.partial({ editview: null });
-  };
+const onClose = () => locationService.partial({ editview: null });
 
-  onChangePage = (editview: string) => {
-    locationService.partial({ editview });
-  };
+const MakeEditable = (props: { onMakeEditable: () => any }) => (
+  <div>
+    <div className="dashboard-settings__header">Dashboard not editable</div>
+    <Button onClick={props.onMakeEditable}>Make editable</Button>
+  </div>
+);
 
-  getPages(): SettingsPage[] {
-    const { dashboard } = this.props;
+export function DashboardSettings({ dashboard, editview }: Props) {
+  const forceUpdate = useForceUpdate();
+  const onMakeEditable = useCallback(() => {
+    dashboard.editable = true;
+    dashboard.meta.canMakeEditable = false;
+    dashboard.meta.canEdit = true;
+    dashboard.meta.canSave = true;
+    forceUpdate();
+  }, [dashboard, forceUpdate]);
+
+  const pages = useMemo((): SettingsPage[] => {
     const pages: SettingsPage[] = [];
 
     if (dashboard.meta.canEdit) {
-      pages.push(this.getGeneralPage());
+      pages.push({
+        title: 'General',
+        id: 'settings',
+        icon: 'sliders-v-alt',
+        component: <GeneralSettings dashboard={dashboard} />,
+      });
 
       pages.push({
         title: 'Annotations',
         id: 'annotations',
         icon: 'comment-alt',
-        render: () => <AnnotationsSettings dashboard={dashboard} />,
+        component: <AnnotationsSettings dashboard={dashboard} />,
       });
 
       pages.push({
         title: 'Variables',
         id: 'templating',
         icon: 'calculator-alt',
-        render: () => <VariableEditorContainer />,
+        component: <VariableEditorContainer />,
       });
 
       pages.push({
         title: 'Links',
         id: 'links',
         icon: 'link',
-        render: () => <LinksSettings dashboard={dashboard} />,
+        component: <LinksSettings dashboard={dashboard} />,
       });
     }
 
@@ -72,7 +86,7 @@ export class DashboardSettings extends PureComponent<Props> {
         title: 'General',
         icon: 'sliders-v-alt',
         id: 'settings',
-        render: () => this.renderMakeEditable(),
+        component: <MakeEditable onMakeEditable={onMakeEditable} />,
       });
     }
 
@@ -81,7 +95,7 @@ export class DashboardSettings extends PureComponent<Props> {
         title: 'Versions',
         id: 'versions',
         icon: 'history',
-        render: () => <VersionsSettings dashboard={dashboard} />,
+        component: <VersionsSettings dashboard={dashboard} />,
       });
     }
 
@@ -90,7 +104,7 @@ export class DashboardSettings extends PureComponent<Props> {
         title: 'Permissions',
         id: 'permissions',
         icon: 'lock',
-        render: () => <DashboardPermissions dashboard={dashboard} />,
+        component: <DashboardPermissions dashboard={dashboard} />,
       });
     }
 
@@ -98,85 +112,53 @@ export class DashboardSettings extends PureComponent<Props> {
       title: 'JSON Model',
       id: 'dashboard_json',
       icon: 'arrow',
-      render: () => <JsonEditorSettings dashboard={dashboard} />,
+      component: <JsonEditorSettings dashboard={dashboard} />,
     });
 
     return pages;
-  }
+  }, [dashboard, onMakeEditable]);
 
-  onMakeEditable = () => {
-    const { dashboard } = this.props;
-    dashboard.editable = true;
-    dashboard.meta.canMakeEditable = false;
-    dashboard.meta.canEdit = true;
-    dashboard.meta.canSave = true;
-    this.forceUpdate();
-  };
-
-  onPostSave = () => {
-    this.props.dashboard.meta.hasUnsavedFolderChange = false;
+  const onPostSave = () => {
+    dashboard.meta.hasUnsavedFolderChange = false;
     dashboardWatcher.reloadPage();
   };
 
-  renderMakeEditable(): React.ReactNode {
-    return (
-      <div>
-        <div className="dashboard-settings__header">Dashboard not editable</div>
-        <Button onClick={this.onMakeEditable}>Make editable</Button>
-      </div>
-    );
-  }
+  const folderTitle = dashboard.meta.folderTitle;
+  const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
+  const canSaveAs = contextSrv.hasEditPermissionInFolders;
+  const canSave = dashboard.meta.canSave;
+  const styles = getStyles(config.theme2);
 
-  getGeneralPage(): SettingsPage {
-    return {
-      title: 'General',
-      id: 'settings',
-      icon: 'sliders-v-alt',
-      render: () => <GeneralSettings dashboard={this.props.dashboard} />,
-    };
-  }
-
-  render() {
-    const { dashboard, editview } = this.props;
-    const folderTitle = dashboard.meta.folderTitle;
-    const pages = this.getPages();
-    const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
-    const canSaveAs = contextSrv.hasEditPermissionInFolders;
-    const canSave = dashboard.meta.canSave;
-    const styles = getStyles(config.theme2);
-
-    return (
-      <div className="dashboard-settings">
-        <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={this.onClose} />
-        <CustomScrollbar>
-          <div className={styles.scrollInner}>
-            <div className={styles.settingsWrapper}>
-              <aside className="dashboard-settings__aside">
-                {pages.map((page) => (
-                  <a
-                    className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
-                    aria-label={selectors.pages.Dashboard.Settings.General.sectionItems(page.title)}
-                    onClick={() => this.onChangePage(page.id)}
-                    key={page.id}
-                  >
-                    <Icon name={page.icon} style={{ marginRight: '4px' }} />
-                    {page.title}
-                  </a>
-                ))}
-                <div className="dashboard-settings__aside-actions">
-                  {canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={this.onPostSave} />}
-                  {canSaveAs && (
-                    <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={this.onPostSave} variant="secondary" />
-                  )}
-                </div>
-              </aside>
-              <div className={styles.settingsContent}>{currentPage.render()}</div>
-            </div>
+  return (
+    <div className="dashboard-settings">
+      <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={onClose} />
+      <CustomScrollbar>
+        <div className={styles.scrollInner}>
+          <div className={styles.settingsWrapper}>
+            <aside className="dashboard-settings__aside">
+              {pages.map((page) => (
+                <Link
+                  to={(loc) => locationUtil.updateSearchParams(loc.search, `editview=${page.id}`)}
+                  className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
+                  key={page.id}
+                >
+                  <Icon name={page.icon} style={{ marginRight: '4px' }} />
+                  {page.title}
+                </Link>
+              ))}
+              <div className="dashboard-settings__aside-actions">
+                {canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onPostSave} />}
+                {canSaveAs && (
+                  <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onPostSave} variant="secondary" />
+                )}
+              </div>
+            </aside>
+            <div className={styles.settingsContent}>{currentPage.component}</div>
           </div>
-        </CustomScrollbar>
-      </div>
-    );
-  }
+        </div>
+      </CustomScrollbar>
+    </div>
+  );
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({

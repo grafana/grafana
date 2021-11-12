@@ -2,12 +2,12 @@ import { map, find } from 'lodash';
 import { IScope } from 'angular';
 import { AppEvents } from '@grafana/data';
 
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import appEvents from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ValidationSrv } from 'app/features/manage-dashboards';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
+import { promiseToDigest } from '../../../../angular/promiseToDigest';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
 
 export class FolderPickerCtrl {
