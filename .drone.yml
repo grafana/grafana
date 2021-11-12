@@ -306,6 +306,12 @@ steps:
   - yarn install --immutable
   image: grafana/build-container:1.4.5
   name: initialize
+- commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
 - image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
@@ -780,6 +786,12 @@ steps:
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
+- commands:
   - |-
     echo -e "unknwon
     referer
@@ -1163,6 +1175,12 @@ steps:
   - grabpl
   image: grafana/build-container:1.4.5
   name: initialize
+- commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
 - commands:
   - |-
     echo -e "unknwon
@@ -1727,6 +1745,12 @@ steps:
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
+- commands:
   - |-
     echo -e "unknwon
     referer
@@ -2099,6 +2123,12 @@ steps:
   - grabpl
   image: grafana/build-container:1.4.5
   name: initialize
+- commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
 - commands:
   - |-
     echo -e "unknwon
@@ -2660,6 +2690,12 @@ steps:
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
+- commands:
   - |-
     echo -e "unknwon
     referer
@@ -3004,6 +3040,12 @@ steps:
   - grabpl
   image: grafana/build-container:1.4.5
   name: initialize
+- commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
 - commands:
   - |-
     echo -e "unknwon
@@ -3502,6 +3544,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 0cbe6266f2d99fa1207092b53feadead446fc29c5d815954eab53ac7620aeeff
+hmac: 789d0134eb618c5f91374399897d92a108435789a3092377bb609cb7f0086290
 
 ...
