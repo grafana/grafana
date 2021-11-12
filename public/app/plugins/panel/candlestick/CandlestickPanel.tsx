@@ -60,7 +60,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
       return doNothing;
     }
 
-    const { mode, priceStyle, colorStrategy } = options;
+    const { mode, valueStyle, colorStrategy } = options;
     const colors = { ...defaultColors, ...options.colors };
     let { open, high, low, close, volume } = fieldMap; // names from matched fields
 
@@ -75,7 +75,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
     let shouldRenderVolume = false;
 
     // find volume field and set overrides
-    if (volume != null && mode !== VizDisplayMode.Price) {
+    if (volume != null && mode !== VizDisplayMode.Value) {
       let volumeField = info.volume!;
 
       if (volumeField != null) {
@@ -186,7 +186,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
                 flatColor: config.theme2.visualization.getColorByName(colors.flat),
                 volumeAlpha,
                 colorStrategy,
-                priceStyle,
+                valueStyle,
                 flatAsUp: true,
               })
             );

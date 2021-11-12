@@ -8,7 +8,7 @@ export type FieldIndices = Record<string, number>;
 
 interface RendererOpts {
   mode: VizDisplayMode;
-  priceStyle: ValueStyle;
+  valueStyle: ValueStyle;
   fields: FieldIndices;
   colorStrategy: ColorStrategy;
   upColor: string;
@@ -19,11 +19,11 @@ interface RendererOpts {
 }
 
 export function drawMarkers(opts: RendererOpts) {
-  let { mode, priceStyle, fields, colorStrategy, upColor, downColor, flatColor, volumeAlpha, flatAsUp = true } = opts;
+  let { mode, valueStyle, fields, colorStrategy, upColor, downColor, flatColor, volumeAlpha, flatAsUp = true } = opts;
 
-  let drawPrice = mode !== VizDisplayMode.Volume && fields.high != null && fields.low != null;
-  let asCandles = drawPrice && priceStyle === ValueStyle.Candles;
-  let drawVolume = mode !== VizDisplayMode.Price && fields.volume != null;
+  const drawPrice = mode !== VizDisplayMode.Volume && fields.high != null && fields.low != null;
+  const asCandles = drawPrice && valueStyle === ValueStyle.Candles;
+  const drawVolume = mode !== VizDisplayMode.Value && fields.volume != null;
 
   function selectPath(priceDir: number, flatPath: Path2D, upPath: Path2D, downPath: Path2D, flatAsUp: boolean) {
     return priceDir > 0 ? upPath : priceDir < 0 ? downPath : flatAsUp ? upPath : flatPath;

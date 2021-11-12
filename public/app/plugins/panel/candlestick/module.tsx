@@ -22,8 +22,8 @@ import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandles
 import { config } from '@grafana/runtime';
 
 const modeOptions = [
-  { label: 'Price & Volume', value: VizDisplayMode.PriceVolume },
-  { label: 'Price', value: VizDisplayMode.Price },
+  { label: 'Price & Volume', value: VizDisplayMode.ValueVolume },
+  { label: 'Price', value: VizDisplayMode.Value },
   { label: 'Volume', value: VizDisplayMode.Volume },
 ] as Array<SelectableValue<VizDisplayMode>>;
 
@@ -71,14 +71,14 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
-    const info = prepareCandlestickFields(context.data, config.theme2, opts);
+    const info = prepareCandlestickFields(context.data, opts, config.theme2);
 
     builder
       .addRadio({
         path: 'mode',
         name: 'Mode',
         description: '',
-        defaultValue: VizDisplayMode.PriceVolume,
+        defaultValue: VizDisplayMode.ValueVolume,
         settings: {
           options: modeOptions,
         },
@@ -120,7 +120,7 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
     }
     addFieldPicker(builder, candlestickFieldsInfo.close, info);
 
-    if (opts.mode !== VizDisplayMode.Price) {
+    if (opts.mode !== VizDisplayMode.Value) {
       addFieldPicker(builder, candlestickFieldsInfo.volume, info);
     }
 
