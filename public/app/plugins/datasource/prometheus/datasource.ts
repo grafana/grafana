@@ -503,7 +503,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     let expr = target.expr;
 
     // Apply adhoc filters
-    expr = this.enahnceExprWithAdHocFilters(expr);
+    expr = this.enhanceExprWithAdHocFilters(expr);
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
@@ -901,7 +901,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return getOriginalMetricName(labelData);
   }
 
-  enahnceExprWithAdHocFilters(expr: string) {
+  enhanceExprWithAdHocFilters(expr: string) {
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
     let finalQuery = expr;
     finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
@@ -932,7 +932,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     delete variables.__interval_ms;
 
     //Add ad hoc filters
-    const expr = this.enahnceExprWithAdHocFilters(target.expr);
+    const expr = this.enhanceExprWithAdHocFilters(target.expr);
 
     return {
       ...target,
