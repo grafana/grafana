@@ -226,8 +226,8 @@ var dataSourcesEditAccessEvaluator = accesscontrol.EvalAll(
 // TODO think if I should precise the scope or not
 // orgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
 var orgPreferencesAccessEvaluator = accesscontrol.EvalAny(
-	accesscontrol.EvalPermission(ActionOrgsRead, ScopeOrgCurrentID),
-	accesscontrol.EvalPermission(ActionOrgsPreferencesRead, ScopeOrgCurrentID),
+	accesscontrol.EvalPermission(ActionOrgsRead),
+	accesscontrol.EvalPermission(ActionOrgsPreferencesRead),
 )
 
 // TODO remove thoughts:
@@ -235,6 +235,6 @@ var orgPreferencesAccessEvaluator = accesscontrol.EvalAny(
 // TODO search for the setting listing all orgs to see if we can filter out some and remove the scope
 // orgsAccessEvaluator is used to protect the "Server Admin > Orgs" page access
 var orgsAccessEvaluator = accesscontrol.EvalAny(
-	accesscontrol.EvalPermission(ActionOrgsRead, ScopeOrgsAll),
+	accesscontrol.EvalPermission(ActionOrgsRead),
 	accesscontrol.EvalPermission(ActionOrgsCreate),
 )
