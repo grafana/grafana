@@ -8,7 +8,7 @@ import { DataSourceApi, PanelEvents } from '@grafana/data';
 import { importDataSourcePlugin, importAppPlugin } from './plugin_loader';
 import { importPanelPlugin } from './importPanelPlugin';
 import DatasourceSrv from './datasource_srv';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 
 /** @ngInject */
 function pluginDirectiveLoader(
@@ -183,23 +183,6 @@ function pluginDirectiveLoader(
             bindings: { appModel: '=', appEditCtrl: '=' },
             attrs: { 'app-model': 'ctrl.model', 'app-edit-ctrl': 'ctrl' },
             Component: appPlugin.angularConfigCtrl,
-          };
-        });
-      }
-      // App Page
-      case 'app-page': {
-        const appModel = scope.ctrl.appModel;
-        return importAppPlugin(appModel).then((appPlugin) => {
-          if (!appPlugin.angularPages) {
-            throw new Error('Plugin has no page components');
-          }
-
-          return {
-            baseUrl: appModel.baseUrl,
-            name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,
-            bindings: { appModel: '=' },
-            attrs: { 'app-model': 'ctrl.appModel' },
-            Component: appPlugin.angularPages[scope.ctrl.page.component],
           };
         });
       }

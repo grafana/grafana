@@ -3,8 +3,7 @@ import ReactDOM from 'react-dom';
 
 import coreModule from 'app/angular/core_module';
 import appEvents from 'app/core/app_events';
-
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 import { AngularModalProxy } from '../components/modals/AngularModalProxy';
 import { provideTheme } from '../utils/ConfigProvider';
 import {
