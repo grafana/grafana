@@ -34,6 +34,7 @@ type PluginListItem struct {
 	Enabled       bool                    `json:"enabled"`
 	Pinned        bool                    `json:"pinned"`
 	Info          *plugins.Info           `json:"info"`
+	Dependencies  *plugins.Dependencies   `json:"dependencies"`
 	LatestVersion string                  `json:"latestVersion"`
 	HasUpdate     bool                    `json:"hasUpdate"`
 	DefaultNavUrl string                  `json:"defaultNavUrl"`

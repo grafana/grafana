@@ -108,7 +108,7 @@ type HTTPServer struct {
 	SocialService             social.Service
 	OAuthTokenService         oauthtoken.OAuthTokenService
 	Listener                  net.Listener
-	EncryptionService         encryption.Service
+	EncryptionService         encryption.Internal
 	SecretsService            secrets.Service
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
@@ -142,7 +142,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	encryptionService encryption.Service, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
+	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, expressionService *expr.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
