@@ -38,7 +38,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 }
 
 func TestProvideServiceAccount_IsDisabled(t *testing.T) {
-	t.Run("should return true if feature toggle is set", func(t *testing.T) {
+	t.Run("should return false if feature toggle is set", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		storeMock := &tests.ServiceAccountsStoreMock{Calls: tests.Calls{}}
 		cfg.FeatureToggles = map[string]bool{"service-accounts": true}
