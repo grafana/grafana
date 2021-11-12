@@ -13,8 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/encryption"
-
 	"github.com/centrifugal/centrifuge"
 	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
@@ -41,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -64,7 +63,7 @@ type CoreGrafanaScope struct {
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, encService encryption.Service,
+	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
 	usageStatsService usagestats.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
@@ -75,7 +74,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
-		EncryptionService:     encService,
+		SecretsService:        secretsService,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -183,8 +182,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 		} else {
 			storage := &pipeline.FileStorage{
-				DataPath:          cfg.DataPath,
-				EncryptionService: g.EncryptionService,
+				DataPath:       cfg.DataPath,
+				SecretsService: g.SecretsService,
 			}
 			g.pipelineStorage = storage
 			builder = &pipeline.StorageRuleBuilder{
@@ -193,7 +192,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 				FrameStorage:         pipeline.NewFrameStorage(),
 				Storage:              storage,
 				ChannelHandlerGetter: g,
-				EncryptionService:    g.EncryptionService,
+				SecretsService:       g.SecretsService,
 			}
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
@@ -369,7 +368,7 @@ type GrafanaLive struct {
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
-	EncryptionService     encryption.Service
+	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 
 	node         *centrifuge.Node
@@ -1220,7 +1219,7 @@ func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *models.ReqContext) response.R
 		if cmd.SecureSettings == nil {
 			cmd.SecureSettings = map[string]string{}
 		}
-		secureJSONData, err := g.EncryptionService.DecryptJsonData(c.Req.Context(), existingBackend.SecureSettings, setting.SecretKey)
+		secureJSONData, err := g.SecretsService.DecryptJsonData(c.Req.Context(), existingBackend.SecureSettings)
 		if err != nil {
 			logger.Error("Error decrypting secure settings", "error", err)
 			return response.Error(http.StatusInternalServerError, "Error decrypting secure settings", err)

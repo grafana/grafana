@@ -77,8 +77,9 @@ func (e SignatureError) AsErrorCode() ErrorCode {
 }
 
 type Dependencies struct {
-	GrafanaVersion string       `json:"grafanaVersion"`
-	Plugins        []Dependency `json:"plugins"`
+	GrafanaDependency string       `json:"grafanaDependency"`
+	GrafanaVersion    string       `json:"grafanaVersion"`
+	Plugins           []Dependency `json:"plugins"`
 }
 
 type Includes struct {
