@@ -33,12 +33,17 @@ steps:
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   image: grafana/build-container:1.4.5
   name: initialize
+- commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
 - commands:
   - |-
     echo -e "unknwon
@@ -296,7 +301,6 @@ steps:
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
@@ -679,7 +683,6 @@ steps:
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - ./bin/grabpl verify-drone
   - make gen-go
   image: grafana/build-container:1.4.5
   name: initialize
@@ -770,7 +773,6 @@ steps:
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - ./bin/grabpl gen-version ${DRONE_TAG}
@@ -1153,7 +1155,6 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - ./bin/grabpl gen-version ${DRONE_TAG}
@@ -1610,7 +1611,6 @@ steps:
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   image: grafana/build-container:1.4.5
@@ -1720,7 +1720,6 @@ steps:
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   - ./bin/grabpl gen-version v7.3.0-test
@@ -2092,7 +2091,6 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   - ./bin/grabpl gen-version v7.3.0-test
@@ -2542,7 +2540,6 @@ steps:
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   image: grafana/build-container:1.4.5
@@ -2657,7 +2654,6 @@ steps:
   image: alpine:3.14.2
   name: identify-runner
 - commands:
-  - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
@@ -3001,7 +2997,6 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
@@ -3507,6 +3502,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 985e62009e7d9656e770aef00c684baa109adafe4dfc40d203fbe23340ca20e0
+hmac: 0cbe6266f2d99fa1207092b53feadead446fc29c5d815954eab53ac7620aeeff
 
 ...

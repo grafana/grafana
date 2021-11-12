@@ -35,7 +35,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         ]
 
     common_cmds = [
-        './bin/grabpl verify-drone',
         # Generate Go code, will install Wire
         # TODO: Install Wire in Docker image instead
         'make gen-go',
@@ -136,6 +135,18 @@ def download_grabpl():
             ),
             'chmod +x bin/grabpl',
         ]
+    }
+
+def lint_drone():
+    return {
+        'name': 'lint-drone',
+        'image': curl_image,
+        'commands': [
+            './bin/grabpl verify-drone',
+        ],
+        'depends_on': [
+            'grabpl',
+        ],
     }
 
 def enterprise_downstream_step(edition):
