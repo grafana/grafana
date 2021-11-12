@@ -20,6 +20,13 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelect
   const styles = useStyles(getStyles);
   const prevStatus = useRef<Status>();
   const statusError = status === Status.failed || status === Status.invalid;
+  const showMessage =
+    message &&
+    (statusError ||
+      status === Status.changing ||
+      status === Status.deleting ||
+      status === Status.unknown ||
+      status === Status.upgrading);
   const [showProgressBar, setShowProgressBar] = useState(getShowProgressBarValue(status, prevStatus.current));
   const statusStyles = useMemo(
     () => ({
@@ -67,7 +74,7 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelect
           {Messages.dbcluster.table.status[status]}
         </span>
       )}
-      {statusError && message && (
+      {showMessage && showProgressBar && (
         <div className={styles.logsWrapper}>
           <a className={styles.logsLabel} onClick={() => openLogs()}>
             {Messages.dbcluster.table.status.logs}
