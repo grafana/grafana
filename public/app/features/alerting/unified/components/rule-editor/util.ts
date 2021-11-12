@@ -17,14 +17,11 @@ export function queriesWithUpdatedReferences(
     const isClassicExpression = query.model.type === 'classic_conditions';
 
     if (isMathExpression) {
-      const oldExpression = new RegExp(`\\$\{?${previousRefId}\}?`, 'gm');
-      const newExpression = `\${${newRefId}}`;
-
       return {
         ...query,
         model: {
           ...query.model,
-          expression: query.model.expression?.replace(oldExpression, newExpression),
+          expression: updateMathExpressionRefs(query.model.expression ?? '', previousRefId, newRefId),
         },
       };
     }
@@ -53,4 +50,11 @@ export function queriesWithUpdatedReferences(
 
     return query;
   });
+}
+
+export function updateMathExpressionRefs(expression: string, previousRefId: string, newRefId: string): string {
+  const oldExpression = new RegExp('\\${?' + previousRefId + '}?', 'gm');
+  const newExpression = '${' + newRefId + '}';
+
+  return expression.replace(oldExpression, newExpression);
 }

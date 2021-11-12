@@ -1,6 +1,6 @@
 import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
-import { queriesWithUpdatedReferences } from './util';
+import { queriesWithUpdatedReferences, updateMathExpressionRefs } from './util';
 
 describe('rule-editor', () => {
   const dataSource: AlertQuery = {
@@ -65,22 +65,6 @@ describe('rule-editor', () => {
     },
   };
 
-  const mathExpressionWithBrackets = {
-    refId: 'B',
-    datasourceUid: '-100',
-    queryType: '',
-    model: {
-      refId: 'B',
-      type: 'math',
-      datasource: {
-        uid: '-100',
-        type: 'grafana-expression',
-      },
-      conditions: [],
-      expression: 'abs(${A}) + ${A}',
-    },
-  };
-
   const reduceExpression = {
     refId: 'B',
     datasourceUid: '-100',
@@ -140,15 +124,6 @@ describe('rule-editor', () => {
       expect(queryModel.expression).toBe('abs(${Query A}) + ${Query A}');
     });
 
-    it('should rewire math expressions', () => {
-      const queries: AlertQuery[] = [dataSource, mathExpressionWithBrackets];
-      const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'Query A');
-
-      const queryModel = rewiredQueries[1].model as ExpressionQuery;
-
-      expect(queryModel.expression).toBe('abs(${Query A}) + ${Query A}');
-    });
-
     it('should rewire reduce expressions', () => {
       const queries: AlertQuery[] = [dataSource, reduceExpression];
       const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'C');
@@ -171,6 +146,15 @@ describe('rule-editor', () => {
 
       expect(rewiredQueries[1].model as ExpressionQuery).toHaveProperty('expression', 'abs(${C}) + ${C}');
       expect(rewiredQueries[2].model as ExpressionQuery).toHaveProperty('expression', 'C');
+    });
+  });
+
+  describe('updateMathExpressionRefs', () => {
+    it('should rewire refs without brackets', () => {
+      expect(updateMathExpressionRefs('abs($Foo) + $Foo', 'Foo', 'Bar')).toBe('abs(${Bar}) + ${Bar}');
+    });
+    it('should rewire refs with brackets', () => {
+      expect(updateMathExpressionRefs('abs(${Foo}) + $Foo', 'Foo', 'Bar')).toBe('abs(${Bar}) + ${Bar}');
     });
   });
 });
