@@ -40,7 +40,6 @@ export function initGrafanaLive() {
       backendSrv: getBackendSrv(),
     })
   );
-  registerLiveFeatures();
 }
 
 export function getGrafanaLiveCentrifugeSrv() {
