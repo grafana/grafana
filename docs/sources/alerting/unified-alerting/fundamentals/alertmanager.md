@@ -25,7 +25,7 @@ You can do the setup in the "Admin" tab within the Grafana v8 Alerts UI.
 ### Add a new external Alertmanager
 
 1. In the Grafana menu, click the Alerting (bell) icon to open the Alerting page listing existing alerts.
-2. Click Admin
+2. Click Admin from the set of tabs
 3. Scroll down to the External Alertmanager section
 4. Click the Add Alertmanager button, a modal opens.
 5. Add the url and eventual port to the alertmanager, there is no need to specify`/api/v(1|2)/alerts`. Grafana will add this.
