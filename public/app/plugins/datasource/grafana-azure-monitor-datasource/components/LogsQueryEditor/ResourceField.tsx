@@ -49,7 +49,13 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
 
   return (
     <>
-      <Modal className={styles.modal} title="Select a resource" isOpen={pickerIsOpen} onDismiss={closePicker}>
+      <Modal
+        className={styles.modal}
+        title="Select a resource"
+        isOpen={pickerIsOpen}
+        onDismiss={closePicker}
+        shouldFocusTrap={true}
+      >
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}
           resourceURI={resource}

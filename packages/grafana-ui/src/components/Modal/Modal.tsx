@@ -26,6 +26,9 @@ export interface Props {
 
   /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
+
+  /** prevents users from tabbing away from items outside of the modal. You probably want this set to true, but making this opt-in for now as we test out this implementation */
+  shouldFocusTrap?: boolean;
 }
 
 export function Modal(props: PropsWithChildren<Props>) {
@@ -39,6 +42,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     contentClassName,
     onDismiss: propsOnDismiss,
     onClickBackdrop,
+    shouldFocusTrap,
   } = props;
   const theme = useTheme2();
   const styles = getModalStyles(theme);
@@ -76,7 +80,7 @@ export function Modal(props: PropsWithChildren<Props>) {
         className={styles.modalBackdrop}
         onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
       />
-      <FocusTrap>
+      <MaybeFocusTrap shouldFocusTrap={shouldFocusTrap || false}>
         <div className={cx(styles.modal, className)}>
           <div className={headerClass}>
             {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
@@ -87,7 +91,7 @@ export function Modal(props: PropsWithChildren<Props>) {
           </div>
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
         </div>
-      </FocusTrap>
+      </MaybeFocusTrap>
     </Portal>
   );
 }
@@ -130,4 +134,20 @@ interface DefaultModalHeaderProps {
 
 function DefaultModalHeader({ icon, iconTooltip, title }: DefaultModalHeaderProps): JSX.Element {
   return <ModalHeader icon={icon} iconTooltip={iconTooltip} title={title} />;
+}
+
+/* 
+Focus Trap ensures that when a user opens a modal, their keyboard focus jumps to the first
+tabbable component available within the modal, and that the user is not able to navigate away 
+from the modal until they close it. Probably all modals should support this, but we have 2 concerns
+regarding this implementation, we'd like to see fixed before forcing this change on every modal. 
+For now focus traps can be opt-in until we have an implementation that feels stable. 
+https://github.com/focus-trap/focus-trap/issues/375
+https://github.com/focus-trap/focus-trap/issues/383
+*/
+function MaybeFocusTrap(props: PropsWithChildren<{ shouldFocusTrap: boolean }>) {
+  if (props.shouldFocusTrap) {
+    return <FocusTrap>{props.children}</FocusTrap>;
+  }
+  return <>{props.children}</>;
 }
