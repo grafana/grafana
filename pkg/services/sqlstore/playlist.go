@@ -10,7 +10,7 @@ import (
 func (ss *SQLStore) addPlaylistQueryAndCommandHandlers() {
 	bus.AddHandlerCtx("sql", ss.CreatePlaylist)
 	bus.AddHandlerCtx("sql", ss.UpdatePlaylist)
-	bus.AddHandlerCtx("sql", DeletePlaylist)
+	bus.AddHandlerCtx("sql", ss.DeletePlaylist)
 	bus.AddHandlerCtx("sql", ss.SearchPlaylists)
 	bus.AddHandlerCtx("sql", ss.GetPlaylist)
 	bus.AddHandlerCtx("sql", ss.GetPlaylistItem)
@@ -115,12 +115,12 @@ func (ss *SQLStore) GetPlaylist(ctx context.Context, query *models.GetPlaylistBy
 	})
 }
 
-func DeletePlaylist(ctx context.Context, cmd *models.DeletePlaylistCommand) error {
+func (ss *SQLStore) DeletePlaylist(ctx context.Context, cmd *models.DeletePlaylistCommand) error {
 	if cmd.Id == 0 || cmd.OrgId == 0 {
 		return models.ErrCommandValidationFailed
 	}
 
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var rawPlaylistSQL = "DELETE FROM playlist WHERE id = ? and org_id = ?"
 		_, err := sess.Exec(rawPlaylistSQL, cmd.Id, cmd.OrgId)
 

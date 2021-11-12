@@ -35,7 +35,7 @@ func TestPlaylistDataAccess(t *testing.T) {
 
 		t.Run("Can remove playlist", func(t *testing.T) {
 			deleteQuery := models.DeletePlaylistCommand{Id: 1, OrgId: 1}
-			err = DeletePlaylist(context.Background(), &deleteQuery)
+			err = ss.DeletePlaylist(context.Background(), &deleteQuery)
 			require.NoError(t, err)
 
 			getQuery := models.GetPlaylistByIdQuery{Id: 1}
@@ -47,7 +47,7 @@ func TestPlaylistDataAccess(t *testing.T) {
 
 	t.Run("Delete playlist that doesn't exist", func(t *testing.T) {
 		deleteQuery := models.DeletePlaylistCommand{Id: 1, OrgId: 1}
-		err := DeletePlaylist(context.Background(), &deleteQuery)
+		err := ss.DeletePlaylist(context.Background(), &deleteQuery)
 		require.NoError(t, err)
 	})
 
@@ -63,7 +63,7 @@ func TestPlaylistDataAccess(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
-				err := DeletePlaylist(context.Background(), &tc.cmd)
+				err := ss.DeletePlaylist(context.Background(), &tc.cmd)
 				require.EqualError(t, err, models.ErrCommandValidationFailed.Error())
 			})
 		}
