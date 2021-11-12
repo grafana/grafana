@@ -225,17 +225,18 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand
 
 		// create user
 		user = &models.User{
-			Email:         cmd.Email,
-			Name:          cmd.Name,
-			Login:         cmd.Login,
-			Company:       cmd.Company,
-			IsAdmin:       cmd.IsAdmin,
-			IsDisabled:    cmd.IsDisabled,
-			OrgId:         orgId,
-			EmailVerified: cmd.EmailVerified,
-			Created:       time.Now(),
-			Updated:       time.Now(),
-			LastSeenAt:    time.Now().AddDate(-10, 0, 0),
+			Email:            cmd.Email,
+			Name:             cmd.Name,
+			Login:            cmd.Login,
+			Company:          cmd.Company,
+			IsAdmin:          cmd.IsAdmin,
+			IsDisabled:       cmd.IsDisabled,
+			OrgId:            orgId,
+			EmailVerified:    cmd.EmailVerified,
+			Created:          time.Now(),
+			Updated:          time.Now(),
+			LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+			IsServiceAccount: cmd.IsServiceAccount,
 		}
 
 		salt, err := util.GetRandomString(10)
@@ -521,7 +522,8 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
-		query.Result = cached.(*models.SignedInUser)
+		cachedUser := cached.(models.SignedInUser)
+		query.Result = &cachedUser
 		return nil
 	}
 
@@ -531,7 +533,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 	}
 
 	cacheKey = newSignedInUserCacheKey(query.Result.OrgId, query.UserId)
-	ss.CacheService.Set(cacheKey, query.Result, time.Second*5)
+	ss.CacheService.Set(cacheKey, *query.Result, time.Second*5)
 	return nil
 }
 
@@ -754,7 +756,16 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 	if !has {
 		return models.ErrUserNotFound
 	}
+	for _, sql := range userDeletions() {
+		_, err := sess.Exec(sql, cmd.UserId)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
+func userDeletions() []string {
 	deletes := []string{
 		"DELETE FROM star WHERE user_id = ?",
 		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
@@ -766,15 +777,15 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 		"DELETE FROM user_auth_token WHERE user_id = ?",
 		"DELETE FROM quota WHERE user_id = ?",
 	}
+	return deletes
+}
 
-	for _, sql := range deletes {
-		_, err := sess.Exec(sql, cmd.UserId)
-		if err != nil {
-			return err
-		}
+func ServiceAccountDeletions() []string {
+	deletes := []string{
+		"DELETE FROM api_key WHERE service_account_id = ?",
 	}
-
-	return nil
+	deletes = append(deletes, userDeletions()...)
+	return deletes
 }
 
 func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
