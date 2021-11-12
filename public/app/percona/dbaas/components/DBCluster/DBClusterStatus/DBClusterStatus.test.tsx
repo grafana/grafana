@@ -24,11 +24,11 @@ describe('DBClusterStatus::', () => {
     expect(span.prop('className')).toContain('active');
   });
 
-  it('renders progress bar when changing', () => {
+  it('renders progress bar and error when changing', () => {
     const dbCluster: DBCluster = {
       ...dbClustersStub[0],
       status: Status.changing,
-      message: 'Should not render error',
+      message: 'Should render error',
       finishedSteps: 5,
       totalSteps: 10,
     };
@@ -38,7 +38,7 @@ describe('DBClusterStatus::', () => {
 
     expect(root.find(dataTestId('cluster-status-active')).length).toBe(0);
     expect(root.find(dataTestId('cluster-progress-bar')).length).toBe(1);
-    expect(root.find(dataTestId('cluster-status-error-message')).length).toBe(0);
+    expect(root.find(dataTestId('cluster-status-error-message')).length).toBe(1);
   });
 
   it('renders error and progress bar when failed', () => {
