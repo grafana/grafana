@@ -489,6 +489,20 @@ describe('Plugin details page', () => {
       await waitFor(() => queryByText('Uninstall'));
       expect(queryByText(`Create a ${name} data source`)).toBeNull();
     });
+
+    it('should not display versions tab for core plugins', async () => {
+      const name = 'Akumuli';
+      const { queryByText } = renderPluginDetails({
+        name,
+        isInstalled: true,
+        type: PluginType.app,
+        isCore: true,
+      });
+
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+
+      expect(queryByText(PluginTabLabels.VERSIONS)).toBeNull();
+    });
   });
 
   describe('viewed as user without grafana admin permissions', () => {
