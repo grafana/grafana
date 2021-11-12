@@ -50,6 +50,10 @@ export const Components = {
     MenuComponent: (title: string) => `${title} menu`,
     MenuGroup: (title: string) => `${title} menu group`,
     MenuItem: (title: string) => `${title} menu item`,
+    SubMenu: {
+      container: 'SubMenu container',
+      icon: 'SubMenu icon',
+    },
   },
   Panels: {
     Panel: {

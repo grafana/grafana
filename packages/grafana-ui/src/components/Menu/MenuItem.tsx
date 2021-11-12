@@ -42,109 +42,108 @@ export interface MenuItemProps<T = any> {
 /** @internal */
 export const MenuItem = React.memo(
   React.forwardRef<MenuItemElement, MenuItemProps>((props, ref) => {
-      const {
-        url,
-        icon,
-        label,
-        ariaLabel,
-        ariaChecked,
-        target,
-        onClick,
-        className,
-        active,
-        childItems,
-        role = 'menuitem',
-        tabIndex = -1,
-      } = props;
-      const styles = useStyles2(getStyles);
-      const [isActive, setIsActive] = useState(active);
-      const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
-      const [openedWithArrow, setOpenedWithArrow] = useState(false);
-      const onMouseEnter = useCallback(() => {
-        setIsSubMenuOpen(true);
-        setIsActive(true);
-      }, []);
-      const onMouseLeave = useCallback(() => {
-        setIsSubMenuOpen(false);
-        setIsActive(false);
-      }, []);
-      const hasSubMenu = useMemo(() => childItems && childItems.length > 0, [childItems]);
-      const Wrapper = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
-      const itemStyle = cx(
-        {
-          [styles.item]: true,
-          [styles.activeItem]: isActive,
-        },
-        className
-      );
+    const {
+      url,
+      icon,
+      label,
+      ariaLabel,
+      ariaChecked,
+      target,
+      onClick,
+      className,
+      active,
+      childItems,
+      role = 'menuitem',
+      tabIndex = -1,
+    } = props;
+    const styles = useStyles2(getStyles);
+    const [isActive, setIsActive] = useState(active);
+    const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
+    const [openedWithArrow, setOpenedWithArrow] = useState(false);
+    const onMouseEnter = useCallback(() => {
+      setIsSubMenuOpen(true);
+      setIsActive(true);
+    }, []);
+    const onMouseLeave = useCallback(() => {
+      setIsSubMenuOpen(false);
+      setIsActive(false);
+    }, []);
+    const hasSubMenu = useMemo(() => childItems && childItems.length > 0, [childItems]);
+    const Wrapper = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
+    const itemStyle = cx(
+      {
+        [styles.item]: true,
+        [styles.activeItem]: isActive,
+      },
+      className
+    );
 
-      const localRef = useRef<MenuItemElement>(null);
-      useImperativeHandle(ref, () => localRef.current!);
+    const localRef = useRef<MenuItemElement>(null);
+    useImperativeHandle(ref, () => localRef.current!);
 
-      const handleKeys = (event: React.KeyboardEvent) => {
-        switch (event.key) {
-          case 'ArrowRight':
-            event.preventDefault();
-            event.stopPropagation();
-            if (hasSubMenu) {
-              setIsSubMenuOpen(true);
-              setOpenedWithArrow(true);
-              setIsActive(true);
-            }
-            break;
-          default:
-            break;
-        }
-      };
-
-      const closeSubMenu = () => {
-        setIsSubMenuOpen(false);
-        setIsActive(false);
-        localRef?.current?.focus();
-      };
-
-      return (
-        <Wrapper
-          target={target}
-          className={itemStyle}
-          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
-          href={url}
-          onClick={
-            onClick
-              ? (event) => {
-                  if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    onClick(event);
-                  }
-                }
-              : undefined
+    const handleKeys = (event: React.KeyboardEvent) => {
+      switch (event.key) {
+        case 'ArrowRight':
+          event.preventDefault();
+          event.stopPropagation();
+          if (hasSubMenu) {
+            setIsSubMenuOpen(true);
+            setOpenedWithArrow(true);
+            setIsActive(true);
           }
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-          onKeyDown={handleKeys}
-          role={url === undefined ? role : undefined}
-          data-role="menuitem" // used to identify menuitem in Menu.tsx
-          ref={localRef}
-          aria-label={ariaLabel}
-          aria-checked={ariaChecked}
-          tabIndex={tabIndex}
-        >
-          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
-          {label}
-          {hasSubMenu && (
-            <SubMenu
-              items={childItems}
-              isOpen={isSubMenuOpen}
-              openedWithArrow={openedWithArrow}
-              setOpenedWithArrow={setOpenedWithArrow}
-              close={closeSubMenu}
-            />
-          )}
-        </Wrapper>
-      );
-    }
-  )
+          break;
+        default:
+          break;
+      }
+    };
+
+    const closeSubMenu = () => {
+      setIsSubMenuOpen(false);
+      setIsActive(false);
+      localRef?.current?.focus();
+    };
+
+    return (
+      <Wrapper
+        target={target}
+        className={itemStyle}
+        rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+        href={url}
+        onClick={
+          onClick
+            ? (event) => {
+                if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onClick(event);
+                }
+              }
+            : undefined
+        }
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onKeyDown={handleKeys}
+        role={url === undefined ? role : undefined}
+        data-role="menuitem" // used to identify menuitem in Menu.tsx
+        ref={localRef}
+        aria-label={ariaLabel}
+        aria-checked={ariaChecked}
+        tabIndex={tabIndex}
+      >
+        {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+        {label}
+        {hasSubMenu && (
+          <SubMenu
+            items={childItems}
+            isOpen={isSubMenuOpen}
+            openedWithArrow={openedWithArrow}
+            setOpenedWithArrow={setOpenedWithArrow}
+            close={closeSubMenu}
+          />
+        )}
+      </Wrapper>
+    );
+  })
 );
 MenuItem.displayName = 'MenuItem';
 

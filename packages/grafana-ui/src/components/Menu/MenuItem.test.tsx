@@ -2,8 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { fireEvent } from '@testing-library/dom';
 import { selectors } from '@grafana/e2e-selectors';
-import { MenuItem } from './MenuItem';
-import { MenuItemProps } from './MenuItem';
+import { MenuItem, MenuItemProps } from './MenuItem';
 
 describe('MenuItem', () => {
   const getMenuItem = (props?: Partial<MenuItemProps>) => (
