@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,72 +20,16 @@ import (
 // QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
-	if len(reqDTO.Queries) == 0 {
-		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
-	}
-
-	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
-	request := legacydata.DataQuery{
-		TimeRange: &timeRange,
-		Debug:     reqDTO.Debug,
-		User:      c.SignedInUser,
-		Queries:   make([]legacydata.DataSubQuery, 0, len(reqDTO.Queries)),
-	}
-
-	// Parse the queries
-	hasExpression := false
-	datasources := make(map[string]*models.DataSource, len(reqDTO.Queries))
-	for _, query := range reqDTO.Queries {
-		ds, errRsp := hs.getDataSourceFromQuery(c, query, datasources)
-		if errRsp != nil {
-			return errRsp
-		}
-		if ds == nil {
-			return response.Error(http.StatusBadRequest, "Datasource not found for query", nil)
-		}
-
-		datasources[ds.Uid] = ds
-		if expr.IsDataSource(ds.Uid) {
-			hasExpression = true
-		}
-
-		hs.log.Debug("Processing metrics query", "query", query)
-
-		request.Queries = append(request.Queries, legacydata.DataSubQuery{
-			RefID:         query.Get("refId").MustString("A"),
-			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
-			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
-			QueryType:     query.Get("queryType").MustString(""),
-			Model:         query,
-			DataSource:    ds,
-		})
-	}
-
-	if hasExpression {
-		qdr, err := hs.expressionService.WrapTransformData(c.Req.Context(), request)
-		if err != nil {
-			return response.Error(500, "expression request error", err)
-		}
-		return toMacronResponse(qdr)
-	}
-
-	ds := request.Queries[0].DataSource
-	if len(datasources) > 1 {
-		// We do not (yet) support mixed query type
-		return response.Error(http.StatusBadRequest, "All queries must use the same datasource", nil)
-	}
-
-	err := hs.PluginRequestValidator.Validate(ds.Url, nil)
+	parsedReq, err := hs.parseMetricRequest(c, reqDTO)
 	if err != nil {
-		return response.Error(http.StatusForbidden, "Access denied", err)
+		return hs.handleGetDataSourceError(err, nil)
 	}
 
-	req, err := hs.createRequest(c.Req.Context(), ds, request)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Request formation error", err)
+	if parsedReq.hasExpression {
+		return hs.handleExpressions(c, parsedReq)
 	}
 
-	resp, err := hs.pluginClient.QueryData(c.Req.Context(), req)
+	resp, err := hs.handleQueryData(c, parsedReq)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
@@ -94,7 +37,217 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	return toMacronResponse(resp)
 }
 
-func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simplejson.Json, history map[string]*models.DataSource) (*models.DataSource, response.Response) {
+// handleExpressions handles POST /api/ds/query when there is an expression.
+func (hs *HTTPServer) handleExpressions(c *models.ReqContext, parsedReq *parsedRequest) response.Response {
+	exprReq := expr.Request{
+		OrgId:   c.OrgId,
+		Queries: []expr.Query{},
+	}
+
+	for _, pq := range parsedReq.parsedQueries {
+		if pq.datasource == nil {
+			return response.Error(http.StatusBadRequest, "Query mising datasource info: "+pq.query.RefID, nil)
+		}
+
+		exprReq.Queries = append(exprReq.Queries, expr.Query{
+			JSON:          pq.query.JSON,
+			Interval:      pq.query.Interval,
+			RefID:         pq.query.RefID,
+			MaxDataPoints: pq.query.MaxDataPoints,
+			QueryType:     pq.query.QueryType,
+			Datasource: expr.DataSourceRef{
+				Type: pq.datasource.Type,
+				UID:  pq.datasource.Uid,
+			},
+			TimeRange: expr.TimeRange{
+				From: pq.query.TimeRange.From,
+				To:   pq.query.TimeRange.To,
+			},
+		})
+	}
+
+	qdr, err := hs.expressionService.TransformData(c.Req.Context(), &exprReq)
+	if err != nil {
+		return response.Error(500, "expression request error", err)
+	}
+	return toMacronResponse(qdr)
+}
+
+func (hs *HTTPServer) handleQueryData(c *models.ReqContext, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+	ds := parsedReq.parsedQueries[0].datasource
+	if err := hs.PluginRequestValidator.Validate(ds.Url, nil); err != nil {
+		return nil, models.ErrDataSourceAccessDenied
+	}
+
+	instanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert data source to instance settings")
+	}
+
+	req := &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			OrgID:                      ds.OrgId,
+			PluginID:                   ds.Type,
+			User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
+			DataSourceInstanceSettings: instanceSettings,
+		},
+		Headers: map[string]string{},
+		Queries: []backend.DataQuery{},
+	}
+
+	if hs.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
+		if token := hs.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
+			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+		}
+	}
+
+	for _, q := range parsedReq.parsedQueries {
+		req.Queries = append(req.Queries, q.query)
+	}
+
+	return hs.pluginClient.QueryData(c.Req.Context(), req)
+}
+
+func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
+	statusCode := http.StatusOK
+	for _, res := range qdr.Responses {
+		if res.Error != nil {
+			statusCode = http.StatusBadRequest
+		}
+	}
+
+	return response.JSONStreaming(statusCode, qdr)
+}
+
+func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceRef interface{}) *response.NormalResponse {
+	hs.log.Debug("Encountered error getting data source", "err", err, "ref", datasourceRef)
+	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		return response.Error(http.StatusForbidden, "Access denied to data source", err)
+	}
+	if errors.Is(err, models.ErrDataSourceNotFound) {
+		return response.Error(http.StatusBadRequest, "Invalid data source ID", err)
+	}
+	return response.Error(http.StatusInternalServerError, "Unable to load data source metadata", err)
+}
+
+// QueryMetrics returns query metrics
+// POST /api/tsdb/query
+//nolint: staticcheck // legacydata.DataResponse deprecated
+//nolint: staticcheck // legacydata.DataQueryResult deprecated
+func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricRequest) response.Response {
+	parsedReq, err := hs.parseMetricRequest(c, reqDto)
+	if err != nil {
+		return hs.handleGetDataSourceError(err, nil)
+	}
+
+	sdkResp, err := hs.handleQueryData(c, parsedReq)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Metric request error", err)
+	}
+
+	legacyResp := legacydata.DataResponse{
+		Results: map[string]legacydata.DataQueryResult{},
+	}
+
+	for refID, res := range sdkResp.Responses {
+		dqr := legacydata.DataQueryResult{
+			RefID: refID,
+		}
+
+		if res.Error != nil {
+			dqr.Error = res.Error
+		}
+
+		if res.Frames != nil {
+			dqr.Dataframes = legacydata.NewDecodedDataFrames(res.Frames)
+		}
+
+		legacyResp.Results[refID] = dqr
+	}
+
+	statusCode := http.StatusOK
+	for _, res := range legacyResp.Results {
+		if res.Error != nil {
+			res.ErrorString = res.Error.Error()
+			legacyResp.Message = res.ErrorString
+			statusCode = http.StatusBadRequest
+		}
+	}
+
+	return response.JSON(statusCode, &legacyResp)
+}
+
+type parsedQuery struct {
+	datasource *models.DataSource
+	query      backend.DataQuery
+}
+
+type parsedRequest struct {
+	hasExpression bool
+	parsedQueries []parsedQuery
+}
+
+func (hs *HTTPServer) parseMetricRequest(c *models.ReqContext, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
+	if len(reqDTO.Queries) == 0 {
+		return nil, errors.New("no queries found in query")
+	}
+
+	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
+	req := &parsedRequest{
+		hasExpression: false,
+		parsedQueries: []parsedQuery{},
+	}
+
+	// Parse the queries
+	datasources := map[string]*models.DataSource{}
+	for _, query := range reqDTO.Queries {
+		ds, err := hs.getDataSourceFromQuery(c, query, datasources)
+		if err != nil {
+			return nil, err
+		}
+		if ds == nil {
+			return nil, errors.New("datasource not found for query")
+		}
+
+		datasources[ds.Uid] = ds
+		if expr.IsDataSource(ds.Uid) {
+			req.hasExpression = true
+		}
+
+		hs.log.Debug("Processing metrics query", "query", query)
+
+		modelJSON, err := query.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+
+		req.parsedQueries = append(req.parsedQueries, parsedQuery{
+			datasource: ds,
+			query: backend.DataQuery{
+				TimeRange: backend.TimeRange{
+					From: timeRange.GetFromAsTimeUTC(),
+					To:   timeRange.GetToAsTimeUTC(),
+				},
+				RefID:         query.Get("refId").MustString("A"),
+				MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
+				Interval:      time.Duration(query.Get("intervalMs").MustInt64(1000)) * time.Millisecond,
+				QueryType:     query.Get("queryType").MustString(""),
+				JSON:          modelJSON,
+			},
+		})
+	}
+
+	if !req.hasExpression {
+		if len(datasources) > 1 {
+			// We do not (yet) support mixed query type
+			return nil, fmt.Errorf("all queries must use the same datasource")
+		}
+	}
+
+	return req, nil
+}
+
+func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simplejson.Json, history map[string]*models.DataSource) (*models.DataSource, error) {
 	var err error
 	uid := query.Get("datasource").Get("uid").MustString()
 
@@ -117,150 +270,22 @@ func (hs *HTTPServer) getDataSourceFromQuery(c *models.ReqContext, query *simple
 		return grafanads.DataSourceModel(c.OrgId), nil
 	}
 
-	// use datasourceId if it exists
-	id := query.Get("datasourceId").MustInt64(0)
-	if id > 0 {
-		ds, err = hs.DataSourceCache.GetDatasource(id, c.SignedInUser, c.SkipCache)
-		if err != nil {
-			return nil, hs.handleGetDataSourceError(err, id)
-		}
-		return ds, nil
-	}
-
 	if uid != "" {
 		ds, err = hs.DataSourceCache.GetDatasourceByUID(uid, c.SignedInUser, c.SkipCache)
 		if err != nil {
-			return nil, hs.handleGetDataSourceError(err, uid)
+			return nil, err
 		}
 		return ds, nil
 	}
 
-	return nil, response.Error(http.StatusBadRequest, "Query missing data source ID/UID", nil)
-}
-
-func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
-	statusCode := http.StatusOK
-	for _, res := range qdr.Responses {
-		if res.Error != nil {
-			statusCode = http.StatusBadRequest
-		}
-	}
-
-	return response.JSONStreaming(statusCode, qdr)
-}
-
-func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceRef interface{}) *response.NormalResponse {
-	hs.log.Debug("Encountered error getting data source", "err", err, "ref", datasourceRef)
-	if errors.Is(err, models.ErrDataSourceAccessDenied) {
-		return response.Error(403, "Access denied to data source", err)
-	}
-	if errors.Is(err, models.ErrDataSourceNotFound) {
-		return response.Error(400, "Invalid data source ID", err)
-	}
-	return response.Error(500, "Unable to load data source metadata", err)
-}
-
-// QueryMetrics returns query metrics
-// POST /api/tsdb/query
-func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricRequest) response.Response {
-	if len(reqDto.Queries) == 0 {
-		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
-	}
-
-	datasourceId, err := reqDto.Queries[0].Get("datasourceId").Int64()
+	// Fallback to the datasourceId
+	id, err := query.Get("datasourceId").Int64()
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "Query missing datasourceId", nil)
+		return nil, errors.New("query missing data source ID/UID")
 	}
-
-	ds, err := hs.DataSourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
-	if err != nil {
-		return hs.handleGetDataSourceError(err, datasourceId)
-	}
-
-	err = hs.PluginRequestValidator.Validate(ds.Url, nil)
-	if err != nil {
-		return response.Error(http.StatusForbidden, "Access denied", err)
-	}
-
-	timeRange := legacydata.NewDataTimeRange(reqDto.From, reqDto.To)
-	request := legacydata.DataQuery{
-		TimeRange: &timeRange,
-		Debug:     reqDto.Debug,
-		User:      c.SignedInUser,
-	}
-
-	for _, query := range reqDto.Queries {
-		request.Queries = append(request.Queries, legacydata.DataSubQuery{
-			RefID:         query.Get("refId").MustString("A"),
-			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
-			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
-			Model:         query,
-			DataSource:    ds,
-		})
-	}
-
-	resp, err := hs.legacyDataRequestHandler.HandleRequest(c.Req.Context(), ds, request)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Metric request error", err)
-	}
-
-	statusCode := http.StatusOK
-	for _, res := range resp.Results {
-		if res.Error != nil {
-			res.ErrorString = res.Error.Error()
-			resp.Message = res.ErrorString
-			statusCode = http.StatusBadRequest
-		}
-	}
-
-	return response.JSON(statusCode, &resp)
-}
-
-func (hs *HTTPServer) createRequest(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (*backend.QueryDataRequest, error) {
-	instanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
+	ds, err = hs.DataSourceCache.GetDatasource(id, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		return nil, err
 	}
-
-	if query.Headers == nil {
-		query.Headers = make(map[string]string)
-	}
-
-	if hs.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := hs.OAuthTokenService.GetCurrentOAuthToken(ctx, query.User); token != nil {
-			delete(query.Headers, "Authorization")
-			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
-		}
-	}
-
-	req := &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			OrgID:                      ds.OrgId,
-			PluginID:                   ds.Type,
-			User:                       adapters.BackendUserFromSignedInUser(query.User),
-			DataSourceInstanceSettings: instanceSettings,
-		},
-		Queries: []backend.DataQuery{},
-		Headers: query.Headers,
-	}
-
-	for _, q := range query.Queries {
-		modelJSON, err := q.Model.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		req.Queries = append(req.Queries, backend.DataQuery{
-			RefID:         q.RefID,
-			Interval:      time.Duration(q.IntervalMS) * time.Millisecond,
-			MaxDataPoints: q.MaxDataPoints,
-			TimeRange: backend.TimeRange{
-				From: query.TimeRange.GetFromAsTimeUTC(),
-				To:   query.TimeRange.GetToAsTimeUTC(),
-			},
-			QueryType: q.QueryType,
-			JSON:      modelJSON,
-		})
-	}
-
-	return req, nil
+	return ds, nil
 }
