@@ -479,7 +479,7 @@ func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealt
 func (m *PluginManager) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	plugin := m.Plugin(req.PluginContext.PluginID)
 	if plugin == nil {
-		return &backend.SubscribeStreamResponse{}, backendplugin.ErrPluginNotRegistered
+		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	return plugin.SubscribeStream(ctx, req)
