@@ -17,7 +17,7 @@ func (ss *SQLStore) addPlaylistQueryAndCommandHandlers() {
 }
 
 func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		playlist := models.Playlist{
 			Name:     cmd.Name,
 			Interval: cmd.Interval,
