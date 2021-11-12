@@ -31,15 +31,17 @@ func TestService(t *testing.T) {
 
 	cfg := setting.NewCfg()
 
+	secretsService := manager.ProvideSecretsService(
+		fakes.NewFakeSecretsStore(),
+		bus.GetBus(),
+		ossencryption.ProvideService(),
+		setting.ProvideProvider(cfg),
+	)
+
 	s := Service{
-		cfg:         cfg,
-		dataService: me,
-		secretsService: manager.ProvideSecretsService(
-			fakes.NewFakeSecretsStore(),
-			bus.GetBus(),
-			ossencryption.ProvideService(),
-			setting.ProvideProvider(cfg),
-		),
+		cfg:            cfg,
+		dataService:    me,
+		secretsService: secretsService,
 	}
 
 	bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetDataSourceQuery) error {
