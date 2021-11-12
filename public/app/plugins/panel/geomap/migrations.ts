@@ -1,4 +1,5 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler, Threshold, ThresholdsMode } from '@grafana/data';
+import { ResourceDimensionMode } from 'app/features/dimensions';
 import { getMarkerAsPath } from './style/markers';
 import { GeomapPanelOptions } from './types';
 import { MapCenterID } from './view';
@@ -100,39 +101,27 @@ function asNumber(v: any): number | undefined {
 }
 
 export const mapMigrationHandler = (panel: PanelModel): Partial<GeomapPanelOptions> => {
-  const pluginVersion = panel?.pluginVersion;
-  if (pluginVersion?.startsWith('8.1') || pluginVersion?.startsWith('8.2')) {
-    if (panel.options?.layers?.length > 0) {
+  const pluginVersion = panel?.pluginVersion ?? '';
+
+  // before 8.3, only one layer was supported!
+  if (pluginVersion.startsWith('8.1') || pluginVersion.startsWith('8.2')) {
+    const layers = panel.options?.layers;
+    if (layers?.length === 1) {
       const layer = panel.options.layers[0];
       if (layer?.type === 'markers') {
-        const shape = layer?.config?.shape;
+        const shape = layer.config?.shape;
         if (shape) {
+          const config = { ...layer.config };
           const marker = getMarkerAsPath(shape);
           if (marker) {
-            layer.config.markerSymbol = {
+            config.markerSymbol = {
               fixed: marker,
-              mode: 'fixed',
+              mode: ResourceDimensionMode.Fixed,
             };
-            delete layer.config.shape;
           }
-          return { ...panel.options, layers: Object.assign([], ...panel.options.layers, { 0: layer }) };
+          delete config.shape;
+          return { ...panel.options, layers: [{ ...layer, config }] };
         }
-      }
-      const layers = panel.options.layers.slice();
-      for (const layer of layers) {
-        if (layer?.type === 'geojson-value-mapper') {
-          const styles = layer?.config?.styles;
-          if (styles) {
-            for (const style of styles) {
-              if (typeof style.fillColor === 'string') {
-                style.fillColor = {
-                  fixed: style.fillColor,
-                };
-              }
-            }
-          }
-        }
-        return { ...panel.options, layers: Object.assign([], layers) };
       }
     }
   }
