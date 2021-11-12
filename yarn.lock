@@ -18082,7 +18082,7 @@ __metadata:
     stylelint: 14.0.1
     stylelint-config-prettier: 9.0.3
     stylelint-config-sass-guidelines: 9.0.1
-    symbol-observable: 1.2.0
+    symbol-observable: 4.0.0
     terser-webpack-plugin: 5.2.5
     test: "link:./public/test"
     testing-library-selector: ^0.1.3
@@ -30993,7 +30993,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"symbol-observable@npm:1.2.0, symbol-observable@npm:^1.0.4":
+"symbol-observable@npm:4.0.0":
+  version: 4.0.0
+  resolution: "symbol-observable@npm:4.0.0"
+  checksum: 212c7edce6186634d671336a88c0e0bbd626c2ab51ed57498dc90698cce541839a261b969c2a1e8dd43762133d47672e8b62e0b1ce9cf4157934ba45fd172ba8
+  languageName: node
+  linkType: hard
+
+"symbol-observable@npm:^1.0.4":
   version: 1.2.0
   resolution: "symbol-observable@npm:1.2.0"
   checksum: 48ffbc22e3d75f9853b3ff2ae94a44d84f386415110aea5effc24d84c502e03a4a6b7a8f75ebaf7b585780bda34eb5d6da3121f826a6f93398429d30032971b6
