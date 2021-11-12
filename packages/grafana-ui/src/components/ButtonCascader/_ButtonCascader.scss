@@ -1,6 +1,15 @@
 .rc-cascader {
   font-size: 12px;
 
+  &-dropdown {
+    // Required, otherwise the portal that the popup is shown in will render under other components
+    z-index: 9999;
+
+    &-hidden {
+      display: none;
+    }
+  }
+
   &-menus {
     font-size: 12px;
     overflow: hidden;
@@ -10,10 +19,6 @@
     border-radius: $border-radius;
     box-shadow: $typeahead-shadow;
     white-space: nowrap;
-
-    &-hidden {
-      display: none;
-    }
 
     &.slide-up-enter,
     &.slide-up-appear {
