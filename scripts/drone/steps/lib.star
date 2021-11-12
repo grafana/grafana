@@ -6,6 +6,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.14.2'
+curl_image = 'curlimages/curl:7.80.0'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
@@ -127,7 +128,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 def download_grabpl():
     return {
         'name': 'grabpl',
-        'image': alpine_image,
+        'image': curl_image,
         'commands': [
             'mkdir -p bin',
             'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
