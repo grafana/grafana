@@ -109,7 +109,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       points: {
         stroke: useColor,
         fill: useColor,
-        size: Math.max(pointSize ?? 1, lineWidth ?? 1),
+        size: pointSize! < lineWidth! ? undefined : pointSize,
         filter: pointsFilter,
       },
     };
