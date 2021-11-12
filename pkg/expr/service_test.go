@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -26,11 +28,20 @@ func TestService(t *testing.T) {
 	me := &mockEndpoint{
 		Frames: []*data.Frame{dsDF},
 	}
+
+	cfg := setting.NewCfg()
+
 	s := Service{
-		cfg:            setting.NewCfg(),
-		dataService:    me,
-		secretsService: fakes.NewFakeSecretsService(),
+		cfg:         cfg,
+		dataService: me,
+		secretsService: manager.ProvideSecretsService(
+			fakes.NewFakeSecretsStore(),
+			bus.GetBus(),
+			ossencryption.ProvideService(),
+			setting.ProvideProvider(cfg),
+		),
 	}
+
 	bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetDataSourceQuery) error {
 		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test", JsonData: simplejson.New()}
 		return nil
