@@ -18,15 +18,25 @@ export function queriesWithUpdatedReferences(
 
     if (isMathExpression) {
       const oldExpression = new RegExp(`\\$${previousRefId}`, 'gm');
-      const newExpression = `$${newRefId}`;
+      const newExpression = `\${${newRefId}}`;
 
-      query.model.expression = query.model.expression?.replace(oldExpression, newExpression);
-      return query;
+      return {
+        ...query,
+        model: {
+          ...query.model,
+          expression: query.model.expression?.replace(oldExpression, newExpression),
+        },
+      };
     }
 
     if (isResampleExpression || isReduceExpression) {
-      query.model.expression = newRefId;
-      return query;
+      return {
+        ...query,
+        model: {
+          ...query.model,
+          expression: newRefId,
+        },
+      };
     }
 
     if (isClassicExpression) {

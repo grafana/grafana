@@ -61,7 +61,7 @@ describe('rule-editor', () => {
         type: 'grafana-expression',
       },
       conditions: [],
-      expression: 'avg($A + $B) + $A',
+      expression: 'abs($A) + $A',
     },
   };
 
@@ -102,7 +102,7 @@ describe('rule-editor', () => {
   };
 
   describe('rewires query names', () => {
-    test('with classic expression', () => {
+    it('should rewire classic expressions', () => {
       const queries: AlertQuery[] = [dataSource, classicCondition];
       const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'C');
 
@@ -115,16 +115,16 @@ describe('rule-editor', () => {
       expect(queryModel.conditions?.every(checkConditionParams));
     });
 
-    test('with math expression', () => {
+    it('should rewire math expressions', () => {
       const queries: AlertQuery[] = [dataSource, mathExpression];
-      const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'C');
+      const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'Query A');
 
       const queryModel = rewiredQueries[1].model as ExpressionQuery;
 
-      expect(queryModel.expression).toBe('avg($C + $B) + $C');
+      expect(queryModel.expression).toBe('abs(${Query A}) + ${Query A}');
     });
 
-    test('reduce expression', () => {
+    it('should rewire reduce expressions', () => {
       const queries: AlertQuery[] = [dataSource, reduceExpression];
       const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'C');
 
@@ -132,12 +132,20 @@ describe('rule-editor', () => {
       expect(queryModel.expression).toBe('C');
     });
 
-    test('resample expression', () => {
+    it('should rewire resample expressions', () => {
       const queries: AlertQuery[] = [dataSource, resampleExpression];
       const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'C');
 
       const queryModel = rewiredQueries[1].model as ExpressionQuery;
       expect(queryModel.expression).toBe('C');
+    });
+
+    it('should rewire multiple expressions', () => {
+      const queries: AlertQuery[] = [dataSource, mathExpression, resampleExpression];
+      const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'C');
+
+      expect(rewiredQueries[1].model as ExpressionQuery).toHaveProperty('expression', 'abs(${C}) + ${C}');
+      expect(rewiredQueries[2].model as ExpressionQuery).toHaveProperty('expression', 'C');
     });
   });
 });
