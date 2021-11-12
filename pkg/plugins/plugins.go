@@ -312,6 +312,8 @@ type PluginClient interface {
 }
 
 func (p *Plugin) ToDTO() PluginDTO {
+	c, _ := p.Client()
+
 	return PluginDTO{
 		JSONData:            p.JSONData,
 		PluginDir:           p.PluginDir,
@@ -322,11 +324,13 @@ func (p *Plugin) ToDTO() PluginDTO {
 		Signature:           p.Signature,
 		SignatureType:       p.SignatureType,
 		SignatureOrg:        p.SignatureOrg,
+		SignedFiles:         p.SignedFiles,
 		SignatureError:      p.SignatureError,
 		GrafanaComVersion:   p.GrafanaComVersion,
 		GrafanaComHasUpdate: p.GrafanaComHasUpdate,
 		Module:              p.Module,
 		BaseURL:             p.BaseURL,
+		StreamHandler:       c,
 	}
 }
 
