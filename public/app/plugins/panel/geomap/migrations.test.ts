@@ -113,10 +113,22 @@ describe('geomap migrations', () => {
       options: {
         layers: [
           {
-            config: {
-              shape: 'circle', // should become resource path
-            },
             type: 'markers',
+            config: {
+              size: {
+                fixed: 5,
+                min: 2,
+                max: 15,
+                field: 'Count',
+              },
+              color: {
+                fixed: 'dark-green',
+                field: 'Price',
+              },
+              fillOpacity: 0.4,
+              shape: 'triangle',
+              showLegend: true,
+            },
           },
         ],
       },
@@ -130,9 +142,23 @@ describe('geomap migrations', () => {
           "layers": Array [
             Object {
               "config": Object {
-                "markerSymbol": Object {
-                  "fixed": "img/icons/marker/circle.svg",
-                  "mode": "fixed",
+                "showLegend": true,
+                "style": Object {
+                  "color": Object {
+                    "field": "Price",
+                    "fixed": "dark-green",
+                  },
+                  "opacity": 0.4,
+                  "size": Object {
+                    "field": "Count",
+                    "fixed": 5,
+                    "max": 15,
+                    "min": 2,
+                  },
+                  "symbol": Object {
+                    "fixed": "img/icons/marker/triangle.svg",
+                    "mode": "fixed",
+                  },
                 },
               },
               "type": "markers",

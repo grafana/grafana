@@ -13,12 +13,8 @@ import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import {
-  ColorDimensionConfig,
-  ScaleDimensionConfig,
   getScaledDimension,
   getColorDimension,
-  ResourceDimensionConfig,
-  ResourceDimensionMode,
   ResourceFolderName,
 } from 'app/features/dimensions';
 import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
@@ -27,33 +23,17 @@ import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
 import { getMarkerMaker } from '../../style/markers';
+import { defaultStyleConfig, StyleConfig } from '../../style/types';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
-  size: ScaleDimensionConfig;
-  color: ColorDimensionConfig;
-  fillOpacity: number;
+  style: StyleConfig;
   showLegend?: boolean;
-  markerSymbol: ResourceDimensionConfig;
 }
 
-const DEFAULT_SIZE = 5;
-
 const defaultOptions: MarkersConfig = {
-  size: {
-    fixed: DEFAULT_SIZE,
-    min: 2,
-    max: 15,
-  },
-  color: {
-    fixed: 'dark-green', // picked from theme
-  },
-  fillOpacity: 0.4,
+  style: defaultStyleConfig,
   showLegend: true,
-  markerSymbol: {
-    mode: ResourceDimensionMode.Fixed,
-    fixed: 'img/icons/marker/circle.svg',
-  },
 };
 
 export const MARKERS_LAYER_ID = 'markers';
@@ -96,7 +76,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
-    const markerMaker = await getMarkerMaker(config.markerSymbol?.fixed);
+    const style = config.style ?? defaultStyleConfig;
+    const markerMaker = await getMarkerMaker(style.symbol?.fixed);
 
     return {
       init: () => vectorLayer,
@@ -115,9 +96,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             continue; // ???
           }
 
-          const colorDim = getColorDimension(frame, config.color, theme);
-          const sizeDim = getScaledDimension(frame, config.size);
-          const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
+          const colorDim = getColorDimension(frame, style.color ?? defaultStyleConfig.color, theme);
+          const sizeDim = getScaledDimension(frame, style.size ?? defaultStyleConfig.size);
+          const opacity = style?.opacity ?? defaultStyleConfig.opacity;
 
           const featureDimensionConfig: FeaturesStylesBuilderConfig = {
             colorDim: colorDim,
@@ -151,27 +132,22 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       registerOptionsUI: (builder) => {
         builder
           .addCustomEditor({
-            id: 'config.size',
-            path: 'config.size',
+            id: 'config.style.size',
+            path: 'config.style.size',
             name: 'Marker Size',
             editor: ScaleDimensionEditor,
             settings: {
               min: 1,
               max: 100, // possible in the UI
             },
-            defaultValue: {
-              // Configured values
-              fixed: DEFAULT_SIZE,
-              min: 1,
-              max: 20,
-            },
+            defaultValue: defaultOptions.style.size,
           })
           .addCustomEditor({
-            id: 'config.markerSymbol',
-            path: 'config.markerSymbol',
+            id: 'config.style.symbol',
+            path: 'config.style.symbol',
             name: 'Marker Symbol',
             editor: ResourceDimensionEditor,
-            defaultValue: defaultOptions.markerSymbol,
+            defaultValue: defaultOptions.style.symbol,
             settings: {
               resourceType: 'icon',
               showSourceRadio: false,
@@ -179,20 +155,17 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             },
           })
           .addCustomEditor({
-            id: 'config.color',
-            path: 'config.color',
+            id: 'config.style.color',
+            path: 'config.style.color',
             name: 'Marker Color',
             editor: ColorDimensionEditor,
             settings: {},
-            defaultValue: {
-              // Configured values
-              fixed: 'grey',
-            },
+            defaultValue: defaultOptions.style.color,
           })
           .addSliderInput({
-            path: 'config.fillOpacity',
+            path: 'config.style.opacity',
             name: 'Fill opacity',
-            defaultValue: defaultOptions.fillOpacity,
+            defaultValue: defaultOptions.style.opacity,
             settings: {
               min: 0,
               max: 1,

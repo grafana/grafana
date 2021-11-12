@@ -1,6 +1,9 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler, Threshold, ThresholdsMode } from '@grafana/data';
 import { ResourceDimensionMode } from 'app/features/dimensions';
+import { cloneDeep } from 'lodash';
+import { MarkersConfig } from './layers/data/markersLayer';
 import { getMarkerAsPath } from './style/markers';
+import { defaultStyleConfig } from './style/types';
 import { GeomapPanelOptions } from './types';
 import { MapCenterID } from './view';
 
@@ -108,20 +111,31 @@ export const mapMigrationHandler = (panel: PanelModel): Partial<GeomapPanelOptio
     const layers = panel.options?.layers;
     if (layers?.length === 1) {
       const layer = panel.options.layers[0];
-      if (layer?.type === 'markers') {
-        const shape = layer.config?.shape;
-        if (shape) {
-          const config = { ...layer.config };
-          const marker = getMarkerAsPath(shape);
-          if (marker) {
-            config.markerSymbol = {
-              fixed: marker,
-              mode: ResourceDimensionMode.Fixed,
-            };
-          }
-          delete config.shape;
-          return { ...panel.options, layers: [{ ...layer, config }] };
+      if (layer?.type === 'markers' && layer.config) {
+        // Moving style to child object
+        const oldConfig = layer.config;
+        const config: MarkersConfig = {
+          style: cloneDeep(defaultStyleConfig),
+          showLegend: Boolean(oldConfig.showLegend),
+        };
+
+        if (oldConfig.size) {
+          config.style.size = oldConfig.size;
         }
+        if (oldConfig.color) {
+          config.style.color = oldConfig.color;
+        }
+        if (oldConfig.fillOpacity) {
+          config.style.opacity = oldConfig.fillOpacity;
+        }
+        const symbol = getMarkerAsPath(oldConfig.shape);
+        if (symbol) {
+          config.style.symbol = {
+            fixed: symbol,
+            mode: ResourceDimensionMode.Fixed,
+          };
+        }
+        return { ...panel.options, layers: [{ ...layer, config }] };
       }
     }
   }

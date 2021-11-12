@@ -1,6 +1,7 @@
 import {
   ColorDimensionConfig,
   ResourceDimensionConfig,
+  ResourceDimensionMode,
   ScaleDimensionConfig,
   TextDimensionConfig,
 } from 'app/features/dimensions';
@@ -29,6 +30,24 @@ export interface StyleConfig {
   text?: TextDimensionConfig;
   textConfig?: TextStyleConfig;
 }
+
+export const DEFAULT_SIZE = 5;
+
+export const defaultStyleConfig = Object.freeze({
+  size: {
+    fixed: DEFAULT_SIZE,
+    min: 2,
+    max: 15,
+  },
+  color: {
+    fixed: 'dark-green', // picked from theme
+  },
+  opacity: 0.4,
+  symbol: {
+    mode: ResourceDimensionMode.Fixed,
+    fixed: 'img/icons/marker/circle.svg',
+  },
+});
 
 /**
  * Static options for text display.  See:

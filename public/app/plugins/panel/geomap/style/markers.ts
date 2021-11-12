@@ -1,10 +1,8 @@
 import { Fill, RegularShape, Stroke, Circle, Style, Icon } from 'ol/style';
 import { Registry, RegistryItem } from '@grafana/data';
-import { StyleConfigValues, StyleMaker } from './types';
+import { DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import tinycolor from 'tinycolor2';
-
-const DEFAULT_SIZE = 5;
 
 interface SymbolMaker extends RegistryItem {
   aliasIds: string[];
