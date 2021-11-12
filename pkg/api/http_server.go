@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/query"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -117,6 +119,7 @@ type HTTPServer struct {
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
 	expressionService         *expr.Service
+	queryDataService          *query.Service
 }
 
 type ServerOptions struct {
@@ -143,7 +146,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service, secretsService secrets.Service, expressionService *expr.Service) (*HTTPServer, error) {
+	dataSourcesService *datasources.Service, secretsService secrets.Service, expressionService *expr.Service,
+	queryDataService *query.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -156,7 +160,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		HooksService:              hooksService,
 		CacheService:              cacheService,
 		SQLStore:                  sqlStore,
-		legacyDataRequestHandler:  legacyDataRequestHandler,
+		legacyDataRequestHandler:  legacyDataRequestHandler, // TODO: remove.
 		AlertEngine:               alertEngine,
 		PluginRequestValidator:    pluginRequestValidator,
 		pluginClient:              pluginClient,
@@ -185,19 +189,20 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		LibraryPanelService:       libraryPanelService,
 		LibraryElementService:     libraryElementService,
 		QuotaService:              quotaService,
-		notificationService:       notificationService,
-		tracingService:            tracingService,
-		internalMetricsSvc:        internalMetricsSvc,
+		notificationService:       notificationService, // TODO: remove.
+		tracingService:            tracingService,      // TODO: remove.
+		internalMetricsSvc:        internalMetricsSvc,  // TODO: remove.
 		log:                       log.New("http.server"),
 		web:                       m,
 		Listener:                  opts.Listener,
 		SocialService:             socialService,
-		OAuthTokenService:         oauthTokenService,
+		OAuthTokenService:         oauthTokenService, // TODO: remove.
 		EncryptionService:         encryptionService,
 		SecretsService:            secretsService,
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
-		expressionService:         expressionService,
+		expressionService:         expressionService, // TODO: remove.
+		queryDataService:          queryDataService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
