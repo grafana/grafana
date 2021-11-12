@@ -61,7 +61,6 @@ export default {
     version: '4.2.2',
     updated: '2021-08-25',
   },
-  latestVersion: '',
   hasUpdate: false,
   defaultNavUrl: '/plugins/alexanderzobnin-zabbix-app/',
   category: '',
