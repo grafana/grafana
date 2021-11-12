@@ -428,6 +428,7 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
     ]
     if ver_mode == 'pr':
         commands.extend([
+            'ls -la',
             'node_modules/.bin/pa11y-ci --config .pa11yci-pr.conf.js',
         ])
     else:
@@ -437,7 +438,7 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
 
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'hugohaggmark/docker-puppeteer:0.1.0',
+        'image': 'hugohaggmark/docker-puppeteer',
         'depends_on': [
           'end-to-end-tests-server' + enterprise2_suffix(edition),
         ],
