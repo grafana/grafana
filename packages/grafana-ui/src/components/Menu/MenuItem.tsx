@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { ReactElement, useCallback, useMemo, useState, useRef, useImperativeHandle } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
+import { SubMenu } from './SubMenu';
+import { getFocusStyles } from '../../themes/mixins';
+
+/** @internal */
+export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivElement;
 
 /** @internal */
 export interface MenuItemProps<T = any> {
@@ -29,61 +34,117 @@ export interface MenuItemProps<T = any> {
   active?: boolean;
 
   tabIndex?: number;
+
+  /** List of menu items for the subMenu */
+  childItems?: Array<ReactElement<MenuItemProps>>;
 }
 
 /** @internal */
 export const MenuItem = React.memo(
-  React.forwardRef<HTMLAnchorElement & HTMLButtonElement, MenuItemProps>((props, ref) => {
-    const {
-      url,
-      icon,
-      label,
-      ariaLabel,
-      ariaChecked,
-      target,
-      onClick,
-      className,
-      active,
-      role = 'menuitem',
-      tabIndex = -1,
-    } = props;
-    const styles = useStyles2(getStyles);
-    const itemStyle = cx(
-      {
-        [styles.item]: true,
-        [styles.activeItem]: active,
-      },
-      className
-    );
+  React.forwardRef<MenuItemElement, MenuItemProps>((props, ref) => {
+      const {
+        url,
+        icon,
+        label,
+        ariaLabel,
+        ariaChecked,
+        target,
+        onClick,
+        className,
+        active,
+        childItems,
+        role = 'menuitem',
+        tabIndex = -1,
+      } = props;
+      const styles = useStyles2(getStyles);
+      const [isActive, setIsActive] = useState(active);
+      const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
+      const [openedWithArrow, setOpenedWithArrow] = useState(false);
+      const onMouseEnter = useCallback(() => {
+        setIsSubMenuOpen(true);
+        setIsActive(true);
+      }, []);
+      const onMouseLeave = useCallback(() => {
+        setIsSubMenuOpen(false);
+        setIsActive(false);
+      }, []);
+      const hasSubMenu = useMemo(() => childItems && childItems.length > 0, [childItems]);
+      const Wrapper = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
+      const itemStyle = cx(
+        {
+          [styles.item]: true,
+          [styles.activeItem]: isActive,
+        },
+        className
+      );
 
-    const Wrapper = url === undefined ? 'button' : 'a';
-    return (
-      <Wrapper
-        target={target}
-        className={itemStyle}
-        rel={target === '_blank' ? 'noopener noreferrer' : undefined}
-        href={url}
-        onClick={
-          onClick
-            ? (event) => {
-                if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
-                  event.preventDefault();
-                  onClick(event);
-                }
-              }
-            : undefined
+      const localRef = useRef<MenuItemElement>(null);
+      useImperativeHandle(ref, () => localRef.current!);
+
+      const handleKeys = (event: React.KeyboardEvent) => {
+        switch (event.key) {
+          case 'ArrowRight':
+            event.preventDefault();
+            event.stopPropagation();
+            if (hasSubMenu) {
+              setIsSubMenuOpen(true);
+              setOpenedWithArrow(true);
+              setIsActive(true);
+            }
+            break;
+          default:
+            break;
         }
-        role={url === undefined ? role : undefined}
-        data-role="menuitem" // used to identify menuitem in Menu.tsx
-        ref={ref}
-        aria-label={ariaLabel}
-        aria-checked={ariaChecked}
-        tabIndex={tabIndex}
-      >
-        {icon && <Icon name={icon} className={styles.icon} aria-hidden />} {label}
-      </Wrapper>
-    );
-  })
+      };
+
+      const closeSubMenu = () => {
+        setIsSubMenuOpen(false);
+        setIsActive(false);
+        localRef?.current?.focus();
+      };
+
+      return (
+        <Wrapper
+          target={target}
+          className={itemStyle}
+          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+          href={url}
+          onClick={
+            onClick
+              ? (event) => {
+                  if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onClick(event);
+                  }
+                }
+              : undefined
+          }
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onKeyDown={handleKeys}
+          role={url === undefined ? role : undefined}
+          data-role="menuitem" // used to identify menuitem in Menu.tsx
+          ref={localRef}
+          aria-label={ariaLabel}
+          aria-checked={ariaChecked}
+          tabIndex={tabIndex}
+        >
+          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+          {label}
+          {hasSubMenu && (
+            <SubMenu
+              items={childItems}
+              isOpen={isSubMenuOpen}
+              openedWithArrow={openedWithArrow}
+              setOpenedWithArrow={setOpenedWithArrow}
+              close={closeSubMenu}
+            />
+          )}
+        </Wrapper>
+      );
+    }
+  )
 );
 MenuItem.displayName = 'MenuItem';
 
@@ -100,6 +161,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0;
       border: none;
       width: 100%;
+      position: relative;
 
       &:hover,
       &:focus,
@@ -107,6 +169,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: ${theme.colors.action.hover};
         color: ${theme.colors.text.primary};
         text-decoration: none;
+      }
+
+      &:focus-visible {
+        ${getFocusStyles(theme)}
       }
     `,
     activeItem: css`
