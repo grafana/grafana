@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -239,11 +240,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = quotaSection.NewKey("enabled", "true")
 			require.NoError(t, err)
-			dashboardQuota := o.DashboardOrgQuota
-			if dashboardQuota == "" {
-				dashboardQuota = "100"
+			dashboardQuota := int64(100)
+			if o.DashboardOrgQuota != nil {
+				dashboardQuota = *o.DashboardOrgQuota
 			}
-			_, err = quotaSection.NewKey("org_dashboard", dashboardQuota)
+			_, err = quotaSection.NewKey("org_dashboard", strconv.FormatInt(dashboardQuota, 10))
 			require.NoError(t, err)
 		}
 		if o.DisableAnonymous {
@@ -302,7 +303,7 @@ type GrafanaOpts struct {
 	NGAlertAlertmanagerConfigPollInterval time.Duration
 	AnonymousUserRole                     models.RoleType
 	EnableQuota                           bool
-	DashboardOrgQuota                     string
+	DashboardOrgQuota                     *int64
 	DisableAnonymous                      bool
 	CatalogAppEnabled                     bool
 	ViewersCanEdit                        bool
