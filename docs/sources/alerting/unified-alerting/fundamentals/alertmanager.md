@@ -33,7 +33,7 @@ You can do the setup in the "Admin" tab within the Grafana v8 Alerts UI.
 
 ### Edit an external Alertmanager
 
-1. Click the pen symbol to the right of the alertmanager row in the table.
+1. Click the pen symbol to the right of the Alertmanager row in the table.
 2. The modal will open, and you will see all urls added. Change the url you want to update and click the Add Alertmanager button.
 3. The edited url will be pending until Grafana has verified/connected/resolved.
 
