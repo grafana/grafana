@@ -10,7 +10,6 @@ import {
 } from '@grafana/data';
 
 import { LivePanelOptions } from './types';
-import { getGrafanaLiveScopes } from 'app/features/live';
 import { config } from 'app/core/config';
 
 type Props = StandardEditorProps<LiveChannelAddress, any, LivePanelOptions>;
@@ -42,27 +41,9 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
     }
   }
 
-  async getScopeDetails() {
-    const { scope } = this.props.value;
-    const srv = getGrafanaLiveScopes();
-
-    if (!srv.doesScopeExist(scope)) {
-      return {
-        namespaces: [],
-      };
-    }
-
-    const namespaces = await srv.getNamespaces(scope);
-    return {
-      namespaces,
-    };
-  }
-
   async updateSelectOptions() {
-    const { namespaces } = await this.getScopeDetails();
-
     this.setState({
-      namespaces,
+      namespaces: [],
       paths: [],
     });
   }

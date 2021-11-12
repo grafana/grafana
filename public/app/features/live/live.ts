@@ -9,10 +9,8 @@ import {
   LiveChannelPresenceStatus,
   toLiveChannelId,
 } from '@grafana/data';
-import { GrafanaLiveChannelConfigSrv } from './channel-config/types';
 
 type GrafanaLiveServiceDeps = {
-  scopes: GrafanaLiveChannelConfigSrv;
   centrifugeSrv: CentrifugeSrv;
   backendSrv: BackendSrv;
 };
