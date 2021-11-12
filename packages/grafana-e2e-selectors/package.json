@@ -36,7 +36,7 @@
     "rollup-plugin-typescript2": "0.30.0",
     "rollup-plugin-visualizer": "5.5.2",
     "ts-loader": "6.2.1",
-    "ts-node": "9.0.0"
+    "ts-node": "10.4.0"
   },
   "types": "src/index.ts",
   "dependencies": {
