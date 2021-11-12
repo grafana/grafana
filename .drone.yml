@@ -213,7 +213,7 @@ steps:
 - commands:
   - yarn -v
   - yarn wait-on http://$HOST:$PORT
-  - --config .pa11yci-pr.conf.js
+  - pa11y-ci --config .pa11yci-pr.conf.js
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -222,7 +222,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: hugohaggmark/docker-puppeteer
+  image: dimsotirakis/docker-puppeteer:test-rem
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
@@ -508,7 +508,7 @@ steps:
 - commands:
   - yarn -v
   - yarn wait-on http://$HOST:$PORT
-  - --config .pa11yci.conf.js --json > pa11y-ci-results.json
+  - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -517,7 +517,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: hugohaggmark/docker-puppeteer
+  image: dimsotirakis/docker-puppeteer:test-rem
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
@@ -3432,6 +3432,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: fe372644551875fedea78d1d951dca7bf21012d3646159899806fb28e20557b7
+hmac: 759675e2d5a8fe2b24efe5dd7b096ed8133b03792df028456821c2b999b96eeb
 
 ...
