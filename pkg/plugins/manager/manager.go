@@ -488,7 +488,7 @@ func (m *PluginManager) SubscribeStream(ctx context.Context, req *backend.Subscr
 func (m *PluginManager) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	plugin := m.Plugin(req.PluginContext.PluginID)
 	if plugin == nil {
-		return &backend.PublishStreamResponse{}, backendplugin.ErrPluginNotRegistered
+		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	return plugin.PublishStream(ctx, req)
