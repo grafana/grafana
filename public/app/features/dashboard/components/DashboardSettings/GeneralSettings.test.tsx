@@ -49,7 +49,7 @@ describe('General Settings', () => {
       const { props } = setupTestContext({});
       userEvent.click(screen.getByLabelText('Time zone picker select container'));
       const timeZonePicker = screen.getByLabelText('Time zone picker select container');
-      userEvent.click(byRole('textbox').get(timeZonePicker));
+      userEvent.click(byRole('combobox').get(timeZonePicker));
       await selectOptionInTest(timeZonePicker, 'Browser Time');
       expect(props.updateTimeZone).toHaveBeenCalledWith('browser');
       expect(props.dashboard.timezone).toBe('browser');
