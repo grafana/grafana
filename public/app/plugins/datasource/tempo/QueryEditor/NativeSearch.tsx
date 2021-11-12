@@ -12,13 +12,13 @@ import {
   Alert,
   useStyles2,
 } from '@grafana/ui';
-import { tokenizer } from './syntax';
+import { tokenizer } from '../syntax';
 import Prism from 'prismjs';
 import { Node } from 'slate';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, isValidGoDuration, SelectableValue } from '@grafana/data';
-import TempoLanguageProvider from './language_provider';
-import { TempoDatasource, TempoQuery } from './datasource';
+import TempoLanguageProvider from '../language_provider';
+import { TempoDatasource, TempoQuery } from '../datasource';
 import { debounce } from 'lodash';
 import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';
