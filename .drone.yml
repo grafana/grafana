@@ -212,7 +212,7 @@ steps:
   name: build-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn pa11y-ci --config .pa11yci-pr.conf.js
+  - node_modules/.bin/pa11y-ci --config .pa11yci-pr.conf.js
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -506,7 +506,7 @@ steps:
   name: publish-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn --silent pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
+  - node_modules/.bin/pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -3430,6 +3430,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 7171a35fea878e112e1377f0e16f49459db36f227d0a4dae253ef492656e25d3
+hmac: cd5e0d2ad9be296e8953eb85844490bcb531283fa7eb703f8afbc666713e776f
 
 ...
