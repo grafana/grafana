@@ -18,23 +18,23 @@ const UnifiedAlertingPromotion: FC<{}> = () => {
   return (
     <Alert
       severity="info"
-      title="Try out the new Unified Alerting"
+      title="Try out the new Grafana 8 alerting"
       onRemove={() => setShowUnifiedAlertingPromotion(false)}
     >
       <p>
         You are using the legacy Grafana alerts feature.
         <br />
         While this feature will not be deprecated any time soon and continue to work as intend, we invite you to give
-        the new Unified Alerting a try.
+        the new Grafana 8 alerting a try.
       </p>
       <p>
         See{' '}
         <a href="https://grafana.com/docs/grafana/latest/alerting/unified-alerting/difference-old-new/">
           What’s New with Grafana 8 alerting
         </a>{' '}
-        to learn more about what&lsquo;s new in Unified Alerting, or learn{' '}
+        to learn more about what&lsquo;s new in Grafana 8 alerting or learn{' '}
         <a href="https://grafana.com/docs/grafana/latest/alerting/unified-alerting/opt-in/">
-          how to enable the new unified alerting feature
+          how to enable the new Grafana 8 alerting feature
         </a>
         .
       </p>
