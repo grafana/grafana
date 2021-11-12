@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/spyzhov/ajson"
+	"github.com/ohler55/ojg/jp"
+	"github.com/ohler55/ojg/oj"
 )
 
 type ExactJsonConverterConfig struct {
@@ -34,10 +35,10 @@ func (c *ExactJsonConverter) Type() string {
 }
 
 func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*ChannelFrame, error) {
-	//obj, err := oj.Parse(body)
-	//if err != nil {
-	//	return nil, err
-	//}
+	obj, err := oj.Parse(body)
+	if err != nil {
+		return nil, err
+	}
 
 	var fields []*data.Field
 
@@ -51,17 +52,15 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 
 		if strings.HasPrefix(f.Value, "$") {
 			// JSON path.
-			nodes, err := ajson.JSONPath(body, f.Value)
+			fragments, err := jp.ParseString(f.Value[1:])
 			if err != nil {
 				return nil, err
 			}
-			if len(nodes) == 0 {
+			values := fragments.Get(obj)
+			if len(values) == 0 {
 				field.Set(0, nil)
-			} else if len(nodes) == 1 {
-				val, err := nodes[0].Value()
-				if err != nil {
-					return nil, err
-				}
+			} else if len(values) == 1 {
+				val := values[0]
 				switch f.Type {
 				case data.FieldTypeNullableFloat64:
 					if val == nil {
@@ -73,7 +72,7 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 						case int64:
 							field.SetConcrete(0, float64(v))
 						default:
-							return nil, errors.New("malformed float64 type for: " + f.Name)
+							return nil, fmt.Errorf("malformed float64 type for %s: %T", f.Name, v)
 						}
 					}
 				case data.FieldTypeNullableString:
@@ -88,41 +87,6 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 			} else {
 				return nil, errors.New("too many values")
 			}
-			//x, err := jp.ParseString(f.Value[1:])
-			//if err != nil {
-			//	return nil, err
-			//}
-			//value := x.Get(obj)
-			//if len(value) == 0 {
-			//	field.Set(0, nil)
-			//} else if len(value) == 1 {
-			//	val := value[0]
-			//	switch f.Type {
-			//	case data.FieldTypeNullableFloat64:
-			//		if val == nil {
-			//			field.Set(0, nil)
-			//		} else {
-			//			switch v := val.(type) {
-			//			case float64:
-			//				field.SetConcrete(0, v)
-			//			case int64:
-			//				field.SetConcrete(0, float64(v))
-			//			default:
-			//				return nil, errors.New("malformed float64 type for: " + f.Name)
-			//			}
-			//		}
-			//	case data.FieldTypeNullableString:
-			//		v, ok := val.(string)
-			//		if !ok {
-			//			return nil, errors.New("malformed string type")
-			//		}
-			//		field.SetConcrete(0, v)
-			//	default:
-			//		return nil, fmt.Errorf("unsupported field type: %s (%s)", f.Type, f.Name)
-			//	}
-			//} else {
-			//	return nil, errors.New("too many values")
-			//}
 		} else if strings.HasPrefix(f.Value, "{") {
 			// Goja script.
 			script := strings.Trim(f.Value, "{}")
@@ -162,33 +126,18 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 		labels := map[string]string{}
 		for _, label := range f.Labels {
 			if strings.HasPrefix(label.Value, "$") {
-				nodes, err := ajson.JSONPath(body, label.Value)
+				fragments, err := jp.ParseString(label.Value[1:])
 				if err != nil {
 					return nil, err
 				}
-				if len(nodes) == 0 {
+				values := fragments.Get(obj)
+				if len(values) == 0 {
 					labels[label.Name] = ""
-				} else if len(nodes) == 1 {
-					value, err := nodes[0].Value()
-					if err != nil {
-						return nil, err
-					}
-					labels[label.Name] = fmt.Sprintf("%v", value)
+				} else if len(values) == 1 {
+					labels[label.Name] = fmt.Sprintf("%v", values[0])
 				} else {
 					return nil, errors.New("too many values for a label")
 				}
-				//x, err := jp.ParseString(label.Value[1:])
-				//if err != nil {
-				//	return nil, err
-				//}
-				//value := x.Get(obj)
-				//if len(value) == 0 {
-				//	labels[label.Name] = ""
-				//} else if len(value) == 1 {
-				//	labels[label.Name] = fmt.Sprintf("%v", value[0])
-				//} else {
-				//	return nil, errors.New("too many values for a label")
-				//}
 			} else if strings.HasPrefix(label.Value, "{") {
 				script := strings.Trim(label.Value, "{}")
 				var err error
