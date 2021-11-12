@@ -54,26 +54,25 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
         continue;
       }
 
-      const handleProps = {
-        key: `${step.value}-${i}`,
-        step: step,
-        y: yPos,
-      };
+      let handleYPos = yPos;
+      const height = plot.bbox.height / window.devicePixelRatio;
 
       // the threshold is below the visible series area
       if (yPos < 0) {
-        handleProps.y = 0;
+        handleYPos = 0;
       }
 
       // the threshold is above the visible series area
-      if (yPos > plot.bbox.height / window.devicePixelRatio) {
-        handleProps.y = plot.bbox.height / window.devicePixelRatio;
+      if (yPos > height) {
+        handleYPos = height;
       }
 
       const handle = (
         <ThresholdDragHandle
-          {...handleProps}
-          dragBounds={{ top: 0, bottom: plot.bbox.height / window.devicePixelRatio }}
+          key={`${step.value}-${i}`}
+          step={step}
+          y={handleYPos}
+          dragBounds={{ top: 0, bottom: height }}
           mapPositionToValue={(y) => plot.posToVal(y, scale)}
           formatValue={(v) => getValueFormat(scale)(v, decimals).text}
           onChange={(value) => {
