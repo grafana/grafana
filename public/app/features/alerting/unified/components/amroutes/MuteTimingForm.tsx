@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
-import { Field, FieldSet, IconButton, Input, Label, Button, useStyles2 } from '@grafana/ui';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { Field, FieldSet, Input, Button, useStyles2 } from '@grafana/ui';
+import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
@@ -12,13 +12,18 @@ import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName
 import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { MuteTimingTimeRange } from './MuteTimingTimeRange';
 
 interface Props {
   muteTiming?: string;
 }
 
-type MuteTimingFields = {
+export type MuteTimingFields = {
   name: string;
+  time_intervals: MuteTimingIntervalFields[];
+};
+
+type MuteTimingIntervalFields = {
   times: Array<{
     start_time: string;
     end_time: string;
@@ -29,35 +34,42 @@ type MuteTimingFields = {
   years: string;
 };
 
-const getDefaultValues = (config: AlertmanagerConfig, muteTiming?: string): MuteTimingFields => {
-  const defaultValues = {
-    name: '',
-    times: [{ start_time: '', end_time: '' }],
-    weekdays: '',
-    days_of_month: '',
-    months: '',
-    years: '',
-  };
+const defaultTimeInterval: MuteTimingIntervalFields = {
+  times: [{ start_time: '', end_time: '' }],
+  weekdays: '',
+  days_of_month: '',
+  months: '',
+  years: '',
+};
 
-  if (muteTiming) {
-    const mute = config?.mute_time_intervals?.find(({ name }) => name === muteTiming);
-    if (mute) {
-      // TODO: make form handle multiple time intervals
-      const intervals = mute.time_intervals[0];
-      return {
-        name: mute.name,
-        times: intervals.times ?? defaultValues.times,
-        weekdays: intervals?.weekdays?.join(', ') ?? defaultValues.weekdays,
-        days_of_month: intervals?.days_of_month?.join(', ') ?? defaultValues.days_of_month,
-        months: intervals?.months?.join(', ') ?? defaultValues.months,
-        years: intervals?.years?.join(', ') ?? defaultValues.years,
-      };
+const useDefaultValues = (config: AlertmanagerConfig, muteTiming?: string): MuteTimingFields => {
+  return useMemo(() => {
+    const defaultValues = {
+      name: '',
+      time_intervals: [defaultTimeInterval],
+    };
+
+    if (muteTiming) {
+      const mute = config?.mute_time_intervals?.find(({ name }) => name === muteTiming);
+      if (mute) {
+        const intervals = mute.time_intervals.map((interval) => ({
+          times: interval.times ?? defaultTimeInterval.times,
+          weekdays: interval?.weekdays?.join(', ') ?? defaultTimeInterval.weekdays,
+          days_of_month: interval?.days_of_month?.join(', ') ?? defaultTimeInterval.days_of_month,
+          months: interval?.months?.join(', ') ?? defaultTimeInterval.months,
+          years: interval?.years?.join(', ') ?? defaultTimeInterval.years,
+        }));
+        return {
+          name: mute.name,
+          time_intervals: intervals,
+        };
+      } else {
+        return defaultValues;
+      }
     } else {
       return defaultValues;
     }
-  } else {
-    return defaultValues;
-  }
+  }, [config, muteTiming]);
 };
 
 const convertStringToArray = (str: string) => {
@@ -65,17 +77,23 @@ const convertStringToArray = (str: string) => {
 };
 
 const createMuteTiming = (fields: MuteTimingFields): MuteTimeInterval => {
-  const timeInterval: TimeInterval = {
-    times: fields.times.filter(({ start_time, end_time }) => !!start_time && !!end_time),
-    weekdays: convertStringToArray(fields.weekdays),
-    days_of_month: convertStringToArray(fields.days_of_month),
-    months: convertStringToArray(fields.months),
-    years: convertStringToArray(fields.years),
-  };
+  const timeIntervals: TimeInterval[] = fields.time_intervals.map(
+    ({ times, weekdays, days_of_month, months, years }) => {
+      const interval = {
+        times: times.filter(({ start_time, end_time }) => !!start_time && !!end_time),
+        weekdays: convertStringToArray(weekdays),
+        days_of_month: convertStringToArray(days_of_month),
+        months: convertStringToArray(months),
+        years: convertStringToArray(years),
+      };
+
+      return omitBy(interval, isUndefined);
+    }
+  );
 
   return {
     name: fields.name,
-    time_intervals: [omitBy(timeInterval, isUndefined)],
+    time_intervals: timeIntervals,
   };
 };
 
@@ -95,15 +113,20 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
   }, [fetchConfig]);
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const { result } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+  const { result, loading } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-  const defaultValues = getDefaultValues(config, muteTiming);
+  const defaultValues = useDefaultValues(config, muteTiming);
   const formApi = useForm({ defaultValues });
-  const { fields: timeRanges = [], append, remove } = useFieldArray<MuteTimingFields>({
-    name: 'times',
+  const {
+    fields: timeIntervals,
+    append: addTimeInterval,
+    remove: removeTimeInterval,
+  } = useFieldArray<MuteTimingFields>({
+    name: 'time_intervals',
     control: formApi.control,
   });
+
   const onSubmit = (values: MuteTimingFields) => {
     const muteTiming = createMuteTiming(values);
 
@@ -129,92 +152,85 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
   return (
     <AlertingPageWrapper pageId="am-routes">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      <form onSubmit={formApi.handleSubmit(onSubmit)}>
-        <FieldSet label={'Create mute timing'}>
-          <Field
-            required
-            label="Name"
-            description="A unique name for the mute timing"
-            invalid={!!formApi.formState.errors?.name}
-            error={formApi.formState.errors.name?.message}
-          >
-            <Input {...formApi.register('name', { required: true })} className={styles.input} />
-          </Field>
-          <Field
-            label="Time range"
-            description="The time inclusive of the starting time and exclusive of the end time in UTC"
-          >
-            <>
-              {timeRanges.map((timeRange, index) => {
-                return (
-                  <div className={styles.timeRangeSection} key={timeRange.id}>
-                    <div className={styles.timeRange}>
-                      <Label>Start time</Label>
-                      <Input
-                        {...formApi.register(`times.${index}.start_time`)}
-                        className={styles.timeRangeInput}
-                        defaultValue={timeRange.start_time}
-                        placeholder="HH:MM"
-                      />
-                      <Label>End time</Label>
-                      <Input
-                        {...formApi.register(`times.${index}.end_time`)}
-                        className={styles.timeRangeInput}
-                        defaultValue={timeRange.end_time}
-                        placeholder="HH:MM"
-                      />
-                    </div>
-                    <div>
-                      <IconButton
-                        className={styles.deleteTimeRange}
-                        title={'Remove'}
-                        name={'trash-alt'}
-                        onClick={() => remove(index)}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-              <Button
-                variant="secondary"
-                type="button"
-                icon={'plus'}
-                onClick={() => append({ start_time: '', end_time: '' })}
+      {result && !loading && (
+        <FormProvider {...formApi}>
+          <form onSubmit={formApi.handleSubmit(onSubmit)}>
+            <FieldSet label={'Create mute timing'}>
+              <Field
+                required
+                label="Name"
+                description="A unique name for the mute timing"
+                invalid={!!formApi.formState.errors?.name}
+                error={formApi.formState.errors.name?.message}
               >
-                Add another time range
-              </Button>
-            </>
-          </Field>
-          <Field label="Days of the week">
-            <Input
-              {...formApi.register('weekdays')}
-              className={styles.input}
-              placeholder="Example: monday, tuesday:thursday"
-            />
-          </Field>
-          <Field
-            label="Days of the month"
-            description="The days of the month, 1-31, of a month. Negative values can be used to represent days which begin at the end of the month"
-          >
-            <Input
-              {...formApi.register('days_of_month')}
-              className={styles.input}
-              placeholder="Example: 1, 14:16, -1"
-            />
-          </Field>
-          <Field label="Months" description="The months of the year in either numerical or the full calendar month">
-            <Input
-              {...formApi.register('months')}
-              className={styles.input}
-              placeholder="Example: 1:3, may:august, december"
-            />
-          </Field>
-          <Field label="Years">
-            <Input {...formApi.register('years')} className={styles.input} placeholder="Example: 2021:2022, 2030" />
-          </Field>
-          <Button type="submit">Submit</Button>
-        </FieldSet>
-      </form>
+                <Input {...formApi.register('name', { required: true })} className={styles.input} />
+              </Field>
+              <FieldSet label="Time intervals">
+                {timeIntervals.map((timeInterval, timeIntervalIndex) => {
+                  return (
+                    <div key={timeInterval.id} className={styles.timeIntervalSection}>
+                      <MuteTimingTimeRange intervalIndex={timeIntervalIndex} />
+                      <Field label="Days of the week">
+                        <Input
+                          {...formApi.register(`time_intervals.${timeIntervalIndex}.weekdays`)}
+                          className={styles.input}
+                          placeholder="Example: monday, tuesday:thursday"
+                        />
+                      </Field>
+                      <Field
+                        label="Days of the month"
+                        description="The days of the month, 1-31, of a month. Negative values can be used to represent days which begin at the end of the month"
+                      >
+                        <Input
+                          {...formApi.register(`time_intervals.${timeIntervalIndex}.days_of_month`)}
+                          className={styles.input}
+                          placeholder="Example: 1, 14:16, -1"
+                        />
+                      </Field>
+                      <Field
+                        label="Months"
+                        description="The months of the year in either numerical or the full calendar month"
+                      >
+                        <Input
+                          {...formApi.register(`time_intervals.${timeIntervalIndex}.months`)}
+                          className={styles.input}
+                          placeholder="Example: 1:3, may:august, december"
+                        />
+                      </Field>
+                      <Field label="Years">
+                        <Input
+                          {...formApi.register(`time_intervals.${timeIntervalIndex}.years`)}
+                          className={styles.input}
+                          placeholder="Example: 2021:2022, 2030"
+                        />
+                      </Field>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        icon="trash-alt"
+                        onClick={() => removeTimeInterval(timeIntervalIndex)}
+                      >
+                        Remove time interval
+                      </Button>
+                    </div>
+                  );
+                })}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className={styles.removeTimeIntervalButton}
+                  onClick={() => {
+                    addTimeInterval(defaultTimeInterval);
+                  }}
+                >
+                  Add another time interval
+                </Button>
+              </FieldSet>
+              <Button type="submit">Submit</Button>
+            </FieldSet>
+          </form>
+        </FormProvider>
+      )}
     </AlertingPageWrapper>
   );
 };
@@ -223,20 +239,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   input: css`
     width: 400px;
   `,
-  timeRangeSection: css`
-    display: flex;
-    align-items: center;
-    margin-left: ${theme.spacing(2)};
-    gap: ${theme.spacing(1)};
-  `,
-  timeRange: css`
+  timeIntervalSection: css`
+    background-color: ${theme.colors.background.secondary};
+    padding: ${theme.spacing(1)};
     margin-bottom: ${theme.spacing(1)};
   `,
-  timeRangeInput: css`
-    width: 120px;
-  `,
-  deleteTimeRange: css`
-    margin-bottom: ${theme.spacing(4)};
+  removeTimeIntervalButton: css`
+    margin-top: ${theme.spacing(1)};
   `,
 });
 

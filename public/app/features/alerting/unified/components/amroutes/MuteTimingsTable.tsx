@@ -1,4 +1,6 @@
-import { IconButton, LinkButton, Link } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { IconButton, LinkButton, Link, useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig, MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
@@ -15,6 +17,7 @@ interface Props {
 }
 
 export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTimingNames, hideActions }) => {
+  const styles = useStyles2(getStyles);
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
   const { result }: AsyncRequestState<AlertManagerCortexConfig> =
     (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
@@ -38,7 +41,11 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
       {!hideActions && <h5>Mute timings</h5>}
       {items.length > 0 ? <DynamicTable items={items} cols={columns} /> : 'No mute timings configured'}
       {!hideActions && (
-        <LinkButton variant="secondary" href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}>
+        <LinkButton
+          className={styles.addMuteButton}
+          variant="secondary"
+          href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+        >
           Add mute timing
         </LinkButton>
       )}
@@ -122,7 +129,14 @@ function parseTimings(timeIntervals: TimeInterval[]) {
         {`${timeString} ${weekdayString}`}
         <br />
         {[daysString, monthsString, yearsString].join(' | ')}
+        <br />
       </React.Fragment>
     );
   });
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  addMuteButton: css`
+    margin-top: ${theme.spacing(1)};
+  `,
+});
