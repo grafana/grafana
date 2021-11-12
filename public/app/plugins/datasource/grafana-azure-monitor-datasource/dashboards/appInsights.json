@@ -2587,30 +2587,6 @@
         "allValue": null,
         "current": {
           "selected": false,
-          "text": "Grafana",
-          "value": "Grafana"
-        },
-        "datasource": "${ds}",
-        "definition": "ResourceNames($sub, $rg, $ns)",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "Resource",
-        "multi": false,
-        "name": "res",
-        "options": [],
-        "query": "ResourceNames($sub, $rg, $ns)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "allValue": null,
-        "current": {
-          "selected": false,
           "text": "microsoft.insights/components",
           "value": "microsoft.insights/components"
         },
@@ -2627,6 +2603,30 @@
         "query": "Namespaces($sub, $rg)",
         "refresh": 1,
         "regex": "([mM](icrosoft)\\.[iI](nsights)/(components))",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "Grafana",
+          "value": "Grafana"
+        },
+        "datasource": "${ds}",
+        "definition": "ResourceNames($sub, $rg, $ns)",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resource",
+        "multi": false,
+        "name": "res",
+        "options": [],
+        "query": "ResourceNames($sub, $rg, $ns)",
+        "refresh": 1,
+        "regex": "",
         "skipUrlSync": false,
         "sort": 0,
         "type": "query"
