@@ -38,7 +38,7 @@ export const useMenuFocus = ({
       setFocusedItem(0);
       setOpenedWithArrow?.(false);
     }
-  }, [isMenuOpen, openedWithArrow]);
+  }, [isMenuOpen, openedWithArrow, setOpenedWithArrow]);
 
   useEffect(() => {
     const menuItems = localRef?.current?.querySelectorAll(`[data-role="menuitem"]`);
