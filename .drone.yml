@@ -26,7 +26,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -289,7 +289,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -619,7 +619,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $env:DRONE_RUNNER_NAME
@@ -672,7 +672,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -763,7 +763,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -1057,7 +1057,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $env:DRONE_RUNNER_NAME
@@ -1130,7 +1130,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -1532,7 +1532,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $env:DRONE_RUNNER_NAME
@@ -1603,7 +1603,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -1713,7 +1713,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -1995,7 +1995,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $env:DRONE_RUNNER_NAME
@@ -2069,7 +2069,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -2463,7 +2463,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $env:DRONE_RUNNER_NAME
@@ -2535,7 +2535,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -2650,7 +2650,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -2909,7 +2909,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $env:DRONE_RUNNER_NAME
@@ -2978,7 +2978,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -3376,7 +3376,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.5/grabpl
   - chmod +x bin/grabpl
-  image: grafana/build-container:1.4.5
+  image: alpine:3.14.2
   name: grabpl
 - commands:
   - echo $env:DRONE_RUNNER_NAME
@@ -3507,6 +3507,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 6c34bf26eac31b422f60c92cba9b400136d4cd4ff53d01a3b320ab89a2efc1b9
+hmac: 639d39aea3ed841b6ff84453f438d56ff481768887082f90495b6b81cf612f83
 
 ...

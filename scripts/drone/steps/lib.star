@@ -127,7 +127,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 def download_grabpl():
     return {
         'name': 'grabpl',
-        'image': build_image,
+        'image': alpine_image,
         'commands': [
             'mkdir -p bin',
             'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
