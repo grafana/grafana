@@ -18,6 +18,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     text-overflow: ellipsis;
     box-sizing: border-box;
     max-width: 100%;
+    border: 1px solid red;
   `;
   const container = css`
     width: 16px;
@@ -59,7 +60,7 @@ export const SingleValue = (props: Props) => {
   const { children, data, disabled } = props;
   const styles = useStyles2(getStyles);
   const loading = useDelayedSwitch(data.loading || false, { delay: 250, duration: 750 });
-
+  console.log('SINGLE', props);
   return (
     <components.SingleValue {...props}>
       <div className={cx(styles.singleValue, disabled && styles.disabled)}>

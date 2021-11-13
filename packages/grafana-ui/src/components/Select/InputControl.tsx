@@ -36,6 +36,7 @@ const getInputControlStyles = stylesFactory(
 
           position: relative;
           box-sizing: border-box;
+          border: 1px solid green;
         `,
         withPrefix &&
           css`
