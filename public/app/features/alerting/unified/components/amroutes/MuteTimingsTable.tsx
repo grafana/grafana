@@ -1,8 +1,8 @@
+import React, { FC, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, LinkButton, Link, useStyles2 } from '@grafana/ui';
+import { IconButton, LinkButton, Link, useStyles2, ConfirmModal } from '@grafana/ui';
 import { AlertManagerCortexConfig, MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
-import React, { FC, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteMuteTimingAction } from '../../state/actions';
@@ -18,7 +18,9 @@ interface Props {
 
 export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTimingNames, hideActions }) => {
   const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
+  const [muteTimingName, setMuteTimingName] = useState<string>('');
   const { result }: AsyncRequestState<AlertManagerCortexConfig> =
     (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
@@ -34,12 +36,22 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
       });
   }, [result?.alertmanager_config?.mute_time_intervals, muteTimingNames]);
 
-  const columns = useColumns(alertManagerSourceName, hideActions);
+  const columns = useColumns(alertManagerSourceName, hideActions, setMuteTimingName);
 
   return (
     <div>
       {!hideActions && <h5>Mute timings</h5>}
       {items.length > 0 ? <DynamicTable items={items} cols={columns} /> : 'No mute timings configured'}
+      {!hideActions && (
+        <ConfirmModal
+          isOpen={!!muteTimingName}
+          title="Delete mute timing"
+          body="Are you sure you would like to delete this mute timing"
+          confirmText="Delete"
+          onConfirm={() => dispatch(deleteMuteTimingAction(alertManagerSourceName, muteTimingName))}
+          onDismiss={() => setMuteTimingName('')}
+        />
+      )}
       {!hideActions && (
         <LinkButton
           className={styles.addMuteButton}
@@ -53,8 +65,7 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
   );
 };
 
-function useColumns(alertManagerSourceName: string, hideActions?: boolean) {
-  const dispatch = useDispatch();
+function useColumns(alertManagerSourceName: string, hideActions = false, setMuteTimingName: (name: string) => void) {
   return useMemo((): Array<DynamicTableColumnProps<MuteTimeInterval>> => {
     const columns: Array<DynamicTableColumnProps<MuteTimeInterval>> = [
       {
@@ -81,19 +92,15 @@ function useColumns(alertManagerSourceName: string, hideActions?: boolean) {
               <Link href={makeAMLink(`/alerting/routes/mute-timing/${btoa(data.name)}/edit`, alertManagerSourceName)}>
                 <IconButton name="edit" title="Edit mute timing" />
               </Link>
-              <IconButton
-                name={'trash-alt'}
-                title="Delete mute timing"
-                onClick={() => dispatch(deleteMuteTimingAction(alertManagerSourceName, data.name))}
-              />
+              <IconButton name={'trash-alt'} title="Delete mute timing" onClick={() => setMuteTimingName(data.name)} />
             </div>
           );
         },
-        size: '140px',
+        size: '100px',
       });
     }
     return columns;
-  }, [alertManagerSourceName, dispatch, hideActions]);
+  }, [alertManagerSourceName, hideActions, setMuteTimingName]);
 }
 
 function parseTimings(timeIntervals: TimeInterval[]) {

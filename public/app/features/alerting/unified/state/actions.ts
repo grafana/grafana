@@ -663,22 +663,28 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
       config?.alertmanager_config?.mute_time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
 
     if (config) {
-      dispatch(
-        updateAlertManagerConfigAction({
-          alertManagerSourceName,
-          oldConfig: config,
-          newConfig: {
-            ...config,
-            alertmanager_config: {
-              ...config.alertmanager_config,
-              route: config.alertmanager_config.route
-                ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
-                : undefined,
-              mute_time_intervals: muteIntervals,
+      withAppEvents(
+        dispatch(
+          updateAlertManagerConfigAction({
+            alertManagerSourceName,
+            oldConfig: config,
+            newConfig: {
+              ...config,
+              alertmanager_config: {
+                ...config.alertmanager_config,
+                route: config.alertmanager_config.route
+                  ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
+                  : undefined,
+                mute_time_intervals: muteIntervals,
+              },
             },
-          },
-          refetch: true,
-        })
+            refetch: true,
+          })
+        ),
+        {
+          successMessage: `Deleted "${muteTimingName}" from Alertmanager configuration`,
+          errorMessage: 'Failed to delete mute timing',
+        }
       );
     }
   };
