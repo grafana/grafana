@@ -1995,7 +1995,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/cache@npm:^11.0.0, @emotion/cache@npm:^11.1.3, @emotion/cache@npm:^11.5.0":
+"@emotion/cache@npm:^11.1.3, @emotion/cache@npm:^11.4.0, @emotion/cache@npm:^11.5.0":
   version: 11.5.0
   resolution: "@emotion/cache@npm:11.5.0"
   dependencies:
@@ -2821,8 +2821,8 @@ __metadata:
     react-inlinesvg: 2.3.0
     react-popper: 2.2.4
     react-router-dom: ^5.2.0
-    react-select: 4.3.0
-    react-select-event: ^5.1.0
+    react-select: 5.2.1
+    react-select-event: 5.3.0
     react-table: 7.7.0
     react-test-renderer: 17.0.1
     react-transition-group: 4.4.1
@@ -8459,7 +8459,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-transition-group@npm:*":
+"@types/react-transition-group@npm:*, @types/react-transition-group@npm:^4.4.0":
   version: 4.4.4
   resolution: "@types/react-transition-group@npm:4.4.4"
   dependencies:
@@ -17897,7 +17897,6 @@ __metadata:
     "@types/react-loadable": 5.5.2
     "@types/react-redux": 7.1.20
     "@types/react-router-dom": ^5.1.7
-    "@types/react-select": 4.0.13
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.0
     "@types/react-virtualized-auto-sizer": 1.0.0
@@ -18052,7 +18051,7 @@ __metadata:
     react-resizable: 3.0.4
     react-reverse-portal: ^2.0.1
     react-router-dom: ^5.2.0
-    react-select: 4.3.0
+    react-select: 5.2.1
     react-select-event: ^5.1.0
     react-split-pane: 0.1.89
     react-test-renderer: 17.0.1
@@ -27584,7 +27583,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select-event@npm:^5.1.0":
+"react-select-event@npm:5.3.0, react-select-event@npm:^5.1.0":
   version: 5.3.0
   resolution: "react-select-event@npm:5.3.0"
   dependencies:
@@ -27593,21 +27592,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:4.3.0":
-  version: 4.3.0
-  resolution: "react-select@npm:4.3.0"
+"react-select@npm:5.2.1":
+  version: 5.2.1
+  resolution: "react-select@npm:5.2.1"
   dependencies:
     "@babel/runtime": ^7.12.0
-    "@emotion/cache": ^11.0.0
+    "@emotion/cache": ^11.4.0
     "@emotion/react": ^11.1.1
+    "@types/react-transition-group": ^4.4.0
     memoize-one: ^5.0.0
     prop-types: ^15.6.0
-    react-input-autosize: ^3.0.0
     react-transition-group: ^4.3.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
-  checksum: 00946ed4dfa46523bc44cd26aab11431396632097207081b471d1965fa53cf7f5a006ac11d89b8a65df05cc5376b1c4438edb1d5259323bdc6d3adf01c79d53e
+  checksum: 014cde5d23ca466795bd7f02455769efda74522c41f11109ec2d6f0e3c77f401ea91ae23cdccce997efb653aa6ea88688a16f40e59bfdef2a2414d0cfd10f374
   languageName: node
   linkType: hard
 

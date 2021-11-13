@@ -231,7 +231,7 @@ export function SelectBase<T>({
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
     creatableProps.onCreateOption = onCreateOption;
-    creatableProps.isValidNewOption = isValidNewOption;
+    creatableProps.isValidNewOption = isValidNewOption as any;
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
