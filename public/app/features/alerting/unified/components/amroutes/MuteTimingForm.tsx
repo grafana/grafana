@@ -174,6 +174,8 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
                         <Input
                           {...formApi.register(`time_intervals.${timeIntervalIndex}.weekdays`)}
                           className={styles.input}
+                          // @ts-ignore react-hook-form doesn't handle nested field arrays well
+                          defaultValue={timeInterval.weekdays}
                           placeholder="Example: monday, tuesday:thursday"
                         />
                       </Field>
@@ -184,6 +186,8 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
                         <Input
                           {...formApi.register(`time_intervals.${timeIntervalIndex}.days_of_month`)}
                           className={styles.input}
+                          // @ts-ignore react-hook-form doesn't handle nested field arrays well
+                          defaultValue={timeInterval.days_of_month}
                           placeholder="Example: 1, 14:16, -1"
                         />
                       </Field>
@@ -195,6 +199,8 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
                           {...formApi.register(`time_intervals.${timeIntervalIndex}.months`)}
                           className={styles.input}
                           placeholder="Example: 1:3, may:august, december"
+                          // @ts-ignore react-hook-form doesn't handle nested field arrays well
+                          defaultValue={timeInterval.months}
                         />
                       </Field>
                       <Field label="Years">
@@ -202,6 +208,8 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
                           {...formApi.register(`time_intervals.${timeIntervalIndex}.years`)}
                           className={styles.input}
                           placeholder="Example: 2021:2022, 2030"
+                          // @ts-ignore react-hook-form doesn't handle nested field arrays well
+                          defaultValue={timeInterval.years}
                         />
                       </Field>
                       <Button
