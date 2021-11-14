@@ -30,6 +30,7 @@ type Bus interface {
 	Dispatch(msg Msg) error
 	DispatchCtx(ctx context.Context, msg Msg) error
 	Publish(msg Msg) error
+	PublishCtx(ctx context.Context, msg Msg) error
 
 	// InTransaction starts a transaction and store it in the context.
 	// The caller can then pass a function with multiple DispatchCtx calls that
@@ -40,6 +41,7 @@ type Bus interface {
 	AddHandler(handler HandlerFunc)
 	AddHandlerCtx(handler HandlerFunc)
 	AddEventListener(handler HandlerFunc)
+	AddEventListenerCtx(handler HandlerFunc)
 
 	// SetTransactionManager allows the user to replace the internal
 	// noop TransactionManager that is responsible for managing
@@ -156,6 +158,34 @@ func (b *InProcBus) Dispatch(msg Msg) error {
 }
 
 // Publish function publish a message to the bus listener.
+func (b *InProcBus) PublishCtx(ctx context.Context, msg Msg) error {
+	var msgName = reflect.TypeOf(msg).Elem().Name()
+	var listeners = b.listeners[msgName]
+
+	span, _ := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
+	defer span.Finish()
+
+	span.SetTag("msg", msgName)
+
+	var params = make([]reflect.Value, 1)
+	params[0] = reflect.ValueOf(msg)
+
+	for _, listenerHandler := range listeners {
+		ret := reflect.ValueOf(listenerHandler).Call(params)
+		e := ret[0].Interface()
+		if e != nil {
+			err, ok := e.(error)
+			if ok {
+				return err
+			}
+			return fmt.Errorf("expected listener to return an error, got '%T'", e)
+		}
+	}
+
+	return nil
+}
+
+// Publish function publish a message to the bus listener.
 func (b *InProcBus) Publish(msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 	var listeners = b.listeners[msgName]
@@ -205,6 +235,16 @@ func (b *InProcBus) AddEventListener(handler HandlerFunc) {
 	b.listeners[eventName] = append(b.listeners[eventName], handler)
 }
 
+func (b *InProcBus) AddEventListenerCtx(handler HandlerFunc) {
+	handlerType := reflect.TypeOf(handler)
+	eventName := handlerType.In(1).Elem().Name()
+	_, exists := b.listeners[eventName]
+	if !exists {
+		b.listeners[eventName] = make([]HandlerFunc, 0)
+	}
+	b.listeners[eventName] = append(b.listeners[eventName], handler)
+}
+
 // AddHandler attaches a handler function to the global bus.
 // Package level function.
 func AddHandler(implName string, handler HandlerFunc) {
@@ -223,6 +263,12 @@ func AddEventListener(handler HandlerFunc) {
 	globalBus.AddEventListener(handler)
 }
 
+// AddEventListenerCtx attaches a handler function to the event listener.
+// Package level function.
+func AddEventListenerCtx(handler HandlerFunc) {
+	globalBus.AddEventListener(handler)
+}
+
 func Dispatch(msg Msg) error {
 	return globalBus.Dispatch(msg)
 }
@@ -232,6 +278,10 @@ func DispatchCtx(ctx context.Context, msg Msg) error {
 }
 
 func Publish(msg Msg) error {
+	return globalBus.Publish(msg)
+}
+
+func PublishCtx(msg Msg) error {
 	return globalBus.Publish(msg)
 }
 
