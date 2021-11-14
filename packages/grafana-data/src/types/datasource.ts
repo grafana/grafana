@@ -14,6 +14,7 @@ import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSuppo
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 import { DataQuery } from './query';
 import { DataSourceRef } from '.';
+import { StreamingResponseData } from '../dataframe/StreamingDataFrame';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -425,7 +426,7 @@ export interface QueryEditorHelpProps<TQuery extends DataQuery = DataQuery> {
  */
 export type LegacyResponseData = TimeSeries | TableData | any;
 
-export type DataQueryResponseData = DataFrame | DataFrameDTO | LegacyResponseData;
+export type DataQueryResponseData = DataFrame | DataFrameDTO | LegacyResponseData | StreamingResponseData;
 
 export interface DataQueryResponse {
   /**

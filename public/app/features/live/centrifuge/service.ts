@@ -1,24 +1,18 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
 import { LiveDataStreamOptions } from '@grafana/runtime';
-import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
 import {
-  DataFrame,
-  DataFrameJSON,
-  dataFrameToJSON,
   DataQueryResponse,
-  isLiveChannelMessageEvent,
-  isLiveChannelStatusEvent,
   LiveChannelAddress,
   LiveChannelConfig,
   LiveChannelConnectionState,
   LiveChannelEvent,
+  LiveChannelId,
   LiveChannelPresenceStatus,
-  LoadingState,
-  StreamingDataFrame,
-  toDataFrameDTO,
+  toLiveChannelId,
 } from '@grafana/data';
 import { CentrifugeLiveChannel } from './channel';
+import { LiveDataStream } from './LiveDataStream';
 
 export type CentrifugeSrvDeps = {
   appUrl: string;
@@ -53,15 +47,18 @@ export interface CentrifugeSrv {
   getPresence(address: LiveChannelAddress, config: LiveChannelConfig): Promise<LiveChannelPresenceStatus>;
 }
 
+export type DataStreamSubscriptionKey = string;
+
 export class CentrifugeService implements CentrifugeSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
+  private readonly liveDataStreamByChannelId: Record<LiveChannelId, LiveDataStream> = {};
   readonly centrifuge: Centrifuge;
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
-  private dataStreamSubscriberReady = true;
+  private readonly dataStreamSubscriberReadiness: Observable<boolean>;
 
   constructor(private deps: CentrifugeSrvDeps) {
-    deps.dataStreamSubscriberReadiness.subscribe((next) => (this.dataStreamSubscriberReady = next));
+    this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
     const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
     this.centrifuge = new Centrifuge(liveUrl, {});
     this.centrifuge.setConnectData({
@@ -163,109 +160,37 @@ export class CentrifugeService implements CentrifugeSrv {
     return this.getChannel<T>(address, config).getStream();
   }
 
+  private createSubscriptionKey = (options: LiveDataStreamOptions): DataStreamSubscriptionKey =>
+    options.key ?? `xstr/${streamCounter++}`;
+
+  private getLiveDataStream = (options: LiveDataStreamOptions, config: LiveChannelConfig): LiveDataStream => {
+    const channelId = toLiveChannelId(options.addr);
+    const existingStream = this.liveDataStreamByChannelId[channelId];
+
+    if (existingStream) {
+      return existingStream;
+    }
+
+    const channel = this.getChannel(options.addr, config);
+    this.liveDataStreamByChannelId[channelId] = new LiveDataStream({
+      channelId,
+      config,
+      onShutdown: () => {
+        delete this.liveDataStreamByChannelId[channelId];
+      },
+      liveEventsObservable: channel.getStream(),
+      subscriberReadiness: this.dataStreamSubscriberReadiness,
+    });
+    return this.liveDataStreamByChannelId[channelId];
+  };
   /**
    * Connect to a channel and return results as DataFrames
    */
   getDataStream(options: LiveDataStreamOptions, config: LiveChannelConfig): Observable<DataQueryResponse> {
-    return new Observable<DataQueryResponse>((subscriber) => {
-      const channel = this.getChannel(options.addr, config);
-      const key = options.key ?? `xstr/${streamCounter++}`;
-      let data: StreamingDataFrame | undefined = undefined;
-      let filtered: DataFrame | undefined = undefined;
-      let state = LoadingState.Streaming;
-      let lastWidth = -1;
+    const subscriptionKey = this.createSubscriptionKey(options);
 
-      const process = (msg: DataFrameJSON) => {
-        if (!data) {
-          data = new StreamingDataFrame(msg, options.buffer);
-        } else {
-          data.push(msg);
-        }
-        state = LoadingState.Streaming;
-        const sameWidth = lastWidth === data.fields.length;
-        lastWidth = data.fields.length;
-
-        // Filter out fields
-        if (!filtered || msg.schema || !sameWidth) {
-          filtered = data;
-          if (options.filter) {
-            const { fields } = options.filter;
-            if (fields?.length) {
-              filtered = {
-                ...data,
-                fields: data.fields.filter((f) => fields.includes(f.name)),
-              };
-            }
-          }
-        }
-
-        if (this.dataStreamSubscriberReady) {
-          filtered.length = data.length; // make sure they stay up-to-date
-          subscriber.next({
-            state,
-            data: [
-              // workaround for serializing issues when sending DataFrame from web worker to the main thread
-              // DataFrame is making use of ArrayVectors which are es6 classes and thus not cloneable out of the box
-              // `toDataFrameDTO` converts ArrayVectors into native arrays.
-              toDataFrameDTO(filtered),
-            ],
-            key,
-          });
-        }
-      };
-
-      if (options.frame) {
-        process(dataFrameToJSON(options.frame));
-      } else if (channel.lastMessageWithSchema) {
-        process(channel.lastMessageWithSchema);
-      }
-
-      const sub = channel.getStream().subscribe({
-        error: (err: any) => {
-          console.log('LiveQuery [error]', { err }, options.addr);
-          state = LoadingState.Error;
-          subscriber.next({ state, data: [data], key, error: toDataQueryError(err) });
-          sub.unsubscribe(); // close after error
-        },
-        complete: () => {
-          console.log('LiveQuery [complete]', options.addr);
-          if (state !== LoadingState.Error) {
-            state = LoadingState.Done;
-          }
-          // or track errors? subscriber.next({ state, data: [data], key });
-          subscriber.complete();
-          sub.unsubscribe();
-        },
-        next: (evt: LiveChannelEvent) => {
-          if (isLiveChannelMessageEvent(evt)) {
-            process(evt.message);
-            return;
-          }
-          if (isLiveChannelStatusEvent(evt)) {
-            if (evt.error) {
-              let error = toDataQueryError(evt.error);
-              error.message = `Streaming channel error: ${error.message}`;
-              state = LoadingState.Error;
-              subscriber.next({ state, data: [data], key, error });
-              return;
-            } else if (
-              evt.state === LiveChannelConnectionState.Connected ||
-              evt.state === LiveChannelConnectionState.Pending
-            ) {
-              if (evt.message) {
-                process(evt.message);
-              }
-              return;
-            }
-            console.log('ignore state', evt);
-          }
-        },
-      });
-
-      return () => {
-        sub.unsubscribe();
-      };
-    });
+    const stream = this.getLiveDataStream(options, config);
+    return stream.get(options, subscriptionKey);
   }
 
   /**

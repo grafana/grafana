@@ -27,6 +27,7 @@ import {
   PanelData,
   rangeUtil,
   ScopedVars,
+  StreamingDataFrame,
   TimeRange,
   TimeZone,
   transformDataFrame,
@@ -54,6 +55,7 @@ export interface QueryRunnerOptions<
 }
 
 let counter = 100;
+
 export function getNextRequestId() {
   return 'Q' + counter++;
 }
@@ -81,59 +83,31 @@ export class PanelQueryRunner {
     const { withFieldConfig, withTransforms } = options;
     let structureRev = 1;
     let lastData: DataFrame[] = [];
-    let processedCount = 0;
+    let isFirstPacket = true;
     let lastConfigRev = -1;
-    const fastCompare = (a: DataFrame, b: DataFrame) => {
-      return compareDataFrameStructures(a, b, true);
-    };
 
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),
       map((data: PanelData) => {
         let processedData = data;
-        let sameStructure = false;
+        let streamingPacketWithSameSchema = false;
 
         if (withFieldConfig && data.series?.length) {
-          // Apply field defaults and overrides
-          let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-          let processFields = fieldConfig != null;
+          if (lastConfigRev === this.dataConfigSource.configRev) {
+            const streamingDataFrame = data.series.find((frame) => frame instanceof StreamingDataFrame) as
+              | StreamingDataFrame
+              | undefined;
 
-          // If the shape is the same, we can skip field overrides
-          if (
-            data.state === LoadingState.Streaming &&
-            processFields &&
-            processedCount > 0 &&
-            lastData.length &&
-            lastConfigRev === this.dataConfigSource.configRev
-          ) {
-            const sameTypes = compareArrayValues(lastData, processedData.series, fastCompare);
-            if (sameTypes) {
-              // Keep the previous field config settings
-              processedData = {
-                ...processedData,
-                series: lastData.map((frame, frameIndex) => ({
-                  ...frame,
-                  length: data.series[frameIndex].length,
-                  fields: frame.fields.map((field, fieldIndex) => ({
-                    ...field,
-                    values: data.series[frameIndex].fields[fieldIndex].values,
-                    state: {
-                      ...field.state,
-                      calcs: undefined,
-                      // add global range calculation here? (not optimal for streaming)
-                      range: undefined,
-                    },
-                  })),
-                })),
-              };
-              processFields = false;
-              sameStructure = true;
+            if (streamingDataFrame && !streamingDataFrame.packetInfo.schemaChanged) {
+              streamingPacketWithSameSchema = true;
             }
           }
 
-          if (processFields) {
+          // Apply field defaults and overrides
+          let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+
+          if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
             lastConfigRev = this.dataConfigSource.configRev!;
-            processedCount++; // results with data
             processedData = {
               ...processedData,
               series: applyFieldOverrides({
@@ -142,16 +116,16 @@ export class PanelQueryRunner {
                 ...fieldConfig!,
               }),
             };
+            isFirstPacket = false;
           }
         }
 
-        if (!sameStructure) {
-          sameStructure = compareArrayValues(lastData, processedData.series, compareDataFrameStructures);
-        }
-        if (!sameStructure) {
+        if (
+          !streamingPacketWithSameSchema &&
+          !compareArrayValues(lastData, processedData.series, compareDataFrameStructures)
+        ) {
           structureRev++;
         }
-
         lastData = processedData.series;
 
         return { ...processedData, structureRev };

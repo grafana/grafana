@@ -150,6 +150,8 @@ export interface LiveChannelPresenceStatus {
   users: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
+export type LiveChannelId = string;
+
 /**
  * @alpha -- experimental
  */
@@ -192,7 +194,7 @@ export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is Li
  *
  * @alpha -- experimental
  */
-export function toLiveChannelId(addr: LiveChannelAddress): string {
+export function toLiveChannelId(addr: LiveChannelAddress): LiveChannelId {
   if (!addr.scope) {
     return '';
   }

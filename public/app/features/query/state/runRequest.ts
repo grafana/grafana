@@ -17,6 +17,7 @@ import {
   guessFieldTypes,
   LoadingState,
   PanelData,
+  StreamingDataFrame,
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
@@ -26,6 +27,11 @@ import { dataSource as expressionDatasource } from 'app/features/expressions/Exp
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import {
+  isAnyStreamingResponseData,
+  isStreamingResponseData,
+  StreamingResponseDataType,
+} from '@grafana/data/src/dataframe/StreamingDataFrame';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -81,6 +87,19 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     request,
     timeRange,
   };
+  panelData.series = panelData.series.map((frame, frameIndex) => {
+    const dataPacket = panelData.series[frameIndex];
+    if (isStreamingResponseData(dataPacket, StreamingResponseDataType.FullFrame)) {
+      return StreamingDataFrame.fromSerialized(dataPacket.frame);
+    } else if (isStreamingResponseData(dataPacket, StreamingResponseDataType.NewValuesSameSchema)) {
+      const buffer = state.panelData.series[frameIndex] as StreamingDataFrame;
+      buffer.pushNewValues(dataPacket.values);
+      buffer.resetStateCalculations(); // TODO: should we recalculate the state here?
+      return buffer;
+    }
+
+    return dataPacket;
+  });
 
   return { packets, panelData };
 }
@@ -181,6 +200,19 @@ export function callQueryMethod(
   return from(returnVal);
 }
 
+function getProcessedDataFrame(data: DataQueryResponseData): DataFrame {
+  const dataFrame = guessFieldTypes(toDataFrame(data));
+
+  if (dataFrame.fields && dataFrame.fields.length) {
+    // clear out the cached info
+    for (const field of dataFrame.fields) {
+      field.state = null;
+    }
+  }
+
+  return dataFrame;
+}
+
 /**
  * All panels will be passed tables that have our best guess at column type set
  *
@@ -191,22 +223,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
     return [];
   }
 
-  const dataFrames: DataFrame[] = [];
-
-  for (const result of results) {
-    const dataFrame = guessFieldTypes(toDataFrame(result));
-
-    if (dataFrame.fields && dataFrame.fields.length) {
-      // clear out the cached info
-      for (const field of dataFrame.fields) {
-        field.state = null;
-      }
-    }
-
-    dataFrames.push(dataFrame);
-  }
-
-  return dataFrames;
+  return results.map((data) => getProcessedDataFrame(data));
 }
 
 export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
@@ -227,7 +244,9 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
 
   // Make sure the data frames are properly formatted
   const STARTTIME = performance.now();
-  const processedDataFrames = getProcessedDataFrames(series);
+  const processedDataFrames = series.map((data) =>
+    isAnyStreamingResponseData(data) ? data : getProcessedDataFrame(data)
+  );
   const annotationsProcessed = getProcessedDataFrames(annotations);
   const STOPTIME = performance.now();
 

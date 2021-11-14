@@ -23,7 +23,7 @@ describe('Streaming JSON', () => {
       },
     };
 
-    const stream = new StreamingDataFrame(json, {
+    const stream = StreamingDataFrame.fromDataFrameJSON(json, {
       maxLength: 5,
       maxDelta: 300,
     });
@@ -189,7 +189,7 @@ describe('Streaming JSON', () => {
   });
 
   describe('lengths property is accurate', () => {
-    const stream = new StreamingDataFrame(
+    const stream = StreamingDataFrame.fromDataFrameJSON(
       {
         schema: {
           fields: [{ name: 'simple', type: FieldType.number }],
@@ -217,7 +217,7 @@ describe('Streaming JSON', () => {
   });
 
   describe('streaming labels column', () => {
-    const stream = new StreamingDataFrame(
+    const stream = StreamingDataFrame.fromDataFrameJSON(
       {
         schema: {
           fields: [
@@ -392,7 +392,7 @@ describe('Streaming JSON', () => {
       },
     };
 
-    const stream = new StreamingDataFrame(json, {
+    const stream = StreamingDataFrame.fromDataFrameJSON(json, {
       maxLength: 4,
       maxDelta: 300,
     });
