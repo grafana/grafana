@@ -357,23 +357,6 @@ export class GeomapPanel extends Component<Props, State> {
     }
   };
 
-  // // This may need to support a layer name change!
-  // private updateLayer = (uid: string, updatedLayer: MapLayerState<any>) => {
-  //   const selected = this.layers.findIndex((v) => v.options.name === uid);
-  //   const layers: MapLayerState[] = [];
-  //   for (const lyr of this.layers) {
-  //     if (lyr.options.name === uid) {
-  //       this.map?.removeLayer(lyr.layer);
-  //       this.map?.addLayer(updatedLayer.layer);
-  //       layers.push(updatedLayer);
-  //     } else {
-  //       layers.push(lyr);
-  //     }
-  //   }
-  //   this.layers = layers;
-  //   this.doOptionsUpdate(selected);
-  // };
-
   private updateLayer = async (uid: string, newOptions: MapLayerOptions): Promise<boolean> => {
     if (!this.map) {
       return false;
