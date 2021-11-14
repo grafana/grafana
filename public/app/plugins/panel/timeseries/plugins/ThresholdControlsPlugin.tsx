@@ -2,6 +2,7 @@ import React, { useState, useLayoutEffect, useMemo, useRef } from 'react';
 import { FieldConfigSource, ThresholdsConfig, getValueFormat } from '@grafana/data';
 import { UPlotConfigBuilder, FIXED_UNIT } from '@grafana/ui';
 import { ThresholdDragHandle } from './ThresholdDragHandle';
+import uPlot from 'uplot';
 
 const GUTTER_SIZE = 60;
 

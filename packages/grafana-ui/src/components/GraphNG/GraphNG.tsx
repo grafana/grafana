@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlignedData } from 'uplot';
+import uPlot, { AlignedData } from 'uplot';
 import { Themeable2 } from '../../types';
 import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
 import {
