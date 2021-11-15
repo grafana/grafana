@@ -1,3 +1,11 @@
+<!-- 8.2.4 START -->
+
+# 8.2.4 (2021-11-15)
+
+- **Security**: Fixes CVE-2021-41244. For more information, see our [blog](https://grafana.com/blog/2021/11/15/grafana-8.2.4-released-with-security-fixes/)
+
+<!-- 8.2.4 END -->
+
 <!-- 8.2.3 START -->
 
 # 8.2.3 (2021-11-03)
