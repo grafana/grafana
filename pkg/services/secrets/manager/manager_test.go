@@ -160,7 +160,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
 
-		cfg := &setting.Cfg{Raw: raw, FeatureToggles: map[string]bool{envelopeEncryptionFeatureToggle: true}}
+		cfg := &setting.Cfg{Raw: raw, FeatureToggles: map[string]bool{secrets.EnvelopeEncryptionFeatureToggle: true}}
 		settings := &setting.OSSImpl{Cfg: cfg}
 
 		svc := ProvideSecretsService(
@@ -185,7 +185,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
 
-		cfg := &setting.Cfg{Raw: raw, FeatureToggles: map[string]bool{envelopeEncryptionFeatureToggle: true}}
+		cfg := &setting.Cfg{Raw: raw, FeatureToggles: map[string]bool{secrets.EnvelopeEncryptionFeatureToggle: true}}
 		settings := &setting.OSSImpl{Cfg: cfg}
 
 		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
