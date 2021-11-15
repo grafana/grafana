@@ -58,6 +58,8 @@ export interface GrafanaLiveSrv {
    * Execute a query over the live websocket and potentiall subscribe to a live channel.
    *
    * Since the initial request and subscription are on the same socket, this will support HA setups
+   *
+   * NOTE: this function willl be called when the feature toggle `queryOverLive` is set
    */
   getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse>;
 
