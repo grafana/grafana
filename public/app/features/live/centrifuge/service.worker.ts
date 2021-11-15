@@ -27,7 +27,7 @@ const getDataStream = (options: LiveDataStreamOptions, config: LiveChannelConfig
   return comlink.proxy(centrifuge.getDataStream(options, config));
 };
 
-const getQueryDataStream = (options: LiveQueryDataOptions) => {
+const getQueryData = (options: LiveQueryDataOptions) => {
   return comlink.proxy(centrifuge.getQueryData(options));
 };
 
@@ -44,7 +44,7 @@ const workObj = {
   getConnectionState,
   getDataStream,
   getStream,
-  getQueryDataStream,
+  getQueryData,
   getPresence,
 };
 

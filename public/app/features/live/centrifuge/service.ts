@@ -283,7 +283,7 @@ export class CentrifugeService implements CentrifugeSrv {
   getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse> {
     return new Observable((subscriber) => {
       this.centrifuge
-        .rpc(options.body)
+        .namedRPC('grafana.query', options.body)
         .then((raw) => {
           const rsp = toDataQueryResponse(raw, options.queries);
           // Check if any response should subscribe to a live stream

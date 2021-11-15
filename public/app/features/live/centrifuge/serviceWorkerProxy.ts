@@ -33,7 +33,7 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
    * Query over websocket
    */
   getQueryData: CentrifugeSrv['getQueryData'] = (options: LiveQueryDataOptions) => {
-    return this.centrifugeWorker.getQueryData(options);
+    return promiseWithRemoteObservableAsObservable(this.centrifugeWorker.getQueryData(options));
   };
 
   getPresence: CentrifugeSrv['getPresence'] = (address, config) => {
