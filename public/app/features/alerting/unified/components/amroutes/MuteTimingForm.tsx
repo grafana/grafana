@@ -1,21 +1,21 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { Field, FieldSet, Input, Button, useStyles2 } from '@grafana/ui';
 import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
-import { AlertmanagerConfig, MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { omitBy, isUndefined } from 'lodash';
 import { AlertManagerPicker } from '../AlertManagerPicker';
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
-import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';
+import { updateAlertManagerConfigAction } from '../../state/actions';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { MuteTimingTimeRange } from './MuteTimingTimeRange';
 
 interface Props {
-  muteTiming?: string;
+  muteTiming?: MuteTimeInterval;
 }
 
 export type MuteTimingFields = {
@@ -42,7 +42,7 @@ const defaultTimeInterval: MuteTimingIntervalFields = {
   years: '',
 };
 
-const useDefaultValues = (config: AlertmanagerConfig, muteTiming?: string): MuteTimingFields => {
+const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
   return useMemo(() => {
     const defaultValues = {
       name: '',
@@ -50,26 +50,21 @@ const useDefaultValues = (config: AlertmanagerConfig, muteTiming?: string): Mute
     };
 
     if (muteTiming) {
-      const mute = config?.mute_time_intervals?.find(({ name }) => name === muteTiming);
-      if (mute) {
-        const intervals = mute.time_intervals.map((interval) => ({
-          times: interval.times ?? defaultTimeInterval.times,
-          weekdays: interval?.weekdays?.join(', ') ?? defaultTimeInterval.weekdays,
-          days_of_month: interval?.days_of_month?.join(', ') ?? defaultTimeInterval.days_of_month,
-          months: interval?.months?.join(', ') ?? defaultTimeInterval.months,
-          years: interval?.years?.join(', ') ?? defaultTimeInterval.years,
-        }));
-        return {
-          name: mute.name,
-          time_intervals: intervals,
-        };
-      } else {
-        return defaultValues;
-      }
+      const intervals = muteTiming.time_intervals.map((interval) => ({
+        times: interval.times ?? defaultTimeInterval.times,
+        weekdays: interval?.weekdays?.join(', ') ?? defaultTimeInterval.weekdays,
+        days_of_month: interval?.days_of_month?.join(', ') ?? defaultTimeInterval.days_of_month,
+        months: interval?.months?.join(', ') ?? defaultTimeInterval.months,
+        years: interval?.years?.join(', ') ?? defaultTimeInterval.years,
+      }));
+      return {
+        name: muteTiming.name,
+        time_intervals: intervals,
+      };
     } else {
       return defaultValues;
     }
-  }, [config, muteTiming]);
+  }, [muteTiming]);
 };
 
 const convertStringToArray = (str: string) => {
@@ -102,21 +97,11 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const styles = useStyles2(getStyles);
 
-  const fetchConfig = useCallback(() => {
-    if (alertManagerSourceName) {
-      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
-    }
-  }, [alertManagerSourceName, dispatch]);
-
-  useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
-
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
   const { result, loading } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-  const defaultValues = useDefaultValues(config, muteTiming);
+  const defaultValues = useDefaultValues(muteTiming);
   const formApi = useForm({ defaultValues });
   const {
     fields: timeIntervals,
