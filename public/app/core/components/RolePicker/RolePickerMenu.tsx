@@ -50,26 +50,8 @@ export const RolePickerMenu = ({
   onUpdate,
   onClear,
 }: RolePickerMenuProps): JSX.Element => {
-  const getInheritedBuiltinRoles = useCallback(
-    (newRole: OrgRole) => {
-      let roles = builtInRoles[newRole];
-      if (!roles) {
-        return [];
-      }
-      if (newRole === OrgRole.Admin) {
-        roles = roles.concat(builtInRoles[OrgRole.Editor]);
-        roles = roles.concat(builtInRoles[OrgRole.Viewer]);
-      } else if (newRole === OrgRole.Editor) {
-        roles = roles.concat(builtInRoles[OrgRole.Viewer]);
-      }
-      return roles.filter((role) => !role.name?.startsWith('managed:'));
-    },
-    [builtInRoles]
-  );
-
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
-  const [selectedBuiltInRoles, setSelectedBuiltInRoles] = useState<Role[]>(getInheritedBuiltinRoles(builtInRole));
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [openedMenuGroup, setOpenedMenuGroup] = useState('');
   const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
@@ -127,11 +109,6 @@ export const RolePickerMenu = ({
         selectedGroupOptions.push(role);
       }
     }
-    for (const role of selectedBuiltInRoles) {
-      if (getRoleGroup(role) === group) {
-        selectedGroupOptions.push(role);
-      }
-    }
     return selectedGroupOptions;
   };
 
@@ -166,10 +143,7 @@ export const RolePickerMenu = ({
     } else {
       if (group) {
         const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
-        const optionsToSelect = group.options.filter(
-          (option) => !selectedBuiltInRoles.find((role) => role.uid === option.uid)
-        );
-        setSelectedOptions([...restOptions, ...optionsToSelect]);
+        setSelectedOptions([...restOptions, ...group.options]);
       }
     }
   };
@@ -194,7 +168,6 @@ export const RolePickerMenu = ({
 
   const onSelectedBuiltinRoleChange = (newRole: OrgRole) => {
     setSelectedBuiltInRole(newRole);
-    setSelectedBuiltInRoles(getInheritedBuiltinRoles(newRole));
   };
 
   const onClearInternal = async () => {
@@ -259,13 +232,7 @@ export const RolePickerMenu = ({
                   <RoleMenuOption
                     data={option}
                     key={i}
-                    isSelected={
-                      !!(
-                        (option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid)) ||
-                        !!selectedBuiltInRoles.find((role) => role.uid === option.uid)
-                      )
-                    }
-                    disabled={!!(option.uid && !!selectedBuiltInRoles.find((role) => role.uid === option.uid))}
+                    isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                     onChange={onChange}
                     // onClick={onMenuGroupClick}
                     hideDescription
@@ -282,13 +249,7 @@ export const RolePickerMenu = ({
                   <RoleMenuOption
                     data={option}
                     key={i}
-                    isSelected={
-                      !!(
-                        (option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid)) ||
-                        !!selectedBuiltInRoles.find((role) => role.uid === option.uid)
-                      )
-                    }
-                    disabled={!!(option.uid && !!selectedBuiltInRoles.find((role) => role.uid === option.uid))}
+                    isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                     onChange={onChange}
                     hideDescription
                   />
@@ -312,7 +273,6 @@ export const RolePickerMenu = ({
         <RolePickerSubMenu
           options={subMenuOptions}
           selectedOptions={selectedOptions}
-          disabledOptions={selectedBuiltInRoles}
           onSelect={onChange}
           onClear={onClearSubMenu}
         />
@@ -329,7 +289,7 @@ const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
 interface RolePickerSubMenuProps {
   options: Role[];
   selectedOptions: Role[];
-  disabledOptions: Role[];
+  disabledOptions?: Role[];
   onSelect: (option: Role) => void;
   onClear?: () => void;
 }
@@ -363,10 +323,10 @@ export const RolePickerSubMenu = ({
                 !!(
                   option.uid &&
                   (!!selectedOptions.find((opt) => opt.uid === option.uid) ||
-                    disabledOptions.find((opt) => opt.uid === option.uid))
+                    disabledOptions?.find((opt) => opt.uid === option.uid))
                 )
               }
-              disabled={!!(option.uid && disabledOptions.find((opt) => opt.uid === option.uid))}
+              disabled={!!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid))}
               onChange={onSelect}
               hideDescription
             />

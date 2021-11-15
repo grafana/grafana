@@ -10,7 +10,6 @@ const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopP
 interface InputProps extends HTMLProps<HTMLInputElement> {
   appliedRoles: Role[];
   builtInRole: string;
-  builtInRoles: Role[];
   query: string;
   isFocused?: boolean;
   disabled?: boolean;
@@ -22,7 +21,6 @@ interface InputProps extends HTMLProps<HTMLInputElement> {
 export const RolePickerInput = ({
   appliedRoles,
   builtInRole,
-  builtInRoles,
   disabled,
   isFocused,
   query,

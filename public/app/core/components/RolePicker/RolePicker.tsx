@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
@@ -41,13 +41,9 @@ export const RolePicker = ({
         const builtInRoles = await getBuiltinRoles();
         setBuiltinRoles(builtInRoles);
 
-        if (builtInRoles[builtInRole]) {
-          const builtInUids = builtInRoles[builtInRole].map((r) => r.uid);
-          const roles = await getRoles();
-          const applied = roles.filter((role) => !builtInUids.includes(role.uid));
-          setAppliedRoles(applied);
-          setSelectedRoles(applied);
-        }
+        const userRoles = await getRoles();
+        setAppliedRoles(userRoles);
+        setSelectedRoles(userRoles);
       } catch (e) {
         // TODO handle error
         console.error('Error loading options');
@@ -110,20 +106,6 @@ export const RolePicker = ({
     return roleOptions;
   };
 
-  const inheritedBuiltinRoles = useMemo(() => {
-    let roles = builtInRoles[builtInRole];
-    if (!roles) {
-      return [];
-    }
-    if (builtInRole === OrgRole.Admin) {
-      roles = roles.concat(builtInRoles[OrgRole.Editor]);
-      roles = roles.concat(builtInRoles[OrgRole.Viewer]);
-    } else if (builtInRole === OrgRole.Editor) {
-      roles = roles.concat(builtInRoles[OrgRole.Viewer]);
-    }
-    return roles.filter((role) => !role.name?.startsWith('managed:'));
-  }, [builtInRole, builtInRoles]);
-
   if (isLoading) {
     return null;
   }
@@ -133,7 +115,6 @@ export const RolePicker = ({
       <ClickOutsideWrapper onClick={onClickOutside}>
         <RolePickerInput
           builtInRole={selectedBuiltInRole}
-          builtInRoles={inheritedBuiltinRoles}
           appliedRoles={selectedRoles}
           query={query}
           onQueryChange={onInputChange}
