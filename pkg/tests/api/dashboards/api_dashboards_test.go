@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
@@ -33,17 +35,17 @@ func TestDashboardQuota(t *testing.T) {
 		Password:       "admin",
 		Login:          "admin",
 	})
-	// test importing dashboard
+
 	t.Run("when quota limit doesn't exceed, importing a dashboard should succeed", func(t *testing.T) {
-		//create dashboard
-		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`)) //ida mention simplejson will be deprecated - should we switch to something else?
+		// Import dashboard
+		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
 		require.NoError(t, err)
 		buf1 := &bytes.Buffer{}
-		err = json.NewEncoder(buf1).Encode(models.SaveDashboardCommand{
+		err = json.NewEncoder(buf1).Encode(dtos.ImportDashboardCommand{
 			Dashboard: dashboardDataOne,
 		})
 		require.NoError(t, err)
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
+		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/import", grafanaListedAddr)
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
@@ -54,33 +56,23 @@ func TestDashboardQuota(t *testing.T) {
 		})
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		TestBody := &TestDashboard{}
-		json.Unmarshal(b, TestBody)
-		require.EqualValues(t, 1, TestBody.ID)
-		fmt.Println("HERE IS TEST BODY", TestBody)
-		// require.JSONEq(t, `{"id":1, "slug":"just-testing", "status":"success", "uid":"smSkHtc7k", "url":"/d/smSkHtc7k/just-testing", "version":1}`, string(b))
+		dashboardDTO := &plugins.PluginDashboardInfoDTO{}
+		err = json.Unmarshal(b, dashboardDTO)
+		require.NoError(t, err)
+		require.EqualValues(t, 1, dashboardDTO.DashboardId)
 	})
-	// test saving dashboard
-	t.Run("when quota limit exceeds saving a dashboard should fail", func(t *testing.T) {
+
+	t.Run("when quota limit exceeds importing a dashboard should fail", func(t *testing.T) {
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
 		require.NoError(t, err)
-		dashboardDataTwo, err := simplejson.NewJson([]byte(`{"title":"testing twice"}`))
-		require.NoError(t, err)
 		buf1 := &bytes.Buffer{}
-		buf2 := &bytes.Buffer{}
-		err = json.NewEncoder(buf1).Encode(models.SaveDashboardCommand{
+		err = json.NewEncoder(buf1).Encode(dtos.ImportDashboardCommand{
 			Dashboard: dashboardDataOne,
 		})
 		require.NoError(t, err)
-		err = json.NewEncoder(buf2).Encode(models.SaveDashboardCommand{
-			Dashboard: dashboardDataTwo,
-		})
-		require.NoError(t, err)
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
+		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/import", grafanaListedAddr)
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
-		require.NoError(t, err)
-		resp, err = http.Post(u, "application/json", buf2)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 		t.Cleanup(func() {
@@ -93,18 +85,10 @@ func TestDashboardQuota(t *testing.T) {
 		require.JSONEq(t, `{"message":"Quota reached"}`, string(b))
 	})
 }
+
 func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) int64 {
 	t.Helper()
 	u, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)
 	return u.Id
-}
-
-type TestDashboard struct {
-	ID      int64  `json:"id"`
-	Slug    string `json:"slug"`
-	Status  string `json:"status"`
-	UID     string `json:"uid"`
-	URL     string `json:"url"`
-	Version int64  `json:"version"`
 }
