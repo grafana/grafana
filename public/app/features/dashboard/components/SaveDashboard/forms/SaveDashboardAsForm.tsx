@@ -3,7 +3,7 @@ import { Button, Input, Switch, Form, Field, InputControl, Modal } from '@grafan
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
-import validationSrv from 'app/features/manage-dashboards/services/ValidationSrv';
+import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 interface SaveDashboardAsFormDTO {
   title: string;
