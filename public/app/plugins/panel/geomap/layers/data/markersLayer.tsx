@@ -12,19 +12,15 @@ import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import {
-  getScaledDimension,
-  getColorDimension,
-  ResourceFolderName,
-  getTextDimension,
-} from 'app/features/dimensions';
-import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
+import { getScaledDimension, getColorDimension, getTextDimension } from 'app/features/dimensions';
+import { TextDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
 import { getMarkerMaker } from '../../style/markers';
 import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
+import { StyleEditor } from './StyleEditor';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -137,45 +133,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       registerOptionsUI: (builder) => {
         builder
           .addCustomEditor({
-            id: 'config.style.size',
-            path: 'config.style.size',
-            name: 'Marker Size',
-            editor: ScaleDimensionEditor,
-            settings: {
-              min: 1,
-              max: 100, // possible in the UI
-            },
-            defaultValue: defaultOptions.style.size,
-          })
-          .addCustomEditor({
-            id: 'config.style.symbol',
-            path: 'config.style.symbol',
-            name: 'Marker Symbol',
-            editor: ResourceDimensionEditor,
-            defaultValue: defaultOptions.style.symbol,
-            settings: {
-              resourceType: 'icon',
-              showSourceRadio: false,
-              folderName: ResourceFolderName.Marker,
-            },
-          })
-          .addCustomEditor({
-            id: 'config.style.color',
-            path: 'config.style.color',
-            name: 'Marker Color',
-            editor: ColorDimensionEditor,
+            id: 'config.style',
+            path: 'config.style',
+            name: 'Styles',
+            editor: StyleEditor,
             settings: {},
-            defaultValue: defaultOptions.style.color,
-          })
-          .addSliderInput({
-            path: 'config.style.opacity',
-            name: 'Fill opacity',
-            defaultValue: defaultOptions.style.opacity,
-            settings: {
-              min: 0,
-              max: 1,
-              step: 0.1,
-            },
+            defaultValue: defaultOptions.style,
           })
           .addCustomEditor({
             id: 'config.style.text',
