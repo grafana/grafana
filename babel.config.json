@@ -6,7 +6,7 @@
       "@babel/preset-env",
       {
         "bugfixes": true,
-        "browserslistEnv": "production",
+        "browserslistEnv": "dev",
         "useBuiltIns": "entry",
         "corejs": "3.10"
       }
@@ -39,5 +39,17 @@
     "@babel/plugin-proposal-optional-chaining",
     "@babel/plugin-syntax-dynamic-import", // needed for `() => import()` in routes.ts
     "angularjs-annotate"
-  ]
+  ],
+  "env": {
+    "production": {
+      "presets": [
+        [
+          "@babel/preset-env",
+          {
+            "browserslistEnv": "production"
+          }
+        ]
+      ]
+    }
+  }
 }
