@@ -13,7 +13,7 @@ export const panelsToCheckFirst = [
   'status-history',
   'text',
   'dashlist',
-  'candlestick', // will be beta in 8.3
+  // 'candlestick', // uncomment when beta
 ];
 
 export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): Promise<VisualizationSuggestion[]> {
