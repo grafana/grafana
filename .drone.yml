@@ -222,7 +222,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: dimsotirakis/docker-puppeteer:test-rem
+  image: hugohaggmark/docker-puppeteer
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
@@ -517,7 +517,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: dimsotirakis/docker-puppeteer:test-rem
+  image: hugohaggmark/docker-puppeteer
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
@@ -3432,6 +3432,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 759675e2d5a8fe2b24efe5dd7b096ed8133b03792df028456821c2b999b96eeb
+hmac: d020f3aee21a33a39d1e97dc1da9f629a53ea25c0ab3afb133bbd88afde376c0
 
 ...
