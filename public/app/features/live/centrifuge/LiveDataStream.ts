@@ -19,8 +19,8 @@ import { map, Observable, ReplaySubject, Subject, Subscriber, Subscription } fro
 import { DataStreamSubscriptionKey } from './service';
 import { StreamingResponseDataType } from '@grafana/data/src/dataframe/StreamingDataFrame';
 
-const bufferIfNot = (canEmitObservable: Observable<boolean>) => <T>(source: Observable<T>): Observable<T[] | T> => {
-  return new Observable((subscriber: Subscriber<T | T[]>) => {
+const bufferIfNot = (canEmitObservable: Observable<boolean>) => <T>(source: Observable<T>): Observable<T[]> => {
+  return new Observable((subscriber: Subscriber<T[]>) => {
     let buffer: T[] = [];
     let canEmit = true;
 
@@ -43,7 +43,7 @@ const bufferIfNot = (canEmitObservable: Observable<boolean>) => <T>(source: Obse
       next(value) {
         if (canEmit) {
           if (!buffer.length) {
-            subscriber.next(value);
+            subscriber.next([value]);
           } else {
             emitBuffer();
           }
@@ -268,26 +268,7 @@ export class LiveDataStream<T = unknown> {
     let shouldSendFullFrame = true;
     const transformedInternalStream = this.stream.pipe(
       bufferIfNot(this.deps.subscriberReadiness),
-      map((next, i) => {
-        const isBuffer = Array.isArray(next);
-        if (!isBuffer) {
-          if (shouldSendFullFrame) {
-            shouldSendFullFrame = false;
-            return getFullFrameResponseData(next.type === InternalStreamMessageType.Error ? next.error : undefined);
-          }
-
-          const message: InternalStreamMessage = next;
-          switch (message.type) {
-            case InternalStreamMessageType.Error:
-              return getFullFrameResponseData(message.error);
-            case InternalStreamMessageType.NewValuesSameSchema:
-              return getNewValuesSameSchemaResponseData(message.values);
-            case InternalStreamMessageType.ChangedSchema:
-              return getFullFrameResponseData();
-          }
-        }
-
-        const messages: InternalStreamMessage[] = next;
+      map((messages, i) => {
         const errors = filterMessages(messages, InternalStreamMessageType.Error);
         const lastError = errors.length ? errors[errors.length - 1].error : undefined;
 
