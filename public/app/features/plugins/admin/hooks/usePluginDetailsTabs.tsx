@@ -13,13 +13,13 @@ type ReturnType = {
 
 export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: PluginDetailsTab[] = []): ReturnType => {
   const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
-  const isCore = Boolean(plugin?.isCore);
+  const isPublished = Boolean(plugin?.isPublished);
   const { pathname } = useLocation();
   const tabs = useMemo(() => {
     const canConfigurePlugins = isOrgAdmin();
     const tabs: PluginDetailsTab[] = [...defaultTabs];
 
-    if (!isCore) {
+    if (isPublished) {
       tabs.push({
         label: PluginTabLabels.VERSIONS,
         icon: 'history',
@@ -67,7 +67,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
     }
 
     return tabs;
-  }, [pluginConfig, defaultTabs, pathname, isCore]);
+  }, [pluginConfig, defaultTabs, pathname, isPublished]);
 
   return {
     error,

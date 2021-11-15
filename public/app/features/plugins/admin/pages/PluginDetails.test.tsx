@@ -194,7 +194,7 @@ describe('Plugin details page', () => {
       await waitFor(() => expect(queryByText('Invalid signature')).toBeInTheDocument());
     });
 
-    it('should display version history in case it is available', async () => {
+    it('should display version history is plugin is published', async () => {
       const versions = [
         {
           version: '1.2.0',
@@ -215,6 +215,7 @@ describe('Plugin details page', () => {
           grafanaDependency: '>=7.0.0',
         },
       ];
+
       const { queryByText, getByRole } = renderPluginDetails(
         {
           id,
@@ -490,18 +491,59 @@ describe('Plugin details page', () => {
       expect(queryByText(`Create a ${name} data source`)).toBeNull();
     });
 
-    it('should not display versions tab for core plugins', async () => {
-      const name = 'Akumuli';
+    it('should not display versions tab for plugins not published to gcom', async () => {
       const { queryByText } = renderPluginDetails({
-        name,
+        name: 'Akumuli',
         isInstalled: true,
         type: PluginType.app,
-        isCore: true,
+        isPublished: false,
       });
 
       await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       expect(queryByText(PluginTabLabels.VERSIONS)).toBeNull();
+    });
+
+    it('should not display update for plugins not published to gcom', async () => {
+      const { queryByText, queryByRole } = renderPluginDetails({
+        name: 'Akumuli',
+        isInstalled: true,
+        hasUpdate: true,
+        type: PluginType.app,
+        isPublished: false,
+      });
+
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+
+      expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+    });
+
+    it('should not display install for plugins not published to gcom', async () => {
+      const { queryByText, queryByRole } = renderPluginDetails({
+        name: 'Akumuli',
+        isInstalled: false,
+        hasUpdate: false,
+        type: PluginType.app,
+        isPublished: false,
+      });
+
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+    });
+
+    it('should not display uninstall for plugins not published to gcom', async () => {
+      const { queryByText, queryByRole } = renderPluginDetails({
+        name: 'Akumuli',
+        isInstalled: true,
+        hasUpdate: false,
+        type: PluginType.app,
+        isPublished: false,
+      });
+
+      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+
+      expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
   });
 
@@ -519,7 +561,7 @@ describe('Plugin details page', () => {
 
       await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
-      expect(queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
     it('should not display an uninstall button for an already installed plugin', async () => {
@@ -545,7 +587,7 @@ describe('Plugin details page', () => {
 
       await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
-      expect(queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
   });
 

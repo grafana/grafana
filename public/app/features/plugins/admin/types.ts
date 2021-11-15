@@ -43,6 +43,7 @@ export interface CatalogPlugin {
   isEnterprise: boolean;
   isInstalled: boolean;
   isDisabled: boolean;
+  isPublished: boolean;
   name: string;
   orgName: string;
   signature: PluginSignatureStatus;
