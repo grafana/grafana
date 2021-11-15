@@ -1,6 +1,8 @@
 import React, { FC, useEffect, useState } from 'react';
-import { Input, InlineField } from '@grafana/ui';
+import { useDebounce } from 'react-use';
+import { Input, InlineField, Field } from '@grafana/ui';
 import {
+  rangeUtil,
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
@@ -23,6 +25,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
 
   const datasource = useDatasource(options.name);
   useAuthenticationWarning(options.jsonData);
+  const logsTimeoutError = useTimoutValidation(props.options.jsonData.logsTimeout);
 
   return (
     <>
@@ -48,13 +51,15 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         <InlineField
           label="Timeout"
           labelWidth={28}
-          tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. You can use interval syntax, ie 30s, 5m, 2000ms"
+          tooltip='Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
+          invalid={Boolean(logsTimeoutError)}
         >
           <Input
             width={60}
             placeholder="15m"
             value={options.jsonData.logsTimeout || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'logsTimeout')}
+            title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}
           />
         </InlineField>
       </div>
@@ -99,4 +104,25 @@ function useDatasource(datasourceName: string) {
   }, [datasourceName]);
 
   return datasource;
+}
+
+function useTimoutValidation(value: string | undefined) {
+  const [err, setErr] = useState<undefined | string>(undefined);
+  useDebounce(
+    () => {
+      if (value) {
+        try {
+          rangeUtil.describeInterval(value);
+          setErr(undefined);
+        } catch (e) {
+          setErr(e.toString());
+        }
+      } else {
+        setErr(undefined);
+      }
+    },
+    350,
+    [value]
+  );
+  return err;
 }
