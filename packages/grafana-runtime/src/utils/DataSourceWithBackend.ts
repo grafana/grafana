@@ -16,6 +16,7 @@ import {
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
+import { config } from '../config';
 import { getBackendSrv, getDataSourceSrv, getGrafanaLiveSrv } from '../services';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
@@ -148,7 +149,7 @@ class DataSourceWithBackend<
       body.to = range.to.valueOf().toString();
     }
 
-    if (true) {
+    if (config.featureToggles.queryOverLive) {
       return getGrafanaLiveSrv().getQueryData({
         request,
         body,
