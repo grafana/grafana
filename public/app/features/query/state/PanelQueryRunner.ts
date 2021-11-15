@@ -37,6 +37,7 @@ import {
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 import { PanelModel } from '../../dashboard/state';
+import { isStreamingDataFrame } from '@grafana/data/src/types/streamingDatasource';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -105,7 +106,7 @@ export class PanelQueryRunner {
 
         if (withFieldConfig && data.series?.length) {
           if (lastConfigRev === this.dataConfigSource.configRev) {
-            const streamingDataFrame = data.series.find((frame) => frame instanceof StreamingDataFrame) as
+            const streamingDataFrame = data.series.find((data) => isStreamingDataFrame(data)) as
               | StreamingDataFrame
               | undefined;
 

@@ -1,5 +1,6 @@
 import { DataQueryResponseData } from './datasource';
-import { SerializedStreamingDataFrame } from '../dataframe/StreamingDataFrame';
+import { SerializedStreamingDataFrame, StreamingDataFrame } from '../dataframe/StreamingDataFrame';
+import { isDataFrame } from '../dataframe';
 
 /**
  * @alpha -- experimental
@@ -47,3 +48,6 @@ export const isAnyStreamingResponseData = (
   responseData: DataQueryResponseData
 ): responseData is StreamingResponseData =>
   'type' in responseData && AllStreamingResponseDataTypes.includes(responseData.type);
+
+export const isStreamingDataFrame = (data: DataQueryResponseData): data is StreamingDataFrame =>
+  isDataFrame(data) && 'packetInfo' in data;
