@@ -258,7 +258,7 @@ describe('LiveDataStream', () => {
       expectValueCollectionState(valuesCollection, { errors: 0, values: 0, complete: false });
     });
 
-    it('should push the first live channel message event to the subscriber as a serialized streamingDataFrame', async () => {
+    it('should emit the first live channel message event as a serialized streamingDataFrame', async () => {
       const valuesCount = valuesCollection.valuesCount();
 
       deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1()));
@@ -293,7 +293,7 @@ describe('LiveDataStream', () => {
       expect(deserializedFrame.length).toEqual(dataFrameJsons.schema1().data.values[0].length);
     });
 
-    it('should push subsequent messages as deltas if the schema stays the same', async () => {
+    it('should emit subsequent messages as deltas if the schema stays the same', async () => {
       const valuesCount = valuesCollection.valuesCount();
 
       deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
@@ -307,7 +307,7 @@ describe('LiveDataStream', () => {
       expect(data.values).toEqual([[102], [3]]);
     });
 
-    it('should push a full frame if schema changes', async () => {
+    it('should emit a full frame if schema changes', async () => {
       const valuesCount = valuesCollection.valuesCount();
       deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema2()));
 
@@ -329,7 +329,7 @@ describe('LiveDataStream', () => {
       ]);
     });
 
-    it('should push a full frame if received a status live channel event with error', async () => {
+    it('should emit a full frame if received a status live channel event with error', async () => {
       const valuesCount = valuesCollection.valuesCount();
 
       const error = new Error(`oh no!`);
@@ -471,7 +471,7 @@ describe('LiveDataStream', () => {
   });
 
   describe('single subscriber with initial frame', () => {
-    it('should push the initial frame right after subscribe', async () => {
+    it('should emit the initial frame right after subscribe', async () => {
       const deps = createDeps();
       const liveDataStream = new LiveDataStream(deps);
       const valuesCollection = new ValuesCollection<DataQueryResponse>();
