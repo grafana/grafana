@@ -148,6 +148,10 @@ class DataSourceWithBackend<
       body.to = range.to.valueOf().toString();
     }
 
+    if (true) {
+      return getGrafanaLiveSrv().getDataQueryStream(requestId, body);
+    }
+
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
         url: '/api/ds/query',

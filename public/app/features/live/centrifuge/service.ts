@@ -1,7 +1,7 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
 import { LiveDataStreamOptions } from '@grafana/runtime';
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import {
   DataFrame,
   DataFrameJSON,
@@ -44,6 +44,13 @@ export interface CentrifugeSrv {
    * Connect to a channel and return results as DataFrames
    */
   getDataStream(options: LiveDataStreamOptions, config: LiveChannelConfig): Observable<DataQueryResponse>;
+
+  /**
+   * Execute a query over the live websocket and potentiall subscribe to a live channel.
+   *
+   * Since the initial request and subscription are on the same socket, this will support HA setups
+   */
+  getDataQueryStream(requestId: string, body: any): Observable<DataQueryResponse>;
 
   /**
    * For channels that support presence, this will request the current state from the server.
@@ -266,6 +273,16 @@ export class CentrifugeService implements CentrifugeSrv {
         sub.unsubscribe();
       };
     });
+  }
+
+  /**
+   * Execute a query over the live websocket and potentiall subscribe to a live channel.
+   *
+   * Since the initial request and subscription are on the same socket, this will support HA setups
+   */
+  getDataQueryStream(requestId: string, body: any): Observable<DataQueryResponse> {
+    // TODO: use centrifuge RPC!!!
+    return of({ error: { message: 'not implemented yet!' }, data: [], state: LoadingState.Error });
   }
 
   /**

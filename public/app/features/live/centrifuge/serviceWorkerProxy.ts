@@ -28,6 +28,13 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
     );
   };
 
+  /**
+   * Query over websocket
+   */
+  getDataQueryStream: CentrifugeSrv['getDataQueryStream'] = (requestId: string, body: any) => {
+    return this.centrifugeWorker.getDataQueryStream(requestId, body);
+  };
+
   getPresence: CentrifugeSrv['getPresence'] = (address, config) => {
     return this.centrifugeWorker.getPresence(address, config);
   };

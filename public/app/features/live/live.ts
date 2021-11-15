@@ -57,6 +57,15 @@ export class GrafanaLiveService implements GrafanaLiveSrv {
   }
 
   /**
+   * Execute a query over the live websocket and potentiall subscribe to a live channel.
+   *
+   * Since the initial request and subscription are on the same socket, this will support HA setups
+   */
+  getDataQueryStream(requestId: string, body: any): Observable<DataQueryResponse> {
+    return this.deps.centrifugeSrv.getDataQueryStream(requestId, body);
+  }
+
+  /**
    * Publish into a channel
    *
    * @alpha -- experimental
