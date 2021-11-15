@@ -150,7 +150,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       exact: false,
       // Someday * and will get a ReactRouter under that path!
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/AppRootPage')
+        () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
       ),
     },
     {

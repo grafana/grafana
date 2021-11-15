@@ -4,8 +4,8 @@ import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } f
 import { createHtmlPortalNode, InPortal, OutPortal, HtmlPortalNode } from 'react-reverse-portal';
 
 import Page from 'app/core/components/Page/Page';
-import { getPluginSettings } from './PluginSettingsCache';
-import { importAppPlugin } from './plugin_loader';
+import { getPluginSettings } from '../PluginSettingsCache';
+import { importAppPlugin } from '../plugin_loader';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { appEvents } from 'app/core/core';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
