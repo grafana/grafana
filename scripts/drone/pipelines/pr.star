@@ -1,5 +1,6 @@
 load(
     'scripts/drone/steps/lib.star',
+    'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
     'codespell_step',
@@ -46,6 +47,7 @@ def pr_pipelines(edition):
     variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     steps = [
+        lint_drone_step(),
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition=edition),

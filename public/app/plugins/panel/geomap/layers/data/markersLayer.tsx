@@ -41,6 +41,7 @@ export const MARKERS_LAYER_ID = 'markers';
 // Used by default when nothing is configured
 export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   type: MARKERS_LAYER_ID,
+  name: '', // will get replaced
   config: defaultOptions,
   location: {
     mode: FrameGeometrySourceMode.Auto,

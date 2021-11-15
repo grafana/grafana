@@ -64,21 +64,21 @@ func postTestData() {
 		jsonData, _ := json.Marshal(d)
 		log.Println(string(jsonData))
 
-		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/push/json/auto", bytes.NewReader(jsonData))
+		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/pipeline/push/stream/json/auto", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
 		_ = resp.Body.Close()
-		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/tip", bytes.NewReader(jsonData))
+		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/pipeline/push/stream/json/tip", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
 		_ = resp.Body.Close()
-		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/exact", bytes.NewReader(jsonData))
+		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/pipeline/push/stream/json/exact", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {

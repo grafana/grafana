@@ -47,6 +47,7 @@ describe('Worldmap Migrations', () => {
         },
         "options": Object {
           "basemap": Object {
+            "name": "Basemap",
             "type": "default",
           },
           "controls": Object {

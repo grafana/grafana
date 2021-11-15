@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go golangci-lint test-go test-js test run run-frontend clean devenv devenv-down protobuf drone help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -146,6 +146,12 @@ clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
 	rm -rf node_modules
 	rm -rf public/build
+
+gen-ts:
+	@echo "generating TypeScript definitions"
+	go get github.com/tkrajina/typescriptify-golang-structs/typescriptify@v0.1.7
+	tscriptify -interface -package=github.com/grafana/grafana/pkg/services/live/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts pkg/services/live/pipeline/config.go
+	go mod tidy
 
 # This repository's configuration is protected (https://readme.drone.io/signature/).
 # Use this make target to regenerate the configuration YAML files when
