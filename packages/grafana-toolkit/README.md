@@ -306,11 +306,12 @@ Create a webpack.config.js with this content (in the root of _your_ plugin)
 
 ```ts
 // webpack.config.js
+const pluginJson = require('./src/plugin.json');
 module.exports.getWebpackConfig = (config, options) => ({
   ...config,
   output: {
     ...config.output,
-    publicPath: 'public/plugins/<plugin-id>/',
+    publicPath: `public/plugins/${pluginJson.id}/`,
   },
 });
 ```
