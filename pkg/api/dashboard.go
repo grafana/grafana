@@ -519,7 +519,7 @@ func GetDashboardVersions(c *models.ReqContext) response.Response {
 		Start:       c.QueryInt("start"),
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dashID), err)
 	}
 
@@ -557,7 +557,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 		Version:     int(c.ParamsInt64(":id")),
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return response.Error(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashID), err)
 	}
 
@@ -610,7 +610,7 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 		},
 	}
 
-	result, err := dashdiffs.CalculateDiff(&options)
+	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options)
 	if err != nil {
 		if errors.Is(err, models.ErrDashboardVersionNotFound) {
 			return response.Error(404, "Dashboard version not found", err)
@@ -638,7 +638,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext, apiCmd dtos.
 	}
 
 	versionQuery := models.GetDashboardVersionQuery{DashboardId: dash.Id, Version: apiCmd.Version, OrgId: c.OrgId}
-	if err := bus.Dispatch(&versionQuery); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &versionQuery); err != nil {
 		return response.Error(404, "Dashboard version not found", nil)
 	}
 
