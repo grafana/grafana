@@ -1,4 +1,10 @@
-import { PanelData, VisualizationSuggestion, VisualizationSuggestionsBuilder, PanelModel } from '@grafana/data';
+import {
+  PanelData,
+  VisualizationSuggestion,
+  VisualizationSuggestionsBuilder,
+  PanelModel,
+  VisualizationSuggestionScore,
+} from '@grafana/data';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 export const panelsToCheckFirst = [
@@ -13,6 +19,7 @@ export const panelsToCheckFirst = [
   'status-history',
   'text',
   'dashlist',
+  'logs',
 ];
 
 export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): Promise<VisualizationSuggestion[]> {
@@ -27,5 +34,7 @@ export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): P
     }
   }
 
-  return builder.getList();
+  return builder.getList().sort((a, b) => {
+    return (b.score ?? VisualizationSuggestionScore.OK) - (a.score ?? VisualizationSuggestionScore.OK);
+  });
 }
