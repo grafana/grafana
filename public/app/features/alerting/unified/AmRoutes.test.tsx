@@ -287,6 +287,7 @@ describe('AmRoutes', () => {
           group_interval: '4m',
           group_wait: '1m',
           repeat_interval: '5h',
+          mute_time_intervals: [],
         },
         templates: [],
       },
@@ -336,6 +337,7 @@ describe('AmRoutes', () => {
           group_by: ['severity', 'namespace'],
           receiver: 'default',
           routes: [],
+          mute_time_intervals: [],
         },
       },
       template_files: {},
@@ -406,6 +408,7 @@ describe('AmRoutes', () => {
           group_wait: '1m',
           receiver: 'default',
           repeat_interval: '5h',
+          mute_time_intervals: [],
           routes: [
             {
               continue: false,
@@ -415,6 +418,7 @@ describe('AmRoutes', () => {
                 ['foo', '!=', 'bar'],
               ],
               receiver: 'simple-receiver',
+              mute_time_intervals: [],
               routes: [],
             },
           ],
@@ -476,6 +480,7 @@ describe('AmRoutes', () => {
           matchers: [],
           receiver: 'default',
           repeat_interval: '5h',
+          mute_time_intervals: [],
           routes: [
             {
               continue: false,
@@ -483,6 +488,7 @@ describe('AmRoutes', () => {
               matchers: ['hello=world', 'foo!=bar'],
               receiver: 'simple-receiver',
               routes: [],
+              mute_time_intervals: [],
             },
           ],
         },
