@@ -269,13 +269,13 @@ export class LiveDataStream<T = unknown> {
     const transformedInternalStream = this.stream.pipe(
       bufferIfNot(this.deps.subscriberReadiness),
       map((next, i) => {
-        if (shouldSendFullFrame) {
-          shouldSendFullFrame = false;
-          return getFullFrameResponseData();
-        }
-
         const isBuffer = Array.isArray(next);
         if (!isBuffer) {
+          if (shouldSendFullFrame) {
+            shouldSendFullFrame = false;
+            return getFullFrameResponseData(next.type === InternalStreamMessageType.Error ? next.error : undefined);
+          }
+
           const message: InternalStreamMessage = next;
           switch (message.type) {
             case InternalStreamMessageType.Error:
@@ -289,10 +289,16 @@ export class LiveDataStream<T = unknown> {
 
         const messages: InternalStreamMessage[] = next;
         const errors = filterMessages(messages, InternalStreamMessageType.Error);
+        const lastError = errors.length ? errors[errors.length - 1].error : undefined;
+
+        if (shouldSendFullFrame) {
+          shouldSendFullFrame = false;
+          return getFullFrameResponseData(lastError);
+        }
 
         if (errors.length) {
           // send the latest frame with the last error, discard everything else
-          return getFullFrameResponseData(errors[errors.length - 1].error);
+          return getFullFrameResponseData(lastError);
         }
 
         const schemaChanged = messages.some((n) => n.type === InternalStreamMessageType.ChangedSchema);

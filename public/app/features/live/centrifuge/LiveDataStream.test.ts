@@ -6,6 +6,7 @@ import {
   LiveChannelConnectionState,
   LiveChannelEvent,
   LiveChannelEventType,
+  LiveChannelLeaveEvent,
   LiveChannelScope,
   LoadingState,
   StreamingDataFrame,
@@ -18,6 +19,7 @@ import {
   StreamingResponseData,
   StreamingResponseDataType,
 } from '@grafana/data/src/dataframe/StreamingDataFrame';
+import { mapValues } from 'lodash';
 
 type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];
@@ -42,7 +44,7 @@ const createDeps = <T = any>(
 class ValuesCollection<T> implements Unsubscribable {
   values: T[] = [];
   errors: any[] = [];
-  complete = false;
+  receivedComplete = false;
   subscription: Subscription | undefined;
 
   valuesCount = () => this.values.length;
@@ -60,10 +62,14 @@ class ValuesCollection<T> implements Unsubscribable {
         this.errors.push(err);
       },
       complete: () => {
-        this.complete = true;
+        this.receivedComplete = true;
       },
     });
   };
+
+  get complete() {
+    return this.receivedComplete || this.subscription?.closed;
+  }
 
   unsubscribe = () => {
     this.subscription?.unsubscribe();
@@ -91,7 +97,12 @@ const liveChannelMessageEvent = <T extends DataFrameJSON>(message: T): LiveChann
   message,
 });
 
-const statusLiveChannelEvent = (state: LiveChannelConnectionState, error?: Error): LiveChannelEvent => ({
+const liveChannelLeaveEvent = (): LiveChannelLeaveEvent => ({
+  type: LiveChannelEventType.Leave,
+  user: '',
+});
+
+const liveChannelStatusEvent = (state: LiveChannelConnectionState, error?: Error): LiveChannelEvent => ({
   type: LiveChannelEventType.Status,
   state,
   error,
@@ -105,6 +116,8 @@ const fieldsOf = (data: StreamingResponseData<StreamingResponseDataType.FullFram
     values: f.values,
   }));
 };
+
+const dummyErrorMessage = 'dummy-error';
 
 describe('LiveDataStream', () => {
   jest.useFakeTimers();
@@ -132,6 +145,47 @@ describe('LiveDataStream', () => {
 
   const expectStreamingResponse = expectResponse(LoadingState.Streaming);
   const expectErrorResponse = expectResponse(LoadingState.Error);
+
+  const dummyLiveChannelAddress: LiveChannelAddress = {
+    scope: LiveChannelScope.Grafana,
+    namespace: 'stream',
+    path: 'abc',
+  };
+
+  const subscriptionKey = 'subKey';
+
+  const liveDataStreamOptions = {
+    withTimeBFilter: {
+      addr: dummyLiveChannelAddress,
+      buffer: {
+        maxLength: 2,
+        maxDelta: 10,
+        action: StreamingFrameAction.Append,
+      },
+      filter: {
+        fields: ['time', 'b'],
+      },
+    },
+    withTimeAFilter: {
+      addr: dummyLiveChannelAddress,
+      buffer: {
+        maxLength: 3,
+        maxDelta: 10,
+        action: StreamingFrameAction.Append,
+      },
+      filter: {
+        fields: ['time', 'a'],
+      },
+    },
+    withoutFilter: {
+      addr: dummyLiveChannelAddress,
+      buffer: {
+        maxLength: 4,
+        maxDelta: 10,
+        action: StreamingFrameAction.Append,
+      },
+    },
+  };
 
   const dataFrameJsons = {
     schema1: () => ({
@@ -174,22 +228,10 @@ describe('LiveDataStream', () => {
     }),
   };
 
-  const dummyLiveChannelAddress: LiveChannelAddress = {
-    scope: LiveChannelScope.Grafana,
-    namespace: 'stream',
-    path: 'abc',
-  };
-
   describe('happy path with a single subscriber', () => {
-    const subscriberStreamingOptions = {
-      maxLength: 2,
-      maxDelta: 10,
-      action: StreamingFrameAction.Append,
-    };
     let deps: ReturnType<typeof createDeps>;
     let liveDataStream: LiveDataStream<any>;
-    let observable: Observable<DataQueryResponse>;
-    let valuesCollection = new ValuesCollection<DataQueryResponse>();
+    const valuesCollection = new ValuesCollection<DataQueryResponse>();
 
     beforeAll(() => {
       deps = createDeps();
@@ -208,16 +250,7 @@ describe('LiveDataStream', () => {
     });
 
     it('should subscribe to subscriberReadiness observable on first subscription and return observable without any values', async () => {
-      observable = liveDataStream.get(
-        {
-          addr: dummyLiveChannelAddress,
-          buffer: subscriberStreamingOptions,
-          filter: {
-            fields: ['time', 'b'],
-          },
-        },
-        'subey'
-      );
+      const observable = liveDataStream.get(liveDataStreamOptions.withTimeBFilter, subscriptionKey);
       valuesCollection.subscribeTo(observable);
 
       //then
@@ -236,7 +269,7 @@ describe('LiveDataStream', () => {
       expectStreamingResponse(response, StreamingResponseDataType.FullFrame);
       const data = response.data[0] as StreamingResponseData<StreamingResponseDataType.FullFrame>;
 
-      expect(data.frame.options).toEqual(subscriberStreamingOptions);
+      expect(data.frame.options).toEqual(liveDataStreamOptions.withTimeBFilter.buffer);
 
       const deserializedFrame = StreamingDataFrame.deserialize(data.frame);
       expect(deserializedFrame.fields).toEqual([
@@ -300,7 +333,7 @@ describe('LiveDataStream', () => {
       const valuesCount = valuesCollection.valuesCount();
 
       const error = new Error(`oh no!`);
-      deps.liveEventsObservable.next(statusLiveChannelEvent(LiveChannelConnectionState.Connected, error));
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Connected, error));
 
       expectValueCollectionState(valuesCollection, {
         errors: 0,
@@ -376,17 +409,16 @@ describe('LiveDataStream', () => {
 
     it(`should reduce buffer to a full frame with last error if one or more errors occur during subscriber's unavailability`, async () => {
       const firstError = new Error('first error');
-      const secondErrorMessage = 'second error - unit test';
-      const secondError = new Error(secondErrorMessage);
+      const secondError = new Error(dummyErrorMessage);
       const valuesCount = valuesCollection.valuesCount();
 
       deps.subscriberReadiness.next(false);
 
       deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
       deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
-      deps.liveEventsObservable.next(statusLiveChannelEvent(LiveChannelConnectionState.Connected, firstError));
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Connected, firstError));
       deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
-      deps.liveEventsObservable.next(statusLiveChannelEvent(LiveChannelConnectionState.Connected, secondError));
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Connected, secondError));
 
       deps.subscriberReadiness.next(true);
       expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount + 1, complete: false });
@@ -395,7 +427,7 @@ describe('LiveDataStream', () => {
       expectErrorResponse(response, StreamingResponseDataType.FullFrame);
 
       const errorMessage = response?.error?.message;
-      expect(errorMessage?.includes(secondErrorMessage)).toBeTruthy();
+      expect(errorMessage?.includes(dummyErrorMessage)).toBeTruthy();
 
       expect(fieldsOf(response.data[0])).toEqual([
         {
@@ -407,6 +439,17 @@ describe('LiveDataStream', () => {
           values: [3, 3],
         },
       ]);
+    });
+
+    it('should ignore messages without payload', async () => {
+      const valuesCount = valuesCollection.valuesCount();
+
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Connected));
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Pending));
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Pending));
+      deps.liveEventsObservable.next(liveChannelLeaveEvent());
+
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount, complete: false });
     });
 
     it(`should shutdown when source observable completes`, async () => {
@@ -424,6 +467,277 @@ describe('LiveDataStream', () => {
       expect(deps.subscriberReadiness.observed).toBeFalsy();
       expect(deps.liveEventsObservable.observed).toBeFalsy();
       expect(deps.onShutdown).toHaveBeenCalled();
+    });
+  });
+
+  describe('single subscriber with initial frame', () => {
+    it('should push the initial frame right after subscribe', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+      const valuesCollection = new ValuesCollection<DataQueryResponse>();
+
+      const initialFrame = StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema2());
+      const observable = liveDataStream.get(
+        { ...liveDataStreamOptions.withTimeBFilter, frame: initialFrame },
+        subscriptionKey
+      );
+      valuesCollection.subscribeTo(observable);
+
+      //then
+      expect(deps.subscriberReadiness.observed).toBeTruthy();
+      expectValueCollectionState(valuesCollection, { errors: 0, values: 1, complete: false });
+
+      const response = valuesCollection.lastValue();
+
+      expectStreamingResponse(response, StreamingResponseDataType.FullFrame);
+      const data = response.data[0] as StreamingResponseData<StreamingResponseDataType.FullFrame>;
+
+      expect(fieldsOf(data)).toEqual([
+        {
+          name: 'time',
+          values: [103],
+        },
+        {
+          name: 'b',
+          values: ['y'], //  bug in streamingDataFrame - fix!
+        },
+      ]);
+    });
+  });
+
+  describe('source observable emits completed event', () => {
+    it('should shutdown', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+      const valuesCollection = new ValuesCollection<DataQueryResponse>();
+
+      const observable = liveDataStream.get(liveDataStreamOptions.withTimeAFilter, subscriptionKey);
+      valuesCollection.subscribeTo(observable);
+
+      expect(deps.subscriberReadiness.observed).toBeTruthy();
+      expect(deps.liveEventsObservable.observed).toBeTruthy();
+      expect(deps.onShutdown).not.toHaveBeenCalled();
+
+      deps.liveEventsObservable.complete();
+
+      expectValueCollectionState(valuesCollection, {
+        errors: 0,
+        values: 0,
+        complete: true,
+      });
+      expect(deps.subscriberReadiness.observed).toBeFalsy();
+      expect(deps.liveEventsObservable.observed).toBeFalsy();
+      expect(deps.onShutdown).toHaveBeenCalled();
+    });
+  });
+
+  describe('source observable emits error event', () => {
+    it('should shutdown', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+      const valuesCollection = new ValuesCollection<DataQueryResponse>();
+
+      const observable = liveDataStream.get(liveDataStreamOptions.withTimeAFilter, subscriptionKey);
+      valuesCollection.subscribeTo(observable);
+
+      expect(deps.subscriberReadiness.observed).toBeTruthy();
+      expect(deps.liveEventsObservable.observed).toBeTruthy();
+      expect(deps.onShutdown).not.toHaveBeenCalled();
+
+      deps.liveEventsObservable.error(new Error(dummyErrorMessage));
+
+      expectValueCollectionState(valuesCollection, {
+        errors: 0,
+        values: 1,
+        complete: true,
+      });
+      const response = valuesCollection.lastValue();
+      expectErrorResponse(response, StreamingResponseDataType.FullFrame);
+
+      expect(response?.error?.message?.includes(dummyErrorMessage)).toBeTruthy();
+
+      expect(deps.subscriberReadiness.observed).toBeFalsy();
+      expect(deps.liveEventsObservable.observed).toBeFalsy();
+      expect(deps.onShutdown).toHaveBeenCalled();
+    });
+  });
+
+  describe('happy path with multiple subscribers', () => {
+    let deps: ReturnType<typeof createDeps>;
+    let liveDataStream: LiveDataStream<any>;
+    const valuesCollections = {
+      withTimeBFilter: new ValuesCollection<DataQueryResponse>(),
+      withTimeAFilter: new ValuesCollection<DataQueryResponse>(),
+      withoutFilter: new ValuesCollection<DataQueryResponse>(),
+    };
+
+    beforeAll(() => {
+      deps = createDeps();
+      liveDataStream = new LiveDataStream(deps);
+    });
+
+    it('should emit the last value as full frame to new subscribers', async () => {
+      valuesCollections.withTimeAFilter.subscribeTo(
+        liveDataStream.get(liveDataStreamOptions.withTimeAFilter, subscriptionKey)
+      );
+
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1()));
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
+
+      expectValueCollectionState(valuesCollections.withTimeAFilter, { errors: 0, values: 2, complete: false });
+
+      valuesCollections.withTimeBFilter.subscribeTo(
+        liveDataStream.get(liveDataStreamOptions.withTimeBFilter, subscriptionKey)
+      );
+      valuesCollections.withoutFilter.subscribeTo(
+        liveDataStream.get(liveDataStreamOptions.withoutFilter, subscriptionKey)
+      );
+
+      console.log(JSON.stringify(valuesCollections.withTimeAFilter, null, 2));
+
+      expectValueCollectionState(valuesCollections.withTimeAFilter, { errors: 0, values: 2, complete: false });
+      expectValueCollectionState(valuesCollections.withTimeBFilter, { errors: 0, values: 1, complete: false });
+      expectValueCollectionState(valuesCollections.withoutFilter, { errors: 0, values: 1, complete: false });
+    });
+
+    it('should emit filtered data to each subscriber', async () => {
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
+      expect(
+        mapValues(valuesCollections, (collection) =>
+          collection.values.map((response) => {
+            const data = response.data[0];
+            return isStreamingResponseData(data, StreamingResponseDataType.FullFrame)
+              ? fieldsOf(data)
+              : isStreamingResponseData(data, StreamingResponseDataType.NewValuesSameSchema)
+              ? data.values
+              : response;
+          })
+        )
+      ).toEqual({
+        withTimeAFilter: [
+          [
+            {
+              name: 'time',
+              values: [100, 101],
+            },
+            {
+              name: 'a',
+              values: ['a', 'b'],
+            },
+          ],
+          [[102], ['c']],
+          [[102], ['c']],
+        ],
+        withTimeBFilter: [
+          [
+            {
+              name: 'time',
+              values: [101, 102],
+            },
+            {
+              name: 'b',
+              values: [2, 3],
+            },
+          ],
+          [[102], [3]],
+        ],
+        withoutFilter: [
+          [
+            {
+              name: 'time',
+              values: [100, 101, 102],
+            },
+            {
+              name: 'a',
+              values: ['a', 'b', 'c'],
+            },
+            {
+              name: 'b',
+              values: [1, 2, 3],
+            },
+          ],
+          [[102], ['c'], [3]],
+        ],
+      });
+    });
+
+    it('should not unsubscribe the source observable unless all subscribers unsubscribe', async () => {
+      valuesCollections.withTimeAFilter.unsubscribe();
+      jest.advanceTimersByTime(deps.shutdownDelayInMs + 1);
+
+      expect(mapValues(valuesCollections, (coll) => coll.complete)).toEqual({
+        withTimeAFilter: true,
+        withTimeBFilter: false,
+        withoutFilter: false,
+      });
+      expect(deps.subscriberReadiness.observed).toBeTruthy();
+      expect(deps.liveEventsObservable.observed).toBeTruthy();
+      expect(deps.onShutdown).not.toHaveBeenCalled();
+    });
+
+    it('should emit complete event to all subscribers during shutdown', async () => {
+      deps.liveEventsObservable.complete();
+
+      expect(mapValues(valuesCollections, (coll) => coll.complete)).toEqual({
+        withTimeAFilter: true,
+        withTimeBFilter: true,
+        withoutFilter: true,
+      });
+      expect(deps.subscriberReadiness.observed).toBeFalsy();
+      expect(deps.liveEventsObservable.observed).toBeFalsy();
+      expect(deps.onShutdown).toHaveBeenCalled();
+    });
+  });
+
+  describe('shutdown after unsubscribe', () => {
+    it('should shutdown if no other subscriber subscribed during shutdown delay', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+      const valuesCollection = new ValuesCollection<DataQueryResponse>();
+
+      valuesCollection.subscribeTo(liveDataStream.get(liveDataStreamOptions.withTimeAFilter, subscriptionKey));
+
+      expect(deps.subscriberReadiness.observed).toBeTruthy();
+      expect(deps.liveEventsObservable.observed).toBeTruthy();
+      expect(deps.onShutdown).not.toHaveBeenCalled();
+
+      valuesCollection.unsubscribe();
+      jest.advanceTimersByTime(deps.shutdownDelayInMs - 1);
+
+      // delay not finished - should still be subscribed
+      expect(deps.subscriberReadiness.observed).toBeFalsy();
+      expect(deps.liveEventsObservable.observed).toBeTruthy();
+      expect(deps.onShutdown).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(2);
+
+      // delay not finished - shut still be subscribed
+      expect(deps.subscriberReadiness.observed).toBeFalsy();
+      expect(deps.liveEventsObservable.observed).toBeFalsy();
+      expect(deps.onShutdown).toHaveBeenCalled();
+    });
+
+    it('should not shutdown after unsubscribe if another subscriber subscribes during shutdown delay', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+      const valuesCollection1 = new ValuesCollection<DataQueryResponse>();
+      const valuesCollection2 = new ValuesCollection<DataQueryResponse>();
+
+      valuesCollection1.subscribeTo(liveDataStream.get(liveDataStreamOptions.withTimeAFilter, subscriptionKey));
+
+      expect(deps.subscriberReadiness.observed).toBeTruthy();
+      expect(deps.liveEventsObservable.observed).toBeTruthy();
+      expect(deps.onShutdown).not.toHaveBeenCalled();
+
+      valuesCollection1.unsubscribe();
+      jest.advanceTimersByTime(deps.shutdownDelayInMs - 1);
+
+      valuesCollection2.subscribeTo(liveDataStream.get(liveDataStreamOptions.withTimeAFilter, subscriptionKey));
+      jest.advanceTimersByTime(deps.shutdownDelayInMs);
+
+      expect(deps.subscriberReadiness.observed).toBeTruthy();
+      expect(deps.liveEventsObservable.observed).toBeTruthy();
+      expect(deps.onShutdown).not.toHaveBeenCalled();
     });
   });
 });

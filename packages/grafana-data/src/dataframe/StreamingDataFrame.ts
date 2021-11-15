@@ -144,12 +144,11 @@ export class StreamingDataFrame implements DataFrame {
       this.timeFieldIndex,
       options.maxDelta
     );
-    if (numberOfItemsToRemove) {
-      dataFrameDTO.fields = dataFrameDTO.fields.map((f) => ({
-        ...f,
-        values: (f.values as unknown[]).slice(numberOfItemsToRemove),
-      }));
-    }
+
+    dataFrameDTO.fields = dataFrameDTO.fields.map((f) => ({
+      ...f,
+      values: (f.values as unknown[]).slice(numberOfItemsToRemove),
+    }));
 
     return {
       ...dataFrameDTO,
