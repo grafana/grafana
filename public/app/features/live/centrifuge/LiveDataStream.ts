@@ -8,13 +8,11 @@ import {
   Field,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
-  LiveChannelConfig,
   LiveChannelConnectionState,
   LiveChannelEvent,
   LiveChannelId,
   LoadingState,
   StreamingDataFrame,
-  StreamingFrameAction,
   StreamingFrameOptions,
 } from '@grafana/data';
 import { map, Observable, ReplaySubject, Subject, Subscriber, Subscription } from 'rxjs';
@@ -22,24 +20,32 @@ import { DataStreamSubscriptionKey } from './service';
 import { StreamingResponseDataType } from '@grafana/data/src/dataframe/StreamingDataFrame';
 
 const bufferIfNot = (canEmitObservable: Observable<boolean>) => <T>(source: Observable<T>): Observable<T[] | T> => {
-  let buffer: T[] = [];
-  let canEmit = true;
-
-  const canEmitSub = canEmitObservable.subscribe({
-    next: (val) => {
-      canEmit = val;
-    },
-  });
-
   return new Observable((subscriber: Subscriber<T | T[]>) => {
+    let buffer: T[] = [];
+    let canEmit = true;
+
+    const emitBuffer = () => {
+      subscriber.next(buffer);
+      buffer = [];
+    };
+
+    const canEmitSub = canEmitObservable.subscribe({
+      next: (val) => {
+        canEmit = val;
+
+        if (canEmit && buffer.length) {
+          emitBuffer();
+        }
+      },
+    });
+
     const sourceSub = source.subscribe({
       next(value) {
         if (canEmit) {
           if (!buffer.length) {
             subscriber.next(value);
           } else {
-            subscriber.next(buffer);
-            buffer = [];
+            emitBuffer();
           }
         } else {
           buffer.push(value);
@@ -60,14 +66,13 @@ const bufferIfNot = (canEmitObservable: Observable<boolean>) => <T>(source: Obse
   });
 };
 
-const shutdownDelayInMs = 5000;
-
-type DataStreamHandlerDeps<T> = {
-  config: LiveChannelConfig;
+export type DataStreamHandlerDeps<T> = {
   channelId: LiveChannelId;
   liveEventsObservable: Observable<LiveChannelEvent<T>>;
   onShutdown: () => void;
   subscriberReadiness: Observable<boolean>;
+  defaultStreamingFrameOptions: Readonly<StreamingFrameOptions>;
+  shutdownDelayInMs: number;
 };
 
 enum InternalStreamMessageType {
@@ -119,12 +124,6 @@ const areAllMessagesOfType = <T extends InternalStreamMessageType>(
   type: T
 ): packets is Array<InternalStreamMessage<T>> => packets.every((p) => p.type === type);
 
-const defaultStreamingFrameOptions: Readonly<StreamingFrameOptions> = {
-  maxLength: 100,
-  maxDelta: Infinity,
-  action: StreamingFrameAction.Append,
-};
-
 export class LiveDataStream<T = unknown> {
   private frameBuffer: StreamingDataFrame;
   private liveEventsSubscription: Subscription;
@@ -132,7 +131,7 @@ export class LiveDataStream<T = unknown> {
   private shutdownTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private deps: DataStreamHandlerDeps<T>) {
-    this.frameBuffer = StreamingDataFrame.empty(defaultStreamingFrameOptions);
+    this.frameBuffer = StreamingDataFrame.empty(deps.defaultStreamingFrameOptions);
     this.liveEventsSubscription = deps.liveEventsObservable.subscribe({
       error: this.onError,
       complete: this.onComplete,
@@ -141,6 +140,7 @@ export class LiveDataStream<T = unknown> {
   }
 
   private shutdown = () => {
+    this.stream.complete();
     this.liveEventsSubscription.unsubscribe();
     this.deps.onShutdown();
   };
@@ -156,7 +156,6 @@ export class LiveDataStream<T = unknown> {
 
   private onComplete = () => {
     console.log('LiveQuery [complete]', this.deps.channelId);
-    this.stream.complete();
     this.shutdown();
   };
 
@@ -209,18 +208,22 @@ export class LiveDataStream<T = unknown> {
     }
   };
 
-  get = (options: LiveDataStreamOptions, subKey: DataStreamSubscriptionKey): Observable<DataQueryResponse> => {
-    if (this.shutdownTimeoutId) {
-      clearTimeout(this.shutdownTimeoutId);
-      this.shutdownTimeoutId = undefined;
-    }
-
+  private prepareInternalStreamForNewSubscription = (options: LiveDataStreamOptions): void => {
     this.resizeBuffer(options);
 
     if (!this.frameBuffer.hasAtLeastOnePacket() && options.frame) {
       // will skip initial frames from subsequent subscribers
       this.process(dataFrameToJSON(options.frame));
     }
+  };
+
+  get = (options: LiveDataStreamOptions, subKey: DataStreamSubscriptionKey): Observable<DataQueryResponse> => {
+    if (this.shutdownTimeoutId) {
+      clearTimeout(this.shutdownTimeoutId);
+      this.shutdownTimeoutId = undefined;
+    }
+
+    this.prepareInternalStreamForNewSubscription(options);
 
     const fieldsNamesFilter = options.filter?.fields;
     const dataNeedsFiltering = fieldsNamesFilter?.length;
@@ -265,7 +268,7 @@ export class LiveDataStream<T = unknown> {
     let shouldSendFullFrame = true;
     const transformedInternalStream = this.stream.pipe(
       bufferIfNot(this.deps.subscriberReadiness),
-      map((next) => {
+      map((next, i) => {
         if (shouldSendFullFrame) {
           shouldSendFullFrame = false;
           return getFullFrameResponseData();
@@ -323,7 +326,7 @@ export class LiveDataStream<T = unknown> {
         // TODO: potentially resize (downsize) the buffer on unsubscribe
         sub.unsubscribe();
         if (!this.stream.observed) {
-          this.shutdownTimeoutId = setTimeout(this.shutdown, shutdownDelayInMs);
+          this.shutdownTimeoutId = setTimeout(this.shutdown, this.deps.shutdownDelayInMs);
         }
       };
     });

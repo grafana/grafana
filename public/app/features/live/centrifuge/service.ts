@@ -9,6 +9,8 @@ import {
   LiveChannelEvent,
   LiveChannelId,
   LiveChannelPresenceStatus,
+  StreamingFrameAction,
+  StreamingFrameOptions,
   toLiveChannelId,
 } from '@grafana/data';
 import { CentrifugeLiveChannel } from './channel';
@@ -48,6 +50,14 @@ export interface CentrifugeSrv {
 }
 
 export type DataStreamSubscriptionKey = string;
+
+const defaultStreamingFrameOptions: Readonly<StreamingFrameOptions> = {
+  maxLength: 100,
+  maxDelta: Infinity,
+  action: StreamingFrameAction.Append,
+};
+
+const dataStreamShutdownDelayInMs = 5000;
 
 export class CentrifugeService implements CentrifugeSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
@@ -174,12 +184,13 @@ export class CentrifugeService implements CentrifugeSrv {
     const channel = this.getChannel(options.addr, config);
     this.liveDataStreamByChannelId[channelId] = new LiveDataStream({
       channelId,
-      config,
       onShutdown: () => {
         delete this.liveDataStreamByChannelId[channelId];
       },
       liveEventsObservable: channel.getStream(),
       subscriberReadiness: this.dataStreamSubscriberReadiness,
+      defaultStreamingFrameOptions,
+      shutdownDelayInMs: dataStreamShutdownDelayInMs,
     });
     return this.liveDataStreamByChannelId[channelId];
   };

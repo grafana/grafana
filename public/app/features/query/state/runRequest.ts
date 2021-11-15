@@ -90,7 +90,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   panelData.series = panelData.series.map((frame, frameIndex) => {
     const dataPacket = panelData.series[frameIndex];
     if (isStreamingResponseData(dataPacket, StreamingResponseDataType.FullFrame)) {
-      return StreamingDataFrame.fromSerialized(dataPacket.frame);
+      return StreamingDataFrame.deserialize(dataPacket.frame);
     } else if (isStreamingResponseData(dataPacket, StreamingResponseDataType.NewValuesSameSchema)) {
       const buffer = state.panelData.series[frameIndex] as StreamingDataFrame;
       buffer.pushNewValues(dataPacket.values);

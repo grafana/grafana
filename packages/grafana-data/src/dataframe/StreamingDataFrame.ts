@@ -138,6 +138,19 @@ export class StreamingDataFrame implements DataFrame {
     const options = optionsOverride ? Object.assign({}, { ...this.options, ...optionsOverride }) : this.options;
     const dataFrameDTO = toFilteredDataFrameDTO(this, fieldPredicate);
 
+    const numberOfItemsToRemove = getNumberOfItemsToRemove(
+      dataFrameDTO.fields.map((f) => f.values) as unknown[][],
+      options.maxLength,
+      this.timeFieldIndex,
+      options.maxDelta
+    );
+    if (numberOfItemsToRemove) {
+      dataFrameDTO.fields = dataFrameDTO.fields.map((f) => ({
+        ...f,
+        values: (f.values as unknown[]).slice(numberOfItemsToRemove),
+      }));
+    }
+
     return {
       ...dataFrameDTO,
       // TODO: Labels and schema are not filtered by field
@@ -184,7 +197,7 @@ export class StreamingDataFrame implements DataFrame {
     );
   };
 
-  static fromSerialized = (serialized: SerializedStreamingDataFrame) => {
+  static deserialize = (serialized: SerializedStreamingDataFrame) => {
     const frame = new StreamingDataFrame(serialized.options);
     frame.initFromSerialized(serialized);
     return frame;
@@ -404,7 +417,7 @@ export class StreamingDataFrame implements DataFrame {
   getValuesFromLastPacket = (): unknown[][] =>
     this.fields.map((f) => {
       const values = f.values.buffer;
-      return values.slice(values.length - this.packetInfo.length);
+      return values.slice(Math.max(values.length - this.packetInfo.length));
     });
 
   hasAtLeastOnePacket = () => Boolean(this.packetInfo.length);
@@ -514,6 +527,18 @@ function circPush(data: unknown[][], newData: unknown[][], maxLength = Infinity,
 }
 
 function assureValuesAreWithinLengthLimit(data: unknown[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
+  const count = getNumberOfItemsToRemove(data, maxLength, deltaIdx, maxDelta);
+
+  if (count) {
+    for (let i = 0; i < data.length; i++) {
+      data[i].splice(0, count);
+    }
+  }
+
+  return count;
+}
+
+function getNumberOfItemsToRemove(data: unknown[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
   if (!data[0]?.length) {
     return 0;
   }
@@ -534,12 +559,6 @@ function assureValuesAreWithinLengthLimit(data: unknown[][], maxLength = Infinit
 
     if (high - low > maxDelta) {
       sliceIdx = closestIdx(high - maxDelta, deltaLookup, sliceIdx);
-    }
-  }
-
-  if (sliceIdx) {
-    for (let i = 0; i < data.length; i++) {
-      data[i].splice(0, sliceIdx);
     }
   }
 
