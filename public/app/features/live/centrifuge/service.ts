@@ -282,7 +282,11 @@ export class CentrifugeService implements CentrifugeSrv {
    */
   getDataQueryStream(requestId: string, body: any): Observable<DataQueryResponse> {
     // TODO: use centrifuge RPC!!!
-    return of({ error: { message: 'not implemented yet!' }, data: [], state: LoadingState.Error });
+    return of(
+      this.centrifuge.rpc(body).then((v) => {
+        return { error: { message: 'not implemented yet!' }, state: LoadingState.Error };
+      })
+    );
   }
 
   /**
