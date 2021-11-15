@@ -114,7 +114,7 @@ func AuthorizeInOrgMiddleware(ac accesscontrol.AccessControl, db *sqlstore.SQLSt
 					Deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 					return
 				}
-				userCopy.OrgId = query.OrgId
+				userCopy.OrgId = query.Result.OrgId
 				userCopy.OrgName = query.Result.OrgName
 				userCopy.OrgRole = query.Result.OrgRole
 			}
@@ -136,14 +136,4 @@ func UseOrgFromContextParams(c *models.ReqContext) (int64, error) {
 
 func UseGlobalOrg(c *models.ReqContext) (int64, error) {
 	return accesscontrol.GlobalOrgID, nil
-}
-
-func UseOrgFromContextParamsByName(db *sqlstore.SQLStore) OrgIDGetter {
-	return func(c *models.ReqContext) (int64, error) {
-		org, err := db.GetOrgByName(web.Params(c.Req)[":name"])
-		if err != nil {
-			return 0, err
-		}
-		return org.Id, nil
-	}
 }

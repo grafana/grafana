@@ -253,7 +253,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// orgs (admin routes)
-		apiRoute.Get("/orgs/name/:name/", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParamsByName(hs.SQLStore), ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.GetOrgByName))
+		apiRoute.Get("/orgs/name/:name/", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.GetOrgByName))
 
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {

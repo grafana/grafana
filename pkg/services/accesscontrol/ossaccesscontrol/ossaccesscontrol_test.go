@@ -536,13 +536,6 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name:     "Translate orgs:current",
-			user:     testUser,
-			rawPerm:  accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:current"},
-			wantPerm: accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:id:3"},
-			wantErr:  false,
-		},
-		{
 			name:     "Translate users:self",
 			user:     testUser,
 			rawPerm:  accesscontrol.Permission{Action: "users:read", Scope: "users:self"},

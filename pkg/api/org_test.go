@@ -396,17 +396,12 @@ func TestAPIEndpoint_GetOrgByName_AccessControl(t *testing.T) {
 	setupOrgsDBForAccessControlTests(t, *sc.db, *sc.initCtx.SignedInUser, 2)
 
 	t.Run("AccessControl allows viewing another org with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsRead}}, 2)
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsRead}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsByNameURL, "TestOrg2"), nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
-	t.Run("AccessControl prevents viewing another org with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsRead}}, 1)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsByNameURL, "TestOrg2"), nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
 	t.Run("AccessControl prevents viewing another org with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsByNameURL, "TestOrg2"), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
