@@ -13,6 +13,7 @@ import {
   StreamingFrameAction,
   getDataSourceRef,
   DataSourceRef,
+  StreamingDataFrame,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -303,7 +304,7 @@ export type StreamOptionsProvider<TQuery extends DataQuery = DataQuery> = (
  * @public
  */
 export const standardStreamOptionsProvider: StreamOptionsProvider = (request: DataQueryRequest, frame: DataFrame) => {
-  const buffer: StreamingFrameOptions = {
+  const buffer: Partial<StreamingFrameOptions> = {
     maxLength: request.maxDataPoints ?? 500,
     action: StreamingFrameAction.Append,
   };
@@ -312,7 +313,7 @@ export const standardStreamOptionsProvider: StreamOptionsProvider = (request: Da
   if (request.rangeRaw?.to === 'now') {
     buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
   }
-  return buffer;
+  return StreamingDataFrame.optionsWithDefaults(buffer);
 };
 
 //@ts-ignore

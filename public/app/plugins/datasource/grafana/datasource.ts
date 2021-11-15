@@ -10,6 +10,7 @@ import {
   DataSourceRef,
   isValidLiveChannelAddress,
   parseLiveChannelAddress,
+  StreamingDataFrame,
   StreamingFrameOptions,
   toDataFrame,
 } from '@grafana/data';
@@ -88,7 +89,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         if (!isValidLiveChannelAddress(addr)) {
           continue;
         }
-        const buffer: StreamingFrameOptions = {
+        const buffer: Partial<StreamingFrameOptions> = {
           maxLength: request.maxDataPoints ?? 500,
         };
         if (target.buffer) {
@@ -103,7 +104,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
             key: `${request.requestId}.${counter++}`,
             addr: addr!,
             filter,
-            buffer,
+            buffer: StreamingDataFrame.optionsWithDefaults(buffer),
           })
         );
       } else {

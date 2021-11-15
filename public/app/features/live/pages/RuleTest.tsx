@@ -30,7 +30,7 @@ export const RuleTest: React.FC<Props> = (props) => {
         if (t) {
           setResponse(
             t.map((f) => {
-              const frame = new StreamingDataFrame(f.frame);
+              const frame = StreamingDataFrame.fromDataFrameJSON(f.frame);
               for (const field of frame.fields) {
                 field.display = getDisplayProcessor({ field, theme: config.theme2 });
               }

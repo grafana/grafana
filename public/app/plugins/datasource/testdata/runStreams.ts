@@ -65,7 +65,7 @@ export function runSignalStream(
       schema.fields.push({ name: 'Max' + suffix, type: FieldType.number });
     }
 
-    const frame = new StreamingDataFrame({ schema }, { maxLength: maxDataPoints });
+    const frame = StreamingDataFrame.fromDataFrameJSON({ schema }, { maxLength: maxDataPoints });
 
     let value = Math.random() * 100;
     let timeoutId: any = null;

@@ -211,7 +211,7 @@ export class StreamingDataFrame implements DataFrame {
     return streamingDataFrame;
   };
 
-  private static optionsWithDefaults = (opts?: Partial<StreamingFrameOptions>): StreamingFrameOptions => {
+  static optionsWithDefaults = (opts?: Partial<StreamingFrameOptions>): StreamingFrameOptions => {
     return {
       maxLength: opts?.maxLength ?? 1000,
       maxDelta: opts?.maxDelta ?? Infinity,
