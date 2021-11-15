@@ -5,7 +5,7 @@ import { updateNavIndex } from 'app/core/actions';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
-import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
+import { getPluginSettings } from 'app/features/plugins/components/PluginSettingsCache';
 import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
 
 import config from '../../../core/config';
