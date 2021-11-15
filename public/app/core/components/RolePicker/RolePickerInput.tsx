@@ -1,6 +1,6 @@
 import React, { FormEvent, HTMLProps, MutableRefObject, useEffect, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2, getInputStyles, sharedInputStyle, DropdownIndicator, styleMixins, Tooltip } from '@grafana/ui';
+import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { ValueContainer } from './ValueContainer';
 import { Role } from '../../../types';
@@ -54,7 +54,7 @@ export const RolePickerInput = ({
   });
 
   return !isFocused ? (
-    <div className={styles.selectedRoles} onMouseDown={onInputClick}>
+    <div className={styles.selectedRoles} onMouseDown={onOpen}>
       <ValueContainer>{builtInRole}</ValueContainer>
       {!!numberOfRoles && (
         <Tooltip
@@ -73,7 +73,7 @@ export const RolePickerInput = ({
       )}
     </div>
   ) : (
-    <div className={styles.wrapper} onMouseDown={onInputClick}>
+    <div className={styles.wrapper}>
       <ValueContainer>{builtInRole}</ValueContainer>
       {appliedRoles.map((role) => (
         <ValueContainer key={role.uid}>{role.displayName}</ValueContainer>
@@ -92,7 +92,7 @@ export const RolePickerInput = ({
         />
       )}
       <div className={styles.suffix}>
-        <DropdownIndicator isOpen={!!isFocused} />
+        <Icon name="angle-up" className={styles.dropdownIndicator} onMouseDown={onInputClick} />
       </div>
     </div>
   );
@@ -131,7 +131,7 @@ const getRolePickerInputStyles = (
         justify-content: flex-start;
         position: relative;
         box-sizing: border-box;
-        cursor: ${disabled ? 'not-allowed' : 'pointer'};
+        cursor: default;
       `,
       withPrefix &&
         css`
@@ -147,10 +147,13 @@ const getRolePickerInputStyles = (
       `
     ),
     suffix: cx(styles.suffix),
+    dropdownIndicator: css`
+      cursor: pointer;
+    `,
     selectedRoles: css`
       display: flex;
       align-items: center;
-      cursor: pointer;
+      cursor: ${disabled ? 'not-allowed' : 'pointer'};
     `,
   };
 };
