@@ -14,7 +14,7 @@ import {
   MSAzurePayload,
   TrackingOptions,
 } from './AddRemoteInstance.types';
-import { AdditionalOptions, Labels, MainDetails } from './FormParts';
+import { AdditionalOptions, Labels, MainDetails, PostgreSQLConnectionDetails } from './FormParts';
 import { Messages } from './AddRemoteInstance.messages';
 import { ExternalServiceConnectionDetails } from './FormParts/ExternalServiceConnectionDetails/ExternalServiceConnectionDetails';
 import { InstanceTypesExtra, InstanceTypes, INSTANCE_TYPES_LABELS, InstanceAvailableType } from '../../panel.types';
@@ -75,6 +75,8 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
         return <ExternalServiceConnectionDetails form={form} />;
       case Databases.haproxy:
         return <HAProxyConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
+      case Databases.postgresql:
+        return <PostgreSQLConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
       default:
         return <MainDetails form={form} remoteInstanceCredentials={remoteInstanceCredentials} />;
     }
