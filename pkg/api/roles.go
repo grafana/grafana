@@ -71,7 +71,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     2,
 			Name:        "fixed:datasources:reader",
 			DisplayName: "Data source reader",
-			Description: "Read and query all datasources",
+			Description: "Read and query all datasources.",
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionDatasourcesRead,
@@ -91,7 +91,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     2,
 			Name:        "fixed:datasources:writer",
 			DisplayName: "Data source writer",
-			Description: "Create, update, delete, read, or query data sources",
+			Description: "Create, update, delete, read, or query data sources.",
 			Permissions: accesscontrol.ConcatPermissions(datasourcesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: ActionDatasourcesWrite,
@@ -114,7 +114,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     3,
 			Name:        "fixed:datasources:id:reader",
 			DisplayName: "Data source ID reader",
-			Description: "Read id for datasources",
+			Description: "Read the ID of a data source based on its name.",
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionDatasourcesIDRead,
@@ -141,7 +141,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	currentOrgReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     2,
-			Name:        "fixed:current:org:reader",
+			Name:        "fixed:current.org:reader",
 			DisplayName: "Current Organization reader",
 			Description: "Read current organization and its quotas.",
 			Permissions: []accesscontrol.Permission{
@@ -161,7 +161,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	currentOrgWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     2,
-			Name:        "fixed:current:org:writer",
+			Name:        "fixed:current.org:writer",
 			DisplayName: "Current Organization writer",
 			Description: "Read current organization, its quotas, and its preferences. Update current organization and its preferences.",
 			Permissions: accesscontrol.ConcatPermissions(currentOrgReaderRole.Role.Permissions, []accesscontrol.Permission{
