@@ -3542,6 +3542,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 789d0134eb618c5f91374399897d92a108435789a3092377bb609cb7f0086290
+hmac: 73b6a37371bd68484809eb311063fc37319a1cff2eb3aabbdad230ba88e13ff4
 
 ...
