@@ -93,7 +93,6 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     name,
     info: { description, version, logos, updated, author },
     id,
-    signature,
     dev,
     type,
     signatureOrg,
@@ -118,7 +117,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     hasUpdate,
     isInstalled: true,
     isDisabled: !!error,
-    isCore: signature === 'internal',
+    isCore: isLocalCorePlugin(plugin),
     isDev: Boolean(dev),
     isEnterprise: false,
     type,
@@ -266,4 +265,8 @@ function isPluginVisible(id: string) {
   const { pluginCatalogHiddenPlugins }: { pluginCatalogHiddenPlugins: string[] } = config;
 
   return !pluginCatalogHiddenPlugins.includes(id);
+}
+
+export function isLocalCorePlugin(local?: LocalPlugin): boolean {
+  return Boolean(local?.signature === 'internal');
 }
