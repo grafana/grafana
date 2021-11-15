@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
 import { Field } from '@grafana/data';
 import { useNodeLimit } from './useNodeLimit';
 import useMountedState from 'react-use/lib/useMountedState';
 import { graphBounds } from './utils';
 import { createWorker } from './createLayoutWorker';
+import { useUnmount } from 'react-use';
 
 export interface Config {
   linkDistance: number;
@@ -52,6 +53,13 @@ export function useLayout(
   const [loading, setLoading] = useState(false);
 
   const isMounted = useMountedState();
+  const layoutWorkerCancelRef = useRef<(() => void) | undefined>();
+
+  useUnmount(() => {
+    if (layoutWorkerCancelRef.current) {
+      layoutWorkerCancelRef.current();
+    }
+  });
 
   // Also we compute both layouts here. Grid layout should not add much time and we can more easily just cache both
   // so this should happen only once for a given response data.
@@ -69,6 +77,7 @@ export function useLayout(
     if (rawNodes.length === 0) {
       setNodesGraph([]);
       setEdgesGraph([]);
+      setLoading(false);
       return;
     }
 
@@ -76,14 +85,15 @@ export function useLayout(
 
     // This is async but as I wanted to still run the sync grid layout and you cannot return promise from effect so
     // having callback seems ok here.
-    defaultLayout(rawNodes, rawEdges, ({ nodes, edges }) => {
-      // TODO: it would be better to cancel the worker somehow but probably not super important right now.
+    const cancel = defaultLayout(rawNodes, rawEdges, ({ nodes, edges }) => {
       if (isMounted()) {
         setNodesGraph(nodes);
         setEdgesGraph(edges as EdgeDatumLayout[]);
         setLoading(false);
       }
     });
+    layoutWorkerCancelRef.current = cancel;
+    return cancel;
   }, [rawNodes, rawEdges, isMounted]);
 
   // Compute grid separately as it is sync and do not need to be inside effect. Also it is dependant on width while
@@ -128,6 +138,7 @@ export function useLayout(
 
 /**
  * Wraps the layout code in a worker as it can take long and we don't want to block the main thread.
+ * Returns a cancel function to terminate the worker.
  */
 function defaultLayout(
   nodes: NodeDatum[],
@@ -154,6 +165,10 @@ function defaultLayout(
     edges,
     config: defaultConfig,
   });
+
+  return () => {
+    worker.terminate();
+  };
 }
 
 /**

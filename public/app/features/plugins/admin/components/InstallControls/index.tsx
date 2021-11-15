@@ -1,6 +1,5 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
@@ -8,27 +7,23 @@ import { GrafanaTheme2, PluginType } from '@grafana/data';
 
 import { ExternallyManagedButton } from './ExternallyManagedButton';
 import { InstallControlsButton } from './InstallControlsButton';
-import { CatalogPlugin, PluginStatus } from '../../types';
+import { CatalogPlugin, PluginStatus, Version } from '../../types';
 import { getExternalManageLink } from '../../helpers';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';
 import { isGrafanaAdmin } from '../../permissions';
 
 interface Props {
   plugin: CatalogPlugin;
+  latestCompatibleVersion?: Version;
 }
 
-export const InstallControls = ({ plugin }: Props) => {
+export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
   const styles = useStyles2(getStyles);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const hasPermission = isGrafanaAdmin();
-  const grafanaDependency = plugin.details?.grafanaDependency;
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
-  const unsupportedGrafanaVersion = grafanaDependency
-    ? !satisfies(config.buildInfo.version, grafanaDependency, {
-        // needed for when running against main
-        includePrerelease: true,
-      })
-    : false;
+  const isCompatible = Boolean(latestCompatibleVersion);
+
   const pluginStatus = plugin.isInstalled
     ? plugin.hasUpdate
       ? PluginStatus.UPDATE
@@ -68,7 +63,19 @@ export const InstallControls = ({ plugin }: Props) => {
     return <div className={styles.message}>{message}</div>;
   }
 
-  if (unsupportedGrafanaVersion) {
+  if (!plugin.isPublished) {
+    return (
+      <div className={styles.message}>
+        <Icon name="exclamation-triangle" /> This plugin is not published to{' '}
+        <a href="https://www.grafana.com/plugins" target="__blank" rel="noreferrer">
+          grafana.com/plugins
+        </a>{' '}
+        and can&#39;t be managed via the catalog.
+      </div>
+    );
+  }
+
+  if (!isCompatible) {
     return (
       <div className={styles.message}>
         <Icon name="exclamation-triangle" />
@@ -89,7 +96,13 @@ export const InstallControls = ({ plugin }: Props) => {
     );
   }
 
-  return <InstallControlsButton plugin={plugin} pluginStatus={pluginStatus} />;
+  return (
+    <InstallControlsButton
+      plugin={plugin}
+      pluginStatus={pluginStatus}
+      latestCompatibleVersion={latestCompatibleVersion}
+    />
+  );
 };
 
 export const getStyles = (theme: GrafanaTheme2) => {

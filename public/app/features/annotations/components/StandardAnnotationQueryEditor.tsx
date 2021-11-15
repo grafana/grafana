@@ -7,7 +7,7 @@ import { Button, Icon, IconName, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { standardAnnotationSupport } from '../standardAnnotationSupport';
-import { executeAnnotationQuery } from '../annotations_srv';
+import { executeAnnotationQuery } from '../executeAnnotationQuery';
 import { PanelModel } from 'app/features/dashboard/state';
 import { AnnotationQueryResponse } from '../types';
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
