@@ -67,6 +67,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			Type:          string(pluginDef.Type),
 			Category:      pluginDef.Category,
 			Info:          &pluginDef.Info,
+			Dependencies:  &pluginDef.Dependencies,
 			LatestVersion: pluginDef.GrafanaComVersion,
 			HasUpdate:     pluginDef.GrafanaComHasUpdate,
 			DefaultNavUrl: pluginDef.DefaultNavURL,
@@ -220,7 +221,7 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 		}
 	}
 
-	dashInfo, dash, err := hs.pluginDashboardManager.ImportDashboard(apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
+	dashInfo, dash, err := hs.pluginDashboardManager.ImportDashboard(c.Req.Context(), apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
 		apiCmd.Dashboard, apiCmd.Overwrite, apiCmd.Inputs, c.SignedInUser)
 	if err != nil {
 		return hs.dashboardSaveErrorToApiResponse(err)

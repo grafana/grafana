@@ -1,30 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 40 40" style="enable-background:new 0 0 40 40;" xml:space="preserve">
-<path style="fill:#4788C7;" d="M35.5,23L35.5,23c-0.275,0-0.5-0.225-0.5-0.5v-21C35,1.225,35.225,1,35.5,1l0,0  C35.775,1,36,1.225,36,1.5v21C36,22.775,35.775,23,35.5,23z"/>
-<path style="fill:#4788C7;" d="M14.5,30L14.5,30c-0.275,0-0.5-0.225-0.5-0.5v-23C14,6.225,14.225,6,14.5,6h0  C14.775,6,15,6.225,15,6.5v23C15,29.775,14.775,30,14.5,30z"/>
-<path style="fill:#4788C7;" d="M25.5,35L25.5,35c-0.275,0-0.5-0.225-0.5-0.5v-17c0-0.275,0.225-0.5,0.5-0.5l0,0  c0.275,0,0.5,0.225,0.5,0.5v17C26,34.775,25.775,35,25.5,35z"/>
-<path style="fill:#4788C7;" d="M4.5,39L4.5,39C4.225,39,4,38.775,4,38.5v-19C4,19.225,4.225,19,4.5,19h0C4.775,19,5,19.225,5,19.5  v19C5,38.775,4.775,39,4.5,39z"/>
-<g>
-	<rect x="32.5" y="4.5" style="fill:#98CCFD;" width="6" height="15"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 40 40" style="enable-background:new 0 0 40 40;" xml:space="preserve">
+	<defs>
+		<style>.cls-1{fill:#84aff1;}.cls-2{fill:url(#linear-gradient);}.cls-3{fill:#3865ab;}</style>
+		<linearGradient id="linear-gradient" y1="40.18" x2="82.99" y2="40.18" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#f2cc0c" />
+			<stop offset="1" stop-color="#ff9830" />
+		</linearGradient>
+	</defs>
 	<g>
-		<path style="fill:#4788C7;" d="M38,5v14h-5V5H38 M39,4h-7v16h7V4L39,4z"/>
+		<path class="cls-3" d="M35.5,23L35.5,23c-0.275,0-0.5-0.225-0.5-0.5v-21C35,1.225,35.225,1,35.5,1l0,0  C35.775,1,36,1.225,36,1.5v21C36,22.775,35.775,23,35.5,23z" />
+		<path class="cls-3" d="M14.5,30L14.5,30c-0.275,0-0.5-0.225-0.5-0.5v-23C14,6.225,14.225,6,14.5,6h0  C14.775,6,15,6.225,15,6.5v23C15,29.775,14.775,30,14.5,30z" />
+		<path class="cls-3" d="M25.5,35L25.5,35c-0.275,0-0.5-0.225-0.5-0.5v-17c0-0.275,0.225-0.5,0.5-0.5l0,0  c0.275,0,0.5,0.225,0.5,0.5v17C26,34.775,25.775,35,25.5,35z" />
+		<path class="cls-3" d="M4.5,39L4.5,39C4.225,39,4,38.775,4,38.5v-19C4,19.225,4.225,19,4.5,19h0C4.775,19,5,19.225,5,19.5  v19C5,38.775,4.775,39,4.5,39z" />
+		<g>
+			<rect x="32.5" y="4.5" class="cls-1" width="6" height="15" />
+			<g>
+				<path class="cls-3" d="M38,5v14h-5V5H38 M39,4h-7v16h7V4L39,4z" />
+			</g>
+		</g>
+		<g>
+			<rect x="11.5" y="9.5" class="cls-1" width="6" height="17" />
+			<g>
+				<path class="cls-3" d="M17,10v16h-5V10H17 M18,9h-7v18h7V9L18,9z" />
+			</g>
+		</g>
+		<g>
+			<rect x="22.5" y="20.5" class="cls-1" width="6" height="11" />
+			<g>
+				<path class="cls-3" d="M28,21v10h-5V21H28 M29,20h-7v12h7V20L29,20z" />
+			</g>
+		</g>
+		<g>
+			<rect x="1.5" y="22.5" class="cls-1" width="6" height="13" />
+			<g>
+				<path class="cls-3" d="M7,23v12H2V23H7 M8,22H1v14h7V22L8,22z" />
+			</g>
+		</g>
 	</g>
-</g>
-<g>
-	<rect x="11.5" y="9.5" style="fill:#98CCFD;" width="6" height="17"/>
-	<g>
-		<path style="fill:#4788C7;" d="M17,10v16h-5V10H17 M18,9h-7v18h7V9L18,9z"/>
-	</g>
-</g>
-<g>
-	<rect x="22.5" y="20.5" style="fill:#DFF0FE;" width="6" height="11"/>
-	<g>
-		<path style="fill:#4788C7;" d="M28,21v10h-5V21H28 M29,20h-7v12h7V20L29,20z"/>
-	</g>
-</g>
-<g>
-	<rect x="1.5" y="22.5" style="fill:#DFF0FE;" width="6" height="13"/>
-	<g>
-		<path style="fill:#4788C7;" d="M7,23v12H2V23H7 M8,22H1v14h7V22L8,22z"/>
-	</g>
-</g>
 </svg>
