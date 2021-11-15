@@ -1,6 +1,7 @@
 import { RemotePlugin, LocalPlugin } from './types';
 import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './__mocks__';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   mapToCatalogPlugin,
   mapRemoteToCatalog,
@@ -9,6 +10,8 @@ import {
   mergeLocalsAndRemotes,
   sortPlugins,
   Sorters,
+  isLocalPluginVisible,
+  isRemotePluginVisible,
 } from './helpers';
 
 describe('Plugins/Helpers', () => {
@@ -639,6 +642,46 @@ describe('Plugins/Helpers', () => {
       );
 
       expect(sorted.map(({ id }) => id)).toEqual(['pie-chart', 'cloud-watch', 'jira', 'zabbix', 'snowflake']);
+    });
+  });
+
+  describe('isLocalPluginVisible()', () => {
+    test('should return TRUE if the plugin is not listed as hidden in the main Grafana configuration', () => {
+      config.pluginCatalogHiddenPlugins = ['akumuli-datasource'];
+      const plugin = getLocalPluginMock({
+        id: 'barchart',
+      });
+
+      expect(isLocalPluginVisible(plugin)).toBe(true);
+    });
+
+    test('should return FALSE if the plugin is listed as hidden in the main Grafana configuration', () => {
+      config.pluginCatalogHiddenPlugins = ['akumuli-datasource'];
+      const plugin = getLocalPluginMock({
+        id: 'akumuli-datasource',
+      });
+
+      expect(isLocalPluginVisible(plugin)).toBe(false);
+    });
+  });
+
+  describe('isRemotePluginVisible()', () => {
+    test('should return TRUE if the plugin is not listed as hidden in the main Grafana configuration', () => {
+      config.pluginCatalogHiddenPlugins = ['akumuli-datasource'];
+      const plugin = getRemotePluginMock({
+        slug: 'barchart',
+      });
+
+      expect(isRemotePluginVisible(plugin)).toBe(true);
+    });
+
+    test('should return FALSE if the plugin is listed as hidden in the main Grafana configuration', () => {
+      config.pluginCatalogHiddenPlugins = ['akumuli-datasource'];
+      const plugin = getRemotePluginMock({
+        slug: 'akumuli-datasource',
+      });
+
+      expect(isRemotePluginVisible(plugin)).toBe(false);
     });
   });
 });
