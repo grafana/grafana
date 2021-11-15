@@ -18,7 +18,7 @@ const UnifiedAlertingPromotion: FC<{}> = () => {
   return (
     <Alert
       severity="info"
-      title="Try out the new Grafana 8 alerting"
+      title="Try out the Grafana 8 alerting!"
       onRemove={() => setShowUnifiedAlertingPromotion(false)}
     >
       <p>
