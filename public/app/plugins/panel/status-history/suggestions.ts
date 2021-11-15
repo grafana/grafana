@@ -4,24 +4,29 @@ import { StatusPanelOptions, StatusFieldConfig } from './types';
 
 export class StatusHistorySuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary } = builder;
+    const { dataSummary: ds } = builder;
 
-    if (!dataSummary.hasData) {
+    if (!ds.hasData) {
       return;
     }
 
     // This panel needs a time field and a string or number field
-    if (!dataSummary.hasTimeField || (!dataSummary.hasStringField && !dataSummary.hasNumberField)) {
+    if (!ds.hasTimeField || (!ds.hasStringField && !ds.hasNumberField)) {
       return;
     }
 
     // If there are many series then they won't fit on y-axis so this panel is not good fit
-    if (dataSummary.numberFieldCount >= 30) {
+    if (ds.numberFieldCount >= 30) {
       return;
     }
 
     // if there a lot of data points for each series then this is not a good match
-    if (dataSummary.rowCountMax > 100) {
+    if (ds.rowCountMax > 100) {
+      return;
+    }
+
+    // Probably better ways to filter out this by inspecting the types of string values so view this as temporary
+    if (ds.preferredVisualisationType === 'logs') {
       return;
     }
 

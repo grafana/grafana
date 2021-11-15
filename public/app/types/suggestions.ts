@@ -26,4 +26,5 @@ export enum SuggestionName {
   StatusHistory = 'Status history',
   TextPanel = 'Text panel',
   DashboardList = 'Dashboard list',
+  Logs = 'Logs',
 }

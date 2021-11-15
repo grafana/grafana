@@ -5,21 +5,11 @@ import config from 'app/core/config';
 import coreModule from 'app/angular/core_module';
 
 import { DataSourceApi, PanelEvents } from '@grafana/data';
-import { importDataSourcePlugin, importAppPlugin } from './plugin_loader';
-import { importPanelPlugin } from './importPanelPlugin';
-import DatasourceSrv from './datasource_srv';
-import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
+import { importDataSourcePlugin, importAppPlugin } from '../../features/plugins/plugin_loader';
+import { importPanelPlugin } from '../../features/plugins/importPanelPlugin';
 
 /** @ngInject */
-function pluginDirectiveLoader(
-  $compile: any,
-  datasourceSrv: DatasourceSrv,
-  $rootScope: GrafanaRootScope,
-  $http: any,
-  $templateCache: any,
-  $timeout: any,
-  $location: ILocationService
-) {
+function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $location: ILocationService) {
   function getTemplate(component: { template: any; templateUrl: any }) {
     if (component.template) {
       return Promise.resolve(component.template);
