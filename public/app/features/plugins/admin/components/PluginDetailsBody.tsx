@@ -7,7 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 import { CatalogPlugin, PluginTabIds } from '../types';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { AppConfigCtrlWrapper } from '../../wrappers/AppConfigWrapper';
+import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import { PluginDashboards } from '../../PluginDashboards';
 
 type Props = {
