@@ -41,6 +41,14 @@ type ConverterConfig struct {
 	JsonFrameConverterConfig  *JsonFrameConverterConfig  `json:"jsonFrame,omitempty"`
 }
 
+type DropFieldsFrameProcessorConfig struct {
+	FieldNames []string `json:"fieldNames"`
+}
+
+type KeepFieldsFrameProcessorConfig struct {
+	FieldNames []string `json:"fieldNames"`
+}
+
 type FrameProcessorConfig struct {
 	Type                      string                          `json:"type" ts_type:"Omit<keyof FrameProcessorConfig, 'type'>"`
 	DropFieldsProcessorConfig *DropFieldsFrameProcessorConfig `json:"dropFields,omitempty"`
@@ -77,6 +85,11 @@ type MultipleSubscriberConfig struct {
 type SubscriberConfig struct {
 	Type                     string                    `json:"type" ts_type:"Omit<keyof SubscriberConfig, 'type'>"`
 	MultipleSubscriberConfig *MultipleSubscriberConfig `json:"multiple,omitempty"`
+}
+
+// RedirectDataOutputConfig ...
+type RedirectDataOutputConfig struct {
+	Channel string `json:"channel"`
 }
 
 type DataOutputterConfig struct {
