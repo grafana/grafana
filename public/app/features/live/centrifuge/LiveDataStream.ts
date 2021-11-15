@@ -119,11 +119,6 @@ const filterMessages = <T extends InternalStreamMessageType>(
   type: T
 ): Array<InternalStreamMessage<T>> => packets.filter((p) => p.type === type) as Array<InternalStreamMessage<T>>;
 
-const areAllMessagesOfType = <T extends InternalStreamMessageType>(
-  packets: InternalStreamMessage[],
-  type: T
-): packets is Array<InternalStreamMessage<T>> => packets.every((p) => p.type === type);
-
 export class LiveDataStream<T = unknown> {
   private frameBuffer: StreamingDataFrame;
   private liveEventsSubscription: Subscription;
@@ -288,11 +283,12 @@ export class LiveDataStream<T = unknown> {
           return getFullFrameResponseData();
         }
 
-        if (!areAllMessagesOfType(messages, InternalStreamMessageType.NewValuesSameSchema)) {
-          throw new Error(`unsupported message type ${messages.map(({ type }) => type)}`);
+        const newValueSameSchemaMessages = filterMessages(messages, InternalStreamMessageType.NewValuesSameSchema);
+        if (newValueSameSchemaMessages.length !== messages.length) {
+          console.warn(`unsupported message type ${messages.map(({ type }) => type)}`);
         }
 
-        return getNewValuesSameSchemaResponseData(reduceNewValuesSameSchemaMessages(messages).values);
+        return getNewValuesSameSchemaResponseData(reduceNewValuesSameSchemaMessages(newValueSameSchemaMessages).values);
       })
     );
 
