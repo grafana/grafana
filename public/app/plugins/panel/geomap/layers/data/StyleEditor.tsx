@@ -2,12 +2,19 @@ import React, { FC } from 'react';
 import { StandardEditorProps } from '@grafana/data';
 import { Field, SliderValueEditor } from '@grafana/ui';
 
-import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
+import {
+  ColorDimensionEditor,
+  ResourceDimensionEditor,
+  ScaleDimensionEditor,
+  TextDimensionEditor,
+} from 'app/features/dimensions/editors';
 import {
   ScaleDimensionConfig,
   ResourceDimensionConfig,
   ColorDimensionConfig,
   ResourceFolderName,
+  TextDimensionConfig,
+  defaultTextConfig,
 } from 'app/features/dimensions/types';
 import { defaultStyleConfig, StyleConfig } from '../../style/types';
 
@@ -16,8 +23,12 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ va
     onChange({ ...value, size: sizeValue });
   };
 
-  const onResourceChange = (resourceValue: ResourceDimensionConfig | undefined) => {
-    onChange({ ...value, symbol: resourceValue });
+  const onSymbolChange = (symbolValue: ResourceDimensionConfig | undefined) => {
+    onChange({ ...value, symbol: symbolValue });
+  };
+
+  const onTextChange = (textValue: TextDimensionConfig | undefined) => {
+    onChange({ ...value, text: textValue });
   };
 
   const onColorChange = (colorValue: ColorDimensionConfig | undefined) => {
@@ -30,7 +41,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ va
 
   return (
     <>
-      <Field label={'Marker Size'}>
+      <Field label={'Size'}>
         <ScaleDimensionEditor
           value={value.size ?? defaultStyleConfig.size}
           context={context}
@@ -45,11 +56,11 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ va
           }
         />
       </Field>
-      <Field label={'Marker Symbol'}>
+      <Field label={'Symbol'}>
         <ResourceDimensionEditor
           value={value.symbol ?? defaultStyleConfig.symbol}
           context={context}
-          onChange={onResourceChange}
+          onChange={onSymbolChange}
           item={
             {
               settings: {
@@ -61,7 +72,15 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ va
           }
         />
       </Field>
-      <Field label={'Marker Color'}>
+      <Field label={'Text label'}>
+        <TextDimensionEditor
+          value={value.text ?? defaultTextConfig}
+          context={context}
+          onChange={onTextChange}
+          item={{} as any}
+        />
+      </Field>
+      <Field label={'Color'}>
         <ColorDimensionEditor
           value={value.color ?? defaultStyleConfig.color}
           context={context}

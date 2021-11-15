@@ -65,6 +65,8 @@ export interface TextDimensionConfig extends BaseDimensionConfig<string> {
   mode: TextDimensionMode;
 }
 
+export const defaultTextConfig: TextDimensionConfig = Object.freeze({ fixed: '', mode: TextDimensionMode.Field });
+
 /** Use the color value from field configs */
 export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
 
