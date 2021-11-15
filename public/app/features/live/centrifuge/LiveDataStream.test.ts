@@ -107,6 +107,8 @@ const fieldsOf = (data: StreamingResponseData<StreamingResponseDataType.FullFram
 };
 
 describe('LiveDataStream', () => {
+  jest.useFakeTimers();
+
   const expectValueCollectionState = <T>(
     valuesCollection: ValuesCollection<T>,
     state: { errors: number; values: number; complete: boolean }
@@ -405,6 +407,23 @@ describe('LiveDataStream', () => {
           values: [3, 3],
         },
       ]);
+    });
+
+    it(`should shutdown when source observable completes`, async () => {
+      expect(deps.onShutdown).not.toHaveBeenCalled();
+      expect(deps.subscriberReadiness.observed).toBeTruthy();
+      expect(deps.liveEventsObservable.observed).toBeTruthy();
+
+      deps.liveEventsObservable.complete();
+      expectValueCollectionState(valuesCollection, {
+        errors: 0,
+        values: valuesCollection.valuesCount(),
+        complete: true,
+      });
+
+      expect(deps.subscriberReadiness.observed).toBeFalsy();
+      expect(deps.liveEventsObservable.observed).toBeFalsy();
+      expect(deps.onShutdown).toHaveBeenCalled();
     });
   });
 });
