@@ -212,7 +212,7 @@ steps:
   name: build-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn run test:accessibility-pr
+  - pa11y-ci --config .pa11yci-pr.conf.js
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -221,7 +221,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: buildkite/puppeteer
+  image: hugohaggmark/docker-puppeteer
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
@@ -506,7 +506,7 @@ steps:
   name: publish-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn run test:accessibility --json > pa11y-ci-results.json
+  - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -515,7 +515,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: buildkite/puppeteer
+  image: hugohaggmark/docker-puppeteer
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
@@ -3430,6 +3430,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 602cb0cf445a9932937cae8a2a396572f53f94c457e426564ad845b1ee54205c
+hmac: d2db1d71a52922f66df9d327cb8991944d6fd050b4ad4d36e5f7cfb9f79f9297
 
 ...

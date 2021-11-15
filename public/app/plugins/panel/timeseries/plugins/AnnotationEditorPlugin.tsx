@@ -3,6 +3,7 @@ import { PlotSelection, UPlotConfigBuilder } from '@grafana/ui';
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useMountedState } from 'react-use';
 import { AnnotationEditor } from './annotations/AnnotationEditor';
+import uPlot from 'uplot';
 
 type StartAnnotatingFn = (props: {
   // pixel coordinates of the clicked point on the uPlot canvas

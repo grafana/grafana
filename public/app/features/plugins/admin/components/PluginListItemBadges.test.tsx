@@ -22,7 +22,6 @@ describe('PluginListItemBadges', () => {
     signature: PluginSignatureStatus.valid,
     publishedAt: '2020-09-01',
     updatedAt: '2021-06-28',
-    version: '1.0.0',
     hasUpdate: false,
     isInstalled: false,
     isCore: false,
@@ -63,8 +62,13 @@ describe('PluginListItemBadges', () => {
     expect(screen.getByRole('button', { name: /learn more/i })).toBeInTheDocument();
   });
 
-  it('renders a error badge (when plugin has an error', () => {
+  it('renders a error badge (when plugin has an error)', () => {
     render(<PluginListItemBadges plugin={{ ...plugin, isDisabled: true, error: PluginErrorCode.modifiedSignature }} />);
     expect(screen.getByText(/disabled/i)).toBeVisible();
+  });
+
+  it('renders an upgrade badge (when plugin has an available update)', () => {
+    render(<PluginListItemBadges plugin={{ ...plugin, hasUpdate: true, installedVersion: '0.0.9' }} />);
+    expect(screen.getByText(/update available/i)).toBeVisible();
   });
 });

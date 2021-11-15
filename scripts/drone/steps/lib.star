@@ -428,16 +428,16 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
     ]
     if ver_mode == 'pr':
         commands.extend([
-            'yarn run test:accessibility-pr',
+            'pa11y-ci --config .pa11yci-pr.conf.js',
         ])
     else:
         commands.extend([
-            'yarn run test:accessibility --json > pa11y-ci-results.json',
+            'pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json',
         ])
 
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'buildkite/puppeteer',
+        'image': 'hugohaggmark/docker-puppeteer',
         'depends_on': [
           'end-to-end-tests-server' + enterprise2_suffix(edition),
         ],

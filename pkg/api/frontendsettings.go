@@ -298,7 +298,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"caching": map[string]bool{
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
-		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
+		"unifiedAlertingEnabled":     hs.Cfg.UnifiedAlerting.Enabled,
+		"pluginCatalogHiddenPlugins": hs.Cfg.PluginCatalogHiddenPlugins,
 	}
 
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
