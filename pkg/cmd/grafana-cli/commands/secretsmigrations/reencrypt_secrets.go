@@ -1,4 +1,4 @@
-package datamigrations
+package secretsmigrations
 
 import (
 	"context"
@@ -22,7 +22,7 @@ type simpleSecret struct {
 	isBase64Encoded bool
 }
 
-func (s simpleSecret) migrate(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
+func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var rows []struct {
 		Id     int
 		Secret string
@@ -80,7 +80,7 @@ type jsonSecret struct {
 	tableName string
 }
 
-func (s jsonSecret) migrate(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
+func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var rows []struct {
 		Id             int
 		SecureJsonData map[string][]byte
@@ -122,7 +122,7 @@ func (s jsonSecret) migrate(secretsSrv *manager.SecretsService, sess *xorm.Sessi
 
 type alertingSecret struct{}
 
-func (s alertingSecret) migrate(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
+func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var results []struct {
 		Id                        int
 		AlertmanagerConfiguration []byte
@@ -177,14 +177,14 @@ func (s alertingSecret) migrate(secretsSrv *manager.SecretsService, sess *xorm.S
 	return nil
 }
 
-func MigrateSecrets(_ utils.CommandLine, runner runner.Runner) error {
+func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 	if !runner.SettingsProvider.IsFeatureToggleEnabled("envelopeEncryption") {
 		logger.Warn("Envelope encryption is not enabled, quitting...")
 		return nil
 	}
 
 	toMigrate := []interface {
-		migrate(*manager.SecretsService, *xorm.Session) error
+		reencrypt(*manager.SecretsService, *xorm.Session) error
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted", isBase64Encoded: false},
 		simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token", isBase64Encoded: true},
@@ -197,7 +197,7 @@ func MigrateSecrets(_ utils.CommandLine, runner runner.Runner) error {
 
 	return runner.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		for _, m := range toMigrate {
-			if err := m.migrate(runner.SecretsService, sess.Session); err != nil {
+			if err := m.reencrypt(runner.SecretsService, sess.Session); err != nil {
 				return err
 			}
 		}

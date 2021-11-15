@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/runner"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
@@ -166,10 +167,16 @@ var adminCommands = []*cli.Command{
 				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
 				Action: runDbCommand(datamigrations.EncryptDatasourcePasswords),
 			},
+		},
+	},
+	{
+		Name:  "secrets-migration",
+		Usage: "Runs a script that migrates secrets in your db",
+		Subcommands: []*cli.Command{
 			{
-				Name:   "migrate-secrets",
-				Usage:  "Migrates secrets from simple symmetric encryption to envelope encryption. Return ok unless there is an error. Safe to execute multiple times.",
-				Action: runRunnerCommand(datamigrations.MigrateSecrets),
+				Name:   "re-encrypt",
+				Usage:  "Re-encrypts secrets by decrypting and re-encrypting them with the currently configured encryption. Returns ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(secretsmigrations.ReEncryptSecrets),
 			},
 		},
 	},
