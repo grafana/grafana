@@ -1,6 +1,10 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler, Threshold, ThresholdsMode } from '@grafana/data';
+import { ResourceDimensionMode } from 'app/features/dimensions';
+import { cloneDeep } from 'lodash';
+import { MarkersConfig } from './layers/data/markersLayer';
+import { getMarkerAsPath } from './style/markers';
+import { defaultStyleConfig } from './style/types';
 import { GeomapPanelOptions } from './types';
-import { markerMakers } from './utils/regularShapes';
 import { MapCenterID } from './view';
 
 /**
@@ -100,23 +104,38 @@ function asNumber(v: any): number | undefined {
 }
 
 export const mapMigrationHandler = (panel: PanelModel): Partial<GeomapPanelOptions> => {
-  const pluginVersion = panel?.pluginVersion;
-  if (pluginVersion?.startsWith('8.1') || pluginVersion?.startsWith('8.2') || pluginVersion?.startsWith('8.3')) {
-    if (panel.options?.layers?.length > 0) {
+  const pluginVersion = panel?.pluginVersion ?? '';
+
+  // before 8.3, only one layer was supported!
+  if (pluginVersion.startsWith('8.1') || pluginVersion.startsWith('8.2')) {
+    const layers = panel.options?.layers;
+    if (layers?.length === 1) {
       const layer = panel.options.layers[0];
-      if (layer?.type === 'markers') {
-        const shape = layer?.config?.shape;
-        if (shape) {
-          const marker = markerMakers.getIfExists(shape);
-          if (marker?.aliasIds && marker.aliasIds?.length > 0) {
-            layer.config.markerSymbol = {
-              fixed: marker.aliasIds[0],
-              mode: 'fixed',
-            };
-            delete layer.config.shape;
-          }
-          return { ...panel.options, layers: Object.assign([], ...panel.options.layers, { 0: layer }) };
+      if (layer?.type === 'markers' && layer.config) {
+        // Moving style to child object
+        const oldConfig = layer.config;
+        const config: MarkersConfig = {
+          style: cloneDeep(defaultStyleConfig),
+          showLegend: Boolean(oldConfig.showLegend),
+        };
+
+        if (oldConfig.size) {
+          config.style.size = oldConfig.size;
         }
+        if (oldConfig.color) {
+          config.style.color = oldConfig.color;
+        }
+        if (oldConfig.fillOpacity) {
+          config.style.opacity = oldConfig.fillOpacity;
+        }
+        const symbol = getMarkerAsPath(oldConfig.shape);
+        if (symbol) {
+          config.style.symbol = {
+            fixed: symbol,
+            mode: ResourceDimensionMode.Fixed,
+          };
+        }
+        return { ...panel.options, layers: [{ ...layer, config }] };
       }
     }
   }

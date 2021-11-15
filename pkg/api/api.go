@@ -435,7 +435,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			if hs.Cfg.FeatureToggles["live-pipeline"] {
 				// POST Live data to be processed according to channel rules.
-				liveRoute.Post("/push/:streamId/:path", hs.LivePushGateway.HandlePath)
+				liveRoute.Post("/pipeline/push/*", hs.LivePushGateway.HandlePipelinePush)
 				liveRoute.Post("/pipeline-convert-test", routing.Wrap(hs.Live.HandlePipelineConvertTestHTTP), reqOrgAdmin)
 				liveRoute.Get("/pipeline-entities", routing.Wrap(hs.Live.HandlePipelineEntitiesListHTTP), reqOrgAdmin)
 				liveRoute.Get("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesListHTTP), reqOrgAdmin)
