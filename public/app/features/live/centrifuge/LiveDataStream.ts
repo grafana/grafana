@@ -140,6 +140,12 @@ export class LiveDataStream<T = unknown> {
     this.deps.onShutdown();
   };
 
+  private shutdownIfNoSubscribers = () => {
+    if (!this.stream.observed) {
+      this.shutdown();
+    }
+  };
+
   private onError = (err: any) => {
     console.log('LiveQuery [error]', { err }, this.deps.channelId);
     this.stream.next({
@@ -309,7 +315,7 @@ export class LiveDataStream<T = unknown> {
         // TODO: potentially resize (downsize) the buffer on unsubscribe
         sub.unsubscribe();
         if (!this.stream.observed) {
-          this.shutdownTimeoutId = setTimeout(this.shutdown, this.deps.shutdownDelayInMs);
+          this.shutdownTimeoutId = setTimeout(this.shutdownIfNoSubscribers, this.deps.shutdownDelayInMs);
         }
       };
     });
