@@ -424,7 +424,6 @@ def lint_frontend_step():
 
 def test_a11y_frontend_step(ver_mode, edition, port=3001):
     commands = [
-        'yarn -v',
         'yarn wait-on http://$HOST:$PORT',
     ]
     if ver_mode == 'pr':
