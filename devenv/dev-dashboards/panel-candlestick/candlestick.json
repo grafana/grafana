@@ -144,7 +144,7 @@
         },
         "id": 2,
         "options": {
-          "colorStrategy": "intra",
+          "colorStrategy": "open-close",
           "colors": {
             "down": "red",
             "up": "green"
@@ -156,7 +156,7 @@
             "placement": "bottom"
           },
           "mode": "candles+volume",
-          "drawStyle": "candles"
+          "candleStyle": "candles"
         },
         "targets": [
           {
@@ -227,7 +227,7 @@
         },
         "id": 7,
         "options": {
-          "colorStrategy": "inter",
+          "colorStrategy": "close-close",
           "colors": {
             "down": "red",
             "up": "green"
@@ -239,7 +239,7 @@
             "placement": "bottom"
           },
           "mode": "candles",
-          "drawStyle": "candles"
+          "candleStyle": "candles"
         },
         "targets": [
           {
@@ -326,7 +326,7 @@
         },
         "id": 6,
         "options": {
-          "colorStrategy": "intra",
+          "colorStrategy": "open-close",
           "colors": {
             "down": "red",
             "up": "blue"
@@ -338,7 +338,7 @@
             "placement": "bottom"
           },
           "mode": "candles",
-          "drawStyle": "ohlcbars"
+          "candleStyle": "ohlcbars"
         },
         "targets": [
           {
@@ -458,7 +458,7 @@
         },
         "id": 4,
         "options": {
-          "colorStrategy": "intra",
+          "colorStrategy": "open-close",
           "colors": {
             "down": "red",
             "up": "yellow"
@@ -470,7 +470,7 @@
             "placement": "bottom"
           },
           "mode": "volume",
-          "drawStyle": "candles"
+          "candleStyle": "candles"
         },
         "targets": [
           {

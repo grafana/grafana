@@ -1,4 +1,4 @@
-import { VizDisplayMode, ColorStrategy, DrawStyle } from './models.gen';
+import { VizDisplayMode, ColorStrategy, CandleStyle } from './models.gen';
 import uPlot from 'uplot';
 import { colorManipulator } from '@grafana/data';
 
@@ -8,7 +8,7 @@ export type FieldIndices = Record<string, number>;
 
 interface RendererOpts {
   mode: VizDisplayMode;
-  drawStyle: DrawStyle;
+  candleStyle: CandleStyle;
   fields: FieldIndices;
   colorStrategy: ColorStrategy;
   upColor: string;
@@ -19,10 +19,10 @@ interface RendererOpts {
 }
 
 export function drawMarkers(opts: RendererOpts) {
-  let { mode, drawStyle, fields, colorStrategy, upColor, downColor, flatColor, volumeAlpha, flatAsUp = true } = opts;
+  let { mode, candleStyle, fields, colorStrategy, upColor, downColor, flatColor, volumeAlpha, flatAsUp = true } = opts;
 
   const drawPrice = mode !== VizDisplayMode.Volume && fields.high != null && fields.low != null;
-  const asCandles = drawPrice && drawStyle === DrawStyle.Candles;
+  const asCandles = drawPrice && candleStyle === CandleStyle.Candles;
   const drawVolume = mode !== VizDisplayMode.Candles && fields.volume != null;
 
   function selectPath(priceDir: number, flatPath: Path2D, upPath: Path2D, downPath: Path2D, flatAsUp: boolean) {
@@ -120,11 +120,11 @@ export function drawMarkers(opts: RendererOpts) {
       // volume
       if (drawVolume) {
         let outerPath = selectPath(
-          colorStrategy === ColorStrategy.Inter ? interDir : intraDir,
+          colorStrategy === ColorStrategy.CloseClose ? interDir : intraDir,
           flatPathVol as Path2D,
           upPathVol as Path2D,
           downPathVol as Path2D,
-          i === idx0 && ColorStrategy.Inter ? false : flatAsUp
+          i === idx0 && ColorStrategy.CloseClose ? false : flatAsUp
         );
 
         let vPx = Math.round(u.valToPos(vData![i]!, u.series[vIdx!].scale!, true));
@@ -133,11 +133,11 @@ export function drawMarkers(opts: RendererOpts) {
 
       if (drawPrice) {
         let outerPath = selectPath(
-          colorStrategy === ColorStrategy.Inter ? interDir : intraDir,
+          colorStrategy === ColorStrategy.CloseClose ? interDir : intraDir,
           flatPath as Path2D,
           upPath as Path2D,
           downPath as Path2D,
-          i === idx0 && ColorStrategy.Inter ? false : flatAsUp
+          i === idx0 && ColorStrategy.CloseClose ? false : flatAsUp
         );
 
         // stick
@@ -155,7 +155,7 @@ export function drawMarkers(opts: RendererOpts) {
           let hgt = Math.max(1, btm - top);
           outerPath.rect(tPx - halfWidth, top, barWidth, hgt);
 
-          if (colorStrategy === ColorStrategy.Inter) {
+          if (colorStrategy === ColorStrategy.CloseClose) {
             if (intraDir >= 0 && hgt > outlineWidth * 2) {
               hollowPath.rect(
                 tPx - halfWidth + outlineWidth,

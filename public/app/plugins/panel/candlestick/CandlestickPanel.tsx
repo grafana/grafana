@@ -61,7 +61,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
       return doNothing;
     }
 
-    const { mode, drawStyle, colorStrategy } = options;
+    const { mode, candleStyle, colorStrategy } = options;
     const colors = { ...defaultColors, ...options.colors };
     let { open, high, low, close, volume } = fieldMap; // names from matched fields
 
@@ -187,7 +187,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
                 flatColor: config.theme2.visualization.getColorByName(colors.flat),
                 volumeAlpha,
                 colorStrategy,
-                drawStyle,
+                candleStyle,
                 flatAsUp: true,
               })
             );

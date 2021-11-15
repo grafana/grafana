@@ -15,7 +15,7 @@ import {
   VizDisplayMode,
   ColorStrategy,
   defaultPanelOptions,
-  DrawStyle,
+  CandleStyle,
 } from './models.gen';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
@@ -28,14 +28,14 @@ const modeOptions = [
   { label: 'Volume', value: VizDisplayMode.Volume },
 ] as Array<SelectableValue<VizDisplayMode>>;
 
-const drawStyles = [
-  { label: 'Candles', value: DrawStyle.Candles },
-  { label: 'OHLC Bars', value: DrawStyle.OHLCBars },
-] as Array<SelectableValue<DrawStyle>>;
+const candleStyles = [
+  { label: 'Candles', value: CandleStyle.Candles },
+  { label: 'OHLC Bars', value: CandleStyle.OHLCBars },
+] as Array<SelectableValue<CandleStyle>>;
 
 const colorStrategies = [
-  { label: 'Since Open', value: 'intra' },
-  { label: 'Since Prior Close', value: 'inter' },
+  { label: 'Since Open', value: ColorStrategy.OpenClose },
+  { label: 'Since Prior Close', value: ColorStrategy.CloseClose },
 ] as Array<SelectableValue<ColorStrategy>>;
 
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
@@ -85,12 +85,12 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
         },
       })
       .addRadio({
-        path: 'drawStyle',
-        name: 'Draw style',
+        path: 'candleStyle',
+        name: 'Candle style',
         description: '',
-        defaultValue: defaultPanelOptions.drawStyle,
+        defaultValue: defaultPanelOptions.candleStyle,
         settings: {
-          options: drawStyles,
+          options: candleStyles,
         },
         showIf: (opts) => opts.mode !== VizDisplayMode.Volume,
       })

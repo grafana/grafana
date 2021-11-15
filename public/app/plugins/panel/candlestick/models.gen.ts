@@ -13,7 +13,7 @@ export enum VizDisplayMode {
   Volume = 'volume',
 }
 
-export enum DrawStyle {
+export enum CandleStyle {
   Candles = 'candles',
   OHLCBars = 'ohlcbars',
 }
@@ -21,10 +21,10 @@ export enum DrawStyle {
 export enum ColorStrategy {
   // up/down color depends on current close vs current open
   // filled always
-  Intra = 'intra',
+  OpenClose = 'open-close',
   // up/down color depends on current close vs prior close
   // filled/hollow depends on current close vs current open
-  Inter = 'inter',
+  CloseClose = 'close-close',
 }
 
 export interface CandlestickFieldMap {
@@ -49,7 +49,7 @@ export const defaultColors: CandlestickColors = {
 
 export interface CandlestickOptions extends OptionsWithLegend {
   mode: VizDisplayMode;
-  drawStyle: DrawStyle;
+  candleStyle: CandleStyle;
   colorStrategy: ColorStrategy;
   fields: CandlestickFieldMap;
   colors: CandlestickColors;
@@ -57,8 +57,8 @@ export interface CandlestickOptions extends OptionsWithLegend {
 
 export const defaultPanelOptions: CandlestickOptions = {
   mode: VizDisplayMode.CandlesVolume,
-  drawStyle: DrawStyle.Candles,
-  colorStrategy: ColorStrategy.Intra,
+  candleStyle: CandleStyle.Candles,
+  colorStrategy: ColorStrategy.OpenClose,
   colors: defaultColors,
   fields: {},
   legend: {
