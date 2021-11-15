@@ -26,6 +26,9 @@ export const Messages = {
         username: 'Username',
         password: 'Password',
       },
+      postgresqlDetails: {
+        database: 'Database',
+      },
       labels: {
         environment: 'Environment',
         region: 'Region',
@@ -65,6 +68,9 @@ export const Messages = {
         username: 'Username',
         password: 'Password',
       },
+      postgresqlDetails: {
+        database: 'Database (default: postgres)',
+      },
       labels: {
         environment: 'Environment',
         region: 'Region',
@@ -93,6 +99,9 @@ export const Messages = {
         port: 'Port your service is listening on',
         username: 'Your database user name',
         password: 'Your database password',
+      },
+      postgresqlDetails: {
+        database: 'Database name',
       },
       haproxy: {
         port: 'HAProxy prometheus exporter port',
