@@ -3,38 +3,9 @@ package pipeline
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/pattern"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
 )
-
-// ChannelAuthCheckConfig is used to define auth rules for a channel.
-type ChannelAuthCheckConfig struct {
-	RequireRole models.RoleType `json:"role,omitempty"`
-}
-
-type ChannelAuthConfig struct {
-	// By default anyone can subscribe.
-	Subscribe *ChannelAuthCheckConfig `json:"subscribe,omitempty"`
-
-	// By default HTTP and WS require admin permissions to publish.
-	Publish *ChannelAuthCheckConfig `json:"publish,omitempty"`
-}
-
-type ChannelRuleSettings struct {
-	Auth            *ChannelAuthConfig      `json:"auth,omitempty"`
-	Subscribers     []*SubscriberConfig     `json:"subscribers,omitempty"`
-	DataOutputters  []*DataOutputterConfig  `json:"dataOutputs,omitempty"`
-	Converter       *ConverterConfig        `json:"converter,omitempty"`
-	FrameProcessors []*FrameProcessorConfig `json:"frameProcessors,omitempty"`
-	FrameOutputters []*FrameOutputterConfig `json:"frameOutputs,omitempty"`
-}
-
-type ChannelRule struct {
-	OrgId    int64               `json:"-"`
-	Pattern  string              `json:"pattern"`
-	Settings ChannelRuleSettings `json:"settings"`
-}
 
 func (r ChannelRule) Valid() (bool, string) {
 	ok, reason := pattern.Valid(r.Pattern)
