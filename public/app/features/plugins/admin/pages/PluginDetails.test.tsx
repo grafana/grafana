@@ -194,7 +194,7 @@ describe('Plugin details page', () => {
       await waitFor(() => expect(queryByText('Invalid signature')).toBeInTheDocument());
     });
 
-    it('should display version history is plugin is published', async () => {
+    it('should display version history if the plugin is published', async () => {
       const versions = [
         {
           version: '1.2.0',
