@@ -410,6 +410,7 @@ describe('Streaming JSON', () => {
           "action": "replace",
           "length": 3,
           "number": 1,
+          "schemaChanged": true,
         },
         "values": Array [
           1,
@@ -433,6 +434,7 @@ describe('Streaming JSON', () => {
           "action": "append",
           "length": 2,
           "number": 2,
+          "schemaChanged": false,
         },
         "values": Array [
           2,
@@ -454,6 +456,7 @@ describe('Streaming JSON', () => {
           "action": "append",
           "length": 1,
           "number": 3,
+          "schemaChanged": false,
         },
         "values": Array [
           3,
