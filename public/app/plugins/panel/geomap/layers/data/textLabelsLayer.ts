@@ -4,7 +4,6 @@ import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import { getColorDimension, getScaledDimension, getTextDimension, TextDimensionMode } from 'app/features/dimensions';
-import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
 import { Feature } from 'ol';
 import { Point } from 'ol/geom';
