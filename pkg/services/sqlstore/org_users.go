@@ -164,7 +164,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 
 	// TODO: add to chore, for cleaning up after we have created
 	// service accounts table in the modelling
-	whereConditions = append(whereConditions, "user.is_service_account = ?")
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = ?", x.Dialect().Quote("user")))
 	whereParams = append(whereParams, false)
 
 	if query.Query != "" {
@@ -194,12 +194,14 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 	sess.Asc("user.email", "user.login")
 
 	if err := sess.Find(&query.Result.OrgUsers); err != nil {
+		fmt.Printf("error %v", err)
 		return err
 	}
 
 	// get total count
 	orgUser := models.OrgUser{}
-	countSess := x.Table("org_user")
+	countSess := x.Table("org_user").
+		Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
 
 	if len(whereConditions) > 0 {
 		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
@@ -207,6 +209,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 
 	count, err := countSess.Count(&orgUser)
 	if err != nil {
+		fmt.Printf("error2 %v", err)
 		return err
 	}
 	query.Result.TotalCount = count
