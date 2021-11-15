@@ -50,6 +50,9 @@
           }
         ]
       ]
+    },
+    "hot": {
+      "plugins": ["react-refresh/babel"]
     }
   }
 }

@@ -35,7 +35,7 @@
     "prettier:check": "prettier --list-different \"**/*.{scss,md,mdx}\"",
     "prettier:write": "prettier --list-different \"**/*.{scss,md,mdx}\" --write",
     "start": "yarn themes:generate && webpack --progress --color --watch --env noTsCheck=0 --config scripts/webpack/webpack.dev.js",
-    "start:hot": "yarn themes:generate && webpack serve --progress --color --config scripts/webpack/webpack.hot.js",
+    "start:hot": "yarn themes:generate && NODE_ENV=hot webpack serve --progress --color --config scripts/webpack/webpack.hot.js",
     "start:noTsCheck": "yarn themes:generate && webpack --progress --color --watch --env noTsCheck=1 --config scripts/webpack/webpack.dev.js",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "storybook": "yarn workspace @grafana/ui storybook --ci",
