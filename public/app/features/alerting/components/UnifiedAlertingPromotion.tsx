@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 import { Alert } from '@grafana/ui';
 import { useLocalStorage } from 'react-use';
 
-export const LOCAL_STORAGE_KEY = 'LegacyAlerting.UnifiedAlertingPromotion';
+export const LOCAL_STORAGE_KEY = 'grafana.legacyalerting.unifiedalertingpromo';
 
 const UnifiedAlertingPromotion: FC<{}> = () => {
   const [showUnifiedAlertingPromotion, setShowUnifiedAlertingPromotion] = useLocalStorage<boolean>(
@@ -24,8 +24,8 @@ const UnifiedAlertingPromotion: FC<{}> = () => {
       <p>
         You are using the legacy Grafana alerting.
         <br />
-       While we have no plans of deprecating it any time soon, we invite you to give
-		 the improved Grafana 8 alerting a try.
+        While we have no plans of deprecating it any time soon, we invite you to give the improved Grafana 8 alerting a
+        try.
       </p>
       <p>
         See{' '}
