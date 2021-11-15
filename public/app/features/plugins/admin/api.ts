@@ -1,7 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { PluginError, renderMarkdown } from '@grafana/data';
 import { API_ROOT, GCOM_API_ROOT } from './constants';
-import { mergeLocalAndRemote } from './helpers';
+import { mergeLocalAndRemote, isLocalPluginVisible, isRemotePluginVisible } from './helpers';
 import {
   PluginDetails,
   Org,
@@ -40,8 +40,9 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
 }
 
 export async function getRemotePlugins(): Promise<RemotePlugin[]> {
-  const res = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins`);
-  return res.items;
+  const { items: remotePlugins }: { items: RemotePlugin[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins`);
+
+  return remotePlugins.filter(isRemotePluginVisible);
 }
 
 async function getPlugin(slug: string): Promise<PluginDetails> {
@@ -108,8 +109,9 @@ async function getLocalPluginReadme(id: string): Promise<string> {
 }
 
 export async function getLocalPlugins(): Promise<LocalPlugin[]> {
-  const installed = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
-  return installed;
+  const localPlugins: LocalPlugin[] = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
+
+  return localPlugins.filter(isLocalPluginVisible);
 }
 
 async function getOrg(slug: string): Promise<Org> {

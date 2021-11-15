@@ -288,6 +288,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
 		"pluginAdminEnabled":               hs.Cfg.PluginAdminEnabled,
 		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
+		"pluginCatalogHiddenPlugins":       hs.Cfg.PluginCatalogHiddenPlugins,
 		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
 		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
 		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,

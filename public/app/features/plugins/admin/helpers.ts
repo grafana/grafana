@@ -257,3 +257,13 @@ export function getLatestCompatibleVersion(versions: Version[] | undefined): Ver
 
   return latest;
 }
+
+export const isLocalPluginVisible = (p: LocalPlugin) => isPluginVisible(p.id);
+
+export const isRemotePluginVisible = (p: RemotePlugin) => isPluginVisible(p.slug);
+
+function isPluginVisible(id: string) {
+  const { pluginCatalogHiddenPlugins }: { pluginCatalogHiddenPlugins: string[] } = config;
+
+  return !pluginCatalogHiddenPlugins.includes(id);
+}
