@@ -2,6 +2,7 @@ import type { Situation, Label } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 import { FUNCTIONS } from '../../../promql';
+import { escapeLabelValueInExactSelector } from '../../../language_utils';
 
 export type CompletionType = 'HISTORY' | 'FUNCTION' | 'METRIC_NAME' | 'DURATION' | 'LABEL_NAME' | 'LABEL_VALUE';
 
@@ -90,7 +91,9 @@ function makeSelector(metricName: string | undefined, labels: Label[]): string {
     allLabels.push({ name: '__name__', value: metricName, op: '=' });
   }
 
-  const allLabelTexts = allLabels.map((label) => `${label.name}${label.op}"${label.value}"`);
+  const allLabelTexts = allLabels.map(
+    (label) => `${label.name}${label.op}"${escapeLabelValueInExactSelector(label.value)}"`
+  );
 
   return `{${allLabelTexts.join(',')}}`;
 }

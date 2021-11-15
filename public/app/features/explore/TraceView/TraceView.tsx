@@ -192,8 +192,8 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
   const processes: Record<string, TraceProcess> = {};
   for (let i = 0; i < view.length; i++) {
     const span = view.get(i);
-    if (!processes[span.serviceName]) {
-      processes[span.serviceName] = {
+    if (!processes[span.spanID]) {
+      processes[span.spanID] = {
         serviceName: span.serviceName,
         tags: span.serviceTags,
       };
@@ -208,7 +208,7 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
         ...s,
         duration: s.duration * 1000,
         startTime: s.startTime * 1000,
-        processID: s.serviceName,
+        processID: s.spanID,
         flags: 0,
         references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
         logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
