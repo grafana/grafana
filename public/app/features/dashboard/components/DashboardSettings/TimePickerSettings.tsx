@@ -80,10 +80,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           refreshIntervals={this.props.refreshIntervals}
           onRefreshIntervalChange={this.props.onRefreshIntervalChange}
         />
-        <Field
-          label="Now delay now"
-          description="Enter 1m to ignore the last minute. It might contain incomplete metrics."
-        >
+        <Field label="Now delay" description="Exclude recent data that may be incomplete.">
           <Input
             id="now-delay-input"
             invalid={!this.state.isNowDelayValid}

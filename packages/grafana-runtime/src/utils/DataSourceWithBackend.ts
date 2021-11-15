@@ -150,9 +150,8 @@ class DataSourceWithBackend<
 
     if (true) {
       return getGrafanaLiveSrv().getQueryData({
-        requestId,
+        request,
         body,
-        queries: queries as DataQuery[],
       });
     }
 
