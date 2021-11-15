@@ -1,5 +1,8 @@
 import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
+export interface Dimensions {
+  [key: string]: string | string[];
+}
 
 export interface CloudWatchMetricsQuery extends DataQuery {
   queryMode?: 'Metrics';
@@ -324,4 +327,10 @@ export interface ExecutedQueryPreview {
   id: string;
   executedQuery: string;
   period: string;
+}
+
+export interface MetricFindSuggestData {
+  text: string;
+  label: string;
+  value: string;
 }

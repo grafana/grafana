@@ -1,22 +1,27 @@
 import React from 'react';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import { getAllDataSources } from './utils/config';
+import { getAllDataSources } from '../../utils/config';
 import {
   fetchAlertManagerConfig,
   deleteAlertManagerConfig,
   updateAlertManagerConfig,
   fetchStatus,
-} from './api/alertmanager';
+} from '../../api/alertmanager';
 import { configureStore } from 'app/store/configureStore';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import Admin from './Admin';
+import AlertmanagerConfig from './AlertmanagerConfig';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
+import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
 import { render, waitFor } from '@testing-library/react';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
-import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
-import { DataSourceType } from './utils/datasource';
+import {
+  mockDataSource,
+  MockDataSourceSrv,
+  someCloudAlertManagerConfig,
+  someCloudAlertManagerStatus,
+} from '../../mocks';
+import { DataSourceType } from '../../utils/datasource';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
 import userEvent from '@testing-library/user-event';
@@ -26,9 +31,9 @@ import {
   AlertManagerImplementation,
 } from 'app/plugins/datasource/alertmanager/types';
 
-jest.mock('./api/alertmanager');
-jest.mock('./api/grafana');
-jest.mock('./utils/config');
+jest.mock('../../api/alertmanager');
+jest.mock('../../api/grafana');
+jest.mock('../../utils/config');
 
 const mocks = {
   getAllDataSources: typeAsJestMock(getAllDataSources),
@@ -52,7 +57,7 @@ const renderAdminPage = (alertManagerSourceName?: string) => {
   return render(
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
-        <Admin />
+        <AlertmanagerConfig />
       </Router>
     </Provider>
   );
@@ -80,7 +85,7 @@ const ui = {
   readOnlyConfig: byTestId('readonly-config'),
 };
 
-describe('Alerting Admin', () => {
+describe('Admin config', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));

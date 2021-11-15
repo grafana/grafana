@@ -2,14 +2,13 @@
 // with some extra renderers passed to the <TimeSeries> component
 
 import React, { useMemo } from 'react';
-import { DataFrame, Field, getDisplayProcessor, PanelProps } from '@grafana/data';
+import { Field, getDisplayProcessor, PanelProps } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, UPlotConfigBuilder } from '@grafana/ui';
+import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
-import { prepareGraphableFields } from '../timeseries/utils';
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
@@ -17,21 +16,10 @@ import { drawMarkers, FieldIndices } from './utils';
 import { defaultColors, MarketOptions, MarketTrendMode } from './models.gen';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { findField } from 'app/features/dimensions';
+import { prepareCandlestickFields } from './fields';
+import uPlot from 'uplot';
 
 interface MarketPanelProps extends PanelProps<MarketOptions> {}
-
-function findFieldInFrames(frames?: DataFrame[], name?: string): Field | undefined {
-  if (frames?.length) {
-    for (const frame of frames) {
-      const f = findField(frame, name);
-      if (f) {
-        return f;
-      }
-    }
-  }
-  return undefined;
-}
 
 export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
   data,
@@ -50,11 +38,9 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const { frames, warn } = useMemo(
-    () => prepareGraphableFields(data?.series, config.theme2),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, options]
-  );
+  const theme = useTheme2();
+
+  const info = useMemo(() => prepareCandlestickFields(data?.series, options, theme), [data, options, theme]);
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
     let tweakScale = (opts: ScaleProps) => opts;
@@ -66,20 +52,20 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
       tweakAxis,
     };
 
-    if (options.fieldMap == null) {
+    // Un-encoding the already parsed special fields
+    // This takes currently matched fields and saves the name so they can be looked up by name later
+    // ¯\_(ツ)_/¯  someday this can make more sense!
+    const fieldMap = info.names;
+
+    if (!Object.keys(fieldMap).length) {
       return doNothing;
     }
 
-    const { mode, priceStyle, fieldMap, colorStrategy } = options;
+    const { mode, priceStyle, colorStrategy } = options;
     const colors = { ...defaultColors, ...options.colors };
-    let { open, high, low, close, volume } = fieldMap;
+    let { open, high, low, close, volume } = fieldMap; // names from matched fields
 
-    if (
-      open == null ||
-      close == null ||
-      findFieldInFrames(frames, open) == null ||
-      findFieldInFrames(frames, close) == null
-    ) {
+    if (open == null || close == null) {
       return doNothing;
     }
 
@@ -91,7 +77,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
 
     // find volume field and set overrides
     if (volume != null && mode !== MarketTrendMode.Price) {
-      let volumeField = findFieldInFrames(frames, volume);
+      let volumeField = info.volume!;
 
       if (volumeField != null) {
         shouldRenderVolume = true;
@@ -147,12 +133,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
       }
     }
 
-    let shouldRenderPrice =
-      mode !== MarketTrendMode.Volume &&
-      high != null &&
-      low != null &&
-      findFieldInFrames(frames, high) != null &&
-      findFieldInFrames(frames, low) != null;
+    let shouldRenderPrice = mode !== MarketTrendMode.Volume && high != null && low != null;
 
     if (!shouldRenderPrice && !shouldRenderVolume) {
       return doNothing;
@@ -162,11 +143,11 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
     let indicesOnly = [];
 
     if (shouldRenderPrice) {
-      fields = { open, high, low, close };
+      fields = { open, high: high!, low: low!, close };
 
       // hide series from legend that are rendered as composite markers
       for (let key in fields) {
-        let field = findFieldInFrames(frames, fields[key])!;
+        let field = (info as any)[key] as Field;
         field.config = {
           ...field.config,
           custom: {
@@ -183,7 +164,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
     }
 
     if (shouldRenderVolume) {
-      fields.volume = volume;
+      fields.volume = volume!;
       fields.open = open;
       fields.close = close;
     }
@@ -219,10 +200,10 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
-  if (!frames || warn) {
+  if (!info.frame || info.warn) {
     return (
       <div className="panel-empty">
-        <p>{warn ?? 'No data found in response'}</p>
+        <p>{info.warn ?? 'No data found in response'}</p>
       </div>
     );
   }
@@ -231,7 +212,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
 
   return (
     <TimeSeries
-      frames={frames}
+      frames={[info.frame]}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}

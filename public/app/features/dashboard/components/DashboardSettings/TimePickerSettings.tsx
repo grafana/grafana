@@ -85,6 +85,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           description="Enter 1m to ignore the last minute. It might contain incomplete metrics."
         >
           <Input
+            id="now-delay-input"
             invalid={!this.state.isNowDelayValid}
             placeholder="0m"
             onChange={this.onNowDelayChange}
