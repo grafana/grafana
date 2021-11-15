@@ -33,6 +33,10 @@ module.exports = (env = {}) =>
           test: /\.tsx?$/,
           use: {
             loader: 'babel-loader',
+            options: {
+              cacheDirectory: true,
+              cacheCompression: false,
+            },
           },
           exclude: /node_modules/,
         },

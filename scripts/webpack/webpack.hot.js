@@ -45,6 +45,10 @@ module.exports = merge(common, {
         test: /\.tsx?$/,
         use: {
           loader: 'babel-loader',
+          options: {
+            cacheDirectory: true,
+            cacheCompression: false,
+          },
         },
         exclude: /node_modules/,
         include: [path.resolve(__dirname, '../../public/'), path.resolve(__dirname, '../../packages/')],
