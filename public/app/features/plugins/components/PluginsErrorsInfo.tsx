@@ -1,9 +1,9 @@
 import React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { HorizontalGroup, InfoBox, List, PluginSignatureBadge, useTheme } from '@grafana/ui';
-import { StoreState } from '../../types';
-import { getAllPluginsErrors } from './state/selectors';
-import { loadPlugins, loadPluginsErrors } from './state/actions';
+import { StoreState } from '../../../types';
+import { getAllPluginsErrors } from '../state/selectors';
+import { loadPlugins, loadPluginsErrors } from '../state/actions';
 import useAsync from 'react-use/lib/useAsync';
 import { connect, ConnectedProps } from 'react-redux';
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
