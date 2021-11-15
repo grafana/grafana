@@ -60,8 +60,13 @@ func (s simpleSecret) migrate(secretsSrv *manager.SecretsService, sess *xorm.Ses
 			return err
 		}
 
+		encoded := string(encrypted)
+		if s.isBase64Encoded {
+			encoded = base64.StdEncoding.EncodeToString(encrypted)
+		}
+
 		updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
-		if _, err := sess.Exec(updateSQL, encrypted, row.Id); err != nil {
+		if _, err := sess.Exec(updateSQL, encoded, row.Id); err != nil {
 			return err
 		}
 	}
