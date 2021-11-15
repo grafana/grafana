@@ -1,7 +1,6 @@
 import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
 import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
-import { Style } from 'ol/style';
 import { MapCenterID } from './view';
 
 export interface ControlsOptions {
@@ -64,10 +63,10 @@ export enum ComparisonOperation {
   GT = 'gt',
   GTE = 'gte',
 }
-
 export interface GazetteerPathEditorConfigSettings {
   options?: Array<SelectableValue<string>>;
 }
+
 //-------------------
 // Runtime model
 //-------------------
@@ -79,13 +78,3 @@ export interface MapLayerState<TConfig = any> {
   onChange: (cfg: MapLayerOptions<TConfig>) => void;
   isBasemap?: boolean;
 }
-export interface StyleMakerConfig {
-  color: string;
-  fillColor: string;
-  size: number;
-  markerPath?: string;
-  text?: string;
-  opacity?: number;
-}
-
-export type StyleMaker = (config: StyleMakerConfig) => Style | Style[];

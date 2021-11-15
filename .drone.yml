@@ -220,8 +220,7 @@ steps:
   name: build-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn dlx pa11y-ci@git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4
-    pa11y-ci --config .pa11yci-pr.conf.js
+  - pa11y-ci --config .pa11yci-pr.conf.js
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -230,7 +229,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: buildkite/puppeteer
+  image: hugohaggmark/docker-puppeteer
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
@@ -523,8 +522,7 @@ steps:
   name: publish-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn dlx --quiet pa11y-ci@git://github.com/pa11y/pa11y-ci#5c842cf1b9fe2867b70ff5354851d985be8d71c4
-    pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
+  - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -533,7 +531,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: buildkite/puppeteer
+  image: hugohaggmark/docker-puppeteer
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
