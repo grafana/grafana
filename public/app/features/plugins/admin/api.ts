@@ -1,23 +1,8 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { PluginError, renderMarkdown } from '@grafana/data';
 import { API_ROOT, GCOM_API_ROOT } from './constants';
-import { mergeLocalAndRemote, isLocalPluginVisible, isRemotePluginVisible } from './helpers';
-import {
-  PluginDetails,
-  Org,
-  LocalPlugin,
-  RemotePlugin,
-  CatalogPlugin,
-  CatalogPluginDetails,
-  Version,
-  PluginVersion,
-} from './types';
-
-export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
-  const { local, remote } = await getPlugin(id);
-
-  return mergeLocalAndRemote(local, remote);
-}
+import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion } from './types';
+import { isLocalPluginVisible, isRemotePluginVisible } from './helpers';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
   const remote = await getRemotePlugin(id);
@@ -45,22 +30,6 @@ export async function getRemotePlugins(): Promise<RemotePlugin[]> {
   const { items: remotePlugins }: { items: RemotePlugin[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins`);
 
   return remotePlugins.filter(isRemotePluginVisible);
-}
-
-async function getPlugin(slug: string): Promise<PluginDetails> {
-  const remote = await getRemotePlugin(slug);
-  const isPublished = Boolean(remote);
-
-  const [localPlugins, versions] = await Promise.all([getLocalPlugins(), getPluginVersions(slug, isPublished)]);
-  const localPlugin = localPlugins?.find((plugin: LocalPlugin) => {
-    return plugin.id === slug;
-  });
-
-  return {
-    remote: remote,
-    remoteVersions: versions,
-    local: localPlugin,
-  };
 }
 
 export async function getPluginErrors(): Promise<PluginError[]> {
@@ -120,11 +89,6 @@ export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   return localPlugins.filter(isLocalPluginVisible);
 }
 
-async function getOrg(slug: string): Promise<Org> {
-  const org = await getBackendSrv().get(`${GCOM_API_ROOT}/orgs/${slug}`);
-  return { ...org, avatarUrl: `${GCOM_API_ROOT}/orgs/${slug}/avatar` };
-}
-
 export async function installPlugin(id: string) {
   // This will install the latest compatible version based on the logic
   // on the backend.
@@ -137,9 +101,7 @@ export async function uninstallPlugin(id: string) {
 
 export const api = {
   getRemotePlugins,
-  getPlugin,
   getInstalledPlugins: getLocalPlugins,
-  getOrg,
   installPlugin,
   uninstallPlugin,
 };
