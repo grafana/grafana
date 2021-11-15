@@ -4,7 +4,6 @@ import { OrgRolePicker } from '../admin/OrgRolePicker';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
-import { config } from '@grafana/runtime';
 import { fetchBuiltinRoles, fetchRoleOptions, UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 
 export interface Props {
@@ -34,7 +33,9 @@ const UsersTable: FC<Props> = (props) => {
         console.error('Error loading options');
       }
     }
-    fetchOptions();
+    if (contextSrv.accessControlEnabled()) {
+      fetchOptions();
+    }
   }, []);
 
   const getRoleOptions = async () => roleOptions;
@@ -79,7 +80,7 @@ const UsersTable: FC<Props> = (props) => {
               <td className="width-1">{user.lastSeenAtAge}</td>
 
               <td className="width-8">
-                {config.licenseInfo.hasLicense ? (
+                {contextSrv.accessControlEnabled() ? (
                   <UserRolePicker
                     userId={user.userId}
                     builtInRole={user.role}

@@ -20,7 +20,6 @@ import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
 import { contextSrv } from 'app/core/core';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { config } from '@grafana/runtime';
 
 interface Props {
   orgs: UserOrg[];
@@ -177,7 +176,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
         <td className={labelClass}>
           <label htmlFor={inputId}>{org.name}</label>
         </td>
-        {config.licenseInfo.hasLicense ? (
+        {contextSrv.accessControlEnabled() ? (
           <td>
             <div className={styles.rolePickerWrapper}>
               <div className={styles.rolePicker}>
