@@ -53,9 +53,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	registrations := []accesscontrol.RoleRegistration{
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:provisioning:admin",
 				Description: "Reload provisioning configurations",
+				Group:       "Provisioning",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionProvisioningReload,
@@ -67,9 +68,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:datasources:admin",
 				Description: "Gives access to create, read, update, delete datasources",
+				Group:       "Data sources",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionDatasourcesRead,
@@ -96,9 +98,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     2,
+				Version:     3,
 				Name:        "fixed:datasources:id:viewer",
 				Description: "Gives access to read datasources ID",
+				Group:       "Infrequently used",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionDatasourcesIDRead,
@@ -110,9 +113,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:datasources:compatibility:querier",
 				Description: "Query data sources when data source permissions are not in use",
+				Group:       "Infrequently used",
 				Permissions: []accesscontrol.Permission{
 					{Action: ActionDatasourcesQuery},
 				},
@@ -121,9 +125,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:current:org:reader",
 				Description: "Read current organization and its quotas.",
+				Group:       "Organizations",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionOrgsRead,
@@ -139,9 +144,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:current:org:writer",
 				Description: "Read current organization, its quotas, and its preferences. Write current organization and its preferences.",
+				Group:       "Organizations",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionOrgsRead,
@@ -169,9 +175,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:orgs:writer",
 				Description: "Create, read, write, or delete an organization. Read or write an organization's quotas.",
+				Group:       "Organizations",
 				Permissions: []accesscontrol.Permission{
 					{Action: ActionOrgsCreate},
 					{

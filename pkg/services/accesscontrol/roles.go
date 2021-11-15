@@ -16,8 +16,9 @@ type RoleRegistry interface {
 // Roles definition
 var (
 	datasourcesEditorReadRole = RoleDTO{
-		Version: 1,
+		Version: 2,
 		Name:    datasourcesEditorRead,
+		Group:   "Data sources",
 		Permissions: []Permission{
 			{
 				Action: ActionDatasourcesExplore,
@@ -27,7 +28,8 @@ var (
 
 	ldapAdminReadRole = RoleDTO{
 		Name:    ldapAdminRead,
-		Version: 1,
+		Version: 2,
+		Group:   "LDAP",
 		Permissions: []Permission{
 			{
 				Action: ActionLDAPUsersRead,
@@ -40,7 +42,8 @@ var (
 
 	ldapAdminEditRole = RoleDTO{
 		Name:    ldapAdminEdit,
-		Version: 2,
+		Version: 3,
+		Group:   "LDAP",
 		Permissions: ConcatPermissions(ldapAdminReadRole.Permissions, []Permission{
 			{
 				Action: ActionLDAPUsersSync,
@@ -52,8 +55,9 @@ var (
 	}
 
 	serverAdminReadRole = RoleDTO{
-		Version: 1,
+		Version: 2,
 		Name:    serverAdminRead,
+		Group:   "Statistics",
 		Permissions: []Permission{
 			{
 				Action: ActionServerStatsRead,
@@ -62,8 +66,9 @@ var (
 	}
 
 	settingsAdminReadRole = RoleDTO{
-		Version: 2,
+		Version: 3,
 		Name:    settingsAdminRead,
+		Group:   "Settings",
 		Permissions: []Permission{
 			{
 				Action: ActionSettingsRead,
@@ -74,7 +79,8 @@ var (
 
 	usersOrgReadRole = RoleDTO{
 		Name:    usersOrgRead,
-		Version: 1,
+		Version: 2,
+		Group:   "Organization users",
 		Permissions: []Permission{
 			{
 				Action: ActionOrgUsersRead,
@@ -85,7 +91,8 @@ var (
 
 	usersOrgEditRole = RoleDTO{
 		Name:    usersOrgEdit,
-		Version: 1,
+		Version: 2,
+		Group:   "Organization users",
 		Permissions: ConcatPermissions(usersOrgReadRole.Permissions, []Permission{
 			{
 				Action: ActionOrgUsersAdd,
@@ -104,7 +111,8 @@ var (
 
 	usersAdminReadRole = RoleDTO{
 		Name:    usersAdminRead,
-		Version: 1,
+		Version: 2,
+		Group:   "Users",
 		Permissions: []Permission{
 			{
 				Action: ActionUsersRead,
@@ -127,7 +135,8 @@ var (
 
 	usersAdminEditRole = RoleDTO{
 		Name:    usersAdminEdit,
-		Version: 1,
+		Version: 2,
+		Group:   "Users",
 		Permissions: ConcatPermissions(usersAdminReadRole.Permissions, []Permission{
 			{
 				Action: ActionUsersPasswordUpdate,
