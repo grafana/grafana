@@ -29,7 +29,7 @@ export class StatSuggestionsSupplier {
       },
     });
 
-    // String an number field with low row count show individual rows
+    // String and number field with low row count show individual rows
     if (ds.hasStringField && ds.hasNumberField && ds.frameCount === 1 && ds.rowCountTotal < 10) {
       list.append({
         name: SuggestionName.Stat,
@@ -37,7 +37,7 @@ export class StatSuggestionsSupplier {
           reduceOptions: {
             values: true,
             calcs: [],
-            fields: ds.hasNumberField ? undefined : '/.*/',
+            fields: '/.*/',
           },
         },
       });
@@ -47,7 +47,7 @@ export class StatSuggestionsSupplier {
           reduceOptions: {
             values: true,
             calcs: [],
-            fields: ds.hasNumberField ? undefined : '/.*/',
+            fields: '/.*/',
           },
           colorMode: BigValueColorMode.Background,
         },
