@@ -11,12 +11,12 @@ type Runner struct {
 	Cfg               *setting.Cfg
 	SQLStore          *sqlstore.SQLStore
 	SettingsProvider  setting.Provider
-	EncryptionService encryption.Service
+	EncryptionService encryption.Internal
 	SecretsService    secrets.Service
 }
 
 func New(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, settingsProvider setting.Provider,
-	encryptionService encryption.Service, secretsService secrets.Service) Runner {
+	encryptionService encryption.Internal, secretsService secrets.Service) Runner {
 	return Runner{
 		Cfg:               cfg,
 		SQLStore:          sqlStore,
