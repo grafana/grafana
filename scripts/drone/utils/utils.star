@@ -1,6 +1,7 @@
 load(
     'scripts/drone/steps/lib.star',
     'initialize_step',
+    'download_grabpl',
     'slack_step',
 )
 
@@ -31,13 +32,15 @@ def pipeline(
             }
         }
 
+    grabpl_step = [download_grabpl()]
+
     pipeline = {
         'kind': 'pipeline',
         'type': 'docker',
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': initialize_step(
+        'steps': grabpl_step + initialize_step(
             edition, platform, is_downstream=is_downstream, install_deps=install_deps, ver_mode=ver_mode,
         ) + steps,
         'depends_on': depends_on,

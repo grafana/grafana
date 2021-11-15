@@ -6,6 +6,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.14.2'
+curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
@@ -33,15 +34,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             },
         ]
 
-    download_grabpl_cmds = [
-        'mkdir -p bin',
-        'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
-            grabpl_version
-        ),
-        'chmod +x bin/grabpl',
-    ]
     common_cmds = [
-        './bin/grabpl verify-drone',
         # Generate Go code, will install Wire
         # TODO: Install Wire in Docker image instead
         'make gen-go',
@@ -94,7 +87,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'environment': {
                     'GITHUB_TOKEN': from_secret(github_token),
                 },
-                'commands': download_grabpl_cmds + [
+                'commands': [
                     'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
                     'cd grafana-enterprise',
                     'git checkout {}'.format(committish),
@@ -104,7 +97,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'name': 'initialize',
                 'image': build_image,
                 'depends_on': [
-                    'clone',
+                    'grabpl',
                 ],
                 'commands': [
                     'mv bin/grabpl /tmp/',
@@ -125,11 +118,36 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         {
             'name': 'initialize',
             'image': build_image,
-            'commands': download_grabpl_cmds + common_cmds,
+            'commands': common_cmds,
         },
     ]
 
     return steps
+
+def download_grabpl():
+    return {
+        'name': 'grabpl',
+        'image': curl_image,
+        'commands': [
+            'mkdir -p bin',
+            'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+                grabpl_version
+            ),
+            'chmod +x bin/grabpl',
+        ]
+    }
+
+def lint_drone_step():
+    return {
+        'name': 'lint-drone',
+        'image': curl_image,
+        'commands': [
+            './bin/grabpl verify-drone',
+        ],
+        'depends_on': [
+            'grabpl',
+        ],
+    }
 
 def enterprise_downstream_step(edition):
     if edition in ('enterprise', 'enterprise2'):
