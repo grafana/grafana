@@ -501,7 +501,11 @@
     "refresh": false,
     "schemaVersion": 33,
     "style": "dark",
-    "tags": [],
+    "tags": [
+      "gdev",
+      "panel-tests",
+      "graph-ng"
+    ],
     "templating": {
       "list": []
     },

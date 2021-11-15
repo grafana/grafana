@@ -321,6 +321,12 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		CheckOrigin:     checkOrigin,
 	})
 
+	pushPipelineWSHandler := pushws.NewPipelinePushHandler(g.Pipeline, pushws.Config{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin:     checkOrigin,
+	})
+
 	g.websocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 
@@ -342,12 +348,21 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
+	g.pushPipelineWebsocketHandler = func(ctx *models.ReqContext) {
+		user := ctx.SignedInUser
+		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
+		newCtx = livecontext.SetContextChannelID(newCtx, web.Params(ctx.Req)["*"])
+		r := ctx.Req.WithContext(newCtx)
+		pushPipelineWSHandler.ServeHTTP(ctx.Resp, r)
+	}
+
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/ws", g.websocketHandler)
 	}, middleware.ReqSignedIn)
 
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/push/:streamId", g.pushWebsocketHandler)
+		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
 	}, middleware.ReqOrgAdmin)
 
 	g.registerUsageMetrics()
@@ -375,8 +390,9 @@ type GrafanaLive struct {
 	surveyCaller *survey.Caller
 
 	// Websocket handlers
-	websocketHandler     interface{}
-	pushWebsocketHandler interface{}
+	websocketHandler             interface{}
+	pushWebsocketHandler         interface{}
+	pushPipelineWebsocketHandler interface{}
 
 	// Full channel handler
 	channels   map[string]models.ChannelHandler
