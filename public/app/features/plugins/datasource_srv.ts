@@ -144,13 +144,13 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // find the metadata
-    const dsConfig = this.settingsMapByUid[key] ?? this.settingsMapByName[key] ?? this.settingsMapById[key];
-    if (!dsConfig) {
+    const instanceSettings = this.settingsMapByUid[key] ?? this.settingsMapByName[key] ?? this.settingsMapById[key];
+    if (!instanceSettings) {
       return Promise.reject({ message: `Datasource ${key} was not found` });
     }
 
     try {
-      const dsPlugin = await importDataSourcePlugin(dsConfig.meta);
+      const dsPlugin = await importDataSourcePlugin(instanceSettings.meta);
       // check if its in cache now
       if (this.datasources[key]) {
         return this.datasources[key];
@@ -162,21 +162,31 @@ export class DatasourceSrv implements DataSourceService {
 
       if (useAngular) {
         instance = getLegacyAngularInjector().instantiate(dsPlugin.DataSourceClass, {
-          instanceSettings: dsConfig,
+          instanceSettings,
         });
       } else {
-        instance = new dsPlugin.DataSourceClass(dsConfig);
+        instance = new dsPlugin.DataSourceClass(instanceSettings);
       }
 
       instance.components = dsPlugin.components;
-      instance.meta = dsConfig.meta;
+
+      // Some old plugins does not extend DataSourceApi so we need to manually patch them
+      if (!(instance instanceof DataSourceApi)) {
+        const anyInstance = instance as any;
+        anyInstance.name = instanceSettings.name;
+        anyInstance.id = instanceSettings.id;
+        anyInstance.type = instanceSettings.type;
+        anyInstance.meta = instanceSettings.meta;
+        anyInstance.uid = instanceSettings.uid;
+        (instance as any).getRef = DataSourceApi.prototype.getRef;
+      }
 
       // store in instance cache
       this.datasources[key] = instance;
       this.datasources[instance.uid] = instance;
       return instance;
     } catch (err) {
-      appEvents.emit(AppEvents.alertError, [dsConfig.name + ' plugin failed', err.toString()]);
+      appEvents.emit(AppEvents.alertError, [instanceSettings.name + ' plugin failed', err.toString()]);
       return Promise.reject({ message: `Datasource: ${key} was not found` });
     }
   }

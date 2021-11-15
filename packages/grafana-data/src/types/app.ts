@@ -50,9 +50,6 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   root?: ComponentClass<AppRootProps<T>>;
   rootNav?: NavModel; // Initial navigation model
 
-  // Old style pages
-  angularPages?: { [component: string]: any };
-
   /**
    * Called after the module has loaded, and before the app is used.
    * This function may be called multiple times on the same instance.
@@ -88,12 +85,6 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
             console.warn('App Page uses unknown component: ', include.component, this.meta);
             continue;
           }
-
-          if (!this.angularPages) {
-            this.angularPages = {};
-          }
-
-          this.angularPages[include.component] = exp;
         }
       }
     }

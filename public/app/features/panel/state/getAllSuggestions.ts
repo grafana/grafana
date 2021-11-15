@@ -10,6 +10,7 @@ export const panelsToCheckFirst = [
   'bargauge',
   'table',
   'state-timeline',
+  'status-history',
   'text',
   'dashlist',
 ];
