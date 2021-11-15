@@ -13,7 +13,7 @@ import { Echo } from 'app/core/services/echo/Echo';
 jest.mock('./PluginSettingsCache', () => ({
   getPluginSettings: jest.fn(),
 }));
-jest.mock('./plugin_loader', () => ({
+jest.mock('../plugin_loader', () => ({
   importAppPlugin: jest.fn(),
 }));
 
