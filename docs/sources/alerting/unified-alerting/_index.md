@@ -22,5 +22,4 @@ Before you begin using Grafana 8 alerting, we recommend that you familiarize you
 
 ## Limitations
 
-- Grafana 8 alerting doesn’t support high availability. Alert notifications are not de-duplicated and load balancing is not supported between instances. For example, silences from one instance will not appear in another.
 - The Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch rules from other supported data sources.
