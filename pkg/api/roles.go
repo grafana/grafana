@@ -223,17 +223,14 @@ var dataSourcesEditAccessEvaluator = accesscontrol.EvalAll(
 	accesscontrol.EvalPermission(ActionDatasourcesWrite),
 )
 
-// TODO think if I should precise the scope or not
 // orgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
 var orgPreferencesAccessEvaluator = accesscontrol.EvalAny(
 	accesscontrol.EvalPermission(ActionOrgsRead),
 	accesscontrol.EvalPermission(ActionOrgsPreferencesRead),
 )
 
-// TODO remove thoughts:
-//     * you can also update and delete an org through this endpoint but cannot select it if you don't have read
-// TODO search for the setting listing all orgs to see if we can filter out some and remove the scope
 // orgsAccessEvaluator is used to protect the "Server Admin > Orgs" page access
+// (you need to have read to be able to update or delete orgs => read is the minimum)
 var orgsAccessEvaluator = accesscontrol.EvalAny(
 	accesscontrol.EvalPermission(ActionOrgsRead),
 	accesscontrol.EvalPermission(ActionOrgsCreate),
