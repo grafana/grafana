@@ -126,7 +126,6 @@ export class StreamingDataFrame implements DataFrame {
       timeFieldIndex: this.timeFieldIndex,
       pushMode: this.pushMode,
       packetInfo: this.packetInfo,
-      // TODO: can run resize after changing buffer size
       options,
     };
   };
