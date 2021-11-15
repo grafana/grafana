@@ -81,7 +81,7 @@ enum InternalStreamMessageType {
   ChangedSchema,
 }
 
-export type InternalStreamMessageTypeToData = {
+type InternalStreamMessageTypeToData = {
   [InternalStreamMessageType.Error]: {
     error: DataQueryError;
   };
