@@ -32,7 +32,7 @@ Family: dashboard.Family & {
         dashlist: pdashlist.Panel
         gauge: pgauge.Panel
         histogram: phistogram.Panel
-        candlestick: pmt.Panel
+        candlestick: pcandlestick.Panel
         news: pnews.Panel
         stat: pstat.Panel
         "state-timeline": st.Panel
