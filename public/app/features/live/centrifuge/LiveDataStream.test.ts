@@ -289,7 +289,7 @@ describe('LiveDataStream', () => {
         },
         {
           name: 'b',
-          values: [], //  bug in streamingDataFrame - fix!
+          values: [undefined, 'y'], //  bug in streamingDataFrame - fix!
         },
       ]);
     });
@@ -367,7 +367,7 @@ describe('LiveDataStream', () => {
         },
         {
           name: 'b',
-          values: [],
+          values: [2, 3],
         },
       ]);
     });
@@ -402,7 +402,7 @@ describe('LiveDataStream', () => {
         },
         {
           name: 'b',
-          values: [],
+          values: [3, 3],
         },
       ]);
     });
