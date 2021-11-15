@@ -8,7 +8,7 @@ import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamic
 import { RouteDescriptor } from '../core/navigation/types';
 import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
-import { getPluginsAdminRoutes } from 'app/features/plugins/routes';
+import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
@@ -372,7 +372,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
       ),
     },
-    ...getPluginsAdminRoutes(),
+    ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
     ...extraRoutes,
