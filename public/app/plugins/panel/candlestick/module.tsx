@@ -20,6 +20,7 @@ import {
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
 import { config } from '@grafana/runtime';
+import { CandlestickSuggestionsSupplier } from './suggestions';
 
 const modeOptions = [
   { label: 'Both', value: VizDisplayMode.CandlesVolume },
@@ -127,4 +128,5 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
     // commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
   })
-  .setDataSupport({ annotations: true, alertStates: true });
+  .setDataSupport({ annotations: true, alertStates: true })
+  .setSuggestionsSupplier(new CandlestickSuggestionsSupplier());

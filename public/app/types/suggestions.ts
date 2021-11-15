@@ -12,6 +12,7 @@ export enum SuggestionName {
   BarChartHorizontal = 'Bar chart horizontal',
   BarChartHorizontalStacked = 'Bar chart horizontal stacked',
   BarChartHorizontalStackedPercent = 'Bar chart horizontal 100% stacked',
+  Candlestick = 'Candlestick',
   PieChart = 'Pie chart',
   PieChartDonut = 'Pie chart donut',
   Stat = 'Stat',
