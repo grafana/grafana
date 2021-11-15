@@ -505,6 +505,44 @@ describe('LiveDataStream', () => {
     });
   });
 
+  describe('two subscribers with initial frames', () => {
+    it('should ignore initial frame from second subscriber', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+      const valuesCollection = new ValuesCollection<DataQueryResponse>();
+      const valuesCollection2 = new ValuesCollection<DataQueryResponse>();
+
+      valuesCollection.subscribeTo(
+        liveDataStream.get(
+          {
+            ...liveDataStreamOptions.withTimeBFilter,
+            frame: StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema1()),
+          },
+          subscriptionKey
+        )
+      );
+
+      expectValueCollectionState(valuesCollection, { errors: 0, values: 1, complete: false });
+
+      valuesCollection2.subscribeTo(
+        liveDataStream.get(
+          {
+            ...liveDataStreamOptions.withTimeBFilter,
+            frame: StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema2()),
+          },
+          subscriptionKey
+        )
+      );
+      // no extra emits for initial subscriber
+      expectValueCollectionState(valuesCollection, { errors: 0, values: 1, complete: false });
+      expectValueCollectionState(valuesCollection2, { errors: 0, values: 1, complete: false });
+
+      const frame1 = fieldsOf(valuesCollection.lastValue().data[0]);
+      const frame2 = fieldsOf(valuesCollection2.lastValue().data[0]);
+      expect(frame1).toEqual(frame2);
+    });
+  });
+
   describe('source observable emits completed event', () => {
     it('should shutdown', async () => {
       const deps = createDeps();
