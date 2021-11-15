@@ -17,6 +17,7 @@ import { defaultColors, MarketOptions, MarketTrendMode } from './models.gen';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { prepareCandlestickFields } from './fields';
+import uPlot from 'uplot';
 
 interface MarketPanelProps extends PanelProps<MarketOptions> {}
 
