@@ -137,7 +137,7 @@ def download_grabpl():
         ]
     }
 
-def lint_drone():
+def lint_drone_step():
     return {
         'name': 'lint-drone',
         'image': curl_image,
