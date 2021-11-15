@@ -111,7 +111,7 @@ async function getLocalPluginReadme(id: string): Promise<string> {
 export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   const localPlugins: LocalPlugin[] = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
 
-  return localPlugins.filter(Boolean).filter(isLocalPluginVisible);
+  return localPlugins.filter(isLocalPluginVisible);
 }
 
 async function getOrg(slug: string): Promise<Org> {
