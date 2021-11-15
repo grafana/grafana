@@ -64,13 +64,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   rawValue,
   getColor,
   allFrames,
-  valueRotation,
-  valueMaxLength,
+  xTickLabelRotation,
+  xTickLabelMaxLength,
   legend,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) => {
-    return shortenValue(formattedValueToString(frame.fields[seriesIdx].display!(value)), valueMaxLength);
+    return shortenValue(formattedValueToString(frame.fields[seriesIdx].display!(value)), xTickLabelMaxLength);
   };
 
   // bar orientation -> x scale orientation & direction
@@ -108,8 +108,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
-  if (vizOrientation.xOri === ScaleOrientation.Horizontal && valueRotation !== 0) {
-    builder.setPadding(getRotationPadding(frame, valueRotation, valueMaxLength));
+  if (vizOrientation.xOri === ScaleOrientation.Horizontal && xTickLabelRotation !== 0) {
+    builder.setPadding(getRotationPadding(frame, xTickLabelRotation, xTickLabelMaxLength));
   }
 
   builder.setPrepData(config.prepData);
@@ -132,7 +132,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     grid: { show: false },
     ticks: { show: false },
     gap: 15,
-    valueRotation: valueRotation * -1,
+    tickLabelRotation: xTickLabelRotation * -1,
     theme,
   });
 

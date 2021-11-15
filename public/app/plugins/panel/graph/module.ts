@@ -356,6 +356,10 @@ export class GraphCtrl extends MetricsPanelCtrl {
   getDataFrameByRefId = (refId: string) => {
     return this.dataList.filter((dataFrame) => dataFrame.refId === refId)[0];
   };
+
+  migrateToReact() {
+    this.onPluginTypeChange(config.panels['timeseries']);
+  }
 }
 
 // Use new react style configuration

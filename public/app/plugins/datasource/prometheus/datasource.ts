@@ -503,15 +503,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     let expr = target.expr;
 
     // Apply adhoc filters
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
-      const { key, operator } = filter;
-      let { value } = filter;
-      if (operator === '=~' || operator === '!~') {
-        value = prometheusRegularEscape(value);
-      }
-      return addLabelToQuery(acc, key, value, operator);
-    }, expr);
+    expr = this.enhanceExprWithAdHocFilters(expr);
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
@@ -909,6 +901,20 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return getOriginalMetricName(labelData);
   }
 
+  enhanceExprWithAdHocFilters(expr: string) {
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    let finalQuery = expr;
+    finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
+      const { key, operator } = filter;
+      let { value } = filter;
+      if (operator === '=~' || operator === '!~') {
+        value = prometheusRegularEscape(value);
+      }
+      return addLabelToQuery(acc, key, value, operator);
+    }, finalQuery);
+    return finalQuery;
+  }
+
   // Used when running queries trough backend
   filterQuery(query: PromQuery): boolean {
     if (query.hide || !query.expr) {
@@ -920,14 +926,18 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   // Used when running queries trough backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
     const variables = cloneDeep(scopedVars);
+
     // We want to interpolate these variables on backend
     delete variables.__interval;
     delete variables.__interval_ms;
 
+    //Add ad hoc filters
+    const expr = this.enhanceExprWithAdHocFilters(target.expr);
+
     return {
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
-      expr: this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
+      expr: this.templateSrv.replace(expr, variables, this.interpolateQueryExpr),
     };
   }
 }

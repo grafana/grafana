@@ -19,8 +19,8 @@ export interface BarChartProps
 const propsToDiff: Array<string | PropDiffFn> = [
   'orientation',
   'barWidth',
-  'valueRotation',
-  'valueMaxLength',
+  'xTickLabelRotation',
+  'xTickLabelMaxLength',
   'groupWidth',
   'stacking',
   'showValue',
@@ -77,8 +77,8 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       legend,
       tooltip,
       text,
-      valueRotation,
-      valueMaxLength,
+      xTickLabelRotation,
+      xTickLabelMaxLength,
     } = props;
 
     return preparePlotConfigBuilder({
@@ -91,8 +91,8 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       barWidth,
       showValue,
       groupWidth,
-      valueRotation,
-      valueMaxLength,
+      xTickLabelRotation,
+      xTickLabelMaxLength,
       stacking,
       legend,
       tooltip,

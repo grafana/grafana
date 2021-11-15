@@ -49,6 +49,10 @@ func AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add column display_name", migrator.NewAddColumnMigration(roleV1, &migrator.Column{
 		Name: "display_name", Type: migrator.DB_NVarchar, Length: 190, Nullable: true,
 	}))
+
+	mg.AddMigration("add column group_name", migrator.NewAddColumnMigration(roleV1, &migrator.Column{
+		Name: "group_name", Type: migrator.DB_NVarchar, Length: 190, Nullable: true,
+	}))
 	//-------  indexes ------------------
 	mg.AddMigration("add index role.org_id", migrator.NewAddIndexMigration(roleV1, roleV1.Indices[0]))
 	mg.AddMigration("add unique index role_org_id_name", migrator.NewAddIndexMigration(roleV1, roleV1.Indices[1]))

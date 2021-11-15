@@ -11,7 +11,7 @@ describe('LayerHeader', () => {
     fireEvent.change(input, { target: { value: 'new name' } });
     fireEvent.blur(input);
 
-    expect((scenario.props.onChange as any).mock.calls[0][0].options.name).toBe('new name');
+    expect((scenario.props.onChange as any).mock.calls[0][0].name).toBe('new name');
   });
 
   it('Show error when empty name is specified', async () => {
@@ -37,21 +37,12 @@ describe('LayerHeader', () => {
   });
 
   function renderScenario(overrides: Partial<LayerHeaderProps>) {
-    const props: any = {
-      layer: {
-        UID: '1',
-        options: { name: 'Layer 1' },
+    const props: LayerHeaderProps = {
+      layer: { name: 'Layer 1', type: '?' },
+      canRename: (v: string) => {
+        const names = new Set(['Layer 1', 'Layer 2']);
+        return !names.has(v);
       },
-      layers: [
-        {
-          UID: '1',
-          options: { name: 'Layer 1' },
-        },
-        {
-          UID: '2',
-          options: { name: 'Layer 2' },
-        },
-      ],
       onChange: jest.fn(),
     };
 
