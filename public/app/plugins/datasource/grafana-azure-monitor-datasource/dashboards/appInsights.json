@@ -162,12 +162,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-            "263177d8-32b8-465a-b939-be00c75e88c5"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Availability",
@@ -248,12 +243,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-            "263177d8-32b8-465a-b939-be00c75e88c5"
-          ]
+          "subscriptions": []
         }
       ],
       "type": "text"
@@ -418,12 +408,7 @@
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-            "263177d8-32b8-465a-b939-be00c75e88c5"
-          ]
+          "subscriptions": []
         }
       ],
       "transformations": [],
@@ -476,11 +461,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "type": "text"
@@ -555,11 +536,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "type": "text"
@@ -634,11 +611,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "type": "text"
@@ -784,12 +757,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-            "263177d8-32b8-465a-b939-be00c75e88c5"
-          ]
+          "subscriptions": []
         }
       ],
       "timeShift": null,
@@ -911,11 +879,7 @@
           "queryType": "Azure Monitor",
           "refId": "Failed requests",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Failed requests",
@@ -1040,11 +1004,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Server response time",
@@ -1169,11 +1129,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Page Views",
@@ -1313,11 +1269,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Average availability",
@@ -1467,11 +1419,7 @@
           "queryType": "Azure Monitor",
           "refId": "Server Exceptions",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         },
         {
           "appInsights": {
@@ -1510,11 +1458,7 @@
           "queryType": "Azure Monitor",
           "refId": "Dependency failures",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Server exceptions and Dependency failures",
@@ -1639,11 +1583,7 @@
           "queryType": "Azure Monitor",
           "refId": "Processor",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         },
         {
           "appInsights": {
@@ -1681,11 +1621,7 @@
           "queryType": "Azure Monitor",
           "refId": "Process CPU",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Average processor and process CPU utilization",
@@ -1867,11 +1803,7 @@
           "queryType": "Azure Monitor",
           "refId": "Page load network connect time",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         },
         {
           "appInsights": {
@@ -1909,11 +1841,7 @@
           "queryType": "Azure Monitor",
           "refId": "Client processing time",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         },
         {
           "appInsights": {
@@ -1951,11 +1879,7 @@
           "queryType": "Azure Monitor",
           "refId": "Send request time",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         },
         {
           "appInsights": {
@@ -1993,11 +1917,7 @@
           "queryType": "Azure Monitor",
           "refId": "Receiving response time",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Average page load time breakdown",
@@ -2118,11 +2038,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Availability test results count",
@@ -2243,11 +2159,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Average process I/O rate",
@@ -2370,11 +2282,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Average available memory",
@@ -2497,11 +2405,7 @@
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "Browser exceptions",
@@ -2515,11 +2419,7 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": false,
-          "text": "Azure Monitor",
-          "value": "Azure Monitor"
-        },
+        "current": {},
         "description": null,
         "error": null,
         "hide": 0,
@@ -2537,11 +2437,7 @@
       },
       {
         "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "Test/Demo - One Observability",
-          "value": "263177d8-32b8-465a-b939-be00c75e88c5"
-        },
+        "current": {},
         "datasource": "${ds}",
         "definition": "Subscriptions()",
         "description": null,
@@ -2561,11 +2457,7 @@
       },
       {
         "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "kaprince-grafana",
-          "value": "kaprince-grafana"
-        },
+        "current": {},
         "datasource": "${ds}",
         "definition": "ResourceGroups($sub)",
         "description": null,
@@ -2585,11 +2477,7 @@
       },
       {
         "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "microsoft.insights/components",
-          "value": "microsoft.insights/components"
-        },
+        "current": {},
         "datasource": "${ds}",
         "definition": "Namespaces($sub, $rg)",
         "description": null,
@@ -2609,11 +2497,7 @@
       },
       {
         "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "Grafana",
-          "value": "Grafana"
-        },
+        "current": {},
         "datasource": "${ds}",
         "definition": "ResourceNames($sub, $rg, $ns)",
         "description": null,
