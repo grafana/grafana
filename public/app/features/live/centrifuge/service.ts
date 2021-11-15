@@ -1,7 +1,7 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
-import { LiveDataStreamOptions } from '@grafana/runtime';
+import { LiveDataStreamOptions, LiveQueryDataOptions, toDataQueryResponse } from '@grafana/runtime';
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import {
   DataFrame,
   DataFrameJSON,
@@ -50,7 +50,7 @@ export interface CentrifugeSrv {
    *
    * Since the initial request and subscription are on the same socket, this will support HA setups
    */
-  getDataQueryStream(requestId: string, body: any): Observable<DataQueryResponse>;
+  getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse>;
 
   /**
    * For channels that support presence, this will request the current state from the server.
@@ -280,13 +280,28 @@ export class CentrifugeService implements CentrifugeSrv {
    *
    * Since the initial request and subscription are on the same socket, this will support HA setups
    */
-  getDataQueryStream(requestId: string, body: any): Observable<DataQueryResponse> {
-    // TODO: use centrifuge RPC!!!
-    return of(
-      this.centrifuge.rpc(body).then((v) => {
-        return { error: { message: 'not implemented yet!' }, state: LoadingState.Error };
-      })
-    );
+  getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse> {
+    return new Observable((subscriber) => {
+      this.centrifuge
+        .rpc(options.body)
+        .then((raw) => {
+          const rsp = toDataQueryResponse(raw, options.queries);
+          // Check if any response should subscribe to a live stream
+          if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
+            // return toStreamingDataResponse(rsp, request, this.streamOptionsProvider);
+            console.log('TODO: subscribe to channel');
+          }
+          subscriber.next(rsp);
+        })
+        .catch((v) => {
+          subscriber.error(v);
+        });
+      return {
+        unsubscribe: () => {
+          console.log('cancel?');
+        },
+      };
+    });
   }
 
   /**

@@ -3,7 +3,7 @@ import * as comlink from 'comlink';
 import './transferHandlers';
 import { remoteObservableAsObservable } from './remoteObservable';
 import { LiveChannelAddress, LiveChannelConfig } from '@grafana/data';
-import { LiveDataStreamOptions } from '@grafana/runtime';
+import { LiveDataStreamOptions, LiveQueryDataOptions } from '@grafana/runtime';
 
 let centrifuge: CentrifugeService;
 
@@ -27,8 +27,8 @@ const getDataStream = (options: LiveDataStreamOptions, config: LiveChannelConfig
   return comlink.proxy(centrifuge.getDataStream(options, config));
 };
 
-const getQueryDataStream = (requestId: string, body: any) => {
-  return comlink.proxy(centrifuge.getDataQueryStream(requestId, body));
+const getQueryDataStream = (options: LiveQueryDataOptions) => {
+  return comlink.proxy(centrifuge.getQueryData(options));
 };
 
 const getStream = (address: LiveChannelAddress, config: LiveChannelConfig) => {

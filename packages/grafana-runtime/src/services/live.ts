@@ -1,5 +1,6 @@
 import {
   DataFrame,
+  DataQuery,
   DataQueryResponse,
   LiveChannelAddress,
   LiveChannelConfig,
@@ -25,6 +26,15 @@ export interface LiveDataStreamOptions {
   key?: string;
   buffer?: StreamingFrameOptions;
   filter?: LiveDataFilter;
+}
+
+/**
+ * @alpha -- experimental: send a normal query request over websockt
+ */
+export interface LiveQueryDataOptions {
+  requestId: string;
+  body: any; // processed queries, same as sent to `/api/query/ds`
+  queries: DataQuery[];
 }
 
 /**
@@ -61,7 +71,7 @@ export interface GrafanaLiveSrv {
    *
    * Since the initial request and subscription are on the same socket, this will support HA setups
    */
-  getDataQueryStream(requestId: string, body: any): Observable<DataQueryResponse>;
+  getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse>;
 
   /**
    * For channels that support presence, this will request the current state from the server.

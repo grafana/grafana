@@ -1,4 +1,4 @@
-import { BackendSrv, GrafanaLiveSrv, LiveDataStreamOptions } from '@grafana/runtime';
+import { BackendSrv, GrafanaLiveSrv, LiveDataStreamOptions, LiveQueryDataOptions } from '@grafana/runtime';
 import { CentrifugeSrv } from './centrifuge/service';
 
 import { mergeMap, from, of, Observable } from 'rxjs';
@@ -61,8 +61,8 @@ export class GrafanaLiveService implements GrafanaLiveSrv {
    *
    * Since the initial request and subscription are on the same socket, this will support HA setups
    */
-  getDataQueryStream(requestId: string, body: any): Observable<DataQueryResponse> {
-    return this.deps.centrifugeSrv.getDataQueryStream(requestId, body);
+  getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse> {
+    return this.deps.centrifugeSrv.getQueryData(options);
   }
 
   /**
