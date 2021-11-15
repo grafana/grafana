@@ -78,6 +78,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     signature: getPluginSignature({ remote: plugin, error }),
     updatedAt,
     hasUpdate: false,
+    isPublished: true,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
     isCore: plugin.internal,
@@ -93,9 +94,9 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     name,
     info: { description, version, logos, updated, author },
     id,
-    signature,
     dev,
     type,
+    signature,
     signatureOrg,
     signatureType,
     hasUpdate,
@@ -119,6 +120,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isInstalled: true,
     isDisabled: !!error,
     isCore: signature === 'internal',
+    isPublished: false,
     isDev: Boolean(dev),
     isEnterprise: false,
     type,
@@ -160,6 +162,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isEnterprise: remote?.status === 'enterprise',
     isInstalled: Boolean(local) || isDisabled,
     isDisabled: isDisabled,
+    isPublished: true,
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
     // TODO<check if we would like to keep preferring the remote version>
@@ -266,4 +269,8 @@ function isPluginVisible(id: string) {
   const { pluginCatalogHiddenPlugins }: { pluginCatalogHiddenPlugins: string[] } = config;
 
   return !pluginCatalogHiddenPlugins.includes(id);
+}
+
+export function isLocalCorePlugin(local?: LocalPlugin): boolean {
+  return Boolean(local?.signature === 'internal');
 }

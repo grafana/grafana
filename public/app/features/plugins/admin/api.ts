@@ -1,33 +1,20 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { PluginError, renderMarkdown } from '@grafana/data';
 import { API_ROOT, GCOM_API_ROOT } from './constants';
-import { mergeLocalAndRemote, isLocalPluginVisible, isRemotePluginVisible } from './helpers';
-import {
-  PluginDetails,
-  Org,
-  LocalPlugin,
-  RemotePlugin,
-  CatalogPlugin,
-  CatalogPluginDetails,
-  Version,
-  PluginVersion,
-} from './types';
-
-export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
-  const { local, remote } = await getPlugin(id);
-
-  return mergeLocalAndRemote(local, remote);
-}
+import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion } from './types';
+import { isLocalPluginVisible, isRemotePluginVisible } from './helpers';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
-  const localPlugins = await getLocalPlugins();
-  const local = localPlugins.find((p) => p.id === id);
-  const isInstalled = Boolean(local);
-  const [remote, versions, localReadme] = await Promise.all([
-    getRemotePlugin(id, isInstalled),
-    getPluginVersions(id),
+  const remote = await getRemotePlugin(id);
+  const isPublished = Boolean(remote);
+
+  const [localPlugins, versions, localReadme] = await Promise.all([
+    getLocalPlugins(),
+    getPluginVersions(id, isPublished),
     getLocalPluginReadme(id),
   ]);
+
+  const local = localPlugins.find((p) => p.id === id);
   const dependencies = local?.dependencies || remote?.json?.dependencies;
 
   return {
@@ -45,22 +32,6 @@ export async function getRemotePlugins(): Promise<RemotePlugin[]> {
   return remotePlugins.filter(isRemotePluginVisible);
 }
 
-async function getPlugin(slug: string): Promise<PluginDetails> {
-  const installed = await getLocalPlugins();
-
-  const localPlugin = installed?.find((plugin: LocalPlugin) => {
-    return plugin.id === slug;
-  });
-
-  const [remote, versions] = await Promise.all([getRemotePlugin(slug, Boolean(localPlugin)), getPluginVersions(slug)]);
-
-  return {
-    remote: remote,
-    remoteVersions: versions,
-    local: localPlugin,
-  };
-}
-
 export async function getPluginErrors(): Promise<PluginError[]> {
   try {
     return await getBackendSrv().get(`${API_ROOT}/errors`);
@@ -69,7 +40,7 @@ export async function getPluginErrors(): Promise<PluginError[]> {
   }
 }
 
-async function getRemotePlugin(id: string, isInstalled: boolean): Promise<RemotePlugin | undefined> {
+async function getRemotePlugin(id: string): Promise<RemotePlugin | undefined> {
   try {
     return await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}`, {});
   } catch (error) {
@@ -79,8 +50,12 @@ async function getRemotePlugin(id: string, isInstalled: boolean): Promise<Remote
   }
 }
 
-async function getPluginVersions(id: string): Promise<Version[]> {
+async function getPluginVersions(id: string, isPublished: boolean): Promise<Version[]> {
   try {
+    if (!isPublished) {
+      return [];
+    }
+
     const versions: { items: PluginVersion[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/versions`);
 
     return (versions.items || []).map((v) => ({
@@ -114,11 +89,6 @@ export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   return localPlugins.filter(isLocalPluginVisible);
 }
 
-async function getOrg(slug: string): Promise<Org> {
-  const org = await getBackendSrv().get(`${GCOM_API_ROOT}/orgs/${slug}`);
-  return { ...org, avatarUrl: `${GCOM_API_ROOT}/orgs/${slug}/avatar` };
-}
-
 export async function installPlugin(id: string) {
   // This will install the latest compatible version based on the logic
   // on the backend.
@@ -131,9 +101,7 @@ export async function uninstallPlugin(id: string) {
 
 export const api = {
   getRemotePlugins,
-  getPlugin,
   getInstalledPlugins: getLocalPlugins,
-  getOrg,
   installPlugin,
   uninstallPlugin,
 };
