@@ -238,16 +238,16 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
-			orgsRoute.Get("/", reqGrafanaAdmin, routing.Wrap(GetOrgByID))
-			orgsRoute.Put("/", reqGrafanaAdmin, bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrg))
-			orgsRoute.Put("/address", reqGrafanaAdmin, bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddress))
-			orgsRoute.Delete("/", reqGrafanaAdmin, routing.Wrap(DeleteOrgByID))
+			orgsRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsRead, ScopeOrgID)), routing.Wrap(GetOrgByID))
+			orgsRoute.Put("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsWrite, ScopeOrgID)), bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrg))
+			orgsRoute.Put("/address", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsWrite, ScopeOrgID)), bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddress))
+			orgsRoute.Delete("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsDelete, ScopeOrgID)), routing.Wrap(DeleteOrgByID))
 			orgsRoute.Get("/users", reqGrafanaAdmin, routing.Wrap(hs.GetOrgUsers))
 			orgsRoute.Post("/users", reqGrafanaAdmin, bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUser))
 			orgsRoute.Patch("/users/:userId", reqGrafanaAdmin, bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUser))
 			orgsRoute.Delete("/users/:userId", reqGrafanaAdmin, routing.Wrap(RemoveOrgUser))
-			orgsRoute.Get("/quotas", reqGrafanaAdmin, routing.Wrap(hs.GetOrgQuotas))
-			orgsRoute.Put("/quotas/:target", reqGrafanaAdmin, bind(models.UpdateOrgQuotaCmd{}), routing.Wrap(hs.UpdateOrgQuota))
+			orgsRoute.Get("/quotas", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsQuotasRead, ScopeOrgID)), routing.Wrap(hs.GetOrgQuotas))
+			orgsRoute.Put("/quotas/:target", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsQuotasWrite, ScopeOrgID)), bind(models.UpdateOrgQuotaCmd{}), routing.Wrap(hs.UpdateOrgQuota))
 		})
 
 		// orgs (admin routes)
