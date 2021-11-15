@@ -59,6 +59,37 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 		intervalCalculator: intervalv2.NewCalculator(),
 	}
 
+	t.Run("parsing query from unified alerting", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "go_goroutines",
+			"refId": "A",
+			"exemplar": true
+		}`
+
+		query := &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					JSON:      []byte(queryJson),
+					TimeRange: timeRange,
+					RefID:     "A",
+				},
+			},
+			Headers: map[string]string{
+				"FromAlert": "true",
+			},
+		}
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, false, models[0].ExemplarQuery)
+	})
+
 	t.Run("parsing query model with step", func(t *testing.T) {
 		timeRange := backend.TimeRange{
 			From: now,

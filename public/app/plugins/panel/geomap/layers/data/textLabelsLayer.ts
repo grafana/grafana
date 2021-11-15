@@ -2,47 +2,43 @@ import { GrafanaTheme2, MapLayerOptions, MapLayerRegistryItem, PanelData, Plugin
 import Map from 'ol/Map';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
-import * as style from 'ol/style';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import {
-  ColorDimensionConfig,
   getColorDimension,
   getScaledDimension,
   getTextDimension,
-  ScaleDimensionConfig,
-  TextDimensionConfig,
   TextDimensionMode,
 } from 'app/features/dimensions';
 import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
-import { Fill, Stroke } from 'ol/style';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
 import { Feature } from 'ol';
 import { Point } from 'ol/geom';
-import { StyleMaker, StyleMakerConfig } from '../../types';
+import { textMarkerMaker } from '../../style/text';
+import { MarkersConfig } from './markersLayer';
 
-interface TextLabelsConfig {
-  labelText: TextDimensionConfig;
-  color: ColorDimensionConfig;
-  fillOpacity: number;
-  fontSize: ScaleDimensionConfig;
-}
 
 export const TEXT_LABELS_LAYER = 'text-labels';
 
-const defaultOptions: TextLabelsConfig = {
-  labelText: {
+// Same configuration
+type TextLabelsConfig = MarkersConfig;
+
+const defaultOptions = {
+  style: {
+    text: {
     fixed: '',
     mode: TextDimensionMode.Field,
   },
   color: {
     fixed: 'dark-blue',
   },
-  fillOpacity: 0.6,
-  fontSize: {
+  opacity: 1,
+  size: {
     fixed: 10,
     min: 5,
     max: 100,
   },
+},
+showLegend: false,
 };
 
 export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
@@ -62,23 +58,6 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
       ...options?.config,
     };
 
-    const fontFamily = theme.typography.fontFamily;
-
-    const getTextStyle = (text: string, fillColor: string, fontSize: number) => {
-      return new style.Text({
-        text: text,
-        fill: new Fill({ color: fillColor }),
-        stroke: new Stroke({ color: fillColor }),
-        font: `normal ${fontSize}px ${fontFamily}`,
-      });
-    };
-
-    const getStyle: StyleMaker = (cfg: StyleMakerConfig) => {
-      return new style.Style({
-        text: getTextStyle(cfg.text ?? defaultOptions.labelText.fixed, cfg.fillColor, cfg.size),
-      });
-    };
-
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
@@ -88,6 +67,9 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
 
         const features: Feature<Point>[] = [];
 
+
+        const style = config.style ?? defaultOptions.style;
+
         for (const frame of data.series) {
           const info = dataFrameToPoints(frame, matchers);
           if (info.warning) {
@@ -95,17 +77,17 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
             return;
           }
 
-          const colorDim = getColorDimension(frame, config.color, theme);
-          const textDim = getTextDimension(frame, config.labelText);
-          const sizeDim = getScaledDimension(frame, config.fontSize);
-          const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
+          const colorDim = getColorDimension(frame, style.color ?? defaultOptions.style.color, theme);
+          const sizeDim = getScaledDimension(frame, style.size ?? defaultOptions.style.size);
+          const opacity = style?.opacity ?? defaultOptions.style.opacity;
+          const textDim = getTextDimension(frame, style.text ?? defaultOptions.style.text );
 
           const featureDimensionConfig: FeaturesStylesBuilderConfig = {
             colorDim: colorDim,
             sizeDim: sizeDim,
             textDim: textDim,
             opacity: opacity,
-            styleMaker: getStyle,
+            styleMaker: textMarkerMaker,
           };
 
           const frameFeatures = getFeatures(frame, info, featureDimensionConfig);
@@ -122,22 +104,24 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
       registerOptionsUI: (builder) => {
         builder
           .addCustomEditor({
-            id: 'config.labelText',
+            id: 'config.style.text',
+            path: 'config.style.text',
             name: 'Text label',
-            path: 'config.labelText',
             editor: TextDimensionEditor,
+            defaultValue: defaultOptions.style.text,
           })
           .addCustomEditor({
-            id: 'config.color',
-            path: 'config.color',
+            id: 'config.style.color',
+            path: 'config.style.color',
             name: 'Text color',
             editor: ColorDimensionEditor,
+            defaultValue: defaultOptions.style.color,
             settings: {},
           })
           .addSliderInput({
-            path: 'config.fillOpacity',
+            path: 'config.style.opacity',
             name: 'Text opacity',
-            defaultValue: defaultOptions.fillOpacity,
+            defaultValue: defaultOptions.style.opacity,
             settings: {
               min: 0,
               max: 1,
@@ -145,14 +129,14 @@ export const textLabelsLayer: MapLayerRegistryItem<TextLabelsConfig> = {
             },
           })
           .addCustomEditor({
-            id: 'config.fontSize',
-            path: 'config.fontSize',
+            id: 'config.style.size',
+            path: 'config.style.size',
             name: 'Text size',
             editor: ScaleDimensionEditor,
+            defaultValue: defaultOptions.style.size,
             settings: {
-              fixed: defaultOptions.fontSize.fixed,
-              min: defaultOptions.fontSize.min,
-              max: defaultOptions.fontSize.max,
+              min: 2,
+              max: 50,
             },
           });
       },
