@@ -497,36 +497,6 @@ func TestMiddlewareContext(t *testing.T) {
 			cfg.AuthProxyAutoSignUp = true
 		})
 
-		middlewareScenario(t, "Should use organisation specified by targetOrgId parameter", func(t *testing.T, sc *scenarioContext) {
-			var storedRoleInfo map[int64]models.RoleType = nil
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				if query.UserId > 0 {
-					query.Result = &models.SignedInUser{OrgId: query.OrgId, UserId: userID, OrgRole: storedRoleInfo[orgID]}
-					return nil
-				}
-				return models.ErrUserNotFound
-			})
-
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: userID}
-				storedRoleInfo = cmd.ExternalUser.OrgRoles
-				return nil
-			})
-
-			targetOrgID := 123
-			sc.fakeReq("GET", fmt.Sprintf("/?targetOrgId=%d", targetOrgID))
-			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
-			sc.exec()
-
-			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, userID, sc.context.UserId)
-			assert.Equal(t, int64(targetOrgID), sc.context.OrgId)
-		}, func(cfg *setting.Cfg) {
-			configure(cfg)
-			cfg.LDAPEnabled = false
-			cfg.AuthProxyAutoSignUp = true
-		})
-
 		middlewareScenario(t, "Should get an existing user from header", func(t *testing.T, sc *scenarioContext) {
 			const userID int64 = 12
 			const orgID int64 = 2

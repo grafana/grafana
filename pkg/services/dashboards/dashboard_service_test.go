@@ -61,7 +61,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -83,7 +83,7 @@ func TestDashboardService(t *testing.T) {
 					dto.Dashboard.SetUid(tc.Uid)
 					dto.User = &models.SignedInUser{}
 
-					_, err := service.buildSaveDashboardCommand(dto, true, false)
+					_, err := service.buildSaveDashboardCommand(context.Background(), dto, true, false)
 					require.Equal(t, err, tc.Error)
 				}
 			})
@@ -98,7 +98,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -114,7 +114,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -130,7 +130,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 					return fmt.Errorf("alert validation error")
 				}
 
@@ -157,7 +157,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -177,7 +177,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -213,7 +213,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -229,7 +229,7 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.ImportDashboard(dto)
+				_, err := service.ImportDashboard(context.Background(), dto)
 				require.Equal(t, err, models.ErrDashboardCannotSaveProvisionedDashboard)
 			})
 		})

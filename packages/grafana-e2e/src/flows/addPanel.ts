@@ -9,6 +9,5 @@ export const addPanel = (config?: Partial<PartialAddPanelConfig>) =>
       panelTitle: `e2e-${uuidv4()}`,
       ...config,
       isEdit: false,
-      isExplore: false,
     })
   );

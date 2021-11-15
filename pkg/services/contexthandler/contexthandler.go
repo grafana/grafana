@@ -105,10 +105,6 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 		}
 	}
 
-	if targetOrgId := reqContext.QueryInt64("targetOrgId"); targetOrgId != 0 {
-		orgID = targetOrgId
-	}
-
 	// the order in which these are tested are important
 	// look for api key in Authorization header first
 	// then init session and look for userId in session

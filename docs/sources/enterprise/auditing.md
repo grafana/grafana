@@ -62,62 +62,198 @@ The `additionalData` field can contain the following information:
 
 ### Recorded actions
 
-The audit logs include records about the following categories of actions:
+The audit logs include records about the following categories of actions. Each action is
+distinguished by the `action` and `resources[...].type` fields in the JSON record.
 
-**Sessions**
+For example, creating an API key produces an audit log like this:
 
-- Log in.
-- Log out (manual log out, token expired/revoked, [SAML Single Logout]({{< relref "saml.md#single-logout" >}})).
-- Revoke a user authentication token.
-- Create or delete an API key.
+```json {hl_lines=4}
+{
+  "action": "create",
+  "resources": [
+    {
+      "id": 1,
+      "type": "api-key"
+    }
+  ],
+  "timestamp": "2021-11-12T22:12:36.144795692Z",
+  "user": {
+    "userId": 1,
+    "orgId": 1,
+    "orgRole": "Admin",
+    "username": "admin",
+    "isAnonymous": false,
+    "authTokenId": 1
+  },
+  "request": {
+    "body": "{\"name\":\"example\",\"role\":\"Viewer\",\"secondsToLive\":null}"
+  },
+  "result": {
+    "statusType": "success",
+    "statusCode": 200,
+    "responseBody": "{\"id\":1,\"name\":\"example\"}"
+  },
+  "resources": [
+    {
+      "id": 1,
+      "type": "api-key"
+    }
+  ],
+  "requestUri": "/api/auth/keys",
+  "ipAddress": "127.0.0.1:54652",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+  "grafanaVersion": "8.3.0-pre"
+}
+```
 
-**User management**
+Some actions can only be distinguished by their `requestUri` fields. For those actions, the relevant
+pattern of the `requestUri` field is given.
 
-- Create, update, or delete a user.
-- Enable or disable a user.
-- Manage user role and permissions.
-- LDAP sync or information access.
+#### Sessions
 
-**Team and organization management**
+| Action                           | Distinguishing fields                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------ |
+| Log in                           | `{"action": "login-AUTH-MODULE"}` \*                                                       |
+| Log out \*\*                     | `{"action": "logout"}`                                                                     |
+| Force logout for user            | `{"action": "logout-user"}`                                                                |
+| Remove user authentication token | `{"action": "revoke-auth-token", "resources": [{"type": "auth-token"}, {"type": "user"}]}` |
+| Create API key                   | `{"action": "create", "resources": [{"type": "api-key"}]}`                                 |
+| Delete API key                   | `{"action": "delete", "resources": [{"type": "api-key"}]}`                                 |
 
-- Create, update, or delete a team or organization.
-- Add or remove a member of a team or organization.
-- Manage organization members roles.
-- Manage team members permissions.
-- Invite an external member to an organization.
-- Revoke a pending invitation to an organization.
-- Add or remove an external group to sync with a team.
+\* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
+`ldap`, etc. \
+\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "saml.md#single-logout" >}}).
 
-**Folder and dashboard management**
+#### User management
 
-- Create, update, or delete a folder.
-- Manage folder permissions.
-- Create, import, update, or delete a dashboard.
-- Restore an old dashboard version.
-- Manage dashboard permissions.
+| Action                    | Distinguishing fields                                               |
+| ------------------------- | ------------------------------------------------------------------- |
+| Create user               | `{"action": "create", "resources": [{"type": "user"}]}`             |
+| Update user               | `{"action": "update", "resources": [{"type": "user"}]}`             |
+| Delete user               | `{"action": "delete", "resources": [{"type": "user"}]}`             |
+| Disable user              | `{"action": "disable", "resources": [{"type": "user"}]}`            |
+| Enable user               | `{"action": "enable", "resources": [{"type": "user"}]}`             |
+| Update password           | `{"action": "update-password", "resources": [{"type": "user"}]}`    |
+| Send password reset email | `{"action": "send-reset-email"}`                                    |
+| Reset password            | `{"action": "reset-password"}`                                      |
+| Update permissions        | `{"action": "update-permissions", "resources": [{"type": "user"}]}` |
+| Send signup email         | `{"action": "signup-email"}`                                        |
+| Click signup link         | `{"action": "signup"}`                                              |
+| Reload LDAP configuration | `{"action": "ldap-reload"}`                                         |
+| Get user in LDAP          | `{"action": "ldap-search"}`                                         |
+| Sync user with LDAP       | `{"action": "ldap-sync", "resources": [{"type": "user"}]`           |
 
-**Data sources management**
+#### Team and organization management
 
-- Create, update, or delete a data source.
-- Manage data source permissions.
+| Action                               | Distinguishing fields                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------- |
+| Add team                             | `{"action": "create", "requestUri": "/api/teams"}`                           |
+| Update team                          | `{"action": "update", "requestUri": "/api/teams/TEAM-ID"}`\*                 |
+| Delete team                          | `{"action": "delete", "requestUri": "/api/teams/TEAM-ID"}`\*                 |
+| Add external group for team          | `{"action": "create", "requestUri": "/api/teams/TEAM-ID/groups"}`\*          |
+| Remove external group for team       | `{"action": "delete", "requestUri": "/api/teams/TEAM-ID/groups/GROUP-ID"}`\* |
+| Add user to team                     | `{"action": "create", "resources": [{"type": "user"}, {"type": "team"}]}`    |
+| Update team member permissions       | `{"action": "update", "resources": [{"type": "user"}, {"type": "team"}]}`    |
+| Remove user from team                | `{"action": "delete", "resources": [{"type": "user"}, {"type": "team"}]}`    |
+| Create organization                  | `{"action": "create", "resources": [{"type": "org"}]}`                       |
+| Update organization                  | `{"action": "update", "resources": [{"type": "org"}]}`                       |
+| Delete organization                  | `{"action": "delete", "resources": [{"type": "org"}]}`                       |
+| Add user to organization             | `{"action": "create", "resources": [{"type": "org"}, {"type": "user"}]}`     |
+| Change user role in organization     | `{"action": "update", "resources": [{"type": "user"}, {"type": "org"}]}`     |
+| Remove user from organization        | `{"action": "delete", "resources": [{"type": "user"}, {"type": "org"}]}`     |
+| Invite external user to organization | `{"action": "org-invite", "resources": [{"type": "org"}, {"type": "user"}]}` |
+| Revoke invitation                    | `{"action": "revoke-org-invite", "resources": [{"type": "org"}]}`            |
 
-**Alerts and notification channels management**
+\* Where `TEAM-ID` is the ID of the affected team, and `GROUP-ID` (if present) is the ID of the
+external group.
 
-- Create, update, or delete a notification channel.
-- Test an alert or a notification channel.
-- Pause an alert.
+#### Folder and dashboard management
 
-**Reporting**
+| Action                        | Distinguishing fields                                                    |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| Create folder                 | `{"action": "create", "resources": [{"type": "folder"}]}`                |
+| Update folder                 | `{"action": "update", "resources": [{"type": "folder"}]}`                |
+| Update folder permissions     | `{"action": "manage-permissions", "resources": [{"type": "folder"}]}`    |
+| Delete folder                 | `{"action": "delete", "resources": [{"type": "folder"}]}`                |
+| Create/update dashboard       | `{"action": "create-update", "resources": [{"type": "dashboard"}]}`      |
+| Import dashboard              | `{"action": "create", "resources": [{"type": "dashboard"}]}`             |
+| Update dashboard permissions  | `{"action": "manage-permissions", "resources": [{"type": "dashboard"}]}` |
+| Restore old dashboard version | `{"action": "restore", "resources": [{"type": "dashboard"}]}`            |
+| Delete dashboard              | `{"action": "delete", "resources": [{"type": "dashboard"}]}`             |
 
-- Create, update, or delete a report.
-- Update reporting settings.
-- Send reporting email.
+#### Data sources management
 
-**Annotations, playlists and snapshots management**
+| Action                                             | Distinguishing fields                                                                     |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Create datasource                                  | `{"action": "create", "resources": [{"type": "datasource"}]}`                             |
+| Update datasource                                  | `{"action": "update", "resources": [{"type": "datasource"}]}`                             |
+| Delete datasource                                  | `{"action": "delete", "resources": [{"type": "datasource"}]}`                             |
+| Enable permissions for datasource                  | `{"action": "enable-permissions", "resources": [{"type": "datasource"}]}`                 |
+| Disable permissions for datasource                 | `{"action": "disable-permissions", "resources": [{"type": "datasource"}]}`                |
+| Grant datasource permission to role, team, or user | `{"action": "create", "resources": [{"type": "datasource"}, {"type": "dspermission"}]}`\* |
+| Remove datasource permission                       | `{"action": "delete", "resources": [{"type": "datasource"}, {"type": "dspermission"}]}`   |
 
-- Create, update, or delete an annotation.
-- Create, update, or delete a playlist.
-- Create or delete a snapshot.
+\* `resources` may also contain a third item with `"type":` set to `"user"` or `"team"`.
+
+#### Alerts and notification channels management
+
+| Action                            | Distinguishing fields                                                 |
+| --------------------------------- | --------------------------------------------------------------------- |
+| Test alert rule                   | `{"action": "test", "resources": [{"type": "panel"}]}`                |
+| Pause alert                       | `{"action": "pause", "resources": [{"type": "alert"}]}`               |
+| Pause all alerts                  | `{"action": "pause-all"}`                                             |
+| Test alert notification channel   | `{"action": "test", "resources": [{"type": "alert-notification"}]}`   |
+| Create alert notification channel | `{"action": "create", "resources": [{"type": "alert-notification"}]}` |
+| Update alert notification channel | `{"action": "update", "resources": [{"type": "alert-notification"}]}` |
+| Delete alert notification channel | `{"action": "delete", "resources": [{"type": "alert-notification"}]}` |
+
+#### Reporting
+
+| Action                    | Distinguishing fields                                                            |
+| ------------------------- | -------------------------------------------------------------------------------- |
+| Create report             | `{"action": "create", "resources": [{"type": "report"}, {"type": "dashboard"}]}` |
+| Update report             | `{"action": "update", "resources": [{"type": "report"}, {"type": "dashboard"}]}` |
+| Delete report             | `{"action": "delete", "resources": [{"type": "report"}]}`                        |
+| Send report by email      | `{"action": "email", "resources": [{"type": "report"}]}`                         |
+| Update reporting settings | `{"action": "change-settings"}`                                                  |
+
+#### Annotations, playlists and snapshots management
+
+| Action                            | Distinguishing fields                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------ |
+| Create annotation                 | `{"action": "create", "resources": [{"type": "annotation"}]}`                        |
+| Create Graphite annotation        | `{"action": "create-graphite", "resources": [{"type": "annotation"}]}`               |
+| Update annotation                 | `{"action": "update", "resources": [{"type": "annotation"}]}`                        |
+| Patch annotation                  | `{"action": "patch", "resources": [{"type": "annotation"}]}`                         |
+| Delete annotation                 | `{"action": "delete", "resources": [{"type": "annotation"}]}`                        |
+| Delete all annotations from panel | `{"action": "mass-delete", "resources": [{"type": "dashboard"}, {"type": "panel"}]}` |
+| Create playlist                   | `{"action": "create", "resources": [{"type": "playlist"}]}`                          |
+| Update playlist                   | `{"action": "update", "resources": [{"type": "playlist"}]}`                          |
+| Delete playlist                   | `{"action": "delete", "resources": [{"type": "playlist"}]}`                          |
+| Create a snapshot                 | `{"action": "create", "resources": [{"type": "dashboard"}, {"type": "snapshot"}]}`   |
+| Delete a snapshot                 | `{"action": "delete", "resources": [{"type": "snapshot"}]}`                          |
+
+#### Provisioning
+
+"resources": [
+{
+"id": 1,
+"type": "api-key"
+}
+],
+
+| Action                           | Distinguishing fields                      |
+| -------------------------------- | ------------------------------------------ |
+| Reload provisioned dashboards    | `{"action": "provisioning-dashboards"}`    |
+| Reload provisioned datasources   | `{"action": "provisioning-datasources"}`   |
+| Reload provisioned plugins       | `{"action": "provisioning-plugins"}`       |
+| Reload provisioned notifications | `{"action": "provisioning-notifications"}` |
+
+#### Miscellaneous
+
+| Action              | Distinguishing fields                                        |
+| ------------------- | ------------------------------------------------------------ |
+| Set licensing token | `{"action": "create", "requestUri": "/api/licensing/token"}` |
 
 ## Configuration
 
