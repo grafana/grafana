@@ -1,4 +1,4 @@
-import { Field, DataFrame, FieldType, Labels, QueryResultMeta, DataQueryResponseData, DataFrameDTO } from '../types';
+import { DataFrame, DataFrameDTO, Field, FieldType, Labels, QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
 import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
@@ -43,43 +43,6 @@ enum PushMode {
   labels,
   // long
 }
-
-// TODO
-// START - move somewhere else
-
-export enum StreamingResponseDataType {
-  NewValuesSameSchema = 'NewValuesSameSchema',
-  FullFrame = 'FullFrame',
-}
-
-const AllStreamingResponseDataTypes = Object.values(StreamingResponseDataType);
-
-export type StreamingResponseDataTypeToData = {
-  [StreamingResponseDataType.NewValuesSameSchema]: {
-    values: unknown[][];
-  };
-  [StreamingResponseDataType.FullFrame]: {
-    frame: SerializedStreamingDataFrame;
-  };
-};
-
-export type StreamingResponseData<T = StreamingResponseDataType> = T extends StreamingResponseDataType
-  ? {
-      type: T;
-    } & StreamingResponseDataTypeToData[T]
-  : never;
-
-export const isStreamingResponseData = <T extends StreamingResponseDataType>(
-  responseData: DataQueryResponseData,
-  type: T
-): responseData is StreamingResponseData<T> => 'type' in responseData && responseData.type === type;
-
-export const isAnyStreamingResponseData = (
-  responseData: DataQueryResponseData
-): responseData is StreamingResponseData =>
-  'type' in responseData && AllStreamingResponseDataTypes.includes(responseData.type);
-
-// move -- END
 
 export type SerializedStreamingDataFrame = DataFrameDTO & {
   refId?: string;

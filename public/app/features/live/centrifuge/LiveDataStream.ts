@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { map, Observable, ReplaySubject, Subject, Subscriber, Subscription } from 'rxjs';
 import { DataStreamSubscriptionKey } from './service';
-import { StreamingResponseDataType } from '@grafana/data/src/dataframe/StreamingDataFrame';
+import { StreamingResponseDataType } from '@grafana/data/src/types/streamingDatasource';
 
 const bufferIfNot = (canEmitObservable: Observable<boolean>) => <T>(source: Observable<T>): Observable<T[]> => {
   return new Observable((subscriber: Subscriber<T[]>) => {

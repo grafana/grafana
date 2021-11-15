@@ -14,7 +14,7 @@ import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSuppo
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 import { DataQuery } from './query';
 import { DataSourceRef } from '.';
-import { StreamingResponseData } from '../dataframe/StreamingDataFrame';
+import { StreamingResponseData } from './streamingDatasource';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;

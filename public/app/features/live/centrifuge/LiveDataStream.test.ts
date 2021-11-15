@@ -14,12 +14,12 @@ import {
 } from '@grafana/data';
 import { Observable, Subject, Subscription, Unsubscribable } from 'rxjs';
 import { DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';
+import { mapValues } from 'lodash';
 import {
   isStreamingResponseData,
   StreamingResponseData,
   StreamingResponseDataType,
-} from '@grafana/data/src/dataframe/StreamingDataFrame';
-import { mapValues } from 'lodash';
+} from '@grafana/data/src/types/streamingDatasource';
 
 type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];

@@ -31,7 +31,7 @@ import {
   isAnyStreamingResponseData,
   isStreamingResponseData,
   StreamingResponseDataType,
-} from '@grafana/data/src/dataframe/StreamingDataFrame';
+} from '@grafana/data/src/types/streamingDatasource';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
