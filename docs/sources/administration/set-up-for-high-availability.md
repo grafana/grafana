@@ -17,7 +17,7 @@ and other persistent data. So the default embedded SQLite database will not work
 ## Configure multiple servers to use the same database
 
 First, you need to set up MySQL or Postgres on another server and configure Grafana to use that database.
-You can find the configuration for doing that in the [[database]]({{< relref "../administration/configuration.md#database" >}}) section in the Grafana config.
+You can find the configuration for doing that in the [[database]]({{<relref "../administration/configuration.md#database" >}}) section in the Grafana config.
 Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on the database you're using.
 
 ## Alerting
@@ -26,7 +26,7 @@ Grafana will now persist all long term data in the database. How to configure th
 
 Grafana 8 Alerts provides a new highly-available model under the hood. It preserves the previous semantics by executing all alerts on every server and notifications are sent only once per alert. There is no support for load distribution between servers at this time.
 
-For configuration, [follow the guide]({{ relref "../alerting/unified-alerting/high-availability.md" >}}).
+For configuration, [follow the guide]({{< relref "../alerting/unified-alerting/high-availability.md" >}}).
 
 **Legacy dashboard alerts**
 
