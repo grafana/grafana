@@ -22,10 +22,10 @@ const UnifiedAlertingPromotion: FC<{}> = () => {
       onRemove={() => setShowUnifiedAlertingPromotion(false)}
     >
       <p>
-        You are using the legacy Grafana alerts feature.
+        You are using the legacy Grafana alerting.
         <br />
-        While this feature will not be deprecated any time soon and continue to work as intend, we invite you to give
-        the new Grafana 8 alerting a try.
+       While we have no plans of deprecating it any time soon, we invite you to give
+		 the improved Grafana 8 alerting a try.
       </p>
       <p>
         See{' '}
