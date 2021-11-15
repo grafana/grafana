@@ -4,6 +4,7 @@ import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
+  ExternalAlertmanagersResponse,
   Receiver,
   Silence,
   SilenceCreatePayload,
@@ -29,6 +30,9 @@ import {
   fetchStatus,
   deleteAlertManagerConfig,
   testReceivers,
+  addAlertManagers,
+  fetchExternalAlertmanagers,
+  fetchExternalAlertmanagerConfig,
 } from '../api/alertmanager';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
@@ -105,6 +109,20 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
         });
       })()
     )
+);
+
+export const fetchExternalAlertmanagersAction = createAsyncThunk(
+  'unifiedAlerting/fetchExternalAlertmanagers',
+  (): Promise<ExternalAlertmanagersResponse> => {
+    return withSerializedError(fetchExternalAlertmanagers());
+  }
+);
+
+export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
+  'unifiedAlerting/fetchExternAlertmanagersConfig',
+  (): Promise<{ alertmanagers: string[] }> => {
+    return withSerializedError(fetchExternalAlertmanagerConfig());
+  }
 );
 
 export const fetchRulerRulesAction = createAsyncThunk(
@@ -728,6 +746,24 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
       {
         errorMessage: 'Failed to update namespace / group',
         successMessage: 'Update successful',
+      }
+    );
+  }
+);
+
+export const addExternalAlertmanagersAction = createAsyncThunk(
+  'unifiedAlerting/addExternalAlertmanagers',
+  async (alertManagerUrls: string[], thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          await addAlertManagers(alertManagerUrls);
+          thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
+        })()
+      ),
+      {
+        errorMessage: 'Failed adding alertmanagers',
+        successMessage: 'Alertmanagers updated',
       }
     );
   }
