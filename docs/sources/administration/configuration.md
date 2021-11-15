@@ -1594,6 +1594,10 @@ Set to `true` if you want to enable external management of plugins. Default is `
 
 Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
+### plugin_catalog_hidden_plugins
+
+Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
+
 <hr>
 
 ## [live]

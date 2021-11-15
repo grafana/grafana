@@ -324,13 +324,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
-    // TODO[Router]
-    // {
-    //   path: '/plugins/:pluginId/page/:slug',
-    //   templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
-    //   controller: 'AppPageCtrl',
-    //   controllerAs: 'ctrl',
-    // },
     {
       path: '/playlists',
       component: SafeDynamicImport(

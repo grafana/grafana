@@ -1,16 +1,15 @@
 import { lastValueFrom, of } from 'rxjs';
-import { setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv } from '@grafana/runtime';
 import { ArrayVector, DataFrame, dataFrameToJSON, dateTime, Field, MutableDataFrame } from '@grafana/data';
 
-import { CloudWatchDatasource } from './datasource';
 import { toArray } from 'rxjs/operators';
+import { setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
 import { CloudWatchLogsQueryStatus } from './types';
-import { TemplateSrvMock } from '../../../features/templating/template_srv.mock';
 
 describe('datasource', () => {
   describe('query', () => {
     it('should return error if log query and log groups is not specified', async () => {
-      const { datasource } = setup();
+      const { datasource } = setupMockedDataSource();
       const observable = datasource.query({ targets: [{ queryMode: 'Logs' as 'Logs' }] } as any);
 
       await expect(observable).toEmitValuesWith((received) => {
@@ -20,7 +19,7 @@ describe('datasource', () => {
     });
 
     it('should return empty response if queries are hidden', async () => {
-      const { datasource } = setup();
+      const { datasource } = setupMockedDataSource();
       const observable = datasource.query({ targets: [{ queryMode: 'Logs' as 'Logs', hide: true }] } as any);
 
       await expect(observable).toEmitValuesWith((received) => {
@@ -30,7 +29,7 @@ describe('datasource', () => {
     });
 
     it('should interpolate variables in the query', async () => {
-      const { datasource, fetchMock } = setup();
+      const { datasource, fetchMock } = setupMockedDataSource();
       datasource.query({
         targets: [
           {
@@ -86,7 +85,7 @@ describe('datasource', () => {
 
   describe('performTimeSeriesQuery', () => {
     it('should return the same length of data as result', async () => {
-      const { datasource } = setup({
+      const { datasource } = setupMockedDataSource({
         data: {
           results: {
             a: { refId: 'a', series: [{ name: 'cpu', points: [1, 1] }], meta: {} },
@@ -114,7 +113,7 @@ describe('datasource', () => {
 
   describe('describeLogGroup', () => {
     it('replaces region correctly in the query', async () => {
-      const { datasource, fetchMock } = setup();
+      const { datasource, fetchMock } = setupMockedDataSource();
       await datasource.describeLogGroups({ region: 'default' });
       expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe('us-west-1');
 
@@ -124,37 +123,12 @@ describe('datasource', () => {
   });
 });
 
-function setup({ data = [] }: { data?: any } = {}) {
-  const datasource = new CloudWatchDatasource(
-    { jsonData: { defaultRegion: 'us-west-1', tracingDatasourceUid: 'xray' } } as any,
-    new TemplateSrvMock({ region: 'templatedRegion', fields: 'templatedField', group: 'templatedGroup' }) as any,
-    {
-      timeRange() {
-        const time = dateTime('2021-01-01T01:00:00Z');
-        const range = {
-          from: time.subtract(6, 'hour'),
-          to: time,
-        };
-
-        return {
-          ...range,
-          raw: range,
-        };
-      },
-    } as any
-  );
-  const fetchMock = jest.fn().mockReturnValue(of({ data }));
-  setBackendSrv({ fetch: fetchMock } as any);
-
-  return { datasource, fetchMock };
-}
-
 function setupForLogs() {
   function envelope(frame: DataFrame) {
     return { data: { results: { a: { refId: 'a', frames: [dataFrameToJSON(frame)] } } } };
   }
 
-  const { datasource, fetchMock } = setup();
+  const { datasource, fetchMock } = setupMockedDataSource();
 
   const startQueryFrame = new MutableDataFrame({ fields: [{ name: 'queryId', values: ['queryid'] }] });
   fetchMock.mockReturnValueOnce(of(envelope(startQueryFrame)));

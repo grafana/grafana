@@ -412,7 +412,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 							"id": "2",
 							"type": "date_histogram",
 							"field": "@timestamp",
-							"settings": { 
+							"settings": {
 								"timeZone": "utc"
 							}
 						}
@@ -435,7 +435,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 							"id": "2",
 							"type": "date_histogram",
 							"field": "@timestamp",
-							"settings": { 
+							"settings": {
 								"timeZone": "America/Los_Angeles"
 							}
 						}
@@ -1181,7 +1181,6 @@ func newDataQuery(body string) (backend.QueryDataRequest, error) {
 	}, nil
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
 func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval time.Duration) (
 	*backend.QueryDataResponse, error) {
 	timeRange := backend.TimeRange{

@@ -146,9 +146,6 @@ export const Pages = {
       table: 'Explore Table',
       scrollBar: () => '.scrollbar-view',
     },
-    Toolbar: {
-      navBar: () => '.explore-toolbar',
-    },
   },
   SoloPanel: {
     url: (page: string) => `/d-solo/${page}`,

@@ -5,7 +5,7 @@ import Page from 'app/core/components/Page/Page';
 import { createNewFolder } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
-import validationSrv from '../../manage-dashboards/services/ValidationSrv';
+import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'manage-dashboards'),

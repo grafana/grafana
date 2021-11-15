@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -24,7 +25,7 @@ func TestDashboardImport(t *testing.T) {
 		mock := &dashboards.FakeDashboardService{}
 		dashboards.MockDashboardService(mock)
 
-		info, dash, err := pm.ImportDashboard("test-app", "dashboards/connections.json", 1, 0, nil, false,
+		info, dash, err := pm.ImportDashboard(context.Background(), "test-app", "dashboards/connections.json", 1, 0, nil, false,
 			[]plugins.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "graphite"},
 			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN})

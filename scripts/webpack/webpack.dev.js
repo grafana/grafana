@@ -59,6 +59,15 @@ module.exports = (env = {}) =>
       splitChunks: false,
     },
 
+    // enable persistent cache for faster cold starts
+    cache: {
+      type: 'filesystem',
+      name: 'grafana-default-development',
+      buildDependencies: {
+        config: [__filename],
+      },
+    },
+
     plugins: [
       parseInt(env.noTsCheck, 10)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
