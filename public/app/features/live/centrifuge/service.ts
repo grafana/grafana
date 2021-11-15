@@ -175,7 +175,7 @@ export class CentrifugeService implements CentrifugeSrv {
   private createSubscriptionKey = (options: LiveDataStreamOptions): DataStreamSubscriptionKey =>
     options.key ?? `xstr/${streamCounter++}`;
 
-  private getLiveDataStream = (options: LiveDataStreamOptions, config: LiveChannelConfig): LiveDataStream => {
+  private getLiveDataStream = (options: LiveDataStreamOptions): LiveDataStream => {
     const channelId = toLiveChannelId(options.addr);
     const existingStream = this.liveDataStreamByChannelId[channelId];
 
@@ -183,7 +183,7 @@ export class CentrifugeService implements CentrifugeSrv {
       return existingStream;
     }
 
-    const channel = this.getChannel(options.addr, config);
+    const channel = this.getChannel(options.addr);
     this.liveDataStreamByChannelId[channelId] = new LiveDataStream({
       channelId,
       onShutdown: () => {
@@ -199,10 +199,10 @@ export class CentrifugeService implements CentrifugeSrv {
   /**
    * Connect to a channel and return results as DataFrames
    */
-  getDataStream(options: LiveDataStreamOptions, config: LiveChannelConfig): Observable<DataQueryResponse> {
+  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse> {
     const subscriptionKey = this.createSubscriptionKey(options);
 
-    const stream = this.getLiveDataStream(options, config);
+    const stream = this.getLiveDataStream(options);
     return stream.get(options, subscriptionKey);
   }
 
