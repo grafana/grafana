@@ -256,6 +256,7 @@ export function getLatestCompatibleVersion(versions: Version[] | undefined): Ver
   const [latest] = versions.filter((v) => Boolean(v.isCompatible));
 
   return latest;
+}
 
 export const isLocalPluginVisible = (p: LocalPlugin) => isPluginVisible(p.id);
 
