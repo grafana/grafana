@@ -414,6 +414,8 @@
   "style": "dark",
   "tags": [
     "gdev",
+    "panel-tests",
+    "graph-ng",
     "demo"
   ],
   "templating": {

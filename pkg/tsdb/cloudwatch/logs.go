@@ -9,7 +9,6 @@ import (
 
 func ProvideLogsService() *LogsService {
 	return &LogsService{
-		// nolint:staticcheck // plugins.DataQueryResponse deprecated
 		responseChannels: make(map[string]chan *backend.QueryDataResponse),
 		queues:           make(map[string](chan bool)),
 	}
@@ -17,14 +16,12 @@ func ProvideLogsService() *LogsService {
 
 // LogsService provides methods for querying CloudWatch Logs.
 type LogsService struct {
-	channelMu sync.Mutex
-	// nolint:staticcheck // plugins.DataQueryResult deprecated
+	channelMu        sync.Mutex
 	responseChannels map[string]chan *backend.QueryDataResponse
 	queues           map[string](chan bool)
 	queueLock        sync.Mutex
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (s *LogsService) AddResponseChannel(name string, channel chan *backend.QueryDataResponse) error {
 	s.channelMu.Lock()
 	defer s.channelMu.Unlock()
@@ -37,7 +34,6 @@ func (s *LogsService) AddResponseChannel(name string, channel chan *backend.Quer
 	return nil
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (s *LogsService) GetResponseChannel(name string) (chan *backend.QueryDataResponse, error) {
 	s.channelMu.Lock()
 	defer s.channelMu.Unlock()

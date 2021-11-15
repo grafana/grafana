@@ -12,6 +12,7 @@ import { ComparisonOperation, FeatureStyleConfig } from '../../types';
 import { Stroke, Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
+import { circleMarker } from '../../style/markers';
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -77,6 +78,11 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     const vectorLayer = new VectorLayer({
       source,
       style: (feature: FeatureLike) => {
+        const type = feature.getGeometry()?.getType();
+        if (type === 'Point') {
+          return circleMarker({color:DEFAULT_STYLE_RULE.fillColor});
+        }
+
         if (feature && config?.styles?.length) {
           for (const style of config.styles) {
             //check if there is no style rule or if the rule matches feature property
@@ -113,6 +119,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
               options: [
                 { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
                 { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
+                { label: 'public/gazetteer/airports.geojson', value: 'public/gazetteer/airports.geojson' },
               ],
               allowCustomValue: true,
             },

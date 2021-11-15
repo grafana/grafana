@@ -73,14 +73,28 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	}
 	cmd.OrgId = c.OrgId
 	var err error
-	var serviceAccount *models.User = &models.User{Id: -1}
 	if hs.Cfg.FeatureToggles["service-accounts"] {
+		//Every new API key must have an associated service account
 		if cmd.CreateNewServiceAccount {
-			serviceAccount, err = hs.AccessControl.CloneUserToServiceAccount(c.Req.Context(), c.SignedInUser)
+			//Create a new service account for the new API key
+			serviceAccount, err := hs.SQLStore.CloneUserToServiceAccount(c.Req.Context(), c.SignedInUser)
 			if err != nil {
 				return response.Error(500, "Unable to clone user to service account", err)
 			}
 			cmd.ServiceAccountId = serviceAccount.Id
+		} else {
+			//Link the new API key to an existing service account
+
+			//Check if user and service account are in the same org
+			query := models.GetUserByIdQuery{Id: cmd.ServiceAccountId}
+			err = bus.DispatchCtx(c.Req.Context(), &query)
+			if err != nil {
+				return response.Error(500, "Unable to clone user to service account", err)
+			}
+			serviceAccountDetails := query.Result
+			if serviceAccountDetails.OrgId != c.OrgId || serviceAccountDetails.OrgId != cmd.OrgId {
+				return response.Error(403, "Target service is not in the same organisation as requesting user or api key", err)
+			}
 		}
 	}
 
@@ -108,4 +122,16 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	}
 
 	return response.JSON(200, result)
+}
+
+// AddAPIKey adds an additional API key to a service account
+func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext, cmd models.AddApiKeyCommand) response.Response {
+	if !hs.Cfg.FeatureToggles["service-accounts"] {
+		return response.Error(500, "Requires services-accounts feature", errors.New("feature missing"))
+	}
+	if cmd.CreateNewServiceAccount {
+		return response.Error(500, "Can't create service account while adding additional API key", nil)
+	}
+
+	return hs.AddAPIKey(c, cmd)
 }

@@ -2,6 +2,8 @@ import './graph';
 import './series_overrides_ctrl';
 import './thresholds_form';
 import './time_regions_form';
+import './annotation_tooltip';
+import './event_editor';
 
 import template from './template';
 import { defaults, find, without } from 'lodash';
