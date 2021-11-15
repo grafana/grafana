@@ -10,6 +10,7 @@ import {
   LicenseInfo,
   MapLayerOptions,
   PanelPluginMeta,
+  PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
@@ -59,17 +60,15 @@ export class GrafanaBootConfig implements GrafanaConfig {
   liveEnabled = true;
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: string[] = [];
+  pluginsToPreload: PreloadPlugin[] = [];
   featureToggles: FeatureToggles = {
     accesscontrol: false,
     trimDefaults: false,
     tempoServiceGraph: false,
     tempoSearch: false,
     recordedQueries: false,
-    prometheusMonaco: false,
     newNavigation: false,
     fullRangeLogsVolume: false,
-    autoLoadFullRangeLogsVolume: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

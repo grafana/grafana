@@ -42,6 +42,14 @@ Use these options to refine your visualization.
 - **Horizontal** - Will make the X axis the category axis.
 - **Vertical** - Will make the Y axis the category axis.
 
+### Rotate bar labels
+
+When the graph is in vertical orientation you can use this setting to rotate the labels under the bars. Useful if the labels are long and overlap.
+
+### Bar label max length
+
+Sets the max length of the bar label. Labels longer than the max length will be truncated and `...` will be appended to the end.
+
 ### Show values
 
 This controls whether values are shown on top or to the left of bars.

@@ -258,6 +258,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
 			keysRoute.Get("/", routing.Wrap(GetAPIKeys))
 			keysRoute.Post("/", quota("api_key"), bind(models.AddApiKeyCommand{}), routing.Wrap(hs.AddAPIKey))
+			keysRoute.Post("/additional", quota("api_key"), bind(models.AddApiKeyCommand{}), routing.Wrap(hs.AdditionalAPIKey))
 			keysRoute.Delete("/:id", routing.Wrap(DeleteAPIKey))
 		}, reqOrgAdmin)
 
@@ -441,10 +442,10 @@ func (hs *HTTPServer) registerRoutes() {
 				liveRoute.Post("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPostHTTP), reqOrgAdmin)
 				liveRoute.Put("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPutHTTP), reqOrgAdmin)
 				liveRoute.Delete("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesDeleteHTTP), reqOrgAdmin)
-				liveRoute.Get("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsListHTTP), reqOrgAdmin)
-				liveRoute.Post("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsPostHTTP), reqOrgAdmin)
-				liveRoute.Put("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsPutHTTP), reqOrgAdmin)
-				liveRoute.Delete("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsDeleteHTTP), reqOrgAdmin)
+				liveRoute.Get("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsListHTTP), reqOrgAdmin)
+				liveRoute.Post("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsPostHTTP), reqOrgAdmin)
+				liveRoute.Put("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsPutHTTP), reqOrgAdmin)
+				liveRoute.Delete("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsDeleteHTTP), reqOrgAdmin)
 			}
 		})
 
@@ -491,7 +492,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)
 
 	// grafana.net proxy
-	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
+	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
 	// Gravatar service.
 	avatarCacheServer := avatar.NewCacheServer(hs.Cfg)

@@ -17,6 +17,8 @@ import {
   deleteAlertManagerConfigAction,
   testReceiversAction,
   updateLotexNamespaceAndGroupAction,
+  fetchExternalAlertmanagersAction,
+  fetchExternalAlertmanagersConfigAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -54,6 +56,10 @@ export const reducer = combineReducers({
   testReceivers: createAsyncSlice('testReceivers', testReceiversAction).reducer,
   updateLotexNamespaceAndGroup: createAsyncSlice('updateLotexNamespaceAndGroup', updateLotexNamespaceAndGroupAction)
     .reducer,
+  externalAlertmanagers: combineReducers({
+    alertmanagerConfig: createAsyncSlice('alertmanagerConfig', fetchExternalAlertmanagersConfigAction).reducer,
+    discoveredAlertmanagers: createAsyncSlice('discoveredAlertmanagers', fetchExternalAlertmanagersAction).reducer,
+  }),
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;

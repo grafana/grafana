@@ -8,15 +8,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type FakeCondition struct{}
 
-func (f *FakeCondition) Eval(context *EvalContext, reqHandler plugins.DataRequestHandler) (*ConditionResult, error) {
+func (f *FakeCondition) Eval(context *EvalContext, reqHandler legacydata.RequestHandler) (*ConditionResult, error) {
 	return &ConditionResult{}, nil
 }
 
@@ -130,7 +130,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		alertRule, err := NewRuleFromDBAlert(alert, false)
+		alertRule, err := NewRuleFromDBAlert(context.Background(), alert, false)
 		require.Nil(t, err)
 
 		require.Len(t, alertRule.Conditions, 1)
@@ -169,7 +169,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		alertRule, err := NewRuleFromDBAlert(alert, false)
+		alertRule, err := NewRuleFromDBAlert(context.Background(), alert, false)
 		require.Nil(t, err)
 		require.NotContains(t, alertRule.Notifications, "999")
 		require.Contains(t, alertRule.Notifications, "notifier2")
@@ -200,7 +200,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		alertRule, err := NewRuleFromDBAlert(alert, false)
+		alertRule, err := NewRuleFromDBAlert(context.Background(), alert, false)
 		require.Nil(t, err)
 		require.EqualValues(t, alertRule.Frequency, 60)
 	})
@@ -238,7 +238,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		_, err := NewRuleFromDBAlert(alert, false)
+		_, err := NewRuleFromDBAlert(context.Background(), alert, false)
 		require.NotNil(t, err)
 		require.EqualValues(t, err.Error(), "alert validation error: Neither id nor uid is specified in 'notifications' block, type assertion to string failed AlertId: 1 PanelId: 1 DashboardId: 1")
 	})

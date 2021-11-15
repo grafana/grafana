@@ -2,8 +2,7 @@ import { DataFrame } from '@grafana/data';
 import { DimensionSupplier } from 'app/features/dimensions';
 import { Feature } from 'ol';
 import { Point } from 'ol/geom';
-import tinycolor from 'tinycolor2';
-import { StyleMaker } from '../types';
+import { StyleMaker } from '../style/types';
 import { LocationInfo } from './location';
 
 export interface FeaturesStylesBuilderConfig {
@@ -20,6 +19,7 @@ export const getFeatures = (
   config: FeaturesStylesBuilderConfig
 ): Array<Feature<Point>> | undefined => {
   const features: Array<Feature<Point>> = [];
+  const opacity = config.opacity;
 
   // Map each data value into new points
   for (let i = 0; i < frame.length; i++) {
@@ -30,10 +30,7 @@ export const getFeatures = (
     const size = config.sizeDim.get(i);
 
     // Get the text for the feature based on text dimension
-    const label = config?.textDim ? config?.textDim.get(i) : undefined;
-
-    // Set the opacity determined from user configuration
-    const fillColor = tinycolor(color).setAlpha(config?.opacity).toRgbString();
+    const text = config?.textDim ? config?.textDim.get(i) : undefined;
 
     // Create a new Feature for each point returned from dataFrameToPoints
     const dot = new Feature(info.points[i]);
@@ -42,11 +39,7 @@ export const getFeatures = (
       rowIndex: i,
     });
 
-    if (config?.textDim) {
-      dot.setStyle(config.styleMaker({ color, fillColor, size, text: label }));
-    } else {
-      dot.setStyle(config.styleMaker({ color, fillColor, size }));
-    }
+    dot.setStyle(config.styleMaker({ color, size, text, opacity }));
     features.push(dot);
   }
 

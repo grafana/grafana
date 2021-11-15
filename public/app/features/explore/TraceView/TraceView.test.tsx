@@ -117,6 +117,32 @@ describe('TraceView', () => {
     }
     expect(ticks()).toBe('0μs274.5μs549μs823.5μs1.1ms');
   });
+
+  it('correctly shows processes for each span', () => {
+    renderTraceView();
+    let table: HTMLElement;
+    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
+
+    const firstSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[0];
+    userEvent.click(firstSpan);
+    userEvent.click(screen.getByText(/Process/));
+    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    expect(table.innerHTML).toContain('client-uuid-1');
+    userEvent.click(firstSpan);
+
+    const secondSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[1];
+    userEvent.click(secondSpan);
+    userEvent.click(screen.getByText(/Process/));
+    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    expect(table.innerHTML).toContain('client-uuid-2');
+    userEvent.click(secondSpan);
+
+    const thirdSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
+    userEvent.click(thirdSpan);
+    userEvent.click(screen.getByText(/Process/));
+    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    expect(table.innerHTML).toContain('client-uuid-3');
+  });
 });
 
 const response: TraceData & { spans: TraceSpanData[] } = {
@@ -160,7 +186,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
           ],
         },
       ],
-      processID: 'p1',
+      processID: '1ed38015486087ca',
       warnings: null as any,
     },
     {
@@ -177,7 +203,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
         { key: 'internal.span.format', type: 'string', value: 'proto' },
       ],
       logs: [],
-      processID: 'p1',
+      processID: '3fb050342773d333',
       warnings: null,
     },
     {
@@ -194,15 +220,33 @@ const response: TraceData & { spans: TraceSpanData[] } = {
         { key: 'internal.span.format', type: 'string', value: 'proto' },
       ],
       logs: [] as any,
-      processID: 'p1',
+      processID: '35118c298fc91f68',
       warnings: null as any,
     },
   ],
   processes: {
-    p1: {
+    '1ed38015486087ca': {
       serviceName: 'loki-all',
       tags: [
-        { key: 'client-uuid', type: 'string', value: '2a59d08899ef6a8a' },
+        { key: 'client-uuid', type: 'string', value: 'client-uuid-1' },
+        { key: 'hostname', type: 'string', value: '0080b530fae3' },
+        { key: 'ip', type: 'string', value: '172.18.0.6' },
+        { key: 'jaeger.version', type: 'string', value: 'Go-2.20.1' },
+      ],
+    },
+    '3fb050342773d333': {
+      serviceName: 'loki-all',
+      tags: [
+        { key: 'client-uuid', type: 'string', value: 'client-uuid-2' },
+        { key: 'hostname', type: 'string', value: '0080b530fae3' },
+        { key: 'ip', type: 'string', value: '172.18.0.6' },
+        { key: 'jaeger.version', type: 'string', value: 'Go-2.20.1' },
+      ],
+    },
+    '35118c298fc91f68': {
+      serviceName: 'loki-all',
+      tags: [
+        { key: 'client-uuid', type: 'string', value: 'client-uuid-3' },
         { key: 'hostname', type: 'string', value: '0080b530fae3' },
         { key: 'ip', type: 'string', value: '172.18.0.6' },
         { key: 'jaeger.version', type: 'string', value: 'Go-2.20.1' },

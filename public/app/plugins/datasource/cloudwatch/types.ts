@@ -1,5 +1,8 @@
-import { DataQuery, SelectableValue } from '@grafana/data';
+import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
+export interface Dimensions {
+  [key: string]: string | string[];
+}
 
 export interface CloudWatchMetricsQuery extends DataQuery {
   queryMode?: 'Metrics';
@@ -314,28 +317,20 @@ export interface MetricRequest {
 
 export interface MetricQuery {
   [key: string]: any;
-  datasourceId: number;
+  datasource: DataSourceRef;
   refId?: string;
   maxDataPoints?: number;
   intervalMs?: number;
 }
 
-// interface TsdbQuery {
-// 	TimeRange *TimeRange
-// 	Queries   []*Query
-// 	Debug     bool
-// }
-
-// type Query struct {
-// 	RefId         string
-// 	Model         *simplejson.Json
-// 	DataSource    *models.DataSource
-// 	MaxDataPoints int64
-// 	IntervalMs    int64
-// }
-
 export interface ExecutedQueryPreview {
   id: string;
   executedQuery: string;
   period: string;
+}
+
+export interface MetricFindSuggestData {
+  text: string;
+  label: string;
+  value: string;
 }
