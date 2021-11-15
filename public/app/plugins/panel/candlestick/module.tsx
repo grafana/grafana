@@ -23,9 +23,9 @@ import { config } from '@grafana/runtime';
 import { CandlestickSuggestionsSupplier } from './suggestions';
 
 const modeOptions = [
-  { label: 'Both', value: VizDisplayMode.CandlesVolume },
   { label: 'Candles', value: VizDisplayMode.Candles },
   { label: 'Volume', value: VizDisplayMode.Volume },
+  { label: 'Both', value: VizDisplayMode.CandlesVolume },
 ] as Array<SelectableValue<VizDisplayMode>>;
 
 const candleStyles = [

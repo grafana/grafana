@@ -30,31 +30,31 @@ export const candlestickFieldsInfo: Record<keyof CandlestickFieldMap, FieldPicke
     key: 'open',
     name: 'Open',
     defaults: ['open', 'o'],
-    description: 'The value at the beginning of the period',
+    description: 'Value at the start of the period',
   },
   high: {
     key: 'high',
     name: 'High',
     defaults: ['high', 'h', 'max'],
-    description: 'The maximum value within the period',
+    description: 'Maximum value within the period',
   },
   low: {
     key: 'low',
     name: 'Low',
     defaults: ['low', 'l', 'min'],
-    description: 'The minimum value within the period',
+    description: 'Minimum value within the period',
   },
   close: {
     key: 'close',
     name: 'Close',
     defaults: ['close', 'c'],
-    description: 'The value at the end of the measured period',
+    description: 'Value at the end of the period',
   },
   volume: {
     key: 'volume',
     name: 'Volume',
     defaults: ['volume', 'v'],
-    description: 'Activity within the measured period',
+    description: 'Sample count within the period',
   },
 };
 
