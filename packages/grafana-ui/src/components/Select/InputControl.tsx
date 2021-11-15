@@ -25,15 +25,12 @@ const getInputControlStyles = stylesFactory(
         css`
           width: 100%;
           max-width: 100%;
-
           display: flex;
           flex-direction: row;
           align-items: center;
           flex-wrap: wrap;
           justify-content: space-between;
-
           padding-right: 0;
-
           position: relative;
           box-sizing: border-box;
         `,

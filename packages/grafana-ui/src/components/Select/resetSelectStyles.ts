@@ -8,7 +8,10 @@ export default function resetSelectStyles() {
     groupHeading: () => ({}),
     indicatorsContainer: () => ({}),
     indicatorSeparator: () => ({}),
-    input: () => ({}),
+    input: () => ({
+      gridArea: '1 / 1 / 2 / 3',
+      gridTemplateColumns: '0px min-content',
+    }),
     loadingIndicator: () => ({}),
     loadingMessage: () => ({}),
     menu: () => ({}),
