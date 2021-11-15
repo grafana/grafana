@@ -140,7 +140,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     const fmt = field.display ?? defaultFormatter;
 
     const scaleKey = buildScaleKey(config);
-
+    console.log('scaleKey', scaleKey);
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
@@ -438,17 +438,27 @@ export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): 
 }
 
 function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {
-  const scaleRange = `${config.min !== undefined ? config.min : 'auto'}-${
-    config.max !== undefined ? config.max : 'auto'
+  const defaultPart = 'na';
+
+  const scaleRange = `${config.min !== undefined ? config.min : defaultPart}-${
+    config.max !== undefined ? config.max : defaultPart
   }`;
 
-  const scalePlacement = `${config.custom?.axisPlacement !== undefined ? config.custom?.axisPlacement : 'auto'}`;
+  const scaleSoftRange = `${config.custom?.axisSoftMin !== undefined ? config.custom.axisSoftMin : defaultPart}-${
+    config.custom?.axisSoftMax !== undefined ? config.custom.axisSoftMax : defaultPart
+  }`;
+
+  const scalePlacement = `${config.custom?.axisPlacement !== undefined ? config.custom?.axisPlacement : defaultPart}`;
+
   const scaleUnit = config.unit ?? FIXED_UNIT;
+
   const scaleDistribution = config.custom?.scaleDistribution
     ? getScaleDistributionPart(config.custom.scaleDistribution)
     : ScaleDistribution.Linear;
 
-  return `${scaleUnit}/${scaleRange}/${scalePlacement}/${scaleDistribution}`;
+  const scaleLabel = Boolean(config.custom?.axisLabel) ? config.custom!.axisLabel : defaultPart;
+
+  return `${scaleUnit}/${scaleRange}/${scaleSoftRange}/${scalePlacement}/${scaleDistribution}/${scaleLabel}`;
 }
 
 function getScaleDistributionPart(config: ScaleDistributionConfig) {
