@@ -142,10 +142,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     border-left: 0;
     border-color: transparent;
     border-style: solid;
+    position: relative;
     transition: 0.2s border-color ease-in-out;
+    z-index: ${theme.zIndex.navbarFixed};
 
     &:hover {
       border-color: ${handleColor};
+
+      &::after {
+        background: ${handleColor};
+      }
     }
   `;
 
@@ -156,7 +162,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         cursor: col-resize;
         width: ${paneSpacing};
         border-right-width: 1px;
-        margin-top: 18px;
+
+        &::after {
+          background: ${theme.colors.panelBorder};
+          content: '';
+          position: absolute;
+          height: 200px;
+          width: 7px;
+          left: calc(100% + 1px);
+          top: 50%;
+          transform: translate(-50%, -50%);
+          transition: 0.2s background ease-in-out;
+          border-radius: 4px;
+        }
       `
     ),
     resizerH: cx(
@@ -169,6 +187,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         z-index: 1;
         border-top-width: 1px;
         margin-left: ${paneSpacing};
+
+        &::after {
+          background: ${theme.colors.panelBorder};
+          content: '';
+          position: absolute;
+          height: 7px;
+          width: 200px;
+          left: 50%;
+          top: -1px;
+          transform: translate(-50%, -50%);
+          transition: 0.2s background ease-in-out;
+          border-radius: 4px;
+        }
       `
     ),
   };
