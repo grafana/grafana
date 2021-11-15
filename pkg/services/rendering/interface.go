@@ -39,6 +39,7 @@ type Opts struct {
 	ConcurrentLimit   int
 	DeviceScaleFactor float64
 	Headers           map[string][]string
+	Theme             Theme
 }
 
 type CSVOpts struct {

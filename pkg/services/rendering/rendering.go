@@ -197,8 +197,13 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+		theme := ThemeDark
+		if opts.Theme != "" {
+			theme = opts.Theme
+		}
+		filePath := fmt.Sprintf("public/img/rendering_limit_%s.png", theme)
 		return &RenderResult{
-			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
+			FilePath: filepath.Join(rs.Cfg.HomePath, filePath),
 		}, nil
 	}
 

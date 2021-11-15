@@ -1,6 +1,7 @@
 package rendering
 
 import (
+	"context"
 	"errors"
 	"path/filepath"
 	"testing"
@@ -94,4 +95,47 @@ func TestRenderErrorImage(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, result)
 	})
+}
+
+func TestRenderLimitImage(t *testing.T) {
+	path, err := filepath.Abs("../../../")
+	require.NoError(t, err)
+
+	rs := RenderingService{
+		Cfg: &setting.Cfg{
+			HomePath: path,
+		},
+		inProgressCount: 2,
+	}
+
+	tests := []struct {
+		name     string
+		theme    Theme
+		expected string
+	}{
+		{
+			name:     "Light theme returns light image",
+			theme:    ThemeLight,
+			expected: path + "/public/img/rendering_limit_light.png",
+		},
+		{
+			name:     "Dark theme returns dark image",
+			theme:    ThemeDark,
+			expected: path + "/public/img/rendering_limit_dark.png",
+		},
+		{
+			name:     "No theme returns dark image",
+			theme:    "",
+			expected: path + "/public/img/rendering_limit_dark.png",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			opts := Opts{Theme: tc.theme, ConcurrentLimit: 1}
+			result, err := rs.Render(context.Background(), opts)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expected, result.FilePath)
+		})
+	}
 }
