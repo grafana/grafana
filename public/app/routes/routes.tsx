@@ -257,11 +257,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/orgs',
-      roles: () =>
-        contextSrv.evaluatePermission(() => ['ServerAdmin'], [
-          AccessControlAction.OrgsRead,
-          AccessControlAction.OrgsCreate,
-        ]),
+      roles: () => contextSrv.evaluatePermission(() => ['ServerAdmin'], [AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminListOrgsPage" */ 'app/features/admin/AdminListOrgsPage')
       ),

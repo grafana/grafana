@@ -3,44 +3,26 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
-import { Alert, LinkButton } from '@grafana/ui';
-import { FetchError, getBackendSrv } from '@grafana/runtime';
+import { LinkButton } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
 import { AdminOrgsTable } from './AdminOrgsTable';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 
 const deleteOrg = async (orgId: number) => {
-  if (contextSrv.hasPermission(AccessControlAction.OrgsDelete)) {
-    return await getBackendSrv().delete('/api/orgs/' + orgId);
-  }
-  return {};
+  return await getBackendSrv().delete('/api/orgs/' + orgId);
 };
 
 const getOrgs = async () => {
-  if (contextSrv.hasPermission(AccessControlAction.OrgsRead)) {
-    return await getBackendSrv().get('/api/orgs');
-  }
-  return [];
+  return await getBackendSrv().get('/api/orgs');
 };
 
-const renderError = (error: FetchError) => {
-  if (error.status === 403) {
-    return renderMissingOrgListRightsMessage();
+const getErrorMessage = (error: any) => {
+  if (error != null && error.data != null && error.data.message != null) {
+    return error.data.message;
   }
-  return (
-    <Alert severity="error" title="Unexpected error">
-      An unexpected error happened. Please try again.
-    </Alert>
-  );
-};
-
-const renderMissingOrgListRightsMessage = () => {
-  return (
-    <Alert severity="info" title="Missing rights">
-      You are not allowed to list organizations. Please contact your server admin to edit organizations.
-    </Alert>
-  );
+  return;
 };
 
 export const AdminListOrgsPages: FC = () => {
@@ -48,7 +30,6 @@ export const AdminListOrgsPages: FC = () => {
   const navModel = getNavModel(navIndex, 'global-orgs');
   const [state, fetchOrgs] = useAsyncFn(async () => await getOrgs(), []);
   const canCreateOrg = contextSrv.hasPermission(AccessControlAction.OrgsCreate);
-  const canListOrgs = contextSrv.hasPermission(AccessControlAction.OrgsRead);
 
   useEffect(() => {
     fetchOrgs();
@@ -64,9 +45,7 @@ export const AdminListOrgsPages: FC = () => {
               New org
             </LinkButton>
           </div>
-          {!canListOrgs && renderMissingOrgListRightsMessage()}
-          {/* TODO double check this with frontend squad */}
-          {state.error && renderError((state.error as unknown) as FetchError)}
+          {state.error && getErrorMessage(state.error)}
           {state.loading && 'Fetching organizations'}
           {state.value && (
             <AdminOrgsTable
