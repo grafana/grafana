@@ -49,6 +49,7 @@ export const find = (searchBy: string, filterBy: string, filterByType: string) =
     }
   );
 
+// The following selectors are used to get information about the outstanding or completed plugins-related network requests.
 export const selectRequest = (actionType: string) =>
   createSelector(selectRoot, ({ requests = {} }) => requests[actionType]);
 
