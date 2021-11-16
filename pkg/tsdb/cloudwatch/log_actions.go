@@ -243,9 +243,6 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 
 func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	model *simplejson.Json, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
-	//if model.Get("logGroupNames").MustStringArray()[0] == "/aws/sagemaker/TrainingJobs" {
-	//	return nil, &AWSError{Code: LimitExceededException, Message: "test message"}
-	//}
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
 		var awsErr awserr.Error

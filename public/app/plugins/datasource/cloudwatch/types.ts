@@ -76,8 +76,8 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   database?: string;
   customMetricsNamespaces?: string;
   endpoint?: string;
+  // Time string like 15s, 10m etc, see rangeUtils.intervalToMs.
   logsTimeout?: string;
-
   // Used to create links if logs contain traceId.
   tracingDatasourceUid?: string;
 }
