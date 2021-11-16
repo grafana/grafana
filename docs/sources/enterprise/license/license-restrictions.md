@@ -42,7 +42,7 @@ You can assign role permissions _globally_ and restrict access to a specific das
 
 **Dashboard permissions**: You can also assign permissions to dashboards or groups (folders) of dashboards. For example, you might want a Viewer to also have Editor permissions for a specific dashboard. While that user can see _all_ dashboards, they can only update one of them. For more information about dashboard permissions, refer to [Dashboard and Folder Permissions](https://grafana.com/docs/grafana/latest/permissions/dashboard-folder-permissions/).
 
-When you grant Editor/Admin dashboard permissions to a Viewer, the Editor/Admin active user count increases by one as shown on the **Utilization** panel of the **Stats & licensing** page and the user’s licensed role changes to Editor/Admin.
+When you grant Editor/Admin dashboard permissions to a Viewer, the Editor/Admin active-user count increases by one as shown on the **Utilization** panel of the **Stats & licensing** page, and the user’s licensed role changes to Editor/Admin.
 
 > The Editor/Admin count increases because the user can edit and save a dashboard.
 
