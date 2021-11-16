@@ -63,7 +63,6 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
     return await getBackendSrv().put('/api/orgs/' + orgId, { ...orgState.value, name });
   };
 
-  // TODO did this to be consistent with data sources access notifications, but do we want to have something standardized and centralized?
   const renderMissingUserListRightsMessage = () => {
     return (
       <Alert severity="info" title="Missing rights">
@@ -72,8 +71,6 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
       </Alert>
     );
   };
-
-  // TODO should I render a mising right message when you are not allowed to edit an org?
 
   return (
     <Page navModel={navModel}>

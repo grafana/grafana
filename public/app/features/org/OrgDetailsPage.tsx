@@ -33,7 +33,6 @@ export class OrgDetailsPage extends PureComponent<Props> {
   render() {
     const { navModel, organization } = this.props;
     const isLoading = Object.keys(organization).length === 0;
-    // TODO should I warn users if I don't display one or the other due to a lack of permissions?
     const canViewOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
     const canViewPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
     const canEditPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
