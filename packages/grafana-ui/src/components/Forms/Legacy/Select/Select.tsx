@@ -1,7 +1,7 @@
 // Libraries
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
-import { default as ReactSelect, components } from 'react-select';
+import { default as ReactSelect, components, GetOptionLabel } from 'react-select';
 import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
 
@@ -216,7 +216,6 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
       <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
         {(onOpenMenuInternal, onCloseMenuInternal) => {
           return (
-            //@ts-expect-error
             <ReactAsyncSelect
               captureMenuScroll={false}
               classNamePrefix="gf-form-select-box"
@@ -229,9 +228,11 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               }}
               defaultValue={defaultValue}
               value={value}
-              getOptionLabel={getOptionLabel}
+              // We real types only allow string Option labels but we return React.Node
+              getOptionLabel={getOptionLabel as GetOptionLabel<SelectableValue<T>>}
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
+              //@ts-expect-error
               onChange={onChange}
               loadOptions={loadOptions}
               isLoading={isLoading}

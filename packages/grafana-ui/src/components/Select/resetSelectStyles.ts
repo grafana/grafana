@@ -12,9 +12,9 @@ export default function resetSelectStyles() {
     loadingIndicator: () => ({}),
     loadingMessage: () => ({}),
     menu: () => ({}),
-    menuList: ({ maxHeight }: { maxHeight: number }) => ({
+    menuList: (({ maxHeight }: { maxHeight: number }) => ({
       maxHeight,
-    }),
+    })) as any,
     multiValue: () => ({}),
     multiValueLabel: () => ({}),
     multiValueRemove: () => ({}),
