@@ -2,6 +2,7 @@ package cloudmonitoring
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
@@ -666,12 +667,35 @@ func TestCloudMonitoring(t *testing.T) {
 		})
 
 		t.Run("and there is a regex operator", func(t *testing.T) {
-			filterParts := []string{"zone", "=~", "us-central1-a~"}
-			value := buildFilterString("somemetrictype", filterParts)
-			assert.NotContains(t, value, `=~`)
-			assert.Contains(t, value, `zone=`)
+			t.Run("and there is not an escaped forward slash", func(t *testing.T) {
+				filterParts := []string{"zone", "=~", "us-central1-a~"}
+				value := buildFilterString("somemetrictype", filterParts)
 
-			assert.Contains(t, value, `zone=monitoring.regex.full_match("us-central1-a~")`)
+				assert.NotContains(t, value, `=~`)
+				assert.Contains(t, value, `zone=monitoring.regex.full_match("us-central1-a~")`)
+			})
+
+			var regexTestCases = []struct {
+				input          string
+				expectedOutput string
+			}{
+				{``, ``},
+				{`/`, `/`},
+				{`\/`, `/`},
+				{`\\/`, `\\/`},
+				{`\\\/`, `\\/`},
+				{`\`, `\`},
+			}
+
+			for _, tt := range regexTestCases {
+				t.Run(fmt.Sprintf("and there is an escaped forward slash (input '%s')", tt.input), func(t *testing.T) {
+					filterParts := []string{"path", "=~", tt.input}
+					value := buildFilterString("somemetrictype", filterParts)
+
+					assert.NotContains(t, value, `=~`)
+					assert.Contains(t, value, `path=monitoring.regex.full_match("`+tt.expectedOutput+`")`)
+				})
+			}
 		})
 	})
 

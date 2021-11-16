@@ -416,7 +416,7 @@ func buildFilterString(metricType string, filterParts []string) string {
 			switch {
 			case operator == "=~" || operator == "!=~":
 				filterString = reverse(strings.Replace(reverse(filterString), "~", "", 1))
-				filterString += fmt.Sprintf(`monitoring.regex.full_match("%s")`, part)
+				filterString += fmt.Sprintf(`monitoring.regex.full_match("%s")`, removeEscapeSequences(part, '/'))
 			case strings.Contains(part, "*"):
 				filterString += interpolateFilterWildcards(part)
 			default:
