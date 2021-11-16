@@ -17,6 +17,7 @@ export default {
   isEnterprise: false,
   isInstalled: false,
   isDisabled: false,
+  isPublished: true,
   name: 'Zabbix',
   orgName: 'Alexander Zobnin',
   popularity: 0.2093,

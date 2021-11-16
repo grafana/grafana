@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
 import { prepareGraphableFields } from '../timeseries/utils';
-import { MarketOptions, CandlestickFieldMap } from './models.gen';
+import { CandlestickOptions, CandlestickFieldMap } from './models.gen';
 
 export interface FieldPickerInfo {
   /** property name */
@@ -30,31 +30,31 @@ export const candlestickFieldsInfo: Record<keyof CandlestickFieldMap, FieldPicke
     key: 'open',
     name: 'Open',
     defaults: ['open', 'o'],
-    description: 'The value at the beginning of the period',
+    description: 'Value at the start of the period',
   },
   high: {
     key: 'high',
     name: 'High',
     defaults: ['high', 'h', 'max'],
-    description: 'The maximum value within the period',
+    description: 'Maximum value within the period',
   },
   low: {
     key: 'low',
     name: 'Low',
     defaults: ['low', 'l', 'min'],
-    description: 'The minimum value within the period',
+    description: 'Minimum value within the period',
   },
   close: {
     key: 'close',
     name: 'Close',
     defaults: ['close', 'c'],
-    description: 'The value at the end of the measured period',
+    description: 'Value at the end of the period',
   },
   volume: {
     key: 'volume',
     name: 'Volume',
     defaults: ['volume', 'v'],
-    description: 'Activity within the measured period',
+    description: 'Sample count within the period',
   },
 };
 
@@ -94,7 +94,7 @@ function findFieldOrAuto(frame: DataFrame, info: FieldPickerInfo, options: Candl
 
 export function prepareCandlestickFields(
   series: DataFrame[] | undefined,
-  options: MarketOptions,
+  options: CandlestickOptions,
   theme: GrafanaTheme2
 ): CandlestickData {
   if (!series?.length) {

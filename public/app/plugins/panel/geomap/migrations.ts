@@ -40,6 +40,7 @@ export function worldmapToGeomapOptions(angular: any): { fieldConfig: FieldConfi
     },
     basemap: {
       type: 'default', // was carto
+      name: 'Basemap',
     },
     layers: [
       // TODO? depends on current configs

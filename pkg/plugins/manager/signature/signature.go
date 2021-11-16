@@ -3,19 +3,16 @@ package signature
 import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var logger = log.New("plugin.signature.validator")
 
 type Validator struct {
-	cfg        *setting.Cfg
 	authorizer plugins.PluginLoaderAuthorizer
 }
 
-func NewValidator(cfg *setting.Cfg, authorizer plugins.PluginLoaderAuthorizer) Validator {
+func NewValidator(authorizer plugins.PluginLoaderAuthorizer) Validator {
 	return Validator{
-		cfg:        cfg,
 		authorizer: authorizer,
 	}
 }

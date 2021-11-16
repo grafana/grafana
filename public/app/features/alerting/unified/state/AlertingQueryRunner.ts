@@ -11,7 +11,7 @@ import {
   TimeRange,
   withLoadingIndicator,
 } from '@grafana/data';
-import { FetchResponse, toDataQueryError } from '@grafana/runtime';
+import { FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { preProcessPanelData } from 'app/features/query/state/runRequest';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -32,7 +32,7 @@ export class AlertingQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult: Record<string, PanelData>;
 
-  constructor(private backendSrv = getBackendSrv()) {
+  constructor(private backendSrv = getBackendSrv(), private dataSourceSrv = getDataSourceSrv()) {
     this.subject = new ReplaySubject(1);
     this.lastResult = {};
   }
@@ -41,10 +41,22 @@ export class AlertingQueryRunner {
     return this.subject.asObservable();
   }
 
-  run(queries: AlertQuery[]) {
+  async run(queries: AlertQuery[]) {
     if (queries.length === 0) {
       const empty = initialState(queries, LoadingState.Done);
       return this.subject.next(empty);
+    }
+
+    // do not execute if one more of the queries are not runnable,
+    // for example not completely configured
+    for (const query of queries) {
+      if (!isExpressionQuery(query.model)) {
+        const ds = await this.dataSourceSrv.get(query.datasourceUid);
+        if (!ds.filterQuery?.(query.model)) {
+          const empty = initialState(queries, LoadingState.Done);
+          return this.subject.next(empty);
+        }
+      }
     }
 
     this.subscription = runRequest(this.backendSrv, queries).subscribe({
