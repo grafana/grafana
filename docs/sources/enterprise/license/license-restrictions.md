@@ -96,7 +96,7 @@ Review the number of users you have for each type of permission and remove inact
 
 > When you delete a user you also delete their preferences, dashboard and folder permissions, and references to that user from the dashboard versions they have updated.
 
-Users who are synced via SAML, Oauth or LDAP will also lose these attributes.
+Users who are synced via SAML, Oauth, or LDAP will also lose these attributes.
 
 ### Update user permissions for dashboards
 
