@@ -1,8 +1,9 @@
-import { Fill, RegularShape, Stroke, Circle, Style, Icon } from 'ol/style';
+import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style';
 import { Registry, RegistryItem } from '@grafana/data';
-import { DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
+import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import tinycolor from 'tinycolor2';
+import { config } from '@grafana/runtime';
 
 interface SymbolMaker extends RegistryItem {
   aliasIds: string[];
@@ -39,6 +40,17 @@ export function getFillColor(cfg: StyleConfigValues) {
   return undefined;
 }
 
+const textLabel = (cfg: StyleConfigValues) => {
+  const fontFamily = config.theme2.typography.fontFamily;
+  const fontSize = cfg.size ?? 12;
+  return new Text({
+    text: cfg.text ?? '?',
+    fill: new Fill({ color: cfg.color ?? defaultStyleConfig.color.fixed }),
+    font: `normal ${fontSize}px ${fontFamily}`,
+    //add offset
+  });
+};
+
 export const circleMarker = (cfg: StyleConfigValues) => {
   return new Style({
     image: new Circle({
@@ -46,6 +58,7 @@ export const circleMarker = (cfg: StyleConfigValues) => {
       fill: getFillColor(cfg),
       radius: cfg.size ?? DEFAULT_SIZE,
     }),
+    text: !cfg?.text ? undefined : textLabel(cfg),
   });
 };
 
@@ -95,6 +108,7 @@ const makers: SymbolMaker[] = [
           radius,
           angle: Math.PI / 4,
         }),
+        text: !cfg?.text ? undefined : textLabel(cfg),
       });
     },
   },
@@ -113,6 +127,7 @@ const makers: SymbolMaker[] = [
           rotation: Math.PI / 4,
           angle: 0,
         }),
+        text: !cfg?.text ? undefined : textLabel(cfg),
       });
     },
   },
@@ -131,6 +146,7 @@ const makers: SymbolMaker[] = [
           radius2: radius * 0.4,
           angle: 0,
         }),
+        text: !cfg?.text ? undefined : textLabel(cfg),
       });
     },
   },
@@ -148,6 +164,7 @@ const makers: SymbolMaker[] = [
           radius2: 0,
           angle: 0,
         }),
+        text: !cfg?.text ? undefined : textLabel(cfg),
       });
     },
   },
@@ -165,6 +182,7 @@ const makers: SymbolMaker[] = [
           radius2: 0,
           angle: Math.PI / 4,
         }),
+        text: !cfg?.text ? undefined : textLabel(cfg),
       });
     },
   },
@@ -206,7 +224,7 @@ export function getMarkerAsPath(shape?: string): string | undefined {
 }
 
 // Will prepare symbols as necessary
-export async function getMarkerMaker(symbol?: string): Promise<StyleMaker> {
+export async function getMarkerMaker(symbol?: string, text?: string): Promise<StyleMaker> {
   if (!symbol) {
     return circleMarker;
   }
@@ -234,6 +252,7 @@ export async function getMarkerMaker(symbol?: string): Promise<StyleMaker> {
                   opacity: cfg.opacity ?? 1,
                   scale: (DEFAULT_SIZE + radius) / 100,
                 }),
+                text: !cfg?.text ? undefined : textLabel(cfg),
               }),
               // transparent bounding box for featureAtPixel detection
               new Style({

@@ -16,8 +16,9 @@ import {
   getScaledDimension,
   getColorDimension,
   ResourceFolderName,
+  getTextDimension,
 } from 'app/features/dimensions';
-import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
+import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
@@ -78,7 +79,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     }
 
     const style = config.style ?? defaultStyleConfig;
-    const markerMaker = await getMarkerMaker(style.symbol?.fixed);
+    const markerMaker = await getMarkerMaker(style.symbol?.fixed, style?.text?.fixed);
 
     return {
       init: () => vectorLayer,
@@ -99,11 +100,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           const colorDim = getColorDimension(frame, style.color ?? defaultStyleConfig.color, theme);
           const sizeDim = getScaledDimension(frame, style.size ?? defaultStyleConfig.size);
+          const textDim = style?.text && getTextDimension(frame, style.text);
           const opacity = style?.opacity ?? defaultStyleConfig.opacity;
 
           const featureDimensionConfig: FeaturesStylesBuilderConfig = {
             colorDim: colorDim,
             sizeDim: sizeDim,
+            textDim: textDim,
             opacity: opacity,
             styleMaker: markerMaker,
           };
@@ -119,6 +122,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             legendProps.next({
               color: colorDim,
               size: sizeDim,
+              text: textDim,
             });
           }
           break; // Only the first frame for now!
@@ -173,6 +177,15 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               step: 0.1,
             },
           })
+          .addCustomEditor({
+            id: 'config.style.text',
+            path: 'config.style.text',
+            name: 'Text label',
+            editor: TextDimensionEditor,
+            defaultValue: defaultOptions.style.text,
+          })
+          //add text color customize
+          //add offset
           .addBooleanSwitch({
             path: 'config.showLegend',
             name: 'Show legend',
