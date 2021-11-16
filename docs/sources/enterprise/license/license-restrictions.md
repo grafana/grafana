@@ -21,7 +21,7 @@ To understand which license type you have, refer to [Determine the number of act
 
 Tiered licensing defines dashboard viewers, and dashboard editors and administrators, as two distinct user types that each have their own user limit.
 
-For example, your license might include 300 Viewers and 50 Editors/Admins. Although editors and administrators have separate permissions and can do different things, Grafana counts them as a single **licensed role**.
+For example, your license might include 300 viewers and 50 editors or administrators. Although editors and administrators have separate permissions and can do different things, Grafana counts them together as a single licensed role.
 
 ### Active users limit
 
