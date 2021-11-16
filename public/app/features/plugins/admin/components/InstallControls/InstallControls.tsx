@@ -8,7 +8,7 @@ import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { ExternallyManagedButton } from './ExternallyManagedButton';
 import { InstallControlsButton } from './InstallControlsButton';
 import { CatalogPlugin, PluginStatus, Version } from '../../types';
-import { getExternalManageLink } from '../../helpers';
+import { getExternalManageLink, isInstallControlsEnabled } from '../../helpers';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';
 import { isGrafanaAdmin } from '../../permissions';
 
@@ -23,6 +23,8 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
   const hasPermission = isGrafanaAdmin();
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const isCompatible = Boolean(latestCompatibleVersion);
+  const isInstallControlsDisabled =
+    plugin.isCore || plugin.isDisabled || plugin.type === PluginType.renderer || !isInstallControlsEnabled();
 
   const pluginStatus = plugin.isInstalled
     ? plugin.hasUpdate
@@ -30,7 +32,7 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
       : PluginStatus.UNINSTALL
     : PluginStatus.INSTALL;
 
-  if (plugin.isCore || plugin.isDisabled || plugin.type === PluginType.renderer) {
+  if (isInstallControlsDisabled) {
     return null;
   }
 
