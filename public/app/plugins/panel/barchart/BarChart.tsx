@@ -10,13 +10,13 @@ import {
   useTheme2,
   VizLayout,
   VizLegend,
-  VizLegendItem,
 } from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
 import { BarChartDisplayValues, BarChartOptions } from './types';
 import { isLegendOrdered, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { getFieldLegendItem } from '../state-timeline/utils';
 
 /**
  * @alpha
@@ -54,12 +54,14 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
     }
 
     if (props.data.colorByField) {
-      const items: VizLegendItem[] = [{ label: 'TODO: mappeed colors?', color: '#F00', yAxis: 1 }];
-      return (
-        <VizLayout.Legend placement={legend.placement}>
-          <VizLegend placement={legend.placement} items={items} displayMode={legend.displayMode} />
-        </VizLayout.Legend>
-      );
+      const items = getFieldLegendItem([props.data.colorByField], theme);
+      if (items?.length) {
+        return (
+          <VizLayout.Legend placement={legend.placement}>
+            <VizLegend placement={legend.placement} items={items} displayMode={legend.displayMode} />
+          </VizLayout.Legend>
+        );
+      }
     }
 
     return <PlotLegend data={props.frames} config={config} maxHeight="35%" maxWidth="60%" {...props.legend} />;
