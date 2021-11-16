@@ -124,7 +124,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     return steps
 
-def download_grabpl():
+def download_grabpl_step():
     return {
         'name': 'grabpl',
         'image': curl_image,
@@ -686,7 +686,7 @@ def postgres_integration_tests_step():
         'name': 'postgres-integration-tests',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'grabpl',
         ],
         'environment': {
             'PGPASSWORD': 'grafanatest',
@@ -710,7 +710,7 @@ def mysql_integration_tests_step():
         'name': 'mysql-integration-tests',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'grabpl',
         ],
         'environment': {
             'GRAFANA_TEST_DB': 'mysql',
@@ -732,8 +732,7 @@ def redis_integration_tests_step():
         'name': 'redis-integration-tests',
         'image': build_image,
         'depends_on': [
-            'test-backend',
-            'test-frontend',
+            'grabpl',
         ],
         'environment': {
             'REDIS_URL': 'redis://redis:6379/0',
@@ -749,8 +748,7 @@ def memcached_integration_tests_step():
         'name': 'memcached-integration-tests',
         'image': build_image,
         'depends_on': [
-            'test-backend',
-            'test-frontend',
+            'grabpl',
         ],
         'environment': {
             'MEMCACHED_HOSTS': 'memcached:11211',
@@ -937,7 +935,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         else:
             committish = '$$env:DRONE_COMMIT'
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
-        download_grabpl_cmds = [
+        download_grabpl_step_cmds = [
             '$$ProgressPreference = "SilentlyContinue"',
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
         ]
@@ -955,7 +953,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'environment': {
                 'GITHUB_TOKEN': from_secret(github_token),
             },
-            'commands': download_grabpl_cmds + clone_cmds,
+            'commands': download_grabpl_step_cmds + clone_cmds,
         })
         steps[1]['depends_on'] = [
             'clone',
