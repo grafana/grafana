@@ -1,7 +1,7 @@
 import React from 'react';
 import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet } from 'lodash';
-import { getDataLinksVariableSuggestions } from 'app/angular/panel/panellinks/link_srv';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue, setOptionImmutably } from './utils';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
@@ -10,8 +10,9 @@ import {
   isNestedPanelOptions,
   NestedValueAccess,
   PanelOptionsEditorBuilder,
-} from '../../../../../../packages/grafana-data/src/utils/OptionsUIBuilders';
+} from '@grafana/data/src/utils/OptionsUIBuilders';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { getOptionOverrides } from './state/getOptionOverrides';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
@@ -91,6 +92,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
         description: fieldOption.description,
+        overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: any) => {
             onFieldConfigsChange(

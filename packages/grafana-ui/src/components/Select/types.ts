@@ -1,7 +1,9 @@
 import { SelectableValue } from '@grafana/data';
 import React from 'react';
+import { ActionMeta as SelectActionMeta } from 'react-select';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
+export type ActionMeta = SelectActionMeta<{}>;
 export type InputActionMeta = {
   action: 'set-value' | 'input-change' | 'input-blur' | 'menu-close';
 };
@@ -52,7 +54,7 @@ export interface SelectCommonProps<T> {
   /** The message to display when no options could be found */
   noOptionsMessage?: string;
   onBlur?: () => void;
-  onChange: (value: SelectableValue<T>) => {} | void;
+  onChange: (value: SelectableValue<T>, actionMeta: ActionMeta) => {} | void;
   onCloseMenu?: () => void;
   /** allowCustomValue must be enabled. Function decides what to do with that custom value. */
   onCreateOption?: (value: string) => void;
@@ -69,7 +71,7 @@ export interface SelectCommonProps<T> {
   tabSelectsValue?: boolean;
   value?: SelectValue<T> | null;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
-  width?: number;
+  width?: number | 'auto';
   isOptionDisabled?: () => boolean;
   /** allowCustomValue must be enabled. Determines whether the "create new" option should be displayed based on the current input value, select value and options array. */
   isValidNewOption?: (

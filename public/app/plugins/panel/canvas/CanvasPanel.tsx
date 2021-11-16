@@ -7,7 +7,6 @@ import { CanvasGroupOptions } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
-import { GroupState } from 'app/features/canvas/runtime/group';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -18,7 +17,6 @@ interface State {
 export interface InstanceState {
   scene: Scene;
   selected: ElementState[];
-  layer: GroupState;
 }
 
 export class CanvasPanel extends Component<Props, State> {
@@ -44,8 +42,7 @@ export class CanvasPanel extends Component<Props, State> {
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {
         // Remove current selection when entering edit mode for any panel in dashboard
-        let event: MouseEvent = new MouseEvent('click');
-        this.scene?.selecto?.clickTarget(event, this.scene?.div);
+        this.scene.clearCurrentSelection();
       })
     );
 

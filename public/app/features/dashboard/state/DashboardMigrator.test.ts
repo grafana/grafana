@@ -7,8 +7,25 @@ import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
 import { config } from 'app/core/config';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 jest.mock('app/core/services/context_srv', () => ({}));
+
+const dataSources = {
+  prom: mockDataSource({
+    name: 'prom',
+    type: 'prometheus',
+  }),
+  [MIXED_DATASOURCE_NAME]: mockDataSource({
+    name: MIXED_DATASOURCE_NAME,
+    type: 'mixed',
+    uid: MIXED_DATASOURCE_NAME,
+  }),
+};
+
+setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
 describe('DashboardModel', () => {
   describe('when creating dashboard with old schema', () => {
@@ -162,7 +179,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(32);
+      expect(model.schemaVersion).toBe(33);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -1747,6 +1764,79 @@ describe('DashboardModel', () => {
         expect(panel2Targets[1].refId).toBe('B');
         expect(panel2Targets[2].refId).toBe('C');
       });
+    });
+  });
+
+  describe('when migrating datasource to refs', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              type: 'query',
+              name: 'var',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 0,
+              datasource: 'prom',
+            },
+          ],
+        },
+        panels: [
+          {
+            id: 1,
+            datasource: 'prom',
+          },
+          {
+            id: 2,
+            datasource: null,
+          },
+          {
+            id: 3,
+            datasource: MIXED_DATASOURCE_NAME,
+            targets: [
+              {
+                datasource: 'prom',
+              },
+            ],
+          },
+          {
+            type: 'row',
+            id: 5,
+            panels: [
+              {
+                id: 6,
+                datasource: 'prom',
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should update variable datasource props to refs', () => {
+      expect(model.templating.list[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+
+    it('should update panel datasource props to refs for named data source', () => {
+      expect(model.panels[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+
+    it('should update panel datasource props to refs for default data source', () => {
+      expect(model.panels[1].datasource).toEqual(null);
+    });
+
+    it('should update panel datasource props to refs for mixed data source', () => {
+      expect(model.panels[2].datasource).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
+    });
+
+    it('should update target datasource props to refs', () => {
+      expect(model.panels[2].targets[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+
+    it('should update datasources in panels collapsed rows', () => {
+      expect(model.panels[3].panels[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
     });
   });
 });

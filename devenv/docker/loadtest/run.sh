@@ -39,7 +39,7 @@ run() {
 	done
 	shift $((OPTIND-1))
 
-  docker run -t --network=host -v $PWD:/src -e URL=$url -e SLOW_QUERY=$slowQuery -e K6_OUT=$out -e API_KEY=$apiKey --rm -i loadimpact/k6:master run --vus $vus --duration $duration src/$testcase.js
+  docker run -t --network=host -v $PWD:/src -e URL=$url -e SLOW_QUERY=$slowQuery -e K6_OUT=$out -e API_KEY=$apiKey --rm -i loadimpact/k6:master run --vus $vus --duration $duration /src/$testcase.js
 }
 
 run "$@"

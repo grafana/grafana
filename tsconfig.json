@@ -5,9 +5,10 @@
     "outDir": "public/dist",
     "rootDirs": ["public/"],
     "allowJs": true,
-    "strictNullChecks": true,
+    "strict": true,
     "resolveJsonModule": true,
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "incremental": true
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": [

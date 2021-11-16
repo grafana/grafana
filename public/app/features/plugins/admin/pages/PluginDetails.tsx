@@ -34,12 +34,6 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
       id: PluginTabIds.OVERVIEW,
       href: `${url}?page=${PluginTabIds.OVERVIEW}`,
     },
-    {
-      label: PluginTabLabels.VERSIONS,
-      icon: 'history',
-      id: PluginTabIds.VERSIONS,
-      href: `${url}?page=${PluginTabIds.VERSIONS}`,
-    },
   ];
   const plugin = useGetSingle(pluginId); // fetches the localplugin settings
   const { tabs } = usePluginDetailsTabs(plugin, defaultTabs);
@@ -99,8 +93,8 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
 
         {/* Active tab */}
         <TabContent className={styles.tabContent}>
-          <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
+          <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
           <PluginDetailsBody queryParams={queryParams} plugin={plugin} />
         </TabContent>
       </PluginPage>

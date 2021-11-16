@@ -9,10 +9,10 @@ import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
-import { LiveChannelSupport } from './live';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 import { DataQuery } from './query';
+import { DataSourceRef } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -204,11 +204,8 @@ abstract class DataSourceApi<
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.type = instanceSettings.type;
-    this.meta = {} as DataSourcePluginMeta;
+    this.meta = instanceSettings.meta;
     this.uid = instanceSettings.uid;
-    if (!this.uid) {
-      this.uid = this.name; // Internal datasources do not have a UID (-- Grafana --)
-    }
   }
 
   /**
@@ -315,6 +312,11 @@ abstract class DataSourceApi<
    */
   getHighlighterExpression?(query: TQuery): string[];
 
+  /** Get an identifier object for this datasource instance */
+  getRef(): DataSourceRef {
+    return { type: this.type, uid: this.uid };
+  }
+
   /**
    * Used in explore
    */
@@ -339,15 +341,6 @@ abstract class DataSourceApi<
    * @deprecated -- prefer using {@link AnnotationSupport}
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
-
-  /**
-   * Define live streaming behavior within this datasource settings
-   *
-   * Note: `plugin.json` must also define `live: true`
-   *
-   * @alpha -- experimental
-   */
-  channelSupport?: LiveChannelSupport;
 
   /**
    * Defines new variable support

@@ -23,6 +23,12 @@ import {
 } from 'app/features/dimensions/utils';
 import { ElementState } from './element';
 import { RootElement } from './root';
+import { GroupState } from './group';
+
+export interface SelectionParams {
+  targets: Array<HTMLElement | SVGElement>;
+  group?: GroupState;
+}
 
 export class Scene {
   styles = getStyles(config.theme2);
@@ -37,7 +43,9 @@ export class Scene {
   style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
+  moveable?: Moveable;
   div?: HTMLDivElement;
+  currentLayer?: GroupState;
 
   constructor(cfg: CanvasGroupOptions, enableEditing: boolean, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = this.load(cfg, enableEditing);
@@ -54,8 +62,10 @@ export class Scene {
     );
 
     setTimeout(() => {
-      if (this.div && enableEditing) {
-        this.initMoveable();
+      if (this.div) {
+        // If editing is enabled, clear selecto instance
+        const destroySelecto = enableEditing;
+        this.initMoveable(destroySelecto, enableEditing);
       }
     }, 100);
     return this.root;
@@ -87,6 +97,12 @@ export class Scene {
   clearCurrentSelection() {
     let event: MouseEvent = new MouseEvent('click');
     this.selecto?.clickTarget(event, this.div);
+  }
+
+  updateCurrentLayer(newLayer: GroupState) {
+    this.currentLayer = newLayer;
+    this.clearCurrentSelection();
+    this.save();
   }
 
   toggleAnchor(element: ElementState, k: keyof Anchor) {
@@ -131,18 +147,69 @@ export class Scene {
   };
 
   private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
-    return this.root.elements.find((element) => element.div === target);
+    // We will probably want to add memoization to this as we are calling on drag / resize
+
+    const stack = [...this.root.elements];
+    while (stack.length > 0) {
+      const currentElement = stack.shift();
+
+      if (currentElement && currentElement.div && currentElement.div === target) {
+        return currentElement;
+      }
+
+      const nestedElements = currentElement instanceof GroupState ? currentElement.elements : [];
+      for (const nestedElement of nestedElements) {
+        stack.unshift(nestedElement);
+      }
+    }
+
+    return undefined;
   };
 
   setRef = (sceneContainer: HTMLDivElement) => {
     this.div = sceneContainer;
   };
 
-  initMoveable = (destroySelecto = false) => {
-    const targetElements: HTMLDivElement[] = [];
-    this.root.elements.forEach((element: ElementState) => {
-      targetElements.push(element.div!);
-    });
+  select = (selection: SelectionParams) => {
+    if (this.selecto) {
+      this.selecto.setSelectedTargets(selection.targets);
+      this.updateSelection(selection);
+    }
+  };
+
+  private updateSelection = (selection: SelectionParams) => {
+    this.moveable!.target = selection.targets;
+
+    if (selection.group) {
+      this.selection.next([selection.group]);
+    } else {
+      const s = selection.targets.map((t) => this.findElementByTarget(t)!);
+      this.selection.next(s);
+    }
+  };
+
+  private generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] => {
+    let targetElements: HTMLDivElement[] = [];
+
+    const stack = [...rootElements];
+    while (stack.length > 0) {
+      const currentElement = stack.shift();
+
+      if (currentElement && currentElement.div) {
+        targetElements.push(currentElement.div);
+      }
+
+      const nestedElements = currentElement instanceof GroupState ? currentElement.elements : [];
+      for (const nestedElement of nestedElements) {
+        stack.unshift(nestedElement);
+      }
+    }
+
+    return targetElements;
+  };
+
+  initMoveable = (destroySelecto = false, allowChanges = true) => {
+    const targetElements = this.generateTargetElements(this.root.elements);
 
     if (destroySelecto) {
       this.selecto?.destroy();
@@ -154,9 +221,10 @@ export class Scene {
       selectByClick: true,
     });
 
-    const moveable = new Moveable(this.div!, {
-      draggable: true,
-      resizable: true,
+    this.moveable = new Moveable(this.div!, {
+      draggable: allowChanges,
+      resizable: allowChanges,
+      origin: false,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
@@ -199,7 +267,7 @@ export class Scene {
       const selectedTarget = event.inputEvent.target;
 
       const isTargetMoveableElement =
-        moveable.isMoveableElement(selectedTarget) ||
+        this.moveable!.isMoveableElement(selectedTarget) ||
         targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
 
       if (isTargetMoveableElement) {
@@ -208,16 +276,12 @@ export class Scene {
       }
     }).on('selectEnd', (event) => {
       targets = event.selected;
-      moveable.target = targets;
-
-      const s = event.selected.map((t) => this.findElementByTarget(t)!);
-      this.selection.next(s);
-      console.log('UPDATE selection', s);
+      this.updateSelection({ targets });
 
       if (event.isDragStart) {
         event.inputEvent.preventDefault();
         setTimeout(() => {
-          moveable.dragStart(event.inputEvent);
+          this.moveable!.dragStart(event.inputEvent);
         });
       }
     });

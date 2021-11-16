@@ -21,14 +21,14 @@ type UsageStats struct {
 // UsageStatsQuerier returns usage stats about alert rules
 // configured in Grafana.
 type UsageStatsQuerier interface {
-	QueryUsageStats() (*UsageStats, error)
+	QueryUsageStats(context.Context) (*UsageStats, error)
 }
 
 // QueryUsageStats returns usage stats about alert rules
 // configured in Grafana.
-func (e *AlertEngine) QueryUsageStats() (*UsageStats, error) {
+func (e *AlertEngine) QueryUsageStats(ctx context.Context) (*UsageStats, error) {
 	cmd := &models.GetAllAlertsQuery{}
-	err := e.Bus.Dispatch(cmd)
+	err := e.Bus.DispatchCtx(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}

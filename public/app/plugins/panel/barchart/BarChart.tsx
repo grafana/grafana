@@ -17,6 +17,8 @@ export interface BarChartProps
 const propsToDiff: Array<string | PropDiffFn> = [
   'orientation',
   'barWidth',
+  'xTickLabelRotation',
+  'xTickLabelMaxLength',
   'groupWidth',
   'stacking',
   'showValue',
@@ -52,7 +54,19 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
   };
 
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-    const { timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip, text } = props;
+    const {
+      timeZone,
+      orientation,
+      barWidth,
+      showValue,
+      groupWidth,
+      stacking,
+      legend,
+      tooltip,
+      text,
+      xTickLabelRotation,
+      xTickLabelMaxLength,
+    } = props;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -64,6 +78,8 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       barWidth,
       showValue,
       groupWidth,
+      xTickLabelRotation,
+      xTickLabelMaxLength,
       stacking,
       legend,
       tooltip,

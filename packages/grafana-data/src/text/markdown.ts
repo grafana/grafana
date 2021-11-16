@@ -1,4 +1,4 @@
-import marked from 'marked';
+import { marked } from 'marked';
 import { sanitize } from './sanitize';
 
 let hasInitialized = false;

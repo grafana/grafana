@@ -33,7 +33,7 @@ func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *models.ReqContext) respo
 }
 
 func (hs *HTTPServer) AdminProvisioningReloadNotifications(c *models.ReqContext) response.Response {
-	err := hs.ProvisioningService.ProvisionNotifications()
+	err := hs.ProvisioningService.ProvisionNotifications(c.Req.Context())
 	if err != nil {
 		return response.Error(500, "", err)
 	}

@@ -1,4 +1,4 @@
-import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { isString } from 'lodash';
 
@@ -104,27 +104,6 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
         alias: item.alias,
       },
     };
-  }
-
-  /**
-   * This is named differently than DataSourceApi.metricFindQuery
-   * because it's not exposed to Grafana like the main AzureMonitorDataSource.
-   * And some of the azure internal data sources return null in this function, which the
-   * external interface does not support
-   */
-  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
-    const appInsightsMetricNameQuery = query.match(/^AppInsightsMetricNames\(\)/i);
-    if (appInsightsMetricNameQuery) {
-      return this.getMetricNames();
-    }
-
-    const appInsightsGroupByQuery = query.match(/^AppInsightsGroupBys\(([^\)]+?)(,\s?([^,]+?))?\)/i);
-    if (appInsightsGroupByQuery) {
-      const metricName = appInsightsGroupByQuery[1];
-      return this.getGroupBys(getTemplateSrv().replace(metricName));
-    }
-
-    return null;
   }
 
   testDatasource(): Promise<DatasourceValidationResult> {

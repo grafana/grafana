@@ -1,7 +1,7 @@
 import { DataFrame, ensureTimeField, Field, FieldType } from '@grafana/data';
 import { StackingMode, VizLegendOptions } from '@grafana/schema';
 import { orderBy } from 'lodash';
-import { AlignedData, Options, PaddingSide } from 'uplot';
+import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
 
@@ -134,7 +134,7 @@ export function collectStackingGroups(f: Field, groups: Map<string, number[]>, s
 }
 
 /**
- * Finds y axis midpoind for point at given idx (css pixels relative to uPlot canvas)
+ * Finds y axis midpoint for point at given idx (css pixels relative to uPlot canvas)
  * @internal
  **/
 
@@ -177,8 +177,13 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
     // find median position
     y = (u.valToPos(min, u.series[sMinIdx].scale!) + u.valToPos(max, u.series[sMaxIdx].scale!)) / 2;
   } else {
-    // snap tooltip to min OR max point, one of thos is not null :)
+    // snap tooltip to min OR max point, one of those is not null :)
     y = u.valToPos((min || max)!, u.series[(sMaxIdx || sMinIdx)!].scale!);
+  }
+
+  // if y is out of canvas bounds, snap it to the bottom
+  if (y !== undefined && y < 0) {
+    y = u.bbox.height / devicePixelRatio;
   }
 
   return y;

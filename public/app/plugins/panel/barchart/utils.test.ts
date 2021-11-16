@@ -87,6 +87,8 @@ describe('BarChart utils', () => {
         placement: 'bottom',
         calcs: [],
       },
+      xTickLabelRotation: 0,
+      xTickLabelMaxLength: 20,
       stacking: StackingMode.None,
       tooltip: {
         mode: TooltipDisplayMode.None,
