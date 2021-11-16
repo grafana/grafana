@@ -42,7 +42,10 @@ export function getFillColor(cfg: StyleConfigValues) {
 
 const textLabel = (cfg: StyleConfigValues) => {
   const fontFamily = config.theme2.typography.fontFamily;
-  const fontSize = cfg.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize;
+  const textConfig = { 
+    ...defaultStyleConfig.textConfig,
+    ...cfg.textConfig,
+   }
   return new Text({
     text: cfg.text ?? '?',
     fill: new Fill({ color: cfg.color ?? defaultStyleConfig.color.fixed }),
