@@ -230,4 +230,8 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"is_folder"},
 		Type: IndexType,
 	}))
+
+	mg.AddMigration("Add provenance column in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "provenance", Type: DB_NVarchar, Length: 32, Nullable: true,
+	}))
 }

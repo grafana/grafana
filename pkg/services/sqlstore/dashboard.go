@@ -49,7 +49,9 @@ var generateNewUid func() string = util.GenerateShortUID
 
 func (ss *SQLStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
 	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		return saveDashboard(sess, &cmd)
+		return ss.WithProvenanceValidation(cmd, func() error {
+			return saveDashboard(sess, &cmd)
+		})
 	})
 	return cmd.Result, err
 }
@@ -106,6 +108,7 @@ func saveDashboard(sess *DBSession, cmd *models.SaveDashboardCommand) error {
 		dash.CreatedBy = userId
 		dash.Updated = time.Now()
 		dash.UpdatedBy = userId
+		dash.Provenance = cmd.GetProvenance()
 		metrics.MApiDashboardInsert.Inc()
 		affectedRows, err = sess.Insert(dash)
 	} else {
@@ -416,7 +419,9 @@ func GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) 
 
 func DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		return deleteDashboard(cmd, sess)
+		return WithProvenanceValidation(cmd, func() error {
+			return deleteDashboard(cmd, sess)
+		})
 	})
 }
 

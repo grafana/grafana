@@ -8,14 +8,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -163,6 +164,25 @@ func TestDashboardDataAccess(t *testing.T) {
 		require.EqualValues(t, dashboard.UpdatedBy, 100)
 		require.False(t, dashboard.Updated.IsZero())
 	})
+
+	t.Run("Should not be able to create immutable dashboard", func(t *testing.T) {
+		setup()
+		cmd := models.SaveDashboardCommand{
+			OrgId: 1,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": "folderId",
+				"tags":  []interface{}{},
+			}),
+			UserId: 100,
+			Meta: models.Meta{
+				Provenance: "not-empty",
+			},
+		}
+		_, err := sqlStore.SaveDashboard(cmd)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, models.ErrModifyImmutableDashboard)
+	})
+
 	t.Run("Should be able to update dashboard by id and remove folderId", func(t *testing.T) {
 		setup()
 		cmd := models.SaveDashboardCommand{
@@ -215,6 +235,19 @@ func TestDashboardDataAccess(t *testing.T) {
 		deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
 		err := DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
+	})
+
+	t.Run("Should not be able to delete immutable folder", func(t *testing.T) {
+		setup()
+		emptyFolder := insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
+
+		deleteCmd := &models.DeleteDashboardCommand{
+			Id:   emptyFolder.Id,
+			Meta: models.Meta{Provenance: "not-empty"},
+		}
+		err := DeleteDashboard(context.Background(), deleteCmd)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, models.ErrModifyImmutableDashboard)
 	})
 
 	t.Run("Should be not able to delete a dashboard if force delete rules is disabled", func(t *testing.T) {

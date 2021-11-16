@@ -31,6 +31,7 @@ type DashboardMeta struct {
 	FolderUrl             string    `json:"folderUrl"`
 	Provisioned           bool      `json:"provisioned"`
 	ProvisionedExternalId string    `json:"provisionedExternalId"`
+	Provenance            string    `json:"provenance"`
 }
 
 type DashboardFullWithMeta struct {

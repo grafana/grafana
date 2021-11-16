@@ -103,6 +103,10 @@ var (
 		Reason:     "Unique identifier needed to be able to get a dashboard",
 		StatusCode: 400,
 	}
+	ErrModifyImmutableDashboard = DashboardErr{
+		Reason:     "Immutable dashboard cannot be modified",
+		StatusCode: 403,
+	}
 )
 
 // DashboardErr represents a dashboard error.
@@ -160,11 +164,12 @@ type Dashboard struct {
 	Created time.Time
 	Updated time.Time
 
-	UpdatedBy int64
-	CreatedBy int64
-	FolderId  int64
-	IsFolder  bool
-	HasAcl    bool
+	UpdatedBy  int64
+	CreatedBy  int64
+	FolderId   int64
+	IsFolder   bool
+	HasAcl     bool
+	Provenance string
 
 	Title string
 	Data  *simplejson.Json
@@ -331,6 +336,8 @@ type ValidateDashboardBeforeSaveResult struct {
 //
 
 type SaveDashboardCommand struct {
+	Meta `json:",inline"`
+
 	Dashboard    *simplejson.Json `json:"dashboard" binding:"Required"`
 	UserId       int64            `json:"userId"`
 	Overwrite    bool             `json:"overwrite"`
@@ -363,6 +370,8 @@ type DashboardProvisioning struct {
 }
 
 type DeleteDashboardCommand struct {
+	Meta `json:",inline"`
+
 	Id                     int64
 	OrgId                  int64
 	ForceDeleteFolderRules bool
