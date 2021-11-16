@@ -42,12 +42,15 @@ export function getFillColor(cfg: StyleConfigValues) {
 
 const textLabel = (cfg: StyleConfigValues) => {
   const fontFamily = config.theme2.typography.fontFamily;
-  const fontSize = cfg.size ?? 12;
+  const fontSize = cfg.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize;
   return new Text({
     text: cfg.text ?? '?',
     fill: new Fill({ color: cfg.color ?? defaultStyleConfig.color.fixed }),
     font: `normal ${fontSize}px ${fontFamily}`,
-    //add offset
+    offsetX: cfg?.textConfig?.offsetX ?? 0,
+    offsetY: cfg?.textConfig?.offsetY ?? 0,
+    textAlign: cfg?.textConfig?.align ?? defaultStyleConfig.textConfig.align,
+    textBaseline: cfg?.textConfig?.baseline ?? defaultStyleConfig.textConfig.baseline,
   });
 };
 
