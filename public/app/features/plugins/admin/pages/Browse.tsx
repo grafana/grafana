@@ -69,7 +69,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
       <Page.Contents>
         <PluginPage>
           <HorizontalGroup wrap>
-            <SearchField value={query} onSearch={onSearch} />
+            <SearchField value={query} onSearch={onSearch} autoFocus />
             <HorizontalGroup wrap className={styles.actionBar}>
               {/* Filter by type */}
               <div>

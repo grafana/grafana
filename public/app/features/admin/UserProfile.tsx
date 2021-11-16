@@ -93,6 +93,7 @@ export function UserProfile({
                 locked={editLocked}
                 lockMessage={lockMessage}
                 onChange={onUserNameChange}
+                autoFocus
               />
               <UserProfileRow
                 label="Email"
@@ -179,6 +180,7 @@ interface UserProfileRowProps {
   lockMessage?: string;
   inputType?: string;
   onChange?: (value: string) => void;
+  autoFocus?: boolean;
 }
 
 interface UserProfileRowState {
@@ -194,6 +196,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     locked: false,
     lockMessage: '',
     inputType: 'text',
+    autoFocus: false,
   };
 
   state = {
@@ -247,7 +250,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
   };
 
   render() {
-    const { label, locked, lockMessage, inputType } = this.props;
+    const { label, locked, lockMessage, inputType, autoFocus } = this.props;
     const { value } = this.state;
     const labelClass = cx(
       'width-16',
@@ -276,6 +279,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
               onChange={this.onInputChange}
               ref={this.setInputElem}
               width={30}
+              autoFocus={autoFocus}
             />
           ) : (
             <span>{this.props.value}</span>

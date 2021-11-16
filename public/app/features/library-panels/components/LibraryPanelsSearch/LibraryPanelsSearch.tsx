@@ -65,6 +65,7 @@ export const LibraryPanelsSearch = ({
             onChange={onFilterChange}
             placeholder={'Search by name or description'}
             width={0}
+            autoFocus
           />
           <HorizontalGroup
             spacing="sm"

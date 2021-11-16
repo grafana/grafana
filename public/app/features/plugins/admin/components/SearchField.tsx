@@ -5,6 +5,7 @@ import { useDebounce } from 'react-use';
 interface Props {
   value?: string;
   onSearch: (value: string) => void;
+  autoFocus?: boolean;
 }
 
 // useDebounce has a bug which causes it to fire on first render. This wrapper prevents that.
@@ -26,7 +27,7 @@ const useDebounceWithoutFirstRender = (callBack: () => any, delay = 0, deps: Rea
   );
 };
 
-export const SearchField = ({ value, onSearch }: Props) => {
+export const SearchField = ({ value, onSearch, autoFocus = false }: Props) => {
   const [query, setQuery] = useState(value);
 
   useDebounceWithoutFirstRender(() => onSearch(query ?? ''), 500, [query]);
@@ -43,6 +44,7 @@ export const SearchField = ({ value, onSearch }: Props) => {
       onChange={(value) => {
         setQuery(value);
       }}
+      autoFocus={autoFocus}
       width={46}
     />
   );

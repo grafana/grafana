@@ -21,7 +21,7 @@ export default class PageActionBar extends PureComponent<Props> {
     return (
       <div className="page-action-bar">
         <div className="gf-form gf-form--grow">
-          <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder={placeholder} />
+          <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder={placeholder} autoFocus />
         </div>
         {linkButton && <LinkButton {...linkProps}>{linkButton.title}</LinkButton>}
       </div>

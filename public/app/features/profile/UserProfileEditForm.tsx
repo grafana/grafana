@@ -29,6 +29,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
                 placeholder="Name"
                 defaultValue={user?.name ?? ''}
                 suffix={<InputSuffix />}
+                autoFocus
               />
             </Field>
             <Field label="Email" invalid={!!errors.email} error="Email is required" disabled={disableLoginForm}>
