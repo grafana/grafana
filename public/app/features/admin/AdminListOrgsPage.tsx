@@ -22,7 +22,7 @@ const getErrorMessage = (error: any) => {
   if (error != null && error.data != null && error.data.message != null) {
     return error.data.message;
   }
-  return;
+  return 'An unexpected error happened.';
 };
 
 export const AdminListOrgsPages: FC = () => {
