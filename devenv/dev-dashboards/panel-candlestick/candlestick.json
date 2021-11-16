@@ -144,7 +144,7 @@
         },
         "id": 2,
         "options": {
-          "colorStrategy": "intra",
+          "colorStrategy": "open-close",
           "colors": {
             "down": "red",
             "up": "green"
@@ -155,8 +155,8 @@
             "displayMode": "list",
             "placement": "bottom"
           },
-          "mode": "pricevolume",
-          "priceStyle": "candles"
+          "mode": "candles+volume",
+          "candleStyle": "candles"
         },
         "targets": [
           {
@@ -166,7 +166,7 @@
           }
         ],
         "title": "Price & Volume",
-        "type": "market-trend"
+        "type": "candlestick"
       },
       {
         "fieldConfig": {
@@ -227,7 +227,7 @@
         },
         "id": 7,
         "options": {
-          "colorStrategy": "inter",
+          "colorStrategy": "close-close",
           "colors": {
             "down": "red",
             "up": "green"
@@ -238,8 +238,8 @@
             "displayMode": "list",
             "placement": "bottom"
           },
-          "mode": "price",
-          "priceStyle": "candles"
+          "mode": "candles",
+          "candleStyle": "candles"
         },
         "targets": [
           {
@@ -265,7 +265,7 @@
             }
           }
         ],
-        "type": "market-trend"
+        "type": "candlestick"
       },
       {
         "fieldConfig": {
@@ -326,7 +326,7 @@
         },
         "id": 6,
         "options": {
-          "colorStrategy": "intra",
+          "colorStrategy": "open-close",
           "colors": {
             "down": "red",
             "up": "blue"
@@ -337,8 +337,8 @@
             "displayMode": "list",
             "placement": "bottom"
           },
-          "mode": "price",
-          "priceStyle": "ohlcbars"
+          "mode": "candles",
+          "candleStyle": "ohlcbars"
         },
         "targets": [
           {
@@ -364,7 +364,7 @@
             }
           }
         ],
-        "type": "market-trend"
+        "type": "candlestick"
       },
       {
         "fieldConfig": {
@@ -458,7 +458,7 @@
         },
         "id": 4,
         "options": {
-          "colorStrategy": "intra",
+          "colorStrategy": "open-close",
           "colors": {
             "down": "red",
             "up": "yellow"
@@ -470,7 +470,7 @@
             "placement": "bottom"
           },
           "mode": "volume",
-          "priceStyle": "candles"
+          "candleStyle": "candles"
         },
         "targets": [
           {
@@ -495,7 +495,7 @@
             }
           }
         ],
-        "type": "market-trend"
+        "type": "candlestick"
       }
     ],
     "refresh": false,
@@ -515,7 +515,7 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Market Trend",
+    "title": "Candlestick",
     "uid": "MP-Di9F7k",
     "version": 7,
     "weekStart": ""

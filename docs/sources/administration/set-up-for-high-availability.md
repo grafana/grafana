@@ -26,7 +26,7 @@ Grafana will now persist all long term data in the database. How to configure th
 
 Grafana 8 Alerts provides a new highly-available model under the hood. It preserves the previous semantics by executing all alerts on every server and notifications are sent only once per alert. There is no support for load distribution between servers at this time.
 
-For configuration, [follow the guide]({{ relref "../alerting/unified-alerting/high-availability.md" >}}).
+For configuration, [follow the guide]({{< relref "../alerting/unified-alerting/high-availability.md" >}}).
 
 **Legacy dashboard alerts**
 

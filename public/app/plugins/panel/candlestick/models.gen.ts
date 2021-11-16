@@ -7,13 +7,13 @@ import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
 
 export const modelVersion = Object.freeze([1, 0]);
 
-export enum MarketTrendMode {
-  Price = 'price',
+export enum VizDisplayMode {
+  CandlesVolume = 'candles+volume',
+  Candles = 'candles',
   Volume = 'volume',
-  PriceVolume = 'pricevolume',
 }
 
-export enum PriceStyle {
+export enum CandleStyle {
   Candles = 'candles',
   OHLCBars = 'ohlcbars',
 }
@@ -21,10 +21,10 @@ export enum PriceStyle {
 export enum ColorStrategy {
   // up/down color depends on current close vs current open
   // filled always
-  Intra = 'intra',
+  OpenClose = 'open-close',
   // up/down color depends on current close vs prior close
   // filled/hollow depends on current close vs current open
-  Inter = 'inter',
+  CloseClose = 'close-close',
 }
 
 export interface CandlestickFieldMap {
@@ -35,30 +35,30 @@ export interface CandlestickFieldMap {
   volume?: string;
 }
 
-export interface MarketTrendColors {
+export interface CandlestickColors {
   up: string;
   down: string;
   flat: string;
 }
 
-export const defaultColors: MarketTrendColors = {
+export const defaultColors: CandlestickColors = {
   up: 'green',
   down: 'red',
   flat: 'gray',
 };
 
-export interface MarketOptions extends OptionsWithLegend {
-  mode: MarketTrendMode;
-  priceStyle: PriceStyle;
+export interface CandlestickOptions extends OptionsWithLegend {
+  mode: VizDisplayMode;
+  candleStyle: CandleStyle;
   colorStrategy: ColorStrategy;
   fields: CandlestickFieldMap;
-  colors: MarketTrendColors;
+  colors: CandlestickColors;
 }
 
-export const defaultPanelOptions: MarketOptions = {
-  mode: MarketTrendMode.PriceVolume,
-  priceStyle: PriceStyle.Candles,
-  colorStrategy: ColorStrategy.Intra,
+export const defaultPanelOptions: CandlestickOptions = {
+  mode: VizDisplayMode.CandlesVolume,
+  candleStyle: CandleStyle.Candles,
+  colorStrategy: ColorStrategy.OpenClose,
   colors: defaultColors,
   fields: {},
   legend: {

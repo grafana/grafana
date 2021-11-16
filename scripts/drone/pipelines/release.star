@@ -1,5 +1,6 @@
 load(
     'scripts/drone/steps/lib.star',
+    'lint_drone_step',
     'test_release_ver',
     'build_image',
     'publish_image',
@@ -82,6 +83,7 @@ def get_steps(edition, ver_mode):
         tries = 5
 
     steps = [
+        lint_drone_step(),
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition=edition),
