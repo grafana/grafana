@@ -1,10 +1,11 @@
-import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import {
   Button,
   Checkbox,
   CustomScrollbar,
   HorizontalGroup,
+  Portal,
   RadioButtonGroup,
   Tooltip,
   useStyles2,
@@ -55,6 +56,7 @@ export const RolePickerMenu = ({
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [openedMenuGroup, setOpenedMenuGroup] = useState('');
   const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
+  const subMenuNode = useRef<HTMLDivElement | null>(null);
 
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -166,6 +168,23 @@ export const RolePickerMenu = ({
     }
   };
 
+  const onOpenSubMenu = (value: string) => {
+    setOpenedMenuGroup(value);
+    setShowSubMenu(true);
+    const group = optionGroups.find((g) => {
+      return g.value === value;
+    });
+    if (group) {
+      setSubMenuOptions(group.options);
+    }
+  };
+
+  const onCloseSubMenu = (value: string) => {
+    setShowSubMenu(false);
+    setOpenedMenuGroup('');
+    setSubMenuOptions([]);
+  };
+
   const onSelectedBuiltinRoleChange = (newRole: OrgRole) => {
     setSelectedBuiltInRole(newRole);
   };
@@ -197,7 +216,7 @@ export const RolePickerMenu = ({
   return (
     <div className={cx(styles.menu, customStyles.menuWrapper)}>
       <div className={customStyles.menu} aria-label="Role picker menu">
-        <CustomScrollbar autoHide={false} autoHeightMax="300px" hideHorizontalTrack>
+        <CustomScrollbar autoHide={false} autoHeightMax="300px" hideHorizontalTrack hideVerticalTrack>
           <div className={customStyles.menuSection}>
             <div className={customStyles.groupHeader}>Built-in roles</div>
             <RadioButtonGroup
@@ -220,7 +239,20 @@ export const RolePickerMenu = ({
                     partiallySelected={groupPartiallySelected(option.value)}
                     onChange={onGroupChange}
                     onClick={onMenuGroupClick}
-                  />
+                    onOpenSubMenu={onOpenSubMenu}
+                    onCloseSubMenu={onCloseSubMenu}
+                    root={subMenuNode?.current!}
+                    isFocused={showSubMenu && openedMenuGroup === option.value}
+                  >
+                    {showSubMenu && openedMenuGroup === option.value ? (
+                      <RolePickerSubMenu
+                        options={subMenuOptions}
+                        selectedOptions={selectedOptions}
+                        onSelect={onChange}
+                        onClear={onClearSubMenu}
+                      />
+                    ) : undefined}
+                  </RoleMenuGroupOption>
                 ))}
               </div>
             </div>
@@ -269,16 +301,7 @@ export const RolePickerMenu = ({
           </HorizontalGroup>
         </div>
       </div>
-      {showSubMenu ? (
-        <RolePickerSubMenu
-          options={subMenuOptions}
-          selectedOptions={selectedOptions}
-          onSelect={onChange}
-          onClear={onClearSubMenu}
-        />
-      ) : (
-        <div></div>
-      )}
+      <div ref={subMenuNode}></div>
     </div>
   );
 };
@@ -399,56 +422,98 @@ interface RoleMenuGroupsOptionProps<T> {
   data: SelectableValue<string>;
   onChange: (value: string) => void;
   onClick?: (value: string) => void;
+  onOpenSubMenu?: (value: string) => void;
+  onCloseSubMenu?: (value: string) => void;
   isSelected?: boolean;
   partiallySelected?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
+  children?: JSX.Element;
+  root?: HTMLElement;
 }
 
 export const RoleMenuGroupOption = React.forwardRef<
   HTMLDivElement,
   React.PropsWithChildren<RoleMenuGroupsOptionProps<any>>
->(({ data, isFocused, isSelected, partiallySelected, disabled, onChange, onClick }, ref) => {
-  const theme = useTheme2();
-  const styles = getSelectStyles(theme);
-  const customStyles = useStyles2(getStyles);
+>(
+  (
+    {
+      data,
+      isFocused,
+      isSelected,
+      partiallySelected,
+      disabled,
+      onChange,
+      onClick,
+      onOpenSubMenu,
+      onCloseSubMenu,
+      children,
+      root,
+    },
+    ref
+  ) => {
+    const theme = useTheme2();
+    const styles = getSelectStyles(theme);
+    const customStyles = useStyles2(getStyles);
 
-  const wrapperClassName = cx(
-    styles.option,
-    isFocused && styles.optionFocused,
-    disabled && customStyles.menuOptionDisabled
-  );
+    const wrapperClassName = cx(
+      styles.option,
+      isFocused && styles.optionFocused,
+      disabled && customStyles.menuOptionDisabled
+    );
 
-  const onChangeInternal = (event: FormEvent<HTMLElement>) => {
-    if (disabled) {
-      return;
-    }
-    if (data.value) {
-      onChange(data.value);
-    }
-  };
+    const onChangeInternal = (event: FormEvent<HTMLElement>) => {
+      if (disabled) {
+        return;
+      }
+      if (data.value) {
+        onChange(data.value);
+      }
+    };
 
-  const onClickInternal = (event: FormEvent<HTMLElement>) => {
-    if (onClick) {
-      onClick(data.value!);
-    }
-  };
+    const onClickInternal = (event: FormEvent<HTMLElement>) => {
+      if (onClick) {
+        onClick(data.value!);
+      }
+    };
 
-  return (
-    <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onClickInternal}>
-      <Checkbox
-        value={isSelected}
-        className={cx(customStyles.menuOptionCheckbox, { [customStyles.checkboxPartiallyChecked]: partiallySelected })}
-        onChange={onChangeInternal}
-        disabled={disabled}
-      />
-      <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
-        <span>{data.displayName || data.name}</span>
-        <span className={customStyles.menuOptionExpand}></span>
+    const onMouseEnter = () => {
+      if (onOpenSubMenu) {
+        onOpenSubMenu(data.value!);
+      }
+    };
+
+    const onMouseLeave = () => {
+      if (onCloseSubMenu) {
+        onCloseSubMenu(data.value!);
+      }
+    };
+
+    return (
+      <div onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onClickInternal}>
+          <Checkbox
+            value={isSelected}
+            className={cx(customStyles.menuOptionCheckbox, {
+              [customStyles.checkboxPartiallyChecked]: partiallySelected,
+            })}
+            onChange={onChangeInternal}
+            disabled={disabled}
+          />
+          <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
+            <span>{data.displayName || data.name}</span>
+            <span className={customStyles.menuOptionExpand}></span>
+          </div>
+          {root && children && (
+            <Portal className={customStyles.subMenuPortal} root={root}>
+              {children}
+            </Portal>
+          )}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 RoleMenuGroupOption.displayName = 'RoleMenuGroupOption';
 
@@ -481,6 +546,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     subMenu: css`
+      height: 100%;
       min-width: 260px;
       display: flex;
       flex-direction: column;
@@ -535,6 +601,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     builtInRoleSelector: css`
       margin: ${theme.spacing(1, 1.25, 1, 1)};
+    `,
+    subMenuPortal: css`
+      height: 100%;
+      > div {
+        height: 100%;
+      }
     `,
     subMenuButtonRow: css`
       background-color: ${theme.colors.background.primary};
