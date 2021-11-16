@@ -157,7 +157,7 @@ Your license is controlled by the following rules:
 
   As the license expiration date approaches, you will see a banner in Grafana that encourages you to renew. To learn about how to renew your license and what happens in Grafana when a license expires, refer to [License expiration](https://grafana.com/docs/grafana/latest/enterprise/license/license-expiration/).
 
-- **Grafana License URL:** Your license does not work with an instance of Grafana with a different root URL.
+**Grafana License URL:** Your license does not work with an instance of Grafana with a different root URL.
 
   The License URL is the root URL of your Grafana instance.
 
