@@ -1,16 +1,9 @@
 import { config, getBackendSrv, getGrafanaLiveSrv, setGrafanaLiveSrv } from '@grafana/runtime';
-import { registerLiveFeatures } from './features';
 import { GrafanaLiveService } from './live';
-import { GrafanaLiveChannelConfigService } from './channel-config';
-import { GrafanaLiveChannelConfigSrv } from './channel-config/types';
 import { contextSrv } from '../../core/services/context_srv';
 import { CentrifugeServiceWorkerProxy } from './centrifuge/serviceWorkerProxy';
 import { CentrifugeService } from './centrifuge/service';
 import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
-
-const grafanaLiveScopesSingleton = new GrafanaLiveChannelConfigService();
-
-export const getGrafanaLiveScopes = (): GrafanaLiveChannelConfigSrv => grafanaLiveScopesSingleton;
 
 export const sessionId =
   (window as any)?.grafanaBootData?.user?.id +
@@ -35,12 +28,10 @@ export function initGrafanaLive() {
 
   setGrafanaLiveSrv(
     new GrafanaLiveService({
-      scopes: getGrafanaLiveScopes(),
       centrifugeSrv,
       backendSrv: getBackendSrv(),
     })
   );
-  registerLiveFeatures();
 }
 
 export function getGrafanaLiveCentrifugeSrv() {

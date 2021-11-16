@@ -54,6 +54,7 @@ type UpdateInfo struct {
 type Client interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
+	backend.StreamHandler
 
 	// CallResource calls a plugin resource.
 	CallResource(pCtx backend.PluginContext, ctx *models.ReqContext, path string)

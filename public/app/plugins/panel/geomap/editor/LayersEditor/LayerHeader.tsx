@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { Icon, Input, FieldValidationMessage, useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-
-import { MapLayerState } from '../../types';
+import { GrafanaTheme, MapLayerOptions } from '@grafana/data';
 
 export interface LayerHeaderProps {
-  layer: MapLayerState<any>;
-  layers: Array<MapLayerState<any>>;
-  onChange: (layer: MapLayerState<any>) => void;
+  layer: MapLayerOptions<any>;
+  canRename: (v: string) => boolean;
+  onChange: (layer: MapLayerOptions<any>) => void;
 }
 
-export const LayerHeader = ({ layer, layers, onChange }: LayerHeaderProps) => {
+export const LayerHeader = ({ layer, canRename, onChange }: LayerHeaderProps) => {
   const styles = useStyles(getStyles);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -29,10 +27,10 @@ export const LayerHeader = ({ layer, layers, onChange }: LayerHeaderProps) => {
       return;
     }
 
-    if (layer.options.name !== newName) {
+    if (layer.name !== newName) {
       onChange({
         ...layer,
-        options: { ...layer.options, name: newName },
+        name: newName,
       });
     }
   };
@@ -45,11 +43,9 @@ export const LayerHeader = ({ layer, layers, onChange }: LayerHeaderProps) => {
       return;
     }
 
-    for (const otherLayer of layers) {
-      if (otherLayer.UID !== layer.UID && newName === otherLayer.options.name) {
-        setValidationError('Layer name already exists');
-        return;
-      }
+    if (!canRename(newName)) {
+      setValidationError('Layer name already exists');
+      return;
     }
 
     if (validationError) {
@@ -81,7 +77,7 @@ export const LayerHeader = ({ layer, layers, onChange }: LayerHeaderProps) => {
             onClick={onEditLayer}
             data-testid="layer-name-div"
           >
-            <span className={styles.layerName}>{layer.options.name}</span>
+            <span className={styles.layerName}>{layer.name}</span>
             <Icon name="pen" className={styles.layerEditIcon} size="sm" />
           </button>
         )}
@@ -90,7 +86,7 @@ export const LayerHeader = ({ layer, layers, onChange }: LayerHeaderProps) => {
           <>
             <Input
               type="text"
-              defaultValue={layer.options.name}
+              defaultValue={layer.name}
               onBlur={onEditLayerBlur}
               autoFocus
               onKeyDown={onKeyDown}
