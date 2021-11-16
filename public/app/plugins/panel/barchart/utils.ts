@@ -96,6 +96,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     text,
     showValue,
     legend,
+    xTime: frame.fields[0].type === FieldType.time,
   };
 
   const config = getConfig(opts, theme);
@@ -284,14 +285,21 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLengt
 /** @internal */
 export function preparePlotFrame(data: DataFrame[]) {
   const firstFrame = data[0];
-  const firstString = firstFrame.fields.find((f) => f.type === FieldType.string);
 
-  if (!firstString) {
-    throw new Error('No string field in DF');
+  // find first string field (x labels)
+  let xField = firstFrame.fields.find((f) => f.type === FieldType.string);
+
+  if (!xField) {
+    // fall back to first time field
+    xField = firstFrame.fields.find((f) => f.type === FieldType.time);
+
+    if (!xField) {
+      throw new Error('No string or time fields found');
+    }
   }
 
   const resultFrame = new MutableDataFrame();
-  resultFrame.addField(firstString);
+  resultFrame.addField(xField);
 
   for (const f of firstFrame.fields) {
     if (f.type === FieldType.number) {

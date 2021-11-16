@@ -49,13 +49,15 @@ export interface BarsOptions {
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
   legend?: VizLegendOptions;
+  // can skip x ticks (e.g. for time)
+  xTime?: boolean;
 }
 
 /**
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri, xDir: dir, rawValue, getColor, formatValue, showValue } = opts;
+  const { xOri, xDir: dir, rawValue, getColor, formatValue, showValue, xTime = false } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
@@ -81,19 +83,34 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
     let splits: number[] = [];
 
-    distribute(u.data[0].length, groupWidth, groupDistr, null, (di, leftPct, widPct) => {
+    let dataLen = u.data[0].length;
+
+    // hardcoded minimum spacing between x ticks
+    let minSpace = 100;
+
+    let cssDim = dim / devicePixelRatio;
+    let maxTicks = Math.floor(cssDim / minSpace);
+
+    let skipMod = dataLen < maxTicks ? 0 : Math.ceil(dataLen / maxTicks);
+
+    distribute(dataLen, groupWidth, groupDistr, null, (di, leftPct, widPct) => {
       let groupLftPx = (dim * leftPct) / devicePixelRatio;
       let groupWidPx = (dim * widPct) / devicePixelRatio;
 
       let groupCenterPx = groupLftPx + groupWidPx / 2;
 
-      splits.push(u.posToVal(groupCenterPx, 'x'));
+      let shouldSkip = xTime && di % skipMod > 0;
+
+      // the splits array is % offsets (0..1) of the x dimension
+      // -1 is a temp reserved magic number used here indicate a skip and not upset TS
+      // we need to push all splits to maintain ordinal positions with u.data[0] for value lookup during xValues formatting below
+      splits.push(shouldSkip ? -1 : u.posToVal(groupCenterPx, 'x'));
     });
 
     return _dir === 1 ? splits : splits.reverse();
   };
 
-  const xValues: Axis.Values = (u) => u.data[0].map((x) => formatValue(0, x));
+  const xValues: Axis.Values = (u, splits) => splits.map((s, i) => (s === -1 ? null : formatValue(0, u.data[0][i])));
 
   let distrTwo = (groupCount: number, barCount: number) => {
     let out = Array.from({ length: barCount }, () => ({
@@ -218,7 +235,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       for (let i = 1; i < u.data.length; i++) {
         let colors = u.data[i].map((value, valueIdx) => {
           if (value != null) {
-            console.log(value, valueIdx);
             return getColor!(i, valueIdx, value);
           }
 
