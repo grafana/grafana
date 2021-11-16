@@ -134,7 +134,7 @@ For example, if your current license includes 60 Viewers and 40 Editor/Admins, t
 
 Before you upgrade to Grafana 8.3, ensure that the total number of active users in Grafana does not exceed the number of users in your combined license. If it does, then new users cannot sign in to Grafana 8.3 until the active user count returns below the licensed limit.
 
-## How to determine your current license type
+## Determining your current license type
 
 You can identify your license type in Grafana 8.3 and higher. If you are running Grafana 8.2 or older, refer to your contract to determine your license type.
 
