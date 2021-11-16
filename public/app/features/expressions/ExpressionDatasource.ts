@@ -1,8 +1,15 @@
-import { DataSourceInstanceSettings, DataSourcePluginMeta, PluginType } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  DataSourcePluginMeta,
+  PluginType,
+} from '@grafana/data';
 import { ExpressionQuery, ExpressionQueryType } from './types';
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { Observable, from, mergeMap } from 'rxjs';
 
 /**
  * This is a singleton instance that just pretends to be a DataSource
@@ -14,6 +21,23 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 
   getCollapsedText(query: ExpressionQuery) {
     return `Expression: ${query.type}`;
+  }
+
+  query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
+    let targets = request.targets.map(
+      async (query: ExpressionQuery): Promise<ExpressionQuery> => {
+        const ds = await getDataSourceSrv().get(query.datasource);
+
+        if (!ds.interpolateVariablesInQueries) {
+          return query;
+        }
+
+        return ds?.interpolateVariablesInQueries([query], {})[0] as ExpressionQuery;
+      }
+    );
+
+    let sub = from(Promise.all(targets));
+    return sub.pipe(mergeMap((t) => super.query({ ...request, targets: t })));
   }
 
   newQuery(query?: Partial<ExpressionQuery>): ExpressionQuery {
