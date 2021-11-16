@@ -2,7 +2,7 @@ import {
   ArrayVector,
   DataFrame,
   DataFrameJSON,
-  DataQuery,
+  DataSourceApi,
   Field,
   FieldType,
   getDefaultRelativeTimeRange,
@@ -189,7 +189,7 @@ describe('AlertingQueryRunner', () => {
       mockBackendSrv({
         fetch: () => throwError(new Error("shouldn't happen")),
       }),
-      mockDataSourceSrv(() => false)
+      mockDataSourceSrv({ filterQuery: () => false })
     );
 
     const data = runner.get();
@@ -218,12 +218,9 @@ const mockBackendSrv = ({ fetch }: MockBackendSrvConfig): BackendSrv => {
   } as unknown) as BackendSrv;
 };
 
-const mockDataSourceSrv = (filterQuery: (query: DataQuery) => boolean = () => true) => {
+const mockDataSourceSrv = (dsApi?: Partial<DataSourceApi>) => {
   return ({
-    get: () =>
-      Promise.resolve({
-        filterQuery,
-      }),
+    get: () => Promise.resolve(dsApi ?? {}),
   } as unknown) as DataSourceSrv;
 };
 
