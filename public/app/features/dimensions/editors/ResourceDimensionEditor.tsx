@@ -63,6 +63,10 @@ export const ResourceDimensionEditor: FC<
     [onChange, value]
   );
 
+  const onClear = () => {
+    onChange({ mode: ResourceDimensionMode.Fixed, fixed: '' });
+  };
+
   const openModal = useCallback(() => {
     setOpen(true);
   }, []);
@@ -109,12 +113,12 @@ export const ResourceDimensionEditor: FC<
         <InlineFieldRow>
           <InlineField label={null} grow>
             <Input
-              value={niceName(value?.fixed)}
-              placeholder="Resource URL"
+              value={niceName(value?.fixed) ?? ''}
+              placeholder="Select a symbol"
               readOnly={true}
               onClick={openModal}
               prefix={srcPath && <SVG src={srcPath} className={styles.icon} />}
-              suffix={<Button icon="ellipsis-h" variant="secondary" fill="text" size="sm" onClick={openModal} />}
+              suffix={<Button icon="trash-alt" variant="secondary" fill="text" size="sm" onClick={onClear} />}
             />
           </InlineField>
         </InlineFieldRow>
