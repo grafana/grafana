@@ -17,10 +17,9 @@ import (
 )
 
 type SecretsService struct {
-	store               secrets.Store
-	kmsProvidersService kmsproviders.Service
-	enc                 encryption.Internal
-	settings            setting.Provider
+	store    secrets.Store
+	enc      encryption.Internal
+	settings setting.Provider
 
 	currentProvider string
 	providers       map[string]secrets.Provider
