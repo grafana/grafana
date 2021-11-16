@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSeriesSort(t *testing.T) {
@@ -302,6 +303,44 @@ func TestSeriesFromFrame(t *testing.T) {
 			if err == nil {
 				tt.Is(t, s, tt.Series)
 			}
+		})
+	}
+}
+
+func TestSeriesName(t *testing.T) {
+	tests := []struct {
+		name               string
+		frame              *data.Frame
+		expectedSeriesName string
+	}{
+		{
+			name: "when the frame got a name this name should be used",
+			frame: &data.Frame{
+				Name: "test",
+				Fields: []*data.Field{
+					data.NewField("time", nil, []time.Time{}),
+					data.NewField("value", nil, []float64{}),
+				},
+			},
+			expectedSeriesName: "test",
+		},
+		{
+			name: "when a frame got no name the name of the value column should be used",
+			frame: &data.Frame{
+				Name: "",
+				Fields: []*data.Field{
+					data.NewField("time", nil, []time.Time{}),
+					data.NewField("value", nil, []float64{}),
+				},
+			},
+			expectedSeriesName: "value",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s, err := SeriesFromFrame(test.frame)
+			require.NoError(t, err)
+			require.Equal(t, test.expectedSeriesName, s.GetName())
 		})
 	}
 }

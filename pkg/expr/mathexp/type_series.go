@@ -118,6 +118,11 @@ FIELDS:
 	frame.Fields = fields
 	s.Frame = frame
 
+	// We use the frame name as series name if the frame name is set
+	if s.Frame.Name != "" {
+		s.Frame.Fields[seriesTypeValIdx].Name = s.Frame.Name
+	}
+
 	return s, nil
 }
 
