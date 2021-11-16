@@ -110,7 +110,7 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 			return err
 		}
 
-		if _, err := sess.Table(s.tableName).Update(toUpdate); err != nil {
+		if _, err := sess.Table(s.tableName).ID(row.Id).Update(toUpdate); err != nil {
 			return err
 		}
 	}
@@ -167,7 +167,7 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 			return err
 		}
 
-		if _, err := sess.Table("alert_configuration").Update(&result); err != nil {
+		if _, err := sess.Table("alert_configuration").ID(result.Id).Update(&result); err != nil {
 			return err
 		}
 	}
