@@ -32,7 +32,7 @@ Your Grafana license includes a maximum number of Viewer and Editor/Admin active
 - Grafana applies sign-in restrictions separately for Viewers and Editor/Admins. If your Grafana license reaches its limit of active Viewers but not its limit of active Editor/Admins, new Editors and Admins can still sign in.
 - The number of dashboards that a user can view or edit, and the number of organizations that they can access does not affect the active user count. A user with editor permissions for many dashboards across many different organizations counts as one editor.
 - A license limit banner appears to administrators when Grafana reaches its active user limit. editors and viewers do not see the banner.
-  Refer to [Optimize your tiered license](#optimize-your-tiered-license) for how to change user roles to make better use of your licenses.
+  To change user roles to make better use of your licenses, refer to [Optimize your tiered license](#optimize-your-tiered-license).
 
 ### Permission domains
 
