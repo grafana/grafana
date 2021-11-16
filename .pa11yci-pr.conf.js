@@ -11,13 +11,13 @@ var config = {
   urls: [
     {
       url: '${HOST}/login',
-      wait: 1000,
+      wait: 500,
       rootElement: '.main-view',
       threshold: 12,
     },
     {
       url: '${HOST}/login',
-      wait: 1000,
+      wait: 500,
       actions: [
         "wait for element input[name='user'] to be added",
         "set field input[name='user'] to admin",
