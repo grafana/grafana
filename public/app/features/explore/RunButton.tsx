@@ -15,16 +15,16 @@ export type Props = {
 export function RunButton(props: Props) {
   const { isSmall, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
   const intervals = getTimeSrv().getValidIntervals(defaultIntervals);
-  let text: string | undefined;
-  let minWidth: string | undefined = '35px'; // When icon only displayed
+  let text: string | undefined = loading ? 'Cancel' : 'Run query';
+  let width = '108px';
 
   if (isLive) {
     return null;
   }
 
-  if (!isSmall) {
-    text = loading ? 'Cancel' : 'Run query';
-    minWidth = '117px';
+  if (isSmall) {
+    text = undefined;
+    width = '35px';
   }
 
   return (
@@ -38,7 +38,7 @@ export function RunButton(props: Props) {
       onRefresh={() => onRun(loading)}
       noIntervalPicker={!showDropdown}
       primary={true}
-      minWidth={minWidth}
+      width={width}
     />
   );
 }

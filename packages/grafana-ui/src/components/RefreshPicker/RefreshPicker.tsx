@@ -55,16 +55,13 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 
   render() {
-    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, minWidth } = this.props;
+    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, width } = this.props;
 
     const currentValue = value || '';
     const variant = this.getVariant();
     const options = intervalsToOptions({ intervals });
     const option = options.find(({ value }) => value === currentValue);
     let selectedValue = option || RefreshPicker.offOption;
-    let style = {
-      minWidth: minWidth,
-    };
 
     if (selectedValue.label === RefreshPicker.offOption.label) {
       selectedValue = { value: '' };
@@ -77,7 +74,7 @@ export class RefreshPicker extends PureComponent<Props> {
           onClick={onRefresh}
           variant={variant}
           icon={isLoading ? 'fa fa-spinner' : 'sync'}
-          style={style}
+          style={width ? { width } : undefined}
           data-testid={selectors.components.RefreshPicker.runButtonV2}
         >
           {text}
