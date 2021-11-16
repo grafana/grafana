@@ -20,7 +20,6 @@ export interface Props {
   text?: string;
   noIntervalPicker?: boolean;
   width?: string;
-  minWidth?: string;
   primary?: boolean;
 }
 
