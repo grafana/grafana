@@ -19,6 +19,15 @@ var (
 	logger = log.New("expr")
 )
 
+type QueryError struct {
+	RefID string
+	Err   error
+}
+
+func (e QueryError) Error() string {
+	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
+}
+
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
@@ -240,7 +249,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 	vals := make([]mathexp.Value, 0)
 	for refID, qr := range resp.Responses {
 		if qr.Error != nil {
-			return mathexp.Results{}, fmt.Errorf("failed to execute query %v: %w", refID, qr.Error)
+			return mathexp.Results{}, QueryError{RefID: refID, Err: qr.Error}
 		}
 
 		if len(qr.Frames) == 1 {
