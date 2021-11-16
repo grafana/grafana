@@ -25,7 +25,7 @@ For example, your license might include 300 Viewers and 50 Editors/Admins. Altho
 
 ### Active users limit
 
-Your Grafana license includes a maximum number of Viewer and Editor/Admin active users. For example, your license can include a maximum of 500 Viewers and 100 Editor/Admins.
+Your Grafana license includes a maximum number of _Viewer_ and _Editor/Admin_ active users. For example, your license can include a maximum of 500 Viewers and 100 Editor/Admins.
 
 - An _active user_ is a user who has signed in to Grafana within the last 30 days. This is a rolling window that is updated daily.
 - When you reach the number of maximum active Viewers or Editor/Admins, only currently active users can sign in; new users and non-active users cannot sign in when you reach the limit.
