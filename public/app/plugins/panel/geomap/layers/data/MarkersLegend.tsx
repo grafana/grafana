@@ -10,7 +10,6 @@ import { getMinMaxAndDelta } from '../../../../../../../packages/grafana-data/sr
 export interface MarkersLegendProps {
   color?: DimensionSupplier<string>;
   size?: DimensionSupplier<number>;
-  text?: DimensionSupplier<string>;
 }
 
 export function MarkersLegend(props: MarkersLegendProps) {

@@ -60,8 +60,8 @@ export const defaultStyleConfig = Object.freeze({
   },
   textConfig: {
     fontSize: 12,
-    align: TextAlignment.Center,
-    baseline: TextBaseline.Middle,
+    textAlign: TextAlignment.Center,
+    textBaseline: TextBaseline.Middle,
   },
 });
 
@@ -73,8 +73,8 @@ export interface TextStyleConfig {
   fontSize?: number;
   offsetX?: number;
   offsetY?: number;
-  align?: TextAlignment;
-  baseline?: TextBaseline;
+  textAlign?: TextAlignment;
+  textBaseline?: TextBaseline;
 }
 
 // Applying the config to real data gives the values

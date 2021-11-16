@@ -42,18 +42,15 @@ export function getFillColor(cfg: StyleConfigValues) {
 
 const textLabel = (cfg: StyleConfigValues) => {
   const fontFamily = config.theme2.typography.fontFamily;
-  const textConfig = { 
+  const textConfig = {
     ...defaultStyleConfig.textConfig,
     ...cfg.textConfig,
-   }
+  };
   return new Text({
     text: cfg.text ?? '?',
     fill: new Fill({ color: cfg.color ?? defaultStyleConfig.color.fixed }),
-    font: `normal ${fontSize}px ${fontFamily}`,
-    offsetX: cfg?.textConfig?.offsetX ?? 0,
-    offsetY: cfg?.textConfig?.offsetY ?? 0,
-    textAlign: cfg?.textConfig?.align ?? defaultStyleConfig.textConfig.align,
-    textBaseline: cfg?.textConfig?.baseline ?? defaultStyleConfig.textConfig.baseline,
+    font: `normal ${textConfig.fontSize}px ${fontFamily}`,
+    ...textConfig,
   });
 };
 
@@ -64,7 +61,7 @@ export const circleMarker = (cfg: StyleConfigValues) => {
       fill: getFillColor(cfg),
       radius: cfg.size ?? DEFAULT_SIZE,
     }),
-    text: !cfg?.text ? undefined : textLabel(cfg),
+    text: textLabel(cfg),
   });
 };
 
@@ -133,7 +130,7 @@ const makers: SymbolMaker[] = [
           rotation: Math.PI / 4,
           angle: 0,
         }),
-        text: !cfg?.text ? undefined : textLabel(cfg),
+        text: textLabel(cfg),
       });
     },
   },
@@ -152,7 +149,7 @@ const makers: SymbolMaker[] = [
           radius2: radius * 0.4,
           angle: 0,
         }),
-        text: !cfg?.text ? undefined : textLabel(cfg),
+        text: textLabel(cfg),
       });
     },
   },
@@ -170,7 +167,7 @@ const makers: SymbolMaker[] = [
           radius2: 0,
           angle: 0,
         }),
-        text: !cfg?.text ? undefined : textLabel(cfg),
+        text: textLabel(cfg),
       });
     },
   },
@@ -188,7 +185,7 @@ const makers: SymbolMaker[] = [
           radius2: 0,
           angle: Math.PI / 4,
         }),
-        text: !cfg?.text ? undefined : textLabel(cfg),
+        text: textLabel(cfg),
       });
     },
   },
@@ -230,7 +227,7 @@ export function getMarkerAsPath(shape?: string): string | undefined {
 }
 
 // Will prepare symbols as necessary
-export async function getMarkerMaker(symbol?: string, text?: string): Promise<StyleMaker> {
+export async function getMarkerMaker(symbol?: string): Promise<StyleMaker> {
   if (!symbol) {
     return circleMarker;
   }

@@ -79,7 +79,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     }
 
     const style = config.style ?? defaultStyleConfig;
-    const markerMaker = await getMarkerMaker(style.symbol?.fixed, style?.text?.fixed);
+    const markerMaker = await getMarkerMaker(style.symbol?.fixed);
 
     return {
       init: () => vectorLayer,
@@ -123,7 +123,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             legendProps.next({
               color: colorDim,
               size: sizeDim,
-              text: textDim,
             });
           }
           break; // Only the first frame for now!
@@ -202,9 +201,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           })
           .addRadio({
             name: 'Text align',
-            path: 'config.style.textConfig.align',
+            path: 'config.style.textConfig.textAlign',
             description: '',
-            defaultValue: defaultOptions.style.textConfig?.align,
+            defaultValue: defaultOptions.style.textConfig?.textAlign,
             settings: {
               options: [
                 { value: TextAlignment.Left, label: TextAlignment.Left },
@@ -215,9 +214,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           })
           .addRadio({
             name: 'Text baseline',
-            path: 'config.style.textConfig.baseline',
+            path: 'config.style.textConfig.textBaseline',
             description: '',
-            defaultValue: defaultOptions.style.textConfig?.baseline,
+            defaultValue: defaultOptions.style.textConfig?.textBaseline,
             settings: {
               options: [
                 { value: TextBaseline.Top, label: TextBaseline.Top },
