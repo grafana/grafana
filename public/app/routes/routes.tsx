@@ -155,18 +155,12 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org',
-      roles: () =>
-        contextSrv.evaluatePermission(() => ['Admin'], [
-          AccessControlAction.OrgsRead,
-          AccessControlAction.OrgsPreferencesRead,
-        ]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage')
       ),
     },
     {
       path: '/org/new',
-      roles: () => contextSrv.evaluatePermission(() => ['ServerAdmin'], [AccessControlAction.OrgsCreate]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "NewOrgPage" */ 'app/features/org/NewOrgPage')),
     },
     {
@@ -257,14 +251,12 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/orgs',
-      roles: () => contextSrv.evaluatePermission(() => ['ServerAdmin'], [AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminListOrgsPage" */ 'app/features/admin/AdminListOrgsPage')
       ),
     },
     {
       path: '/admin/orgs/edit/:id',
-      roles: () => contextSrv.evaluatePermission(() => ['ServerAdmin'], [AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
       ),
