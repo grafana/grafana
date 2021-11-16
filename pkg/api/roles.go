@@ -132,6 +132,31 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		{
 			Role: accesscontrol.RoleDTO{
 				Version:     2,
+				Name:        "fixed:current:org:writer",
+				Description: "Read current organization, its quotas, and its preferences. Write current organization and its preferences.",
+				Permissions: []accesscontrol.Permission{
+					{
+						Action: ActionOrgsRead,
+					},
+					{
+						Action: ActionOrgsQuotasRead,
+					},
+					{
+						Action: ActionOrgsPreferencesRead,
+					},
+					{
+						Action: ActionOrgsWrite,
+					},
+					{
+						Action: ActionOrgsPreferencesWrite,
+					},
+				},
+			},
+			Grants: []string{string(models.ROLE_ADMIN)},
+		},
+		{
+			Role: accesscontrol.RoleDTO{
+				Version:     2,
 				Name:        "fixed:orgs:writer",
 				Description: "Create, read, write, or delete an organization. Read or write an organization's quotas.",
 				Permissions: []accesscontrol.Permission{
@@ -153,7 +178,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 					},
 				},
 			},
-			Grants: []string{accesscontrol.RoleGrafanaAdmin, string(models.ROLE_ADMIN)},
+			Grants: []string{accesscontrol.RoleGrafanaAdmin},
 		},
 	}
 
