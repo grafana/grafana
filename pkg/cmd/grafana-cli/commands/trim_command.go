@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"bytes"
+	"encoding/json"
 	gerrors "errors"
 	"fmt"
 	"io"
@@ -45,8 +47,12 @@ func (cmd Command) trimResource(c utils.CommandLine) error {
 		return gerrors.New(errors.Details(err, nil))
 	}
 
-	b = out.Value.([]byte)
-	// mb, err := json.MarshalIndent()
-	fmt.Println(out.Value)
+	b = []byte(out.Value.(string))
+	var buf bytes.Buffer
+	err = json.Indent(&buf, b, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(buf.String())
 	return nil
 }
