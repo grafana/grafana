@@ -4,7 +4,7 @@ import Page from 'app/core/components/Page/Page';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { Alert, LinkButton } from '@grafana/ui';
-import { getBackendSrv } from '@grafana/runtime';
+import { FetchError, getBackendSrv } from '@grafana/runtime';
 import { AdminOrgsTable } from './AdminOrgsTable';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -22,6 +22,17 @@ const getOrgs = async () => {
     return await getBackendSrv().get('/api/orgs');
   }
   return [];
+};
+
+const renderError = (error: FetchError) => {
+  if (error.status === 403) {
+    return renderMissingOrgListRightsMessage();
+  }
+  return (
+    <Alert severity="error" title="Unexpected error">
+      An unexpected error happened. Please try again.
+    </Alert>
+  );
 };
 
 const renderMissingOrgListRightsMessage = () => {
@@ -54,8 +65,9 @@ export const AdminListOrgsPages: FC = () => {
             </LinkButton>
           </div>
           {!canListOrgs && renderMissingOrgListRightsMessage()}
+          {/* TODO double check this with frontend squad */}
+          {state.error && renderError((state.error as unknown) as FetchError)}
           {state.loading && 'Fetching organizations'}
-          {state.error}
           {state.value && (
             <AdminOrgsTable
               orgs={state.value}
