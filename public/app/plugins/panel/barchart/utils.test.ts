@@ -150,15 +150,15 @@ describe('BarChart utils', () => {
       expect(result.warn).toEqual('No data in response');
     });
 
-    it('will warn when there is no string field in the response', () => {
+    it('will warn when there is no string or time field', () => {
       const df = new MutableDataFrame({
         fields: [
-          { name: 'a', type: FieldType.time, values: [1, 2, 3, 4, 5] },
+          { name: 'a', type: FieldType.other, values: [1, 2, 3, 4, 5] },
           { name: 'value', values: [1, 2, 3, 4, 5] },
         ],
       });
       const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
-      expect(result.warn).toEqual('Bar charts requires a string field');
+      expect(result.warn).toEqual('Bar charts requires a string or time field');
       expect(result.display).toBeUndefined();
     });
 

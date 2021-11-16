@@ -359,52 +359,64 @@ export function prepareBarChartDisplayValues(
   }
 
   let stringField: Field | undefined = undefined;
+  let timeField: Field | undefined = undefined;
   let fields: Field[] = [];
   for (const field of frame.fields) {
-    if (field.type === FieldType.string) {
-      if (stringField) {
-        continue; // skip multiple strings
-      }
-      stringField = field;
-    } else if (field.type === FieldType.number) {
-      const copy = {
-        ...field,
-        state: {
-          ...field.state,
-          seriesIndex: fields.length, // off by one?
-        },
-        config: {
-          ...field.config,
-          custom: {
-            ...field.config.custom,
-            stacking: {
-              group: '_',
-              mode: options.stacking,
+    switch (field.type) {
+      case FieldType.string:
+        if (!stringField) {
+          stringField = field;
+        }
+        break;
+
+      case FieldType.time:
+        if (!timeField) {
+          timeField = field;
+        }
+        break;
+
+      case FieldType.number: {
+        const copy = {
+          ...field,
+          state: {
+            ...field.state,
+            seriesIndex: fields.length, // off by one?
+          },
+          config: {
+            ...field.config,
+            custom: {
+              ...field.config.custom,
+              stacking: {
+                group: '_',
+                mode: options.stacking,
+              },
             },
           },
-        },
-        values: new ArrayVector(
-          field.values.toArray().map((v) => {
-            if (!(Number.isFinite(v) || v == null)) {
-              return null;
-            }
-            return v;
-          })
-        ),
-      };
+          values: new ArrayVector(
+            field.values.toArray().map((v) => {
+              if (!(Number.isFinite(v) || v == null)) {
+                return null;
+              }
+              return v;
+            })
+          ),
+        };
 
-      if (options.stacking === StackingMode.Percent) {
-        copy.config.unit = 'percentunit';
-        copy.display = getDisplayProcessor({ field: copy, theme });
+        if (options.stacking === StackingMode.Percent) {
+          copy.config.unit = 'percentunit';
+          copy.display = getDisplayProcessor({ field: copy, theme });
+        }
+
+        fields.push(copy);
       }
-
-      fields.push(copy);
     }
   }
 
-  if (!stringField) {
+  const firstField = stringField || timeField;
+
+  if (!firstField) {
     return {
-      warn: 'Bar charts requires a string field',
+      warn: 'Bar charts requires a string or time field',
     } as BarChartDisplayValues;
   }
 
@@ -425,13 +437,13 @@ export function prepareBarChartDisplayValues(
   }
 
   // String field is first
-  fields.unshift(stringField);
+  fields.unshift(firstField);
 
   return {
     aligned: frame,
     display: {
       fields,
-      length: stringField.values.length,
+      length: firstField.values.length,
     },
   };
 }
