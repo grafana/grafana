@@ -17,6 +17,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// nolint: unused,deadcode
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.Runner) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
