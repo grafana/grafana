@@ -153,7 +153,7 @@ To determine if you have tiered pricing or combined pricing, complete the follow
 
 Your license is controlled by the following rules:
 
-- **License expiration date:** The license includes an expiration date, which is the date when a license becomes inactive.
+**License expiration date:** The license includes an expiration date, which is the date when a license becomes inactive.
 
   As the license expiration date approaches, you will see a banner in Grafana that encourages you to renew. To learn about how to renew your license and what happens in Grafana when a license expires, refer to [License expiration](https://grafana.com/docs/grafana/latest/enterprise/license/license-expiration/).
 
