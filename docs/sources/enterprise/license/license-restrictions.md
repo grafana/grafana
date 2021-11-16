@@ -36,7 +36,7 @@ Your Grafana license includes a maximum number of Viewer and Editor/Admin active
 
 ### Permission domains
 
-You can assign role permissions _globally_ and restrict access to a specific dashboard (or set of dashboards).
+You can assign role permissions _globally_ and restrict access to a specific dashboard or set of dashboards.
 
 **Organization permissions**: When you create a user, you select a role on the user details page. Your selection applies to all Grafana dashboards within the Organization. For example, a user with the Viewer role can see all dashboards, but cannot create or edit dashboards. For more information about user roles and permissions, refer to [Organization roles](https://grafana.com/docs/grafana/latest/permissions/organization_roles/).
 
