@@ -50,6 +50,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 		require.Equal(t, len(fakeRepo.inserted), 1)
 		require.Equal(t, fakeRepo.inserted[0].OrgId, int64(1))
 		require.Equal(t, fakeRepo.inserted[0].Access, models.DsAccess("proxy"))
+		require.Equal(t, fakeRepo.inserted[0].Name, "My datasource name")
+		require.Equal(t, fakeRepo.inserted[0].Uid, "P937719A77F4894D4")
 	})
 
 	t.Run("no datasource in database", func(t *testing.T) {
@@ -217,6 +219,15 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		validateDatasource(t, dsCfg)
 		validateDeleteDatasources(t, dsCfg)
+	})
+
+}
+
+func TestUIDFromNames(t *testing.T) {
+	t.Run("generate safe uid from name", func(t *testing.T) {
+		require.Equal(t, safeUIDFromName("Hello world"), "P7B502C3A1F48C860")
+		require.Equal(t, safeUIDFromName("Hello World"), "P0A4D55A8D778E502")
+		require.Equal(t, safeUIDFromName("AAA"), "P606EC6E9BD8A8FF2")
 	})
 }
 
