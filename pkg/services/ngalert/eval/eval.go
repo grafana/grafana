@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"runtime/debug"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -48,6 +49,9 @@ func (e *invalidEvalResultFormatError) Unwrap() error {
 // a condition.
 type ExecutionResults struct {
 	Error error
+
+	// NoData contains the DatasourceUID for RefIDs that returned no data.
+	NoData map[string]string
 
 	Results data.Frames
 }
@@ -165,17 +169,13 @@ type NumberValueCapture struct {
 }
 
 func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, exprService *expr.Service) ExecutionResults {
-	result := ExecutionResults{}
-
 	execResp, err := executeQueriesAndExpressions(ctx, c.Data, now, exprService)
-
 	if err != nil {
 		return ExecutionResults{Error: err}
 	}
 
 	// eval captures for the '__value_string__' annotation and the Value property of the API response.
 	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
-
 	captureVal := func(refID string, labels data.Labels, value *float64) {
 		captures = append(captures, NumberValueCapture{
 			Var:    refID,
@@ -184,7 +184,28 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, expr
 		})
 	}
 
+	// datasourceUIDsForRefIDs is a short-lived lookup table of RefID to DatasourceUID
+	// for efficient lookups of the DatasourceUID when a RefID returns no data
+	datasourceUIDsForRefIDs := make(map[string]string)
+	for _, next := range c.Data {
+		datasourceUIDsForRefIDs[next.RefID] = next.DatasourceUID
+	}
+	// datasourceExprUID is a special DatasourceUID for expressions
+	datasourceExprUID := strconv.FormatInt(expr.DatasourceID, 10)
+
+	var result ExecutionResults
 	for refID, res := range execResp.Responses {
+		if len(res.Frames) == 0 {
+			// to ensure that NoData is consistent with Results we do not initialize NoData
+			// unless there is at least one RefID that returned no data
+			if result.NoData == nil {
+				result.NoData = make(map[string]string)
+			}
+			if s, ok := datasourceUIDsForRefIDs[refID]; ok && s != datasourceExprUID {
+				result.NoData[refID] = s
+			}
+		}
+
 		// for each frame within each response, the response can contain several data types including time-series data.
 		// For now, we favour simplicity and only care about single scalar values.
 		for _, frame := range res.Frames {
@@ -281,10 +302,10 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		})
 	}
 
-	appendNoData := func(l data.Labels) {
+	appendNoData := func(labels data.Labels) {
 		evalResults = append(evalResults, Result{
 			State:              NoData,
-			Instance:           l,
+			Instance:           labels,
 			EvaluatedAt:        ts,
 			EvaluationDuration: time.Since(ts),
 		})
@@ -292,6 +313,17 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 
 	if execResults.Error != nil {
 		appendErrRes(execResults.Error)
+		return evalResults
+	}
+
+	if len(execResults.NoData) > 0 {
+		m := make(map[string]struct{})
+		for _, datasourceUID := range execResults.NoData {
+			if _, ok := m[datasourceUID]; !ok {
+				appendNoData(data.Labels{"datasource_uid": datasourceUID})
+				m[datasourceUID] = struct{}{}
+			}
+		}
 		return evalResults
 	}
 
