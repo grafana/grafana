@@ -2,7 +2,6 @@ package eval
 
 import (
 	"fmt"
-	"sort"
 	"testing"
 	"time"
 
@@ -321,11 +320,14 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 		require.Len(t, v, 2)
 		require.Equal(t, NoData, v[0].State)
 		require.Equal(t, NoData, v[1].State)
-		datasourceUIDs := []string{
-			v[0].Instance["datasource_uid"],
-			v[1].Instance["datasource_uid"],
+
+		datasourceUIDs := make([]string, 0, len(v))
+		for _, next := range v {
+			datasourceUID, ok := next.Instance["datasource_uid"]
+			require.True(t, ok)
+			require.NotEqual(t, "", datasourceUID)
+			datasourceUIDs = append(datasourceUIDs, datasourceUID)
 		}
-		sort.Strings(datasourceUIDs)
-		require.Equal(t, []string{"1", "2"}, datasourceUIDs)
+		require.ElementsMatch(t, []string{"1", "2"}, datasourceUIDs)
 	})
 }
