@@ -33,7 +33,6 @@ func TestService(t *testing.T) {
 
 	secretsService := manager.ProvideSecretsService(
 		fakes.NewFakeSecretsStore(),
-		bus.GetBus(),
 		ossencryption.ProvideService(),
 		setting.ProvideProvider(cfg),
 	)

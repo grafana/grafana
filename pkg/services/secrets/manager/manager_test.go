@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -165,7 +164,6 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 
 		svc := ProvideSecretsService(
 			database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
-			bus.New(),
 			ossencryption.ProvideService(),
 			settings,
 		)
@@ -194,7 +192,6 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 
 		svcEncrypt := ProvideSecretsService(
 			secretStore,
-			bus.New(),
 			ossencryption.ProvideService(),
 			settings,
 		)
@@ -210,7 +207,6 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		// to bypass the cache, we set up one more secrets service to test decrypting
 		svcDecrypt := ProvideSecretsService(
 			secretStore,
-			bus.New(),
 			ossencryption.ProvideService(),
 			settings,
 		)
