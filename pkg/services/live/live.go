@@ -518,7 +518,7 @@ func checkAllowedOrigin(origin string, originURL *url.URL, appURL *url.URL, orig
 	return false, nil
 }
 
-var clientConcurrency = 8
+var clientConcurrency = 12
 
 func (g *GrafanaLive) IsHA() bool {
 	return g.Cfg != nil && g.Cfg.LiveHAEngine != ""
