@@ -231,7 +231,7 @@ Where the following:
 
 The following legacy alerting actions are still supported:
 | Action | Distinguishing fields |
-| ------------------------- | --------------------------------------------------------------------- |
+| --------------------------------- | --------------------------------------------------------------------- |
 | Test alert rule | `{"action": "test", "resources": [{"type": "panel"}]}` |
 | Pause alert | `{"action": "pause", "resources": [{"type": "alert"}]}` |
 | Pause all alerts | `{"action": "pause-all"}` |
