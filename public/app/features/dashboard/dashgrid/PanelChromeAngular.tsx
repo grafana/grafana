@@ -8,12 +8,13 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { setPanelAngularComponent } from '../state/reducers';
+import { setPanelAngularComponent } from 'app/features/panel/state/reducers';
 import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PANEL_BORDER } from 'app/core/constants';
 import { isSoloRoute } from '../../../routes/utils';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 
 interface OwnProps {
   panel: PanelModel;
@@ -27,7 +28,7 @@ interface OwnProps {
 }
 
 interface ConnectedProps {
-  angularComponent?: AngularComponent | null;
+  angularComponent?: AngularComponent;
 }
 
 interface DispatchProps {
@@ -98,7 +99,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    this.cleanUpAngularPanel();
     this.subs.unsubscribe();
   }
 
@@ -106,7 +106,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     const { plugin, height, width, panel } = this.props;
 
     if (prevProps.plugin !== plugin) {
-      this.cleanUpAngularPanel();
       this.loadAngularPanel();
     }
 
@@ -154,19 +153,9 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     };
 
     setPanelAngularComponent({
-      panelId: panel.id,
+      key: panel.key,
       angularComponent: loader.load(this.element, this.scopeProps, template),
     });
-  }
-
-  cleanUpAngularPanel() {
-    const { angularComponent, setPanelAngularComponent, panel } = this.props;
-
-    if (angularComponent) {
-      angularComponent.destroy();
-    }
-
-    setPanelAngularComponent({ panelId: panel.id, angularComponent: null });
   }
 
   hasOverlayHeader() {
@@ -226,7 +215,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   return {
-    angularComponent: state.dashboard.panels[props.panel.id].angularComponent,
+    angularComponent: getPanelStateForModel(state, props.panel)?.angularComponent,
   };
 };
 

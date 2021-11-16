@@ -1,6 +1,7 @@
 load(
     'scripts/drone/steps/lib.star',
     'initialize_step',
+    'download_grabpl',
     'slack_step',
 )
 
@@ -11,6 +12,7 @@ def pipeline(
     is_downstream=False, install_deps=True,
     ):
     if platform != 'windows':
+        grabpl_step = [download_grabpl()]
         platform_conf = {
             'platform': {
                 'os': 'linux',
@@ -23,6 +25,7 @@ def pipeline(
             }
         }
     else:
+        grabpl_step = []
         platform_conf = {
             'platform': {
                 'os': 'windows',
@@ -37,7 +40,7 @@ def pipeline(
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': initialize_step(
+        'steps': grabpl_step + initialize_step(
             edition, platform, is_downstream=is_downstream, install_deps=install_deps, ver_mode=ver_mode,
         ) + steps,
         'depends_on': depends_on,

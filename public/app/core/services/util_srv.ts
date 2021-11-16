@@ -1,10 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import appEvents from 'app/core/app_events';
-
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 import { AngularModalProxy } from '../components/modals/AngularModalProxy';
 import { provideTheme } from '../utils/ConfigProvider';
 import {
@@ -16,6 +15,8 @@ import {
 } from '../../types/events';
 import { ConfirmModal, ConfirmModalProps } from '@grafana/ui';
 import { deprecationWarning, textUtil } from '@grafana/data';
+import { CopyPanelEvent } from '@grafana/runtime';
+import { copyPanel } from 'app/features/dashboard/utils/panel';
 
 export class UtilSrv {
   modalScope: any;
@@ -32,6 +33,7 @@ export class UtilSrv {
     appEvents.subscribe(HideModalEvent, this.hideModal.bind(this));
     appEvents.subscribe(ShowConfirmModalEvent, (e) => this.showConfirmModal(e.payload));
     appEvents.subscribe(ShowModalReactEvent, (e) => this.showModalReact(e.payload));
+    appEvents.subscribe(CopyPanelEvent, (e) => copyPanel(e.payload));
   }
 
   showModalReact(options: any) {

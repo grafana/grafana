@@ -20,12 +20,22 @@ export interface Props {
   width?: number;
   autoFocus?: boolean;
   onBlur?: () => void;
-  includeInternal?: boolean;
+  includeInternal?: boolean | InternalTimeZones[];
   disabled?: boolean;
+  inputId?: string;
 }
 
 export const TimeZonePicker: React.FC<Props> = (props) => {
-  const { onChange, width, autoFocus = false, onBlur, value, includeInternal = false, disabled = false } = props;
+  const {
+    onChange,
+    width,
+    autoFocus = false,
+    onBlur,
+    value,
+    includeInternal = false,
+    disabled = false,
+    inputId,
+  } = props;
   const groupedTimeZones = useTimeZones(includeInternal);
   const selected = useSelectedTimeZone(groupedTimeZones, value);
   const filterBySearchIndex = useFilterBySearchIndex();
@@ -43,6 +53,7 @@ export const TimeZonePicker: React.FC<Props> = (props) => {
 
   return (
     <Select
+      inputId={inputId}
       value={selected}
       placeholder="Type to search (country, city, abbreviation)"
       autoFocus={autoFocus}
@@ -63,7 +74,7 @@ interface SelectableZoneGroup extends SelectableValue<string> {
   options: SelectableZone[];
 }
 
-const useTimeZones = (includeInternal: boolean): SelectableZoneGroup[] => {
+const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): SelectableZoneGroup[] => {
   const now = Date.now();
 
   const timeZoneGroups = getTimeZoneGroups(includeInternal).map((group: GroupedTimeZones) => {

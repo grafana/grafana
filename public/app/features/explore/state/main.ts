@@ -9,7 +9,6 @@ import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
 import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
-import store from '../../../core/store';
 
 //
 // Actions and Payloads
@@ -23,12 +22,6 @@ export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
 export const localStorageFullAction = createAction('explore/localStorageFullAction');
 export const richHistoryLimitExceededAction = createAction('explore/richHistoryLimitExceededAction');
-
-/**
- * Stores new value of auto-load logs volume switch. Used only internally. changeAutoLogsVolume() is used to
- * update auto-load and load logs volume if it hasn't been loaded.
- */
-export const storeAutoLoadLogsVolumeAction = createAction<boolean>('explore/storeAutoLoadLogsVolumeAction');
 
 /**
  * Resets state for explore.
@@ -145,11 +138,8 @@ export const navigateToExplore = (
   return async (dispatch) => {
     const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
     const datasourceSrv = getDataSourceSrv();
-    const datasource = await datasourceSrv.get(panel.datasource);
     const path = await getExploreUrl({
       panel,
-      panelTargets: panel.targets,
-      panelDatasource: datasource,
       datasourceSrv,
       timeSrv: getTimeSrv(),
     });
@@ -163,8 +153,6 @@ export const navigateToExplore = (
   };
 };
 
-export const AUTO_LOAD_LOGS_VOLUME_SETTING_KEY = 'grafana.explore.logs.autoLoadLogsVolume';
-
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
@@ -176,7 +164,6 @@ export const initialExploreState: ExploreState = {
   richHistory: [],
   localStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
-  autoLoadLogsVolume: store.getBool(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, false),
 };
 
 /**
@@ -242,14 +229,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       richHistoryLimitExceededWarningShown: true,
-    };
-  }
-
-  if (storeAutoLoadLogsVolumeAction.match(action)) {
-    const autoLoadLogsVolume = action.payload;
-    return {
-      ...state,
-      autoLoadLogsVolume,
     };
   }
 

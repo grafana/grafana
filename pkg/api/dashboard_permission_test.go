@@ -160,6 +160,47 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			}, hs)
 		})
 
+		t.Run("When trying to add permissions with both a team and user", func(t *testing.T) {
+			origNewGuardian := guardian.New
+			t.Cleanup(func() {
+				guardian.New = origNewGuardian
+			})
+
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+				CanAdminValue:                    true,
+				CheckPermissionBeforeUpdateValue: true,
+			})
+
+			setUp := func() {
+				getDashboardQueryResult := models.NewDashboard("Dash")
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+					query.Result = getDashboardQueryResult
+					return nil
+				})
+			}
+
+			cmd := dtos.UpdateDashboardAclCommand{
+				Items: []dtos.DashboardAclUpdateItem{
+					{UserID: 1000, TeamID: 1, Permission: models.PERMISSION_ADMIN},
+				},
+			}
+
+			updateDashboardPermissionScenario(t, updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/dashboards/id/1/permissions",
+				routePattern: "/api/dashboards/id/:id/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					setUp()
+					callUpdateDashboardPermissions(t, sc)
+					assert.Equal(t, 400, sc.resp.Code)
+					respJSON, err := jsonMap(sc.resp.Body.Bytes())
+					require.NoError(t, err)
+					assert.Equal(t, models.ErrPermissionsWithUserAndTeamNotAllowed.Error(), respJSON["error"])
+				},
+			}, hs)
+		})
+
 		t.Run("When trying to update permissions with duplicate permissions", func(t *testing.T) {
 			origNewGuardian := guardian.New
 			t.Cleanup(func() {

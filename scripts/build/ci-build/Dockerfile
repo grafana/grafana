@@ -69,6 +69,11 @@ RUN cd /tmp/crosstool-ng-${CTNG}        && \
     echo 'CT_EXPERIMENTAL=y' >> .config && \
     echo 'CT_ALLOW_BUILD_AS_ROOT=y' >> .config && \
     echo 'CT_ALLOW_BUILD_AS_ROOT_SURE=y' >> .config && \
+    mkdir -p .build/tarballs && \
+    cd .build/tarballs && \
+    curl -fLO https://libisl.sourceforge.io/isl-0.20.tar.gz && \
+    curl -fLO https://github.com/libexpat/libexpat/releases/download/R_2_1_0/expat-2.1.0.tar.gz && \
+    cd - && \
     ./ct-ng build
 RUN cd /tmp && \
     rm /tmp/x86_64-centos6-linux-gnu/build.log.bz2 && \
@@ -108,8 +113,8 @@ FROM debian:stretch-20210208
 ENV GOVERSION=1.17 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=14.17.6-1nodesource1 \
-    YARNVERSION=3.1.0-rc.5
+    NODEVERSION=16.13.0-1nodesource1 \
+    YARNVERSION=1.22.15-1
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
@@ -143,7 +148,7 @@ RUN apt-get update && \
         unzip &&        \
     gem install -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
-    curl -fsL https://deb.nodesource.com/setup_14.x | bash - && \
+    curl -fsL https://deb.nodesource.com/setup_16.x | bash - && \
     apt-get update && apt-get install -yq nodejs=${NODEVERSION} && \
     curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \

@@ -5,7 +5,15 @@ import {
   identityOverrideProcessor,
 } from '@grafana/data';
 import React from 'react';
-import { graphFieldOptions, HorizontalGroup, IconButton, Input, RadioButtonGroup, Tooltip } from '../..';
+import {
+  GraphFieldConfig,
+  graphFieldOptions,
+  HorizontalGroup,
+  IconButton,
+  Input,
+  RadioButtonGroup,
+  Tooltip,
+} from '../..';
 import { StackingConfig, StackingMode } from '@grafana/schema';
 
 export const StackingEditor: React.FC<FieldOverrideEditorProps<StackingConfig, any>> = ({
@@ -49,7 +57,7 @@ export const StackingEditor: React.FC<FieldOverrideEditorProps<StackingConfig, a
 };
 
 export function addStackingConfig(
-  builder: FieldConfigEditorBuilder<{ stacking: StackingConfig }>,
+  builder: FieldConfigEditorBuilder<GraphFieldConfig>,
   defaultConfig?: StackingConfig,
   category = ['Graph styles']
 ) {

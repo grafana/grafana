@@ -8,16 +8,20 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     e2e.pages.Explore.visit();
-    e2e.components.DataSourcePicker.container()
-      .should('be.visible')
-      .within(() => {
-        e2e.components.DataSourcePicker.input().should('be.visible').click();
-      });
+    e2e.components.DataSourcePicker.inputV2().should('be.visible').click();
 
     cy.contains('gdev-prometheus').scrollIntoView().should('be.visible').click();
     const queryText = 'http_requests_total';
 
-    e2e.components.QueryField.container().should('be.visible').type(queryText).type('{backspace}');
+    // we need to wait for the query-field being lazy-loaded, in two steps:
+    // it is a two-step process:
+    // 1. first we wait for the text 'Loading...' to appear
+    // 1. then we wait for the text 'Loading...' to disappear
+    const monacoLoadingText = 'Loading...';
+    e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
+    e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
+
+    e2e.components.QueryField.container().type(queryText).type('{backspace}');
 
     cy.contains(queryText.slice(0, -1)).should('be.visible');
 

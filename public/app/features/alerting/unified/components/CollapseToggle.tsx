@@ -14,7 +14,12 @@ export const CollapseToggle: FC<Props> = ({ isCollapsed, onToggle, className, te
   const styles = useStyles(getStyles);
 
   return (
-    <button className={cx(styles.expandButton, className)} onClick={() => onToggle(!isCollapsed)} {...restOfProps}>
+    <button
+      aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} alert group`}
+      className={cx(styles.expandButton, className)}
+      onClick={() => onToggle(!isCollapsed)}
+      {...restOfProps}
+    >
       <Icon size={size} name={isCollapsed ? 'angle-right' : 'angle-down'} />
       {text}
     </button>

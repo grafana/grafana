@@ -4,86 +4,92 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestTempUserCommandsAndQueries(t *testing.T) {
-	Convey("Testing Temp User commands & queries", t, func() {
+	ss := InitTestDB(t)
+	cmd := models.CreateTempUserCommand{
+		OrgId:  2256,
+		Name:   "hello",
+		Code:   "asd",
+		Email:  "e@as.co",
+		Status: models.TmpUserInvitePending,
+	}
+	setup := func(t *testing.T) {
 		InitTestDB(t)
+		err := ss.CreateTempUser(context.Background(), &cmd)
+		require.Nil(t, err)
+	}
 
-		Convey("Given saved api key", func() {
-			cmd := models.CreateTempUserCommand{
-				OrgId:  2256,
-				Name:   "hello",
-				Code:   "asd",
-				Email:  "e@as.co",
-				Status: models.TmpUserInvitePending,
-			}
-			err := CreateTempUser(&cmd)
-			So(err, ShouldBeNil)
+	t.Run("Should be able to get temp users by org id", func(t *testing.T) {
+		setup(t)
+		query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
+		err := ss.GetTempUsersQuery(context.Background(), &query)
 
-			Convey("Should be able to get temp users by org id", func() {
-				query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
-				err = GetTempUsersQuery(&query)
+		require.Nil(t, err)
+		require.Equal(t, 1, len(query.Result))
+	})
 
-				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 1)
-			})
+	t.Run("Should be able to get temp users by email", func(t *testing.T) {
+		setup(t)
+		query := models.GetTempUsersQuery{Email: "e@as.co", Status: models.TmpUserInvitePending}
+		err := ss.GetTempUsersQuery(context.Background(), &query)
 
-			Convey("Should be able to get temp users by email", func() {
-				query := models.GetTempUsersQuery{Email: "e@as.co", Status: models.TmpUserInvitePending}
-				err = GetTempUsersQuery(&query)
+		require.Nil(t, err)
+		require.Equal(t, 1, len(query.Result))
+	})
 
-				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 1)
-			})
+	t.Run("Should be able to get temp users by code", func(t *testing.T) {
+		setup(t)
+		query := models.GetTempUserByCodeQuery{Code: "asd"}
+		err := ss.GetTempUserByCode(context.Background(), &query)
 
-			Convey("Should be able to get temp users by code", func() {
-				query := models.GetTempUserByCodeQuery{Code: "asd"}
-				err = GetTempUserByCode(&query)
+		require.Nil(t, err)
+		require.Equal(t, "hello", query.Result.Name)
+	})
 
-				So(err, ShouldBeNil)
-				So(query.Result.Name, ShouldEqual, "hello")
-			})
+	t.Run("Should be able update status", func(t *testing.T) {
+		setup(t)
+		cmd2 := models.UpdateTempUserStatusCommand{Code: "asd", Status: models.TmpUserRevoked}
+		err := ss.UpdateTempUserStatus(context.Background(), &cmd2)
+		require.Nil(t, err)
+	})
 
-			Convey("Should be able update status", func() {
-				cmd2 := models.UpdateTempUserStatusCommand{Code: "asd", Status: models.TmpUserRevoked}
-				err := UpdateTempUserStatus(&cmd2)
-				So(err, ShouldBeNil)
-			})
+	t.Run("Should be able update email sent and email sent on", func(t *testing.T) {
+		setup(t)
+		cmd2 := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
+		err := ss.UpdateTempUserWithEmailSent(context.Background(), &cmd2)
+		require.Nil(t, err)
 
-			Convey("Should be able update email sent and email sent on", func() {
-				cmd2 := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
-				err := UpdateTempUserWithEmailSent(&cmd2)
-				So(err, ShouldBeNil)
+		query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
+		err = ss.GetTempUsersQuery(context.Background(), &query)
 
-				query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
-				err = GetTempUsersQuery(&query)
+		require.Nil(t, err)
+		require.True(t, query.Result[0].EmailSent)
+		require.False(t, query.Result[0].EmailSentOn.UTC().Before(query.Result[0].Created.UTC()))
+	})
 
-				So(err, ShouldBeNil)
-				So(query.Result[0].EmailSent, ShouldBeTrue)
-				So(query.Result[0].EmailSentOn.UTC(), ShouldHappenOnOrAfter, query.Result[0].Created.UTC())
-			})
+	t.Run("Should be able expire temp user", func(t *testing.T) {
+		setup(t)
+		createdAt := time.Unix(cmd.Result.Created, 0)
+		cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
+		err := ss.ExpireOldUserInvites(context.Background(), &cmd2)
+		require.Nil(t, err)
+		require.Equal(t, int64(1), cmd2.NumExpired)
 
-			Convey("Should be able expire temp user", func() {
-				createdAt := time.Unix(cmd.Result.Created, 0)
-				cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
-				err := ExpireOldUserInvites(&cmd2)
-				So(err, ShouldBeNil)
-				So(cmd2.NumExpired, ShouldEqual, int64(1))
-
-				Convey("Should do nothing when no temp users to expire", func() {
-					createdAt := time.Unix(cmd.Result.Created, 0)
-					cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
-					err := ExpireOldUserInvites(&cmd2)
-					So(err, ShouldBeNil)
-					So(cmd2.NumExpired, ShouldEqual, int64(0))
-				})
-			})
+		t.Run("Should do nothing when no temp users to expire", func(t *testing.T) {
+			createdAt := time.Unix(cmd.Result.Created, 0)
+			cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
+			err := ss.ExpireOldUserInvites(context.Background(), &cmd2)
+			require.Nil(t, err)
+			require.Equal(t, int64(0), cmd2.NumExpired)
 		})
 	})
 }

@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -12,7 +13,7 @@ var (
 	loginAttemptsWindow           = time.Minute * 5
 )
 
-var validateLoginAttempts = func(query *models.LoginUserQuery) error {
+var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQuery) error {
 	if query.Cfg.DisableBruteForceLoginProtection {
 		return nil
 	}
@@ -22,7 +23,7 @@ var validateLoginAttempts = func(query *models.LoginUserQuery) error {
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
 
-	if err := bus.Dispatch(&loginAttemptCountQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, &loginAttemptCountQuery); err != nil {
 		return err
 	}
 
@@ -33,7 +34,7 @@ var validateLoginAttempts = func(query *models.LoginUserQuery) error {
 	return nil
 }
 
-var saveInvalidLoginAttempt = func(query *models.LoginUserQuery) error {
+var saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery) error {
 	if query.Cfg.DisableBruteForceLoginProtection {
 		return nil
 	}
@@ -43,5 +44,5 @@ var saveInvalidLoginAttempt = func(query *models.LoginUserQuery) error {
 		IpAddress: query.IpAddress,
 	}
 
-	return bus.Dispatch(&loginAttemptCommand)
+	return bus.DispatchCtx(ctx, &loginAttemptCommand)
 }

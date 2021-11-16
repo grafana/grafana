@@ -1,5 +1,5 @@
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DataSourceInstanceSettings, DataSourcePlugin } from '@grafana/data';
+import { DataSourceApi, DataSourceInstanceSettings, DataSourcePlugin, DataSourcePluginMeta } from '@grafana/data';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv: any = {
@@ -31,13 +31,13 @@ class TestDataSource {
 }
 
 jest.mock('../plugin_loader', () => ({
-  importDataSourcePlugin: () => {
+  importDataSourcePlugin: (meta: DataSourcePluginMeta) => {
     return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
   },
 }));
 
 describe('datasource_srv', () => {
-  const dataSourceSrv = new DatasourceSrv({} as any, {} as any, templateSrv);
+  const dataSourceSrv = new DatasourceSrv(templateSrv);
   const dataSourceInit = {
     mmm: {
       type: 'test-db',
@@ -115,6 +115,15 @@ describe('datasource_srv', () => {
         expect(dsByUid.meta).toBe(dsByName.meta);
         expect(dsByUid).toBe(dsByName);
       });
+
+      it('should patch legacy datasources', async () => {
+        expect(TestDataSource instanceof DataSourceApi).toBe(false);
+        const instance = await dataSourceSrv.get('mmm');
+        expect(instance.name).toBe('mmm');
+        expect(instance.type).toBe('test-db');
+        expect(instance.uid).toBe('uid-code-mmm');
+        expect(instance.getRef()).toEqual({ type: 'test-db', uid: 'uid-code-mmm' });
+      });
     });
 
     describe('when getting instance settings', () => {
@@ -125,7 +134,7 @@ describe('datasource_srv', () => {
       it('should work with variable', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasource}');
         expect(ds?.name).toBe('${datasource}');
-        expect(ds?.uid).toBe('uid-code-BBB');
+        expect(ds?.uid).toBe('${datasource}');
       });
 
       it('should not set isDefault when being fetched via variable', () => {
@@ -136,7 +145,7 @@ describe('datasource_srv', () => {
       it('should work with variable', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasourceDefault}');
         expect(ds?.name).toBe('${datasourceDefault}');
-        expect(ds?.uid).toBe('uid-code-BBB');
+        expect(ds?.uid).toBe('${datasourceDefault}');
       });
     });
 
@@ -221,6 +230,7 @@ describe('datasource_srv', () => {
             },
             "name": "-- Mixed --",
             "type": "test-db",
+            "uid": "-- Mixed --",
           },
           Object {
             "meta": Object {
@@ -230,6 +240,7 @@ describe('datasource_srv', () => {
             },
             "name": "-- Dashboard --",
             "type": "dashboard",
+            "uid": "-- Dashboard --",
           },
           Object {
             "meta": Object {
@@ -239,6 +250,7 @@ describe('datasource_srv', () => {
             },
             "name": "-- Grafana --",
             "type": "grafana",
+            "uid": "-- Grafana --",
           },
         ]
       `);

@@ -1,6 +1,6 @@
 import { GraphCtrl } from '../module';
-import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
-import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
+import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 
 import TimeSeries from 'app/core/time_series2';
@@ -9,7 +9,7 @@ import { graphDirective, GraphElement } from '../graph';
 import { dateTime, EventBusSrv } from '@grafana/data';
 import { DashboardModel } from '../../../../features/dashboard/state';
 
-jest.mock('app/features/annotations/all', () => ({
+jest.mock('../event_manager', () => ({
   EventManager: () => {
     return {
       on: () => {},
@@ -23,6 +23,7 @@ jest.mock('app/core/core', () => ({
     directive: () => {},
   },
   appEvents: {
+    subscribe: () => {},
     on: () => {},
   },
 }));

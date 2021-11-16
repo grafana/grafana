@@ -19,7 +19,7 @@ import Prism from 'prismjs';
 import { LokiOptions, LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
-import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
+import { failedMetric, mapPromMetricsToServiceMap, serviceMapMetrics, totalsMetric } from './graphTransform';
 import {
   transformTrace,
   transformTraceList,
@@ -54,6 +54,7 @@ export type TempoQuery = {
   minDuration?: string;
   maxDuration?: string;
   limit?: number;
+  serviceMapQuery?: string;
 } & DataQuery;
 
 export const DEFAULT_LIMIT = 20;
@@ -268,6 +269,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const tagsQueryObject = tagsQuery.reduce((tagQuery, item) => ({ ...tagQuery, ...item }), {});
     return { ...tagsQueryObject, ...tempoQuery };
   }
+
+  async getServiceGraphLabels() {
+    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
+    return ds.getTagKeys!();
+  }
+
+  async getServiceGraphLabelValues(key: string) {
+    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
+    return ds.getTagValues!({ key });
+  }
 }
 
 function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
@@ -283,12 +294,39 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
     // Just collect all the responses first before processing into node graph data
     toArray(),
     map((responses: DataQueryResponse[]) => {
+      const errorRes = responses.find((res) => !!res.error);
+      if (errorRes) {
+        throw new Error(errorRes.error!.message);
+      }
+
+      const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
+      nodes.fields[0].config = {
+        links: [
+          makePromLink('Total requests', totalsMetric, datasourceUid),
+          makePromLink('Failed requests', failedMetric, datasourceUid),
+        ],
+      };
+
       return {
-        data: mapPromMetricsToServiceMap(responses, request.range),
+        data: [nodes, edges],
         state: LoadingState.Done,
       };
     })
   );
+}
+
+function makePromLink(title: string, metric: string, datasourceUid: string) {
+  return {
+    url: '',
+    title,
+    internal: {
+      query: {
+        expr: metric,
+      } as PromQuery,
+      datasourceUid,
+      datasourceName: 'Prometheus',
+    },
+  };
 }
 
 function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
@@ -297,7 +335,9 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
     targets: serviceMapMetrics.map((metric) => {
       return {
         refId: metric,
-        expr: `delta(${metric}[$__range])`,
+        // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
+        // service map at the same time anyway
+        expr: `delta(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
         instant: true,
       };
     }),

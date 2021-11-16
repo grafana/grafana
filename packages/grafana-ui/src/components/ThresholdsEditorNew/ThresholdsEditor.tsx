@@ -151,11 +151,13 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles, idx: number) {
     const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
 
+    const ariaLabel = `Threshold ${idx + 1}`;
     if (!isFinite(threshold.value)) {
       return (
         <Input
           type="text"
           value={'Base'}
+          aria-label={ariaLabel}
           disabled
           prefix={
             <div className={styles.colorPicker}>
@@ -177,6 +179,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
         value={threshold.value}
+        aria-label={ariaLabel}
         ref={idx === 0 ? this.latestThresholdInputRef : null}
         onBlur={this.onBlur}
         prefix={

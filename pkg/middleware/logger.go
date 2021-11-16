@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	cw "github.com/weaveworks/common/middleware"
+	cw "github.com/weaveworks/common/tracing"
 )
 
 func Logger(cfg *setting.Cfg) web.Handler {

@@ -1,27 +1,23 @@
-// Libraries
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-
-// Components
 import { PanelChrome } from './PanelChrome';
 import { PanelChromeAngular } from './PanelChromeAngular';
-
-// Actions
-import { initDashboardPanel } from '../state/actions';
-
-// Types
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
+import { cleanUpPanelState, setPanelInstanceState } from '../../panel/state/reducers';
+import { initPanelState } from '../../panel/state/actions';
 
 export interface OwnProps {
   panel: PanelModel;
+  stateKey: string;
   dashboard: DashboardModel;
   isEditing: boolean;
   isViewing: boolean;
   isInView: boolean;
   width: number;
   height: number;
+  skipStateCleanUp?: boolean;
 }
 
 export interface State {
@@ -29,7 +25,7 @@ export interface State {
 }
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
-  const panelState = state.dashboard.panels[props.panel.id];
+  const panelState = state.panels[props.stateKey];
   if (!panelState) {
     return { plugin: null };
   }
@@ -41,7 +37,9 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 };
 
 const mapDispatchToProps = {
-  initDashboardPanel,
+  initPanelState,
+  cleanUpPanelState,
+  setPanelInstanceState,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -60,7 +58,16 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.props.initDashboardPanel(this.props.panel);
+    if (!this.props.plugin) {
+      this.props.initPanelState(this.props.panel);
+    }
+  }
+
+  componentWillUnmount() {
+    // Most of the time an unmount should result in cleanup but in PanelEdit it should not
+    if (!this.props.skipStateCleanUp) {
+      this.props.cleanUpPanelState({ key: this.props.stateKey });
+    }
   }
 
   componentDidUpdate() {
@@ -68,6 +75,10 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
       this.setState({ isLazy: false });
     }
   }
+
+  onInstanceStateChange = (value: any) => {
+    this.props.setPanelInstanceState({ key: this.props.stateKey, value });
+  };
 
   renderPanel(plugin: PanelPlugin) {
     const { dashboard, panel, isViewing, isInView, isEditing, width, height } = this.props;
@@ -97,6 +108,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
         isInView={isInView}
         width={width}
         height={height}
+        onInstanceStateChange={this.onInstanceStateChange}
       />
     );
   }

@@ -7,11 +7,12 @@ import { getVariables } from '../../../variables/state/selectors';
 import { StoreState } from '../../../../types';
 
 export interface Props {
+  id?: string;
   repeat?: string | null;
   onChange: (name: string | null) => void;
 }
 
-export const RepeatRowSelect: FC<Props> = ({ repeat, onChange }) => {
+export const RepeatRowSelect: FC<Props> = ({ repeat, onChange, id }) => {
   const variables = useSelector((state: StoreState) => getVariables(state));
 
   const variableOptions = useMemo(() => {
@@ -36,5 +37,5 @@ export const RepeatRowSelect: FC<Props> = ({ repeat, onChange }) => {
 
   const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
 
-  return <Select menuShouldPortal value={repeat} onChange={onSelectChange} options={variableOptions} />;
+  return <Select inputId={id} menuShouldPortal value={repeat} onChange={onSelectChange} options={variableOptions} />;
 };

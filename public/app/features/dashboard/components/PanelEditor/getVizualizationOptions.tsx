@@ -10,8 +10,9 @@ import {
   isNestedPanelOptions,
   NestedValueAccess,
   PanelOptionsEditorBuilder,
-} from '../../../../../../packages/grafana-data/src/utils/OptionsUIBuilders';
+} from '@grafana/data/src/utils/OptionsUIBuilders';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { getOptionOverrides } from './state/getOptionOverrides';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
@@ -91,6 +92,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
         description: fieldOption.description,
+        overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: any) => {
             onFieldConfigsChange(
@@ -98,7 +100,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
             );
           };
 
-          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} />;
+          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={fieldOption.id} />;
         },
       })
     );
@@ -136,12 +138,16 @@ export function fillOptionsPaneItems(
 
     // Nested options get passed up one level
     if (isNestedPanelOptions(pluginOption)) {
-      const sub = access.getValue(pluginOption.path);
+      const subAccess = pluginOption.getNestedValueAccess(access);
+      const subContext = subAccess.getContext
+        ? subAccess.getContext(context)
+        : { ...context, options: access.getValue(pluginOption.path) };
+
       fillOptionsPaneItems(
         pluginOption.getBuilder(),
-        pluginOption.getNestedValueAccess(access),
+        subAccess,
         getOptionsPaneCategory,
-        { ...context, options: sub },
+        subContext,
         category // parent category
       );
       continue;
@@ -161,6 +167,7 @@ export function fillOptionsPaneItems(
               }}
               item={pluginOption}
               context={context}
+              id={pluginOption.id}
             />
           );
         },

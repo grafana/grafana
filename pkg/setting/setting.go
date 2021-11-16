@@ -203,6 +203,7 @@ type Cfg struct {
 	EnforceDomain    bool
 
 	// Security settings
+	SecretKey             string
 	EmailCodeValidMinutes int
 
 	// build
@@ -257,6 +258,7 @@ type Cfg struct {
 	PluginSettings                   PluginSettings
 	PluginsAllowUnsigned             []string
 	PluginCatalogURL                 string
+	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 	DisableSanitizeHtml              bool
@@ -454,7 +456,7 @@ type CommandLineArgs struct {
 	Args     []string
 }
 
-func parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
+func (cfg Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
 	appUrl := valueAsString(section, "root_url", "http://localhost:3000/")
 
 	if appUrl[len(appUrl)-1] != '/' {
@@ -464,7 +466,8 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
 	// Check if has app suburl.
 	url, err := url.Parse(appUrl)
 	if err != nil {
-		log.Fatalf(4, "Invalid root_url(%s): %s", appUrl, err)
+		cfg.Logger.Error("Invalid root_url.", "url", appUrl, "error", err)
+		os.Exit(1)
 	}
 
 	appSubUrl := strings.TrimSuffix(url.Path, "/")
@@ -620,7 +623,7 @@ func applyCommandLineProperties(props map[string]string, file *ini.File) {
 	}
 }
 
-func getCommandLineProperties(args []string) map[string]string {
+func (cfg Cfg) getCommandLineProperties(args []string) map[string]string {
 	props := make(map[string]string)
 
 	for _, arg := range args {
@@ -631,8 +634,8 @@ func getCommandLineProperties(args []string) map[string]string {
 		trimmed := strings.TrimPrefix(arg, "cfg:")
 		parts := strings.Split(trimmed, "=")
 		if len(parts) != 2 {
-			log.Fatalf(3, "Invalid command line argument. argument: %v", arg)
-			return nil
+			cfg.Logger.Error("Invalid command line argument.", "argument", arg)
+			os.Exit(1)
 		}
 
 		props[parts[0]] = parts[1]
@@ -707,7 +710,7 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	parsedFile.BlockMode = false
 
 	// command line props
-	commandLineProps := getCommandLineProperties(args.Args)
+	commandLineProps := cfg.getCommandLineProperties(args.Args)
 	// load default overrides
 	applyCommandLineDefaultProperties(commandLineProps, parsedFile)
 
@@ -718,7 +721,8 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		if err2 != nil {
 			return nil, err2
 		}
-		log.Fatalf(3, err.Error())
+		cfg.Logger.Error(err.Error())
+		os.Exit(1)
 	}
 
 	// apply environment overrides
@@ -920,18 +924,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
 
-	pluginsSection := iniFile.Section("plugins")
-	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
-	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
-	cfg.PluginSettings = extractPluginSettings(iniFile.Sections())
-	pluginsAllowUnsigned := pluginsSection.Key("allow_loading_unsigned_plugins").MustString("")
-	for _, plug := range strings.Split(pluginsAllowUnsigned, ",") {
-		plug = strings.TrimSpace(plug)
-		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
+	if err := cfg.readPluginSettings(iniFile); err != nil {
+		return err
 	}
-	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
-	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
-	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
 
 	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
@@ -961,7 +956,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readDataSourcesSettings()
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
-		log.Warnf("require_email_validation is enabled but smtp is disabled")
+		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
 	// check old key  name
@@ -1137,6 +1132,7 @@ func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
 	SecretKey = valueAsString(security, "secret_key", "")
+	cfg.SecretKey = SecretKey
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 
@@ -1356,7 +1352,8 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 		_, err := url.Parse(cfg.RendererCallbackUrl)
 		if err != nil {
 			// XXX: Should return an error?
-			log.Fatalf(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
+			cfg.Logger.Error("Invalid callback_url.", "url", cfg.RendererCallbackUrl, "error", err)
+			os.Exit(1)
 		}
 	}
 
@@ -1413,7 +1410,7 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	server := iniFile.Section("server")
 	var err error
-	AppUrl, AppSubUrl, err = parseAppUrlAndSubUrl(server)
+	AppUrl, AppSubUrl, err = cfg.parseAppUrlAndSubUrl(server)
 	if err != nil {
 		return err
 	}

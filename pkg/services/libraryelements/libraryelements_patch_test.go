@@ -97,6 +97,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.FolderID = newFolder.Id
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -117,6 +118,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Name = "New Name"
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Model["title"] = "Text - Library Panel"
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -138,6 +140,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.UID = cmd.UID
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Model["title"] = "Text - Library Panel"
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -209,6 +212,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -234,6 +238,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -259,6 +264,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -275,6 +281,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Meta.UpdatedBy.ID = int64(2)
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -362,6 +369,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)

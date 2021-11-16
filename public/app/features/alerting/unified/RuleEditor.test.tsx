@@ -126,7 +126,7 @@ describe('RuleEditor', () => {
     });
 
     await renderRuleEditor();
-    await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
+    userEvent.type(await ui.inputs.name.find(), 'my great new rule');
     await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed alert/);
     const dataSourceSelect = ui.inputs.dataSource.get();
     userEvent.click(byRole('textbox').get(dataSourceSelect));
@@ -135,17 +135,18 @@ describe('RuleEditor', () => {
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
-    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
+    userEvent.type(ui.inputs.expr.get(), 'up == 1');
 
-    await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
+    userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
+    userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    userEvent.click(ui.buttons.addLabel.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
 
-    await userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
-    await userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
-    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
+    userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
+    userEvent.type(ui.inputs.labelKey(1).get(), 'team');
+    userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
     // save and check what was sent to backend
     userEvent.click(ui.buttons.save.get());
@@ -196,15 +197,16 @@ describe('RuleEditor', () => {
     await waitFor(() => expect(searchFolderMock).toHaveBeenCalled());
     await clickSelectOption(folderInput, 'Folder A');
 
-    await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
+    userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
+    userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    userEvent.click(ui.buttons.addLabel.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
 
-    await userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
-    await userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
-    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
+    userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
+    userEvent.type(ui.inputs.labelKey(1).get(), 'team');
+    userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
     // save and check what was sent to backend
     userEvent.click(ui.buttons.save.get());
@@ -265,7 +267,7 @@ describe('RuleEditor', () => {
     });
 
     await renderRuleEditor();
-    await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
+    userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
     await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed recording rule/);
     const dataSourceSelect = ui.inputs.dataSource.get();
     userEvent.click(byRole('textbox').get(dataSourceSelect));
@@ -274,24 +276,27 @@ describe('RuleEditor', () => {
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
-    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
+    userEvent.type(ui.inputs.expr.get(), 'up == 1');
 
-    userEvent.click(ui.buttons.addLabel.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
 
-    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    userEvent.type(ui.inputs.labelKey(1).get(), 'team');
+    userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
     // try to save, find out that recording rule name is invalid
     userEvent.click(ui.buttons.save.get());
-    expect(
-      await byText(
-        'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
-      ).find()
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        byText(
+          'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
+        ).get()
+      ).toBeInTheDocument()
+    );
     expect(mocks.api.setRulerRuleGroup).not.toBeCalled();
 
     // fix name and re-submit
-    await userEvent.type(await ui.inputs.name.find(), '{selectall}{del}my:great:new:recording:rule');
+    userEvent.type(await ui.inputs.name.find(), '{selectall}{del}my:great:new:recording:rule');
     userEvent.click(ui.buttons.save.get());
 
     // save and check what was sent to backend
@@ -374,12 +379,12 @@ describe('RuleEditor', () => {
 
     // add an annotation
     await clickSelectOption(ui.inputs.annotationKey(2).get(), /Add new/);
-    await userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
-    await userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
+    userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
+    userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
 
     //add a label
-    await userEvent.type(ui.inputs.labelKey(2).get(), 'custom');
-    await userEvent.type(ui.inputs.labelValue(2).get(), 'value');
+    userEvent.type(ui.inputs.labelKey(2).get(), 'custom');
+    userEvent.type(ui.inputs.labelValue(2).get(), 'value');
 
     // save and check what was sent to backend
     userEvent.click(ui.buttons.save.get());

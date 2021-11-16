@@ -6,6 +6,7 @@ exports[`FolderPicker should render 1`] = `
 >
   <AsyncSelect
     allowCustomValue={false}
+    aria-label="Select a folder"
     defaultOptions={true}
     defaultValue={null}
     loadOptions={[Function]}

@@ -207,3 +207,9 @@ type LibraryElementArrayResponse struct {
 type LibraryElementConnectionsResponse struct {
 	Result []LibraryElementConnectionDTO `json:"result"`
 }
+
+// DeleteLibraryElementResponse is the response struct for deleting a library element.
+type DeleteLibraryElementResponse struct {
+	ID      int64  `json:"id"`
+	Message string `json:"message"`
+}

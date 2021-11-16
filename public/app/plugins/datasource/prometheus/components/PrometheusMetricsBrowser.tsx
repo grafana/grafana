@@ -12,19 +12,14 @@ import {
 import PromQlLanguageProvider from '../language_provider';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
 import { css, cx } from '@emotion/css';
-import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme } from '@grafana/data';
 
 // Hard limit on labels to render
-const MAX_LABEL_COUNT = 10000;
-const MAX_VALUE_COUNT = 50000;
 const EMPTY_SELECTOR = '{}';
 const METRIC_LABEL = '__name__';
 const LIST_ITEM_SIZE = 25;
-
-export const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
 
 export interface BrowserProps {
   languageProvider: PromQlLanguageProvider;
@@ -32,6 +27,9 @@ export interface BrowserProps {
   theme: GrafanaTheme;
   autoSelect?: number;
   hide?: () => void;
+  lastUsedLabels: string[];
+  storeLastUsedLabels: (labels: string[]) => void;
+  deleteLastUsedLabels: () => void;
 }
 
 interface BrowserState {
@@ -243,7 +241,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         valueSearchTerm: '',
       };
     });
-    store.delete(LAST_USED_LABELS_KEY);
+    this.props.deleteLastUsedLabels();
     // Get metrics
     this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
   };
@@ -316,17 +314,11 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
   }
 
   componentDidMount() {
-    const { languageProvider } = this.props;
+    const { languageProvider, lastUsedLabels } = this.props;
     if (languageProvider) {
-      const selectedLabels: string[] = store.getObject(LAST_USED_LABELS_KEY, []);
+      const selectedLabels: string[] = lastUsedLabels;
       languageProvider.start().then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
-        // TODO too-many-metrics
-        if (rawLabels.length > MAX_LABEL_COUNT) {
-          const error = `Too many labels found (showing only ${MAX_LABEL_COUNT} of ${rawLabels.length})`;
-          rawLabels = rawLabels.slice(0, MAX_LABEL_COUNT);
-          this.setState({ error });
-        }
         // Get metrics
         this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
         // Auto-select previously selected labels
@@ -353,7 +345,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       return;
     }
     const selectedLabels = this.state.labels.filter((label) => label.selected).map((label) => label.name);
-    store.setObject(LAST_USED_LABELS_KEY, selectedLabels);
+    this.props.storeLastUsedLabels(selectedLabels);
     if (label.selected) {
       // Refetch values for newly selected label...
       if (!label.values) {
@@ -394,11 +386,6 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         this.updateLabelState(name, { loading: false });
         return;
       }
-      if (rawValues.length > MAX_VALUE_COUNT) {
-        const error = `Too many values for ${name} (showing only ${MAX_VALUE_COUNT} of ${rawValues.length})`;
-        rawValues = rawValues.slice(0, MAX_VALUE_COUNT);
-        this.setState({ error });
-      }
       const values: FacettableValue[] = [];
       const { metricsMetadata } = languageProvider;
       for (const labelValue of rawValues) {
@@ -433,9 +420,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         return;
       }
       if (Object.keys(possibleLabels).length === 0) {
-        // Sometimes the backend does not return a valid set
-        console.error('No results for label combination, but should not occur.');
-        this.setState({ error: `Facetting failed for ${selector}` });
+        this.setState({ error: `Empty results, no matching label for ${selector}` });
         return;
       }
       const labels: SelectableLabel[] = facetLabels(this.state.labels, possibleLabels, lastFacetted);

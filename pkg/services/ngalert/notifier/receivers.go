@@ -24,6 +24,7 @@ var (
 )
 
 type TestReceiversResult struct {
+	Alert     types.Alert
 	Receivers []TestReceiverResult
 	NotifedAt time.Time
 }
@@ -61,19 +62,7 @@ func (e ReceiverTimeoutError) Error() string {
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigParams) (*TestReceiversResult, error) {
 	// now represents the start time of the test
 	now := time.Now()
-	testAlert := &types.Alert{
-		Alert: model.Alert{
-			Labels: model.LabelSet{
-				model.LabelName("alertname"): "TestAlert",
-				model.LabelName("instance"):  "Grafana",
-			},
-			Annotations: model.LabelSet{
-				model.LabelName("summary"): "Notification test",
-			},
-			StartsAt: now,
-		},
-		UpdatedAt: now,
-	}
+	testAlert := newTestAlert(c, now, now)
 
 	// we must set a group key that is unique per test as some receivers use this key to deduplicate alerts
 	ctx = notify.WithGroupKey(ctx, testAlert.Labels.String()+now.String())
@@ -97,7 +86,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		Error        error
 	}
 
-	newTestReceiversResult := func(results []result, notifiedAt time.Time) *TestReceiversResult {
+	newTestReceiversResult := func(alert types.Alert, results []result, notifiedAt time.Time) *TestReceiversResult {
 		m := make(map[string]TestReceiverResult)
 		for _, receiver := range c.Receivers {
 			// set up the result for this receiver
@@ -122,6 +111,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 			m[next.ReceiverName] = tmp
 		}
 		v := new(TestReceiversResult)
+		v.Alert = alert
 		v.Receivers = make([]TestReceiverResult, 0, len(c.Receivers))
 		v.NotifedAt = notifiedAt
 		for _, next := range m {
@@ -165,7 +155,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}
 
 	if len(jobs) == 0 {
-		return newTestReceiversResult(invalid, now), nil
+		return newTestReceiversResult(testAlert, invalid, now), nil
 	}
 
 	numWorkers := maxTestReceiversWorkers
@@ -188,7 +178,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 					Config:       next.Config,
 					ReceiverName: next.ReceiverName,
 				}
-				if _, err := next.Notifier.Notify(ctx, testAlert); err != nil {
+				if _, err := next.Notifier.Notify(ctx, &testAlert); err != nil {
 					v.Error = err
 				}
 				resultCh <- v
@@ -204,7 +194,43 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		results = append(results, next)
 	}
 
-	return newTestReceiversResult(append(invalid, results...), now), nil
+	return newTestReceiversResult(testAlert, append(invalid, results...), now), nil
+}
+
+func newTestAlert(c apimodels.TestReceiversConfigParams, startsAt, updatedAt time.Time) types.Alert {
+	var (
+		defaultAnnotations = model.LabelSet{
+			"summary": "Notification test",
+		}
+		defaultLabels = model.LabelSet{
+			"alertname": "TestAlert",
+			"instance":  "Grafana",
+		}
+	)
+
+	alert := types.Alert{
+		Alert: model.Alert{
+			Labels:      defaultLabels,
+			Annotations: defaultAnnotations,
+			StartsAt:    startsAt,
+		},
+		UpdatedAt: updatedAt,
+	}
+
+	if c.Alert != nil {
+		if c.Alert.Annotations != nil {
+			for k, v := range c.Alert.Annotations {
+				alert.Annotations[k] = v
+			}
+		}
+		if c.Alert.Labels != nil {
+			for k, v := range c.Alert.Labels {
+				alert.Labels[k] = v
+			}
+		}
+	}
+
+	return alert
 }
 
 func processNotifierError(config *apimodels.PostableGrafanaReceiver, err error) error {

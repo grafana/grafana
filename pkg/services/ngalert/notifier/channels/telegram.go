@@ -9,8 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
@@ -22,7 +20,7 @@ var (
 // TelegramNotifier is responsible for sending
 // alert notifications to Telegram.
 type TelegramNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	BotToken string
 	ChatID   string
 	Message  string
@@ -36,7 +34,7 @@ func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template,
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
-	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString(), setting.SecretKey)
+	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString())
 	chatID := model.Settings.Get("chatid").MustString()
 	message := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
 
@@ -49,7 +47,7 @@ func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template,
 	}
 
 	return &TelegramNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,

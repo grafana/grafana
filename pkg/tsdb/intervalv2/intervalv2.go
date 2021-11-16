@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 )
 
 var (
-	defaultRes         int64 = 1500
+	DefaultRes         int64 = 1500
 	defaultMinInterval       = time.Millisecond * 1
 	year                     = time.Hour * 24 * 365
 	day                      = time.Hour * 24
@@ -58,18 +58,18 @@ func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval
 	from := timerange.From.UnixNano()
 	resolution := maxDataPoints
 	if resolution == 0 {
-		resolution = defaultRes
+		resolution = DefaultRes
 	}
 
 	calculatedInterval := time.Duration((to - from) / resolution)
 
 	if calculatedInterval < minInterval {
-		return Interval{Text: interval.FormatDuration(minInterval), Value: minInterval}
+		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
 	}
 
 	rounded := roundInterval(calculatedInterval)
 
-	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
+	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
 
 func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange, safeRes int64) Interval {
@@ -78,7 +78,7 @@ func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange,
 	safeInterval := time.Duration((to - from) / safeRes)
 
 	rounded := roundInterval(safeInterval)
-	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
+	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
 
 // GetIntervalFrom returns the minimum interval.
@@ -120,7 +120,7 @@ func ParseIntervalStringToTimeDuration(interval string) (time.Duration, error) {
 	if isPureNum {
 		formattedInterval += "s"
 	}
-	parsedInterval, err := time.ParseDuration(formattedInterval)
+	parsedInterval, err := gtime.ParseDuration(formattedInterval)
 	if err != nil {
 		return time.Duration(0), err
 	}

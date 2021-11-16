@@ -39,6 +39,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         render: function renderDescription() {
           return (
             <TextArea
+              id="description-text-area"
               defaultValue={panel.description}
               onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
             />
@@ -96,6 +97,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             render: function renderRepeatOptions() {
               return (
                 <RepeatRowSelect
+                  id="repeat-by-variable-select"
                   repeat={panel.repeat}
                   onChange={(value?: string | null) => {
                     onPanelConfigChange('repeat', value);

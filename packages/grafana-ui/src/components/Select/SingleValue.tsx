@@ -7,6 +7,7 @@ import { SlideOutTransition } from '../transitions/SlideOutTransition';
 import { FadeTransition } from '../transitions/FadeTransition';
 import { Spinner } from '../Spinner/Spinner';
 import { GrafanaTheme2 } from '@grafana/data';
+import tinycolor from 'tinycolor2';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const singleValue = css`
@@ -35,7 +36,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   `;
 
   const disabled = css`
-    color: ${theme.colors.action.disabledText};
+    color: ${tinycolor(theme.colors.text.disabled).setAlpha(0.64).toString()};
   `;
 
   return { singleValue, container, item, disabled };
