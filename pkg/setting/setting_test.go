@@ -473,9 +473,7 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
-				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, true)
+				require.Error(t, err)
 			},
 		},
 		{
@@ -490,7 +488,7 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
 				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
-				assert.Equal(t, AlertingEnabled, true)
+				assert.Equal(t, AlertingEnabled, false)
 			},
 		},
 		{
@@ -505,7 +503,7 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
 				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, true)
+				assert.Equal(t, AlertingEnabled, false)
 			},
 		},
 		{
@@ -518,9 +516,7 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
-				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, true)
+				require.Error(t, err)
 			},
 		},
 		{
@@ -534,7 +530,7 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
 				assert.Equal(t, AlertingEnabled, false)
 			},
 		},
@@ -550,7 +546,7 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
 				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, true)
+				assert.Equal(t, AlertingEnabled, false)
 			},
 		},
 	}

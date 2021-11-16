@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -72,8 +73,11 @@ type UnifiedAlertingSettings struct {
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg := UnifiedAlertingSettings{}
 	ua := iniFile.Section("unified_alerting")
-	// if legacy alerting is enabled, enable unified alerting by default. If the legacy alerting is disabled, require unified alerting to be enabled explicitly
-	uaCfg.Enabled = ua.Key("enabled").MustBool(AlertingEnabled)
+	uaCfg.Enabled = ua.Key("enabled").MustBool(true)
+
+	if uaCfg.Enabled && AlertingEnabled {
+		return errors.New("both legacy and Grafana 8 Alerts are enabled. Disable one of them and restart")
+	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
 	orgsStr := valueAsString(ua, "disabled_orgs", "")

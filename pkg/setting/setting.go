@@ -1384,7 +1384,7 @@ func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 
 func readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
-	AlertingEnabled = alerting.Key("enabled").MustBool(true)
+	AlertingEnabled = alerting.Key("enabled").MustBool(false)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 

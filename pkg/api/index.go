@@ -207,7 +207,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
 	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.Enabled && !uaIsDisabledForOrg
 
-	if setting.AlertingEnabled && !hs.Cfg.UnifiedAlerting.Enabled || uaVisibleForOrg {
+	if setting.AlertingEnabled || uaVisibleForOrg {
 		alertChildNavs := hs.buildAlertNavLinks(c, uaVisibleForOrg)
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Alerting",
@@ -460,7 +460,7 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
 	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.Enabled && !uaIsDisabledForOrg
 
-	if setting.AlertingEnabled && !hs.Cfg.UnifiedAlerting.Enabled || uaVisibleForOrg {
+	if setting.AlertingEnabled || uaVisibleForOrg {
 		children = append(children, &dtos.NavLink{
 			Text: "Alert rule", SubTitle: "Create an alert rule", Id: "alert",
 			Icon: "bell", Url: hs.Cfg.AppSubURL + "/alerting/new",
