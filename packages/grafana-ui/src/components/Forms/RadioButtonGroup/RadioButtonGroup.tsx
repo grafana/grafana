@@ -17,6 +17,7 @@ export interface RadioButtonGroupProps<T> {
   fullWidth?: boolean;
   className?: string;
   autoFocus?: boolean;
+  activeRadioButtonRef?: React.MutableRefObject<HTMLInputElement | null>;
 }
 
 export function RadioButtonGroup<T>({
@@ -29,6 +30,7 @@ export function RadioButtonGroup<T>({
   className,
   fullWidth = false,
   autoFocus = false,
+  activeRadioButtonRef,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue) => {
@@ -44,12 +46,11 @@ export function RadioButtonGroup<T>({
   const groupName = useRef(id);
   const styles = useStyles2(getStyles);
 
-  const activeButtonRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
-    if (autoFocus && activeButtonRef.current) {
-      activeButtonRef.current.focus();
+    if (autoFocus && activeRadioButtonRef?.current) {
+      activeRadioButtonRef?.current.focus();
     }
-  }, [autoFocus]);
+  }, [autoFocus, activeRadioButtonRef]);
 
   return (
     <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}>
@@ -67,7 +68,7 @@ export function RadioButtonGroup<T>({
             name={groupName.current}
             description={o.description}
             fullWidth={fullWidth}
-            ref={value === o.value ? activeButtonRef : undefined}
+            ref={value === o.value ? activeRadioButtonRef : undefined}
           >
             {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
             {o.imgUrl && <img src={o.imgUrl} alt={o.label} className={styles.img} />}

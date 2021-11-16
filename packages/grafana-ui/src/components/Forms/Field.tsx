@@ -27,6 +27,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   horizontal?: boolean;
   /** make validation message overflow horizontally. Prevents pushing out adjacent inline components */
   validationMessageHorizontalOverflow?: boolean;
+  onClick?: () => void;
 
   className?: string;
   /**
@@ -79,6 +80,7 @@ export const Field: React.FC<FieldProps> = ({
   className,
   validationMessageHorizontalOverflow,
   htmlFor,
+  onClick,
   ...otherProps
 }) => {
   const theme = useTheme2();
@@ -87,7 +89,7 @@ export const Field: React.FC<FieldProps> = ({
 
   const labelElement =
     typeof label === 'string' ? (
-      <Label htmlFor={inputId} description={description}>
+      <Label htmlFor={inputId} description={description} onClick={onClick}>
         {`${label}${required ? ' *' : ''}`}
       </Label>
     ) : (

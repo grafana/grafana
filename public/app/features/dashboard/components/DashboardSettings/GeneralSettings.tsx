@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { TimeZone } from '@grafana/data';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
@@ -24,6 +24,8 @@ const GRAPH_TOOLTIP_OPTIONS = [
 
 export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWeekStart }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
+  const EditableButtonRef = useRef<HTMLInputElement | null>(null);
+  const GraphButtonRef = useRef<HTMLInputElement | null>(null);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
     dashboard.meta.folderId = folder.id;
@@ -80,6 +82,13 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
     setRenderCounter(renderCounter + 1);
   };
 
+  const onEditableButtonClick = () => {
+    EditableButtonRef.current?.focus();
+  };
+  const onGraphButtonClick = () => {
+    GraphButtonRef.current?.focus();
+  };
+
   const editableOptions = [
     { label: 'Editable', value: true },
     { label: 'Read-only', value: false },
@@ -115,8 +124,14 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
         <Field
           label="Editable"
           description="Set to read-only to disable all editing. Reload the dashboard for changes to take effect"
+          onClick={onEditableButtonClick}
         >
-          <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
+          <RadioButtonGroup
+            onChange={onEditableChange}
+            options={editableOptions}
+            value={dashboard.editable}
+            activeRadioButtonRef={EditableButtonRef}
+          />
         </Field>
       </div>
 
@@ -139,8 +154,14 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
         <Field
           label="Graph tooltip"
           description="Controls tooltip and hover highlight behavior across different panels"
+          onClick={onGraphButtonClick}
         >
-          <RadioButtonGroup onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={dashboard.graphTooltip} />
+          <RadioButtonGroup
+            onChange={onTooltipChange}
+            options={GRAPH_TOOLTIP_OPTIONS}
+            value={dashboard.graphTooltip}
+            activeRadioButtonRef={GraphButtonRef}
+          />
         </Field>
       </CollapsableSection>
 
