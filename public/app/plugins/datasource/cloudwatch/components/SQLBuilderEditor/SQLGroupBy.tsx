@@ -12,7 +12,6 @@ import {
   getFlattenedGroupBys,
   getMetricNameFromExpression,
   getNamespaceFromExpression,
-  groupByExpressionsToDimensions,
   setGroupByField,
   setSql,
 } from './utils';
@@ -31,8 +30,12 @@ const SQLGroupBy: React.FC<SQLGroupByProps> = ({ query, datasource, onQueryChang
   const namespace = getNamespaceFromExpression(sql.from);
   const metricName = getMetricNameFromExpression(sql.select);
 
-  const existingFilters = useMemo(() => groupByExpressionsToDimensions(groupBysFromQuery), [groupBysFromQuery]);
-  const options = useDimensionKeys(datasource, query.region, namespace, metricName, existingFilters);
+  const baseOptions = useDimensionKeys(datasource, query.region, namespace, metricName);
+  const options = useMemo(
+    // Exclude options we've already selected
+    () => baseOptions.filter((option) => !groupBysFromQuery.some((v) => v.property.name === option.value)),
+    [baseOptions, groupBysFromQuery]
+  );
 
   const onChange = (newItems: Array<Partial<QueryEditorGroupByExpression>>) => {
     // As new (empty object) items come in, with need to make sure they have the correct type

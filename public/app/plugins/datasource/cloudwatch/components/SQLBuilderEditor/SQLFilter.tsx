@@ -101,9 +101,7 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
   const namespace = getNamespaceFromExpression(sql.from);
   const metricName = getMetricNameFromExpression(sql.select);
 
-  // TODO: pass existing dimensions
-  const existingFilters = useMemo(() => ({}), []);
-  const dimensionKeys = useDimensionKeys(datasource, query.region, namespace, metricName, existingFilters);
+  const dimensionKeys = useDimensionKeys(datasource, query.region, namespace, metricName);
 
   const loadDimensionValues = async () => {
     if (!filter.property?.name) {
@@ -147,7 +145,6 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
         width="auto"
         isLoading={state.loading}
         value={
-          // TODO: better this
           filter.operator?.value && typeof filter.operator?.value === 'string' ? toOption(filter.operator?.value) : null
         }
         options={state.value}

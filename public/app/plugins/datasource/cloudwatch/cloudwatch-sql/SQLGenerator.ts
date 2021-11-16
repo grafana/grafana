@@ -145,7 +145,7 @@ export default class SQLGenerator {
   }
 
   private formatValue(label: string): string {
-    const specialCharacters = /[/\s\.-]/; // slash, space, dot, or dasho
+    const specialCharacters = /[/\s\.-]/; // slash, space, dot or dash
 
     const interpolated = this.templateSrv.replace(label, {}, 'raw');
     if (specialCharacters.test(interpolated)) {

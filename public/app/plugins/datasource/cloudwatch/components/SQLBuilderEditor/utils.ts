@@ -124,17 +124,6 @@ export function getFlattenedGroupBys(sql: SQLExpression): QueryEditorGroupByExpr
   return flattenGroupByExpressions(groupBy?.expressions ?? []);
 }
 
-/** Converts an array of QueryEditorGroupByExpression to a Dimensions  **/
-export function groupByExpressionsToDimensions(groupBys: QueryEditorGroupByExpression[]): Dimensions {
-  const groupByStrings = groupBys.reduce((acc: string[], curr: QueryEditorGroupByExpression) => {
-    if (curr.property?.name) {
-      return [...acc, curr.property.name];
-    }
-    return acc;
-  }, []);
-  return stringArrayToDimensions(groupByStrings);
-}
-
 /** Converts a string array to a Dimensions object with null values  **/
 export function stringArrayToDimensions(arr: string[]): Dimensions {
   return arr.reduce((acc, curr) => {
@@ -223,7 +212,6 @@ export function setSchemaLabels(
     });
   }
 
-  // TODO: do the with schema bit
   return query;
 }
 

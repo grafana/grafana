@@ -135,11 +135,11 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
                   onRunQuery={onRunQuery}
                   datasource={datasource}
                 ></SQLBuilderEditor>
-                <Space v={0.5} />
               </>
             )}
           </>
         )}
+        <Space v={0.5} />
         <EditorRow>
           <EditorField
             label="ID"

@@ -42,7 +42,7 @@ export class CompletionItemProvider {
 
   getCompletionProvider(monaco: Monaco) {
     return {
-      triggerCharacters: [' ', '$', ','],
+      triggerCharacters: [' ', '$', ',', '(', "'"],
       provideCompletionItems: async (model: monacoTypes.editor.ITextModel, position: monacoTypes.IPosition) => {
         const currentToken = linkedTokenBuilder(monaco, model, position);
         const statementPosition = getStatementPosition(currentToken);
