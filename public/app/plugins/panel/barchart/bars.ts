@@ -49,15 +49,14 @@ export interface BarsOptions {
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
   legend?: VizLegendOptions;
-  // can skip x ticks (e.g. for time)
-  xTime?: boolean;
+  xSpacing?: number;
 }
 
 /**
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri, xDir: dir, rawValue, getColor, formatValue, showValue, xTime = false } = opts;
+  const { xOri, xDir: dir, rawValue, getColor, formatValue, showValue, xSpacing = 0 } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
@@ -84,14 +83,16 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let splits: number[] = [];
 
     let dataLen = u.data[0].length;
+    let lastIdx = dataLen - 1;
 
-    // hardcoded minimum spacing between x ticks
-    let minSpace = 100;
+    let skipMod = 0;
 
-    let cssDim = dim / devicePixelRatio;
-    let maxTicks = Math.floor(cssDim / minSpace);
+    if (xSpacing !== 0) {
+      let cssDim = dim / devicePixelRatio;
+      let maxTicks = Math.abs(Math.floor(cssDim / xSpacing));
 
-    let skipMod = dataLen < maxTicks ? 0 : Math.ceil(dataLen / maxTicks);
+      skipMod = dataLen < maxTicks ? 0 : Math.ceil(dataLen / maxTicks);
+    }
 
     distribute(dataLen, groupWidth, groupDistr, null, (di, leftPct, widPct) => {
       let groupLftPx = (dim * leftPct) / devicePixelRatio;
@@ -99,7 +100,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       let groupCenterPx = groupLftPx + groupWidPx / 2;
 
-      let shouldSkip = xTime && di % skipMod > 0;
+      let shouldSkip = skipMod !== 0 && (xSpacing > 0 ? di : lastIdx - di) % skipMod > 0;
 
       // the splits array is % offsets (0..1) of the x dimension
       // -1 is a temp reserved magic number used here indicate a skip and not upset TS

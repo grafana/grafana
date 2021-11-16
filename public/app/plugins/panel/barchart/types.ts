@@ -22,6 +22,9 @@ export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, 
   xTickLabelRotation: number;
   xTickLabelMaxLength: number;
   colorByField?: string;
+
+  // negative values indicate backwards skipping behavior
+  xTickLabelSpacing?: number;
 }
 
 /**

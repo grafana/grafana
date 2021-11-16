@@ -32,6 +32,7 @@ const propsToDiff: Array<string | PropDiffFn> = [
   'barWidth',
   'xTickLabelRotation',
   'xTickLabelMaxLength',
+  'xTickLabelSpacing',
   'groupWidth',
   'stacking',
   'showValue',
@@ -108,6 +109,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       text,
       xTickLabelRotation,
       xTickLabelMaxLength,
+      xTickLabelSpacing,
     } = props;
 
     return preparePlotConfigBuilder({
@@ -122,6 +124,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       groupWidth,
       xTickLabelRotation,
       xTickLabelMaxLength,
+      xTickLabelSpacing,
       stacking,
       legend,
       tooltip,

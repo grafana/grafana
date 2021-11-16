@@ -100,6 +100,14 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           min: 0,
         },
       })
+      .addNumberInput({
+        path: 'xTickLabelSpacing',
+        name: 'Bar label minimum spacing',
+        description: 'Bar labels will be skipped to maintain this distance',
+        settings: {
+          placeholder: '0',
+        },
+      })
       .addRadio({
         path: 'showValue',
         name: 'Show values',

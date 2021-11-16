@@ -66,6 +66,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   allFrames,
   xTickLabelRotation,
   xTickLabelMaxLength,
+  xTickLabelSpacing = 0,
   legend,
 }) => {
   const builder = new UPlotConfigBuilder();
@@ -96,7 +97,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     text,
     showValue,
     legend,
-    xTime: frame.fields[0].type === FieldType.time,
+    xSpacing: xTickLabelSpacing,
   };
 
   const config = getConfig(opts, theme);
