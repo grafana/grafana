@@ -30,6 +30,7 @@ export interface BarChartProps
 const propsToDiff: Array<string | PropDiffFn> = [
   'orientation',
   'barWidth',
+  'barRadius',
   'xTickLabelRotation',
   'xTickLabelMaxLength',
   'xTickLabelSpacing',
@@ -101,6 +102,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       timeZone,
       orientation,
       barWidth,
+      barRadius = 0,
       showValue,
       groupWidth,
       stacking,
@@ -120,6 +122,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       eventBus,
       orientation,
       barWidth,
+      barRadius,
       showValue,
       groupWidth,
       xTickLabelRotation,

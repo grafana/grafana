@@ -40,6 +40,7 @@ export interface BarsOptions {
   xDir: ScaleDirection;
   groupWidth: number;
   barWidth: number;
+  barRadius: number;
   showValue: VisibilityMode;
   stacking: StackingMode;
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
@@ -62,7 +63,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const isStacked = opts.stacking !== StackingMode.None;
   const pctStacked = opts.stacking === StackingMode.Percent;
 
-  let { groupWidth, barWidth } = opts;
+  let { groupWidth, barWidth, barRadius = 0 } = opts;
 
   if (isStacked) {
     [groupWidth, barWidth] = [barWidth, groupWidth];
@@ -169,6 +170,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     : {};
 
   let barsBuilder = uPlot.paths.bars!({
+    radius: barRadius,
     disp: {
       x0: {
         unit: 2,

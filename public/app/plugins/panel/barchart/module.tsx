@@ -154,6 +154,16 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           step: 0.01,
         },
       })
+      .addSliderInput({
+        path: 'barRadius',
+        name: 'Bar radius',
+        defaultValue: 0,
+        settings: {
+          min: 0,
+          max: 0.5,
+          step: 0.05,
+        },
+      })
       .addFieldNamePicker({
         path: 'colorByField',
         name: 'Color by field',
