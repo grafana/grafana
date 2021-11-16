@@ -1,11 +1,11 @@
 import { createTheme, toDataFrame } from '@grafana/data';
 import { prepareCandlestickFields } from './fields';
-import { MarketOptions } from './models.gen';
+import { CandlestickOptions } from './models.gen';
 
 const theme = createTheme();
 
 describe('Candlestick data', () => {
-  const options: MarketOptions = {} as MarketOptions;
+  const options: CandlestickOptions = {} as CandlestickOptions;
 
   it('require a time field', () => {
     const info = prepareCandlestickFields(

@@ -5,6 +5,6 @@ coreModule.directive('datasourceTlsAuthSettings', () => {
     scope: {
       current: '=',
     },
-    templateUrl: 'public/app/features/datasources/partials/tls_auth_settings.html',
+    templateUrl: 'public/app/angular/partials/tls_auth_settings.html',
   };
 });

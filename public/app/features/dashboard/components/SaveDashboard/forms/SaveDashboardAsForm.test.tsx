@@ -8,7 +8,9 @@ import * as api from 'app/features/manage-dashboards/state/actions';
 jest.mock('app/features/plugins/datasource_srv', () => ({}));
 jest.mock('app/features/expressions/ExpressionDatasource', () => ({}));
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
-  validateNewDashboardName: () => true,
+  validationSrv: {
+    validateNewDashboardName: () => true,
+  },
 }));
 
 jest.spyOn(api, 'searchFolders').mockResolvedValue([]);
