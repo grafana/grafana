@@ -13,15 +13,15 @@ import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPl
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { drawMarkers, FieldIndices } from './utils';
-import { defaultColors, MarketOptions, MarketTrendMode } from './models.gen';
+import { defaultColors, CandlestickOptions, VizDisplayMode } from './models.gen';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { prepareCandlestickFields } from './fields';
 import uPlot from 'uplot';
 
-interface MarketPanelProps extends PanelProps<MarketOptions> {}
+interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
-export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
+export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
   data,
   timeRange,
   timeZone,
@@ -61,7 +61,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
       return doNothing;
     }
 
-    const { mode, priceStyle, colorStrategy } = options;
+    const { mode, candleStyle, colorStrategy } = options;
     const colors = { ...defaultColors, ...options.colors };
     let { open, high, low, close, volume } = fieldMap; // names from matched fields
 
@@ -76,7 +76,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
     let shouldRenderVolume = false;
 
     // find volume field and set overrides
-    if (volume != null && mode !== MarketTrendMode.Price) {
+    if (volume != null && mode !== VizDisplayMode.Candles) {
       let volumeField = info.volume!;
 
       if (volumeField != null) {
@@ -89,7 +89,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
         }
 
         // we only want to put volume on own shorter axis when rendered with price
-        if (mode !== MarketTrendMode.Volume) {
+        if (mode !== VizDisplayMode.Volume) {
           volumeField.config = { ...volumeField.config };
           volumeField.config.unit = 'short';
           volumeField.display = getDisplayProcessor({
@@ -133,7 +133,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
       }
     }
 
-    let shouldRenderPrice = mode !== MarketTrendMode.Volume && high != null && low != null;
+    let shouldRenderPrice = mode !== VizDisplayMode.Volume && high != null && low != null;
 
     if (!shouldRenderPrice && !shouldRenderVolume) {
       return doNothing;
@@ -187,7 +187,7 @@ export const MarketTrendPanel: React.FC<MarketPanelProps> = ({
                 flatColor: config.theme2.visualization.getColorByName(colors.flat),
                 volumeAlpha,
                 colorStrategy,
-                priceStyle,
+                candleStyle,
                 flatAsUp: true,
               })
             );
