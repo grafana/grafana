@@ -19,6 +19,8 @@ export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, 
   showValue: VisibilityMode;
   barWidth: number;
   groupWidth: number;
+  xTickLabelRotation: number;
+  xTickLabelMaxLength: number;
   rawValue: (seriesIdx: number, valueIdx: number) => number;
 }
 

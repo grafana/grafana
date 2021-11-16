@@ -5,7 +5,6 @@ import {
   cancelQueriesAction,
   clearCache,
   importQueries,
-  loadLogsVolumeData,
   queryReducer,
   runQueries,
   scanStartAction,
@@ -33,18 +32,6 @@ import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 import Mock = jest.Mock;
-import { config } from '@grafana/runtime';
-
-jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  config: {
-    ...((jest.requireActual('@grafana/runtime') as unknown) as any).config,
-    featureToggles: {
-      fullRangeLogsVolume: true,
-      autoLoadFullRangeLogsVolume: false,
-    },
-  },
-}));
 
 const t = toUtc();
 const testRange = {
@@ -64,6 +51,7 @@ const defaultInitialState = {
     [ExploreId.left]: {
       datasourceInstance: {
         query: jest.fn(),
+        getRef: jest.fn(),
         meta: {
           id: 'something',
         },
@@ -160,8 +148,8 @@ describe('importing queries', () => {
         importQueries(
           ExploreId.left,
           [
-            { datasource: 'postgres1', refId: 'refId_A' },
-            { datasource: 'postgres1', refId: 'refId_B' },
+            { datasource: { type: 'postgresql' }, refId: 'refId_A' },
+            { datasource: { type: 'postgresql' }, refId: 'refId_B' },
           ],
           { name: 'Postgres1', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
           { name: 'Postgres2', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>
@@ -342,6 +330,7 @@ describe('reducer', () => {
             ...defaultInitialState.explore[ExploreId.left],
             datasourceInstance: {
               query: jest.fn(),
+              getRef: jest.fn(),
               meta: {
                 id: 'something',
               },
@@ -374,29 +363,21 @@ describe('reducer', () => {
 
     it('should cancel any unfinished logs volume queries', async () => {
       await dispatch(runQueries(ExploreId.left));
-      // no subscriptions created yet
-      expect(unsubscribes).toHaveLength(0);
-
-      await dispatch(loadLogsVolumeData(ExploreId.left));
+      // first query is run automatically
       // loading in progress - one subscription created, not cleaned up yet
       expect(unsubscribes).toHaveLength(1);
       expect(unsubscribes[0]).not.toBeCalled();
 
       setupQueryResponse(getState());
       await dispatch(runQueries(ExploreId.left));
-      // new query was run - first subscription is cleaned up, no new subscriptions yet
-      expect(unsubscribes).toHaveLength(1);
+      // a new query is run while log volume query is not resolve yet...
       expect(unsubscribes[0]).toBeCalled();
-
-      await dispatch(loadLogsVolumeData(ExploreId.left));
-      // new subscription is created, only the old was was cleaned up
+      // first subscription is cleaned up, a new subscription is created automatically
       expect(unsubscribes).toHaveLength(2);
-      expect(unsubscribes[0]).toBeCalled();
       expect(unsubscribes[1]).not.toBeCalled();
     });
 
     it('should load logs volume after running the query', async () => {
-      config.featureToggles.autoLoadFullRangeLogsVolume = true;
       await dispatch(runQueries(ExploreId.left));
       expect(unsubscribes).toHaveLength(1);
     });

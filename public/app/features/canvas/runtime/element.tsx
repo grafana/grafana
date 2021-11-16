@@ -186,6 +186,10 @@ export class ElementState {
     this.options = { ...options };
     let trav = this.parent;
     while (trav) {
+      if (trav.isRoot()) {
+        trav.scene.save();
+        break;
+      }
       trav.revId++;
       trav = trav.parent;
     }
@@ -291,8 +295,14 @@ export class ElementState {
   render() {
     const { item } = this;
     return (
-      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.initElement}>
-        <item.display config={this.options.config} width={this.width} height={this.height} data={this.data} />
+      <div key={`${this.UID}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.initElement}>
+        <item.display
+          key={`${this.UID}/${this.revId}`}
+          config={this.options.config}
+          width={this.width}
+          height={this.height}
+          data={this.data}
+        />
       </div>
     );
   }

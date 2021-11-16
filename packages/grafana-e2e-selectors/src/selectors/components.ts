@@ -137,8 +137,16 @@ export const Components = {
     active: () => '[class*="-activeTabStyle"]',
   },
   RefreshPicker: {
+    /**
+     * @deprecated use runButtonV2 from Grafana 8.3 instead
+     */
     runButton: 'RefreshPicker run button',
+    /**
+     * @deprecated use intervalButtonV2 from Grafana 8.3 instead
+     */
     intervalButton: 'RefreshPicker interval button',
+    runButtonV2: 'data-testid RefreshPicker run button',
+    intervalButtonV2: 'data-testid RefreshPicker interval button',
   },
   QueryTab: {
     content: 'Query editor tab content',
@@ -261,5 +269,8 @@ export const Components = {
   },
   PanelAlertTabContent: {
     content: 'Unified alert editor tab content',
+  },
+  VisualizationPreview: {
+    card: (name: string) => `data-testid suggestion-${name}`,
   },
 };

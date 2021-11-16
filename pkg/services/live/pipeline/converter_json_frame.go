@@ -7,8 +7,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type JsonFrameConverterConfig struct{}
-
 // JsonFrameConverter decodes single data.Frame from JSON.
 type JsonFrameConverter struct {
 	config JsonFrameConverterConfig

@@ -4,9 +4,11 @@ import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
+  ExternalAlertmanagersResponse,
   Receiver,
   Silence,
   SilenceCreatePayload,
+  TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
@@ -28,6 +30,9 @@ import {
   fetchStatus,
   deleteAlertManagerConfig,
   testReceivers,
+  addAlertManagers,
+  fetchExternalAlertmanagers,
+  fetchExternalAlertmanagerConfig,
 } from '../api/alertmanager';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
@@ -104,6 +109,20 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
         });
       })()
     )
+);
+
+export const fetchExternalAlertmanagersAction = createAsyncThunk(
+  'unifiedAlerting/fetchExternalAlertmanagers',
+  (): Promise<ExternalAlertmanagersResponse> => {
+    return withSerializedError(fetchExternalAlertmanagers());
+  }
+);
+
+export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
+  'unifiedAlerting/fetchExternAlertmanagersConfig',
+  (): Promise<{ alertmanagers: string[] }> => {
+    return withSerializedError(fetchExternalAlertmanagerConfig());
+  }
 );
 
 export const fetchRulerRulesAction = createAsyncThunk(
@@ -633,12 +652,13 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
 interface TestReceiversOptions {
   alertManagerSourceName: string;
   receivers: Receiver[];
+  alert?: TestReceiversAlert;
 }
 
 export const testReceiversAction = createAsyncThunk(
   'unifiedalerting/testReceivers',
-  ({ alertManagerSourceName, receivers }: TestReceiversOptions): Promise<void> => {
-    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers)), {
+  ({ alertManagerSourceName, receivers, alert }: TestReceiversOptions): Promise<void> => {
+    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers, alert)), {
       errorMessage: 'Failed to send test alert.',
       successMessage: 'Test alert sent.',
     });
@@ -726,6 +746,24 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
       {
         errorMessage: 'Failed to update namespace / group',
         successMessage: 'Update successful',
+      }
+    );
+  }
+);
+
+export const addExternalAlertmanagersAction = createAsyncThunk(
+  'unifiedAlerting/addExternalAlertmanagers',
+  async (alertManagerUrls: string[], thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          await addAlertManagers(alertManagerUrls);
+          thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
+        })()
+      ),
+      {
+        errorMessage: 'Failed adding alertmanagers',
+        successMessage: 'Alertmanagers updated',
       }
     );
   }

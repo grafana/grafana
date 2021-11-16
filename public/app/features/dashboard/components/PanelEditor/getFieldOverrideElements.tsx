@@ -14,7 +14,7 @@ import { OptionPaneRenderProps } from './types';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
-import { getDataLinksVariableSuggestions } from 'app/angular/panel/panellinks/link_srv';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
 import { css } from '@emotion/css';
 
@@ -121,6 +121,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
         render: function renderMatcherUI() {
           return (
             <matcherUi.component
+              id={`${matcherUi.matcher.id}-${idx}`}
               matcher={matcherUi.matcher}
               data={props.data?.series ?? []}
               options={override.matcher.options}
@@ -260,5 +261,6 @@ function getBorderTopStyles(theme: GrafanaTheme2) {
   return css({
     borderTop: `1px solid ${theme.colors.border.weak}`,
     padding: `${theme.spacing(2)}`,
+    display: 'flex',
   });
 }

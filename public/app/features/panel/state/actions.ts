@@ -6,6 +6,8 @@ import { panelModelAndPluginReady } from './reducers';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { toPanelModelLibraryPanel } from 'app/features/library-panels/utils';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
+import { DataTransformerConfig, FieldConfigSource } from '@grafana/data';
+import { getPanelOptionsWithDefaults } from 'app/features/dashboard/state/getPanelOptionsWithDefaults';
 
 export function initPanelState(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
@@ -29,10 +31,23 @@ export function initPanelState(panel: PanelModel): ThunkResult<void> {
   };
 }
 
-export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkResult<void> {
+export interface ChangePanelPluginAndOptionsArgs {
+  panel: PanelModel;
+  pluginId: string;
+  options?: any;
+  fieldConfig?: FieldConfigSource;
+  transformations?: DataTransformerConfig[];
+}
+
+export function changePanelPlugin({
+  panel,
+  pluginId,
+  options,
+  fieldConfig,
+}: ChangePanelPluginAndOptionsArgs): ThunkResult<void> {
   return async (dispatch, getStore) => {
     // ignore action is no change
-    if (panel.type === pluginId) {
+    if (panel.type === pluginId && !options && !fieldConfig) {
       return;
     }
 
@@ -43,12 +58,28 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
       plugin = await dispatch(loadPanelPlugin(pluginId));
     }
 
-    const oldKey = panel.key;
+    let cleanUpKey = panel.key;
 
-    panel.changePlugin(plugin);
+    if (panel.type !== pluginId) {
+      panel.changePlugin(plugin);
+    }
+
+    if (options || fieldConfig) {
+      const newOptions = getPanelOptionsWithDefaults({
+        plugin,
+        currentOptions: options || panel.options,
+        currentFieldConfig: fieldConfig || panel.fieldConfig,
+        isAfterPluginChange: false,
+      });
+
+      panel.options = newOptions.options;
+      panel.fieldConfig = newOptions.fieldConfig;
+      panel.configRev++;
+    }
+
     panel.generateNewKey();
 
-    dispatch(panelModelAndPluginReady({ key: panel.key, plugin, cleanUpKey: oldKey }));
+    dispatch(panelModelAndPluginReady({ key: panel.key, plugin, cleanUpKey }));
   };
 }
 

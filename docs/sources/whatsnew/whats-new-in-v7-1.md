@@ -79,7 +79,7 @@ Grafana v7.1 adds support for provisioning of app plugins. This allows app plugi
 
 Support for multiple dimensions has been added to all services in the Azure Monitor datasource. This means you can now group by more than one dimension with time series queries. With the Kusto based services, Log Analytics and Application Insights Analytics, you can also select multiple metrics as well as multiple dimensions.
 
-Additionally, the Raw Edit mode for Application Insights Analytics has been replaced with a new service in the drop down for the data source and is called Insights Analytics. The new query editor behaves in the same way as Log Analytics.
+Additionally, the Raw Edit mode for Application Insights Analytics has been replaced with a new service in the drop-down for the data source and is called Insights Analytics. The new query editor behaves in the same way as Log Analytics.
 
 ## Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) data source
 

@@ -234,8 +234,11 @@ export interface AlertmanagerStatus {
   };
 }
 
+export type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
+
 export interface TestReceiversPayload {
   receivers?: Receiver[];
+  alert?: TestReceiversAlert;
 }
 
 interface TestReceiversResultGrafanaReceiverConfig {
@@ -254,6 +257,19 @@ export interface TestReceiversResult {
   receivers: TestReceiversResultReceiver[];
 }
 
+export interface ExternalAlertmanagers {
+  activeAlertManagers: AlertmanagerUrl[];
+  droppedAlertManagers: AlertmanagerUrl[];
+}
+
+export interface AlertmanagerUrl {
+  url: string;
+}
+
+export interface ExternalAlertmanagersResponse {
+  data: ExternalAlertmanagers;
+  status: 'string';
+}
 export enum AlertManagerImplementation {
   cortex = 'cortex',
   prometheus = 'prometheus',

@@ -15,40 +15,39 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestEngineTimeouts(t *testing.T) {
-	Convey("Alerting engine timeout tests", t, func() {
-		usMock := &usagestats.UsageStatsMock{T: t}
-		engine := ProvideAlertEngine(nil, nil, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg())
-		setting.AlertingNotificationTimeout = 30 * time.Second
-		setting.AlertingMaxAttempts = 3
-		engine.resultHandler = &FakeResultHandler{}
-		job := &Job{running: true, Rule: &Rule{}}
+	usMock := &usagestats.UsageStatsMock{T: t}
+	engine := ProvideAlertEngine(nil, nil, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg())
+	setting.AlertingNotificationTimeout = 30 * time.Second
+	setting.AlertingMaxAttempts = 3
+	engine.resultHandler = &FakeResultHandler{}
+	job := &Job{running: true, Rule: &Rule{}}
 
-		Convey("Should trigger as many retries as needed", func() {
-			Convey("pended alert for datasource -> result handler should be worked", func() {
-				// reduce alert timeout to test quickly
-				setting.AlertingEvaluationTimeout = 30 * time.Second
-				transportTimeoutInterval := 2 * time.Second
-				serverBusySleepDuration := 1 * time.Second
+	t.Run("Should trigger as many retries as needed", func(t *testing.T) {
+		t.Run("pended alert for datasource -> result handler should be worked", func(t *testing.T) {
+			// reduce alert timeout to test quickly
+			setting.AlertingEvaluationTimeout = 30 * time.Second
+			transportTimeoutInterval := 2 * time.Second
+			serverBusySleepDuration := 1 * time.Second
 
-				evalHandler := NewFakeCommonTimeoutHandler(transportTimeoutInterval, serverBusySleepDuration)
-				resultHandler := NewFakeCommonTimeoutHandler(transportTimeoutInterval, serverBusySleepDuration)
-				engine.evalHandler = evalHandler
-				engine.resultHandler = resultHandler
+			evalHandler := NewFakeCommonTimeoutHandler(transportTimeoutInterval, serverBusySleepDuration)
+			resultHandler := NewFakeCommonTimeoutHandler(transportTimeoutInterval, serverBusySleepDuration)
+			engine.evalHandler = evalHandler
+			engine.resultHandler = resultHandler
 
-				err := engine.processJobWithRetry(context.TODO(), job)
-				So(err, ShouldBeNil)
+			err := engine.processJobWithRetry(context.TODO(), job)
+			require.Nil(t, err)
 
-				So(evalHandler.EvalSucceed, ShouldEqual, true)
-				So(resultHandler.ResultHandleSucceed, ShouldEqual, true)
+			require.Equal(t, true, evalHandler.EvalSucceed)
+			require.Equal(t, true, resultHandler.ResultHandleSucceed)
 
-				// initialize for other tests.
-				setting.AlertingEvaluationTimeout = 2 * time.Second
-				engine.resultHandler = &FakeResultHandler{}
-			})
+			// initialize for other tests.
+			setting.AlertingEvaluationTimeout = 2 * time.Second
+			engine.resultHandler = &FakeResultHandler{}
 		})
 	})
 }

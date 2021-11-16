@@ -52,7 +52,7 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
         <div key={name}>
           {icon && (
             <>
-              <img className={styles.dataSourceIcon} src={icon} />{' '}
+              <img alt={`${name} datasource logo`} className={styles.dataSourceIcon} src={icon} />{' '}
             </>
           )}
           {name}

@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/loki/pkg/logcli/client"
@@ -34,7 +34,7 @@ type Service struct {
 	plog               log.Logger
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) (*Service, error) {
+func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
 		im:                 im,
@@ -46,7 +46,7 @@ func ProvideService(httpClientProvider httpclient.Provider, manager backendplugi
 		QueryDataHandler: s,
 	})
 
-	if err := manager.Register("loki", factory); err != nil {
+	if err := registrar.LoadAndRegister("loki", factory); err != nil {
 		s.plog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

@@ -8,15 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	Bus               bus.Bus
-	SQLStore          *sqlstore.SQLStore
-	EncryptionService encryption.Service
+	Bus            bus.Bus
+	SQLStore       *sqlstore.SQLStore
+	SecretsService secrets.Service
 
 	logger                       log.Logger
 	pluginSettingDecryptionCache secureJSONDecryptionCache
@@ -32,40 +31,40 @@ type secureJSONDecryptionCache struct {
 	sync.Mutex
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Service) *Service {
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service) *Service {
 	s := &Service{
-		Bus:               bus,
-		SQLStore:          store,
-		EncryptionService: encryptionService,
-		logger:            log.New("pluginsettings"),
+		Bus:            bus,
+		SQLStore:       store,
+		SecretsService: secretsService,
+		logger:         log.New("pluginsettings"),
 		pluginSettingDecryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
 		},
 	}
 
-	s.Bus.AddHandler(s.GetPluginSettingById)
+	s.Bus.AddHandlerCtx(s.GetPluginSettingById)
 	s.Bus.AddHandlerCtx(s.UpdatePluginSetting)
-	s.Bus.AddHandler(s.UpdatePluginSettingVersion)
+	s.Bus.AddHandlerCtx(s.UpdatePluginSettingVersion)
 
 	return s
 }
 
-func (s *Service) GetPluginSettingById(query *models.GetPluginSettingByIdQuery) error {
-	return s.SQLStore.GetPluginSettingById(query)
+func (s *Service) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+	return s.SQLStore.GetPluginSettingById(ctx, query)
 }
 
 func (s *Service) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureJsonData, setting.SecretKey)
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
 
-	return s.SQLStore.UpdatePluginSetting(cmd)
+	return s.SQLStore.UpdatePluginSetting(ctx, cmd)
 }
 
-func (s *Service) UpdatePluginSettingVersion(cmd *models.UpdatePluginSettingVersionCmd) error {
-	return s.SQLStore.UpdatePluginSettingVersion(cmd)
+func (s *Service) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
+	return s.SQLStore.UpdatePluginSettingVersion(ctx, cmd)
 }
 
 func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
@@ -76,7 +75,7 @@ func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
 		return item.json
 	}
 
-	json, err := s.EncryptionService.DecryptJsonData(context.Background(), ps.SecureJsonData, setting.SecretKey)
+	json, err := s.SecretsService.DecryptJsonData(context.Background(), ps.SecureJsonData)
 	if err != nil {
 		s.logger.Error("Failed to decrypt secure json data", "error", err)
 		return map[string]string{}

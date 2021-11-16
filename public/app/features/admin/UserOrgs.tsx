@@ -33,12 +33,19 @@ interface State {
 }
 
 export class UserOrgs extends PureComponent<Props, State> {
+  addToOrgButtonRef = React.createRef<HTMLButtonElement>();
   state = {
     showAddOrgModal: false,
   };
 
-  showOrgAddModal = (show: boolean) => () => {
-    this.setState({ showAddOrgModal: show });
+  showOrgAddModal = () => {
+    this.setState({ showAddOrgModal: true });
+  };
+
+  dismissOrgAddModal = () => {
+    this.setState({ showAddOrgModal: false }, () => {
+      this.addToOrgButtonRef.current?.focus();
+    });
   };
 
   render() {
@@ -69,12 +76,12 @@ export class UserOrgs extends PureComponent<Props, State> {
           </div>
           <div className={addToOrgContainerClass}>
             {canAddToOrg && (
-              <Button variant="secondary" onClick={this.showOrgAddModal(true)}>
+              <Button variant="secondary" onClick={this.showOrgAddModal} ref={this.addToOrgButtonRef}>
                 Add user to organization
               </Button>
             )}
           </div>
-          <AddToOrgModal isOpen={showAddOrgModal} onOrgAdd={onOrgAdd} onDismiss={this.showOrgAddModal(false)} />
+          <AddToOrgModal isOpen={showAddOrgModal} onOrgAdd={onOrgAdd} onDismiss={this.dismissOrgAddModal} />
         </div>
       </>
     );
@@ -151,12 +158,15 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
     const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
     const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
 
+    const inputId = `${org.name}-input`;
     return (
       <tr>
-        <td className={labelClass}>{org.name}</td>
+        <td className={labelClass}>
+          <label htmlFor={inputId}>{org.name}</label>
+        </td>
         {isChangingRole ? (
           <td>
-            <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} />
+            <OrgRolePicker inputId={inputId} value={currentRole} onChange={this.onOrgRoleChange} autoFocus />
           </td>
         ) : (
           <td className="width-25">{org.role}</td>
@@ -181,6 +191,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
                 confirmVariant="destructive"
                 onCancel={this.onCancelClick}
                 onConfirm={this.onOrgRemove}
+                autoFocus
               >
                 Remove from organization
               </ConfirmButton>
@@ -257,10 +268,10 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         onDismiss={this.onCancel}
       >
         <Field label="Organization">
-          <OrgPicker onSelected={this.onOrgSelect} />
+          <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} autoFocus />
         </Field>
         <Field label="Role">
-          <OrgRolePicker value={role} onChange={this.onOrgRoleChange} />
+          <OrgRolePicker inputId="new-org-role-input" value={role} onChange={this.onOrgRoleChange} />
         </Field>
         <Modal.ButtonRow>
           <HorizontalGroup spacing="md" justify="center">

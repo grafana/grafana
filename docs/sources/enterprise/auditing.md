@@ -69,24 +69,56 @@ For example, creating an API key produces an audit log like this:
 
 ```json {hl_lines=4}
 {
-  ...
-  "action":"create",
-  ...
-  "resources":[{"id":1,"type":"api-key"}],
-  ...
+  "action": "create",
+  "resources": [
+    {
+      "id": 1,
+      "type": "api-key"
+    }
+  ],
+  "timestamp": "2021-11-12T22:12:36.144795692Z",
+  "user": {
+    "userId": 1,
+    "orgId": 1,
+    "orgRole": "Admin",
+    "username": "admin",
+    "isAnonymous": false,
+    "authTokenId": 1
+  },
+  "request": {
+    "body": "{\"name\":\"example\",\"role\":\"Viewer\",\"secondsToLive\":null}"
+  },
+  "result": {
+    "statusType": "success",
+    "statusCode": 200,
+    "responseBody": "{\"id\":1,\"name\":\"example\"}"
+  },
+  "resources": [
+    {
+      "id": 1,
+      "type": "api-key"
+    }
+  ],
+  "requestUri": "/api/auth/keys",
+  "ipAddress": "127.0.0.1:54652",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+  "grafanaVersion": "8.3.0-pre"
 }
 ```
 
+Some actions can only be distinguished by their `requestUri` fields. For those actions, the relevant
+pattern of the `requestUri` field is given.
+
 #### Sessions
 
-| Action                           | Distinguishing fields                                      |
-| -------------------------------- | ---------------------------------------------------------- |
-| Log in                           | `{"action": "login-AUTH-MODULE"}` \*                       |
-| Log out \*\*                     | `{"action": "logout"}`                                     |
-| Force logout for user            | `{"action": "logout-user"}`                                |
+| Action                           | Distinguishing fields                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------ |
+| Log in                           | `{"action": "login-AUTH-MODULE"}` \*                                                       |
+| Log out \*\*                     | `{"action": "logout"}`                                                                     |
+| Force logout for user            | `{"action": "logout-user"}`                                                                |
 | Remove user authentication token | `{"action": "revoke-auth-token", "resources": [{"type": "auth-token"}, {"type": "user"}]}` |
-| Create API key                   | `{"action": "create", "resources": [{"type": "api-key"}]}` |
-| Delete API key                   | `{"action": "delete", "resources": [{"type": "api-key"}]}` |
+| Create API key                   | `{"action": "create", "resources": [{"type": "api-key"}]}`                                 |
+| Delete API key                   | `{"action": "delete", "resources": [{"type": "api-key"}]}`                                 |
 
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
@@ -109,26 +141,31 @@ For example, creating an API key produces an audit log like this:
 | Click signup link         | `{"action": "signup"}`                                              |
 | Reload LDAP configuration | `{"action": "ldap-reload"}`                                         |
 | Get user in LDAP          | `{"action": "ldap-search"}`                                         |
-| Sync user with LDAP       | `{"action": "ldap-sync", "resources": [{"type": "user"}]` |
+| Sync user with LDAP       | `{"action": "ldap-sync", "resources": [{"type": "user"}]`           |
 
 #### Team and organization management
 
-| Action                                              | Distinguishing fields                                                     |
-| --------------------------------------------------- | ------------------------------------------------------------------------- |
-| Add team<br/>(or add external group for team)       | `{"action": "create", "resources": [{"type": "team"}]}`                   |
-| Update team                                         | `{"action": "update", "resources": [{"type": "team"}]}`                   |
-| Delete team<br/>(or remove external group for team) | `{"action": "delete", "resources": [{"type": "team"}]}`                   |
-| Add user to team                                    | `{"action": "create", "resources": [{"type": "user"}, {"type": "team"}]}` |
-| Update team member permissions                      | `{"action": "update", "resources": [{"type": "user"}, {"type": "team"}]}` |
-| Remove user from team                               | `{"action": "delete", "resources": [{"type": "user"}, {"type": "team"}]}` |
-| Create organization                                 | `{"action": "create", "resources": [{"type": "org"}]}`                    |
-| Update organization                                 | `{"action": "update", "resources": [{"type": "org"}]}`                    |
-| Delete organization                                 | `{"action": "delete", "resources": [{"type": "org"}]}`                    |
-| Add user to organization                            | `{"action": "create", "resources": [{"type": "org"}, {"type": "user"}]}`  |
-| Change user role in organization                    | `{"action": "update", "resources": [{"type": "user"}, {"type": "org"}]}`  |
-| Remove user from organization                       | `{"action": "delete", "resources": [{"type": "user"}, {"type": "org"}]}`  |
-| Invite external user to organization                | `{"action": "org-invite", "resources": [{"type": "org"}, {"type": "user"}]}`                |
-| Revoke invitation                                   | `{"action": "revoke-org-invite", "resources": [{"type": "org"}]}`         |
+| Action                               | Distinguishing fields                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------- |
+| Add team                             | `{"action": "create", "requestUri": "/api/teams"}`                           |
+| Update team                          | `{"action": "update", "requestUri": "/api/teams/TEAM-ID"}`\*                 |
+| Delete team                          | `{"action": "delete", "requestUri": "/api/teams/TEAM-ID"}`\*                 |
+| Add external group for team          | `{"action": "create", "requestUri": "/api/teams/TEAM-ID/groups"}`\*          |
+| Remove external group for team       | `{"action": "delete", "requestUri": "/api/teams/TEAM-ID/groups/GROUP-ID"}`\* |
+| Add user to team                     | `{"action": "create", "resources": [{"type": "user"}, {"type": "team"}]}`    |
+| Update team member permissions       | `{"action": "update", "resources": [{"type": "user"}, {"type": "team"}]}`    |
+| Remove user from team                | `{"action": "delete", "resources": [{"type": "user"}, {"type": "team"}]}`    |
+| Create organization                  | `{"action": "create", "resources": [{"type": "org"}]}`                       |
+| Update organization                  | `{"action": "update", "resources": [{"type": "org"}]}`                       |
+| Delete organization                  | `{"action": "delete", "resources": [{"type": "org"}]}`                       |
+| Add user to organization             | `{"action": "create", "resources": [{"type": "org"}, {"type": "user"}]}`     |
+| Change user role in organization     | `{"action": "update", "resources": [{"type": "user"}, {"type": "org"}]}`     |
+| Remove user from organization        | `{"action": "delete", "resources": [{"type": "user"}, {"type": "org"}]}`     |
+| Invite external user to organization | `{"action": "org-invite", "resources": [{"type": "org"}, {"type": "user"}]}` |
+| Revoke invitation                    | `{"action": "revoke-org-invite", "resources": [{"type": "org"}]}`            |
+
+\* Where `TEAM-ID` is the ID of the affected team, and `GROUP-ID` (if present) is the ID of the
+external group.
 
 #### Folder and dashboard management
 
@@ -167,47 +204,51 @@ For example, creating an API key produces an audit log like this:
 | Disable caching for datasource                     | `{"action": "disable-cache", "resources": [{"type": "datasource"}]}`                      |
 | Update datasource caching configuration            | `{"action": "update", "resources": [{"type": "datasource"}]}`                             |
 
-
 \* `resources` may also contain a third item with `"type":` set to `"user"` or `"team"`.
 
 #### Alerts and notification channels management
 
-| Action                            | Distinguishing fields                                                                                  |
-| ----------------------------------| ------------------------------------------------------------------------------------------------------ |
-| Save alert manager configuration  | `{"action": "update", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/alerts"}`           |
-| Reset alert manager configuration | `{"action": "delete", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/alerts"}`           |
-| Create silence                    | `{"action": "create", "requestUri": "/api/alertmanager/<recipient>\*/api/v2/silences"}`                |
-| Delete silence                    | `{"action": "delete", "requestUri": "/api/alertmanager/<recipient>\*/api/v2/silences/<silence id>"}`   |
-| Create alert                      | `{"action": "create", "requestUri": "/api/ruler/<recipient>\*/api/v2/alerts"}`                         |
-| Create or update rule group       | `{"action": "create-update", "requestUri": "/api/ruler/<recipient>\*/api/v1/rules/<namespace>"}`       |
-| Delete rule group                 | `{"action": "delete", "requestUri": "/api/ruler/<recipient>\*/api/v1/rules/<namespace>/<group name>"}` |
-| Delete namespace                  | `{"action": "delete", "requestUri": "/api/ruler/<recipient>\*/api/v1/rules/<namespace>"}`              |
-| Test Grafana managed receivers    | `{"action": "test", "requestUri": "/api/alertmanager/<recipient>\*/config/api/v1/receivers/test"}`     |
-| Create or update the NGalert configuration of the user's organization | `{"action": "create-update", "requestUri": "/api/v1/ngalert/admin_config"}` |
-| Delete the NGalert configuration of the user's organization           | `{"action": "delete", "requestUri": "/api/v1/ngalert/admin_config"}`        |
+| Action                                                                | Distinguishing fields                                                                          |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Save alert manager configuration                                      | `{"action": "update", "requestUri": "/api/alertmanager/RECIPIENT/config/api/v1/alerts"}`       |
+| Reset alert manager configuration                                     | `{"action": "delete", "requestUri": "/api/alertmanager/RECIPIENT/config/api/v1/alerts"}`       |
+| Create silence                                                        | `{"action": "create", "requestUri": "/api/alertmanager/RECIPIENT/api/v2/silences"}`            |
+| Delete silence                                                        | `{"action": "delete", "requestUri": "/api/alertmanager/RECIPIENT/api/v2/silences/SILENCE-ID"}` |
+| Create alert                                                          | `{"action": "create", "requestUri": "/api/ruler/RECIPIENT/api/v2/alerts"}`                     |
+| Create or update rule group                                           | `{"action": "create-update", "requestUri": "/api/ruler/RECIPIENT/api/v1/rules/NAMESPACE"}`     |
+| Delete rule group                                                     | `{"action": "delete", "requestUri": "/api/ruler/RECIPIENT/api/v1/rules/NAMESPACE/GROUP-NAME"}` |
+| Delete namespace                                                      | `{"action": "delete", "requestUri": "/api/ruler/RECIPIENT/api/v1/rules/NAMESPACE"}`            |
+| Test Grafana managed receivers                                        | `{"action": "test", "requestUri": "/api/alertmanager/RECIPIENT/config/api/v1/receivers/test"}` |
+| Create or update the NGalert configuration of the user's organization | `{"action": "create-update", "requestUri": "/api/v1/ngalert/admin_config"}`                    |
+| Delete the NGalert configuration of the user's organization           | `{"action": "delete", "requestUri": "/api/v1/ngalert/admin_config"}`                           |
 
-\* `recipient` is `grafana` for requests handled by Grafana or the numeric data source ID for requests forwarded to a data source.
+Where the following:
+
+- `RECIPIENT` is `grafana` for requests handled by Grafana or the numeric data source ID for requests forwarded to a data source.
+- `NAMESPACE` is the string identifier for the rules namespace.
+- `GROUP-NAME` is the string identifier for the rules group.
+- `SILENCE-ID` is the ID of the affected silence.
 
 The following legacy alerting actions are still supported:
-| Action                    | Distinguishing fields                                                 |
+| Action | Distinguishing fields |
 | ------------------------- | --------------------------------------------------------------------- |
-| Test alert rule           | `{"action": "test", "resources": [{"type": "panel"}]}`                |
-| Pause alert               | `{"action": "pause", "resources": [{"type": "alert"}]}`               |
-| Pause all alerts          | `{"action": "pause-all"}`                                             |
-| Test alert notification channel   | `{"action": "test", "resources": [{"type": "alert-notification"}]}`   |
+| Test alert rule | `{"action": "test", "resources": [{"type": "panel"}]}` |
+| Pause alert | `{"action": "pause", "resources": [{"type": "alert"}]}` |
+| Pause all alerts | `{"action": "pause-all"}` |
+| Test alert notification channel | `{"action": "test", "resources": [{"type": "alert-notification"}]}` |
 | Create alert notification channel | `{"action": "create", "resources": [{"type": "alert-notification"}]}` |
 | Update alert notification channel | `{"action": "update", "resources": [{"type": "alert-notification"}]}` |
 | Delete alert notification channel | `{"action": "delete", "resources": [{"type": "alert-notification"}]}` |
 
 #### Reporting
 
-| Action                    | Distinguishing fields                                     |
-| ------------------------- | --------------------------------------------------------- |
+| Action                    | Distinguishing fields                                                            |
+| ------------------------- | -------------------------------------------------------------------------------- |
 | Create report             | `{"action": "create", "resources": [{"type": "report"}, {"type": "dashboard"}]}` |
 | Update report             | `{"action": "update", "resources": [{"type": "report"}, {"type": "dashboard"}]}` |
-| Delete report             | `{"action": "delete", "resources": [{"type": "report"}]}` |
-| Send report by email      | `{"action": "email", "resources": [{"type": "report"}]}`  |
-| Update reporting settings | `{"action": "change-settings"}`                           |
+| Delete report             | `{"action": "delete", "resources": [{"type": "report"}]}`                        |
+| Send report by email      | `{"action": "email", "resources": [{"type": "report"}]}`                         |
+| Update reporting settings | `{"action": "change-settings"}`                                                  |
 
 #### Annotations, playlists and snapshots management
 
@@ -236,16 +277,16 @@ The following legacy alerting actions are still supported:
 
 #### Plugins management
 
-| Action              | Distinguishing fields     |
-| ------------------- | ------------------------- |
-| Install plugin      | `{"action": "install"}`   |
-| Uninstall plugin    | `{"action": "uninstall"}` |
+| Action           | Distinguishing fields     |
+| ---------------- | ------------------------- |
+| Install plugin   | `{"action": "install"}`   |
+| Uninstall plugin | `{"action": "uninstall"}` |
 
 #### Miscellaneous
 
-| Action              | Distinguishing fields  |
-| ------------------- | ---------------------- |
-| Set licensing token | `{"action": "create"}` |
+| Action              | Distinguishing fields                                        |
+| ------------------- | ------------------------------------------------------------ |
+| Set licensing token | `{"action": "create", "requestUri": "/api/licensing/token"}` |
 
 ## Configuration
 

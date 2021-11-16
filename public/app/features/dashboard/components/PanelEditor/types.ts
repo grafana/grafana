@@ -59,3 +59,10 @@ export interface OptionPaneRenderProps {
   onPanelOptionsChanged: (options: any) => void;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
 }
+
+export interface OptionPaneItemOverrideInfo {
+  type: 'data' | 'rule';
+  onClick?: () => void;
+  tooltip: string;
+  description: string;
+}

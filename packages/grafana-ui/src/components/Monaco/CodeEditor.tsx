@@ -10,7 +10,6 @@ import { Themeable2 } from '../../types';
 
 import { CodeEditorProps, Monaco, MonacoEditor as MonacoEditorType, MonacoOptions } from './types';
 import { registerSuggestions } from './suggestions';
-import defineThemes from './theme';
 
 type Props = CodeEditorProps & Themeable2;
 
@@ -85,8 +84,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
   handleBeforeMount = (monaco: Monaco) => {
     this.monaco = monaco;
-    const { language, theme, getSuggestions, onBeforeEditorMount } = this.props;
-    defineThemes(monaco, theme);
+    const { language, getSuggestions, onBeforeEditorMount } = this.props;
 
     if (getSuggestions) {
       this.completionCancel = registerSuggestions(monaco, language, getSuggestions);
@@ -148,7 +146,6 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
           width={width}
           height={height}
           language={language}
-          theme={theme.isDark ? 'grafana-dark' : 'grafana-light'}
           value={value}
           options={{
             ...options,

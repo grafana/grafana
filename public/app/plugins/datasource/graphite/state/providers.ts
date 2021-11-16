@@ -106,7 +106,7 @@ export function getTagOperatorsSelectables(): Array<SelectableValue<GraphiteTagO
 async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
   try {
     const tagExpressions = state.queryModel.renderTagExpressions(index);
-    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
+    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, { range: state.range });
 
     const altTags = map(values, 'text');
     altTags.splice(0, 0, state.removeTagValue);
@@ -134,7 +134,7 @@ async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: str
   let tagsAsSegments: GraphiteSegment[];
   try {
     const tagExpressions = state.queryModel.renderTagExpressions();
-    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
+    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, { range: state.range });
     tagsAsSegments = map(values, (val) => {
       return {
         value: val.text,

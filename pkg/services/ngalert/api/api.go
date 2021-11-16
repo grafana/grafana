@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -17,8 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // timeNow makes it possible to test usage of time
@@ -54,7 +54,7 @@ type API struct {
 	Cfg                  *setting.Cfg
 	DatasourceCache      datasources.CacheService
 	RouteRegister        routing.RouteRegister
-	DataService          *tsdb.Service
+	ExpressionService    *expr.Service
 	QuotaService         *quota.QuotaService
 	Schedule             schedule.ScheduleService
 	RuleStore            store.RuleStore
@@ -64,7 +64,7 @@ type API struct {
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
-	EncryptionService    encryption.Service
+	SecretsService       secrets.Service
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -78,7 +78,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, enc: api.EncryptionService, log: logger},
+		AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
@@ -93,11 +93,11 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, manager: api.StateManager, store: api.RuleStore, log: logger},
 	), m)
 	api.RegisterTestingApiEndpoints(TestingApiSrv{
-		AlertingProxy:   proxy,
-		Cfg:             api.Cfg,
-		DataService:     api.DataService,
-		DatasourceCache: api.DatasourceCache,
-		log:             logger,
+		AlertingProxy:     proxy,
+		Cfg:               api.Cfg,
+		ExpressionService: api.ExpressionService,
+		DatasourceCache:   api.DatasourceCache,
+		log:               logger,
 	}, m)
 	api.RegisterConfigurationApiEndpoints(AdminSrv{
 		store:     api.AdminConfigStore,

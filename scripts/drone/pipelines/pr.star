@@ -1,5 +1,6 @@
 load(
     'scripts/drone/steps/lib.star',
+    'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
     'codespell_step',
@@ -25,7 +26,7 @@ load(
     'benchmark_ldap_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
-    'test_a11y_frontend_step_pr',
+    'test_a11y_frontend_step',
 )
 
 load(
@@ -46,6 +47,7 @@ def pr_pipelines(edition):
     variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     steps = [
+        lint_drone_step(),
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition=edition),
@@ -79,7 +81,7 @@ def pr_pipelines(edition):
         e2e_tests_server_step(edition=edition),
         e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
-        test_a11y_frontend_step_pr(edition=edition),
+        test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
         build_frontend_docs_step(edition=edition),
         build_docs_website_step(),
         copy_packages_for_docker_step(),

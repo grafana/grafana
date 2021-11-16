@@ -4,8 +4,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
-import { getCompletionProvider } from './monaco-completion-provider';
+import { selectors } from '@grafana/e2e-selectors';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { Props } from './MonacoQueryFieldProps';
+import { getOverrideServices } from './getOverrideServices';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -15,23 +17,38 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   fixedOverflowWidgets: true,
   folding: false,
   fontSize: 14,
-  lineDecorationsWidth: 8,
+  lineDecorationsWidth: 8, // used as "padding-left"
   lineNumbers: 'off',
   minimap: { enabled: false },
   overviewRulerBorder: false,
   overviewRulerLanes: 0,
   padding: {
+    // these numbers were picked so that visually this matches the previous version
+    // of the query-editor the best
     top: 4,
-    bottom: 4,
+    bottom: 5,
   },
   renderLineHighlight: 'none',
   scrollbar: {
     vertical: 'hidden',
+    verticalScrollbarSize: 8, // used as "padding-right"
+    horizontal: 'hidden',
+    horizontalScrollbarSize: 0,
   },
   scrollBeyondLastLine: false,
+  suggest: getSuggestOptions(),
   suggestFontSize: 12,
-  wordWrap: 'off',
+  wordWrap: 'on',
 };
+
+// this number was chosen by testing various values. it might be necessary
+// because of the width of the border, not sure.
+//it needs to do 2 things:
+// 1. when the editor is single-line, it should make the editor height be visually correct
+// 2. when the editor is multi-line, the editor should not be "scrollable" (meaning,
+//    you do a scroll-movement in the editor, and it will scroll the content by a couple pixels
+//    up & down. this we want to avoid)
+const EDITOR_HEIGHT_OFFSET = 2;
 
 const PROMQL_LANG_ID = promLanguageDefinition.id;
 
@@ -51,23 +68,6 @@ function ensurePromQL(monaco: Monaco) {
   }
 }
 
-const THEME_NAME = 'grafana-prometheus-query-field';
-
-let MONACO_THEME_SETUP_STARTED = false;
-function ensureMonacoTheme(monaco: Monaco, theme: GrafanaTheme2) {
-  if (MONACO_THEME_SETUP_STARTED === false) {
-    MONACO_THEME_SETUP_STARTED = true;
-    monaco.editor.defineTheme(THEME_NAME, {
-      base: theme.isDark ? 'vs-dark' : 'vs',
-      inherit: true,
-      colors: {
-        'editor.background': theme.components.input.background,
-      },
-      rules: [],
-    });
-  }
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
@@ -78,12 +78,15 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 const MonacoQueryField = (props: Props) => {
+  // we need only one instance of `overrideServices` during the lifetime of the react component
+  const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onChange, initialValue } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
-  const onChangeRef = useLatest(onChange);
+  const onRunQueryRef = useLatest(onRunQuery);
+  const onBlurRef = useLatest(onBlur);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
 
@@ -99,23 +102,23 @@ const MonacoQueryField = (props: Props) => {
 
   return (
     <div
+      aria-label={selectors.components.QueryField.container}
       className={styles.container}
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}
     >
       <ReactMonacoEditor
+        overrideServices={overrideServicesRef.current}
         options={options}
         language="promql"
-        theme={THEME_NAME}
         value={initialValue}
         beforeMount={(monaco) => {
           ensurePromQL(monaco);
-          ensureMonacoTheme(monaco, theme);
         }}
         onMount={(editor, monaco) => {
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
-            onChangeRef.current(editor.getValue());
+            onBlurRef.current(editor.getValue());
           });
 
           // we construct a DataProvider object
@@ -138,7 +141,11 @@ const MonacoQueryField = (props: Props) => {
             return Promise.resolve(result);
           };
 
-          const dataProvider = { getSeries, getHistory, getAllMetricNames };
+          const getAllLabelNames = () => Promise.resolve(lpRef.current.getLabelKeys());
+
+          const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
+
+          const dataProvider = { getSeries, getHistory, getAllMetricNames, getAllLabelNames, getLabelValues };
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,
@@ -175,7 +182,7 @@ const MonacoQueryField = (props: Props) => {
             const containerDiv = containerRef.current;
             if (containerDiv !== null) {
               const pixelHeight = editor.getContentHeight();
-              containerDiv.style.height = `${pixelHeight}px`;
+              containerDiv.style.height = `${pixelHeight + EDITOR_HEIGHT_OFFSET}px`;
               containerDiv.style.width = '100%';
               const pixelWidth = containerDiv.clientWidth;
               editor.layout({ width: pixelWidth, height: pixelHeight });
@@ -188,9 +195,7 @@ const MonacoQueryField = (props: Props) => {
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-            const text = editor.getValue();
-            props.onChange(text);
-            props.onRunQuery();
+            onRunQueryRef.current(editor.getValue());
           });
         }}
       />
