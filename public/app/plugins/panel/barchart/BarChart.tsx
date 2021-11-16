@@ -1,11 +1,22 @@
 import React, { useRef } from 'react';
 import { cloneDeep } from 'lodash';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
-import { GraphNG, GraphNGProps, PlotLegend, UPlotConfigBuilder, usePanelContext, useTheme2 } from '@grafana/ui';
+import {
+  GraphNG,
+  GraphNGProps,
+  PlotLegend,
+  UPlotConfigBuilder,
+  usePanelContext,
+  useTheme2,
+  VizLayout,
+  VizLegend,
+  VizLegendItem,
+} from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
 import { BarChartDisplayValues, BarChartOptions } from './types';
 import { isLegendOrdered, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 /**
  * @alpha
@@ -37,8 +48,18 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
   frame0Ref.current = props.frames[0];
 
   const renderLegend = (config: UPlotConfigBuilder) => {
-    if (!config || props.legend.displayMode === LegendDisplayMode.Hidden) {
+    const { legend } = props;
+    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
       return null;
+    }
+
+    if (props.data.colorByField) {
+      const items: VizLegendItem[] = [{ label: 'TODO: mappeed colors?', color: '#F00', yAxis: 1 }];
+      return (
+        <VizLayout.Legend placement={legend.placement}>
+          <VizLegend placement={legend.placement} items={items} displayMode={legend.displayMode} />
+        </VizLayout.Legend>
+      );
     }
 
     return <PlotLegend data={props.frames} config={config} maxHeight="35%" maxWidth="60%" {...props.legend} />;
@@ -61,8 +82,14 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
   if (props.data.colorByField) {
     const colorByField = props.data.colorByField;
     const disp = colorByField.display!;
+    const fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100.0;
+    // gradientMode? ignore?
     getColor = (seriesIdx: number, valueIdx: number) => {
-      return disp(colorByField.values.get(valueIdx)).color!;
+      const v = disp(colorByField.values.get(valueIdx)).color!;
+      if (fillOpacity < 1) {
+        return alpha(v, fillOpacity);
+      }
+      return v;
     };
   }
 
