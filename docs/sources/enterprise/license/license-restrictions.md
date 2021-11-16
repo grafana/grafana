@@ -82,17 +82,9 @@ To determine the number of active users for each licensed role:
 
 Grafana counts Viewer users separately from Editor/Admin users. If you reach the limit imposed by your license for either of these user types, use the following techniques to make optimum use of the licenses you purchased.
 
-**Review and update organization permissions.**
-
-You can modify organization permissions to reduce the count of one type of user. For example, if you reach the limit of Editor/Admin users, assign Viewer permissions to one (or more) Editor/Admin users who agree to read-only access to dashboards. The license count updates when a user signs back in to Grafana.
-
-**Review and update dashboard permissions.**
-
-Because Viewers can also count toward Editor/Admin usage, if they are granted access to edit specific dashboards, review your dashboard permissions and adjust accordingly. Remove Editor or Admin permissions where necessary.
-
-**Delete users.**
-
-Review the number of users you have for each type of permission and remove inactive users. Removing users immediately frees up space for new users.
+* **Review and update organization permissions.** You can modify organization permissions to reduce the count of one type of user. For example, if you reach the limit of Editor/Admin users, assign Viewer permissions to one (or more) Editor/Admin users who agree to read-only access to dashboards. The license count updates when a user signs back in to Grafana.
+* **Review and update dashboard permissions.** Because Viewers can also count toward Editor/Admin usage, if they are granted access to edit specific dashboards, review your dashboard permissions and adjust accordingly. Remove Editor or Admin permissions where necessary.
+* **Delete users.** Review the number of users you have for each type of permission and remove inactive users. Removing users immediately frees up space for new users.
 
 > When you delete a user you also delete their preferences, dashboard and folder permissions, and references to that user from the dashboard versions they have updated.
 
