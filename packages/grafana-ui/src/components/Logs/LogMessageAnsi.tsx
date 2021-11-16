@@ -18,10 +18,9 @@ function convertCSSToStyle(theme: GrafanaTheme2, css: string): Style {
   return css.split(/;\s*/).reduce<Style>((accumulated, line) => {
     // The ansicolor package returns this color if the chunk has the ANSI dim
     // style (`\e[2m`), but it is nearly unreadable in the dark theme, so we use
-    // `opacity` instead to style it in a way that works across all themes.
+    // GrafanaTheme2 instead to style it in a way that works across all themes.
     if (line === 'color:rgba(0,0,0,0.5)') {
-      accumulated['color'] = theme.colors.text.secondary;
-      return accumulated;
+      return { color: theme.colors.text.secondary };
     }
 
     const match = line.match(/([^:\s]+)\s*:\s*(.+)/);
