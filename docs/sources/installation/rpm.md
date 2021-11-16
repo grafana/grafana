@@ -174,11 +174,11 @@ sudo systemctl enable grafana-server
 
 #### Serving Grafana behind a proxy
 
-When serving grafana behind a proxy you need to set `http_proxy` and `https_proxy` environment variables.
+When serving Grafana behind a proxy, you need to configure the `http_proxy` and `https_proxy` environment variables.
 
 ##### Centos 6
 
-If you run Centos 6, to do so add the following lines in `/etc/sysconfig/grafana-server`.
+If you are on Centos 6, add the following lines to the `/etc/sysconfig/grafana-server` file.
 
 ```
 export no_proxy=internal.domain,127.0.0.1
@@ -188,7 +188,7 @@ export https_proxy=http://proxy.domain:3128/
 
 ##### Centos 7
 
-If you run Centos 6, to do so add the following lines in `/etc/sysconfig/grafana-server`.
+If you are on Centos 7, add the following lines to the `/etc/sysconfig/grafana-server` file.
 
 ```
 http_proxy=http://proxy.domain:3128/
