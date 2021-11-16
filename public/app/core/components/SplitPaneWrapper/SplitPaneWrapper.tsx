@@ -134,20 +134,29 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const paneSpacing = theme.spacing.md;
 
   const resizer = css`
-    font-style: italic;
-    background: transparent;
-    border-top: 0;
-    border-right: 0;
-    border-bottom: 0;
-    border-left: 0;
-    border-color: transparent;
-    border-style: solid;
     position: relative;
-    transition: 0.2s border-color ease-in-out;
-    z-index: ${theme.zIndex.navbarFixed};
+
+    &::before {
+      content: '';
+      position: absolute;
+      transition: 0.2s border-color ease-in-out;
+    }
+
+    &::after {
+      background: ${theme.colors.panelBorder};
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transition: 0.2s background ease-in-out;
+      transform: translate(-50%, -50%);
+      border-radius: 4px;
+    }
 
     &:hover {
-      border-color: ${handleColor};
+      &::before {
+        border-color: ${handleColor};
+      }
 
       &::after {
         background: ${handleColor};
@@ -161,19 +170,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       css`
         cursor: col-resize;
         width: ${paneSpacing};
-        border-right-width: 1px;
+
+        &::before {
+          border-right: 1px solid transparent;
+          height: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+        }
 
         &::after {
-          background: ${theme.colors.panelBorder};
-          content: '';
-          position: absolute;
           height: 200px;
-          width: 7px;
-          left: calc(100% + 1px);
-          top: 50%;
-          transform: translate(-50%, -50%);
-          transition: 0.2s background ease-in-out;
-          border-radius: 4px;
+          width: 4px;
         }
       `
     ),
@@ -182,23 +189,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       css`
         height: ${paneSpacing};
         cursor: row-resize;
-        position: relative;
-        top: 0px;
-        z-index: 1;
-        border-top-width: 1px;
         margin-left: ${paneSpacing};
 
+        &::before {
+          border-top: 1px solid transparent;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 100%;
+        }
+
         &::after {
-          background: ${theme.colors.panelBorder};
-          content: '';
-          position: absolute;
-          height: 7px;
+          height: 4px;
           width: 200px;
-          left: 50%;
-          top: -1px;
-          transform: translate(-50%, -50%);
-          transition: 0.2s background ease-in-out;
-          border-radius: 4px;
         }
       `
     ),
