@@ -28,8 +28,7 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 		Secret string
 	}
 
-	selectSQL := fmt.Sprintf("SELECT id, %s as secret FROM %s", s.columnName, s.tableName)
-	if err := sess.SQL(selectSQL).Find(&rows); err != nil {
+	if err := sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		return err
 	}
 
@@ -86,8 +85,7 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 		SecureJsonData map[string][]byte
 	}
 
-	selectSQL := fmt.Sprintf("SELECT id, secure_json_data FROM %s", s.tableName)
-	if err := sess.SQL(selectSQL).Find(&rows); err != nil {
+	if err := sess.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
 		return err
 	}
 
@@ -110,7 +108,7 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 			return err
 		}
 
-		if _, err := sess.Table(s.tableName).ID(row.Id).Update(toUpdate); err != nil {
+		if _, err := sess.Table(s.tableName).Where("id = ?", row.Id).Update(toUpdate); err != nil {
 			return err
 		}
 	}
@@ -167,7 +165,7 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 			return err
 		}
 
-		if _, err := sess.Table("alert_configuration").ID(result.Id).Update(&result); err != nil {
+		if _, err := sess.Table("alert_configuration").Where("id = ?", result.Id).Update(&result); err != nil {
 			return err
 		}
 	}
@@ -178,10 +176,6 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 }
 
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
-	if !runner.SettingsProvider.IsFeatureToggleEnabled("envelopeEncryption") {
-		logger.Warn("Envelope encryption is not enabled, quitting...")
-		return nil
-	}
 
 	toMigrate := []interface {
 		reencrypt(*manager.SecretsService, *xorm.Session) error
@@ -195,7 +189,7 @@ func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 		alertingSecret{},
 	}
 
-	return runner.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return runner.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		for _, m := range toMigrate {
 			if err := m.reencrypt(runner.SecretsService, sess.Session); err != nil {
 				return err
