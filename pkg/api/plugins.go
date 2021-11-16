@@ -213,6 +213,14 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 		return response.Error(422, "Dashboard must be set", nil)
 	}
 
+	limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
+	if err != nil {
+		return response.Error(500, "failed to get quota", err)
+	}
+	if limitReached {
+		return response.Error(403, "Quota reached", nil)
+	}
+
 	trimDefaults := c.QueryBoolWithDefault("trimdefaults", true)
 	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
 		apiCmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(apiCmd.Dashboard)
