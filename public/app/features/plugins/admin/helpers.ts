@@ -75,7 +75,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     orgName,
     popularity,
     publishedAt,
-    signature: getPluginSignature({ remote: plugin, error }),
+    signature: getPluginSignatureStatus({ remote: plugin, error }),
     updatedAt,
     hasUpdate: false,
     isPublished: true,
@@ -92,13 +92,13 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
 export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): CatalogPlugin {
   const {
     name,
-    info: { description, version, logos, updated, author },
+    json: {
+      info: { description, version, logos, updated, author },
+    },
     id,
     dev,
     type,
     signature,
-    signatureOrg,
-    signatureType,
     hasUpdate,
   } = plugin;
 
@@ -111,15 +111,15 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     orgName: author.name,
     popularity: 0,
     publishedAt: '',
-    signature: getPluginSignature({ local: plugin, error }),
-    signatureOrg,
-    signatureType,
+    signature: getPluginSignatureStatus({ local: plugin, error }),
+    signatureOrg: signature.org,
+    signatureType: signature.type,
     updatedAt: updated,
     installedVersion: version,
     hasUpdate,
     isInstalled: true,
     isDisabled: !!error,
-    isCore: signature === 'internal',
+    isCore: signature.status === 'internal',
     isPublished: false,
     isDev: Boolean(dev),
     isEnterprise: false,
@@ -130,7 +130,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
 
 // TODO: change the signature by removing the optionals for local and remote.
 export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
-  const installedVersion = local?.info.version;
+  const installedVersion = local?.json.info.version;
   const id = remote?.slug || local?.id || '';
   const type = local?.type || remote?.typeCode;
   const isDisabled = !!error;
@@ -145,19 +145,19 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
       small: `https://grafana.com/api/plugins/${id}/versions/${remote.version}/logos/small`,
       large: `https://grafana.com/api/plugins/${id}/versions/${remote.version}/logos/large`,
     };
-  } else if (local && local.info.logos) {
-    logos = local.info.logos;
+  } else if (local && local.json.info.logos) {
+    logos = local.json.info.logos;
   }
 
   return {
-    description: local?.info.description || remote?.description || '',
+    description: local?.json.info.description || remote?.description || '',
     downloads: remote?.downloads || 0,
     hasUpdate: local?.hasUpdate || false,
     id,
     info: {
       logos,
     },
-    isCore: Boolean(remote?.internal || local?.signature === PluginSignatureStatus.internal),
+    isCore: Boolean(remote?.internal || local?.signature.status === PluginSignatureStatus.internal),
     isDev: Boolean(local?.dev),
     isEnterprise: remote?.status === 'enterprise',
     isInstalled: Boolean(local) || isDisabled,
@@ -166,15 +166,15 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
     // TODO<check if we would like to keep preferring the remote version>
-    orgName: remote?.orgName || local?.info.author.name || '',
+    orgName: remote?.orgName || local?.json.info.author.name || '',
     popularity: remote?.popularity || 0,
     publishedAt: remote?.createdAt || '',
     type,
-    signature: getPluginSignature({ local, remote, error }),
-    signatureOrg: local?.signatureOrg || remote?.versionSignedByOrgName,
-    signatureType: local?.signatureType || remote?.versionSignatureType || remote?.signatureType || undefined,
+    signature: getPluginSignatureStatus({ local, remote, error }),
+    signatureOrg: local?.signature.org || remote?.versionSignedByOrgName,
+    signatureType: local?.signature.type || remote?.versionSignatureType || remote?.signatureType || undefined,
     // TODO<check if we would like to keep preferring the remote version>
-    updatedAt: remote?.updatedAt || local?.info.updated || '',
+    updatedAt: remote?.updatedAt || local?.json.info.updated || '',
     installedVersion,
     error: error?.errorCode,
   };
@@ -215,7 +215,7 @@ function groupErrorsByPluginId(errors: PluginError[] = []): Record<string, Plugi
   }, {} as Record<string, PluginError | undefined>);
 }
 
-function getPluginSignature(options: {
+function getPluginSignatureStatus(options: {
   local?: LocalPlugin;
   remote?: RemotePlugin;
   error?: PluginError;
@@ -234,7 +234,7 @@ function getPluginSignature(options: {
   }
 
   if (local?.signature) {
-    return local.signature;
+    return local.signature.status;
   }
 
   if (remote?.signatureType || remote?.versionSignatureType) {
@@ -272,5 +272,5 @@ function isPluginVisible(id: string) {
 }
 
 export function isLocalCorePlugin(local?: LocalPlugin): boolean {
-  return Boolean(local?.signature === 'internal');
+  return Boolean(local?.signature?.status === 'internal');
 }

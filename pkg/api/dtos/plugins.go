@@ -28,21 +28,36 @@ type PluginSetting struct {
 }
 
 type PluginListItem struct {
-	Name          string                  `json:"name"`
-	Type          string                  `json:"type"`
-	Id            string                  `json:"id"`
-	Enabled       bool                    `json:"enabled"`
-	Pinned        bool                    `json:"pinned"`
-	Info          *plugins.Info           `json:"info"`
-	Dependencies  *plugins.Dependencies   `json:"dependencies"`
-	LatestVersion string                  `json:"latestVersion"`
-	HasUpdate     bool                    `json:"hasUpdate"`
-	DefaultNavUrl string                  `json:"defaultNavUrl"`
-	Category      string                  `json:"category"`
-	State         plugins.ReleaseState    `json:"state"`
-	Signature     plugins.SignatureStatus `json:"signature"`
-	SignatureType plugins.SignatureType   `json:"signatureType"`
-	SignatureOrg  string                  `json:"signatureOrg"`
+	ID            string       `json:"id"`
+	Name          string       `json:"name"`
+	Type          string       `json:"type"`
+	Enabled       bool         `json:"enabled"`
+	Pinned        bool         `json:"pinned"`
+	HasUpdate     bool         `json:"hasUpdate"`
+	LatestVersion string       `json:"latestVersion"`
+	Dependencies  []Dependency `json:"dependencies"`
+
+	JSON      PluginJSON    `json:"json"`
+	Signature SignatureInfo `json:"signature"`
+}
+
+type PluginJSON struct {
+	Info          *plugins.Info         `json:"info"`
+	Dependencies  *plugins.Dependencies `json:"dependencies"`
+	DefaultNavURL string                `json:"defaultNavUrl"`
+	Category      string                `json:"category"`
+	State         plugins.ReleaseState  `json:"state"`
+}
+
+type SignatureInfo struct {
+	Status plugins.SignatureStatus `json:"status"`
+	Type   plugins.SignatureType   `json:"type"`
+	Org    string                  `json:"org"`
+}
+
+type Dependency struct {
+	PluginID string `json:"pluginId"`
+	Version  string `json:"version"`
 }
 
 type PluginList []PluginListItem

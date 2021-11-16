@@ -5,6 +5,7 @@ import {
   PluginSignatureType,
   PluginDependencies,
   PluginErrorCode,
+  PluginDependency,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 import { StoreState, PluginsState } from 'app/types';
@@ -126,12 +127,23 @@ export type RemotePlugin = {
 };
 
 export type LocalPlugin = {
-  category: string;
-  defaultNavUrl: string;
   dev?: boolean;
   enabled: boolean;
   hasUpdate: boolean;
   id: string;
+  name: string;
+  pinned: boolean;
+  signature: SignatureInfo;
+  type: PluginType;
+  json: PluginJSON;
+  dependencies: PluginDependency[];
+};
+
+type PluginJSON = {
+  state: string;
+  dependencies: PluginDependencies;
+  category: string;
+  defaultNavUrl: string;
   info: {
     author: Rel;
     description: string;
@@ -148,14 +160,12 @@ export type LocalPlugin = {
     version: string;
     updated: string;
   };
-  name: string;
-  pinned: boolean;
-  signature: PluginSignatureStatus;
-  signatureOrg: string;
-  signatureType: PluginSignatureType;
-  state: string;
-  type: PluginType;
-  dependencies: PluginDependencies;
+};
+
+type SignatureInfo = {
+  status: PluginSignatureStatus;
+  org: string;
+  type: PluginSignatureType;
 };
 
 interface Rel {

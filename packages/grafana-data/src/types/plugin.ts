@@ -91,6 +91,11 @@ export interface PluginDependencies {
   plugins: PluginDependencyInfo[];
 }
 
+export interface PluginDependency {
+  pluginId: string;
+  version: string;
+}
+
 export enum PluginIncludeType {
   dashboard = 'dashboard',
   page = 'page',

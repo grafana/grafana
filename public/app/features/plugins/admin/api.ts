@@ -15,12 +15,12 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   ]);
 
   const local = localPlugins.find((p) => p.id === id);
-  const dependencies = local?.dependencies || remote?.json?.dependencies;
+  const dependencies = local?.json.dependencies || remote?.json?.dependencies;
 
   return {
     grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
     pluginDependencies: dependencies?.plugins || [],
-    links: local?.info.links || remote?.json?.info.links || [],
+    links: local?.json.info.links || remote?.json?.info.links || [],
     readme: localReadme || remote?.readme,
     versions,
   };

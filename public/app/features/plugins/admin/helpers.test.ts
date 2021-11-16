@@ -174,7 +174,10 @@ describe('Plugins/Helpers', () => {
 
     test('isCore if signature is internal', () => {
       const pluginWithoutInternalSignature = { ...localPlugin };
-      const pluginWithInternalSignature = { ...localPlugin, signature: 'internal' } as LocalPlugin;
+      const pluginWithInternalSignature = {
+        ...localPlugin,
+        signature: { ...localPlugin.signature, status: 'internal' },
+      } as LocalPlugin;
       expect(mapLocalToCatalog(pluginWithoutInternalSignature).isCore).toBe(false);
       expect(mapLocalToCatalog(pluginWithInternalSignature).isCore).toBe(true);
     });
@@ -224,7 +227,10 @@ describe('Plugins/Helpers', () => {
       // Local & Remote
       expect(
         mapToCatalogPlugin(
-          { ...localPlugin, info: { ...localPlugin.info, description: 'Local description' } },
+          {
+            ...localPlugin,
+            json: { ...localPlugin.json, info: { ...localPlugin.json.info, description: 'Local description' } },
+          },
           { ...remotePlugin, description: 'Remote description' }
         )
       ).toMatchObject({ description: 'Local description' });
@@ -236,7 +242,10 @@ describe('Plugins/Helpers', () => {
 
       // Local only
       expect(
-        mapToCatalogPlugin({ ...localPlugin, info: { ...localPlugin.info, description: 'Local description' } })
+        mapToCatalogPlugin({
+          ...localPlugin,
+          json: { ...localPlugin.json, info: { ...localPlugin.json.info, description: 'Local description' } },
+        })
       ).toMatchObject({ description: 'Local description' });
 
       // No local or remote
@@ -275,10 +284,20 @@ describe('Plugins/Helpers', () => {
       expect(mapToCatalogPlugin(undefined, { ...remotePlugin, internal: false })).toMatchObject({ isCore: false });
 
       // Local only
-      expect(mapToCatalogPlugin({ ...localPlugin, signature: PluginSignatureStatus.internal })).toMatchObject({
+      expect(
+        mapToCatalogPlugin({
+          ...localPlugin,
+          signature: { ...localPlugin.signature, status: PluginSignatureStatus.internal },
+        })
+      ).toMatchObject({
         isCore: true,
       });
-      expect(mapToCatalogPlugin({ ...localPlugin, signature: PluginSignatureStatus.valid })).toMatchObject({
+      expect(
+        mapToCatalogPlugin({
+          ...localPlugin,
+          signature: { ...localPlugin.signature, status: PluginSignatureStatus.valid },
+        })
+      ).toMatchObject({
         isCore: false,
       });
 
@@ -433,7 +452,7 @@ describe('Plugins/Helpers', () => {
       // Local & Remote
       expect(
         mapToCatalogPlugin(
-          { ...localPlugin, signature: PluginSignatureStatus.valid },
+          { ...localPlugin, signature: { ...localPlugin.signature, status: PluginSignatureStatus.valid } },
           { ...remotePlugin, signatureType: '', versionSignatureType: '' }
         )
       ).toMatchObject({
@@ -441,7 +460,7 @@ describe('Plugins/Helpers', () => {
       });
       expect(
         mapToCatalogPlugin(
-          { ...localPlugin, signature: PluginSignatureStatus.missing },
+          { ...localPlugin, signature: { ...localPlugin.signature, status: PluginSignatureStatus.missing } },
           {
             ...remotePlugin,
             signatureType: PluginSignatureType.grafana,
@@ -470,7 +489,12 @@ describe('Plugins/Helpers', () => {
       });
 
       // Local only
-      expect(mapToCatalogPlugin({ ...localPlugin, signature: PluginSignatureStatus.valid })).toMatchObject({
+      expect(
+        mapToCatalogPlugin({
+          ...localPlugin,
+          signature: { ...localPlugin.signature, status: PluginSignatureStatus.valid },
+        })
+      ).toMatchObject({
         signature: PluginSignatureStatus.valid,
       });
 
@@ -482,7 +506,7 @@ describe('Plugins/Helpers', () => {
       // Local & Remote
       expect(
         mapToCatalogPlugin(
-          { ...localPlugin, signatureOrg: 'Local Org' },
+          { ...localPlugin, signature: { ...localPlugin.signature, org: 'Local Org' } },
           { ...remotePlugin, versionSignedByOrgName: 'Remote Org' }
         )
       ).toMatchObject({
@@ -495,7 +519,9 @@ describe('Plugins/Helpers', () => {
       });
 
       // Local only
-      expect(mapToCatalogPlugin({ ...localPlugin, signatureOrg: 'Local Org' })).toMatchObject({
+      expect(
+        mapToCatalogPlugin({ ...localPlugin, signature: { ...localPlugin.signature, org: 'Local Org' } })
+      ).toMatchObject({
         signatureOrg: 'Local Org',
       });
 
@@ -507,7 +533,7 @@ describe('Plugins/Helpers', () => {
       // Local & Remote
       expect(
         mapToCatalogPlugin(
-          { ...localPlugin, signatureType: PluginSignatureType.core },
+          { ...localPlugin, signature: { ...localPlugin.signature, type: PluginSignatureType.core } },
           { ...remotePlugin, signatureType: PluginSignatureType.grafana }
         )
       ).toMatchObject({
@@ -535,7 +561,9 @@ describe('Plugins/Helpers', () => {
       });
 
       // Local only
-      expect(mapToCatalogPlugin({ ...localPlugin, signatureType: PluginSignatureType.core })).toMatchObject({
+      expect(
+        mapToCatalogPlugin({ ...localPlugin, signature: { ...localPlugin.signature, type: PluginSignatureType.core } })
+      ).toMatchObject({
         signatureType: PluginSignatureType.core,
       });
 
@@ -547,7 +575,7 @@ describe('Plugins/Helpers', () => {
       // Local & Remote
       expect(
         mapToCatalogPlugin(
-          { ...localPlugin, info: { ...localPlugin.info, updated: '2019-01-01' } },
+          { ...localPlugin, json: { ...localPlugin.json, info: { ...localPlugin.json.info, updated: '2019-01-01' } } },
           { ...remotePlugin, updatedAt: '2020-01-01' }
         )
       ).toMatchObject({
@@ -561,7 +589,10 @@ describe('Plugins/Helpers', () => {
 
       // Local only
       expect(
-        mapToCatalogPlugin({ ...localPlugin, info: { ...localPlugin.info, updated: '2019-01-01' } })
+        mapToCatalogPlugin({
+          ...localPlugin,
+          json: { ...localPlugin.json, info: { ...localPlugin.json.info, updated: '2019-01-01' } },
+        })
       ).toMatchObject({
         updatedAt: '2019-01-01',
       });

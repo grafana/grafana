@@ -41,62 +41,68 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	}
 
 	result := make(dtos.PluginList, 0)
-	for _, pluginDef := range hs.pluginStore.Plugins() {
+	for _, p := range hs.pluginStore.Plugins() {
+		// filter out built in plugins
+		if p.BuiltIn {
+			continue
+		}
+
 		// filter out app sub plugins
-		if embeddedFilter == "0" && pluginDef.IncludedInAppID != "" {
+		if embeddedFilter == "0" && p.IncludedInAppID != "" {
 			continue
 		}
 
 		// filter out core plugins
-		if (coreFilter == "0" && pluginDef.IsCorePlugin()) || (coreFilter == "1" && !pluginDef.IsCorePlugin()) {
+		if (coreFilter == "0" && p.IsCorePlugin()) || (coreFilter == "1" && !p.IsCorePlugin()) {
 			continue
 		}
 
 		// filter on type
-		if typeFilter != "" && typeFilter != string(pluginDef.Type) {
+		if typeFilter != "" && typeFilter != string(p.Type) {
 			continue
 		}
 
-		if pluginDef.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
+		if p.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
-		listItem := dtos.PluginListItem{
-			Id:            pluginDef.ID,
-			Name:          pluginDef.Name,
-			Type:          string(pluginDef.Type),
-			Category:      pluginDef.Category,
-			Info:          &pluginDef.Info,
-			Dependencies:  &pluginDef.Dependencies,
-			LatestVersion: pluginDef.GrafanaComVersion,
-			HasUpdate:     pluginDef.GrafanaComHasUpdate,
-			DefaultNavUrl: pluginDef.DefaultNavURL,
-			State:         pluginDef.State,
-			Signature:     pluginDef.Signature,
-			SignatureType: pluginDef.SignatureType,
-			SignatureOrg:  pluginDef.SignatureOrg,
+		pDTO := dtos.PluginListItem{
+			ID:            p.ID,
+			Name:          p.Name,
+			Type:          string(p.Type),
+			LatestVersion: p.GrafanaComVersion,
+			HasUpdate:     p.GrafanaComHasUpdate,
+			JSON: dtos.PluginJSON{
+				Info:          &p.Info,
+				Dependencies:  &p.Dependencies,
+				DefaultNavURL: p.DefaultNavURL,
+				Category:      p.Category,
+				State:         p.State,
+			},
+			Signature: dtos.SignatureInfo{
+				Status: p.Signature,
+				Type:   p.SignatureType,
+				Org:    p.SignatureOrg,
+			},
 		}
 
-		if pluginSetting, exists := pluginSettingsMap[pluginDef.ID]; exists {
-			listItem.Enabled = pluginSetting.Enabled
-			listItem.Pinned = pluginSetting.Pinned
+		pDTO.Dependencies = getPluginDependencies(p)
+
+		if pluginSetting, exists := pluginSettingsMap[p.ID]; exists {
+			pDTO.Enabled = pluginSetting.Enabled
+			pDTO.Pinned = pluginSetting.Pinned
 		}
 
-		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
-			listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
+		if pDTO.JSON.DefaultNavURL == "" || !pDTO.Enabled {
+			pDTO.JSON.DefaultNavURL = hs.Cfg.AppSubURL + "/plugins/" + pDTO.ID + "/"
 		}
 
 		// filter out disabled plugins
-		if enabledFilter == "1" && !listItem.Enabled {
+		if enabledFilter == "1" && !pDTO.Enabled {
 			continue
 		}
 
-		// filter out built in plugins
-		if pluginDef.BuiltIn {
-			continue
-		}
-
-		result = append(result, listItem)
+		result = append(result, pDTO)
 	}
 
 	sort.Sort(result)
@@ -491,4 +497,56 @@ func (hs *HTTPServer) pluginMarkdown(pluginId string, name string) ([]byte, erro
 		return nil, err
 	}
 	return data, nil
+}
+
+func getPluginDependencies(p *plugins.Plugin) []dtos.Dependency {
+	dependencies := make(map[string][]dtos.Dependency)
+	if p.Parent != nil {
+		if dependencies[p.Parent.ID] == nil {
+			dependencies[p.Parent.ID] = []dtos.Dependency{{
+				PluginID: p.Parent.ID,
+				Version:  p.Parent.Info.Version,
+			}}
+		} else {
+			dependencies[p.Parent.ID] = append(dependencies[p.Parent.ID], dtos.Dependency{
+				PluginID: p.Parent.ID,
+				Version:  p.Parent.Info.Version,
+			})
+		}
+	}
+
+	for _, child := range p.Children {
+		if dependencies[child.ID] == nil {
+			dependencies[child.ID] = []dtos.Dependency{{
+				PluginID: child.ID,
+				Version:  child.Info.Version,
+			}}
+		} else {
+			dependencies[child.ID] = append(dependencies[child.ID], dtos.Dependency{
+				PluginID: child.ID,
+				Version:  child.Info.Version,
+			})
+		}
+	}
+
+	for _, dep := range p.Dependencies.Plugins {
+		if dependencies[dep.ID] == nil {
+			dependencies[dep.ID] = []dtos.Dependency{{
+				PluginID: dep.ID,
+				Version:  dep.Version,
+			}}
+		} else {
+			dependencies[dep.ID] = append(dependencies[dep.ID], dtos.Dependency{
+				PluginID: dep.ID,
+				Version:  dep.Version,
+			})
+		}
+	}
+
+	deps := make([]dtos.Dependency, 0)
+	for _, dep := range dependencies {
+		deps = append(deps, dep...)
+	}
+
+	return deps
 }
