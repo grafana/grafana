@@ -16,7 +16,6 @@ interface OrgNameDTO {
   orgName: string;
 }
 
-// TODO if I reached this page this is because I had the ability to read all orgs, do I need to protect this?
 const getOrg = async (orgId: UrlQueryValue) => {
   return await getBackendSrv().get('/api/orgs/' + orgId);
 };
@@ -29,15 +28,11 @@ const getOrgUsers = async (orgId: UrlQueryValue) => {
 };
 
 const updateOrgUserRole = async (orgUser: OrgUser, orgId: UrlQueryValue) => {
-  if (contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate)) {
-    await getBackendSrv().patch('/api/orgs/' + orgId + '/users/' + orgUser.userId, orgUser);
-  }
+  await getBackendSrv().patch('/api/orgs/' + orgId + '/users/' + orgUser.userId, orgUser);
 };
 
 const removeOrgUser = async (orgUser: OrgUser, orgId: UrlQueryValue) => {
-  if (contextSrv.hasPermission(AccessControlAction.OrgUsersRemove)) {
-    return await getBackendSrv().delete('/api/orgs/' + orgId + '/users/' + orgUser.userId);
-  }
+  return await getBackendSrv().delete('/api/orgs/' + orgId + '/users/' + orgUser.userId);
 };
 
 interface Props extends GrafanaRouteComponentProps<{ id: string }> {}
