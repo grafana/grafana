@@ -100,7 +100,7 @@ export const RolePicker = ({
   };
 
   const getOptions = () => {
-    if (query) {
+    if (query && query.trim() !== '') {
       return roleOptions.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()));
     }
     return roleOptions;
@@ -132,7 +132,7 @@ export const RolePicker = ({
             onBuiltInRoleSelect={onBuiltInRoleSelect}
             onSelect={onSelect}
             onUpdate={onUpdate}
-            showGroups={query.length === 0}
+            showGroups={query.length === 0 || query.trim() === ''}
           />
         )}
       </ClickOutsideWrapper>
