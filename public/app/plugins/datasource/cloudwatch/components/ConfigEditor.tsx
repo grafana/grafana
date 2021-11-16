@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
-import { Input, InlineField, Field } from '@grafana/ui';
+import { Input, InlineField } from '@grafana/ui';
 import {
   rangeUtil,
   DataSourcePluginOptionsEditorProps,
