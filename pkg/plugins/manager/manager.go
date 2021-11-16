@@ -228,7 +228,7 @@ func (m *PluginManager) Renderer() *plugins.Plugin {
 func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	plugin := m.Plugin(req.PluginContext.PluginID)
 	if plugin == nil {
-		return &backend.QueryDataResponse{}, nil
+		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.QueryDataResponse
@@ -474,6 +474,33 @@ func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealt
 	}
 
 	return resp, nil
+}
+
+func (m *PluginManager) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	plugin := m.Plugin(req.PluginContext.PluginID)
+	if plugin == nil {
+		return nil, backendplugin.ErrPluginNotRegistered
+	}
+
+	return plugin.SubscribeStream(ctx, req)
+}
+
+func (m *PluginManager) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	plugin := m.Plugin(req.PluginContext.PluginID)
+	if plugin == nil {
+		return nil, backendplugin.ErrPluginNotRegistered
+	}
+
+	return plugin.PublishStream(ctx, req)
+}
+
+func (m *PluginManager) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	plugin := m.Plugin(req.PluginContext.PluginID)
+	if plugin == nil {
+		return backendplugin.ErrPluginNotRegistered
+	}
+
+	return plugin.RunStream(ctx, req, sender)
 }
 
 func (m *PluginManager) isRegistered(pluginID string) bool {

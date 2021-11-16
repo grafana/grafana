@@ -11,10 +11,14 @@ export interface MenuItemProps<T = any> {
   label: string;
   /** Aria label for accessibility support */
   ariaLabel?: string;
+  /** Aria checked for accessibility support */
+  ariaChecked?: boolean;
   /** Target of the menu item (i.e. new window)  */
   target?: LinkTarget;
   /** Icon of the menu item */
   icon?: IconName;
+  /** Role of the menu item */
+  role?: string;
   /** Url of the menu item */
   url?: string;
   /** Handler for the click behaviour */
@@ -29,45 +33,57 @@ export interface MenuItemProps<T = any> {
 
 /** @internal */
 export const MenuItem = React.memo(
-  React.forwardRef<HTMLAnchorElement & HTMLButtonElement, MenuItemProps>(
-    ({ url, icon, label, ariaLabel, target, onClick, className, active, tabIndex = -1 }, ref) => {
-      const styles = useStyles2(getStyles);
-      const itemStyle = cx(
-        {
-          [styles.item]: true,
-          [styles.activeItem]: active,
-        },
-        className
-      );
+  React.forwardRef<HTMLAnchorElement & HTMLButtonElement, MenuItemProps>((props, ref) => {
+    const {
+      url,
+      icon,
+      label,
+      ariaLabel,
+      ariaChecked,
+      target,
+      onClick,
+      className,
+      active,
+      role = 'menuitem',
+      tabIndex = -1,
+    } = props;
+    const styles = useStyles2(getStyles);
+    const itemStyle = cx(
+      {
+        [styles.item]: true,
+        [styles.activeItem]: active,
+      },
+      className
+    );
 
-      const Wrapper = url === undefined ? 'button' : 'a';
-      return (
-        <Wrapper
-          target={target}
-          className={itemStyle}
-          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
-          href={url}
-          onClick={
-            onClick
-              ? (event) => {
-                  if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
-                    event.preventDefault();
-                    onClick(event);
-                  }
+    const Wrapper = url === undefined ? 'button' : 'a';
+    return (
+      <Wrapper
+        target={target}
+        className={itemStyle}
+        rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+        href={url}
+        onClick={
+          onClick
+            ? (event) => {
+                if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
+                  event.preventDefault();
+                  onClick(event);
                 }
-              : undefined
-          }
-          role={url === undefined ? 'menuitem' : undefined}
-          data-role="menuitem" // used to identify menuitem in Menu.tsx
-          ref={ref}
-          aria-label={ariaLabel}
-          tabIndex={tabIndex}
-        >
-          {icon && <Icon name={icon} className={styles.icon} aria-hidden />} {label}
-        </Wrapper>
-      );
-    }
-  )
+              }
+            : undefined
+        }
+        role={url === undefined ? role : undefined}
+        data-role="menuitem" // used to identify menuitem in Menu.tsx
+        ref={ref}
+        aria-label={ariaLabel}
+        aria-checked={ariaChecked}
+        tabIndex={tabIndex}
+      >
+        {icon && <Icon name={icon} className={styles.icon} aria-hidden />} {label}
+      </Wrapper>
+    );
+  })
 );
 MenuItem.displayName = 'MenuItem';
 

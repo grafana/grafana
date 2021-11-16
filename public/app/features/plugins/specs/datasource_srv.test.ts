@@ -1,5 +1,5 @@
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DataSourceInstanceSettings, DataSourcePlugin } from '@grafana/data';
+import { DataSourceApi, DataSourceInstanceSettings, DataSourcePlugin, DataSourcePluginMeta } from '@grafana/data';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv: any = {
@@ -31,13 +31,13 @@ class TestDataSource {
 }
 
 jest.mock('../plugin_loader', () => ({
-  importDataSourcePlugin: () => {
+  importDataSourcePlugin: (meta: DataSourcePluginMeta) => {
     return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
   },
 }));
 
 describe('datasource_srv', () => {
-  const dataSourceSrv = new DatasourceSrv({} as any, {} as any, templateSrv);
+  const dataSourceSrv = new DatasourceSrv(templateSrv);
   const dataSourceInit = {
     mmm: {
       type: 'test-db',
@@ -114,6 +114,15 @@ describe('datasource_srv', () => {
         const dsByName = await dataSourceSrv.get('mmm');
         expect(dsByUid.meta).toBe(dsByName.meta);
         expect(dsByUid).toBe(dsByName);
+      });
+
+      it('should patch legacy datasources', async () => {
+        expect(TestDataSource instanceof DataSourceApi).toBe(false);
+        const instance = await dataSourceSrv.get('mmm');
+        expect(instance.name).toBe('mmm');
+        expect(instance.type).toBe('test-db');
+        expect(instance.uid).toBe('uid-code-mmm');
+        expect(instance.getRef()).toEqual({ type: 'test-db', uid: 'uid-code-mmm' });
       });
     });
 

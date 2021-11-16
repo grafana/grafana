@@ -465,6 +465,154 @@ func TestQuery_ResourceARNs(t *testing.T) {
 	})
 }
 
+func TestQuery_GetAllMetrics(t *testing.T) {
+	t.Run("all metrics in all namespaces are being returned", func(t *testing.T) {
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
+				{
+					JSON: json.RawMessage(`{
+						"type":      "metricFindQuery",
+						"subtype":   "all_metrics",
+						"region":    "us-east-1"
+					}`),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		metricCount := 0
+		for _, metrics := range metricsMap {
+			metricCount += len(metrics)
+		}
+
+		assert.Equal(t, metricCount, resp.Responses[""].Frames[0].Fields[1].Len())
+	})
+}
+
+func TestQuery_GetDimensionKeys(t *testing.T) {
+	origNewCWClient := NewCWClient
+	t.Cleanup(func() {
+		NewCWClient = origNewCWClient
+	})
+
+	var client FakeCWClient
+
+	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return client
+	}
+
+	metrics := []*cloudwatch.Metric{
+		{MetricName: aws.String("Test_MetricName1"), Dimensions: []*cloudwatch.Dimension{
+			{Name: aws.String("Dimension1"), Value: aws.String("Dimension1")},
+			{Name: aws.String("Dimension2"), Value: aws.String("Dimension2")},
+		}},
+		{MetricName: aws.String("Test_MetricName2"), Dimensions: []*cloudwatch.Dimension{
+			{Name: aws.String("Dimension2"), Value: aws.String("Dimension2")},
+			{Name: aws.String("Dimension3"), Value: aws.String("Dimension3")},
+		}},
+	}
+
+	t.Run("should fetch dimension keys from list metrics api and return unique dimensions when a dimension filter is specified", func(t *testing.T) {
+		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
+				{
+					JSON: json.RawMessage(`{
+						"type":      "metricFindQuery",
+						"subtype":   "dimension_keys",
+						"region":    "us-east-1",
+						"namespace": "AWS/EC2",
+						"dimensionFilters": {
+							"InstanceId": "",
+							"AutoscalingGroup": []
+						}
+					}`),
+				},
+			},
+		})
+
+		require.NoError(t, err)
+
+		expValues := []string{"Dimension1", "Dimension2", "Dimension3"}
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, expValues),
+			data.NewField("value", nil, expValues),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": len(expValues),
+			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
+		}, resp)
+	})
+
+	t.Run("should return hard coded metrics when no dimension filter is specified", func(t *testing.T) {
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
+				{
+					JSON: json.RawMessage(`{
+						"type":      "metricFindQuery",
+						"subtype":   "dimension_keys",
+						"region":    "us-east-1",
+						"namespace": "AWS/EC2",
+						"dimensionFilters": {}
+					}`),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		expValues := dimensionsMap["AWS/EC2"]
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, expValues),
+			data.NewField("value", nil, expValues),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": len(expValues),
+			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
+		}, resp)
+	})
+}
 func Test_isCustomMetrics(t *testing.T) {
 	metricsMap = map[string][]string{
 		"AWS/EC2": {"ExampleMetric"},

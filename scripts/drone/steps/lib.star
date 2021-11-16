@@ -1,11 +1,12 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.5.5'
-build_image = 'grafana/build-container:1.4.4'
+build_image = 'grafana/build-container:1.4.5'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.14.2'
+curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
@@ -33,15 +34,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             },
         ]
 
-    download_grabpl_cmds = [
-        'mkdir -p bin',
-        'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
-            grabpl_version
-        ),
-        'chmod +x bin/grabpl',
-    ]
     common_cmds = [
-        './bin/grabpl verify-drone',
         # Generate Go code, will install Wire
         # TODO: Install Wire in Docker image instead
         'make gen-go',
@@ -94,7 +87,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'environment': {
                     'GITHUB_TOKEN': from_secret(github_token),
                 },
-                'commands': download_grabpl_cmds + [
+                'commands': [
                     'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
                     'cd grafana-enterprise',
                     'git checkout {}'.format(committish),
@@ -104,7 +97,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'name': 'initialize',
                 'image': build_image,
                 'depends_on': [
-                    'clone',
+                    'grabpl',
                 ],
                 'commands': [
                     'mv bin/grabpl /tmp/',
@@ -125,11 +118,36 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         {
             'name': 'initialize',
             'image': build_image,
-            'commands': download_grabpl_cmds + common_cmds,
+            'commands': common_cmds,
         },
     ]
 
     return steps
+
+def download_grabpl():
+    return {
+        'name': 'grabpl',
+        'image': curl_image,
+        'commands': [
+            'mkdir -p bin',
+            'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+                grabpl_version
+            ),
+            'chmod +x bin/grabpl',
+        ]
+    }
+
+def lint_drone_step():
+    return {
+        'name': 'lint-drone',
+        'image': curl_image,
+        'commands': [
+            './bin/grabpl verify-drone',
+        ],
+        'depends_on': [
+            'grabpl',
+        ],
+    }
 
 def enterprise_downstream_step(edition):
     if edition in ('enterprise', 'enterprise2'):
@@ -422,10 +440,22 @@ def lint_frontend_step():
         ],
     }
 
-def test_a11y_frontend_step(edition, port=3001):
+def test_a11y_frontend_step(ver_mode, edition, port=3001):
+    commands = [
+        'yarn wait-on http://$HOST:$PORT',
+    ]
+    if ver_mode == 'pr':
+        commands.extend([
+            'pa11y-ci --config .pa11yci-pr.conf.js',
+        ])
+    else:
+        commands.extend([
+            'pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json',
+        ])
+
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'buildkite/puppeteer',
+        'image': 'hugohaggmark/docker-puppeteer',
         'depends_on': [
           'end-to-end-tests-server' + enterprise2_suffix(edition),
         ],
@@ -435,29 +465,7 @@ def test_a11y_frontend_step(edition, port=3001):
             'PORT': port,
         },
         'failure': 'ignore',
-        'commands': [
-            'yarn wait-on http://$HOST:$PORT',
-            'yarn run test:accessibility --json > pa11y-ci-results.json',
-        ],
-    }
-
-def test_a11y_frontend_step_pr(edition, port=3001):
-    return {
-        'name': 'test-a11y-frontend-pr' + enterprise2_suffix(edition),
-        'image': 'buildkite/puppeteer',
-        'depends_on': [
-          'end-to-end-tests-server' + enterprise2_suffix(edition),
-        ],
-         'environment': {
-            'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
-            'PORT': port,
-        },
-        'failure': 'ignore',
-        'commands': [
-            'yarn wait-on http://$HOST:$PORT',
-            'yarn run test:accessibility-pr',
-        ],
+        'commands': commands,
     }
 
 def frontend_metrics_step(edition):

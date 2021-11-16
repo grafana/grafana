@@ -370,6 +370,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			{
 				name: "Load multiple plugins (broken, valid, unsigned)",
 				cfg: &setting.Cfg{
+					Env:         "production",
 					PluginsPath: filepath.Join(parentDir),
 				},
 				appURL: "http://localhost:3000",
@@ -884,7 +885,7 @@ func newLoader(cfg *setting.Cfg) *Loader {
 		cfg:                cfg,
 		pluginFinder:       finder.New(cfg),
 		pluginInitializer:  initializer.New(cfg, &fakeLicensingService{}),
-		signatureValidator: signature.NewValidator(cfg, &signature.UnsignedPluginAuthorizer{Cfg: cfg}),
+		signatureValidator: signature.NewValidator(&signature.UnsignedPluginAuthorizer{Cfg: cfg}),
 		errs:               make(map[string]*plugins.SignatureError),
 	}
 }

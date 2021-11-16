@@ -23,7 +23,7 @@ const (
 
 type SecretsService struct {
 	store    secrets.Store
-	enc      encryption.Service
+	enc      encryption.Internal
 	settings setting.Provider
 
 	currentProvider string
@@ -31,7 +31,7 @@ type SecretsService struct {
 	dataKeyCache    map[string]dataKeyCacheItem
 }
 
-func ProvideSecretsService(store secrets.Store, enc encryption.Service, settings setting.Provider) *SecretsService {
+func ProvideSecretsService(store secrets.Store, enc encryption.Internal, settings setting.Provider) *SecretsService {
 	providers := map[string]secrets.Provider{
 		defaultProvider: grafana.New(settings, enc),
 	}

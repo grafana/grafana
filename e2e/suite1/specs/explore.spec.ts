@@ -9,7 +9,7 @@ e2e.scenario({
   scenario: () => {
     e2e.pages.Explore.visit();
     e2e.pages.Explore.General.container().should('have.length', 1);
-    e2e.components.RefreshPicker.runButton().should('have.length', 1);
+    e2e.components.RefreshPicker.runButtonV2().should('have.length', 1);
 
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
       .should('be.visible')
