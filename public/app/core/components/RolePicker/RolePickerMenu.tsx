@@ -150,24 +150,6 @@ export const RolePickerMenu = ({
     }
   };
 
-  const onMenuGroupClick = (value: string) => {
-    if (openedMenuGroup === value) {
-      setShowSubMenu(false);
-      setOpenedMenuGroup('');
-      setSubMenuOptions([]);
-      return;
-    }
-
-    setOpenedMenuGroup(value);
-    setShowSubMenu(true);
-    const group = optionGroups.find((g) => {
-      return g.value === value;
-    });
-    if (group) {
-      setSubMenuOptions(group.options);
-    }
-  };
-
   const onOpenSubMenu = (value: string) => {
     setOpenedMenuGroup(value);
     setShowSubMenu(true);
@@ -238,7 +220,6 @@ export const RolePickerMenu = ({
                     isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
                     partiallySelected={groupPartiallySelected(option.value)}
                     onChange={onGroupChange}
-                    onClick={onMenuGroupClick}
                     onOpenSubMenu={onOpenSubMenu}
                     onCloseSubMenu={onCloseSubMenu}
                     root={subMenuNode?.current!}
@@ -266,7 +247,6 @@ export const RolePickerMenu = ({
                     key={i}
                     isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                     onChange={onChange}
-                    // onClick={onMenuGroupClick}
                     hideDescription
                   />
                 ))}
