@@ -47,6 +47,7 @@ import {
   hasLegacyVariableSupport,
   hasOptions,
   hasStandardVariableSupport,
+  isAdHoc,
   isMulti,
   isQuery,
 } from '../guard';
@@ -517,7 +518,9 @@ export const variableUpdated = (
     const variables = getVariables(state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
-    const affectedPanelIds = getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels);
+    const affectedPanelIds = isAdHoc(variableInState)
+      ? undefined // for adhoc variables we don't know which panels that will be impacted
+      : getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels);
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];

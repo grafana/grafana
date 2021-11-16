@@ -12,6 +12,7 @@ def pipeline(
     is_downstream=False, install_deps=True,
     ):
     if platform != 'windows':
+        grabpl_step = [download_grabpl()]
         platform_conf = {
             'platform': {
                 'os': 'linux',
@@ -24,6 +25,7 @@ def pipeline(
             }
         }
     else:
+        grabpl_step = []
         platform_conf = {
             'platform': {
                 'os': 'windows',
@@ -31,8 +33,6 @@ def pipeline(
                 'version': '1809',
             }
         }
-
-    grabpl_step = [download_grabpl()]
 
     pipeline = {
         'kind': 'pipeline',
