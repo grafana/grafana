@@ -143,7 +143,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     2,
 			Name:        "fixed:current.org:reader",
 			DisplayName: "Current Organization reader",
-			Description: "Read current organization and its quotas.",
+			Description: "Read the current organization, such as its ID, name, address, or quotas.",
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionOrgsRead,
@@ -163,7 +163,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     2,
 			Name:        "fixed:current.org:writer",
 			DisplayName: "Current Organization writer",
-			Description: "Read current organization, its quotas, and its preferences. Update current organization and its preferences.",
+			Description: "Read the current organization, its quotas, or its preferences. Update the current organization properties, or its preferences.",
 			Permissions: accesscontrol.ConcatPermissions(currentOrgReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: ActionOrgsPreferencesRead,
@@ -187,7 +187,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Name:        "fixed:orgs:reader",
 			DisplayName: "Organization reader",
-			Description: "Read organizations and quotas.",
+			Description: "Read the organization and its quotas.",
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionOrgsRead,

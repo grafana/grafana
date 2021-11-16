@@ -168,12 +168,14 @@ type DsPermissionType int
 const (
 	DsPermissionNoAccess DsPermissionType = iota
 	DsPermissionQuery
+	DsPermissionRead
 )
 
 func (p DsPermissionType) String() string {
 	names := map[int]string{
 		int(DsPermissionQuery):    "Query",
 		int(DsPermissionNoAccess): "No Access",
+		int(DsPermissionRead):     "Read",
 	}
 	return names[int(p)]
 }

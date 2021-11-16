@@ -15,11 +15,11 @@ type RoleRegistry interface {
 
 // Roles definition
 var (
-	datasourcesQuerierRole = RoleDTO{
+	datasourcesExplorerRole = RoleDTO{
 		Version:     2,
-		Name:        datasourcesQuerier,
-		DisplayName: "Data source querier",
-		Description: "Query data sources using the Explore feature in Grafana. Users will only be able to query datasources for which they also have data source query permissions.",
+		Name:        datasourcesExplorer,
+		DisplayName: "Data source explorer",
+		Description: "Enable the Explore feature. Data source permissions still apply, you can only query data sources for which you have query permissions.",
 		Permissions: []Permission{
 			{
 				Action: ActionDatasourcesExplore,
@@ -94,7 +94,7 @@ var (
 	settingsReaderRole = RoleDTO{
 		Version:     3,
 		DisplayName: "Setting reader",
-		Description: "Read settings.",
+		Description: "Read Grafana instance settings.",
 		Name:        settingsReader,
 		Permissions: []Permission{
 			{
@@ -108,7 +108,7 @@ var (
 		Version:     2,
 		Name:        statsReader,
 		DisplayName: "Statistics reader",
-		Description: "Read server statistics.",
+		Description: "Read Grafana instance statistics.",
 		Permissions: []Permission{
 			{
 				Action: ActionServerStatsRead,
@@ -144,7 +144,7 @@ var (
 	usersWriterRole = RoleDTO{
 		Name:        usersWriter,
 		DisplayName: "User writer",
-		Description: "Read and update all attributes and settings for all users in Grafana.",
+		Description: "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
 		Version:     2,
 		Permissions: ConcatPermissions(usersReaderRole.Permissions, []Permission{
 			{
@@ -192,15 +192,15 @@ var (
 
 // Role names definitions
 const (
-	datasourcesQuerier = "fixed:datasources:querier"
-	ldapReader         = "fixed:ldap:reader"
-	ldapWriter         = "fixed:ldap:writer"
-	orgUsersReader     = "fixed:org.users:reader"
-	orgUsersWriter     = "fixed:org.users:writer"
-	settingsReader     = "fixed:settings:reader"
-	statsReader        = "fixed:stats:reader"
-	usersReader        = "fixed:users:reader"
-	usersWriter        = "fixed:users:writer"
+	datasourcesExplorer = "fixed:datasources:explorer"
+	ldapReader          = "fixed:ldap:reader"
+	ldapWriter          = "fixed:ldap:writer"
+	orgUsersReader      = "fixed:org.users:reader"
+	orgUsersWriter      = "fixed:org.users:writer"
+	settingsReader      = "fixed:settings:reader"
+	statsReader         = "fixed:stats:reader"
+	usersReader         = "fixed:users:reader"
+	usersWriter         = "fixed:users:writer"
 )
 
 var (
@@ -211,15 +211,15 @@ var (
 	// resource. FixedRoleGrants lists which built-in roles are
 	// assigned which fixed roles in this list.
 	FixedRoles = map[string]RoleDTO{
-		datasourcesQuerier: datasourcesQuerierRole,
-		ldapReader:         ldapReaderRole,
-		ldapWriter:         ldapWriterRole,
-		orgUsersReader:     orgUsersReaderRole,
-		orgUsersWriter:     orgUsersWriterRole,
-		settingsReader:     settingsReaderRole,
-		statsReader:        statsReaderRole,
-		usersReader:        usersReaderRole,
-		usersWriter:        usersWriterRole,
+		datasourcesExplorer: datasourcesExplorerRole,
+		ldapReader:          ldapReaderRole,
+		ldapWriter:          ldapWriterRole,
+		orgUsersReader:      orgUsersReaderRole,
+		orgUsersWriter:      orgUsersWriterRole,
+		settingsReader:      settingsReaderRole,
+		statsReader:         statsReaderRole,
+		usersReader:         usersReaderRole,
+		usersWriter:         usersWriterRole,
 	}
 
 	// FixedRoleGrants specifies which built-in roles are assigned
@@ -240,7 +240,7 @@ var (
 			orgUsersWriter,
 		},
 		string(models.ROLE_EDITOR): {
-			datasourcesQuerier,
+			datasourcesExplorer,
 		},
 	}
 )
