@@ -19,7 +19,6 @@ import { getTimeRangeForExpression } from '../utils/timeRange';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
-import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 
 export interface AlertingQueryResult {
   frames: DataFrameJSON[];
@@ -51,9 +50,9 @@ export class AlertingQueryRunner {
     // do not execute if one more of the queries are not runnable,
     // for example not completely configured
     for (const query of queries) {
-      if (query.datasourceUid !== ExpressionDatasourceUID) {
+      if (!isExpressionQuery(query.model)) {
         const ds = await this.dataSourceSrv.get(query.datasourceUid);
-        if (ds.filterQuery?.(query.model) === false) {
+        if (!ds.filterQuery?.(query.model)) {
           const empty = initialState(queries, LoadingState.Done);
           return this.subject.next(empty);
         }
