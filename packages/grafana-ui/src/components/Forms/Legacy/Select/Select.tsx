@@ -222,10 +222,8 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               className={selectClassNames}
               components={{
                 Option: SelectOption,
-                //@ts-expect-error
                 SingleValue,
                 IndicatorsContainer,
-                //@ts-expect-error
                 NoOptionsMessage,
               }}
               defaultValue={defaultValue}
