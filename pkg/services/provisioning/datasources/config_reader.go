@@ -2,7 +2,7 @@ package datasources
 
 import (
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -147,7 +147,7 @@ func (cr *configReader) validateAccessAndOrgID(ctx context.Context, ds *upsertDa
 }
 
 func safeUIDFromName(name string) string {
-	h := sha1.New()
+	h := sha256.New()
 	_, _ = h.Write([]byte(name))
 	bs := h.Sum(nil)
 	return strings.ToUpper(fmt.Sprintf("P%x", bs[:8]))
