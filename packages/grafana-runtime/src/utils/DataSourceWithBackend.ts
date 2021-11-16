@@ -171,15 +171,6 @@ class DataSourceWithBackend<
   }
 
   /**
-   * Override to skip executing a query
-   *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
-   */
-  filterQuery?(query: TQuery): boolean;
-
-  /**
    * Apply template variables for explore
    */
   interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[] {

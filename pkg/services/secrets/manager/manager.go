@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	grafana "github.com/grafana/grafana/pkg/services/secrets/defaultprovider"
 	"github.com/grafana/grafana/pkg/setting"
+	"xorm.io/xorm"
 )
 
 const (
@@ -59,6 +60,10 @@ type dataKeyCacheItem struct {
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
+	return s.EncryptWithDBSession(ctx, payload, opt, nil)
+}
+
+func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
 	if !s.settings.IsFeatureToggleEnabled(envelopeEncryptionFeatureToggle) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
@@ -71,7 +76,7 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 	dataKey, err := s.dataKey(ctx, keyName)
 	if err != nil {
 		if errors.Is(err, secrets.ErrDataKeyNotFound) {
-			dataKey, err = s.newDataKey(ctx, keyName, scope)
+			dataKey, err = s.newDataKey(ctx, keyName, scope, sess)
 			if err != nil {
 				return nil, err
 			}
@@ -137,9 +142,13 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 }
 
 func (s *SecretsService) EncryptJsonData(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions) (map[string][]byte, error) {
+	return s.EncryptJsonDataWithDBSession(ctx, kv, opt, nil)
+}
+
+func (s *SecretsService) EncryptJsonDataWithDBSession(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions, sess *xorm.Session) (map[string][]byte, error) {
 	encrypted := make(map[string][]byte)
 	for key, value := range kv {
-		encryptedData, err := s.Encrypt(ctx, []byte(value), opt)
+		encryptedData, err := s.EncryptWithDBSession(ctx, []byte(value), opt, sess)
 		if err != nil {
 			return nil, err
 		}
@@ -185,7 +194,7 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 // newDataKey creates a new random DEK, caches it and returns its value
-func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string) ([]byte, error) {
+func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string, sess *xorm.Session) ([]byte, error) {
 	// 1. Create new DEK
 	dataKey, err := newRandomDataKey()
 	if err != nil {
@@ -203,13 +212,20 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 3. Store its encrypted value in db
-	err = s.store.CreateDataKey(ctx, secrets.DataKey{
+	dek := secrets.DataKey{
 		Active:        true, // TODO: right now we never mark a key as deactivated
 		Name:          name,
 		Provider:      s.currentProvider,
 		EncryptedData: encrypted,
 		Scope:         scope,
-	})
+	}
+
+	if sess == nil {
+		err = s.store.CreateDataKey(ctx, dek)
+	} else {
+		err = s.store.CreateDataKeyWithDBSession(ctx, dek, sess)
+	}
+
 	if err != nil {
 		return nil, err
 	}
