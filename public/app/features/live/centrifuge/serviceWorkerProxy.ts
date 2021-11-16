@@ -4,7 +4,7 @@ import './transferHandlers';
 
 import * as comlink from 'comlink';
 import { asyncScheduler, Observable, observeOn } from 'rxjs';
-import { LiveChannelAddress, LiveChannelConfig, LiveChannelEvent } from '@grafana/data';
+import { LiveChannelAddress, LiveChannelEvent } from '@grafana/data';
 import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
 import { createWorker } from './createCentrifugeServiceWorker';
 
@@ -20,21 +20,21 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
     return promiseWithRemoteObservableAsObservable(this.centrifugeWorker.getConnectionState());
   };
 
-  getDataStream: CentrifugeSrv['getDataStream'] = (options, config) => {
-    return promiseWithRemoteObservableAsObservable(this.centrifugeWorker.getDataStream(options, config)).pipe(
+  getDataStream: CentrifugeSrv['getDataStream'] = (options) => {
+    return promiseWithRemoteObservableAsObservable(this.centrifugeWorker.getDataStream(options)).pipe(
       // async scheduler splits the synchronous task of deserializing data from web worker and
       // consuming the message (ie. updating react component) into two to avoid blocking the event loop
       observeOn(asyncScheduler)
     );
   };
 
-  getPresence: CentrifugeSrv['getPresence'] = (address, config) => {
-    return this.centrifugeWorker.getPresence(address, config);
+  getPresence: CentrifugeSrv['getPresence'] = (address) => {
+    return this.centrifugeWorker.getPresence(address);
   };
 
-  getStream: CentrifugeSrv['getStream'] = <T>(address: LiveChannelAddress, config: LiveChannelConfig) => {
+  getStream: CentrifugeSrv['getStream'] = <T>(address: LiveChannelAddress) => {
     return promiseWithRemoteObservableAsObservable(
-      this.centrifugeWorker.getStream(address, config) as Promise<comlink.Remote<Observable<LiveChannelEvent<T>>>>
+      this.centrifugeWorker.getStream(address) as Promise<comlink.Remote<Observable<LiveChannelEvent<T>>>>
     );
   };
 }

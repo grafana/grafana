@@ -36,7 +36,7 @@ func (f FakeSecretsStore) CreateDataKey(_ context.Context, dataKey secrets.DataK
 	return nil
 }
 
-func (f FakeSecretsStore) CreateDataKeyWithDBSession(ctx context.Context, dataKey secrets.DataKey, sess *xorm.Session) error {
+func (f FakeSecretsStore) CreateDataKeyWithDBSession(_ context.Context, dataKey secrets.DataKey, _ *xorm.Session) error {
 	f.store[dataKey.Name] = &dataKey
 	return nil
 }

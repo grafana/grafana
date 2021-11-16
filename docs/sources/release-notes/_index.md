@@ -8,6 +8,7 @@ weight = 10000
 Here you can find detailed release notes that list everything that is included in every release as well as notices
 about deprecations, breaking changes as well as changes that relate to plugin development.
 
+- [Release notes for 8.2.4]({{< relref "release-notes-8-2-4" >}})
 - [Release notes for 8.2.3]({{< relref "release-notes-8-2-3" >}})
 - [Release notes for 8.2.2]({{< relref "release-notes-8-2-2" >}})
 - [Release notes for 8.2.1]({{< relref "release-notes-8-2-1" >}})

@@ -46,7 +46,7 @@ func New(license models.Licensing, cfg *setting.Cfg, authorizer plugins.PluginLo
 		cfg:                cfg,
 		pluginFinder:       finder.New(cfg),
 		pluginInitializer:  initializer.New(cfg, license),
-		signatureValidator: signature.NewValidator(cfg, authorizer),
+		signatureValidator: signature.NewValidator(authorizer),
 		errs:               make(map[string]*plugins.SignatureError),
 	}
 }
