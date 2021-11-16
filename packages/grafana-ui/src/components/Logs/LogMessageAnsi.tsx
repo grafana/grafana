@@ -1,8 +1,9 @@
-import { findHighlightChunksInText } from '@grafana/data';
+import { findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
 import ansicolor from 'ansicolor';
 import React, { PureComponent } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
+import { Themeable2, withTheme2 } from 'src';
 
 interface Style {
   [key: string]: string;
@@ -13,13 +14,13 @@ interface ParsedChunk {
   text: string;
 }
 
-function convertCSSToStyle(css: string): Style {
+function convertCSSToStyle(theme: GrafanaTheme2, css: string): Style {
   return css.split(/;\s*/).reduce<Style>((accumulated, line) => {
     // The ansicolor package returns this color if the chunk has the ANSI dim
     // style (`\e[2m`), but it is nearly unreadable in the dark theme, so we use
     // `opacity` instead to style it in a way that works across all themes.
     if (line === 'color:rgba(0,0,0,0.5)') {
-      accumulated['opacity'] = '0.5';
+      accumulated['color'] = theme.colors.text.secondary;
       return accumulated;
     }
 
@@ -34,7 +35,7 @@ function convertCSSToStyle(css: string): Style {
   }, {});
 }
 
-interface Props {
+interface Props extends Themeable2 {
   value: string;
   highlight?: {
     searchWords: string[];
@@ -47,7 +48,7 @@ interface State {
   prevValue: string;
 }
 
-export class LogMessageAnsi extends PureComponent<Props, State> {
+class UnThemedLogMessageAnsi extends PureComponent<Props, State> {
   state: State = {
     chunks: [],
     prevValue: '',
@@ -64,7 +65,7 @@ export class LogMessageAnsi extends PureComponent<Props, State> {
       chunks: parsed.spans.map((span) => {
         return span.css
           ? {
-              style: convertCSSToStyle(span.css),
+              style: convertCSSToStyle(props.theme, span.css),
               text: span.text,
             }
           : { text: span.text };
@@ -97,3 +98,5 @@ export class LogMessageAnsi extends PureComponent<Props, State> {
     });
   }
 }
+
+export const LogMessageAnsi = withTheme2(UnThemedLogMessageAnsi);
