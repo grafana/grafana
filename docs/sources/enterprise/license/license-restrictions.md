@@ -32,7 +32,7 @@ Your Grafana license includes a maximum number of Viewer and Editor/Admin active
 - Grafana applies signin restrictions separately for Viewers and Editor/Admins. If your Grafana license reaches its limit of active Viewers but not its limit of active Editor/Admins, new Editors and Admins can still sign in.
 - The number of dashboards a user can view or edit and the number of Organizations they can access have no impact on the active user count. A user with Editor permissions for many dashboards across many different organizations counts as one Editor.
 - A license limit banner appears to Admins when Grafana reaches its active user limit. Editors and Viewers do not see the banner.
-  Refer to [Optimize your tiered license](optimize-your-tiered-license) for how to change user roles to make better use of your licenses.
+  Refer to [Optimize your tiered license](#optimize-your-tiered-license) for how to change user roles to make better use of your licenses.
 
 ### Permission domains
 
@@ -42,29 +42,25 @@ You can assign role permissions _globally_ and restrict access to a specific das
 
 **Dashboard permissions**: You can also assign permissions to dashboards or groups (folders) of dashboards. For example, you might want a Viewer to also have Editor permissions for a specific dashboard. While that user can see _all_ dashboards, they can only update one of them. For more information about dashboard permissions, refer to [Dashboard and Folder Permissions](https://grafana.com/docs/grafana/latest/permissions/dashboard-folder-permissions/).
 
-:::important
 When you grant Editor/Admin dashboard permissions to a Viewer, the Editor/Admin active user count increases by one as shown on the **Utilization** panel of the **Stats & licensing** page and the user’s licensed role changes to Editor/Admin.
 
-The Editor/Admin count increases because the user can edit and save a dashboard.
-:::
+> The Editor/Admin count increases because the user can edit and save a dashboard.
 
 ### Grant dashboard edit without save permissions
 
 You can grant Viewers the ability to edit but not save a dashboard. This setting is useful when you have users that want to explore dashboards, but only need the generated view temporarily and do not require an Editor/Admin license.
 
-:::note
-This setting does not affect Viewers’ license role billing.
-:::
+> This setting does not affect Viewers’ license role billing.
 
 To grant dashboard edit without save permissions:
 
-/1 Open the `grafana.ini` file that contains default configurations.
+1. Open the `grafana.ini` file that contains default configurations.
 
-The name and location of the file depends on your installation. For information about locating
-the default configurations file, refer to [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/).
+   The name and location of the file depends on your installation. For information about locating
+   the default configurations file, refer to [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/).
 
-/1 Change the `viewers-can-edit` setting to `true`.
-/1 Restart Grafana Enterprise.
+1. Change the `viewers-can-edit` setting to `true`.
+1. Restart Grafana Enterprise.
 
 ### Determine the number of active users for each licensed role
 
@@ -72,17 +68,15 @@ Because you can assign a user global permissions while also enhancing (or limiti
 
 To determine the number of active users for each licensed role:
 
-/1 Sign in to Grafana Enterprise as a System Administrator.
+1. Sign in to Grafana Enterprise as a System Administrator.
 
-/1 Click **Server Admin** (the shield icon).
+1. Click **Server Admin** (the shield icon).
 
-/1 Click **Statistics and licensing**.
+1. Click **Statistics and licensing**.
 
-/1 Review the role utilization count on the **Utilization** panel.
+1. Review the role utilization count on the **Utilization** panel.
 
-:::note
-Utilization data updates when the user signs back in to Grafana after you change their permissions.
-:::
+> Utilization data updates when the user signs back in to Grafana after you change their permissions.
 
 ### Optimize your tiered license
 
@@ -100,11 +94,9 @@ Because Viewers can also count toward Editor/Admin usage, if they are granted ac
 
 Review the number of users you have for each type of permission and remove inactive users. Removing users immediately frees up space for new users.
 
-:::note
-When you delete a user you also delete their preferences, dashboard and folder permissions, and references to that user from the dashboard versions they have updated.
+> When you delete a user you also delete their preferences, dashboard and folder permissions, and references to that user from the dashboard versions they have updated.
 
 Users who are synced via SAML, Oauth or LDAP will also lose these attributes.
-:::
 
 ### Update user permissions for dashboards
 
@@ -112,15 +104,15 @@ You can change the access a user has to specific dashboards. For billing purpose
 
 To change user permissions for dashboards:
 
-/1 Sign in to Grafana as a system administrator.
+1. Sign in to Grafana as a system administrator.
 
-/1 Hover your mouse over **Server Admin** (the shield icon) and click **Statistics and licensing**.
+1. Hover your mouse over **Server Admin** (the shield icon) and click **Statistics and licensing**.
 
-1/ In the **Dashboard and Folder Permissions** area, click the dashboard in the \*\*Resource title (URL) column.
+1. In the **Dashboard and Folder Permissions** area, click the dashboard in the \*\*Resource title (URL) column.
 
-The **Permission** page opens.
+   The **Permission** page opens.
 
-1/ Use the dropdown list to select a role.
+1. Use the dropdown list to select a role.
 
 The next time the user signs in, the **Utilization** panel on the **Stats & licensing** page displays updated data.
 
@@ -136,9 +128,7 @@ For instructions about how to update your license, refer to [Activate license](h
 
 After you apply the token, Grafana Enterprise resets your license and updates the user counts on the **Utilization** panel .
 
-:::note
-If you are running Grafana Enterprise 8.2 or earlier, the license grants you the total number of licensed users _for each user type_.
-:::
+> If you are running Grafana Enterprise 8.2 or earlier, the license grants you the total number of licensed users _for each user type_.
 
 For example, if your current license includes 60 Viewers and 40 Editor/Admins, the new license includes 100 Viewers and 100 Editor/Admins. Grafana Enterprise 8.3 removes the distinction between Viewers and Editor/Admins as shown on the **Utilization** panel.
 
@@ -150,14 +140,14 @@ You can identify your license type in Grafana 8.3 and higher. If you are running
 
 To determine if you have tiered pricing or combined pricing, complete the following steps in Grafana v8.3 or higher:
 
-/1 Sign in to Grafana as a system administrator.
+1. Sign in to Grafana as a system administrator.
 
-/1 Hover your mouse over **Server Admin** (the shield icon), and click **Stats & licensing**.
+1. Hover your mouse over **Server Admin** (the shield icon), and click **Stats & licensing**.
 
-/1 In the **Utilization** panel, review the license count data.
+1. In the **Utilization** panel, review the license count data.
 
-- If you see **Admins & Editors** and **Viewers**, then you have a tiered license.
-- If you only see **Users**, then you have a combined license.
+   - If you see **Admins & Editors** and **Viewers**, then you have a tiered license.
+   - If you only see **Users**, then you have a combined license.
 
 ## License restrictions common to both license types
 
