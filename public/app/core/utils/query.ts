@@ -29,9 +29,9 @@ export function updateQueries(
 ): DataQuery[] {
   const datasource = getDataSourceRef(newSettings);
 
-  if (!newSettings.meta.mixed && dsSettings?.meta.mixed) {
+  if (!newSettings.meta.mixed) {
     return queries.map((q) => {
-      if (!isExpressionReference(q.datasource)) {
+      if (q.datasource && !isExpressionReference(q.datasource)) {
         q.datasource = datasource;
       }
       return q;
