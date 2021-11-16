@@ -31,7 +31,6 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 	assert.True(tb, settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle))
 
 	encryption := ossencryption.ProvideService()
-
 	secretsService, err := ProvideSecretsService(
 		store,
 		osskmsproviders.ProvideService(encryption, settings),

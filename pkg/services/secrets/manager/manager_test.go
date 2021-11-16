@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
+
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -163,12 +164,14 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		cfg := &setting.Cfg{Raw: raw, FeatureToggles: map[string]bool{secrets.EnvelopeEncryptionFeatureToggle: true}}
 		settings := &setting.OSSImpl{Cfg: cfg}
 
-		svc := ProvideSecretsService(
+		encr := ossencryption.ProvideService()
+		svc, err := ProvideSecretsService(
 			database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
-			bus.New(),
-			ossencryption.ProvideService(),
+			osskmsproviders.ProvideService(encr, settings),
+			encr,
 			settings,
 		)
+		require.NoError(t, err)
 
 		assert.Equal(t, "awskms.second_key", svc.currentProvider)
 	})
@@ -192,12 +195,14 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		fake := fakeProvider{}
 		providerID := "fake-provider.some-key"
 
-		svcEncrypt := ProvideSecretsService(
+		encr := ossencryption.ProvideService()
+		svcEncrypt, err := ProvideSecretsService(
 			secretStore,
-			bus.New(),
-			ossencryption.ProvideService(),
+			osskmsproviders.ProvideService(encr, settings),
+			encr,
 			settings,
 		)
+		require.NoError(t, err)
 
 		svcEncrypt.RegisterProvider(providerID, &fake)
 		require.NoError(t, err)
@@ -208,12 +213,13 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 
 		// secret service tries to find a DEK in a cache first before calling provider's decrypt
 		// to bypass the cache, we set up one more secrets service to test decrypting
-		svcDecrypt := ProvideSecretsService(
+		svcDecrypt, err := ProvideSecretsService(
 			secretStore,
-			bus.New(),
-			ossencryption.ProvideService(),
+			osskmsproviders.ProvideService(encr, settings),
+			encr,
 			settings,
 		)
+		require.NoError(t, err)
 		svcDecrypt.RegisterProvider(providerID, &fake)
 		_, _ = svcDecrypt.Decrypt(context.Background(), encrypted)
 		assert.True(t, fake.decryptCalled, "fake provider's decrypt should be called")
