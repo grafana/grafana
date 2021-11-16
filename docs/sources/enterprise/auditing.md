@@ -230,12 +230,13 @@ Where the following:
 - `SILENCE-ID` is the ID of the affected silence.
 
 The following legacy alerting actions are still supported:
-| Action | Distinguishing fields |
+
+| Action                            | Distinguishing fields                                                 |
 | --------------------------------- | --------------------------------------------------------------------- |
-| Test alert rule | `{"action": "test", "resources": [{"type": "panel"}]}` |
-| Pause alert | `{"action": "pause", "resources": [{"type": "alert"}]}` |
-| Pause all alerts | `{"action": "pause-all"}` |
-| Test alert notification channel | `{"action": "test", "resources": [{"type": "alert-notification"}]}` |
+| Test alert rule                   | `{"action": "test", "resources": [{"type": "panel"}]}`                |
+| Pause alert                       | `{"action": "pause", "resources": [{"type": "alert"}]}`               |
+| Pause all alerts                  | `{"action": "pause-all"}`                                             |
+| Test alert notification channel   | `{"action": "test", "resources": [{"type": "alert-notification"}]}`   |
 | Create alert notification channel | `{"action": "create", "resources": [{"type": "alert-notification"}]}` |
 | Update alert notification channel | `{"action": "update", "resources": [{"type": "alert-notification"}]}` |
 | Delete alert notification channel | `{"action": "delete", "resources": [{"type": "alert-notification"}]}` |
