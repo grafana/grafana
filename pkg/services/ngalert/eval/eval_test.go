@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -276,40 +277,6 @@ func TestEvaluateExecutionResult(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc: "no data for Ref ID will produce NoData result",
-			execResults: ExecutionResults{
-				NoData: map[string]string{"A": "1"},
-			},
-			expectResultLength: 1,
-			expectResults: Results{
-				{
-					Instance: data.Labels{"datasource_uid": "1"},
-					State:    NoData,
-				},
-			},
-		},
-		{
-			desc: "no data for Ref IDs will produce NoData result for each data source",
-			execResults: ExecutionResults{
-				NoData: map[string]string{
-					"A": "1",
-					"B": "1",
-					"C": "2",
-				},
-			},
-			expectResultLength: 2,
-			expectResults: Results{
-				{
-					Instance: data.Labels{"datasource_uid": "1"},
-					State:    NoData,
-				},
-				{
-					Instance: data.Labels{"datasource_uid": "2"},
-					State:    NoData,
-				},
-			},
-		},
 	}
 
 	for _, tc := range cases {
@@ -327,4 +294,38 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEvaluateExecutionResultsNoData(t *testing.T) {
+	t.Run("no data for Ref ID will produce NoData result", func(t *testing.T) {
+		results := ExecutionResults{
+			NoData: map[string]string{
+				"A": "1",
+			},
+		}
+		v := evaluateExecutionResult(results, time.Time{})
+		require.Len(t, v, 1)
+		require.Equal(t, data.Labels{"datasource_uid": "1"}, v[0].Instance)
+		require.Equal(t, NoData, v[0].State)
+	})
+
+	t.Run("no data for Ref IDs will produce NoData result for each data source", func(t *testing.T) {
+		results := ExecutionResults{
+			NoData: map[string]string{
+				"A": "1",
+				"B": "1",
+				"C": "2",
+			},
+		}
+		v := evaluateExecutionResult(results, time.Time{})
+		require.Len(t, v, 2)
+		require.Equal(t, NoData, v[0].State)
+		require.Equal(t, NoData, v[1].State)
+		datasourceUIDs := []string{
+			v[0].Instance["datasource_uid"],
+			v[1].Instance["datasource_uid"],
+		}
+		sort.Strings(datasourceUIDs)
+		require.Equal(t, []string{"1", "2"}, datasourceUIDs)
+	})
 }
