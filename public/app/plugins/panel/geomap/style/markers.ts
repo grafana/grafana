@@ -111,7 +111,7 @@ const makers: SymbolMaker[] = [
           radius,
           angle: Math.PI / 4,
         }),
-        text: !cfg?.text ? undefined : textLabel(cfg),
+        text: textLabel(cfg),
       });
     },
   },
