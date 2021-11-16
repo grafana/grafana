@@ -4,6 +4,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -12,6 +13,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "x",
       "show": true,
       "side": 2,
@@ -29,6 +31,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -37,6 +40,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "__fixed",
       "show": true,
       "side": 3,
@@ -93,7 +97,7 @@ Object {
       ],
       "scales": Array [
         "x",
-        "__fixed",
+        null,
       ],
     },
   },

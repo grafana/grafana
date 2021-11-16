@@ -14,7 +14,7 @@ import { isString } from 'lodash';
 import { LineConfig } from '../types';
 import { DimensionContext } from 'app/features/dimensions/context';
 
-interface IconConfig {
+export interface IconConfig {
   path?: ResourceDimensionConfig;
   fill?: ColorDimensionConfig;
   stroke?: LineConfig;
@@ -64,18 +64,20 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   display: IconDisplay,
 
-  defaultConfig: {
-    path: {
-      mode: ResourceDimensionMode.Fixed,
-      fixed: 'img/icons/unicons/question-circle.svg',
+  getNewOptions: (options) => ({
+    placement: {
+      width: 50,
+      height: 50,
     },
-    fill: { fixed: '#FFF899' },
-  },
-
-  defaultSize: {
-    width: 50,
-    height: 50,
-  },
+    ...options,
+    config: {
+      path: {
+        mode: ResourceDimensionMode.Fixed,
+        fixed: 'img/icons/unicons/question-circle.svg',
+      },
+      fill: { fixed: '#FFF899' },
+    },
+  }),
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: IconConfig) => {
@@ -103,8 +105,10 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
+    const category = ['Icon'];
     builder
       .addCustomEditor({
+        category,
         id: 'iconSelector',
         path: 'config.path',
         name: 'SVG Path',
@@ -114,9 +118,10 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         },
       })
       .addCustomEditor({
+        category,
         id: 'config.fill',
         path: 'config.fill',
-        name: 'Icon fill color',
+        name: 'Fill color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
@@ -125,6 +130,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         },
       })
       .addSliderInput({
+        category,
         path: 'config.stroke.width',
         name: 'Stroke',
         defaultValue: 0,
@@ -134,16 +140,17 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         },
       })
       .addCustomEditor({
+        category,
         id: 'config.stroke.color',
         path: 'config.stroke.color',
-        name: 'Icon Stroke color',
+        name: 'Stroke color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
           // Configured values
           fixed: 'grey',
         },
-        showIf: (cfg) => Boolean(cfg.config?.stroke?.width),
+        showIf: (cfg) => Boolean(cfg?.config?.stroke?.width),
       });
   },
 };

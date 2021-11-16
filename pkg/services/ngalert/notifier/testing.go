@@ -2,9 +2,11 @@ package notifier
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -128,6 +130,29 @@ func (fkv *FakeKVStore) Del(_ context.Context, orgId int64, namespace string, ke
 	delete(fkv.store[orgId][namespace], key)
 
 	return nil
+}
+
+func (fkv *FakeKVStore) Keys(ctx context.Context, orgID int64, namespace string, keyPrefix string) ([]kvstore.Key, error) {
+	fkv.mtx.Lock()
+	defer fkv.mtx.Unlock()
+	var keys []kvstore.Key
+	for orgIDFromStore, namespaceMap := range fkv.store {
+		if orgID != kvstore.AllOrganizations && orgID != orgIDFromStore {
+			continue
+		}
+		if keyMap, exists := namespaceMap[namespace]; exists {
+			for k := range keyMap {
+				if strings.HasPrefix(k, keyPrefix) {
+					keys = append(keys, kvstore.Key{
+						OrgId:     orgIDFromStore,
+						Namespace: namespace,
+						Key:       keyPrefix,
+					})
+				}
+			}
+		}
+	}
+	return keys, nil
 }
 
 type fakeState struct {

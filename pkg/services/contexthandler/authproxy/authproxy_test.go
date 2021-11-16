@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 )
 
 type fakeMultiLDAP struct {
@@ -64,7 +64,7 @@ func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, cb fu
 	}
 
 	ctx := &models.ReqContext{
-		Context: &macaron.Context{Req: req},
+		Context: &web.Context{Req: req},
 	}
 
 	auth := New(cfg, &Options{

@@ -44,6 +44,7 @@ import * as textPanel from 'app/plugins/panel/text/module';
 import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
 import * as stateTimelinePanel from 'app/plugins/panel/state-timeline/module';
 import * as statusHistoryPanel from 'app/plugins/panel/status-history/module';
+import * as candlestickPanel from 'app/plugins/panel/candlestick/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
@@ -71,6 +72,7 @@ import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 // Async loaded panels
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
+const iconPanel = async () => await import(/* webpackChunkName: "iconPanel" */ 'app/plugins/panel/icon/module');
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -98,10 +100,12 @@ const builtInPlugins: any = {
   'app/plugins/panel/timeseries/module': timeseriesPanel,
   'app/plugins/panel/state-timeline/module': stateTimelinePanel,
   'app/plugins/panel/status-history/module': statusHistoryPanel,
+  'app/plugins/panel/candlestick/module': candlestickPanel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/xychart/module': xyChartPanel,
   'app/plugins/panel/geomap/module': geomapPanel,
   'app/plugins/panel/canvas/module': canvasPanel,
+  'app/plugins/panel/icon/module': iconPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/pluginlist/module': pluginsListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,

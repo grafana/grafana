@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, memo } from 'react';
+import React, { ComponentType, useEffect, useMemo, memo } from 'react';
 import { css, cx } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
 import {
@@ -16,9 +16,19 @@ import Page from 'app/core/components/Page/Page';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from '../../core/selectors/navModel';
-import { AccessControlAction, StoreState, Unit, UserDTO } from '../../types';
+import { AccessControlAction, StoreState, Unit, UserDTO, UserFilter } from '../../types';
 import { changeFilter, changePage, changeQuery, fetchUsers } from './state/actions';
 import PageLoader from '../../core/components/PageLoader/PageLoader';
+
+export interface FilterProps {
+  filters: UserFilter[];
+  onChange: (filter: any) => void;
+  className?: string;
+}
+const extraFilters: Array<ComponentType<FilterProps>> = [];
+export const addExtraFilters = (filter: ComponentType<FilterProps>) => {
+  extraFilters.push(filter);
+};
 
 const mapDispatchToProps = {
   fetchUsers,
@@ -34,7 +44,7 @@ const mapStateToProps = (state: StoreState) => ({
   showPaging: state.userListAdmin.showPaging,
   totalPages: state.userListAdmin.totalPages,
   page: state.userListAdmin.page,
-  filter: state.userListAdmin.filter,
+  filters: state.userListAdmin.filters,
   isLoading: state.userListAdmin.isLoading,
 });
 
@@ -55,7 +65,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   page,
   changePage,
   changeFilter,
-  filter,
+  filters,
   isLoading,
 }) => {
   const styles = useStyles2(getStyles);
@@ -79,13 +89,16 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
             />
             <RadioButtonGroup
               options={[
-                { label: 'All users', value: 'all' },
-                { label: 'Active last 30 days', value: 'activeLast30Days' },
+                { label: 'All users', value: false },
+                { label: 'Active last 30 days', value: true },
               ]}
-              onChange={changeFilter}
-              value={filter}
+              onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
+              value={filters.find((f) => f.name === 'activeLast30Days')?.value}
               className={styles.filter}
             />
+            {extraFilters.map((FilterComponent, index) => (
+              <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
+            ))}
           </div>
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
             <LinkButton href="admin/users/create" variant="primary">
@@ -117,6 +130,8 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                               dashboard/folder permissions.{' '}
                               <a
                                 className={styles.link}
+                                target="_blank"
+                                rel="noreferrer noopener"
                                 href={
                                   'https://grafana.com/docs/grafana/next/enterprise/license/license-restrictions/#active-users-limit'
                                 }
@@ -327,10 +342,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.disabled};
     `,
     link: css`
-      color: ${theme.colors.text.link};
-      :hover {
-        text-decoration: underline;
-      }
+      color: inherit;
+      cursor: pointer;
+      text-decoration: underline;
     `,
   };
 };

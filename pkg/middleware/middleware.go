@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	macaron "gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -25,9 +24,9 @@ func HandleNoCacheHeader(ctx *models.ReqContext) {
 	ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
 }
 
-func AddDefaultResponseHeaders(cfg *setting.Cfg) macaron.Handler {
-	return func(c *macaron.Context) {
-		c.Resp.Before(func(w macaron.ResponseWriter) {
+func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
+	return func(c *web.Context) {
+		c.Resp.Before(func(w web.ResponseWriter) {
 			// if response has already been written, skip.
 			if w.Written() {
 				return
@@ -47,7 +46,7 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) macaron.Handler {
 }
 
 // addSecurityHeaders adds HTTP(S) response headers that enable various security protections in the client's browser.
-func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
+func addSecurityHeaders(w web.ResponseWriter, cfg *setting.Cfg) {
 	if (cfg.Protocol == setting.HTTPSScheme || cfg.Protocol == setting.HTTP2Scheme) && cfg.StrictTransportSecurity {
 		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", cfg.StrictTransportSecurityMaxAge)}
 		if cfg.StrictTransportSecurityPreload {
@@ -68,12 +67,12 @@ func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
 	}
 }
 
-func addNoCacheHeaders(w macaron.ResponseWriter) {
+func addNoCacheHeaders(w web.ResponseWriter) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Pragma", "no-cache")
 	w.Header().Set("Expires", "-1")
 }
 
-func addXFrameOptionsDenyHeader(w macaron.ResponseWriter) {
+func addXFrameOptionsDenyHeader(w web.ResponseWriter) {
 	w.Header().Set("X-Frame-Options", "deny")
 }

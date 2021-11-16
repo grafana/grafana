@@ -3,7 +3,14 @@ import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { calculateFontSize, PlotTooltipInterpolator } from '@grafana/ui';
-import { StackingMode, VisibilityMode, ScaleDirection, ScaleOrientation, VizTextDisplayOptions } from '@grafana/schema';
+import {
+  StackingMode,
+  VisibilityMode,
+  ScaleDirection,
+  ScaleOrientation,
+  VizTextDisplayOptions,
+  VizLegendOptions,
+} from '@grafana/schema';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 const groupDistr = SPACE_BETWEEN;
@@ -40,6 +47,7 @@ export interface BarsOptions {
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
+  legend?: VizLegendOptions;
 }
 
 /**
@@ -311,9 +319,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   function prepData(frames: DataFrame[]) {
     alignedTotals = null;
 
-    return preparePlotData(frames, ({ totals }) => {
-      alignedTotals = totals;
-    });
+    return preparePlotData(
+      frames,
+      ({ totals }) => {
+        alignedTotals = totals;
+      },
+      opts.legend
+    );
   }
 
   return {

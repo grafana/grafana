@@ -12,14 +12,13 @@ import (
 	dboards "github.com/grafana/grafana/pkg/dashboards"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/require"
 )
 
 const userInDbName = "user_in_db"
@@ -163,7 +162,7 @@ func getCreateCommandWithModel(folderID int64, name string, kind models.LibraryE
 }
 
 type scenarioContext struct {
-	ctx           *macaron.Context
+	ctx           *web.Context
 	service       *LibraryElementService
 	reqContext    *models.ReqContext
 	user          models.SignedInUser
@@ -190,12 +189,12 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 	t.Cleanup(func() {
 		dashboards.UpdateAlerting = origUpdateAlerting
 	})
-	dashboards.UpdateAlerting = func(store dboards.Store, orgID int64, dashboard *models.Dashboard,
+	dashboards.UpdateAlerting = func(ctx context.Context, store dboards.Store, orgID int64, dashboard *models.Dashboard,
 		user *models.SignedInUser) error {
 		return nil
 	}
 
-	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(dashItem, true)
+	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
@@ -280,7 +279,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		ctx := macaron.Context{Req: &http.Request{}}
+		ctx := web.Context{Req: &http.Request{}}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)

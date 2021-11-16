@@ -6,9 +6,12 @@ package server
 import (
 	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -19,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/searchusers"
+	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -48,9 +52,16 @@ var wireExtsBasicSet = wire.NewSet(
 	authinfoservice.ProvideOSSUserProtectionService,
 	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
 	ossencryption.ProvideService,
-	wire.Bind(new(encryption.Service), new(*ossencryption.Service)),
+	wire.Bind(new(encryption.Internal), new(*ossencryption.Service)),
+	filters.ProvideOSSSearchUserFilter,
+	wire.Bind(new(models.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
 	searchusers.ProvideUsersService,
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
+	signature.ProvideService,
+	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
+	acdb.ProvideService,
+	wire.Bind(new(accesscontrol.ResourceStore), new(*acdb.AccessControlStore)),
+	wire.Bind(new(accesscontrol.PermissionsProvider), new(*acdb.AccessControlStore)),
 )
 
 var wireExtsSet = wire.NewSet(

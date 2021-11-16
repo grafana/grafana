@@ -11,41 +11,29 @@ import Feature from 'ol/Feature';
 import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
-
-import tinycolor from 'tinycolor2';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import {
-  ColorDimensionConfig,
-  ScaleDimensionConfig,
   getScaledDimension,
   getColorDimension,
+  ResourceFolderName,
+  getTextDimension,
 } from 'app/features/dimensions';
-import { ScaleDimensionEditor, ColorDimensionEditor } from 'app/features/dimensions/editors';
+import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { circleMarker, markerMakers } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
+import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
+import { getMarkerMaker } from '../../style/markers';
+import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
-  size: ScaleDimensionConfig;
-  color: ColorDimensionConfig;
-  fillOpacity: number;
-  shape?: string;
+  style: StyleConfig;
   showLegend?: boolean;
 }
 
 const defaultOptions: MarkersConfig = {
-  size: {
-    fixed: 5,
-    min: 2,
-    max: 15,
-  },
-  color: {
-    fixed: 'dark-green', // picked from theme
-  },
-  fillOpacity: 0.4,
-  shape: 'circle',
+  style: defaultStyleConfig,
   showLegend: true,
 };
 
@@ -54,6 +42,7 @@ export const MARKERS_LAYER_ID = 'markers';
 // Used by default when nothing is configured
 export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   type: MARKERS_LAYER_ID,
+  name: '', // will get replaced
   config: defaultOptions,
   location: {
     mode: FrameGeometrySourceMode.Auto,
@@ -88,7 +77,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     if (config.showLegend) {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
-    const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
+
+    const style = config.style ?? defaultStyleConfig;
+    const markerMaker = await getMarkerMaker(style.symbol?.fixed);
 
     return {
       init: () => vectorLayer,
@@ -107,28 +98,24 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             continue; // ???
           }
 
-          const colorDim = getColorDimension(frame, config.color, theme);
-          const sizeDim = getScaledDimension(frame, config.size);
-          const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
+          const colorDim = getColorDimension(frame, style.color ?? defaultStyleConfig.color, theme);
+          const sizeDim = getScaledDimension(frame, style.size ?? defaultStyleConfig.size);
+          const textDim = style?.text && getTextDimension(frame, style.text);
+          const opacity = style?.opacity ?? defaultStyleConfig.opacity;
 
-          // Map each data value into new points
-          for (let i = 0; i < frame.length; i++) {
-            // Get the circle color for a specific data value depending on color scheme
-            const color = colorDim.get(i);
-            // Set the opacity determined from user configuration
-            const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
-            // Get circle size from user configuration
-            const radius = sizeDim.get(i);
+          const featureDimensionConfig: FeaturesStylesBuilderConfig = {
+            colorDim: colorDim,
+            sizeDim: sizeDim,
+            textDim: textDim,
+            textConfig: style?.textConfig,
+            opacity: opacity,
+            styleMaker: markerMaker,
+          };
 
-            // Create a new Feature for each point returned from dataFrameToPoints
-            const dot = new Feature(info.points[i]);
-            dot.setProperties({
-              frame,
-              rowIndex: i,
-            });
+          const frameFeatures = getFeatures(frame, info, featureDimensionConfig);
 
-            dot.setStyle(shape!.make(color, fillColor, radius));
-            features.push(dot);
+          if (frameFeatures) {
+            features.push(...frameFeatures);
           }
 
           // Post updates to the legend component
@@ -145,63 +132,108 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         const vectorSource = new source.Vector({ features });
         vectorLayer.setSource(vectorSource);
       },
+
+      // Marker overlay options
+      registerOptionsUI: (builder) => {
+        builder
+          .addCustomEditor({
+            id: 'config.style.size',
+            path: 'config.style.size',
+            name: 'Marker Size',
+            editor: ScaleDimensionEditor,
+            settings: {
+              min: 1,
+              max: 100, // possible in the UI
+            },
+            defaultValue: defaultOptions.style.size,
+          })
+          .addCustomEditor({
+            id: 'config.style.symbol',
+            path: 'config.style.symbol',
+            name: 'Marker Symbol',
+            editor: ResourceDimensionEditor,
+            defaultValue: defaultOptions.style.symbol,
+            settings: {
+              resourceType: 'icon',
+              showSourceRadio: false,
+              folderName: ResourceFolderName.Marker,
+            },
+          })
+          .addCustomEditor({
+            id: 'config.style.color',
+            path: 'config.style.color',
+            name: 'Marker Color',
+            editor: ColorDimensionEditor,
+            settings: {},
+            defaultValue: defaultOptions.style.color,
+          })
+          .addSliderInput({
+            path: 'config.style.opacity',
+            name: 'Fill opacity',
+            defaultValue: defaultOptions.style.opacity,
+            settings: {
+              min: 0,
+              max: 1,
+              step: 0.1,
+            },
+          })
+          .addCustomEditor({
+            id: 'config.style.text',
+            path: 'config.style.text',
+            name: 'Text label',
+            editor: TextDimensionEditor,
+            defaultValue: defaultOptions.style.text,
+          })
+          .addNumberInput({
+            name: 'Text font size',
+            path: 'config.style.textConfig.fontSize',
+            defaultValue: defaultOptions.style.textConfig?.fontSize,
+          })
+          .addNumberInput({
+            name: 'Text X offset',
+            path: 'config.style.textConfig.offsetX',
+            defaultValue: 0,
+          })
+          .addNumberInput({
+            name: 'Text Y offset',
+            path: 'config.style.textConfig.offsetY',
+            defaultValue: 0,
+          })
+          .addRadio({
+            name: 'Text align',
+            path: 'config.style.textConfig.textAlign',
+            description: '',
+            defaultValue: defaultOptions.style.textConfig?.textAlign,
+            settings: {
+              options: [
+                { value: TextAlignment.Left, label: TextAlignment.Left },
+                { value: TextAlignment.Center, label: TextAlignment.Center },
+                { value: TextAlignment.Right, label: TextAlignment.Right },
+              ],
+            },
+          })
+          .addRadio({
+            name: 'Text baseline',
+            path: 'config.style.textConfig.textBaseline',
+            description: '',
+            defaultValue: defaultOptions.style.textConfig?.textBaseline,
+            settings: {
+              options: [
+                { value: TextBaseline.Top, label: TextBaseline.Top },
+                { value: TextBaseline.Middle, label: TextBaseline.Middle },
+                { value: TextBaseline.Bottom, label: TextBaseline.Bottom },
+              ],
+            },
+          })
+          // baseline?: 'bottom' | 'top' | 'middle';
+          .addBooleanSwitch({
+            path: 'config.showLegend',
+            name: 'Show legend',
+            description: 'Show legend',
+            defaultValue: defaultOptions.showLegend,
+          });
+      },
     };
-  },
-  // Marker overlay options
-  registerOptionsUI: (builder) => {
-    builder
-      .addCustomEditor({
-        id: 'config.color',
-        path: 'config.color',
-        name: 'Marker Color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {
-          // Configured values
-          fixed: 'grey',
-        },
-      })
-      .addCustomEditor({
-        id: 'config.size',
-        path: 'config.size',
-        name: 'Marker Size',
-        editor: ScaleDimensionEditor,
-        settings: {
-          min: 1,
-          max: 100, // possible in the UI
-        },
-        defaultValue: {
-          // Configured values
-          fixed: 5,
-          min: 1,
-          max: 20,
-        },
-      })
-      .addSelect({
-        path: 'config.shape',
-        name: 'Marker Shape',
-        settings: {
-          options: markerMakers.selectOptions().options,
-        },
-        defaultValue: 'circle',
-      })
-      .addSliderInput({
-        path: 'config.fillOpacity',
-        name: 'Fill opacity',
-        defaultValue: defaultOptions.fillOpacity,
-        settings: {
-          min: 0,
-          max: 1,
-          step: 0.1,
-        },
-        showIf: (cfg) => markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill,
-      })
-      .addBooleanSwitch({
-        path: 'config.showLegend',
-        name: 'Show legend',
-        description: 'Show legend',
-        defaultValue: defaultOptions.showLegend,
-      });
   },
 
   // fill in the default values

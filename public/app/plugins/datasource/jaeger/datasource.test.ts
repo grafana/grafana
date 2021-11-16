@@ -4,7 +4,7 @@ import { DataQueryRequest, DataSourceInstanceSettings, dateTime, FieldType, Plug
 import { backendSrv } from 'app/core/services/backend_srv';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
-import { JaegerDatasource } from './datasource';
+import { JaegerDatasource, JaegerJsonData } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import {
   testResponse,
@@ -222,7 +222,7 @@ function setupFetchMock(response: any, mock?: any) {
   return fetchMock;
 }
 
-const defaultSettings: DataSourceInstanceSettings = {
+const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
   id: 0,
   uid: '0',
   type: 'tracing',
@@ -237,7 +237,11 @@ const defaultSettings: DataSourceInstanceSettings = {
     module: '',
     baseUrl: '',
   },
-  jsonData: {},
+  jsonData: {
+    nodeGraph: {
+      enabled: true,
+    },
+  },
 };
 
 const defaultQuery: DataQueryRequest<JaegerQuery> = {

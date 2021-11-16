@@ -7,7 +7,8 @@ import (
 )
 
 // ModelToInstanceSettings converts a models.DataSource to a backend.DataSourceInstanceSettings.
-func ModelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstanceSettings, error) {
+func ModelToInstanceSettings(ds *models.DataSource, decryptFn func(map[string][]byte) map[string]string,
+) (*backend.DataSourceInstanceSettings, error) {
 	jsonDataBytes, err := ds.JsonData.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -23,7 +24,7 @@ func ModelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstance
 		BasicAuthEnabled:        ds.BasicAuth,
 		BasicAuthUser:           ds.BasicAuthUser,
 		JSONData:                jsonDataBytes,
-		DecryptedSecureJSONData: ds.DecryptedValues(),
+		DecryptedSecureJSONData: decryptFn(ds.SecureJsonData),
 		Updated:                 ds.Updated,
 	}, nil
 }

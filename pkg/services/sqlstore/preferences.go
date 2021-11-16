@@ -10,9 +10,9 @@ import (
 )
 
 func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
-	bus.AddHandler("sql", GetPreferences)
+	bus.AddHandlerCtx("sql", ss.GetPreferences)
 	bus.AddHandlerCtx("sql", ss.GetPreferencesWithDefaults)
-	bus.AddHandler("sql", SavePreferences)
+	bus.AddHandlerCtx("sql", ss.SavePreferences)
 }
 
 func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
@@ -44,6 +44,7 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 		res := &models.Preferences{
 			Theme:           ss.Cfg.DefaultTheme,
 			Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
+			WeekStart:       ss.Cfg.DateFormats.DefaultWeekStart,
 			HomeDashboardId: 0,
 		}
 
@@ -53,6 +54,9 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 			}
 			if p.Timezone != "" {
 				res.Timezone = p.Timezone
+			}
+			if p.WeekStart != "" {
+				res.WeekStart = p.WeekStart
 			}
 			if p.HomeDashboardId != 0 {
 				res.HomeDashboardId = p.HomeDashboardId
@@ -64,25 +68,27 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 	})
 }
 
-func GetPreferences(query *models.GetPreferencesQuery) error {
-	var prefs models.Preferences
-	exists, err := x.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
+func (ss *SQLStore) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		var prefs models.Preferences
+		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	if exists {
-		query.Result = &prefs
-	} else {
-		query.Result = new(models.Preferences)
-	}
+		if exists {
+			query.Result = &prefs
+		} else {
+			query.Result = new(models.Preferences)
+		}
 
-	return nil
+		return nil
+	})
 }
 
-func SavePreferences(cmd *models.SavePreferencesCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
 		if err != nil {
@@ -96,6 +102,7 @@ func SavePreferences(cmd *models.SavePreferencesCommand) error {
 				TeamId:          cmd.TeamId,
 				HomeDashboardId: cmd.HomeDashboardId,
 				Timezone:        cmd.Timezone,
+				WeekStart:       cmd.WeekStart,
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
@@ -105,6 +112,7 @@ func SavePreferences(cmd *models.SavePreferencesCommand) error {
 		}
 		prefs.HomeDashboardId = cmd.HomeDashboardId
 		prefs.Timezone = cmd.Timezone
+		prefs.WeekStart = cmd.WeekStart
 		prefs.Theme = cmd.Theme
 		prefs.Updated = time.Now()
 		prefs.Version += 1

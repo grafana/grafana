@@ -88,6 +88,9 @@ export const Pages = {
           General: {
             headerLink: 'Variable editor Header link',
             modeLabelNew: 'Variable editor Header mode New',
+            /**
+             * @deprecated
+             */
             modeLabelEdit: 'Variable editor Header mode Edit',
             generalNameInput: 'Variable editor Form Name field',
             generalTypeSelect: 'Variable editor Form Type select',
@@ -142,9 +145,6 @@ export const Pages = {
       graph: 'Explore Graph',
       table: 'Explore Table',
       scrollBar: () => '.scrollbar-view',
-    },
-    Toolbar: {
-      navBar: () => '.explore-toolbar',
     },
   },
   SoloPanel: {

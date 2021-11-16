@@ -12,10 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/alertmanager/api/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"gopkg.in/macaron.v1"
 )
 
 const (
@@ -250,7 +250,7 @@ func Instrument(
 	path string,
 	action interface{},
 	metrics *API,
-) macaron.Handler {
+) web.Handler {
 	normalizedPath := MakeLabelValue(path)
 
 	return func(c *models.ReqContext) {
@@ -265,7 +265,7 @@ func Instrument(
 
 		// TODO: We could look up the datasource type via our datasource service
 		var backend string
-		recipient := macaron.Params(c.Req)[":Recipient"]
+		recipient := web.Params(c.Req)[":Recipient"]
 		if recipient == apimodels.GrafanaBackend.String() || recipient == "" {
 			backend = GrafanaBackend
 		} else {

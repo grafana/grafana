@@ -268,6 +268,7 @@ For code that needs to be used by external plugin:
 
 - Use named exports for all code you want to export from a file.
 - Use declaration exports (i.e. `export const foo = ...`).
+- Avoid using default exports (for example, `export default foo`).
 - Export only the code that is meant to be used outside the module.
 
 ### Comments
@@ -342,6 +343,14 @@ static defaultProps = { ... }
 
 // good
 static defaultProps: Partial<Props> = { ... }
+```
+
+### How to declare functional components
+
+We recommend using named regular functions when creating a new react functional component.
+
+```typescript
+export function Component(props: Props): ReactElement { ... }
 ```
 
 ## State management

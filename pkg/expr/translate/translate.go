@@ -1,6 +1,7 @@
 package translate
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -188,7 +189,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 				Id:    dc.Conditions[condIdx].Query.DatasourceID,
 			}
 
-			if err := bus.Dispatch(getDsInfo); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), getDsInfo); err != nil {
 				return nil, fmt.Errorf("could not find datasource: %w", err)
 			}
 
@@ -258,7 +259,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	ccAlertQuery := ngmodels.AlertQuery{
 		RefID:         ccRefID,
 		Model:         exprModelJSON,
-		DatasourceUID: expr.DatasourceUID,
+		DatasourceUID: expr.OldDatasourceUID,
 	}
 
 	ngCond.Data = append(ngCond.Data, ccAlertQuery)

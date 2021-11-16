@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Alert, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { DashboardInitError, AppNotificationSeverity } from 'app/types';

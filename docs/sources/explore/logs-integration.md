@@ -21,7 +21,11 @@ During an infrastructure monitoring and incident response, you can dig deeper in
 
 ### Logs visualization
 
-Results of log queries are shown as histograms in the graph and individual logs are displayed below. If the data source does not send histogram data for the requested time range, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval and the start of the histogram is then anchored by the first log row's timestamp from the result. The end of the time series is anchored to the time picker's **To** range.
+Results of log queries are shown as histograms in the graph and individual logs are explained in the following sections.
+
+If the data source supports a full range log volume histogram, the graph with log distribution for all entered log queries is shown automatically. This feature is currently supported by Elasticsearch data source.
+
+If the data source does not support loading full range log volume histogram, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval, and the first log row's timestamp then anchors the start of the histogram from the result. The end of the time series is anchored to the time picker's **To** range.
 
 #### Log level
 

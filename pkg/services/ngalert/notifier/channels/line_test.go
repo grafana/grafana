@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
 func TestLineNotifier(t *testing.T) {
@@ -88,7 +90,9 @@ func TestLineNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewLineNotifier(m, tmpl)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
+			pn, err := NewLineNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

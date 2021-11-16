@@ -37,11 +37,11 @@ func bind(ctx *macaron.Context, obj interface{}, ifacePtr ...interface{}) {
 	if ctx.Req.Method == "POST" || ctx.Req.Method == "PUT" || ctx.Req.Method == "PATCH" || ctx.Req.Method == "DELETE" {
 		switch {
 		case strings.Contains(contentType, "form-urlencoded"):
-			_, _ = ctx.Invoke(Form(obj, ifacePtr...))
+			_, _ = ctx.Invoke(bindForm(obj, ifacePtr...))
 		case strings.Contains(contentType, "multipart/form-data"):
-			_, _ = ctx.Invoke(MultipartForm(obj, ifacePtr...))
+			_, _ = ctx.Invoke(bindMultipartForm(obj, ifacePtr...))
 		case strings.Contains(contentType, "json"):
-			_, _ = ctx.Invoke(Json(obj, ifacePtr...))
+			_, _ = ctx.Invoke(bindJson(obj, ifacePtr...))
 		default:
 			var errors Errors
 			if contentType == "" {
@@ -53,7 +53,7 @@ func bind(ctx *macaron.Context, obj interface{}, ifacePtr ...interface{}) {
 			ctx.Map(obj) // Map a fake struct so handler won't panic.
 		}
 	} else {
-		_, _ = ctx.Invoke(Form(obj, ifacePtr...))
+		_, _ = ctx.Invoke(bindForm(obj, ifacePtr...))
 	}
 }
 
@@ -87,9 +87,6 @@ func errorHandler(errs Errors, rw http.ResponseWriter) {
 	}
 }
 
-// CustomErrorHandler will be invoked if errors occured.
-var CustomErrorHandler func(*macaron.Context, Errors)
-
 // Bind wraps up the functionality of the Form and Json middleware
 // according to the Content-Type and verb of the request.
 // A Content-Type is required for POST and PUT requests.
@@ -101,26 +98,11 @@ var CustomErrorHandler func(*macaron.Context, Errors)
 func Bind(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		bind(ctx, obj, ifacePtr...)
-		if handler, ok := obj.(ErrorHandler); ok {
-			_, _ = ctx.Invoke(handler.Error)
-		} else if CustomErrorHandler != nil {
-			_, _ = ctx.Invoke(CustomErrorHandler)
-		} else {
-			_, _ = ctx.Invoke(errorHandler)
-		}
+		_, _ = ctx.Invoke(errorHandler)
 	}
 }
 
-// BindIgnErr will do the exactly same thing as Bind but without any
-// error handling, which user has freedom to deal with them.
-// This allows user take advantages of validation.
-func BindIgnErr(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
-	return func(ctx *macaron.Context) {
-		bind(ctx, obj, ifacePtr...)
-	}
-}
-
-// Form is middleware to deserialize form-urlencoded data from the request.
+// bindForm is middleware to deserialize form-urlencoded data from the request.
 // It gets data from the form-urlencoded body, if present, or from the
 // query string. It uses the http.Request.ParseForm() method
 // to perform deserialization, then reflection is used to map each field
@@ -129,7 +111,7 @@ func BindIgnErr(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
 // keys, for example: key=val1&key=val2&key=val3
 // An interface pointer can be added as a second argument in order
 // to map the struct to a specific interface.
-func Form(formStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
+func bindForm(formStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		var errors Errors
 
@@ -153,11 +135,11 @@ func Form(formStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 // Set this to whatever value you prefer; default is 10 MB.
 var MaxMemory = int64(1024 * 1024 * 10)
 
-// MultipartForm works much like Form, except it can parse multipart forms
+// bindMultipartForm works much like Form, except it can parse multipart forms
 // and handle file uploads. Like the other deserialization middleware handlers,
 // you can pass in an interface to make the interface available for injection
 // into other handlers later.
-func MultipartForm(formStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
+func bindMultipartForm(formStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		var errors Errors
 		ensureNotPointer(formStruct)
@@ -189,12 +171,12 @@ func MultipartForm(formStruct interface{}, ifacePtr ...interface{}) macaron.Hand
 	}
 }
 
-// Json is middleware to deserialize a JSON payload from the request
+// bindJson is middleware to deserialize a JSON payload from the request
 // into the struct that is passed in. The resulting struct is then
 // validated, but no error handling is actually performed here.
 // An interface pointer can be added as a second argument in order
 // to map the struct to a specific interface.
-func Json(jsonStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
+func bindJson(jsonStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		var errors Errors
 		ensureNotPointer(jsonStruct)
@@ -210,52 +192,11 @@ func Json(jsonStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 	}
 }
 
-// URL is the middleware to parse URL parameters into struct fields.
-func URL(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
-	return func(ctx *macaron.Context) {
-		var errors Errors
-
-		ensureNotPointer(obj)
-		obj := reflect.New(reflect.TypeOf(obj))
-
-		val := obj.Elem()
-		for k, v := range macaron.Params(ctx.Req) {
-			field := val.FieldByName(k[1:])
-			if field.IsValid() {
-				errors = setWithProperType(field.Kind(), v, field, k, errors)
-			}
-		}
-		validateAndMap(obj, ctx, errors, ifacePtr...)
-	}
-}
-
-// RawValidate is same as Validate but does not require a HTTP context,
-// and can be used independently just for validation.
-// This function does not support Validator interface.
-func RawValidate(obj interface{}) Errors {
-	var errs Errors
-	v := reflect.ValueOf(obj)
-	k := v.Kind()
-	if k == reflect.Interface || k == reflect.Ptr {
-		v = v.Elem()
-		k = v.Kind()
-	}
-	if k == reflect.Slice || k == reflect.Array {
-		for i := 0; i < v.Len(); i++ {
-			e := v.Index(i).Interface()
-			errs = validateStruct(errs, e)
-		}
-	} else {
-		errs = validateStruct(errs, obj)
-	}
-	return errs
-}
-
-// Validate is middleware to enforce required fields. If the struct
-// passed in implements Validator, then the user-defined Validate method
+// validateMiddleware is middleware to enforce required fields. If the struct
+// passed in implements Validator, then the user-defined validateMiddleware method
 // is executed, and its errors are mapped to the context. This middleware
 // performs no error handling: it merely detects errors and maps them.
-func Validate(obj interface{}) macaron.Handler {
+func validateMiddleware(obj interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		var errs Errors
 		v := reflect.ValueOf(obj)
@@ -268,13 +209,13 @@ func Validate(obj interface{}) macaron.Handler {
 			for i := 0; i < v.Len(); i++ {
 				e := v.Index(i).Interface()
 				errs = validateStruct(errs, e)
-				if validator, ok := e.(Validator); ok {
+				if validator, ok := e.(_Validator); ok {
 					errs = validator.Validate(ctx, errs)
 				}
 			}
 		} else {
 			errs = validateStruct(errs, obj)
-			if validator, ok := obj.(Validator); ok {
+			if validator, ok := obj.(_Validator); ok {
 				errs = validator.Validate(ctx, errs)
 			}
 		}
@@ -283,9 +224,9 @@ func Validate(obj interface{}) macaron.Handler {
 }
 
 var (
-	AlphaDashPattern    = regexp.MustCompile(`[^\d\w-_]`)
-	AlphaDashDotPattern = regexp.MustCompile(`[^\d\w-_\.]`)
-	EmailPattern        = regexp.MustCompile("[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?")
+	alphaDashPattern    = regexp.MustCompile(`[^\d\w-_]`)
+	alphaDashDotPattern = regexp.MustCompile(`[^\d\w-_\.]`)
+	emailPattern        = regexp.MustCompile("[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?")
 )
 
 // Copied from github.com/asaskevich/govalidator.
@@ -323,40 +264,30 @@ func isURL(str string) bool {
 }
 
 type (
-	// Rule represents a validation rule.
-	Rule struct {
+	// rule represents a validation rule.
+	rule struct {
 		// IsMatch checks if rule matches.
 		IsMatch func(string) bool
 		// IsValid applies validation rule to condition.
 		IsValid func(Errors, string, interface{}) (bool, Errors)
 	}
 
-	// ParamRule does same thing as Rule but passes rule itself to IsValid method.
-	ParamRule struct {
+	// paramRule does same thing as Rule but passes rule itself to IsValid method.
+	paramRule struct {
 		// IsMatch checks if rule matches.
 		IsMatch func(string) bool
 		// IsValid applies validation rule to condition.
 		IsValid func(Errors, string, string, interface{}) (bool, Errors)
 	}
 
-	// RuleMapper and ParamRuleMapper represent validation rule mappers,
+	// _RuleMapper and ParamRuleMapper represent validation rule mappers,
 	// it allwos users to add custom validation rules.
-	RuleMapper      []*Rule
-	ParamRuleMapper []*ParamRule
+	_RuleMapper      []*rule
+	_ParamRuleMapper []*paramRule
 )
 
-var ruleMapper RuleMapper
-var paramRuleMapper ParamRuleMapper
-
-// AddRule adds new validation rule.
-func AddRule(r *Rule) {
-	ruleMapper = append(ruleMapper, r)
-}
-
-// AddParamRule adds new validation rule.
-func AddParamRule(r *ParamRule) {
-	paramRuleMapper = append(paramRuleMapper, r)
-}
+var ruleMapper _RuleMapper
+var paramRuleMapper _ParamRuleMapper
 
 func in(fieldValue interface{}, arr string) bool {
 	val := fmt.Sprintf("%v", fieldValue)
@@ -464,12 +395,12 @@ VALIDATE_RULES:
 				break VALIDATE_RULES
 			}
 		case rule == "AlphaDash":
-			if AlphaDashPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
+			if alphaDashPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
 				errors.Add([]string{field.Name}, ERR_ALPHA_DASH, "AlphaDash")
 				break VALIDATE_RULES
 			}
 		case rule == "AlphaDashDot":
-			if AlphaDashDotPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
+			if alphaDashDotPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
 				errors.Add([]string{field.Name}, ERR_ALPHA_DASH_DOT, "AlphaDashDot")
 				break VALIDATE_RULES
 			}
@@ -525,7 +456,7 @@ VALIDATE_RULES:
 				break VALIDATE_RULES
 			}
 		case rule == "Email":
-			if !EmailPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
+			if !emailPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
 				errors.Add([]string{field.Name}, ERR_EMAIL, "Email")
 				break VALIDATE_RULES
 			}
@@ -590,9 +521,6 @@ VALIDATE_RULES:
 	return errors
 }
 
-// NameMapper represents a form tag name mapper.
-type NameMapper func(string) string
-
 var (
 	nameMapper = func(field string) string {
 		newstr := make([]rune, 0, len(field))
@@ -608,11 +536,6 @@ var (
 		return string(newstr)
 	}
 )
-
-// SetNameMapper sets name mapper.
-func SetNameMapper(nm NameMapper) {
-	nameMapper = nm
-}
 
 // Takes values from the form data and puts them into a struct
 func mapForm(formStruct reflect.Value, form map[string][]string,
@@ -755,7 +678,7 @@ func ensureNotPointer(obj interface{}) {
 // with errors from deserialization, then maps both the
 // resulting struct and the errors to the context.
 func validateAndMap(obj reflect.Value, ctx *macaron.Context, errors Errors, ifacePtr ...interface{}) {
-	_, _ = ctx.Invoke(Validate(obj.Interface()))
+	_, _ = ctx.Invoke(validateMiddleware(obj.Interface()))
 	errors = append(errors, getErrors(ctx)...)
 	ctx.Map(errors)
 	ctx.Map(obj.Elem().Interface())
@@ -770,15 +693,9 @@ func getErrors(ctx *macaron.Context) Errors {
 }
 
 type (
-	// ErrorHandler is the interface that has custom error handling process.
-	ErrorHandler interface {
-		// Error handles validation errors with custom process.
-		Error(*macaron.Context, Errors)
-	}
-
-	// Validator is the interface that handles some rudimentary
+	// _Validator is the interface that handles some rudimentary
 	// request validation logic so your application doesn't have to.
-	Validator interface {
+	_Validator interface {
 		// Validate validates that the request is OK. It is recommended
 		// that validation be limited to checking values for syntax and
 		// semantics, enough to know that you can make sense of the request

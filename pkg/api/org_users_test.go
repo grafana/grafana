@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/searchusers/filters"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 
@@ -145,7 +147,7 @@ func setupOrgUsersAPIcontext(t *testing.T, role models.RoleType) (*scenarioConte
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithDisabled(),
 		SQLStore:           db,
-		searchUsersService: searchusers.ProvideUsersService(bus.New()),
+		searchUsersService: searchusers.ProvideUsersService(bus.New(), filters.ProvideOSSSearchUserFilter()),
 	}
 
 	sc := setupScenarioContext(t, "/api/org/users/lookup")

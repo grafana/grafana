@@ -1,5 +1,8 @@
-import { DataQuery, SelectableValue } from '@grafana/data';
+import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
+export interface Dimensions {
+  [key: string]: string | string[];
+}
 
 export interface CloudWatchMetricsQuery extends DataQuery {
   queryMode?: 'Metrics';
@@ -53,7 +56,7 @@ export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
 export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
   (cloudwatchQuery as CloudWatchLogsQuery).queryMode === 'Logs';
 
-export interface CloudWatchAnnotationQuery extends CloudWatchMetricsQuery {
+interface AnnotationProperties {
   enable: boolean;
   name: string;
   iconColor: string;
@@ -61,6 +64,10 @@ export interface CloudWatchAnnotationQuery extends CloudWatchMetricsQuery {
   actionPrefix: string;
   alarmNamePrefix: string;
 }
+
+export type CloudWatchLogsAnnotationQuery = CloudWatchLogsQuery & AnnotationProperties;
+export type CloudWatchMetricsAnnotationQuery = CloudWatchMetricsQuery & AnnotationProperties;
+export type CloudWatchAnnotationQuery = CloudWatchLogsAnnotationQuery | CloudWatchMetricsAnnotationQuery;
 
 export type SelectableStrings = Array<SelectableValue<string>>;
 
@@ -310,28 +317,20 @@ export interface MetricRequest {
 
 export interface MetricQuery {
   [key: string]: any;
-  datasourceId: number;
+  datasource: DataSourceRef;
   refId?: string;
   maxDataPoints?: number;
   intervalMs?: number;
 }
 
-// interface TsdbQuery {
-// 	TimeRange *TimeRange
-// 	Queries   []*Query
-// 	Debug     bool
-// }
-
-// type Query struct {
-// 	RefId         string
-// 	Model         *simplejson.Json
-// 	DataSource    *models.DataSource
-// 	MaxDataPoints int64
-// 	IntervalMs    int64
-// }
-
 export interface ExecutedQueryPreview {
   id: string;
   executedQuery: string;
   period: string;
+}
+
+export interface MetricFindSuggestData {
+  text: string;
+  label: string;
+  value: string;
 }

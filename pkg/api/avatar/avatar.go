@@ -23,8 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/macaron.v1"
-
+	"github.com/grafana/grafana/pkg/web"
 	gocache "github.com/patrickmn/go-cache"
 )
 
@@ -40,6 +39,8 @@ type Avatar struct {
 	notFound  bool
 	timestamp time.Time
 }
+
+var alog = log.New("avatar")
 
 func New(hash string) *Avatar {
 	return &Avatar{
@@ -78,7 +79,7 @@ type CacheServer struct {
 var validMD5 = regexp.MustCompile("^[a-fA-F0-9]{32}$")
 
 func (a *CacheServer) Handler(ctx *models.ReqContext) {
-	hash := macaron.Params(ctx.Req)[":hash"]
+	hash := web.Params(ctx.Req)[":hash"]
 
 	if len(hash) != 32 || !validMD5.MatchString(hash) {
 		ctx.JsonApiErr(404, "Avatar not found", nil)
@@ -96,7 +97,7 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 	if avatar.Expired() {
 		// The cache item is either expired or newly created, update it from the server
 		if err := avatar.Update(); err != nil {
-			log.Tracef("avatar update error: %v", err)
+			ctx.Logger.Debug("avatar update", "err", err)
 			avatar = a.notFound
 		}
 	}
@@ -105,7 +106,7 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 		avatar = a.notFound
 	} else if !exists {
 		if err := a.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
-			log.Tracef("Error adding avatar to cache: %s", err)
+			ctx.Logger.Debug("add avatar to cache", "err", err)
 		}
 	}
 
@@ -118,7 +119,7 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 	ctx.Resp.Header().Set("Cache-Control", "private, max-age=3600")
 
 	if err := avatar.Encode(ctx.Resp); err != nil {
-		log.Warnf("avatar encode error: %v", err)
+		ctx.Logger.Warn("avatar encode error:", "err", err)
 		ctx.Resp.WriteHeader(500)
 	}
 }
@@ -143,7 +144,7 @@ func newNotFound(cfg *setting.Cfg) *Avatar {
 	// variable.
 	// nolint:gosec
 	if data, err := ioutil.ReadFile(path); err != nil {
-		log.Errorf(3, "Failed to read user_profile.png, %v", path)
+		alog.Error("Failed to read user_profile.png", "path", path)
 	} else {
 		avatar.data = bytes.NewBuffer(data)
 	}
@@ -216,7 +217,7 @@ var client = &http.Client{
 func (a *thunderTask) fetch() error {
 	a.Avatar.timestamp = time.Now()
 
-	log.Debugf("avatar.fetch(fetch new avatar): %s", a.Url)
+	alog.Debug("avatar.fetch(fetch new avatar)", "url", a.Url)
 	req, err := http.NewRequest("GET", a.Url, nil)
 	if err != nil {
 		return err
@@ -233,7 +234,7 @@ func (a *thunderTask) fetch() error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Warn("Failed to close response body", "err", err)
+			alog.Warn("Failed to close response body", "err", err)
 		}
 	}()
 

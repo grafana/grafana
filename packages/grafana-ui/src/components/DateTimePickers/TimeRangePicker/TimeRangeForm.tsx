@@ -18,7 +18,7 @@ import { useStyles2 } from '../../..';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
-import { TimePickerCalendar } from './TimePickerCalendar';
+import TimePickerCalendar from './TimePickerCalendar';
 
 interface Props {
   isFullscreen: boolean;
@@ -65,16 +65,6 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     [setOpen]
   );
 
-  const onFocus = useCallback(
-    (event: FormEvent<HTMLElement>) => {
-      if (!isFullscreen) {
-        return;
-      }
-      onOpen(event);
-    },
-    [isFullscreen, onOpen]
-  );
-
   const onApply = useCallback(
     (e: FormEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -111,36 +101,41 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     </div>
   );
 
-  const icon = isFullscreen ? null : <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+  const icon = (
+    <Button
+      aria-label={selectors.components.TimePicker.calendar.openButton}
+      icon="calendar-alt"
+      variant="secondary"
+      onClick={onOpen}
+    />
+  );
 
   return (
-    <div aria-label="Absolute time ranges">
-      <Field label="From" invalid={from.invalid} error={from.errorMessage}>
-        <div className={style.fieldContainer}>
+    <div>
+      <div className={style.fieldContainer}>
+        <Field label="From" invalid={from.invalid} error={from.errorMessage}>
           <Input
             onClick={(event) => event.stopPropagation()}
-            onFocus={onFocus}
             onChange={(event) => onChange(event.currentTarget.value, to.value)}
             addonAfter={icon}
             aria-label={selectors.components.TimePicker.fromField}
             value={from.value}
           />
-          {fyTooltip}
-        </div>
-      </Field>
-      <Field label="To" invalid={to.invalid} error={to.errorMessage}>
-        <div className={style.fieldContainer}>
+        </Field>
+        {fyTooltip}
+      </div>
+      <div className={style.fieldContainer}>
+        <Field label="To" invalid={to.invalid} error={to.errorMessage}>
           <Input
             onClick={(event) => event.stopPropagation()}
-            onFocus={onFocus}
             onChange={(event) => onChange(from.value, event.currentTarget.value)}
             addonAfter={icon}
             aria-label={selectors.components.TimePicker.toField}
             value={to.value}
           />
-          {fyTooltip}
-        </div>
-      </Field>
+        </Field>
+        {fyTooltip}
+      </div>
       <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
         Apply time range
       </Button>
@@ -217,7 +212,7 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     tooltip: css`
       padding-left: ${theme.spacing(1)};
-      padding-top: ${theme.spacing(0.5)};
+      padding-top: ${theme.spacing(3)};
     `,
   };
 }

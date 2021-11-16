@@ -4,12 +4,14 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption"
+	"golang.org/x/net/context"
 )
 
 // Provision alert notifiers
-func Provision(configDirectory string) error {
-	dc := newNotificationProvisioner(log.New("provisioning.notifiers"))
-	return dc.applyChanges(configDirectory)
+func Provision(ctx context.Context, configDirectory string, encryptionService encryption.Internal) error {
+	dc := newNotificationProvisioner(encryptionService, log.New("provisioning.notifiers"))
+	return dc.applyChanges(ctx, configDirectory)
 }
 
 // NotificationProvisioner is responsible for provsioning alert notifiers
@@ -18,15 +20,18 @@ type NotificationProvisioner struct {
 	cfgProvider *configReader
 }
 
-func newNotificationProvisioner(log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(encryptionService encryption.Internal, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
-		log:         log,
-		cfgProvider: &configReader{log: log},
+		log: log,
+		cfgProvider: &configReader{
+			encryptionService: encryptionService,
+			log:               log,
+		},
 	}
 }
 
-func (dc *NotificationProvisioner) apply(cfg *notificationsAsConfig) error {
-	if err := dc.deleteNotifications(cfg.DeleteNotifications); err != nil {
+func (dc *NotificationProvisioner) apply(ctx context.Context, cfg *notificationsAsConfig) error {
+	if err := dc.deleteNotifications(ctx, cfg.DeleteNotifications); err != nil {
 		return err
 	}
 
@@ -37,7 +42,7 @@ func (dc *NotificationProvisioner) apply(cfg *notificationsAsConfig) error {
 	return nil
 }
 
-func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*deleteNotificationConfig) error {
+func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, notificationToDelete []*deleteNotificationConfig) error {
 	for _, notification := range notificationToDelete {
 		dc.log.Info("Deleting alert notification", "name", notification.Name, "uid", notification.UID)
 
@@ -53,13 +58,13 @@ func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*d
 
 		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.UID, OrgId: notification.OrgID}
 
-		if err := bus.Dispatch(getNotification); err != nil {
+		if err := bus.DispatchCtx(ctx, getNotification); err != nil {
 			return err
 		}
 
 		if getNotification.Result != nil {
 			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
-			if err := bus.Dispatch(cmd); err != nil {
+			if err := bus.DispatchCtx(ctx, cmd); err != nil {
 				return err
 			}
 		}
@@ -128,14 +133,14 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 	return nil
 }
 
-func (dc *NotificationProvisioner) applyChanges(configPath string) error {
-	configs, err := dc.cfgProvider.readConfig(configPath)
+func (dc *NotificationProvisioner) applyChanges(ctx context.Context, configPath string) error {
+	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
 	if err != nil {
 		return err
 	}
 
 	for _, cfg := range configs {
-		if err := dc.apply(cfg); err != nil {
+		if err := dc.apply(ctx, cfg); err != nil {
 			return err
 		}
 	}

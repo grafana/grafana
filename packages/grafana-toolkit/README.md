@@ -300,6 +300,24 @@ If your comments include ES2016 code, then SystemJS v0.20.19, which Grafana uses
 
 To fix this error, remove the ES2016 code from your comments.
 
+### I would like to dynamically import modules in my plugin
+
+Create a webpack.config.js with this content (in the root of _your_ plugin)
+
+```ts
+// webpack.config.js
+const pluginJson = require('./src/plugin.json');
+module.exports.getWebpackConfig = (config, options) => ({
+  ...config,
+  output: {
+    ...config.output,
+    publicPath: `public/plugins/${pluginJson.id}/`,
+  },
+});
+```
+
+The plugin id is the id written in the plugin.json file.
+
 ## Contribute to grafana-toolkit
 
 You can contribute to grafana-toolkit by helping develop it or by debugging it.
@@ -309,7 +327,7 @@ You can contribute to grafana-toolkit by helping develop it or by debugging it.
 Typically plugins should be developed using the `@grafana/toolkit` installed from npm. However, when working on the toolkit, you might want to use the local version. Follow the steps below to develop with a local version:
 
 1. Clone [Grafana repository](https://github.com/grafana/grafana).
-2. Navigate to the directory you have cloned Grafana repo to and then run `yarn install --pure-lockfile`.
+2. Navigate to the directory you have cloned Grafana repo to and then run `yarn install --immutable`.
 3. Navigate to `<GRAFANA_DIR>/packages/grafana-toolkit` and then run `yarn link`.
 4. Navigate to the directory where your plugin code is and then run `npx grafana-toolkit plugin:dev --yarnlink`. This adds all dependencies required by grafana-toolkit to your project, as well as link your local grafana-toolkit version to be used by the plugin.
 

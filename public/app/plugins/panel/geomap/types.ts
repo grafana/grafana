@@ -1,4 +1,5 @@
-import { MapLayerOptions } from '@grafana/data';
+import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
+import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
 import { MapCenterID } from './view';
 
@@ -45,6 +46,7 @@ export interface GeomapPanelOptions {
 }
 export interface FeatureStyleConfig {
   fillColor: string; //eventually be ColorDimensionConfig
+  opacity?: number;
   strokeWidth?: number;
   rule?: FeatureRuleConfig;
 }
@@ -60,4 +62,18 @@ export enum ComparisonOperation {
   LTE = 'lte',
   GT = 'gt',
   GTE = 'gte',
+}
+export interface GazetteerPathEditorConfigSettings {
+  options?: Array<SelectableValue<string>>;
+}
+
+//-------------------
+// Runtime model
+//-------------------
+export interface MapLayerState<TConfig = any> {
+  options: MapLayerOptions<TConfig>;
+  handler: MapLayerHandler;
+  layer: BaseLayer; // the openlayers instance
+  onChange: (cfg: MapLayerOptions<TConfig>) => void;
+  isBasemap?: boolean;
 }

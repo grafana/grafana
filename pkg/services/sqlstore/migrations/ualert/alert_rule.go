@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -79,8 +80,8 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	}
 
 	annotations := make(map[string]string, 3)
-	annotations["__dashboardUid__"] = da.DashboardUID
-	annotations["__panelId__"] = fmt.Sprintf("%v", da.PanelId)
+	annotations[ngmodels.DashboardUIDAnnotation] = da.DashboardUID
+	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelId)
 	annotations["__alertId__"] = fmt.Sprintf("%v", da.Id)
 
 	return lbls, annotations
@@ -128,6 +129,10 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 
 	if err := m.addSilence(da, ar); err != nil {
 		m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", ar.Title, "err", err)
+	}
+
+	if err := m.addNoDataSilence(da, ar); err != nil {
+		m.mg.Logger.Error("alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
 	}
 
 	return ar, nil
@@ -200,7 +205,7 @@ func transNoData(s string) (string, error) {
 	case "alerting":
 		return "Alerting", nil
 	case "keep_state":
-		return "Alerting", nil
+		return "NoData", nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
 	}
 	return "", fmt.Errorf("unrecognized No Data setting %v", s)
 }

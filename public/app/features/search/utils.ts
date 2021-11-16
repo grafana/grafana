@@ -227,10 +227,7 @@ export const getSectionIcon = (section: DashboardSection): IconName => {
  * Get storage key for a dashboard folder by its title
  * @param title
  */
-export const getSectionStorageKey = (title: string) => {
-  if (!title) {
-    return '';
-  }
+export const getSectionStorageKey = (title = 'General') => {
   return `${SECTION_STORAGE_KEY}.${title.toLowerCase()}`;
 };
 

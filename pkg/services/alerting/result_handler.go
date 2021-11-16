@@ -24,10 +24,10 @@ type defaultResultHandler struct {
 	log      log.Logger
 }
 
-func newResultHandler(renderService rendering.Service) *defaultResultHandler {
+func newResultHandler(renderService rendering.Service, decryptFn GetDecryptedValueFn) *defaultResultHandler {
 	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
-		notifier: newNotificationService(renderService),
+		notifier: newNotificationService(renderService, decryptFn),
 	}
 }
 

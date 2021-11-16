@@ -84,7 +84,7 @@ interface State {
   forceEscape: boolean;
 }
 
-export class UnthemedLogs extends PureComponent<Props, State> {
+class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
@@ -301,6 +301,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               response.
             </div>
             <ExploreGraph
+              graphStyle="lines"
               data={logsSeries}
               height={150}
               width={width}
@@ -316,16 +317,21 @@ export class UnthemedLogs extends PureComponent<Props, State> {
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
             <InlineField label="Time" transparent>
-              <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent />
+              <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent id="show-time" />
             </InlineField>
             <InlineField label="Unique labels" transparent>
-              <InlineSwitch value={showLabels} onChange={this.onChangeLabels} transparent />
+              <InlineSwitch value={showLabels} onChange={this.onChangeLabels} transparent id="unique-labels" />
             </InlineField>
             <InlineField label="Wrap lines" transparent>
-              <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
+              <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent id="wrap-lines" />
             </InlineField>
             <InlineField label="Prettify JSON" transparent>
-              <InlineSwitch value={prettifyLogMessage} onChange={this.onChangePrettifyLogMessage} transparent />
+              <InlineSwitch
+                value={prettifyLogMessage}
+                onChange={this.onChangePrettifyLogMessage}
+                transparent
+                id="prettify"
+              />
             </InlineField>
             <InlineField label="Dedup" transparent>
               <RadioButtonGroup
@@ -340,16 +346,18 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               />
             </InlineField>
           </InlineFieldRow>
-          <Button
-            variant="secondary"
-            disabled={isFlipping}
-            title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
-            aria-label="Flip results order"
-            className={styles.flipButton}
-            onClick={this.onChangeLogsSortOrder}
-          >
-            {isFlipping ? 'Flipping...' : 'Flip results order'}
-          </Button>
+          <div>
+            <Button
+              variant="secondary"
+              disabled={isFlipping}
+              title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
+              aria-label="Flip results order"
+              className={styles.headerButton}
+              onClick={this.onChangeLogsSortOrder}
+            >
+              {isFlipping ? 'Flipping...' : 'Flip results order'}
+            </Button>
+          </div>
         </div>
         <LogsMetaRow
           logRows={logRows}
@@ -441,7 +449,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       margin: ${theme.spacing(2, 0, 1)};
       border: 1px solid ${theme.colors.border.medium};
     `,
-    flipButton: css`
+    headerButton: css`
       margin: ${theme.spacing(0.5, 0, 0, 1)};
     `,
     radioButtons: css`

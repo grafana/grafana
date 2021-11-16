@@ -4,7 +4,7 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { TimeRange, AppEvents, rangeUtil, dateMath } from '@grafana/data';
+import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel } from '@grafana/data';
 
 // Utils
 import { isString as _isString } from 'lodash';
@@ -26,7 +26,7 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
   // confirm deletion
   if (ask !== false) {
     const text2 =
-      panel.alert && !config.featureToggles.ngalert
+      panel.alert && !config.unifiedAlertingEnabled
         ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
         : undefined;
     const confirmText = panel.alert ? 'YES' : undefined;
@@ -52,7 +52,7 @@ export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => 
   dashboard.duplicatePanel(panel);
 };
 
-export const copyPanel = (panel: PanelModel) => {
+export const copyPanel = (panel: IPanelModel) => {
   let saveModel = panel;
   if (panel instanceof PanelModel) {
     saveModel = panel.getSaveModel();

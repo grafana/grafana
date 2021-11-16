@@ -1,6 +1,5 @@
 import config from '../../core/config';
 import { extend } from 'lodash';
-import coreModule from 'app/core/core_module';
 import { rangeUtil } from '@grafana/data';
 import { AccessControlAction, UserPermission } from 'app/types';
 
@@ -143,7 +142,3 @@ export const setContextSrv = (override: ContextSrv) => {
   }
   contextSrv = override;
 };
-
-coreModule.factory('contextSrv', () => {
-  return contextSrv;
-});

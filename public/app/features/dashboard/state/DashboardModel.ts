@@ -18,7 +18,6 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 // Utils & Services
 import { contextSrv } from 'app/core/services/context_srv';
-import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { GridPos, PanelModel } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
@@ -31,10 +30,10 @@ import {
   DateTimeInput,
   EventBusExtended,
   EventBusSrv,
+  PanelModel as IPanelModel,
   TimeRange,
   TimeZone,
   UrlQueryValue,
-  PanelModel as IPanelModel,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
@@ -42,9 +41,19 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
-import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
+import { isOnTheSameGridRow } from './utils';
+import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { Subscription } from 'rxjs';
+import { appEvents } from '../../../core/core';
+import {
+  VariablesChanged,
+  VariablesChangedInUrl,
+  VariablesFinishedProcessingTimeRangeChange,
+} from '../../variables/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -77,6 +86,7 @@ export class DashboardModel {
   tags: any;
   style: any;
   timezone: any;
+  weekStart: any;
   editable: any;
   graphTooltip: DashboardCursorSync;
   time: any;
@@ -97,7 +107,9 @@ export class DashboardModel {
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
-  private hasChangesThatAffectsAllPanels: boolean;
+  private panelsAffectedByVariableChange: number[] | null;
+  private appEventsSubscription: Subscription;
+  private lastRefresh: number;
 
   // ------------------
   // not persisted
@@ -120,7 +132,9 @@ export class DashboardModel {
     panelInView: true,
     getVariablesFromState: true,
     formatDate: true,
-    hasChangesThatAffectsAllPanels: true,
+    appEventsSubscription: true,
+    panelsAffectedByVariableChange: true,
+    lastRefresh: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -138,6 +152,7 @@ export class DashboardModel {
     this.tags = data.tags ?? [];
     this.style = data.style ?? 'dark';
     this.timezone = data.timezone ?? '';
+    this.weekStart = data.weekStart ?? '';
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
@@ -163,7 +178,19 @@ export class DashboardModel {
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
-    this.hasChangesThatAffectsAllPanels = false;
+    this.panelsAffectedByVariableChange = null;
+    this.appEventsSubscription = new Subscription();
+    this.lastRefresh = Date.now();
+    this.appEventsSubscription.add(appEvents.subscribe(VariablesChanged, this.variablesChangedHandler.bind(this)));
+    this.appEventsSubscription.add(
+      appEvents.subscribe(
+        VariablesFinishedProcessingTimeRangeChange,
+        this.variablesFinishedProcessingTimeRangeChangeHandler.bind(this)
+      )
+    );
+    this.appEventsSubscription.add(
+      appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
+    );
   }
 
   addBuiltInAnnotationQuery() {
@@ -237,7 +264,7 @@ export class DashboardModel {
     copy.panels = this.getPanelSaveModels();
 
     //  sort by keys
-    copy = sortByKeys(copy);
+    copy = sortedDeepCloneWithoutNulls(copy);
     copy.getVariables = () => {
       return copy.templating.list;
     };
@@ -268,6 +295,9 @@ export class DashboardModel {
   private getPanelSaveModels() {
     return this.panels
       .filter((panel: PanelModel) => {
+        if (this.isSnapshotTruthy()) {
+          return true;
+        }
         if (panel.type === 'add-panel') {
           return false;
         }
@@ -284,16 +314,16 @@ export class DashboardModel {
       .map((panel: PanelModel) => {
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel
-        if (this.panelInEdit && this.panelInEdit.editSourceId === panel.id) {
-          const saveModel = this.panelInEdit.getSaveModel();
-          // while editing a panel we modify its id, need to restore it here
-          saveModel.id = this.panelInEdit.editSourceId;
-          return saveModel;
+        if (this.panelInEdit && this.panelInEdit.id === panel.id) {
+          return this.panelInEdit.getSaveModel();
         }
 
         return panel.getSaveModel();
       })
       .map((model: any) => {
+        if (this.isSnapshotTruthy()) {
+          return model;
+        }
         // Clear any scopedVars from persisted mode. This cannot be part of getSaveModel as we need to be able to copy
         // panel models with preserved scopedVars, for example when going into edit mode.
         delete model.scopedVars;
@@ -348,17 +378,22 @@ export class DashboardModel {
     dispatch(onTimeRangeUpdated(timeRange));
   }
 
-  startRefresh() {
+  startRefresh(affectedPanelIds?: number[]) {
     this.events.publish(new RefreshEvent());
+    this.lastRefresh = Date.now();
 
     if (this.panelInEdit) {
-      this.panelInEdit.refresh();
-      return;
+      if (!affectedPanelIds || affectedPanelIds.includes(this.panelInEdit.id)) {
+        this.panelInEdit.refresh();
+        return;
+      }
     }
 
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {
-        panel.refresh();
+        if (!affectedPanelIds || affectedPanelIds.includes(panel.id)) {
+          panel.refresh();
+        }
       }
     }
   }
@@ -396,29 +431,23 @@ export class DashboardModel {
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
-    this.refreshIfChangeAffectsAllPanels();
+    this.refreshIfPanelsAffectedByVariableChange();
   }
 
   exitPanelEditor() {
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
-    this.refreshIfChangeAffectsAllPanels();
     getTimeSrv().resumeAutoRefresh();
+    this.refreshIfPanelsAffectedByVariableChange();
   }
 
-  setChangeAffectsAllPanels() {
-    if (this.panelInEdit || this.panelInView) {
-      this.hasChangesThatAffectsAllPanels = true;
-    }
-  }
-
-  private refreshIfChangeAffectsAllPanels() {
-    if (!this.hasChangesThatAffectsAllPanels) {
+  private refreshIfPanelsAffectedByVariableChange() {
+    if (!this.panelsAffectedByVariableChange) {
       return;
     }
 
-    this.hasChangesThatAffectsAllPanels = false;
-    this.startRefresh();
+    this.startRefresh(this.panelsAffectedByVariableChange);
+    this.panelsAffectedByVariableChange = null;
   }
 
   private ensureListExist(data: any) {
@@ -703,6 +732,10 @@ export class DashboardModel {
     if (yOffset > 0) {
       const panelBelowIndex = panelIndex + selectedOptions.length;
       for (let i = panelBelowIndex; i < this.panels.length; i++) {
+        if (isOnTheSameGridRow(panel, this.panels[i])) {
+          continue;
+        }
+
         this.panels[i].gridPos.y += yOffset;
       }
     }
@@ -905,6 +938,7 @@ export class DashboardModel {
   }
 
   destroy() {
+    this.appEventsSubscription.unsubscribe();
     this.events.removeAllListeners();
     for (const panel of this.panels) {
       panel.destroy();
@@ -1036,7 +1070,6 @@ export class DashboardModel {
   private updateSchema(old: any) {
     const migrator = new DashboardMigrator(this);
     migrator.updateSchema(old);
-    migrator.migrateCloudWatchQueries();
   }
 
   resetOriginalTime() {
@@ -1184,5 +1217,41 @@ export class DashboardModel {
         filters: cloneDeep(variable.filters),
       };
     });
+  }
+
+  private variablesChangedHandler(event: VariablesChanged) {
+    this.variablesChangedBaseHandler(event, true);
+  }
+
+  private variablesFinishedProcessingTimeRangeChangeHandler(event: VariablesFinishedProcessingTimeRangeChange) {
+    this.variablesChangedBaseHandler(event);
+  }
+
+  private variablesChangedBaseHandler(
+    event: VariablesChanged | VariablesFinishedProcessingTimeRangeChange,
+    processRepeats = false
+  ) {
+    if (processRepeats) {
+      this.processRepeats();
+    }
+
+    if (!event.payload.panelIds || getTimeSrv().isRefreshOutsideThreshold(this.lastRefresh)) {
+      // passing undefined in panelIds means we want to update all panels
+      this.startRefresh(undefined);
+      return;
+    }
+
+    if (this.panelInEdit || this.panelInView) {
+      this.panelsAffectedByVariableChange = event.payload.panelIds.filter(
+        (id) => id !== (this.panelInEdit?.id ?? this.panelInView?.id)
+      );
+    }
+
+    this.startRefresh(event.payload.panelIds);
+  }
+
+  private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
+    this.templateVariableValueUpdated();
+    this.startRefresh(event.payload.panelIds);
   }
 }

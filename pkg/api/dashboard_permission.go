@@ -112,6 +112,10 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {
 	for _, item := range apiCmd.Items {
+		if item.UserID > 0 && item.TeamID > 0 {
+			return models.ErrPermissionsWithUserAndTeamNotAllowed
+		}
+
 		if (item.UserID > 0 || item.TeamID > 0) && item.Role != nil {
 			return models.ErrPermissionsWithRoleNotAllowed
 		}

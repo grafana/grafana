@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
-	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 )
@@ -129,9 +128,11 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	for _, query := range req.Queries {
 		rawQueryProp := make(map[string]interface{})
 		queryBytes, err := query.JSON.MarshalJSON()
+
 		if err != nil {
 			return nil, err
 		}
+
 		err = json.Unmarshal(queryBytes, &rawQueryProp)
 		if err != nil {
 			return nil, err
@@ -142,26 +143,39 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 			RefID:         query.RefID,
 			TimeRange:     query.TimeRange,
 			QueryType:     query.QueryType,
-			DatasourceUID: query.DatasourceUID,
+			DatasourceUID: query.GetDatasourceUID(),
 		}
 
-		dsName, err := rn.GetDatasourceName()
-		if err != nil {
-			return nil, err
+		numericDSID := float64(0) // legacy
+		if rn.DatasourceUID == "" {
+			if rv, ok := rn.Query["datasourceId"]; ok {
+				if sv, ok := rv.(float64); ok {
+					if sv == DatasourceID {
+						rn.DatasourceUID = DatasourceUID
+					}
+					if sv > 0 {
+						numericDSID = sv
+					}
+				}
+			}
 		}
 
-		dsUID := rn.DatasourceUID
+		if rn.DatasourceUID == "" && numericDSID == 0 {
+			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
+		}
 
-		var node graph.Node
-		switch {
-		case dsName == DatasourceName || dsUID == DatasourceUID:
+		var node Node
+
+		if rn.IsExpressionQuery() {
 			node, err = buildCMDNode(dp, rn)
-		default: // If it's not an expression query, it's a data source query.
+		} else {
 			node, err = s.buildDSNode(dp, rn, req)
 		}
+
 		if err != nil {
 			return nil, err
 		}
+
 		dp.AddNode(node)
 	}
 	return dp, nil

@@ -1,3 +1,4 @@
+// use light-weight, numbers only implementations of functions
 import { create, all } from 'mathjs';
 
 let mathjs: Partial<math.MathJsStatic> | undefined = undefined;
@@ -23,7 +24,7 @@ export function parseEquation(expr: string): MathInfo {
     const symbols = new Set<string>();
     const node = math.parse(expr);
     node.traverse((n, path, parent) => {
-      if (n.isSymbolNode && n.name && !parent.isFunctionNode) {
+      if (n.type === 'SymbolNode' && n.name && parent.type !== 'FunctionNode') {
         symbols.add(n.name);
       }
     });

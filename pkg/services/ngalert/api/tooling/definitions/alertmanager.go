@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -9,16 +10,15 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -138,17 +138,25 @@ type MultiStatus struct{}
 // swagger:parameters RoutePostTestReceivers
 type TestReceiversConfigParams struct {
 	// in:body
+	Alert *TestReceiversConfigAlertParams `yaml:"alert,omitempty" json:"alert,omitempty"`
+	// in:body
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
-func (c *TestReceiversConfigParams) ProcessConfig() error {
-	return processReceiverConfigs(c.Receivers)
+func (c *TestReceiversConfigParams) ProcessConfig(encrypt EncryptFn) error {
+	return processReceiverConfigs(c.Receivers, encrypt)
+}
+
+type TestReceiversConfigAlertParams struct {
+	Annotations model.LabelSet `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Labels      model.LabelSet `yaml:"labels,omitempty" json:"labels,omitempty"`
 }
 
 // swagger:model
 type TestReceiversResult struct {
-	Receivers []TestReceiverResult `json:"receivers"`
-	NotifedAt time.Time            `json:"notified_at"`
+	Alert      TestReceiversConfigAlertParams `json:"alert"`
+	Receivers  []TestReceiverResult           `json:"receivers"`
+	NotifiedAt time.Time                      `json:"notified_at"`
 }
 
 // swagger:model
@@ -412,8 +420,8 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 }
 
 // ProcessConfig parses grafana receivers, encrypts secrets and assigns UUIDs (if they are missing)
-func (c *PostableUserConfig) ProcessConfig() error {
-	return processReceiverConfigs(c.AlertmanagerConfig.Receivers)
+func (c *PostableUserConfig) ProcessConfig(encrypt EncryptFn) error {
+	return processReceiverConfigs(c.AlertmanagerConfig.Receivers, encrypt)
 }
 
 // MarshalYAML implements yaml.Marshaller.
@@ -870,22 +878,6 @@ type PostableGrafanaReceiver struct {
 	SecureSettings        map[string]string `json:"secureSettings"`
 }
 
-func (r *PostableGrafanaReceiver) GetDecryptedSecret(key string) (string, error) {
-	storedValue, ok := r.SecureSettings[key]
-	if !ok {
-		return "", nil
-	}
-	decodeValue, err := base64.StdEncoding.DecodeString(storedValue)
-	if err != nil {
-		return "", err
-	}
-	decryptedValue, err := util.Decrypt(decodeValue, setting.SecretKey)
-	if err != nil {
-		return "", err
-	}
-	return string(decryptedValue), nil
-}
-
 type ReceiverType int
 
 const (
@@ -1061,7 +1053,9 @@ type PostableGrafanaReceivers struct {
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
 
-func processReceiverConfigs(c []*PostableApiReceiver) error {
+type EncryptFn func(ctx context.Context, payload []byte, scope secrets.EncryptionOptions) ([]byte, error)
+
+func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 	seenUIDs := make(map[string]struct{})
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
@@ -1069,7 +1063,7 @@ func processReceiverConfigs(c []*PostableApiReceiver) error {
 		case GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				for k, v := range gr.SecureSettings {
-					encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
+					encryptedData, err := encrypt(context.Background(), []byte(v), secrets.WithoutScope())
 					if err != nil {
 						return fmt.Errorf("failed to encrypt secure settings: %w", err)
 					}

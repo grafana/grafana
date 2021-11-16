@@ -263,7 +263,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			},
 		}
 
-		scenarioCtx.notificationService = newNotificationService(renderService)
+		scenarioCtx.notificationService = newNotificationService(renderService, nil)
 		fn(scenarioCtx)
 	})
 }
@@ -279,7 +279,7 @@ type testNotifier struct {
 	Frequency             time.Duration
 }
 
-func newTestNotifier(model *models.AlertNotification) (Notifier, error) {
+func newTestNotifier(model *models.AlertNotification, _ GetDecryptedValueFn) (Notifier, error) {
 	uploadImage := true
 	value, exist := model.Settings.CheckGet("uploadImage")
 	if exist {

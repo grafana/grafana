@@ -37,26 +37,25 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
         maxZoom: cfg.maxZoom,
       });
     },
+    registerOptionsUI: (builder) => {
+      builder
+        .addTextInput({
+          path: 'config.url',
+          name: 'URL template',
+          description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
+          settings: {
+            placeholder: defaultXYZConfig.url,
+          },
+        })
+        .addTextInput({
+          path: 'config.attribution',
+          name: 'Attribution',
+          settings: {
+            placeholder: defaultXYZConfig.attribution,
+          },
+        });
+    },
   }),
-
-  registerOptionsUI: (builder) => {
-    builder
-      .addTextInput({
-        path: 'config.url',
-        name: 'URL template',
-        description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
-        settings: {
-          placeholder: defaultXYZConfig.url,
-        },
-      })
-      .addTextInput({
-        path: 'config.attribution',
-        name: 'Attribution',
-        settings: {
-          placeholder: defaultXYZConfig.attribution,
-        },
-      });
-  },
 };
 
 export const genericLayers = [xyzTiles];

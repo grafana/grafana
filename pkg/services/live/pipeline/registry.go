@@ -15,77 +15,87 @@ var SubscribersRegistry = []EntityInfo{
 		Type:        SubscriberTypeManagedStream,
 		Description: "apply managed stream subscribe logic",
 	},
-	{
-		Type:        SubscriberTypeMultiple,
-		Description: "apply multiple subscribers",
-	},
-	{
-		Type:        SubscriberTypeAuthorizeRole,
-		Description: "authorize user role",
-	},
 }
 
-var OutputsRegistry = []EntityInfo{
+var FrameOutputsRegistry = []EntityInfo{
 	{
-		Type:        OutputTypeManagedStream,
-		Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
+		Type:        FrameOutputTypeManagedStream,
+		Description: "only send schema when structure changes (note this also requires a matching subscriber)",
 		Example:     ManagedStreamOutputConfig{},
 	},
 	{
-		Type:        OutputTypeMultiple,
-		Description: "Send the output to multiple destinations",
-		Example:     MultipleOutputterConfig{},
-	},
-	{
-		Type:        OutputTypeConditional,
+		Type:        FrameOutputTypeConditional,
 		Description: "send to an output depending on frame values",
 		Example:     ConditionalOutputConfig{},
 	},
 	{
-		Type: OutputTypeRedirect,
+		Type:        FrameOutputTypeRedirect,
+		Description: "redirect for processing by another channel rule",
 	},
 	{
-		Type: OutputTypeThreshold,
+		Type:        FrameOutputTypeThreshold,
+		Description: "output field threshold boundaries cross into new channel",
 	},
 	{
-		Type: OutputTypeChangeLog,
+		Type:        FrameOutputTypeChangeLog,
+		Description: "output field changes into new channel",
 	},
 	{
-		Type: OutputTypeRemoteWrite,
+		Type:        FrameOutputTypeRemoteWrite,
+		Description: "output to remote write endpoint",
+	},
+	{
+		Type:        FrameOutputTypeLoki,
+		Description: "output frame as JSON to Loki",
 	},
 }
 
 var ConvertersRegistry = []EntityInfo{
 	{
-		Type: ConverterTypeJsonAuto,
+		Type:        ConverterTypeJsonAuto,
+		Description: "automatic recursive JSON to Frame conversion",
 	},
 	{
-		Type: ConverterTypeJsonExact,
+		Type:        ConverterTypeJsonExact,
+		Description: "JSON to Frame conversion according to exact list of fields",
 	},
 	{
 		Type:        ConverterTypeInfluxAuto,
 		Description: "accept influx line protocol",
-		Example:     AutoInfluxConverterConfig{},
+		Example: AutoInfluxConverterConfig{
+			FrameFormat: "labels_column",
+		},
 	},
 	{
-		Type: ConverterTypeJsonFrame,
+		Type:        ConverterTypeJsonFrame,
+		Description: "JSON-encoded Grafana data frame",
 	},
 }
 
-var ProcessorsRegistry = []EntityInfo{
+var FrameProcessorsRegistry = []EntityInfo{
 	{
-		Type:        ProcessorTypeKeepFields,
+		Type:        FrameProcessorTypeKeepFields,
 		Description: "list the fields that should stay",
-		Example:     KeepFieldsProcessorConfig{},
+		Example:     KeepFieldsFrameProcessorConfig{},
 	},
 	{
-		Type:        ProcessorTypeDropFields,
+		Type:        FrameProcessorTypeDropFields,
 		Description: "list the fields that should be removed",
-		Example:     DropFieldsProcessorConfig{},
+		Example:     DropFieldsFrameProcessorConfig{},
+	},
+}
+
+var DataOutputsRegistry = []EntityInfo{
+	{
+		Type:        DataOutputTypeBuiltin,
+		Description: "use builtin publish handler",
 	},
 	{
-		Type:        ProcessorTypeMultiple,
-		Description: "apply multiple processors",
-		Example:     MultipleProcessorConfig{},
+		Type:        DataOutputTypeRedirect,
+		Description: "redirect data processing to another channel rule",
+	},
+	{
+		Type:        DataOutputTypeLoki,
+		Description: "output data to Loki as logs",
 	},
 }

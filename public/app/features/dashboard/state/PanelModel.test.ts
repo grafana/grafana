@@ -265,7 +265,6 @@ describe('PanelModel', () => {
           });
         });
 
-        model.editSourceId = 1001;
         model.fieldConfig.defaults.decimals = 3;
         model.fieldConfig.defaults.custom = {
           customProp: true,
@@ -287,10 +286,6 @@ describe('PanelModel', () => {
         ];
         model.changePlugin(newPlugin);
         model.alert = { id: 2 };
-      });
-
-      it('should keep editSourceId', () => {
-        expect(model.editSourceId).toBe(1001);
       });
 
       it('should keep maxDataPoints', () => {

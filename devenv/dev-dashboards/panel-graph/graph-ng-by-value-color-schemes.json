@@ -829,7 +829,8 @@
   "style": "dark",
   "tags": [
     "gdev",
-    "panel-tests"
+    "panel-tests",
+    "graph-ng"
   ],
   "templating": {
     "list": []

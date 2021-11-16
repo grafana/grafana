@@ -94,7 +94,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
         {playlistToDelete && (
           <ConfirmModal
             title={playlistToDelete.name}
-            confirmText="delete"
+            confirmText="Delete"
             body={`Are you sure you want to delete '${playlistToDelete.name}' playlist?`}
             onConfirm={onDeletePlaylist}
             isOpen={Boolean(playlistToDelete)}

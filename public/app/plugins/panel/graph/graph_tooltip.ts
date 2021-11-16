@@ -1,7 +1,13 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
-import { textUtil, systemDateFormats, LegacyGraphHoverClearEvent, LegacyGraphHoverEvent } from '@grafana/data';
+import {
+  textUtil,
+  systemDateFormats,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
+  DataHoverClearEvent,
+} from '@grafana/data';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -153,6 +159,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       }
     }
     dashboard.events.publish(new LegacyGraphHoverClearEvent());
+    dashboard.events.publish(new DataHoverClearEvent());
   });
 
   elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {

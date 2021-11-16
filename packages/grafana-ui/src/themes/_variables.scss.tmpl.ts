@@ -95,8 +95,9 @@ $height-lg: ${theme.v1.height.lg};
 
 // Typography
 // -------------------------
-
+/* stylelint-disable-next-line string-quotes */
 $font-family-sans-serif: ${theme.v1.typography.fontFamily.sansSerif};
+/* stylelint-disable-next-line string-quotes */
 $font-family-monospace: ${theme.v1.typography.fontFamily.monospace};
 
 $font-size-base: ${theme.v1.typography.size.base} !default;
