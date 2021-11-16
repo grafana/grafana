@@ -1,4 +1,5 @@
-import { createSelector } from 'reselect';
+import { createSelector } from '@reduxjs/toolkit';
+import { PluginError, PluginErrorCode } from '@grafana/data';
 import { RequestStatus, PluginCatalogStoreState } from '../types';
 import { pluginsAdapter } from './reducer';
 
@@ -48,6 +49,19 @@ export const find = (searchBy: string, filterBy: string, filterByType: string) =
       return searchBy === '' ? filteredPlugins : searchedPlugins;
     }
   );
+
+export const selectPluginErrors = createSelector(selectAll, (plugins) =>
+  plugins
+    ? plugins
+        .filter((p) => Boolean(p.error))
+        .map(
+          (p): PluginError => ({
+            pluginId: p.id,
+            errorCode: p!.error as PluginErrorCode,
+          })
+        )
+    : []
+);
 
 // The following selectors are used to get information about the outstanding or completed plugins-related network requests.
 export const selectRequest = (actionType: string) =>
