@@ -110,7 +110,29 @@ export class PanelQueryRunner {
               | StreamingDataFrame
               | undefined;
 
-            if (streamingDataFrame && !streamingDataFrame.packetInfo.schemaChanged) {
+            if (
+              streamingDataFrame &&
+              !streamingDataFrame.packetInfo.schemaChanged &&
+              // TODO: remove below condition after fixing issue with modifying panels
+              lastData[0].fields.length === streamingDataFrame.fields.length
+            ) {
+              processedData = {
+                ...processedData,
+                series: lastData.map((frame, frameIndex) => ({
+                  ...frame,
+                  length: data.series[frameIndex].length,
+                  fields: frame.fields.map((field, fieldIndex) => ({
+                    ...field,
+                    values: data.series[frameIndex].fields[fieldIndex].values,
+                    state: {
+                      ...field.state,
+                      calcs: undefined,
+                      range: undefined,
+                    },
+                  })),
+                })),
+              };
+
               streamingPacketWithSameSchema = true;
             }
           }

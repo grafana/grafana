@@ -94,7 +94,6 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     } else if (isStreamingResponseData(dataPacket, StreamingResponseDataType.NewValuesSameSchema)) {
       const buffer = state.panelData.series[frameIndex] as StreamingDataFrame;
       buffer.pushNewValues(dataPacket.values);
-      buffer.resetStateCalculations(); // TODO: should we recalculate the state here?
       return buffer;
     }
 
