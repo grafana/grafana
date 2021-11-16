@@ -71,7 +71,6 @@ export interface GazetteerPathEditorConfigSettings {
 // Runtime model
 //-------------------
 export interface MapLayerState<TConfig = any> {
-  UID: string; // value changes with each initialization
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
   layer: BaseLayer; // the openlayers instance

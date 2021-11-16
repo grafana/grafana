@@ -276,6 +276,40 @@ func TestEvaluateExecutionResult(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "no data for Ref ID will produce NoData result",
+			execResults: ExecutionResults{
+				NoData: map[string]string{"A": "1"},
+			},
+			expectResultLength: 1,
+			expectResults: Results{
+				{
+					Instance: data.Labels{"datasource_uid": "1"},
+					State:    NoData,
+				},
+			},
+		},
+		{
+			desc: "no data for Ref IDs will produce NoData result for each data source",
+			execResults: ExecutionResults{
+				NoData: map[string]string{
+					"A": "1",
+					"B": "1",
+					"C": "2",
+				},
+			},
+			expectResultLength: 2,
+			expectResults: Results{
+				{
+					Instance: data.Labels{"datasource_uid": "1"},
+					State:    NoData,
+				},
+				{
+					Instance: data.Labels{"datasource_uid": "2"},
+					State:    NoData,
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
