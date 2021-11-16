@@ -65,7 +65,8 @@ function renderLogMessage(
     highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
   const searchWords = highlights ?? [];
   if (hasAnsi) {
-    return <LogMessageAnsi value={entry} highlight={{ searchWords, highlightClassName }} />;
+    const highlight = needsHighlighter ? {searchWords, highlightClassName} : undefined;
+    return <LogMessageAnsi value={entry} highlight={highlight} />;
   } else if (needsHighlighter) {
     return (
       <Highlighter
