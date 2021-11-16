@@ -85,13 +85,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration
 - commands:
@@ -394,13 +394,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration
 - commands:
@@ -861,13 +861,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration
 - commands:
@@ -1251,13 +1251,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration
 - commands:
@@ -1363,13 +1363,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-enterprise2
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration-enterprise2
 - commands:
@@ -1820,13 +1820,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration
 - commands:
@@ -2199,13 +2199,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration
 - commands:
@@ -2311,13 +2311,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-enterprise2
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration-enterprise2
 - commands:
@@ -2765,13 +2765,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration
 - commands:
@@ -3116,13 +3116,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration
 - commands:
@@ -3226,13 +3226,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-enterprise2
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
-  - lint-backend
+  - initialize
   image: grafana/build-container:1.4.5
   name: test-backend-integration-enterprise2
 - commands:
@@ -3573,6 +3573,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: c5d479ada0a86ca4deb9116f167aeaf7e06c516abda7459a6922c4613c5782a3
+hmac: 1a222d3ca8d442626379b9a57f741495d5f3d104bca7518f076e67704c6fc24f
 
 ...
