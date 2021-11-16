@@ -11,7 +11,7 @@ var config = {
   urls: [
     {
       url: '${HOST}/login',
-      wait: 500,
+      wait: 1000,
       rootElement: '.main-view',
     },
     {
@@ -23,7 +23,7 @@ var config = {
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
-      wait: 500,
+      wait: 1000,
       rootElement: '.main-view',
     },
     {

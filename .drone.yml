@@ -228,7 +228,7 @@ steps:
       from_secret: grafana_misc_stats_api_key
     HOST: end-to-end-tests-server
     PORT: 3001
-  failure: ignore
+  failure: always
   image: hugohaggmark/docker-puppeteer
   name: test-a11y-frontend
 - commands:
@@ -3542,6 +3542,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 73b6a37371bd68484809eb311063fc37319a1cff2eb3aabbdad230ba88e13ff4
+hmac: cd616d8972577a11b3a9987c825f87ef9a17ff5ab5dc7cfbdbd491d552a27a34
 
 ...
