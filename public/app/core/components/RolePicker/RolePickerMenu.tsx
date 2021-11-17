@@ -209,50 +209,51 @@ export const RolePickerMenu = ({
               fullWidth={true}
             />
           </div>
-          {showGroups && !!optionGroups.length ? (
-            <div className={customStyles.menuSection}>
-              <div className={customStyles.groupHeader}>Fixed roles</div>
-              <div className={styles.optionBody}>
-                {optionGroups.map((option, i) => (
-                  <RoleMenuGroupOption
-                    data={option}
-                    key={i}
-                    isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
-                    partiallySelected={groupPartiallySelected(option.value)}
-                    onChange={onGroupChange}
-                    onOpenSubMenu={onOpenSubMenu}
-                    onCloseSubMenu={onCloseSubMenu}
-                    root={subMenuNode?.current!}
-                    isFocused={showSubMenu && openedMenuGroup === option.value}
-                  >
-                    {showSubMenu && openedMenuGroup === option.value ? (
-                      <RolePickerSubMenu
-                        options={subMenuOptions}
-                        selectedOptions={selectedOptions}
-                        onSelect={onChange}
-                        onClear={onClearSubMenu}
-                      />
-                    ) : undefined}
-                  </RoleMenuGroupOption>
-                ))}
+          {!!fixedRoles.length &&
+            (showGroups && !!optionGroups.length ? (
+              <div className={customStyles.menuSection}>
+                <div className={customStyles.groupHeader}>Fixed roles</div>
+                <div className={styles.optionBody}>
+                  {optionGroups.map((option, i) => (
+                    <RoleMenuGroupOption
+                      data={option}
+                      key={i}
+                      isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
+                      partiallySelected={groupPartiallySelected(option.value)}
+                      onChange={onGroupChange}
+                      onOpenSubMenu={onOpenSubMenu}
+                      onCloseSubMenu={onCloseSubMenu}
+                      root={subMenuNode?.current!}
+                      isFocused={showSubMenu && openedMenuGroup === option.value}
+                    >
+                      {showSubMenu && openedMenuGroup === option.value && (
+                        <RolePickerSubMenu
+                          options={subMenuOptions}
+                          selectedOptions={selectedOptions}
+                          onSelect={onChange}
+                          onClear={onClearSubMenu}
+                        />
+                      )}
+                    </RoleMenuGroupOption>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className={customStyles.menuSection}>
-              <div className={customStyles.groupHeader}>Fixed roles</div>
-              <div className={styles.optionBody}>
-                {fixedRoles.map((option, i) => (
-                  <RoleMenuOption
-                    data={option}
-                    key={i}
-                    isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
-                    onChange={onChange}
-                    hideDescription
-                  />
-                ))}
+            ) : (
+              <div className={customStyles.menuSection}>
+                <div className={customStyles.groupHeader}>Fixed roles</div>
+                <div className={styles.optionBody}>
+                  {fixedRoles.map((option, i) => (
+                    <RoleMenuOption
+                      data={option}
+                      key={i}
+                      isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                      onChange={onChange}
+                      hideDescription
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            ))}
           {!!customRoles.length && (
             <div>
               <div className={customStyles.groupHeader}>Custom roles</div>
@@ -408,7 +409,7 @@ interface RoleMenuGroupsOptionProps<T> {
   partiallySelected?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
-  children?: JSX.Element;
+  children?: React.ReactNode;
   root?: HTMLElement;
 }
 
@@ -498,8 +499,8 @@ export const RoleMenuGroupOption = React.forwardRef<
 RoleMenuGroupOption.displayName = 'RoleMenuGroupOption';
 
 const getRoleGroup = (role: Role) => {
-  let groupName = role.name.substr('fixed:'.length);
-  return groupName.substring(0, groupName.indexOf(':'));
+  const parts = role.name.split(':');
+  return parts.length > 1 ? parts[1] : '';
 };
 
 const capitalize = (s: string): string => {

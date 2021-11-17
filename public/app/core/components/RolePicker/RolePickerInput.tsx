@@ -32,13 +32,11 @@ export const RolePickerInput = ({
   const styles = useStyles2((theme) => getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false));
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const onInputClick = (event: FormEvent<HTMLElement>) => {
+  useEffect(() => {
     if (isFocused) {
-      onClose();
-    } else {
-      onOpen(event);
+      (inputRef as MutableRefObject<HTMLInputElement>).current?.focus();
     }
-  };
+  });
 
   const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target?.value;
@@ -46,12 +44,6 @@ export const RolePickerInput = ({
   };
 
   const numberOfRoles = appliedRoles.length;
-
-  useEffect(() => {
-    if (isFocused) {
-      (inputRef as MutableRefObject<HTMLInputElement>).current?.focus();
-    }
-  });
 
   return !isFocused ? (
     <div className={styles.selectedRoles} onMouseDown={onOpen}>
@@ -92,7 +84,7 @@ export const RolePickerInput = ({
         />
       )}
       <div className={styles.suffix}>
-        <Icon name="angle-up" className={styles.dropdownIndicator} onMouseDown={onInputClick} />
+        <Icon name="angle-up" className={styles.dropdownIndicator} onMouseDown={onClose} />
       </div>
     </div>
   );
@@ -146,7 +138,7 @@ const getRolePickerInputStyles = (
         cursor: ${focused ? 'default' : 'pointer'};
       `
     ),
-    suffix: cx(styles.suffix),
+    suffix: styles.suffix,
     dropdownIndicator: css`
       cursor: pointer;
     `,

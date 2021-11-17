@@ -8,7 +8,7 @@ export interface Props {
   builtInRole: OrgRole;
   getRoles: () => Promise<Role[]>;
   getRoleOptions: () => Promise<Role[]>;
-  getBuiltinRoles: () => Promise<{ [key: string]: Role[] }>;
+  getBuiltinRoles: () => Promise<Record<string, Role[]>>;
   onRolesChange: (newRoles: string[]) => void;
   onBuiltinRoleChange: (newRole: OrgRole) => void;
   disabled?: boolean;
@@ -28,7 +28,7 @@ export const RolePicker = ({
   const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
-  const [builtInRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
+  const [builtInRoles, setBuiltinRoles] = useState<Record<string, Role[]>>({});
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
