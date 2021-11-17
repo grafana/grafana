@@ -51,11 +51,11 @@ export const RolePickerInput = ({
       {!!numberOfRoles && (
         <Tooltip
           content={
-            <>
+            <div className={styles.tooltip}>
               {appliedRoles?.map((role) => (
                 <p key={role.uid}>{role.displayName}</p>
               ))}
-            </>
+            </div>
           }
         >
           <div>
@@ -146,6 +146,11 @@ const getRolePickerInputStyles = (
       display: flex;
       align-items: center;
       cursor: ${disabled ? 'not-allowed' : 'pointer'};
+    `,
+    tooltip: css`
+      p {
+        margin-bottom: ${theme.spacing(0.5)};
+      }
     `,
   };
 };
