@@ -5,6 +5,7 @@ import {
   Checkbox,
   CustomScrollbar,
   HorizontalGroup,
+  Icon,
   Portal,
   RadioButtonGroup,
   Tooltip,
@@ -377,20 +378,23 @@ export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithCh
     };
 
     return (
-      <Tooltip content={data.description}>
-        <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onChangeInternal}>
-          <Checkbox
-            value={isSelected}
-            className={customStyles.menuOptionCheckbox}
-            onChange={onChangeInternal}
-            disabled={disabled}
-          />
-          <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
-            <span>{data.displayName || data.name}</span>
-            {!hideDescription && data.description && <div className={styles.optionDescription}>{data.description}</div>}
-          </div>
+      <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onChangeInternal}>
+        <Checkbox
+          value={isSelected}
+          className={customStyles.menuOptionCheckbox}
+          onChange={onChangeInternal}
+          disabled={disabled}
+        />
+        <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
+          <span>{data.displayName || data.name}</span>
+          {!hideDescription && data.description && <div className={styles.optionDescription}>{data.description}</div>}
         </div>
-      </Tooltip>
+        {data.description && (
+          <Tooltip content={data.description}>
+            <Icon name="question-circle" className={customStyles.menuOptionInfoSign} />
+          </Tooltip>
+        )}
+      </div>
     );
   }
 );
@@ -561,6 +565,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     menuOptionBody: css`
       font-weight: ${theme.typography.fontWeightRegular};
+      padding: ${theme.spacing(0, 1, 0, 0)};
     `,
     menuOptionDisabled: css`
       color: ${theme.colors.text.disabled};
@@ -574,6 +579,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       &:after {
         content: '>';
       }
+    `,
+    menuOptionInfoSign: css`
+      color: ${theme.colors.text.disabled};
     `,
     builtInRoleSelector: css`
       margin: ${theme.spacing(1, 1.25, 1, 1)};
