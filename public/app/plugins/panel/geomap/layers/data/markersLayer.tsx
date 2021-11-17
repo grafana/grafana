@@ -12,7 +12,7 @@ import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { getScaledDimension, getColorDimension, getTextDimension, TextDimensionMode } from 'app/features/dimensions';
+import { getScaledDimension, getColorDimension, getTextDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';

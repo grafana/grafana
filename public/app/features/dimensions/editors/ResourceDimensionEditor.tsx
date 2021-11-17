@@ -118,7 +118,7 @@ export const ResourceDimensionEditor: FC<
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Fixed && (
-        <InlineFieldRow onClick={openModal}>
+        <InlineFieldRow onClick={openModal} className={styles.pointer}>
           <InlineField label={null} grow>
             <Input
               value={niceName(value?.fixed) ?? ''}
@@ -158,5 +158,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: inline-block;
     fill: currentColor;
     max-width: 25px;
+  `,
+  pointer: css`
+    cursor: pointer;
+    div input[readonly] {
+      cursor: pointer;
+    }
   `,
 });

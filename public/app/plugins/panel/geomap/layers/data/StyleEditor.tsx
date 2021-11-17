@@ -15,7 +15,6 @@ import {
   ResourceFolderName,
   TextDimensionConfig,
   defaultTextConfig,
-  TextDimensionMode,
 } from 'app/features/dimensions/types';
 import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
 
