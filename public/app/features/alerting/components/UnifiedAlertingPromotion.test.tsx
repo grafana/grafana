@@ -12,7 +12,6 @@ describe('Unified Alerting promotion', () => {
 
   it('should show by default', () => {
     const promotion = render(<UnifiedAlertingPromotion />);
-    console.log(selectors.components.Alert.alertV2('info'));
     expect(promotion.queryByTestId(selectors.components.Alert.alertV2('info'))).toBeInTheDocument();
   });
 
