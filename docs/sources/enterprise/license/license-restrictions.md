@@ -15,7 +15,7 @@ You either have:
 - tiered licensing, or
 - combined licensing
 
-To understand which license type you have, refer to [Determine the number of active users for each licensed role](determine-the-number-of-active-users-for-each-licensed role).
+To understand which license type you have, refer to [Determine the number of active users for each licensed role](#determine-the-number-of-active-users-for-each-licensed-role).
 
 ## Tiered licensing
 
@@ -42,7 +42,7 @@ You can assign role permissions _globally_ and restrict access to a specific das
 
 **Dashboard permissions**: You can also assign permissions to dashboards or groups (folders) of dashboards. For example, you might want a viewer to also have editor permissions for a specific dashboard. While that user can see _all_ dashboards, they can only update one of them. For more information about dashboard permissions, refer to [Dashboard and Folder Permissions](https://grafana.com/docs/grafana/latest/permissions/dashboard-folder-permissions/).
 
-When you grant editor/admin dashboard permissions to a viewer, the editor/admin active-user count increases by one as shown on the **Utilization** panel of the **Stats & licensing** page, and the user’s licensed role changes to editor/admin.
+When you grant editor/admin dashboard permissions to a viewer, the editor/admin active-user count increases by one as shown on the **Utilization** panel of the **Statistics and licensing** page, and the user’s licensed role changes to editor/admin.
 
 > The editor/admin count increases because the user can edit and save a dashboard.
 
@@ -106,7 +106,7 @@ To change user permissions for dashboards:
 
 1. Use the dropdown list to select a role.
 
-The next time the user signs in, the **Utilization** panel on the **Stats & licensing** page displays updated data.
+The next time the user signs in, the **Utilization** panel on the **Statistics and licensing** page displays updated data.
 
 ## Combined licensing
 
@@ -134,7 +134,7 @@ To determine if you have tiered pricing or combined pricing, complete the follow
 
 1. Sign in to Grafana as a system administrator.
 
-1. Hover your mouse over **Server Admin** (the shield icon), and click **Stats & licensing**.
+1. Hover your mouse over **Server Admin** (the shield icon), and click **Statistics and licensing**.
 
 1. In the **Utilization** panel, review the license count data.
 
