@@ -1,5 +1,7 @@
 load(
     'scripts/drone/steps/lib.star',
+    'download_grabpl_step',
+    'initialize_step',
     'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
@@ -55,8 +57,6 @@ def pr_pipelines(edition):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
     ]
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
@@ -64,6 +64,10 @@ def pr_pipelines(edition):
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
+    ]
+    integration_test_steps = [
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
     ]
 
     if include_enterprise2:
@@ -93,7 +97,7 @@ def pr_pipelines(edition):
     ])
 
     if include_enterprise2:
-        test_steps.extend([
+        integration_test_steps.extend([
             redis_integration_tests_step(),
             memcached_integration_tests_step(),
         ])
@@ -106,12 +110,15 @@ def pr_pipelines(edition):
     trigger = {
         'event': ['pull_request',],
     }
+
     return [
         pipeline(
-            name='pr-test', edition=edition, trigger=trigger, services=services, steps=test_steps,
-            ver_mode=ver_mode,
+            name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
+                + test_steps,
         ), pipeline(
-            name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=build_steps,
-            ver_mode=ver_mode,
+            name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
+                + build_steps,
+        ), pipeline(
+            name='pr-integration-tests', edition=edition, trigger=trigger, services=services, steps=[download_grabpl_step()] + integration_test_steps,
         ),
     ]
