@@ -112,7 +112,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	datasourcesIdReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     3,
-			Name:        "fixed:datasources:id:reader",
+			Name:        "fixed:datasources.id:reader",
 			DisplayName: "Data source ID reader",
 			Description: "Read the ID of a data source based on its name.",
 			Permissions: []accesscontrol.Permission{
