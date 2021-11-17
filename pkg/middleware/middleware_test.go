@@ -534,7 +534,10 @@ func TestMiddlewareContext(t *testing.T) {
 
 			sc.handlerFunc = func(c *models.ReqContext) {
 				t.Log("Handler called")
-				defer c.Req.Body.Close()
+				defer func() {
+					err := c.Req.Body.Close()
+					require.NoError(t, err)
+				}()
 
 				bodyAfterHandler, e := io.ReadAll(c.Req.Body)
 				require.NoError(t, e)
