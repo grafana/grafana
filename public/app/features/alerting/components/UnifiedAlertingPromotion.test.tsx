@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { render } from '@testing-library/react';
+import { selectors } from '@grafana/e2e-selectors';
 import userEvent from '@testing-library/user-event';
 import { UnifiedAlertingPromotion, LOCAL_STORAGE_KEY } from './UnifiedAlertingPromotion';
 
@@ -11,7 +12,8 @@ describe('Unified Alerting promotion', () => {
 
   it('should show by default', () => {
     const promotion = render(<UnifiedAlertingPromotion />);
-    expect(promotion.queryByLabelText('Alert info')).toBeInTheDocument();
+    console.log(selectors.components.Alert.alertV2('info'));
+    expect(promotion.queryByTestId(selectors.components.Alert.alertV2('info'))).toBeInTheDocument();
   });
 
   it('should be hidden if dismissed', () => {
@@ -21,7 +23,7 @@ describe('Unified Alerting promotion', () => {
     const dismissButton = promotion.getByRole('button');
     userEvent.click(dismissButton);
 
-    expect(promotion.queryByLabelText('Alert info')).not.toBeInTheDocument();
+    expect(promotion.queryByTestId(selectors.components.Alert.alertV2('info'))).not.toBeInTheDocument();
     expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toBe('false');
   });
 
@@ -29,6 +31,6 @@ describe('Unified Alerting promotion', () => {
     window.localStorage.setItem(LOCAL_STORAGE_KEY, 'false');
     const promotion = render(<UnifiedAlertingPromotion />);
 
-    expect(promotion.queryByLabelText('Alert info')).not.toBeInTheDocument();
+    expect(promotion.queryByTestId(selectors.components.Alert.alertV2('info'))).not.toBeInTheDocument();
   });
 });
