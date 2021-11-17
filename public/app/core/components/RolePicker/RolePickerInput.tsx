@@ -115,7 +115,7 @@ const getRolePickerInputStyles = (
         min-height: 32px;
         height: auto;
         flex-direction: row;
-        padding-right: 0;
+        padding-right: 24px;
         max-width: 100%;
         align-items: center;
         display: flex;
