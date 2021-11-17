@@ -27,7 +27,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
-import { addQuery, updateQueries } from 'app/core/utils/query';
+import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
@@ -37,6 +37,7 @@ import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/dataso
 import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
 import { GroupActionComponents } from './QueryActionComponent';
+import { updateQueries } from '../state/updateQueries';
 
 interface Props {
   queryRunner: PanelQueryRunner;

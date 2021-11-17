@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { CoreApp, SelectableValue } from '@grafana/data';
 import { PromQuery } from '../types';
 
 import PromQueryField from './PromQueryField';
@@ -44,7 +44,8 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
       expr: '',
       legendFormat: '',
       interval: '',
-      exemplar: true,
+      // Set exemplar to false for alerting queries
+      exemplar: props.app === CoreApp.UnifiedAlerting ? false : true,
     };
     const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
@@ -111,6 +112,8 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
   render() {
     const { datasource, query, range, data } = this.props;
     const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
+    //We want to hide exemplar field for unified alerting as exemplars in alerting don't make sense and are source of confusion
+    const showExemplarField = this.props.app !== CoreApp.UnifiedAlerting;
 
     return (
       <PromQueryField
@@ -197,7 +200,14 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 />
               </InlineFormLabel>
             </div>
-            <PromExemplarField onChange={this.onExemplarChange} datasource={datasource} query={this.query} />
+            {showExemplarField && (
+              <PromExemplarField
+                onChange={this.onExemplarChange}
+                datasource={datasource}
+                query={this.query}
+                data-testid={testIds.exemplar}
+              />
+            )}
           </div>
         }
       />
@@ -207,4 +217,5 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
 export const testIds = {
   editor: 'prom-editor',
+  exemplar: 'exemplar-editor',
 };

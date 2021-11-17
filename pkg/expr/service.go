@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,15 +36,24 @@ func IsDataSource(uid string) bool {
 
 // Service is service representation for expression handling.
 type Service struct {
-	Cfg         *setting.Cfg
-	DataService plugins.DataRequestHandler
+	cfg            *setting.Cfg
+	dataService    backend.QueryDataHandler
+	secretsService secrets.Service
+}
+
+func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, secretsService secrets.Service) *Service {
+	return &Service{
+		cfg:            cfg,
+		dataService:    pluginClient,
+		secretsService: secretsService,
+	}
 }
 
 func (s *Service) isDisabled() bool {
-	if s.Cfg == nil {
+	if s.cfg == nil {
 		return true
 	}
-	return !s.Cfg.ExpressionsEnabled
+	return !s.cfg.ExpressionsEnabled
 }
 
 // BuildPipeline builds a pipeline from a request.

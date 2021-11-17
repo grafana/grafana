@@ -6,7 +6,6 @@ import {
   getDisplayProcessor,
   GrafanaTheme2,
   isBooleanUnit,
-  PanelData,
 } from '@grafana/data';
 import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/schema';
 
@@ -16,9 +15,7 @@ export interface GraphableFieldsResult {
 }
 
 // This will return a set of frames with only graphable values included
-export function prepareGraphableFields(data: PanelData, theme: GrafanaTheme2): GraphableFieldsResult {
-  const { series } = data;
-
+export function prepareGraphableFields(series: DataFrame[], theme: GrafanaTheme2): GraphableFieldsResult {
   if (!series?.length) {
     return { message: 'No data in response' };
   }

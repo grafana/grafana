@@ -238,15 +238,14 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
-			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))
 			orgsRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsRead, ScopeOrgID)), routing.Wrap(GetOrgByID))
 			orgsRoute.Put("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsWrite, ScopeOrgID)), bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrg))
 			orgsRoute.Put("/address", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsWrite, ScopeOrgID)), bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddress))
 			orgsRoute.Delete("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsDelete, ScopeOrgID)), routing.Wrap(DeleteOrgByID))
-			orgsRoute.Get("/users", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionOrgUsersRead, ac.ScopeUsersAll)), routing.Wrap(hs.GetOrgUsers))
-			orgsRoute.Post("/users", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionOrgUsersAdd, ac.ScopeUsersAll)), bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUser))
-			orgsRoute.Patch("/users/:userId", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionOrgUsersRoleUpdate, userIDScope)), bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUser))
-			orgsRoute.Delete("/users/:userId", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionOrgUsersRemove, userIDScope)), routing.Wrap(RemoveOrgUser))
+			orgsRoute.Get("/users", reqGrafanaAdmin, routing.Wrap(hs.GetOrgUsers))
+			orgsRoute.Post("/users", reqGrafanaAdmin, bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUser))
+			orgsRoute.Patch("/users/:userId", reqGrafanaAdmin, bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUser))
+			orgsRoute.Delete("/users/:userId", reqGrafanaAdmin, routing.Wrap(RemoveOrgUser))
 			orgsRoute.Get("/quotas", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsQuotasRead, ScopeOrgID)), routing.Wrap(hs.GetOrgQuotas))
 			orgsRoute.Put("/quotas/:target", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsQuotasWrite, ScopeOrgID)), bind(models.UpdateOrgQuotaCmd{}), routing.Wrap(hs.UpdateOrgQuota))
 		})
@@ -258,6 +257,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
 			keysRoute.Get("/", routing.Wrap(GetAPIKeys))
 			keysRoute.Post("/", quota("api_key"), bind(models.AddApiKeyCommand{}), routing.Wrap(hs.AddAPIKey))
+			keysRoute.Post("/additional", quota("api_key"), bind(models.AddApiKeyCommand{}), routing.Wrap(hs.AdditionalAPIKey))
 			keysRoute.Delete("/:id", routing.Wrap(DeleteAPIKey))
 		}, reqOrgAdmin)
 
@@ -434,17 +434,17 @@ func (hs *HTTPServer) registerRoutes() {
 
 			if hs.Cfg.FeatureToggles["live-pipeline"] {
 				// POST Live data to be processed according to channel rules.
-				liveRoute.Post("/push/:streamId/:path", hs.LivePushGateway.HandlePath)
+				liveRoute.Post("/pipeline/push/*", hs.LivePushGateway.HandlePipelinePush)
 				liveRoute.Post("/pipeline-convert-test", routing.Wrap(hs.Live.HandlePipelineConvertTestHTTP), reqOrgAdmin)
 				liveRoute.Get("/pipeline-entities", routing.Wrap(hs.Live.HandlePipelineEntitiesListHTTP), reqOrgAdmin)
 				liveRoute.Get("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesListHTTP), reqOrgAdmin)
 				liveRoute.Post("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPostHTTP), reqOrgAdmin)
 				liveRoute.Put("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPutHTTP), reqOrgAdmin)
 				liveRoute.Delete("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesDeleteHTTP), reqOrgAdmin)
-				liveRoute.Get("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsListHTTP), reqOrgAdmin)
-				liveRoute.Post("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsPostHTTP), reqOrgAdmin)
-				liveRoute.Put("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsPutHTTP), reqOrgAdmin)
-				liveRoute.Delete("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsDeleteHTTP), reqOrgAdmin)
+				liveRoute.Get("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsListHTTP), reqOrgAdmin)
+				liveRoute.Post("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsPostHTTP), reqOrgAdmin)
+				liveRoute.Put("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsPutHTTP), reqOrgAdmin)
+				liveRoute.Delete("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsDeleteHTTP), reqOrgAdmin)
 			}
 		})
 
@@ -491,7 +491,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)
 
 	// grafana.net proxy
-	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
+	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
 	// Gravatar service.
 	avatarCacheServer := avatar.NewCacheServer(hs.Cfg)

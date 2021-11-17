@@ -1,11 +1,5 @@
-import { createTheme, DataFrame, FieldType, MutableDataFrame, PanelData, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, MutableDataFrame, toDataFrame } from '@grafana/data';
 import { prepareGraphableFields } from './utils';
-
-function toPanelData(frames: DataFrame[]): PanelData {
-  return {
-    series: frames,
-  } as PanelData;
-}
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -17,7 +11,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const info = prepareGraphableFields(toPanelData(frames), createTheme());
+    const info = prepareGraphableFields(frames, createTheme());
     expect(info.message).toEqual('Data does not have a time field');
   });
 
@@ -30,7 +24,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const info = prepareGraphableFields(toPanelData(frames), createTheme());
+    const info = prepareGraphableFields(frames, createTheme());
     expect(info.message).toEqual('No graphable fields');
   });
 
@@ -45,7 +39,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const info = prepareGraphableFields(toPanelData(frames), createTheme());
+    const info = prepareGraphableFields(frames, createTheme());
     expect(info.message).toBeUndefined();
 
     const out = info.frames![0];
@@ -72,7 +66,7 @@ describe('prepare timeseries graph', () => {
         { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity] },
       ],
     });
-    const result = prepareGraphableFields(toPanelData([df]), createTheme());
+    const result = prepareGraphableFields([df], createTheme());
 
     const field = result.frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values.toArray()).toMatchInlineSnapshot(`

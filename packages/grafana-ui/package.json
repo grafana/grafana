@@ -48,6 +48,7 @@
     "clipboard": "2.0.4",
     "core-js": "3.10.0",
     "d3": "5.15.0",
+    "date-fns": "2.25.0",
     "emotion": "11.0.0",
     "hoist-non-react-statics": "3.3.2",
     "immutable": "3.8.2",
@@ -86,7 +87,7 @@
     "slate-plain-serializer": "0.7.10",
     "tinycolor2": "1.4.1",
     "tslib": "2.3.1",
-    "uplot": "1.6.16",
+    "uplot": "1.6.17",
     "uuid": "8.3.0"
   },
   "devDependencies": {
@@ -110,6 +111,7 @@
     "@storybook/manager-webpack5": "6.3.7",
     "@storybook/react": "6.3.7",
     "@storybook/theming": "6.3.7",
+    "@swc/helpers": "0.2.13",
     "@testing-library/dom": "8.10.1",
     "@testing-library/jest-dom": "5.11.9",
     "@testing-library/react": "11.1.2",
