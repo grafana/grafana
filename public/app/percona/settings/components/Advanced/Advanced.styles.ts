@@ -96,7 +96,7 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
         padding: 0 ${spacing.sm};
       }
     `,
-    technicalPreviewDoc: css`
+    infoBox: css`
       display: flex;
       align-items: center;
       border: ${border.width.sm} solid ${colors.pageHeaderBorder};
@@ -113,7 +113,7 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
         color: ${colors.linkExternal};
       }
     `,
-    technicalPreviewIcon: css`
+    infoBoxIcon: css`
       margin: ${spacing.sm};
       fill: ${colors.linkExternal};
     `,
