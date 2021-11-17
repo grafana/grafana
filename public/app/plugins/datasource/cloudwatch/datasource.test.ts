@@ -35,7 +35,7 @@ describe('datasource', () => {
           .query({
             targets: [
               {
-                queryMode: 'Logs' as 'Logs',
+                queryMode: 'Logs',
                 region: '$region',
                 expression: 'fields $fields',
                 logGroupNames: ['/some/$group'],
