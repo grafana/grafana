@@ -47,6 +47,7 @@ describe('Worldmap Migrations', () => {
         },
         "options": Object {
           "basemap": Object {
+            "name": "Basemap",
             "type": "default",
           },
           "controls": Object {
@@ -158,6 +159,11 @@ describe('geomap migrations', () => {
                   "symbol": Object {
                     "fixed": "img/icons/marker/triangle.svg",
                     "mode": "fixed",
+                  },
+                  "textConfig": Object {
+                    "fontSize": 12,
+                    "textAlign": "center",
+                    "textBaseline": "middle",
                   },
                 },
               },

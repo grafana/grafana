@@ -156,9 +156,18 @@ func (rs *RenderingService) Version() string {
 	return rs.version
 }
 
-func (rs *RenderingService) RenderErrorImage(_ error) (*RenderResult, error) {
-	imgUrl := "public/img/rendering_error.png"
-	imgPath := filepath.Join(setting.HomePath, imgUrl)
+func (rs *RenderingService) RenderErrorImage(theme Theme, err error) (*RenderResult, error) {
+	if theme == "" {
+		theme = ThemeDark
+	}
+	imgUrl := "public/img/rendering_%s_%s.png"
+	if errors.Is(err, ErrTimeout) {
+		imgUrl = fmt.Sprintf(imgUrl, "timeout", theme)
+	} else {
+		imgUrl = fmt.Sprintf(imgUrl, "error", theme)
+	}
+
+	imgPath := filepath.Join(rs.Cfg.HomePath, imgUrl)
 	if _, err := os.Stat(imgPath); errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	}
@@ -188,8 +197,13 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+		theme := ThemeDark
+		if opts.Theme != "" {
+			theme = opts.Theme
+		}
+		filePath := fmt.Sprintf("public/img/rendering_limit_%s.png", theme)
 		return &RenderResult{
-			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
+			FilePath: filepath.Join(rs.Cfg.HomePath, filePath),
 		}, nil
 	}
 

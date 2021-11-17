@@ -306,13 +306,15 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderExtraActions() {
-    return GroupActionComponents.getAllExtraRenderAction().map((c, index) => {
-      return React.createElement(c, {
-        onAddQuery: this.onAddQuery,
-        onChangeDataSource: this.onChangeDataSource,
-        key: index,
-      });
-    });
+    return GroupActionComponents.getAllExtraRenderAction()
+      .map((action, index) =>
+        action({
+          onAddQuery: this.onAddQuery,
+          onChangeDataSource: this.onChangeDataSource,
+          key: index,
+        })
+      )
+      .filter(Boolean);
   }
 
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {

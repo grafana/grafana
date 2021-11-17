@@ -1,8 +1,8 @@
 {
   "type": "panel",
-  "name": "Market trend",
-  "id": "market-trend",
-  "state": "alpha",
+  "name": "Candlestick",
+  "id": "candlestick",
+  "state": "beta",
 
   "info": {
     "author": {

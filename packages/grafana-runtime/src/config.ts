@@ -100,6 +100,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   unifiedAlertingEnabled = false;
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
+  recordedQueries = {
+    enabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
