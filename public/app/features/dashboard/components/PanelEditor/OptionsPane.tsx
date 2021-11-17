@@ -11,38 +11,44 @@ import { VisualizationSelectPane } from './VisualizationSelectPane';
 import { usePanelLatestData } from './usePanelLatestData';
 import { OptionPaneRenderProps } from './types';
 
-export const OptionsPane = React.memo<OptionPaneRenderProps>(
-  ({ plugin, panel, onFieldConfigsChange, onPanelOptionsChanged, onPanelConfigChange, dashboard, instanceState }) => {
-    const styles = useStyles(getStyles);
-    const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
-    const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
+export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
+  plugin,
+  panel,
+  onFieldConfigsChange,
+  onPanelOptionsChanged,
+  onPanelConfigChange,
+  dashboard,
+  instanceState,
+}) => {
+  const styles = useStyles(getStyles);
+  const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
+  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
 
-    return (
-      <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
-        {!isVizPickerOpen && (
-          <>
-            <div className={styles.vizButtonWrapper}>
-              <VisualizationButton panel={panel} />
-            </div>
-            <div className={styles.optionsWrapper}>
-              <OptionsPaneOptions
-                panel={panel}
-                dashboard={dashboard}
-                plugin={plugin}
-                instanceState={instanceState}
-                data={data}
-                onFieldConfigsChange={onFieldConfigsChange}
-                onPanelOptionsChanged={onPanelOptionsChanged}
-                onPanelConfigChange={onPanelConfigChange}
-              />
-            </div>
-          </>
-        )}
-        {isVizPickerOpen && <VisualizationSelectPane panel={panel} data={data} />}
-      </div>
-    );
-  }
-);
+  return (
+    <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
+      {!isVizPickerOpen && (
+        <>
+          <div className={styles.vizButtonWrapper}>
+            <VisualizationButton panel={panel} />
+          </div>
+          <div className={styles.optionsWrapper}>
+            <OptionsPaneOptions
+              panel={panel}
+              dashboard={dashboard}
+              plugin={plugin}
+              instanceState={instanceState}
+              data={data}
+              onFieldConfigsChange={onFieldConfigsChange}
+              onPanelOptionsChanged={onPanelOptionsChanged}
+              onPanelConfigChange={onPanelConfigChange}
+            />
+          </div>
+        </>
+      )}
+      {isVizPickerOpen && <VisualizationSelectPane panel={panel} data={data} />}
+    </div>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
