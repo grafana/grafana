@@ -142,7 +142,7 @@ func TestEvent_NoRegisteredListener(t *testing.T) {
 	bus := New()
 
 	err := bus.Publish(&testQuery{})
-	require.Error(t, err, "listener not found")
+	require.NoError(t, err, "unable to publish event")
 }
 
 func TestEventCtx(t *testing.T) {
@@ -165,5 +165,5 @@ func TestEventCtx_NoRegisteredListener(t *testing.T) {
 	bus := New()
 
 	err := bus.PublishCtx(context.Background(), &testQuery{})
-	require.Error(t, err, "listener not found")
+	require.NoError(t, err, "unable to publish event")
 }

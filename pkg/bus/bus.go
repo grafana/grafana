@@ -169,10 +169,12 @@ func (b *InProcBus) PublishCtx(ctx context.Context, msg Msg) error {
 	var listeners = b.listenersWithCtx[msgName]
 	if listeners == nil {
 		withCtx = false
-		listeners = b.listeners[msgName]
-		if listeners == nil {
-			return ErrListenerNotFound
-		}
+	}
+	if b.listeners[msgName] != nil {
+		listeners = append(listeners, b.listeners[msgName])
+	}
+	if listeners == nil {
+		return nil
 	}
 
 	span, _ := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
@@ -212,7 +214,7 @@ func (b *InProcBus) Publish(msg Msg) error {
 		withCtx = false
 		listeners = b.listeners[msgName]
 		if listeners == nil {
-			return ErrListenerNotFound
+			return nil
 		}
 	}
 
@@ -298,7 +300,7 @@ func AddEventListener(handler HandlerFunc) {
 // AddEventListenerCtx attaches a handler function to the event listener.
 // Package level function.
 func AddEventListenerCtx(handler HandlerFunc) {
-	globalBus.AddEventListener(handler)
+	globalBus.AddEventListenerCtx(handler)
 }
 
 func Dispatch(msg Msg) error {
