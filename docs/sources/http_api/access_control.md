@@ -511,7 +511,7 @@ INSERT EXAMPLE RESPONSE HERE
 
 `POST /api/access-control/[SOMETHING]`
 
-Replace a user's [fine-grained access control roles]({{< relref "../enterprise/access-control/fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}) entirely with a new set of roles.
+Replace a user's [fine-grained access control roles]({{< relref "../enterprise/access-control/roles.md" >}}) entirely with a new set of roles.
 
 #### Required permissions
 

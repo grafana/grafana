@@ -132,6 +132,23 @@ Example response:
 }
 ```
 
+## Grant new roles directly to a user
+
+There are two ways to grant roles directly to users: in the UI using the role picker, and using the API.
+
+**Note**: In order to assign roles using the role picker, you must have a user account with one of the following:
+- The Admin built-in role
+- The Server Admin role
+<!-- - The fixed role `fixed:permissions:writer` -->
+<!-- - A custom role with `[INSERT PERMISSIONS HERE]` permissions -->
+In order to assign roles via the API, you must have a user account with one of the permissions listed above, or an API token with the Admin role.
+
+### Grant a role to a user with the role picker
+
+### Grant a role to a user via API
+
+To grant a role to a user via API, refer to the [fine-grained access control HTTP API docs]({{< relref "../../http_api/access_control.md#manage-roles-granted-to-users" >}})
+
 ## Create your first custom role
 
 You can create your custom role by either using an [HTTP API]({{< relref "../../http_api/access_control.md#create-a-new-custom-role" >}}) or by using [Grafana provisioning]({{< relref "./provisioning.md" >}}).
