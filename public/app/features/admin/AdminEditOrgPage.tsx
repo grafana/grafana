@@ -60,9 +60,9 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
 
   const renderMissingUserListRightsMessage = () => {
     return (
-      <Alert severity="info" title="Missing rights">
-        You are not allowed to see users in this organization. Please contact your server admin to update this
-        organization.
+      <Alert severity="info" title="Missing permissions">
+        You do not have permission to see users in this organization. To update this
+        organization, contact your server administrator.
       </Alert>
     );
   };
