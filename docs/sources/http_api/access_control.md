@@ -407,6 +407,138 @@ Content-Type: application/json; charset=UTF-8
 | 403  | Access denied                                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details.               |
 
+## Manage roles granted to users
+
+Manage [fine-grained access control roles]({{< relref "../enterprise/access-control/fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}) granted to specific users.
+
+### View the roles that have been assigned to a user
+
+`GET /api/access-control/[SOMETHING]`
+
+Lists the [fine-grained access control roles]({{< relref "../enterprise/access-control/fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}) that have been directly assigned to a given user. Note: this list does not include builtin roles (Viewer, Editor, or Admin), and it does not include roles that have been inherited from a team.
+
+#### Required permissions
+
+| Action             | Scope    |
+| ------------------ | -------- |
+|  |  |
+
+#### Example request
+
+```http
+INSERT EXAMPLE REQUEST HERE
+```
+
+#### Example response
+
+```http
+INSERT EXAMPLE RESPONSE HERE
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | [INSERT RESPONSE HERE]                                               |
+| 403  | Access denied                                                        |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+### Grant a role to a user
+
+`POST /api/access-control/[SOMETHING]`
+
+Grant a [fine-grained access control role]({{< relref "../enterprise/access-control/fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}) to a specific user
+
+#### Required permissions
+
+| Action             | Scope    |
+| ------------------ | -------- |
+|  |  |
+
+#### Example request
+
+```http
+INSERT EXAMPLE REQUEST HERE
+```
+
+#### Example response
+
+```http
+INSERT EXAMPLE RESPONSE HERE
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | [ADD RESPONSE HERE]                                                  |
+| 403  | Access denied                                                        |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+## Remove a role from a user
+
+`POST /api/access-control/[SOMETHING]`
+
+Un-grant a [fine-grained access control roles]({{< relref "../enterprise/access-control/fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}) that was previously granted to a user.
+
+#### Required permissions
+
+| Action             | Scope    |
+| ------------------ | -------- |
+|  |  |
+
+#### Example request
+
+```http
+INSERT EXAMPLE REQUEST HERE
+```
+
+#### Example response
+
+```http
+INSERT EXAMPLE RESPONSE HERE
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | [ADD RESPONSE HERE]                                                  |
+| 403  | Access denied                                                        |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+### Bulk update a user's roles
+
+`POST /api/access-control/[SOMETHING]`
+
+Replace a user's [fine-grained access control roles]({{< relref "../enterprise/access-control/fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}) entirely with a new set of roles.
+
+#### Required permissions
+
+| Action             | Scope    |
+| ------------------ | -------- |
+|  |  |
+
+#### Example request
+
+```http
+INSERT EXAMPLE REQUEST HERE
+```
+
+#### Example response
+
+```http
+INSERT EXAMPLE RESPONSE HERE
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | [ADD RESPONSE HERE]                                                  |
+| 403  | Access denied                                                        |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
 ## Create and remove built-in role assignments
 
 API set allows to create or remove [built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) and list current assignments.
