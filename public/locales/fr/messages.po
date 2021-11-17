@@ -12,3 +12,7 @@ msgstr ""
 "Last-Translator: \n"
 "Language-Team: \n"
 "Plural-Forms: \n"
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "edit-user-profile.title"
+msgstr ""
