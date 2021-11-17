@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Candlestick",
   "id": "candlestick",
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
     "author": {
