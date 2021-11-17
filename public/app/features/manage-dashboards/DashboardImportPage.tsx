@@ -1,7 +1,7 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from '@emotion/css';
-import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Field, FileUpload, Form, Input, stylesFactory, TextArea, Themeable2, withTheme2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
@@ -22,7 +22,7 @@ type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageR
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'import', undefined, true),
-  isLoaded: state.importDashboard.isLoaded,
+  loadingState: state.importDashboard.state,
 });
 
 const mapDispatchToProps = {
@@ -36,7 +36,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class UnthemedDashboardImport extends PureComponent<Props> {
-  constructor (props: Props) {
+  constructor(props: Props) {
     super(props);
     const { gcomDashboardId } = this.props.queryParams;
     if (gcomDashboardId) {
@@ -156,11 +156,18 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   }
 
   render() {
-    const { isLoaded, navModel } = this.props;
+    const { loadingState, navModel } = this.props;
     const { gcomDashboardId } = this.props.queryParams;
     return (
       <Page navModel={navModel}>
-        <Page.Contents>{isLoaded ? <ImportDashboardOverview /> : gcomDashboardId ? null : this.renderImportForm()}</Page.Contents>
+        <Page.Contents>
+          {loadingState ==}
+          {loadingState === LoadingState.Done ? (
+            <ImportDashboardOverview />
+          ) : gcomDashboardId ? null : (
+            this.renderImportForm()
+          )}
+        </Page.Contents>
       </Page>
     );
   }
