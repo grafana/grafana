@@ -227,8 +227,8 @@ func TestInitializer_envVars(t *testing.T) {
 		}
 
 		licensing := &testLicensingService{
-			edition:    "test",
-			hasLicense: true,
+			edition:  "test",
+			tokenRaw: "token",
 		}
 
 		i := &Initializer{
@@ -250,7 +250,7 @@ func TestInitializer_envVars(t *testing.T) {
 		assert.Equal(t, "GF_VERSION=", envVars[1])
 		assert.Equal(t, "GF_EDITION=test", envVars[2])
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=", envVars[4])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
 	})
 }
 
@@ -314,17 +314,8 @@ func Test_pluginSettings_ToEnv(t *testing.T) {
 }
 
 type testLicensingService struct {
-	edition    string
-	hasLicense bool
-	tokenRaw   string
-}
-
-func (t *testLicensingService) HasLicense() bool {
-	return t.hasLicense
-}
-
-func (t *testLicensingService) Expiry() int64 {
-	return 0
+	edition  string
+	tokenRaw string
 }
 
 func (t *testLicensingService) Edition() string {
@@ -341,10 +332,6 @@ func (t *testLicensingService) ContentDeliveryPrefix() string {
 
 func (t *testLicensingService) LicenseURL(showAdminLicensingPage bool) string {
 	return ""
-}
-
-func (t *testLicensingService) HasValidLicense() bool {
-	return false
 }
 
 func (t *testLicensingService) Environment() map[string]string {

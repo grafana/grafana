@@ -252,9 +252,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"env":           setting.Env,
 		},
 		"licenseInfo": map[string]interface{}{
-			"hasLicense":      hs.License.HasLicense(),
-			"hasValidLicense": hs.License.HasValidLicense(),
-			"expiry":          hs.License.Expiry(),
 			"stateInfo":       hs.License.StateInfo(),
 			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, accesscontrol.LicensingPageReaderAccess)),
 			"edition":         hs.License.Edition(),

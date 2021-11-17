@@ -196,7 +196,7 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
 	}
 
-	if i.license != nil && i.license.HasLicense() {
+	if i.license != nil {
 		hostEnv = append(
 			hostEnv,
 			fmt.Sprintf("GF_EDITION=%s", i.license.Edition()),
