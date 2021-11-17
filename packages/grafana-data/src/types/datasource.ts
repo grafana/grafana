@@ -591,6 +591,9 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
    */
   basicAuth?: string;
   withCredentials?: boolean;
+
+  /** When the name+uid are based on template variables, maintain access to the real values */
+  rawRef?: DataSourceRef;
 }
 
 /**

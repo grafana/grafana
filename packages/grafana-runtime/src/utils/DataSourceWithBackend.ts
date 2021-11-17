@@ -124,7 +124,7 @@ class DataSourceWithBackend<
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
-        datasource = getDataSourceRef(ds);
+        datasource = ds.rawRef ?? getDataSourceRef(ds);
       }
 
       return {
