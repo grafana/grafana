@@ -5,6 +5,7 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 import coreModule from './core_module';
 import { AnnotationsSrv } from './services/annotations_srv';
+import { UtilSrv } from './services/UtilSrv';
 
 export function registerComponents() {
   coreModule.factory('backendSrv', () => getBackendSrv());
@@ -14,4 +15,5 @@ export function registerComponents() {
   coreModule.factory('linkSrv', () => getLinkSrv());
   coreModule.factory('validationSrv', () => validationSrv);
   coreModule.service('annotationsSrv', AnnotationsSrv);
+  coreModule.service('utilSrv', UtilSrv);
 }
