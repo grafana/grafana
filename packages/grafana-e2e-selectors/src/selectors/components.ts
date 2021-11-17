@@ -164,7 +164,11 @@ export const Components = {
     content: 'Alert editor tab content',
   },
   Alert: {
+    /**
+     * @deprecated use alertV2 from Grafana 8.3 instead
+     */
     alert: (severity: string) => `Alert ${severity}`,
+    alertV2: (severity: string) => `data-testid Alert ${severity}`,
   },
   TransformTab: {
     content: 'Transform editor tab content',
