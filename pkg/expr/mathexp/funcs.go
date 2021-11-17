@@ -34,7 +34,7 @@ var builtins = map[string]parse.Func{
 		VariantReturn: true,
 		F:             round,
 	},
-	"ciel": {
+	"ceil": {
 		Args:          []parse.ReturnType{parse.TypeVariantSet},
 		VariantReturn: true,
 		F:             ceil,
