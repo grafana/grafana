@@ -25,14 +25,14 @@ const setup = (propOverrides?: Partial<Props>) => {
 describe('SearchResults', () => {
   it('should render result items', () => {
     setup();
-    expect(screen.getAllByLabelText('Search section')).toHaveLength(2);
+    expect(screen.getAllByTestId('Search section')).toHaveLength(2);
   });
 
   it('should render section items for expanded section', () => {
     setup();
     expect(screen.getAllByLabelText(/collapse folder/i)).toHaveLength(1);
-    expect(screen.getAllByLabelText('Search items')).toHaveLength(1);
-    expect(screen.getAllByLabelText(/dashboard search item/i)).toHaveLength(2);
+    expect(screen.getAllByTestId('Search items')).toHaveLength(1);
+    expect(screen.getAllByTestId(/dashboard search item/i)).toHaveLength(2);
   });
 
   it('should not render checkboxes for non-editable results', () => {

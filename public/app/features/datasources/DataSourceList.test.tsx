@@ -23,7 +23,6 @@ describe('DataSourcesList', () => {
   it('should render all elements in the list item', () => {
     setup();
     expect(screen.getByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'dataSource-0 dataSource-0' })).toBeInTheDocument();
-    expect(screen.getByAltText('dataSource-0')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
   });
 });

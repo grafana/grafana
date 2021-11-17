@@ -32,12 +32,12 @@ export const SearchResults: FC<Props> = memo(
         <div className={styles.wrapper}>
           {results.map((section) => {
             return (
-              <div aria-label={sectionLabel} className={styles.section} key={section.id || section.title}>
+              <div data-testid={sectionLabel} className={styles.section} key={section.id || section.title}>
                 {section.title && (
                   <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
                 )}
                 {section.expanded && (
-                  <div aria-label={itemsLabel} className={styles.sectionItems}>
+                  <div data-testid={itemsLabel} className={styles.sectionItems}>
                     {section.items.map((item) => (
                       <SearchItem key={item.id} {...itemProps} item={item} />
                     ))}

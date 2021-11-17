@@ -25,7 +25,7 @@ export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, class
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       <HorizontalGroup align="center" spacing="xs">
         {icon && <Icon name={icon} size="sm" />}
-        <span>{text}</span>
+        <span aria-label={tooltip}>{text}</span>
       </HorizontalGroup>
     </div>
   );

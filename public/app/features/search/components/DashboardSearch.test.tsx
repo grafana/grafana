@@ -93,9 +93,9 @@ describe('DashboardSearch', () => {
     locationService.push('/');
     setup();
 
-    const section = await screen.findAllByLabelText('Search section');
+    const section = await screen.findAllByTestId('Search section');
     expect(section).toHaveLength(2);
-    expect(screen.getAllByLabelText('Search items')).toHaveLength(1);
+    expect(screen.getAllByTestId('Search items')).toHaveLength(1);
   });
 
   it('should call search with selected tags', async () => {

@@ -7,7 +7,11 @@ import { IconButton } from '../IconButton/IconButton';
 describe('Card', () => {
   it('should execute callback when clicked', () => {
     const callback = jest.fn();
-    render(<Card heading="Test Heading" onClick={callback} />);
+    render(
+      <Card onClick={callback}>
+        <Card.Heading>Test Heading</Card.Heading>
+      </Card>
+    );
     fireEvent.click(screen.getByText('Test Heading'));
     expect(callback).toBeCalledTimes(1);
   });
@@ -15,7 +19,8 @@ describe('Card', () => {
   describe('Card Actions', () => {
     it('Children should be disabled or enabled according to Card disabled prop', () => {
       const { rerender } = render(
-        <Card heading="Test Heading">
+        <Card>
+          <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button>Click Me</Button>
           </Card.Actions>
@@ -29,7 +34,8 @@ describe('Card', () => {
       expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
 
       rerender(
-        <Card heading="Test Heading" disabled>
+        <Card disabled>
+          <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button>Click Me</Button>
           </Card.Actions>
@@ -45,7 +51,8 @@ describe('Card', () => {
 
     it('Children should be independently enabled or disabled if explicitly set', () => {
       const { rerender } = render(
-        <Card heading="Test Heading">
+        <Card>
+          <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button disabled>Click Me</Button>
           </Card.Actions>
@@ -59,7 +66,8 @@ describe('Card', () => {
       expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
 
       rerender(
-        <Card heading="Test Heading" disabled>
+        <Card disabled>
+          <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button disabled={false}>Click Me</Button>
           </Card.Actions>
@@ -76,7 +84,8 @@ describe('Card', () => {
     it('Children should be conditional', () => {
       const shouldNotRender = false;
       render(
-        <Card heading="Test Heading">
+        <Card>
+          <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button>Click Me</Button>
             {shouldNotRender && <Button>Delete</Button>}

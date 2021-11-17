@@ -49,12 +49,12 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
   const folderTitle = item.folderTitle || 'General';
   return (
     <Card
-      aria-label={selectors.dashboards(item.title)}
-      heading={item.title}
+      data-testid={selectors.dashboards(item.title)}
       href={item.url}
       style={{ minHeight: SEARCH_ITEM_HEIGHT }}
       className={styles.container}
     >
+      <Card.Heading>{item.title}</Card.Heading>
       <Card.Figure align={'center'} className={styles.checkbox}>
         <SearchCheckbox
           aria-label="Select dashboard"
@@ -64,8 +64,8 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         />
       </Card.Figure>
       <Card.Meta separator={''}>
-        <span className={styles.metaContainer}>
-          <Icon name={'folder'} />
+        <span className={styles.metaContainer} aria-label={`Folder "${folderTitle}"`}>
+          <Icon name={'folder'} aria-hidden />
           {folderTitle}
         </span>
         {item.sortMetaName && (
@@ -76,7 +76,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         )}
       </Card.Meta>
       <Card.Tags>
-        <TagList tags={item.tags} onClick={tagSelected} />
+        <TagList tags={item.tags} onClick={tagSelected} aria-label={(tag) => `Filter by tag "${tag}"`} />
       </Card.Tags>
     </Card>
   );
@@ -86,10 +86,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       margin-bottom: ${theme.spacing(0.75)};
-
-      a {
-        padding: ${theme.spacing(1)} ${theme.spacing(2)};
-      }
+      padding: ${theme.spacing(1)} ${theme.spacing(2)};
     `,
     metaContainer: css`
       display: flex;

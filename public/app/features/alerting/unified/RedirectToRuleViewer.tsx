@@ -70,11 +70,8 @@ export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Elem
       <div className={styles.rules}>
         {rules.map((rule, index) => {
           return (
-            <Card
-              key={`${rule.name}-${index}`}
-              heading={rule.name}
-              href={createViewLink(rulesSource, rule, '/alerting/list')}
-            >
+            <Card key={`${rule.name}-${index}`} href={createViewLink(rulesSource, rule, '/alerting/list')}>
+              <Card.Heading>{rule.name}</Card.Heading>
               <Card.Meta separator={''}>
                 <Icon name="folder" />
                 <span className={styles.namespace}>{`${rule.namespace.name} / ${rule.group.name}`}</span>
