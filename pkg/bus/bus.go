@@ -20,9 +20,6 @@ type Msg interface{}
 // ErrHandlerNotFound defines an error if a handler is not found
 var ErrHandlerNotFound = errors.New("handler not found")
 
-// ErrListenerNotFound defines an error if a listener is not found
-var ErrListenerNotFound = errors.New("listener not found")
-
 // TransactionManager defines a transaction interface
 type TransactionManager interface {
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
@@ -165,16 +162,24 @@ func (b *InProcBus) Dispatch(msg Msg) error {
 // PublishCtx function publish a message to the bus listener.
 func (b *InProcBus) PublishCtx(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
-	withCtx := true
-	var listeners = b.listenersWithCtx[msgName]
-	if listeners == nil {
-		withCtx = false
+
+	var params = []reflect.Value{}
+	if listeners, exists := b.listenersWithCtx[msgName]; exists {
+		params = append(params, reflect.ValueOf(ctx))
+		params = append(params, reflect.ValueOf(msg))
+		if err := checkListeners(listeners, params); err != nil {
+			return err
+		}
 	}
-	if b.listeners[msgName] != nil {
-		listeners = append(listeners, b.listeners[msgName])
-	}
-	if listeners == nil {
-		return nil
+
+	if listeners, exists := b.listeners[msgName]; exists {
+		params = append(params, reflect.ValueOf(msg))
+		if setting.Env == setting.Dev {
+			b.logger.Warn("PublishCtx called with message listener registered using AddEventListener and should be changed to use AddEventListenerCtx", "msgName", msgName)
+		}
+		if err := checkListeners(listeners, params); err != nil {
+			return err
+		}
 	}
 
 	span, _ := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
@@ -182,51 +187,35 @@ func (b *InProcBus) PublishCtx(ctx context.Context, msg Msg) error {
 
 	span.SetTag("msg", msgName)
 
-	var params = []reflect.Value{}
-	if withCtx {
-		params = append(params, reflect.ValueOf(ctx))
-	} else if setting.Env == setting.Dev {
-		b.logger.Warn("PublishCtx called with message listener registered using AddEventListener and should be changed to use AddEventListenerCtx", "msgName", msgName)
-	}
-	params = append(params, reflect.ValueOf(msg))
-
-	for _, listenerHandler := range listeners {
-		ret := reflect.ValueOf(listenerHandler).Call(params)
-		e := ret[0].Interface()
-		if e != nil {
-			err, ok := e.(error)
-			if ok {
-				return err
-			}
-			return fmt.Errorf("expected listener to return an error, got '%T'", e)
-		}
-	}
-
 	return nil
 }
 
 // Publish function publish a message to the bus listener.
 func (b *InProcBus) Publish(msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
-	withCtx := true
-	listeners := b.listenersWithCtx[msgName]
-	if listeners == nil {
-		withCtx = false
-		listeners = b.listeners[msgName]
-		if listeners == nil {
-			return nil
-		}
-	}
-
 	var params = []reflect.Value{}
-	if withCtx {
-		if setting.Env == setting.Dev {
-			b.logger.Warn("Publish called with message listener registered using AddEventListener and should be changed to use AddEventListenerCtx", "msgName", msgName)
-		}
+	if listeners, exists := b.listenersWithCtx[msgName]; exists {
 		params = append(params, reflect.ValueOf(context.Background()))
+		params = append(params, reflect.ValueOf(msg))
+		if setting.Env == setting.Dev {
+			b.logger.Warn("Publish called with message handler registered using AddEventHandlerCtx and should be changed to use PublishCtx", "msgName", msgName)
+		}
+		if err := checkListeners(listeners, params); err != nil {
+			return err
+		}
 	}
-	params = append(params, reflect.ValueOf(msg))
 
+	if listeners, exists := b.listeners[msgName]; exists {
+		params = append(params, reflect.ValueOf(msg))
+		if err := checkListeners(listeners, params); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func checkListeners(listeners []HandlerFunc, params []reflect.Value) error {
 	for _, listenerHandler := range listeners {
 		ret := reflect.ValueOf(listenerHandler).Call(params)
 		e := ret[0].Interface()
@@ -238,7 +227,6 @@ func (b *InProcBus) Publish(msg Msg) error {
 			return fmt.Errorf("expected listener to return an error, got '%T'", e)
 		}
 	}
-
 	return nil
 }
 
