@@ -15,15 +15,15 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { OrgRole, Role } from 'app/types';
 
-type BuiltInRoles = { [key: string]: Role[] };
+type BuiltInRoles = Record<string, Role[]>;
 
-const BuiltinRoles = ['Viewer', 'Editor', 'Admin'];
-const BuiltinRoleOption: Array<SelectableValue<OrgRole>> = BuiltinRoles.map((r: string) => ({
+const BuiltinRoles = Object.values(OrgRole);
+const BuiltinRoleOption: Array<SelectableValue<OrgRole>> = BuiltinRoles.map((r) => ({
   label: r,
-  value: r as OrgRole,
+  value: r,
 }));
 
-const fixedRoleGroupNames: { [key: string]: string } = {
+const fixedRoleGroupNames: Record<string, string> = {
   ldap: 'LDAP',
   current: 'Current org',
 };
@@ -76,8 +76,7 @@ export const RolePickerMenu = ({
     });
 
     const groups = [];
-    for (const groupName in groupsMap) {
-      if (Object.prototype.hasOwnProperty.call(groupsMap, groupName)) {
+    for (const groupName of Object.keys(groupsMap)) {
         const groupOptions = groupsMap[groupName].sort(sortRolesByName);
         groups.push({
           name: fixedRoleGroupNames[groupName] || capitalize(groupName),
@@ -399,7 +398,7 @@ export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithCh
 
 RoleMenuOption.displayName = 'RoleMenuOption';
 
-interface RoleMenuGroupsOptionProps<T> {
+interface RoleMenuGroupsOptionProps {
   data: SelectableValue<string>;
   onChange: (value: string) => void;
   onClick?: (value: string) => void;
@@ -415,7 +414,7 @@ interface RoleMenuGroupsOptionProps<T> {
 
 export const RoleMenuGroupOption = React.forwardRef<
   HTMLDivElement,
-  React.PropsWithChildren<RoleMenuGroupsOptionProps<any>>
+  RoleMenuGroupsOptionProps>
 >(
   (
     {
