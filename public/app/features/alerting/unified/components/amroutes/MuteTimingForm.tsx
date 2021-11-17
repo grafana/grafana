@@ -99,7 +99,7 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       {result && !loading && (
         <FormProvider {...formApi}>
-          <form onSubmit={formApi.handleSubmit(onSubmit)}>
+          <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">
             <FieldSet label={'Create mute timing'}>
               <Field
                 required
@@ -108,7 +108,11 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
                 invalid={!!formApi.formState.errors?.name}
                 error={formApi.formState.errors.name?.message}
               >
-                <Input {...formApi.register('name', { required: true })} className={styles.input} />
+                <Input
+                  {...formApi.register('name', { required: true })}
+                  className={styles.input}
+                  data-testid={'mute-timing-name'}
+                />
               </Field>
               <FieldSet label="Time intervals">
                 {timeIntervals.map((timeInterval, timeIntervalIndex) => {
@@ -131,6 +135,7 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
                               ),
                           })}
                           className={styles.input}
+                          data-testid="mute-timing-weekdays"
                           // @ts-ignore react-hook-form doesn't handle nested field arrays well
                           defaultValue={timeInterval.weekdays}
                           placeholder="Example: monday, tuesday:thursday"
@@ -158,6 +163,7 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
                           // @ts-ignore react-hook-form doesn't handle nested field arrays well
                           defaultValue={timeInterval.days_of_month}
                           placeholder="Example: 1, 14:16, -1"
+                          data-testid="mute-timing-days"
                         />
                       </Field>
                       <Field
@@ -180,6 +186,7 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
                           placeholder="Example: 1:3, may:august, december"
                           // @ts-ignore react-hook-form doesn't handle nested field arrays well
                           defaultValue={timeInterval.months}
+                          data-testid="mute-timing-months"
                         />
                       </Field>
                       <Field
@@ -196,6 +203,7 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
                           placeholder="Example: 2021:2022, 2030"
                           // @ts-ignore react-hook-form doesn't handle nested field arrays well
                           defaultValue={timeInterval.years}
+                          data-testid="mute-timing-years"
                         />
                       </Field>
                       <Button

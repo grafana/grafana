@@ -47,6 +47,7 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
                       // @ts-ignore react-hook-form doesn't handle nested field arrays well
                       defaultValue={timeRange.start_time}
                       placeholder="HH:MM"
+                      data-testid="mute-timing-starts-at"
                     />
                   </Field>
                   <Field
@@ -65,6 +66,7 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
                       // @ts-ignore react-hook-form doesn't handle nested field arrays well
                       defaultValue={timeRange.end_time}
                       placeholder="HH:MM"
+                      data-testid="mute-timing-ends-at"
                     />
                   </Field>
                 </div>
@@ -73,7 +75,11 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
                     className={styles.deleteTimeRange}
                     title={'Remove'}
                     name={'trash-alt'}
-                    onClick={() => removeTimeRange(index)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      removeTimeRange(index);
+                    }}
                   />
                 </div>
               </div>

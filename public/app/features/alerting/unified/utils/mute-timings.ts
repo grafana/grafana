@@ -20,12 +20,16 @@ export const MONTHS = [
 ];
 
 export const validateArrayField = (value: string, validateValue: (input: string) => boolean, invalidText: string) => {
-  return (
-    value
-      .split(',')
-      .map((x) => x.trim())
-      .every((entry) => entry.split(':').every(validateValue)) || invalidText
-  );
+  if (value) {
+    return (
+      value
+        .split(',')
+        .map((x) => x.trim())
+        .every((entry) => entry.split(':').every(validateValue)) || invalidText
+    );
+  } else {
+    return true;
+  }
 };
 
 const convertStringToArray = (str: string) => {

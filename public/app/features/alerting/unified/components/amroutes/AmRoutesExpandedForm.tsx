@@ -312,7 +312,12 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               </Field>
             </>
           )}
-          <Field label="Mute timings" description="Add mute timing to policy" invalid={!!errors.muteTimeIntervals}>
+          <Field
+            label="Mute timings"
+            data-testid="am-mute-timing-select"
+            description="Add mute timing to policy"
+            invalid={!!errors.muteTimeIntervals}
+          >
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
                 <MultiSelect
