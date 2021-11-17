@@ -389,7 +389,7 @@ def test_backend_step(edition):
         'name': 'test-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'initialize',
         ],
         'commands': [
             './bin/grabpl test-backend --edition {}'.format(edition),
@@ -401,7 +401,7 @@ def test_backend_integration_step(edition):
         'name': 'test-backend-integration' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'initialize',
         ],
         'commands': [
             './bin/grabpl integration-tests --edition {}'.format(edition),
