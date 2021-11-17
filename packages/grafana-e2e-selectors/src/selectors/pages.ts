@@ -43,7 +43,11 @@ export const Pages = {
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
     DashNav: {
+      /**
+       * @deprecated use navV2 from Grafana 8.3 instead
+       */
       nav: 'Dashboard navigation',
+      navV2: 'data-testid Dashboard navigation',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
