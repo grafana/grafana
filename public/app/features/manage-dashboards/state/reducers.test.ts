@@ -15,7 +15,7 @@ import {
   setLibraryPanelInputs,
 } from './reducers';
 import { LibraryElementDTO } from '../../library-panels/types';
-import { LoadingState } from '../../../../../packages/grafana-data';
+import { LoadingState } from '@grafana/data';
 
 describe('importDashboardReducer', () => {
   describe('when setGcomDashboard action is dispatched', () => {
