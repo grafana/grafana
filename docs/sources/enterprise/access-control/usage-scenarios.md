@@ -132,22 +132,55 @@ Example response:
 }
 ```
 
-## Grant new roles directly to a user
+## Manage roles granted directly to users
 
 There are two ways to grant roles directly to users: in the UI using the role picker, and using the API.
 
-**Note**: In order to assign roles using the role picker, you must have a user account with one of the following:
-- The Admin built-in role
-- The Server Admin role
-<!-- - The fixed role `fixed:permissions:writer` -->
+### Grant roles to a user within a specific Organization using the role picker
+
+In order to assign roles to a user within a specific Organization using the role picker, you must have a user account with one of the following: 
+* The Admin builtin role.
+* The Server Admin role.
+* The fixed role `fixed:permissions:writer`, [assigned for the given Organization]({{< relref "roles/#scope-of-assignments" >}}).
 <!-- - A custom role with `[INSERT PERMISSIONS HERE]` permissions -->
-In order to assign roles via the API, you must have a user account with one of the permissions listed above, or an API token with the Admin role.
 
-### Grant a role to a user with the role picker
+Steps:
+1. Navigate to the Users Configuration page by hovering over **Configuration** (the gear icon) in the left navigation menu and selecting **Users**.
+1. Click on the **Role** column in the row for the user whose role you would like to edit
+1. Select one or more roles that you would like to assign to that user.
+1. Click the **Apply** button to apply the selected roles to that user. 
 
-### Grant a role to a user via API
+The user's permissions will update immediately, and the UI will reflect their new permissions the next time they reload their browser or visit a new page.
 
-To grant a role to a user via API, refer to the [fine-grained access control HTTP API docs]({{< relref "../../http_api/access_control.md#manage-roles-granted-to-users" >}})
+**Note**: The roles that you select will be assigned only within the given Organization. For example, if you grant the user the "Data source editor" role while you are in the main Organization, then that user will be able to edit data source in the main Organization but not in others.
+
+### Grant roles to a user in multiple Organizations using the role picker
+
+In order to assign roles across multiple Organizations to a user using the role picker, you must have a user account with one of the following:
+* The Server Admin built-in role
+* The fixed role `fixed:permissions:writer`, [assigned globally]({{< relref "roles/#scope-of-assignments" >}}).
+<!-- - A custom role with `[INSERT PERMISSIONS HERE]` permissions -->
+
+Steps:
+1. Navigate to the Users Admin page by hovering over **Server Admin** (the shield icon) in the left navigation menu and selecting **Users**.
+1. Click on a user row to edit that user's roles.
+1. Under the **Organizations** header, you will see a list of roles assigned to that user within each of their Organizations. Click on the roles in an organization to open the role picker.
+1. Select one or more roles that you would like to assign to that user.
+1. Click the **Apply** button to apply the selected roles to that user.
+
+The user's permissions will update immediately, and the UI will reflect their new permissions the next time they reload their browser or visit a new page.
+
+**Note**: The roles that you select will be assigned only within one Organization. For example, if you grant the user the "Data source editor" role in the row for the main Organization, then that user will be able to edit data source in the main Organization but not in others.
+
+### Manage users' roles via API
+
+In order to assign roles using the role picker, you must have an API token with the Admin role, or a user account with one of the following:
+* The Admin built-in role
+* The Server Admin role
+* The fixed role `fixed:permissions:writer`
+<!-- - A custom role with `[INSERT PERMISSIONS HERE]` permissions -->
+
+To grant a role to a user via API, refer to the [fine-grained access control HTTP API docs]({{< relref "../../http_api/access_control.md#manage-roles-granted-to-users" >}}).
 
 ## Create your first custom role
 
