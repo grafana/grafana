@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { css } from '@emotion/css';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, stylesFactory, withTheme2, Input, TextArea, Field, Form, FileUpload, Themeable2 } from '@grafana/ui';
+import { Button, Field, FileUpload, Form, Input, stylesFactory, TextArea, Themeable2, withTheme2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
@@ -12,6 +12,7 @@ import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { cleanUpAction } from '../../core/actions/cleanUp';
 
 type DashboardImportPageRouteSearchParams = {
   gcomDashboardId?: string;
@@ -27,6 +28,7 @@ const mapStateToProps = (state: StoreState) => ({
 const mapDispatchToProps = {
   fetchGcomDashboard,
   importDashboardJson,
+  cleanUpAction,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -34,6 +36,18 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class UnthemedDashboardImport extends PureComponent<Props> {
+  componentDidMount() {
+    const { gcomDashboardId } = this.props.queryParams;
+    if (gcomDashboardId) {
+      this.getGcomDashboard({ gcomDashboard: gcomDashboardId });
+      return;
+    }
+  }
+
+  componentWillUnmount() {
+    this.props.cleanUpAction({ stateSelector: (state: StoreState) => state.importDashboard });
+  }
+
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
     const { importDashboardJson } = this.props;
     const file = event.currentTarget.files && event.currentTarget.files.length > 0 && event.currentTarget.files[0];
