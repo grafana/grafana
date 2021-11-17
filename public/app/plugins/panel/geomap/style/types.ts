@@ -62,6 +62,8 @@ export const defaultStyleConfig = Object.freeze({
     fontSize: 12,
     textAlign: TextAlignment.Center,
     textBaseline: TextBaseline.Middle,
+    offsetX: 0,
+    offsetY: 0,
   },
 });
 
