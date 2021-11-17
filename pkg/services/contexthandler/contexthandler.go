@@ -107,7 +107,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	}
 
 	queryParameters, err := url.ParseQuery(reqContext.Req.URL.RawQuery)
-	if err == nil {
+	if err != nil {
 		reqContext.Logger.Error("Failed to parse query parameters", "error", err)
 	}
 	if queryParameters.Has("targetOrgId") {
