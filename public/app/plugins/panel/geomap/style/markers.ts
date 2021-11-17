@@ -284,6 +284,6 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
     return maker.make;
   }
 
-  // defatult to showing a circle
+  // default to showing a circle
   return errorMarker;
 }

@@ -96,7 +96,10 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           const colorDim = getColorDimension(frame, style.color ?? defaultStyleConfig.color, theme);
           const sizeDim = getScaledDimension(frame, style.size ?? defaultStyleConfig.size);
-          const textDim = style?.text && getTextDimension(frame, style.text);
+          let textDim = undefined;
+          if (style?.text && (style.text.field || style.text.fixed)) {
+            textDim = getTextDimension(frame, style.text);
+          }
           const opacity = style?.opacity ?? defaultStyleConfig.opacity;
 
           const featureDimensionConfig: FeaturesStylesBuilderConfig = {
