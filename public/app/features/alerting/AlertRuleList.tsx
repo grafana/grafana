@@ -10,7 +10,7 @@ import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { SelectableValue } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { setSearchQuery } from './state/reducers';
-import { Button, LinkButton, Select, VerticalGroup, FilterInput } from '@grafana/ui';
+import { Button, FilterInput, LinkButton, Select, VerticalGroup } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ShowModalReactEvent } from '../../types/events';
 import { AlertHowToModal } from './AlertHowToModal';
@@ -100,10 +100,13 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
               <FilterInput placeholder="Search alerts" value={search} onChange={this.onSearchQueryChange} />
             </div>
             <div className="gf-form">
-              <label className="gf-form-label">States</label>
+              <label className="gf-form-label" htmlFor="alert-state-filter">
+                States
+              </label>
 
               <div className="width-13">
                 <Select
+                  inputId={'alert-state-filter'}
                   menuShouldPortal
                   options={this.stateFilters}
                   onChange={this.onStateFilterChanged}
