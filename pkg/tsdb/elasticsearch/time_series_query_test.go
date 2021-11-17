@@ -1061,7 +1061,7 @@ func TestSettingsCasting(t *testing.T) {
 							"field": "@timestamp",
 							"id": "2",
 							"settings": {
-								interval: "1d"							
+								"interval": "1d"							
 							}
 						}
 					],
@@ -1088,7 +1088,7 @@ func TestSettingsCasting(t *testing.T) {
 							"field": "@timestamp",
 							"id": "2",
 							"settings": {
-								interval: "1d"							
+								"interval": "1d"							
 							}
 						}
 					],
