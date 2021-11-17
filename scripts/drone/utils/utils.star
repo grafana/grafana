@@ -10,7 +10,6 @@ def pipeline(
     name, edition, trigger, steps, services=[], platform='linux', depends_on=[],
     ):
     if platform != 'windows':
-        grabpl_step = [download_grabpl_step()]
         platform_conf = {
             'platform': {
                 'os': 'linux',
@@ -23,7 +22,6 @@ def pipeline(
             }
         }
     else:
-        grabpl_step = []
         platform_conf = {
             'platform': {
                 'os': 'windows',
