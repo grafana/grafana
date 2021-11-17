@@ -19,7 +19,7 @@ var (
 		Version:     2,
 		Name:        datasourcesExplorer,
 		DisplayName: "Data source explorer",
-		Description: "Enable the Explore feature. Data source permissions still apply, you can only query data sources for which you have query permissions.",
+		Description: "Enable the Explore feature. Data source permissions still apply; you can only query data sources for which you have query permissions.",
 		Permissions: []Permission{
 			{
 				Action: ActionDatasourcesExplore,
