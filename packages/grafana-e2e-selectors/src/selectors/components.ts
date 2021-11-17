@@ -218,7 +218,11 @@ export const Components = {
     content: 'Field overrides editor content',
   },
   FolderPicker: {
+    /**
+     * @deprecated use containerV2 from Grafana 8.3 instead
+     */
     container: 'Folder picker select container',
+    containerV2: 'data-testid Folder picker select container',
     input: 'Select a folder',
   },
   ReadonlyFolderPicker: {
