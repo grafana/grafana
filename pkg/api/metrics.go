@@ -33,7 +33,6 @@ func (m MissingDatasourceInfoError) Error() string {
 }
 
 func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalResponse {
-	hs.log.Debug("Error while querying data", "err", err)
 	if errors.Is(err, models.ErrDataSourceAccessDenied) {
 		return response.Error(http.StatusForbidden, "Access denied to data source", err)
 	}
@@ -49,7 +48,7 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 		return response.Error(http.StatusBadRequest, "Query missing data source ID/UID", err)
 	}
 	if errors.Is(err, ErrDifferentDatasources) {
-		return response.Error(http.StatusBadRequest, "all queries must use the same datasource", err)
+		return response.Error(http.StatusBadRequest, "All queries must use the same datasource", err)
 	}
 	var missingRefError MissingDatasourceInfoError
 	if errors.As(err, &missingRefError) {
