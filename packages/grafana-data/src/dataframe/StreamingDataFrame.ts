@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameDTO, Field, FieldType, Labels, QueryResultMeta } from '../types';
+import { DataFrame, Field, FieldDTO, FieldType, Labels, QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
 import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
@@ -44,7 +44,9 @@ enum PushMode {
   // long
 }
 
-export type SerializedStreamingDataFrame = DataFrameDTO & {
+export type SerializedStreamingDataFrame = {
+  name?: string;
+  fields: FieldDTO[];
   refId?: string;
   meta: QueryResultMeta;
   schemaFields: FieldSchema[];
