@@ -176,7 +176,6 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 }
 
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
-
 	toMigrate := []interface {
 		reencrypt(*manager.SecretsService, *xorm.Session) error
 	}{
