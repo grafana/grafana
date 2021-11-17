@@ -10,6 +10,7 @@ export const getFeatures = (
   style: StyleConfigState
 ): Array<Feature<Point>> | undefined => {
   const features: Array<Feature<Point>> = [];
+  const { dims } = style;
   const values = { ...style.base };
 
   // Map each data value into new points
@@ -21,16 +22,16 @@ export const getFeatures = (
       rowIndex: i,
     });
 
-    // Only create a new style if it depends on the data
-    if (style.dims) {
-      if (style.dims.color) {
-        values.color = style.dims.color.get(i);
+    // Update values used in dynamic styles
+    if (dims) {
+      if (dims.color) {
+        values.color = dims.color.get(i);
       }
-      if (style.dims.size) {
-        values.size = style.dims.size.get(i);
+      if (dims.size) {
+        values.size = dims.size.get(i);
       }
-      if (style.dims.text) {
-        values.text = style.dims.text.get(i);
+      if (dims.text) {
+        values.text = dims.text.get(i);
       }
 
       dot.setStyle(style.maker(values));
