@@ -91,6 +91,21 @@ export interface StyleConfigValues {
   textConfig?: TextStyleConfig;
 }
 
+/** When the style depends on a field */
+export interface StyleConfigFields {
+  color?: string;
+  size?: string;
+  text?: string;
+}
+
+export interface StyleConfigState {
+  config: TextStyleConfig;
+  hasText?: boolean;
+  base: StyleConfigValues;
+  fields?: StyleConfigFields;
+  maker: StyleMaker;
+}
+
 /**
  * Given values create a style
  */
