@@ -13,6 +13,7 @@ import { Stroke, Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
 import { circleMarker } from '../../style/markers';
+import { Observable, ReplaySubject } from 'rxjs';
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -54,6 +55,8 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       url: config.src,
       format: new GeoJSON(),
     });
+    
+    const features = new ReplaySubject<FeatureLike[]>();
 
     const key = source.on('change', () => {
       if (source.getState() == 'ready') {
@@ -63,6 +66,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         //     var olFeatures = source.getFeatures(); // olFeatures.length > 1
         //     // Only after using setTimeout can I search the feature list... :(
         // }, 100)
+        features.next(source.getFeatures());
 
         console.log('SOURCE READY!!!', source.getFeatures().length);
       }
@@ -108,8 +112,10 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
       // Geojson source url
       registerOptionsUI: (builder) => {
-        const features = source.getFeatures();
-        console.log('FEATURES', source.getState(), features.length, options);
+        // const features = source.getFeatures();
+        // console.log('FEATURES', source.getState(), features.length, options);
+
+        const props = features.pipe(map((f) => f));
 
         builder
           .addSelect({
@@ -130,7 +136,9 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             path: 'config.styles',
             name: 'Style Rules',
             editor: GeomapStyleRulesEditor,
-            settings: {},
+            settings: {
+              features: props,
+            },
             defaultValue: [],
           });
       },
