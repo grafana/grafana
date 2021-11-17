@@ -36,7 +36,8 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class UnthemedDashboardImport extends PureComponent<Props> {
-  componentDidMount() {
+  constructor (props: Props) {
+    super(props);
     const { gcomDashboardId } = this.props.queryParams;
     if (gcomDashboardId) {
       this.getGcomDashboard({ gcomDashboard: gcomDashboardId });
@@ -156,9 +157,10 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
   render() {
     const { isLoaded, navModel } = this.props;
+    const { gcomDashboardId } = this.props.queryParams;
     return (
       <Page navModel={navModel}>
-        <Page.Contents>{isLoaded ? <ImportDashboardOverview /> : this.renderImportForm()}</Page.Contents>
+        <Page.Contents>{isLoaded ? <ImportDashboardOverview /> : gcomDashboardId ? null : this.renderImportForm()}</Page.Contents>
       </Page>
     );
   }
