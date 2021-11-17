@@ -12,19 +12,14 @@ import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import {
-  getScaledDimension,
-  getColorDimension,
-  ResourceFolderName,
-  getTextDimension,
-} from 'app/features/dimensions';
-import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
+import { getScaledDimension, getColorDimension, getTextDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
 import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
 import { getMarkerMaker } from '../../style/markers';
-import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
+import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { StyleEditor } from './StyleEditor';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -79,7 +74,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     }
 
     const style = config.style ?? defaultStyleConfig;
-    const markerMaker = await getMarkerMaker(style.symbol?.fixed);
+    const hasTextLabel = Boolean(style.text?.fixed || style.text?.field);
+    const markerMaker = await getMarkerMaker(style.symbol?.fixed, hasTextLabel);
 
     return {
       init: () => vectorLayer,
@@ -100,7 +96,10 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           const colorDim = getColorDimension(frame, style.color ?? defaultStyleConfig.color, theme);
           const sizeDim = getScaledDimension(frame, style.size ?? defaultStyleConfig.size);
-          const textDim = style?.text && getTextDimension(frame, style.text);
+          let textDim = undefined;
+          if (style?.text && (style.text.field || style.text.fixed)) {
+            textDim = getTextDimension(frame, style.text);
+          }
           const opacity = style?.opacity ?? defaultStyleConfig.opacity;
 
           const featureDimensionConfig: FeaturesStylesBuilderConfig = {
@@ -137,95 +136,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       registerOptionsUI: (builder) => {
         builder
           .addCustomEditor({
-            id: 'config.style.size',
-            path: 'config.style.size',
-            name: 'Marker Size',
-            editor: ScaleDimensionEditor,
-            settings: {
-              min: 1,
-              max: 100, // possible in the UI
-            },
-            defaultValue: defaultOptions.style.size,
-          })
-          .addCustomEditor({
-            id: 'config.style.symbol',
-            path: 'config.style.symbol',
-            name: 'Marker Symbol',
-            editor: ResourceDimensionEditor,
-            defaultValue: defaultOptions.style.symbol,
-            settings: {
-              resourceType: 'icon',
-              showSourceRadio: false,
-              folderName: ResourceFolderName.Marker,
-            },
-          })
-          .addCustomEditor({
-            id: 'config.style.color',
-            path: 'config.style.color',
-            name: 'Marker Color',
-            editor: ColorDimensionEditor,
+            id: 'config.style',
+            path: 'config.style',
+            name: 'Styles',
+            editor: StyleEditor,
             settings: {},
-            defaultValue: defaultOptions.style.color,
+            defaultValue: defaultOptions.style,
           })
-          .addSliderInput({
-            path: 'config.style.opacity',
-            name: 'Fill opacity',
-            defaultValue: defaultOptions.style.opacity,
-            settings: {
-              min: 0,
-              max: 1,
-              step: 0.1,
-            },
-          })
-          .addCustomEditor({
-            id: 'config.style.text',
-            path: 'config.style.text',
-            name: 'Text label',
-            editor: TextDimensionEditor,
-            defaultValue: defaultOptions.style.text,
-          })
-          .addNumberInput({
-            name: 'Text font size',
-            path: 'config.style.textConfig.fontSize',
-            defaultValue: defaultOptions.style.textConfig?.fontSize,
-          })
-          .addNumberInput({
-            name: 'Text X offset',
-            path: 'config.style.textConfig.offsetX',
-            defaultValue: 0,
-          })
-          .addNumberInput({
-            name: 'Text Y offset',
-            path: 'config.style.textConfig.offsetY',
-            defaultValue: 0,
-          })
-          .addRadio({
-            name: 'Text align',
-            path: 'config.style.textConfig.textAlign',
-            description: '',
-            defaultValue: defaultOptions.style.textConfig?.textAlign,
-            settings: {
-              options: [
-                { value: TextAlignment.Left, label: TextAlignment.Left },
-                { value: TextAlignment.Center, label: TextAlignment.Center },
-                { value: TextAlignment.Right, label: TextAlignment.Right },
-              ],
-            },
-          })
-          .addRadio({
-            name: 'Text baseline',
-            path: 'config.style.textConfig.textBaseline',
-            description: '',
-            defaultValue: defaultOptions.style.textConfig?.textBaseline,
-            settings: {
-              options: [
-                { value: TextBaseline.Top, label: TextBaseline.Top },
-                { value: TextBaseline.Middle, label: TextBaseline.Middle },
-                { value: TextBaseline.Bottom, label: TextBaseline.Bottom },
-              ],
-            },
-          })
-          // baseline?: 'bottom' | 'top' | 'middle';
           .addBooleanSwitch({
             path: 'config.showLegend',
             name: 'Show legend',
