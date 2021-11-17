@@ -124,7 +124,7 @@ class DataSourceWithBackend<
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
-        datasource = getDataSourceRef(ds);
+        datasource = ds.rawRef ?? getDataSourceRef(ds);
       }
 
       return {
@@ -169,15 +169,6 @@ class DataSourceWithBackend<
         })
       );
   }
-
-  /**
-   * Override to skip executing a query
-   *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
-   */
-  filterQuery?(query: TQuery): boolean;
 
   /**
    * Apply template variables for explore

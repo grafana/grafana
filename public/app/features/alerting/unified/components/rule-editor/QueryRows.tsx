@@ -136,6 +136,7 @@ export class QueryRows extends PureComponent<Props, State> {
         return {
           ...item,
           refId: query.refId,
+          queryType: item.model.queryType ?? '',
           model: {
             ...item.model,
             ...query,

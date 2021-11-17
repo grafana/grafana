@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
-import { Button, Container, Icon, IconButton, stylesFactory, ValuePicker } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, IconButton, stylesFactory, ValuePicker } from '@grafana/ui';
 import { AppEvents, GrafanaTheme, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
@@ -20,6 +20,14 @@ type Props = StandardEditorProps<any, LayerEditorProps, PanelOptions>;
 
 export class LayerElementListEditor extends PureComponent<Props> {
   style = getLayerDragStyles(config.theme);
+
+  getScene = () => {
+    const { settings } = this.props.item;
+    if (!settings?.layer) {
+      return;
+    }
+    return settings.layer.scene;
+  };
 
   onAddItem = (sel: SelectableValue<string>) => {
     const { settings } = this.props.item;
@@ -158,6 +166,15 @@ export class LayerElementListEditor extends PureComponent<Props> {
     this.goUpLayer();
   };
 
+  private onGroupSelection = () => {
+    const scene = this.getScene();
+    if (scene) {
+      scene.groupSelection();
+    } else {
+      console.warn('no scene!');
+    }
+  };
+
   private onDeleteGroup = () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
@@ -268,7 +285,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
         </DragDropContext>
         <br />
 
-        <Container>
+        <HorizontalGroup>
           <ValuePicker
             icon="plus"
             label="Add item"
@@ -282,7 +299,12 @@ export class LayerElementListEditor extends PureComponent<Props> {
               Clear Selection
             </Button>
           )}
-        </Container>
+          {selection.length > 1 && (
+            <Button size="sm" variant="secondary" onClick={this.onGroupSelection}>
+              Group items
+            </Button>
+          )}
+        </HorizontalGroup>
       </>
     );
   }
