@@ -17980,7 +17980,6 @@ __metadata:
     fast-text-encoding: ^1.0.0
     file-loader: 6.2.0
     file-saver: 2.0.2
-    focus-trap-react: ^8.8.2
     fork-ts-checker-webpack-plugin: 6.4.0
     fs-extra: 10.0.0
     gaze: 1.1.3
