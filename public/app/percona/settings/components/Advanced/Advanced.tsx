@@ -55,6 +55,7 @@ export const Advanced: FC<AdvancedProps> = ({
       telemetryLabel,
       telemetryLink,
       telemetryTooltip,
+      telemetryDisclaimer,
       updatesLabel,
       updatesLink,
       updatesTooltip,
@@ -179,11 +180,13 @@ export const Advanced: FC<AdvancedProps> = ({
               tooltip={telemetryTooltip}
               tooltipLinkText={tooltipLinkText}
               link={telemetryLink}
-              className={cx({ [styles.switchDisabled]: values.stt || values.alerting })}
-              disabled={values.stt || values.alerting}
               dataTestId="advanced-telemetry"
               component={SwitchRow}
             />
+            <div className={styles.infoBox}>
+              <Icon name="info-circle" size="xl" className={styles.infoBoxIcon} />
+              <p>{telemetryDisclaimer}</p>
+            </div>
             <Field
               name="updates"
               type="checkbox"
@@ -201,8 +204,6 @@ export const Advanced: FC<AdvancedProps> = ({
               tooltip={sttTooltip}
               tooltipLinkText={tooltipLinkText}
               link={sttLink}
-              className={cx({ [styles.switchDisabled]: !values.telemetry })}
-              disabled={!values.telemetry}
               dataTestId="advanced-stt"
               component={SwitchRow}
             />
@@ -255,8 +256,8 @@ export const Advanced: FC<AdvancedProps> = ({
             </div>
             <fieldset className={styles.technicalPreview}>
               <legend>{technicalPreviewLegend}</legend>
-              <div className={styles.technicalPreviewDoc}>
-                <Icon name="info-circle" size={'xl'} className={styles.technicalPreviewIcon} />
+              <div className={styles.infoBox}>
+                <Icon name="info-circle" size="xl" className={styles.infoBoxIcon} />
                 <p>
                   {technicalPreviewDescription}{' '}
                   <a href={TECHNICAL_PREVIEW_DOC_URL} target="_blank" rel="noreferrer">
@@ -292,8 +293,6 @@ export const Advanced: FC<AdvancedProps> = ({
                 tooltip={alertingTooltip}
                 tooltipLinkText={tooltipLinkText}
                 link={alertingLink}
-                className={cx({ [styles.switchDisabled]: !values.telemetry })}
-                disabled={!values.telemetry}
                 dataTestId="advanced-alerting"
                 component={SwitchRow}
               />
