@@ -312,7 +312,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         'name': 'build-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'test-backend' + enterprise2_suffix(edition),
+            'initialize',
         ],
         'environment': env,
         'commands': cmds,
@@ -345,7 +345,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'name': 'build-frontend',
         'image': build_image,
         'depends_on': [
-            'test-frontend',
+            'initialize',
         ],
         'commands': cmds,
     }
