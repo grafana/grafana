@@ -184,14 +184,14 @@ func TestAPIEndpoint_PutCurrentOrgAddress_AccessControl(t *testing.T) {
 
 // `/api/orgs/` endpoints test
 
-// setupOrgsDBForAccessControlTests stores users and create three
+// setupOrgsDBForAccessControlTests stores users and create specified number of orgs
 func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.SQLStore, user models.SignedInUser, orgsCount int) {
 	t.Helper()
 
 	_, err := db.CreateUser(context.Background(), models.CreateUserCommand{Email: user.Email, SkipOrgSetup: true, Login: user.Login})
 	require.NoError(t, err)
 
-	// Create three orgs
+	// Create `orgsCount` orgs
 	for i := 1; i <= orgsCount; i++ {
 		_, err = db.CreateOrgWithMember(fmt.Sprintf("TestOrg%v", i), 0)
 		require.NoError(t, err)
