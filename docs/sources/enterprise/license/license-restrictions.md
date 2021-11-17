@@ -38,9 +38,10 @@ Your Grafana license includes a maximum number of _Viewer_ and _Editor/Admin_ ac
 
 You can assign role permissions _globally_ and restrict access to a specific dashboard or set of dashboards.
 
-**Organization permissions**: When you create a user, you select a role on the user details page. Your selection applies to all Grafana dashboards within the Organization. For example, a user with the viewer role can see all dashboards, but cannot create or edit dashboards. For more information about user roles and permissions, refer to [Organization roles](https://grafana.com/docs/grafana/latest/permissions/organization_roles/).
+**Organization permissions**: When you create a user, you select a role on the user details page. Your selection applies to all Grafana dashboards within the Organization. For example, a user with the viewer role can see all dashboards, but cannot create or edit dashboards. For more information about user roles and permissions, refer to 
+[Organization roles]({{< relref "../../permissions/organization_roles.md" >}}).
 
-**Dashboard permissions**: You can also assign permissions to dashboards or groups (folders) of dashboards. For example, you might want a viewer to also have editor permissions for a specific dashboard. While that user can see _all_ dashboards, they can only update one of them. For more information about dashboard permissions, refer to [Dashboard and Folder Permissions](https://grafana.com/docs/grafana/latest/permissions/dashboard-folder-permissions/).
+**Dashboard permissions**: You can also assign permissions to dashboards or groups (folders) of dashboards. For example, you might want a viewer to also have editor permissions for a specific dashboard. While that user can see _all_ dashboards, they can only update one of them. For more information about dashboard permissions, refer to [Dashboard and Folder Permissions]({{< relref "../../permissions/dashboard-folder-permissions.md" >}}).
 
 When you grant editor/admin dashboard permissions to a viewer, the editor/admin active-user count increases by one as shown on the **Utilization** panel of the **Statistics and licensing** page, and the user’s licensed role changes to editor/admin.
 
@@ -57,7 +58,7 @@ To grant dashboard edit without save permissions:
 1. Open the `grafana.ini` file that contains default configurations.
 
    The name and location of the file depends on your installation. For information about locating
-   the default configurations file, refer to [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/).
+   the default configurations file, refer to [Configuration]({{< relref "../../administration/configuration.md" >}}).
 
 1. Change the `viewers-can-edit` setting to `true`.
 1. Restart Grafana Enterprise.
@@ -116,7 +117,8 @@ For example, if you purchase 150 licenses, you can have 20 admins, 70 editors, a
 ### Transition to combined license model
 
 To transition from the tiered licensing model to the combined license model, contact your Grafana account team and request to switch to combined user pricing. Once you update your contract with the account team, they will issue you a new license token.
-For instructions about how to update your license, refer to [Activate license](https://grafana.com/docs/grafana/latest/enterprise/license/activate-license/).
+For instructions about how to update your license, refer to [Activate an Enterprise license]({{< relref "./activate-license.md" >}}).
+
 
 After you apply the token, Grafana Enterprise resets your license and updates the user counts on the **Utilization** panel .
 
@@ -147,7 +149,7 @@ Your license is controlled by the following rules:
 
 **License expiration date:** The license includes an expiration date, which is the date when a license becomes inactive.
 
-As the license expiration date approaches, you will see a banner in Grafana that encourages you to renew. To learn about how to renew your license and what happens in Grafana when a license expires, refer to [License expiration](https://grafana.com/docs/grafana/latest/enterprise/license/license-expiration/).
+As the license expiration date approaches, you will see a banner in Grafana that encourages you to renew. To learn about how to renew your license and what happens in Grafana when a license expires, refer to [License expiration]({{< relref "./license-expiration.md" >}}).
 
 **Grafana License URL:** Your license does not work with an instance of Grafana with a different root URL.
 
