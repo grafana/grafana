@@ -131,6 +131,9 @@ export const Pages = {
   },
   Dashboards: {
     url: '/dashboards',
+    /**
+     * @deprecated use components.Search.dashboardItem from Grafana 8.3 instead
+     */
     dashboards: (title: string) => `Dashboard search item ${title}`,
   },
   SaveDashboardAsModal: {

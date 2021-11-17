@@ -260,8 +260,20 @@ export const Components = {
     select: (name: string) => `Value picker select ${name}`,
   },
   Search: {
+    /**
+     * @deprecated use sectionV2 from Grafana 8.3 instead
+     */
     section: 'Search section',
+    sectionV2: 'data-testid Search section',
+    /**
+     * @deprecated use itemsV2 from Grafana 8.3 instead
+     */
     items: 'Search items',
+    itemsV2: 'data-testid Search items',
+    collapseFolder: (sectionId: string) => `data-testid Collapse folder ${sectionId}`,
+    expandFolder: (sectionId: string) => `data-testid Expand folder ${sectionId}`,
+    dashboardItem: (item: string) => `${Components.Search.dashboardItems} ${item}`,
+    dashboardItems: 'data-testid Dashboard search item',
   },
   DashboardLinks: {
     container: 'data-testid Dashboard link container',
