@@ -162,6 +162,8 @@ describe('geomap migrations', () => {
                   },
                   "textConfig": Object {
                     "fontSize": 12,
+                    "offsetX": 0,
+                    "offsetY": 0,
                     "textAlign": "center",
                     "textBaseline": "middle",
                   },

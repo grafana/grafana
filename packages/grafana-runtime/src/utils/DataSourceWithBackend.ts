@@ -109,6 +109,7 @@ class DataSourceWithBackend<
 
     const queries = targets.map((q) => {
       let datasource = this.getRef();
+      let datasourceId = this.id;
 
       if (isExpressionReference(q.datasource)) {
         return {
@@ -125,11 +126,13 @@ class DataSourceWithBackend<
         }
 
         datasource = ds.rawRef ?? getDataSourceRef(ds);
+        datasourceId = ds.id;
       }
 
       return {
         ...this.applyTemplateVariables(q, request.scopedVars),
         datasource,
+        datasourceId, // deprecated!
         intervalMs,
         maxDataPoints,
       };
