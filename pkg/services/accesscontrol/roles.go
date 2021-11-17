@@ -15,9 +15,11 @@ type RoleRegistry interface {
 
 // Roles definition
 var (
-	datasourcesEditorReadRole = RoleDTO{
-		Version: 1,
-		Name:    datasourcesEditorRead,
+	datasourcesExplorerRole = RoleDTO{
+		Version:     2,
+		Name:        datasourcesExplorer,
+		DisplayName: "Data source explorer",
+		Description: "Enable the Explore feature. Data source permissions still apply; you can only query data sources for which you have query permissions.",
 		Permissions: []Permission{
 			{
 				Action: ActionDatasourcesExplore,
@@ -25,9 +27,11 @@ var (
 		},
 	}
 
-	ldapAdminReadRole = RoleDTO{
-		Name:    ldapAdminRead,
-		Version: 1,
+	ldapReaderRole = RoleDTO{
+		Name:        ldapReader,
+		DisplayName: "LDAP reader",
+		Description: "Read LDAP configuration and status.",
+		Version:     2,
 		Permissions: []Permission{
 			{
 				Action: ActionLDAPUsersRead,
@@ -38,10 +42,12 @@ var (
 		},
 	}
 
-	ldapAdminEditRole = RoleDTO{
-		Name:    ldapAdminEdit,
-		Version: 2,
-		Permissions: ConcatPermissions(ldapAdminReadRole.Permissions, []Permission{
+	ldapWriterRole = RoleDTO{
+		Name:        ldapWriter,
+		DisplayName: "LDAP writer",
+		Description: "Read and update LDAP configuration and read LDAP status.",
+		Version:     3,
+		Permissions: ConcatPermissions(ldapReaderRole.Permissions, []Permission{
 			{
 				Action: ActionLDAPUsersSync,
 			},
@@ -51,42 +57,12 @@ var (
 		}),
 	}
 
-	serverAdminReadRole = RoleDTO{
-		Version: 1,
-		Name:    serverAdminRead,
-		Permissions: []Permission{
-			{
-				Action: ActionServerStatsRead,
-			},
-		},
-	}
-
-	settingsAdminReadRole = RoleDTO{
-		Version: 2,
-		Name:    settingsAdminRead,
-		Permissions: []Permission{
-			{
-				Action: ActionSettingsRead,
-				Scope:  ScopeSettingsAll,
-			},
-		},
-	}
-
-	usersOrgReadRole = RoleDTO{
-		Name:    usersOrgRead,
-		Version: 1,
-		Permissions: []Permission{
-			{
-				Action: ActionOrgUsersRead,
-				Scope:  ScopeUsersAll,
-			},
-		},
-	}
-
-	usersOrgEditRole = RoleDTO{
-		Name:    usersOrgEdit,
-		Version: 1,
-		Permissions: ConcatPermissions(usersOrgReadRole.Permissions, []Permission{
+	orgUsersWriterRole = RoleDTO{
+		Name:        orgUsersWriter,
+		DisplayName: "Organization user writer",
+		Description: "Within a single organization, add a user, invite a user, read information about a user and their role, remove a user from that organization, or change the role of a user.",
+		Version:     2,
+		Permissions: ConcatPermissions(orgUsersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionOrgUsersAdd,
 				Scope:  ScopeUsersAll,
@@ -102,9 +78,49 @@ var (
 		}),
 	}
 
-	usersAdminReadRole = RoleDTO{
-		Name:    usersAdminRead,
-		Version: 1,
+	orgUsersReaderRole = RoleDTO{
+		Name:        orgUsersReader,
+		DisplayName: "Organization user reader",
+		Description: "Read users within a single organization.",
+		Version:     2,
+		Permissions: []Permission{
+			{
+				Action: ActionOrgUsersRead,
+				Scope:  ScopeUsersAll,
+			},
+		},
+	}
+
+	settingsReaderRole = RoleDTO{
+		Version:     3,
+		DisplayName: "Setting reader",
+		Description: "Read Grafana instance settings.",
+		Name:        settingsReader,
+		Permissions: []Permission{
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsAll,
+			},
+		},
+	}
+
+	statsReaderRole = RoleDTO{
+		Version:     2,
+		Name:        statsReader,
+		DisplayName: "Statistics reader",
+		Description: "Read Grafana instance statistics.",
+		Permissions: []Permission{
+			{
+				Action: ActionServerStatsRead,
+			},
+		},
+	}
+
+	usersReaderRole = RoleDTO{
+		Name:        usersReader,
+		DisplayName: "User reader",
+		Description: "Read all users and their information, such as team memberships, authentication tokens, and quotas.",
+		Version:     2,
 		Permissions: []Permission{
 			{
 				Action: ActionUsersRead,
@@ -125,10 +141,12 @@ var (
 		},
 	}
 
-	usersAdminEditRole = RoleDTO{
-		Name:    usersAdminEdit,
-		Version: 1,
-		Permissions: ConcatPermissions(usersAdminReadRole.Permissions, []Permission{
+	usersWriterRole = RoleDTO{
+		Name:        usersWriter,
+		DisplayName: "User writer",
+		Description: "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
+		Version:     2,
+		Permissions: ConcatPermissions(usersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionUsersPasswordUpdate,
 				Scope:  ScopeGlobalUsersAll,
@@ -174,20 +192,15 @@ var (
 
 // Role names definitions
 const (
-	datasourcesEditorRead = "fixed:datasources:editor:read"
-
-	serverAdminRead = "fixed:server:admin:read"
-
-	settingsAdminRead = "fixed:settings:admin:read"
-
-	usersAdminEdit = "fixed:users:admin:edit"
-	usersAdminRead = "fixed:users:admin:read"
-
-	usersOrgEdit = "fixed:users:org:edit"
-	usersOrgRead = "fixed:users:org:read"
-
-	ldapAdminEdit = "fixed:ldap:admin:edit"
-	ldapAdminRead = "fixed:ldap:admin:read"
+	datasourcesExplorer = "fixed:datasources:explorer"
+	ldapReader          = "fixed:ldap:reader"
+	ldapWriter          = "fixed:ldap:writer"
+	orgUsersReader      = "fixed:org.users:reader"
+	orgUsersWriter      = "fixed:org.users:writer"
+	settingsReader      = "fixed:settings:reader"
+	statsReader         = "fixed:stats:reader"
+	usersReader         = "fixed:users:reader"
+	usersWriter         = "fixed:users:writer"
 )
 
 var (
@@ -198,36 +211,36 @@ var (
 	// resource. FixedRoleGrants lists which built-in roles are
 	// assigned which fixed roles in this list.
 	FixedRoles = map[string]RoleDTO{
-		datasourcesEditorRead: datasourcesEditorReadRole,
-		usersAdminEdit:        usersAdminEditRole,
-		usersAdminRead:        usersAdminReadRole,
-		usersOrgEdit:          usersOrgEditRole,
-		usersOrgRead:          usersOrgReadRole,
-		ldapAdminEdit:         ldapAdminEditRole,
-		ldapAdminRead:         ldapAdminReadRole,
-		serverAdminRead:       serverAdminReadRole,
-		settingsAdminRead:     settingsAdminReadRole,
+		datasourcesExplorer: datasourcesExplorerRole,
+		ldapReader:          ldapReaderRole,
+		ldapWriter:          ldapWriterRole,
+		orgUsersReader:      orgUsersReaderRole,
+		orgUsersWriter:      orgUsersWriterRole,
+		settingsReader:      settingsReaderRole,
+		statsReader:         statsReaderRole,
+		usersReader:         usersReaderRole,
+		usersWriter:         usersWriterRole,
 	}
 
 	// FixedRoleGrants specifies which built-in roles are assigned
 	// to which set of FixedRoles by default. Alphabetically sorted.
 	FixedRoleGrants = map[string][]string{
 		RoleGrafanaAdmin: {
-			ldapAdminEdit,
-			ldapAdminRead,
-			serverAdminRead,
-			settingsAdminRead,
-			usersAdminEdit,
-			usersAdminRead,
-			usersOrgEdit,
-			usersOrgRead,
+			ldapReader,
+			ldapWriter,
+			orgUsersReader,
+			orgUsersWriter,
+			settingsReader,
+			statsReader,
+			usersReader,
+			usersWriter,
 		},
 		string(models.ROLE_ADMIN): {
-			usersOrgEdit,
-			usersOrgRead,
+			orgUsersReader,
+			orgUsersWriter,
 		},
 		string(models.ROLE_EDITOR): {
-			datasourcesEditorRead,
+			datasourcesExplorer,
 		},
 	}
 )

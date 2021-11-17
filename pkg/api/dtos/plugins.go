@@ -13,9 +13,9 @@ type PluginSetting struct {
 	Pinned        bool                   `json:"pinned"`
 	Module        string                 `json:"module"`
 	BaseUrl       string                 `json:"baseUrl"`
-	Info          *plugins.Info          `json:"info"`
+	Info          plugins.Info           `json:"info"`
 	Includes      []*plugins.Includes    `json:"includes"`
-	Dependencies  *plugins.Dependencies  `json:"dependencies"`
+	Dependencies  plugins.Dependencies   `json:"dependencies"`
 	JsonData      map[string]interface{} `json:"jsonData"`
 	DefaultNavUrl string                 `json:"defaultNavUrl"`
 
@@ -33,8 +33,8 @@ type PluginListItem struct {
 	Id            string                  `json:"id"`
 	Enabled       bool                    `json:"enabled"`
 	Pinned        bool                    `json:"pinned"`
-	Info          *plugins.Info           `json:"info"`
-	Dependencies  *plugins.Dependencies   `json:"dependencies"`
+	Info          plugins.Info            `json:"info"`
+	Dependencies  plugins.Dependencies    `json:"dependencies"`
 	LatestVersion string                  `json:"latestVersion"`
 	HasUpdate     bool                    `json:"hasUpdate"`
 	DefaultNavUrl string                  `json:"defaultNavUrl"`

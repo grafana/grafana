@@ -41,7 +41,11 @@ const uiDelete = (uid: string, title: string) => {
   e2e.pages.Dashboards.visit();
 
   // @todo replace `e2e.pages.Dashboards.dashboards` with this when argument is empty
-  e2e()
-    .get('[aria-label^="Dashboard search item "]')
-    .each((item) => e2e().wrap(item).should('not.contain', title));
+  if (e2e.components.Search.dashboardItems) {
+    e2e.components.Search.dashboardItems().each((item) => e2e().wrap(item).should('not.contain', title));
+  } else {
+    e2e()
+      .get('[aria-label^="Dashboard search item "]')
+      .each((item) => e2e().wrap(item).should('not.contain', title));
+  }
 };
