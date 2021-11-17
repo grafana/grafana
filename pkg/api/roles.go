@@ -236,7 +236,7 @@ var orgPreferencesAccessEvaluator = accesscontrol.EvalAny(
 )
 
 // orgsAccessEvaluator is used to protect the "Server Admin > Orgs" page access
-// (you need to have read to be able to update or delete orgs => read is the minimum)
+// (you need to have read access to update or delete orgs; read is the minimum)
 var orgsAccessEvaluator = accesscontrol.EvalPermission(ActionOrgsRead)
 
 // orgsCreateAccessEvaluator is used to protect the "Server Admin > Orgs > New Org" page access
