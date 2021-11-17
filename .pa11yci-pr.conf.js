@@ -55,7 +55,9 @@ var config = {
       url: '${HOST}/alerting/list',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      // the unified alerting promotion alert's content contrast is too low
+      // see https://github.com/grafana/grafana/pull/41829
+      threshold: 5,
     },
     {
       url: '${HOST}/datasources',
