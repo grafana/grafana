@@ -30,7 +30,7 @@ class TestDataSource {
   constructor(public instanceSettings: DataSourceInstanceSettings) {}
 }
 
-jest.mock('../plugin_loader', () => ({
+jest.mock('./plugin_loader', () => ({
   importDataSourcePlugin: (meta: DataSourcePluginMeta) => {
     return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
   },
@@ -128,13 +128,21 @@ describe('datasource_srv', () => {
 
     describe('when getting instance settings', () => {
       it('should work by name or uid', () => {
-        expect(dataSourceSrv.getInstanceSettings('mmm')).toBe(dataSourceSrv.getInstanceSettings('uid-code-mmm'));
+        const ds = dataSourceSrv.getInstanceSettings('mmm');
+        expect(dataSourceSrv.getInstanceSettings('uid-code-mmm')).toBe(ds);
+        expect(dataSourceSrv.getInstanceSettings({ uid: 'uid-code-mmm' })).toBe(ds);
       });
 
       it('should work with variable', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasource}');
         expect(ds?.name).toBe('${datasource}');
         expect(ds?.uid).toBe('${datasource}');
+        expect(ds?.rawRef).toMatchInlineSnapshot(`
+          Object {
+            "type": "test-db",
+            "uid": "uid-code-BBB",
+          }
+        `);
       });
 
       it('should not set isDefault when being fetched via variable', () => {
@@ -146,6 +154,12 @@ describe('datasource_srv', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasourceDefault}');
         expect(ds?.name).toBe('${datasourceDefault}');
         expect(ds?.uid).toBe('${datasourceDefault}');
+        expect(ds?.rawRef).toMatchInlineSnapshot(`
+          Object {
+            "type": "test-db",
+            "uid": "uid-code-BBB",
+          }
+        `);
       });
     });
 

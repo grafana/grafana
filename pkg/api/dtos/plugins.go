@@ -13,9 +13,9 @@ type PluginSetting struct {
 	Pinned        bool                   `json:"pinned"`
 	Module        string                 `json:"module"`
 	BaseUrl       string                 `json:"baseUrl"`
-	Info          *plugins.Info          `json:"info"`
+	Info          plugins.Info           `json:"info"`
 	Includes      []*plugins.Includes    `json:"includes"`
-	Dependencies  *plugins.Dependencies  `json:"dependencies"`
+	Dependencies  plugins.Dependencies   `json:"dependencies"`
 	JsonData      map[string]interface{} `json:"jsonData"`
 	DefaultNavUrl string                 `json:"defaultNavUrl"`
 
@@ -42,11 +42,11 @@ type PluginListItem struct {
 }
 
 type PluginJSON struct {
-	Info          *plugins.Info         `json:"info"`
-	Dependencies  *plugins.Dependencies `json:"dependencies"`
-	DefaultNavURL string                `json:"defaultNavUrl"`
-	Category      string                `json:"category"`
-	State         plugins.ReleaseState  `json:"state"`
+	Info          plugins.Info         `json:"info"`
+	Dependencies  plugins.Dependencies `json:"dependencies"`
+	DefaultNavURL string               `json:"defaultNavUrl"`
+	Category      string               `json:"category"`
+	State         plugins.ReleaseState `json:"state"`
 }
 
 type SignatureInfo struct {

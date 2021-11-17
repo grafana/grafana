@@ -45,6 +45,68 @@ type Plugin struct {
 	log      log.Logger
 }
 
+type PluginDTO struct {
+	JSONData
+
+	PluginDir string
+	Class     Class
+
+	// App fields
+	IncludedInAppID string
+	DefaultNavURL   string
+	Pinned          bool
+
+	// Signature fields
+	Signature      SignatureStatus
+	SignatureType  SignatureType
+	SignatureOrg   string
+	SignedFiles    PluginFiles
+	SignatureError *SignatureError
+
+	// GCOM update checker fields
+	GrafanaComVersion   string
+	GrafanaComHasUpdate bool
+
+	// SystemJS fields
+	Module  string
+	BaseURL string
+
+	Parent   *DepPlugin
+	Children []*DepPlugin
+
+	// temporary
+	backend.StreamHandler
+}
+
+func (p PluginDTO) SupportsStreaming() bool {
+	return p.StreamHandler != nil
+}
+
+func (p PluginDTO) IsApp() bool {
+	return p.Type == "app"
+}
+
+func (p PluginDTO) IsCorePlugin() bool {
+	return p.Class == Core
+}
+
+func (p PluginDTO) IncludedInSignature(file string) bool {
+	// permit Core plugin files
+	if p.IsCorePlugin() {
+		return true
+	}
+
+	// permit when no signed files (no MANIFEST)
+	if p.SignedFiles == nil {
+		return true
+	}
+
+	if _, exists := p.SignedFiles[file]; !exists {
+		return false
+	}
+	return true
+}
+
 // JSONData represents the plugin's plugin.json
 type JSONData struct {
 	// Common settings
@@ -120,6 +182,11 @@ type JWTTokenAuth struct {
 	Url    string            `json:"url"`
 	Scopes []string          `json:"scopes"`
 	Params map[string]string `json:"params"`
+}
+
+type DepPlugin struct {
+	ID      string
+	Version string
 }
 
 func (p *Plugin) PluginID() string {
@@ -252,6 +319,47 @@ type PluginClient interface {
 	backend.StreamHandler
 }
 
+func (p *Plugin) ToDTO() PluginDTO {
+	c, _ := p.Client()
+
+	var children []*DepPlugin
+	for _, child := range p.Children {
+		children = append(children, &DepPlugin{
+			ID:      child.ID,
+			Version: child.Info.Version,
+		})
+	}
+
+	var parent *DepPlugin
+	if p.Parent != nil {
+		parent = &DepPlugin{
+			ID:      p.Parent.ID,
+			Version: p.Parent.Info.Version,
+		}
+	}
+
+	return PluginDTO{
+		JSONData:            p.JSONData,
+		PluginDir:           p.PluginDir,
+		Class:               p.Class,
+		IncludedInAppID:     p.IncludedInAppID,
+		DefaultNavURL:       p.DefaultNavURL,
+		Pinned:              p.Pinned,
+		Signature:           p.Signature,
+		SignatureType:       p.SignatureType,
+		SignatureOrg:        p.SignatureOrg,
+		SignedFiles:         p.SignedFiles,
+		SignatureError:      p.SignatureError,
+		GrafanaComVersion:   p.GrafanaComVersion,
+		GrafanaComHasUpdate: p.GrafanaComHasUpdate,
+		Module:              p.Module,
+		BaseURL:             p.BaseURL,
+		StreamHandler:       c,
+		Parent:              parent,
+		Children:            children,
+	}
+}
+
 func (p *Plugin) StaticRoute() *StaticRoute {
 	if p.IsCorePlugin() {
 		return nil
@@ -286,33 +394,6 @@ func (p *Plugin) IsBundledPlugin() bool {
 
 func (p *Plugin) IsExternalPlugin() bool {
 	return p.Class == External
-}
-
-func (p *Plugin) SupportsStreaming() bool {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return false
-	}
-
-	_, ok = pluginClient.(backend.StreamHandler)
-	return ok
-}
-
-func (p *Plugin) IncludedInSignature(file string) bool {
-	// permit Core plugin files
-	if p.IsCorePlugin() {
-		return true
-	}
-
-	// permit when no signed files (no MANIFEST)
-	if p.SignedFiles == nil {
-		return true
-	}
-
-	if _, exists := p.SignedFiles[file]; !exists {
-		return false
-	}
-	return true
 }
 
 type Class string

@@ -9,22 +9,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	grafana "github.com/grafana/grafana/pkg/services/secrets/defaultprovider"
 	"github.com/grafana/grafana/pkg/setting"
 	"xorm.io/xorm"
 )
 
-const (
-	defaultProvider                 = "secretKey"
-	envelopeEncryptionFeatureToggle = "envelopeEncryption"
-)
-
 type SecretsService struct {
 	store    secrets.Store
-	bus      bus.Bus
 	enc      encryption.Internal
 	settings setting.Provider
 
@@ -33,15 +26,21 @@ type SecretsService struct {
 	dataKeyCache    map[string]dataKeyCacheItem
 }
 
-func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Internal, settings setting.Provider) *SecretsService {
-	providers := map[string]secrets.Provider{
-		defaultProvider: grafana.New(settings, enc),
+func ProvideSecretsService(
+	store secrets.Store,
+	kmsProvidersService kmsproviders.Service,
+	enc encryption.Internal,
+	settings setting.Provider,
+) (*SecretsService, error) {
+	providers, err := kmsProvidersService.Provide()
+	if err != nil {
+		return nil, err
 	}
-	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(defaultProvider)
+
+	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
 
 	s := &SecretsService{
 		store:           store,
-		bus:             bus,
 		enc:             enc,
 		settings:        settings,
 		providers:       providers,
@@ -49,7 +48,7 @@ func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Inte
 		dataKeyCache:    make(map[string]dataKeyCacheItem),
 	}
 
-	return s
+	return s, nil
 }
 
 type dataKeyCacheItem struct {
@@ -65,11 +64,11 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 
 func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(envelopeEncryptionFeatureToggle) {
+	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
-	// If encryption envelopeEncryptionFeatureToggle toggle is on, use envelope encryption
+	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
 	scope := opt()
 	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.currentProvider)
 
@@ -103,12 +102,12 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(envelopeEncryptionFeatureToggle) {
+	// Use legacy encryption service if secrets.EnvelopeEncryptionFeatureToggle toggle is off
+	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 
-	// If encryption envelopeEncryptionFeatureToggle toggle is on, use envelope encryption
+	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
 	if len(payload) == 0 {
 		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}

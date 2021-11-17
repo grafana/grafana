@@ -160,6 +160,11 @@ describe('geomap migrations', () => {
                     "fixed": "img/icons/marker/triangle.svg",
                     "mode": "fixed",
                   },
+                  "textConfig": Object {
+                    "fontSize": 12,
+                    "textAlign": "center",
+                    "textBaseline": "middle",
+                  },
                 },
               },
               "type": "markers",
