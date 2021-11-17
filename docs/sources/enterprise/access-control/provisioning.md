@@ -25,7 +25,7 @@ You can create, update, and delete custom roles, as well as create and remove bu
 
 To create or update custom roles, you can add a list of `roles` in the configuration.
 
-Every role has a [version]({{< relref "./roles.md#custom-roles" >}}) number. For each role you update, you must remember to increment it, otherwise changes won't be accounted for.
+Every role has a [version]({{< relref "./roles.md#custom-roles" >}}) number. For each role you update, you must remember to increment it, otherwise changes won't be applied.
 
 When you update a role, the existing role inside Grafana is altered to be exactly what is specified in the YAML file, including permissions.
 
@@ -72,6 +72,20 @@ roles:
 ```
 
 The `orgId` is lost when the role is set to global.
+
+### Grant roles to users
+
+To grant roles to users, you can add a list of <!-- SOMETHING --> in the configuration.
+
+Every user role grant has a [version]({{< relref "./roles.md#custom-roles" >}}) number. For each user role assignment you update, you must remember to increment the version, otherwise changes won't be applied.
+
+When you update a role grant, the user's roles are altered to be exactly what is specified in the YAML file.
+
+Here is an example YAML file to grant roles to a user:
+
+```yaml
+[INSERT YAML HERE]
+```
 
 ### Delete roles
 
