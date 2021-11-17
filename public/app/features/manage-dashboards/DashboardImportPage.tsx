@@ -3,7 +3,20 @@ import { connect, ConnectedProps } from 'react-redux';
 import { css } from '@emotion/css';
 import { AppEvents, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Field, FileUpload, Form, Input, stylesFactory, TextArea, Themeable2, withTheme2 } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  FileUpload,
+  Form,
+  HorizontalGroup,
+  Input,
+  Spinner,
+  stylesFactory,
+  TextArea,
+  Themeable2,
+  VerticalGroup,
+  withTheme2,
+} from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
@@ -161,7 +174,13 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents>
-          {loadingState === LoadingState.Loading && <span>Loading...</span>}
+          {loadingState === LoadingState.Loading && (
+            <VerticalGroup justify="center">
+              <HorizontalGroup justify="center">
+                <Spinner size={32} />
+              </HorizontalGroup>
+            </VerticalGroup>
+          )}
           {[LoadingState.Error, LoadingState.NotStarted].includes(loadingState) && this.renderImportForm()}
           {loadingState === LoadingState.Done && <ImportDashboardOverview />}
         </Page.Contents>
