@@ -12,8 +12,13 @@ import { fetchGcomDashboard, importDashboardJson } from './state/actions';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-interface OwnProps extends Themeable2 {}
+type DashboardImportPageRouteSearchParams = {
+  gcomDashboardId?: string;
+};
+
+type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageRouteSearchParams>;
 
 interface ConnectedProps {
   navModel: NavModel;
