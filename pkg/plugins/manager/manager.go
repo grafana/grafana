@@ -465,8 +465,8 @@ func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealt
 }
 
 func (m *PluginManager) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	plugin := m.Plugin(req.PluginContext.PluginID)
-	if plugin == nil {
+	plugin, exists := m.plugin(req.PluginContext.PluginID)
+	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
@@ -474,8 +474,8 @@ func (m *PluginManager) SubscribeStream(ctx context.Context, req *backend.Subscr
 }
 
 func (m *PluginManager) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	plugin := m.Plugin(req.PluginContext.PluginID)
-	if plugin == nil {
+	plugin, exists := m.plugin(req.PluginContext.PluginID)
+	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
@@ -483,8 +483,8 @@ func (m *PluginManager) PublishStream(ctx context.Context, req *backend.PublishS
 }
 
 func (m *PluginManager) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	plugin := m.Plugin(req.PluginContext.PluginID)
-	if plugin == nil {
+	plugin, exists := m.plugin(req.PluginContext.PluginID)
+	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
 
