@@ -88,7 +88,7 @@ const defaultProps: Props = {
 
 function getSelectors() {
   const dashboardSelect = () => screen.getByLabelText(/user preferences home dashboard drop down/i);
-  const timepickerSelect = () => screen.getByLabelText(selectors.components.TimeZonePicker.container);
+  const timepickerSelect = () => screen.getByTestId(selectors.components.TimeZonePicker.containerV2);
   const teamsTable = () => screen.getByRole('table', { name: /user teams table/i });
   const orgsTable = () => screen.getByRole('table', { name: /user organizations table/i });
   const sessionsTable = () => screen.getByRole('table', { name: /user sessions table/i });

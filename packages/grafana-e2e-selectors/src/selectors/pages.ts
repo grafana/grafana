@@ -65,6 +65,9 @@ export const Pages = {
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
+        /**
+         * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
+         */
         timezone: 'Time zone picker select container',
         title: 'Dashboard settings page title',
       },

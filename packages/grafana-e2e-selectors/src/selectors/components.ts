@@ -237,7 +237,11 @@ export const Components = {
     inputV2: 'Select a data source',
   },
   TimeZonePicker: {
+    /**
+     * @deprecated use containerV2 from Grafana 8.3 instead
+     */
     container: 'Time zone picker select container',
+    containerV2: 'data-testid Time zone picker select container',
   },
   WeekStartPicker: {
     container: 'Choose starting day of the week',

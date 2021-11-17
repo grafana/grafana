@@ -12,8 +12,8 @@ import {
   Select,
   stylesFactory,
   TimeZonePicker,
-  WeekStartPicker,
   Tooltip,
+  WeekStartPicker,
 } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -166,7 +166,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 />
               </Field>
 
-              <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
+              <Field label="Timezone" data-testid={selectors.components.TimeZonePicker.containerV2}>
                 <TimeZonePicker includeInternal={true} value={timezone} onChange={this.onTimeZoneChanged} />
               </Field>
 
