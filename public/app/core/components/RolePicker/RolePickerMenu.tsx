@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import {
   Button,
@@ -62,31 +62,6 @@ export const RolePickerMenu = ({
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
 
-  const getOptionGroups = useCallback(() => {
-    const groupsMap: { [key: string]: Role[] } = {};
-    options.forEach((role) => {
-      if (role.name.startsWith('fixed:')) {
-        const groupName = getRoleGroup(role);
-        if (groupsMap[groupName]) {
-          groupsMap[groupName].push(role);
-        } else {
-          groupsMap[groupName] = [role];
-        }
-      }
-    });
-
-    const groups = [];
-    for (const groupName of Object.keys(groupsMap)) {
-      const groupOptions = groupsMap[groupName].sort(sortRolesByName);
-      groups.push({
-        name: fixedRoleGroupNames[groupName] || capitalize(groupName),
-        value: groupName,
-        options: groupOptions,
-      });
-    }
-    return groups.sort((a, b) => (a.name < b.name ? -1 : 1));
-  }, [options]);
-
   // Call onSelect() on every selectedOptions change
   useEffect(() => {
     onSelect(selectedOptions);
@@ -100,7 +75,7 @@ export const RolePickerMenu = ({
 
   const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
   const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
-  const optionGroups = getOptionGroups();
+  const optionGroups = getOptionGroups(options);
 
   const getSelectedGroupOptions = (group: string) => {
     const selectedGroupOptions = [];
@@ -287,6 +262,31 @@ export const RolePickerMenu = ({
 
 const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:');
 const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
+
+const getOptionGroups = (options: Role[]) => {
+  const groupsMap: { [key: string]: Role[] } = {};
+  options.forEach((role) => {
+    if (role.name.startsWith('fixed:')) {
+      const groupName = getRoleGroup(role);
+      if (groupsMap[groupName]) {
+        groupsMap[groupName].push(role);
+      } else {
+        groupsMap[groupName] = [role];
+      }
+    }
+  });
+
+  const groups = [];
+  for (const groupName of Object.keys(groupsMap)) {
+    const groupOptions = groupsMap[groupName].sort(sortRolesByName);
+    groups.push({
+      name: fixedRoleGroupNames[groupName] || capitalize(groupName),
+      value: groupName,
+      options: groupOptions,
+    });
+  }
+  return groups.sort((a, b) => a.name.localeCompare(b.name));
+};
 
 interface RolePickerSubMenuProps {
   options: Role[];
@@ -502,7 +502,7 @@ const capitalize = (s: string): string => {
   return s.slice(0, 1).toUpperCase() + s.slice(1);
 };
 
-const sortRolesByName = (a: Role, b: Role) => (a.name < b.name ? -1 : 1);
+const sortRolesByName = (a: Role, b: Role) => a.name.localeCompare(b.name);
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
