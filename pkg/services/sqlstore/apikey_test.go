@@ -129,7 +129,7 @@ func TestApiKeyErrors(t *testing.T) {
 
 		t.Run("Delete non-existing key should return error", func(t *testing.T) {
 			cmd := models.DeleteApiKeyCommand{Id: 1}
-			err := ss.DeleteApiKeyCtx(context.Background(), &cmd)
+			err := ss.DeleteApiKey(context.Background(), &cmd)
 
 			assert.EqualError(t, err, models.ErrApiKeyNotFound.Error())
 		})

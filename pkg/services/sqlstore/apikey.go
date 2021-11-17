@@ -13,7 +13,7 @@ func (ss *SQLStore) addAPIKeysQueryAndCommandHandlers() {
 	bus.AddHandlerCtx("sql", ss.GetAPIKeys)
 	bus.AddHandlerCtx("sql", ss.GetApiKeyById)
 	bus.AddHandlerCtx("sql", ss.GetApiKeyByName)
-	bus.AddHandlerCtx("sql", ss.DeleteApiKeyCtx)
+	bus.AddHandlerCtx("sql", ss.DeleteApiKey)
 	bus.AddHandlerCtx("sql", ss.AddAPIKey)
 }
 
@@ -38,7 +38,7 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 	})
 }
 
-func (ss *SQLStore) DeleteApiKeyCtx(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
+func (ss *SQLStore) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		return deleteAPIKey(sess, cmd.Id, cmd.OrgId)
 	})
