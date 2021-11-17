@@ -1074,12 +1074,12 @@ func TestSettingsCasting(t *testing.T) {
 
 				dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
 
-				assert.Zero(t, 10, dateHistogramAgg.FixedInterval)
-				assert.NotZero(t, 10, dateHistogramAgg.Interval)
+				assert.Zero(t, dateHistogramAgg.FixedInterval)
+				assert.NotZero(t, dateHistogramAgg.Interval)
 			})
 
 			t.Run("Uses fixed_interval with ES >= 8.0.0", func(t *testing.T) {
-				c := newFakeClient("7.7.0")
+				c := newFakeClient("8.0.0")
 				_, err := executeTsdbQuery(c, `{
 					"timeField": "@timestamp",
 					"bucketAggs": [
@@ -1101,8 +1101,8 @@ func TestSettingsCasting(t *testing.T) {
 
 				dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
 
-				assert.NotZero(t, 10, dateHistogramAgg.FixedInterval)
-				assert.Zero(t, 10, dateHistogramAgg.Interval)
+				assert.NotZero(t, dateHistogramAgg.FixedInterval)
+				assert.Zero(t, dateHistogramAgg.Interval)
 			})
 		})
 	})
