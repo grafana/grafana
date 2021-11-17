@@ -1,4 +1,6 @@
+import { config } from '@grafana/runtime';
 import { TextDimensionMode } from 'app/features/dimensions';
+import { getMarkerMaker } from './markers';
 import { defaultStyleConfig, StyleConfig, StyleConfigFields, StyleConfigState } from './types';
 
 /** Indicate if the style wants to show text values */
@@ -17,21 +19,46 @@ export function styleUsesText(config: StyleConfig): boolean {
 }
 
 /** Return a distinct list of fields used to dynamically change the style */
-export function getStyleConfigState(config: StyleConfig): StyleConfigState {
-  const hasText = styleUsesText(config);
+export async function getStyleConfigState(cfg?: StyleConfig): Promise<StyleConfigState> {
+  if (!cfg) {
+    cfg = defaultStyleConfig;
+  }
+  const hasText = styleUsesText(cfg);
+  const fields: StyleConfigFields = {};
+  const maker = await getMarkerMaker(cfg.symbol?.fixed, hasText);
   const state: StyleConfigState = {
-    config,
+    config: cfg, // raw values
     hasText,
+    fields,
     base: {
-      color: config.color?.fixed ?? defaultStyleConfig.color.fixed,
+      color: config.theme2.visualization.getColorByName(cfg.color?.fixed ?? defaultStyleConfig.color.fixed),
+      opacity: cfg.opacity ?? defaultStyleConfig.opacity,
+      lineWidth: cfg.lineWidth ?? 1,
+      size: cfg.size?.fixed ?? defaultStyleConfig.size.fixed,
+      rotation: 0, // dynamic will follow path
     },
+    maker,
   };
 
-  const fields: StyleConfigFields = {
-    color: config.color?.field,
-    size: config.size?.field,
-    text: config.text?.field,
-  };
+  if (cfg.color?.field?.length) {
+    fields.color = cfg.color.field;
+  }
+  if (cfg.size?.field?.length) {
+    fields.size = cfg.size.field;
+  }
 
-  return fields;
+  if (hasText) {
+    state.base.text = cfg.text?.fixed;
+    state.base.textConfig = cfg.textConfig ?? defaultStyleConfig.textConfig;
+
+    if (cfg.text?.field?.length) {
+      fields.text = cfg.text.field;
+    }
+  }
+
+  // Clear the fields if possible
+  if (!Object.keys(fields).length) {
+    state.fields = undefined;
+  }
+  return state;
 }

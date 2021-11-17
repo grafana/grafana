@@ -1,5 +1,6 @@
 import {
   ColorDimensionConfig,
+  DimensionSupplier,
   ResourceDimensionConfig,
   ResourceDimensionMode,
   ScaleDimensionConfig,
@@ -100,11 +101,18 @@ export interface StyleConfigFields {
   text?: string;
 }
 
+export interface StyleDimensions {
+  color?: DimensionSupplier<string>;
+  size?: DimensionSupplier<number>;
+  text?: DimensionSupplier<string>;
+}
+
 export interface StyleConfigState {
-  config: TextStyleConfig;
+  config: StyleConfig;
   hasText?: boolean;
   base: StyleConfigValues;
   fields?: StyleConfigFields;
+  dims?: StyleDimensions;
   maker: StyleMaker;
 }
 
