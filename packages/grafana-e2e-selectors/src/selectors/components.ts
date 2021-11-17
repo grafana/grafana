@@ -284,7 +284,11 @@ export const Components = {
     icon: 'Loading indicator',
   },
   CallToActionCard: {
+    /**
+     * @deprecated use buttonV2 from Grafana 8.3 instead
+     */
     button: (name: string) => `Call to action button ${name}`,
+    buttonV2: (name: string) => `data-testid Call to action button ${name}`,
   },
   DataLinksContextMenu: {
     singleLink: 'Data link',
