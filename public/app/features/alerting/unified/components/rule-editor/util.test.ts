@@ -147,6 +147,15 @@ describe('rule-editor', () => {
       expect(rewiredQueries[1].model as ExpressionQuery).toHaveProperty('expression', 'abs(${C}) + ${C}');
       expect(rewiredQueries[2].model as ExpressionQuery).toHaveProperty('expression', 'C');
     });
+
+    it('should skip if refs are identical', () => {
+      const queries: AlertQuery[] = [dataSource, reduceExpression, mathExpression];
+      const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'A');
+
+      expect(rewiredQueries[0]).toEqual(queries[0]);
+      expect(rewiredQueries[1]).toEqual(queries[1]);
+      expect(rewiredQueries[2]).toEqual(queries[2]);
+    });
   });
 
   describe('updateMathExpressionRefs', () => {

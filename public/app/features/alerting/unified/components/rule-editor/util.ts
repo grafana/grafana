@@ -7,6 +7,10 @@ export function queriesWithUpdatedReferences(
   newRefId: string
 ): AlertQuery[] {
   return queries.map((query) => {
+    if (previousRefId === newRefId) {
+      return query;
+    }
+
     if (!isExpressionQuery(query.model)) {
       return query;
     }
