@@ -115,7 +115,8 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
 
   getPanelDescription = (panel: PanelModel): string => {
     const { defaultDatasource } = this.state;
-    const dsname = panel.datasource ? panel.datasource : defaultDatasource;
+    const datasource = panel.datasource ? panel.datasource : defaultDatasource;
+    const dsname = getDatasourceSrv().getInstanceSettings(datasource)?.name;
 
     if (panel.targets.length === 1) {
       return '1 query to ' + dsname;
