@@ -491,7 +491,7 @@ func TestAPIEndpoint_PutOrgAddress_AccessControl(t *testing.T) {
 	})
 
 	input = strings.NewReader(testUpdateOrgAddressForm)
-	t.Run("AccessControl prevents updating another org address with too correct permissions in another org", func(t *testing.T) {
+	t.Run("AccessControl prevents updating another org address with correct permissions in the current org", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsAddressURL, 2), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
