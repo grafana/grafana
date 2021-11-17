@@ -51,11 +51,11 @@ export function NavBarMenuItem({
   if (url) {
     element =
       !target && url.startsWith('/') ? (
-        <Link className={styles.element} href={url} target={target} onClick={onClick} tabIndex={-1}>
+        <Link className={styles.element} href={url} target={target} onClick={onClick} tabIndex={!isMobile ? -1 : 0}>
           {linkContent}
         </Link>
       ) : (
-        <a href={url} target={target} className={styles.element} onClick={onClick} tabIndex={-1}>
+        <a href={url} target={target} className={styles.element} onClick={onClick} tabIndex={!isMobile ? -1 : 0}>
           {linkContent}
         </a>
       );

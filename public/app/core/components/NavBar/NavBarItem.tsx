@@ -38,8 +38,12 @@ const NavBarItem = ({
   index,
 }: Props) => {
   const theme = useTheme2();
+  let menuItemsSorted;
+  if (menuItems) {
+    menuItemsSorted = reverseMenuDirection ? menuItems?.reverse() : menuItems;
+  }
 
-  const filteredItems = menuItems?.filter((item) => !item.hideFromMenu);
+  const filteredItems = menuItemsSorted?.filter((item) => !item.hideFromMenu);
   const adjustHeightForBorder = filteredItems!.length === 0;
   const styles = getStyles(theme, isActive, adjustHeightForBorder);
 
@@ -71,7 +75,7 @@ const NavBarItem = ({
 
   return showMenu ? (
     <div className={cx(styles.container, className)}>
-      <MenuButton link={link} isActive={isActive} reverseDirection={reverseMenuDirection}>
+      <MenuButton link={link} isActive={isActive} reverseDirection={reverseMenuDirection} menuItems={menuItems}>
         <Item key={id} textValue={link.text}>
           <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
         </Item>

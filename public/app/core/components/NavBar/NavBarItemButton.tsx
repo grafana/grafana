@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { useMenuTriggerState } from '@react-stately/menu';
 
-import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
+import { useFocusVisible, useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
 import { useMenuTrigger } from '@react-aria/menu';
 import { useButton } from '@react-aria/button';
 
@@ -14,7 +14,7 @@ import NavBarDropdown from './NavBarDropdown';
 export function MenuButton(props: any) {
   const theme = useTheme2();
 
-  const { link, isActive, reverseDirection, ...rest } = props;
+  const { link, isActive, reverseDirection, menuItems, id, ...rest } = props;
   const styles = getStyles(theme, isActive);
 
   // Create state based on the incoming props
@@ -23,19 +23,13 @@ export function MenuButton(props: any) {
   // Get props for the menu trigger and menu elements
   const ref = React.useRef(null);
   const { menuTriggerProps, menuProps } = useMenuTrigger({}, state, ref);
-  const { focusWithinProps } = useFocusWithin({
-    onFocusWithinChange: (isFocused) => {
-      if (isFocused) {
-        state.open();
-      }
-      if (!isFocused) {
-        state.close();
-      }
-    },
-  });
 
-  const { hoverProps } = useHover({
+  // style to the focused menu item
+  let { isFocusVisible } = useFocusVisible({ isTextInput: false });
+
+  const { hoverProps, isHovered } = useHover({
     onHoverChange: (isHovering) => {
+      console.log({ stateHover: state.isOpen });
       if (isHovering) {
         state.open();
       }
@@ -45,18 +39,34 @@ export function MenuButton(props: any) {
     },
   });
 
+  const { focusWithinProps } = useFocusWithin({
+    onFocusWithinChange: (isFocused) => {
+      if (isFocused && isFocusVisible) {
+        state.open();
+      }
+      if (!isFocused) {
+        state.close();
+      }
+    },
+  });
+
   const [enableAllItems, setEnableAllItems] = useState(false);
 
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
-      console.log(e.key);
       switch (e.key) {
         case 'Enter':
         case ' ':
-          link?.onClick();
+          setEnableAllItems(false);
+          state.close();
+          //should clear up focus or focus on main page
           break;
         case 'ArrowRight':
+          if (!state.isOpen) {
+            state.open();
+          }
           setEnableAllItems(true);
+
           break;
         case 'ArrowLeft':
           setEnableAllItems(false);
@@ -121,7 +131,7 @@ export function MenuButton(props: any) {
       {state.isOpen && (
         <NavBarDropdown
           {...rest}
-          parent={link}
+          items={menuItems}
           enableAllItems={enableAllItems}
           domProps={menuProps}
           autoFocus={state.focusStrategy}

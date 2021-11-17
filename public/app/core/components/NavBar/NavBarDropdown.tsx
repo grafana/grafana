@@ -29,11 +29,17 @@ const NavBarDropdown = ({
   const styles = getStyles(theme, reverseDirection);
 
   const disabledKeys = enableAllItems
-    ? []
+    ? items?.map((item: any, index: number) => {
+        if (item.id?.startsWith('divider')) {
+          return `${item.key}-${index}`;
+        }
+        return false;
+      })
     : items?.map((item: any, index: number) => {
         return `${item.id}-${index}`;
       });
 
+  // console.log({ disabledKeys });
   // Create menu state based on the incoming props
   const state = useTreeState({ ...rest, disabledKeys });
 
@@ -128,7 +134,6 @@ export function MenuItem({ item, state, onAction, onClose }: any) {
         e.target?.querySelector('a')?.click();
         e.target?.querySelector('button')?.click();
         break;
-      default:
         break;
     }
   };
@@ -167,7 +172,7 @@ const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirecti
       bottom: ${reverseDirection ? 0 : 'auto'};
       box-shadow: ${theme.shadows.z3};
       display: flex;
-      flex-direction: ${reverseDirection ? 'column-reverse' : 'column'};
+      flex-direction: column;
       left: 100%;
       list-style: none;
       min-width: 140px;
