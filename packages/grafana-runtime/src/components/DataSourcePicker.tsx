@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@grafana/ui';
+import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
 import {
   DataSourceInstanceSettings,
   DataSourceRef,
@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
-import { css, cx } from '@emotion/css';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -152,7 +151,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
-    const styles = getStyles();
     const isClearable = typeof onClear === 'function';
 
     return (
@@ -161,7 +159,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           aria-label={selectors.components.DataSourcePicker.inputV2}
           inputId="data-source-picker"
           menuShouldPortal
-          className={styles.select}
+          className="ds-picker select-container"
           isMulti={false}
           isClearable={isClearable}
           backspaceRemovesValue={false}
@@ -191,13 +189,3 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     );
   }
 }
-
-const getStyles = stylesFactory(() => ({
-  select: cx(
-    css({
-      minWidth: 200,
-    }),
-    'ds-picker',
-    'select-container'
-  ),
-}));

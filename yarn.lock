@@ -2420,7 +2420,7 @@ __metadata:
     rollup-plugin-typescript2: 0.30.0
     rollup-plugin-visualizer: 5.5.2
     rxjs: 7.3.0
-    sinon: 8.1.1
+    sinon: 12.0.1
     tinycolor2: 1.4.1
     tslib: 2.3.1
     typescript: 4.4.3
@@ -2845,7 +2845,7 @@ __metadata:
     ts-loader: 8.0.11
     tslib: 2.3.1
     typescript: 4.4.3
-    uplot: 1.6.16
+    uplot: 1.6.17
     uuid: 8.3.0
     webpack: 5.58.1
     webpack-filter-warnings-plugin: 1.2.1
@@ -2955,7 +2955,7 @@ __metadata:
     react-icons: 2.2.7
     recompose: ^0.25.0
     reselect: 4.0.0
-    sinon: 8.1.1
+    sinon: 12.0.1
     tinycolor2: 1.4.1
     tslib: 2.3.1
     tween-functions: ^1.2.0
@@ -5338,7 +5338,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/commons@npm:^1, @sinonjs/commons@npm:^1.6.0, @sinonjs/commons@npm:^1.7.0":
+"@sinonjs/commons@npm:^1.6.0, @sinonjs/commons@npm:^1.7.0, @sinonjs/commons@npm:^1.8.3":
   version: 1.8.3
   resolution: "@sinonjs/commons@npm:1.8.3"
   dependencies:
@@ -5356,7 +5356,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/fake-timers@npm:^7.1.0":
+"@sinonjs/fake-timers@npm:^7.0.4, @sinonjs/fake-timers@npm:^7.1.0":
   version: 7.1.2
   resolution: "@sinonjs/fake-timers@npm:7.1.2"
   dependencies:
@@ -5365,24 +5365,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/formatio@npm:^4.0.1":
-  version: 4.0.1
-  resolution: "@sinonjs/formatio@npm:4.0.1"
+"@sinonjs/fake-timers@npm:^8.1.0":
+  version: 8.1.0
+  resolution: "@sinonjs/fake-timers@npm:8.1.0"
   dependencies:
-    "@sinonjs/commons": ^1
-    "@sinonjs/samsam": ^4.2.0
-  checksum: 445f2512feb1b4d7c0bd36b6a0f433c25393aa0381b02b0315fba81656c39494e29924fb636228ad2a0bfe1711eefd765dccea814c66e0b7d88bd6e71d0f0848
+    "@sinonjs/commons": ^1.7.0
+  checksum: 09b5a158ce013a6c37613258bad79ca4efeb99b1f59c41c73cca36cac00b258aefcf46eeea970fccf06b989414d86fe9f54c1102272c0c3bdd51a313cea80949
   languageName: node
   linkType: hard
 
-"@sinonjs/samsam@npm:^4.2.0, @sinonjs/samsam@npm:^4.2.2":
-  version: 4.2.2
-  resolution: "@sinonjs/samsam@npm:4.2.2"
+"@sinonjs/samsam@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@sinonjs/samsam@npm:6.0.2"
   dependencies:
     "@sinonjs/commons": ^1.6.0
     lodash.get: ^4.4.2
     type-detect: ^4.0.8
-  checksum: b438197deb27d7e928e0ce9d448856d8dd2e2cff67b5b94a2f64246377a0ea4b86cc1908f5a44e7f8adfb7d93fd255acd0dec2e1108afce2c45fe097ed46b05f
+  checksum: bc1514edf15f4fa42a1bf27024b15f87654deb2999045c0e427659ff3c734eba44661fceae3624be23cc15ee9c6ddafe5209af2192845c6b267350b54eed1495
   languageName: node
   linkType: hard
 
@@ -10227,6 +10226,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ansi-styles@npm:^6.0.0":
+  version: 6.1.0
+  resolution: "ansi-styles@npm:6.1.0"
+  checksum: 7a7f8528c07a9d20c3a92bccd2b6bc3bb4d26e5cb775c02826921477377bd495d615d61f710d56216344b6238d1d11ef2b0348e146c5b128715578bfb3217229
+  languageName: node
+  linkType: hard
+
 "ansi-to-html@npm:^0.6.11":
   version: 0.6.15
   resolution: "ansi-to-html@npm:0.6.15"
@@ -12264,7 +12270,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cli-truncate@npm:2.1.0, cli-truncate@npm:^2.1.0":
+"cli-truncate@npm:3.1.0":
+  version: 3.1.0
+  resolution: "cli-truncate@npm:3.1.0"
+  dependencies:
+    slice-ansi: ^5.0.0
+    string-width: ^5.0.0
+  checksum: c3243e41974445691c63f8b405df1d5a24049dc33d324fe448dc572e561a7b772ae982692900b1a5960901cc4fc7def25a629b9c69a4208ee89d12ab3332617a
+  languageName: node
+  linkType: hard
+
+"cli-truncate@npm:^2.1.0":
   version: 2.1.0
   resolution: "cli-truncate@npm:2.1.0"
   dependencies:
@@ -12452,7 +12468,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"colorette@npm:^1.1.0, colorette@npm:^1.2.1, colorette@npm:^1.2.2, colorette@npm:^1.4.0":
+"colorette@npm:^1.1.0, colorette@npm:^1.2.1, colorette@npm:^1.2.2":
   version: 1.4.0
   resolution: "colorette@npm:1.4.0"
   checksum: 01c3c16058b182a4ab4c126a65a75faa4d38a20fa7c845090b25453acec6c371bb2c5dceb0a2338511f17902b9d1a9af0cadd8509c9403894b79311032c256c3
@@ -12541,7 +12557,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:8.3.0, commander@npm:^8.0.0, commander@npm:^8.1.0, commander@npm:^8.2.0":
+"commander@npm:8.3.0, commander@npm:^8.0.0, commander@npm:^8.1.0, commander@npm:^8.3.0":
   version: 8.3.0
   resolution: "commander@npm:8.3.0"
   checksum: 0f82321821fc27b83bd409510bb9deeebcfa799ff0bf5d102128b500b7af22872c0c92cb6a0ebc5a4cf19c6b550fba9cedfa7329d18c6442a625f851377bacf0
@@ -14712,10 +14728,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"diff@npm:^4.0.1, diff@npm:^4.0.2":
+"diff@npm:^4.0.1":
   version: 4.0.2
   resolution: "diff@npm:4.0.2"
   checksum: f2c09b0ce4e6b301c221addd83bf3f454c0bc00caa3dd837cf6c127d6edf7223aa2bbe3b688feea110b7f262adbfc845b757c44c8a9f8c0c5b15d8fa9ce9d20d
+  languageName: node
+  linkType: hard
+
+"diff@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "diff@npm:5.0.0"
+  checksum: f19fe29284b633afdb2725c2a8bb7d25761ea54d321d8e67987ac851c5294be4afeab532bd84531e02583a3fe7f4014aa314a3eda84f5590e7a9e6b371ef3b46
   languageName: node
   linkType: hard
 
@@ -15150,6 +15173,13 @@ __metadata:
   version: 8.0.0
   resolution: "emoji-regex@npm:8.0.0"
   checksum: d4c5c39d5a9868b5fa152f00cada8a936868fd3367f33f71be515ecee4c803132d11b31a6222b2571b1e5f7e13890156a94880345594d0ce7e3c9895f560f192
+  languageName: node
+  linkType: hard
+
+"emoji-regex@npm:^9.2.2":
+  version: 9.2.2
+  resolution: "emoji-regex@npm:9.2.2"
+  checksum: 8487182da74aabd810ac6d6f1994111dfc0e331b01271ae01ec1eb0ad7b5ecc2bbbbd2f053c05cb55a1ac30449527d819bbfbf0e3de1023db308cbcb47f86601
   languageName: node
   linkType: hard
 
@@ -17242,13 +17272,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-own-enumerable-property-symbols@npm:^3.0.0":
-  version: 3.0.2
-  resolution: "get-own-enumerable-property-symbols@npm:3.0.2"
-  checksum: 8f0331f14159f939830884799f937343c8c0a2c330506094bc12cbee3665d88337fe97a4ea35c002cc2bdba0f5d9975ad7ec3abb925015cdf2a93e76d4759ede
-  languageName: node
-  linkType: hard
-
 "get-package-type@npm:^0.1.0":
   version: 0.1.0
   resolution: "get-package-type@npm:0.1.0"
@@ -17996,7 +18019,7 @@ __metadata:
     lezer: 0.13.5
     lezer-promql: 0.20.0
     lezer-tree: 0.13.2
-    lint-staged: 11.2.6
+    lint-staged: 12.0.2
     lodash: 4.17.21
     logfmt: ^1.3.2
     lru-cache: 6.0.0
@@ -18069,14 +18092,14 @@ __metadata:
     search-query-parser: 1.5.4
     selecto: 1.13.0
     semver: ^7.1.3
-    sinon: 8.1.1
+    sinon: 12.0.1
     slate: 0.47.8
     slate-plain-serializer: 0.7.10
     style-loader: 3.3.1
     stylelint: 14.0.1
     stylelint-config-prettier: 9.0.3
     stylelint-config-sass-guidelines: 9.0.1
-    symbol-observable: 1.2.0
+    symbol-observable: 4.0.0
     terser-webpack-plugin: 5.2.5
     test: "link:./public/test"
     testing-library-selector: ^0.1.3
@@ -18088,7 +18111,7 @@ __metadata:
     ts-node: 10.4.0
     tslib: 2.3.1
     typescript: 4.4.3
-    uplot: 1.6.16
+    uplot: 1.6.17
     uuid: 8.3.0
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -18217,6 +18240,13 @@ __metadata:
   version: 4.0.0
   resolution: "has-flag@npm:4.0.0"
   checksum: 261a1357037ead75e338156b1f9452c016a37dcd3283a972a30d9e4a87441ba372c8b81f818cd0fbcd9c0354b4ae7e18b9e1afa1971164aef6d18c2b6095a8ad
+  languageName: node
+  linkType: hard
+
+"has-flag@npm:^5.0.0":
+  version: 5.0.1
+  resolution: "has-flag@npm:5.0.1"
+  checksum: e0a151db8e43b528258c4269c23224c691b42c1f5168f6d88b61c3f9398ef16d44226a78a0596642da55851cf306a8afe57d6936d4d69a24b66fd10de1373da8
   languageName: node
   linkType: hard
 
@@ -19639,6 +19669,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-fullwidth-code-point@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "is-fullwidth-code-point@npm:4.0.0"
+  checksum: 8ae89bf5057bdf4f57b346fb6c55e9c3dd2549983d54191d722d5c739397a903012cc41a04ee3403fd872e811243ef91a7c5196da7b5841dc6b6aae31a264a8d
+  languageName: node
+  linkType: hard
+
 "is-function@npm:^1.0.2":
   version: 1.0.2
   resolution: "is-function@npm:1.0.2"
@@ -19823,7 +19860,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-obj@npm:^1.0.0, is-obj@npm:^1.0.1":
+"is-obj@npm:^1.0.0":
   version: 1.0.1
   resolution: "is-obj@npm:1.0.1"
   checksum: 3ccf0efdea12951e0b9c784e2b00e77e87b2f8bd30b42a498548a8afcc11b3287342a2030c308e473e93a7a19c9ea7854c99a8832a476591c727df2a9c79796c
@@ -19948,13 +19985,6 @@ __metadata:
     call-bind: ^1.0.2
     has-tostringtag: ^1.0.0
   checksum: 362399b33535bc8f386d96c45c9feb04cf7f8b41c182f54174c1a45c9abbbe5e31290bbad09a458583ff6bf3b2048672cdb1881b13289569a7c548370856a652
-  languageName: node
-  linkType: hard
-
-"is-regexp@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "is-regexp@npm:1.0.0"
-  checksum: be692828e24cba479ec33644326fa98959ec68ba77965e0291088c1a741feaea4919d79f8031708f85fd25e39de002b4520622b55460660b9c369e6f7187faef
   languageName: node
   linkType: hard
 
@@ -21641,31 +21671,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lint-staged@npm:11.2.6":
-  version: 11.2.6
-  resolution: "lint-staged@npm:11.2.6"
+"lint-staged@npm:12.0.2":
+  version: 12.0.2
+  resolution: "lint-staged@npm:12.0.2"
   dependencies:
-    cli-truncate: 2.1.0
-    colorette: ^1.4.0
-    commander: ^8.2.0
+    cli-truncate: 3.1.0
+    colorette: ^2.0.16
+    commander: ^8.3.0
     cosmiconfig: ^7.0.1
     debug: ^4.3.2
-    enquirer: ^2.3.6
     execa: ^5.1.1
-    listr2: ^3.12.2
+    listr2: ^3.13.3
     micromatch: ^4.0.4
     normalize-path: ^3.0.0
-    please-upgrade-node: ^3.2.0
+    object-inspect: 1.11.0
     string-argv: 0.3.1
-    stringify-object: 3.3.0
-    supports-color: 8.1.1
+    supports-color: 9.0.2
   bin:
     lint-staged: bin/lint-staged.js
-  checksum: b9071621db351c553579bd18df3d80fb753f851c4f1f72db0aaf12e713eab25b6d8a044dab2957817de7da02054a63f7725a49c763aee09295133f0d554f4d3f
+  checksum: dd90c182c762f4172ac470b47af4810ea1e637d82c47871e1aa4b44e79570235725bc0be166c054cf7cf9db1877f11a19e5258dee89ab00b00d336b147e803fb
   languageName: node
   linkType: hard
 
-"listr2@npm:^3.12.2":
+"listr2@npm:^3.13.3":
   version: 3.13.3
   resolution: "listr2@npm:3.13.3"
   dependencies:
@@ -22039,15 +22067,6 @@ __metadata:
     es6-symbol: ^3.1.1
     object.assign: ^4.1.0
   checksum: f4eff8e178a37c45bbd107a81e34892f0c61398e1231bb25be88df330d1057b3719175348b426b8486a3d466ce5c7d5adbff6fcddd413a1dd67607a41326c9dd
-  languageName: node
-  linkType: hard
-
-"lolex@npm:^5.0.1, lolex@npm:^5.1.2":
-  version: 5.1.2
-  resolution: "lolex@npm:5.1.2"
-  dependencies:
-    "@sinonjs/commons": ^1.7.0
-  checksum: 7eb468d4ef4746c024d23cb2b75f679f79449a9d5cbe11abadf2f3b147c1d7ffe28816438bedfb8a75c58357a625c2f9ba197b050c226d2b3f0c4a956cf556fb
   languageName: node
   linkType: hard
 
@@ -23328,17 +23347,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nise@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "nise@npm:3.0.1"
+"nise@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "nise@npm:5.1.0"
   dependencies:
     "@sinonjs/commons": ^1.7.0
-    "@sinonjs/formatio": ^4.0.1
+    "@sinonjs/fake-timers": ^7.0.4
     "@sinonjs/text-encoding": ^0.7.1
     just-extend: ^4.0.2
-    lolex: ^5.0.1
     path-to-regexp: ^1.7.0
-  checksum: 7caf5c50a2d1589ec6b7ad2356d879d7906c6b834f146d9dec4eaf55f1883ad43bd4cde5a8a4051f91fadbf85d2ccc32bab1f424accdd1744fb82a6185855090
+  checksum: e3843cc125163ce99b7fb0328edf427b981be32c6c719684582cf0a46fb5206173835a9a14dedac3c4833e415ab0e0493f9f4d4163572a3a0c95db39b093166d
   languageName: node
   linkType: hard
 
@@ -23867,7 +23885,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"object-inspect@npm:^1.11.0, object-inspect@npm:^1.7.0, object-inspect@npm:^1.8.0, object-inspect@npm:^1.9.0":
+"object-inspect@npm:1.11.0, object-inspect@npm:^1.11.0, object-inspect@npm:^1.7.0, object-inspect@npm:^1.8.0, object-inspect@npm:^1.9.0":
   version: 1.11.0
   resolution: "object-inspect@npm:1.11.0"
   checksum: 8c64f89ce3a7b96b6925879ad5f6af71d498abc217e136660efecd97452991216f375a7eb47cb1cb50643df939bf0c7cc391567b7abc6a924d04679705e58e27
@@ -24893,15 +24911,6 @@ __metadata:
   dependencies:
     find-up: ^3.0.0
   checksum: 5bac346b7c7c903613c057ae3ab722f320716199d753f4a7d053d38f2b5955460f3e6ab73b4762c62fd3e947f58e04f1343e92089e7bb6091c90877406fcd8c8
-  languageName: node
-  linkType: hard
-
-"please-upgrade-node@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "please-upgrade-node@npm:3.2.0"
-  dependencies:
-    semver-compare: ^1.0.0
-  checksum: d87c41581a2a022fbe25965a97006238cd9b8cbbf49b39f78d262548149a9d30bd2bdf35fec3d810e0001e630cd46ef13c7e19c389dea8de7e64db271a2381bb
   languageName: node
   linkType: hard
 
@@ -29310,13 +29319,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver-compare@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "semver-compare@npm:1.0.0"
-  checksum: dd1d7e2909744cf2cf71864ac718efc990297f9de2913b68e41a214319e70174b1d1793ac16e31183b128c2b9812541300cb324db8168e6cf6b570703b171c68
-  languageName: node
-  linkType: hard
-
 "semver-diff@npm:^2.0.0":
   version: 2.1.0
   resolution: "semver-diff@npm:2.1.0"
@@ -29618,18 +29620,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sinon@npm:8.1.1":
-  version: 8.1.1
-  resolution: "sinon@npm:8.1.1"
+"sinon@npm:12.0.1":
+  version: 12.0.1
+  resolution: "sinon@npm:12.0.1"
   dependencies:
-    "@sinonjs/commons": ^1.7.0
-    "@sinonjs/formatio": ^4.0.1
-    "@sinonjs/samsam": ^4.2.2
-    diff: ^4.0.2
-    lolex: ^5.1.2
-    nise: ^3.0.1
-    supports-color: ^7.1.0
-  checksum: 949073ca3e65d2701fef1af50ed2824d717fdbc17bcbf9a3e15fe8f129d74f19e8143400686c24e17d35fabc591ef25f1fc0b6a2be6c93d80795261566e0c4e8
+    "@sinonjs/commons": ^1.8.3
+    "@sinonjs/fake-timers": ^8.1.0
+    "@sinonjs/samsam": ^6.0.2
+    diff: ^5.0.0
+    nise: ^5.1.0
+    supports-color: ^7.2.0
+  checksum: a264310c28df43e923a6e223c719953b7bd829b8e2fee7fe8b40154647e350b6bb4c18009be6f193e50892687f8e8c5d987d666fc3f6e4e78a9f807211ea365f
   languageName: node
   linkType: hard
 
@@ -29780,6 +29781,16 @@ __metadata:
     astral-regex: ^2.0.0
     is-fullwidth-code-point: ^3.0.0
   checksum: 4a82d7f085b0e1b070e004941ada3c40d3818563ac44766cca4ceadd2080427d337554f9f99a13aaeb3b4a94d9964d9466c807b3d7b7541d1ec37ee32d308756
+  languageName: node
+  linkType: hard
+
+"slice-ansi@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "slice-ansi@npm:5.0.0"
+  dependencies:
+    ansi-styles: ^6.0.0
+    is-fullwidth-code-point: ^4.0.0
+  checksum: 7e600a2a55e333a21ef5214b987c8358fe28bfb03c2867ff2cbf919d62143d1812ac27b4297a077fdaf27a03da3678e49551c93e35f9498a3d90221908a1180e
   languageName: node
   linkType: hard
 
@@ -30478,6 +30489,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"string-width@npm:^5.0.0":
+  version: 5.0.1
+  resolution: "string-width@npm:5.0.1"
+  dependencies:
+    emoji-regex: ^9.2.2
+    is-fullwidth-code-point: ^4.0.0
+    strip-ansi: ^7.0.1
+  checksum: 2a7cbd6a4180f8215553fc0dfe8fe62d2ba76d141b0a6fca44df7b81f0089613d0b115bd67bb293ea7e8c5f8295525014a3562cce28d0e06caa6f626980e9c7e
+  languageName: node
+  linkType: hard
+
 "string.prototype.matchall@npm:^4.0.0 || ^3.0.1, string.prototype.matchall@npm:^4.0.2":
   version: 4.0.6
   resolution: "string.prototype.matchall@npm:4.0.6"
@@ -30583,17 +30605,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stringify-object@npm:3.3.0":
-  version: 3.3.0
-  resolution: "stringify-object@npm:3.3.0"
-  dependencies:
-    get-own-enumerable-property-symbols: ^3.0.0
-    is-obj: ^1.0.1
-    is-regexp: ^1.0.0
-  checksum: 6827a3f35975cfa8572e8cd3ed4f7b262def260af18655c6fde549334acdac49ddba69f3c861ea5a6e9c5a4990fe4ae870b9c0e6c31019430504c94a83b7a154
-  languageName: node
-  linkType: hard
-
 "strip-ansi@npm:6.0.0":
   version: 6.0.0
   resolution: "strip-ansi@npm:6.0.0"
@@ -30639,7 +30650,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strip-ansi@npm:^7.0.0":
+"strip-ansi@npm:^7.0.0, strip-ansi@npm:^7.0.1":
   version: 7.0.1
   resolution: "strip-ansi@npm:7.0.1"
   dependencies:
@@ -30911,12 +30922,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"supports-color@npm:8.1.1, supports-color@npm:^8.0.0, supports-color@npm:^8.1.0, supports-color@npm:^8.1.1":
-  version: 8.1.1
-  resolution: "supports-color@npm:8.1.1"
+"supports-color@npm:9.0.2":
+  version: 9.0.2
+  resolution: "supports-color@npm:9.0.2"
   dependencies:
-    has-flag: ^4.0.0
-  checksum: c052193a7e43c6cdc741eb7f378df605636e01ad434badf7324f17fb60c69a880d8d8fcdcb562cf94c2350e57b937d7425ab5b8326c67c2adc48f7c87c1db406
+    has-flag: ^5.0.0
+  checksum: 690c21f61945a1ebab61fbc9dc861672b1d9678359ce75312b8b7ecb873f37f2ed2df56daa4ef4265300bea2e51f8285831ffb0a190ac46aaeed1d5b44fd51fe
   languageName: node
   linkType: hard
 
@@ -30938,12 +30949,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"supports-color@npm:^7.0.0, supports-color@npm:^7.1.0":
+"supports-color@npm:^7.0.0, supports-color@npm:^7.1.0, supports-color@npm:^7.2.0":
   version: 7.2.0
   resolution: "supports-color@npm:7.2.0"
   dependencies:
     has-flag: ^4.0.0
   checksum: 3dda818de06ebbe5b9653e07842d9479f3555ebc77e9a0280caf5a14fb877ffee9ed57007c3b78f5a6324b8dbeec648d9e97a24e2ed9fdb81ddc69ea07100f4a
+  languageName: node
+  linkType: hard
+
+"supports-color@npm:^8.0.0, supports-color@npm:^8.1.0, supports-color@npm:^8.1.1":
+  version: 8.1.1
+  resolution: "supports-color@npm:8.1.1"
+  dependencies:
+    has-flag: ^4.0.0
+  checksum: c052193a7e43c6cdc741eb7f378df605636e01ad434badf7324f17fb60c69a880d8d8fcdcb562cf94c2350e57b937d7425ab5b8326c67c2adc48f7c87c1db406
   languageName: node
   linkType: hard
 
@@ -30998,7 +31018,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"symbol-observable@npm:1.2.0, symbol-observable@npm:^1.0.4":
+"symbol-observable@npm:4.0.0":
+  version: 4.0.0
+  resolution: "symbol-observable@npm:4.0.0"
+  checksum: 212c7edce6186634d671336a88c0e0bbd626c2ab51ed57498dc90698cce541839a261b969c2a1e8dd43762133d47672e8b62e0b1ce9cf4157934ba45fd172ba8
+  languageName: node
+  linkType: hard
+
+"symbol-observable@npm:^1.0.4":
   version: 1.2.0
   resolution: "symbol-observable@npm:1.2.0"
   checksum: 48ffbc22e3d75f9853b3ff2ae94a44d84f386415110aea5effc24d84c502e03a4a6b7a8f75ebaf7b585780bda34eb5d6da3121f826a6f93398429d30032971b6
@@ -32530,6 +32557,13 @@ __metadata:
   version: 1.6.16
   resolution: "uplot@npm:1.6.16"
   checksum: f7243693f9319a47a92f758a0fe1315b2f713f68ec9bbabce4f8929525a8648ac5936e1448a4f122486de6fc78da4b6038f20b71a9416da6228572e305e0d171
+  languageName: node
+  linkType: hard
+
+"uplot@npm:1.6.17":
+  version: 1.6.17
+  resolution: "uplot@npm:1.6.17"
+  checksum: f63d3d4337c12dacc6940fa8e3a8a94416db787e175c715b4975a28fea85f340beb89d3907c83cd1663943d77abd26057098dc8152117d76f8fa184be295edbb
   languageName: node
   linkType: hard
 

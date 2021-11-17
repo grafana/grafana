@@ -1,6 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { SearchItem, Props } from './SearchItem';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { Props, SearchItem } from './SearchItem';
 import { DashboardSearchItemType } from '../types';
 
 beforeEach(() => {
@@ -35,7 +37,7 @@ const setup = (propOverrides?: Partial<Props>) => {
 describe('SearchItem', () => {
   it('should render the item', () => {
     setup();
-    expect(screen.getAllByLabelText('Dashboard search item Test 1')).toHaveLength(1);
+    expect(screen.getAllByTestId(selectors.components.Search.dashboardItem('Test 1'))).toHaveLength(1);
     expect(screen.getAllByText('Test 1')).toHaveLength(1);
   });
 

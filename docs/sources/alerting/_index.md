@@ -7,11 +7,11 @@ weight = 110
 
 Alerts allow you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
-Grafana 8.0 has new and improved alerting that centralizes alerting information in a single, searchable view. It allows you to to:
+Grafana 8.0 has new and improved alerting that centralizes alerting information in a single, searchable view. It allows you to:
 
-- Create and manage Grafana managed alerts
+- Create and manage Grafana alerts
 - Create and manage Cortex and Loki managed alerts
-- View alerting information from Prometheus compatible data sources
+- View alerting information from Prometheus and Alertmanager compatible data sources
 
 Grafana 8 alerting has four key components:
 

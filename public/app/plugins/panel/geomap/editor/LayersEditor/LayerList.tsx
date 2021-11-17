@@ -23,10 +23,6 @@ export const LayerList = ({ layers, onDragEnd, selected, actions }: LayerListPro
     return sel ? `${style.row} ${style.sel}` : style.row;
   };
 
-  const onLayerNameChange = (layer: MapLayerState<any>) => {
-    actions.updateLayer(layer.UID, layer);
-  };
-
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="droppable">
@@ -37,24 +33,29 @@ export const LayerList = ({ layers, onDragEnd, selected, actions }: LayerListPro
               const rows: any = [];
               for (let i = layers.length - 1; i > 0; i--) {
                 const element = layers[i];
+                const uid = element.options.name;
                 rows.push(
-                  <Draggable key={element.UID} draggableId={element.UID} index={rows.length}>
+                  <Draggable key={uid} draggableId={uid} index={rows.length}>
                     {(provided, snapshot) => (
                       <div
                         className={getRowStyle(i === selected)}
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        onMouseDown={() => actions!.selectLayer(element.UID)}
+                        onMouseDown={() => actions!.selectLayer(uid)}
                       >
-                        <LayerHeader layer={{ ...element }} layers={layers} onChange={onLayerNameChange} />
+                        <LayerHeader
+                          layer={element.options}
+                          canRename={actions.canRename}
+                          onChange={element.onChange}
+                        />
                         <div className={style.textWrapper}>&nbsp; {element.options.type}</div>
 
                         <IconButton
                           name="trash-alt"
                           title={'remove'}
                           className={cx(style.actionIcon, style.dragIcon)}
-                          onClick={() => actions.deleteLayer(element.UID)}
+                          onClick={() => actions.deleteLayer(uid)}
                           surface="header"
                         />
                         {layers.length > 2 && (

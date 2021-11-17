@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -24,6 +25,8 @@ const (
 	defaultPassword  = "password"
 )
 
+var updateSnapshotFlag = false
+
 func TestPlugins(t *testing.T) {
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		PluginAdminEnabled: true,
@@ -32,10 +35,10 @@ func TestPlugins(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, cfgPath)
 
 	type testCase struct {
-		desc      string
-		url       string
-		expStatus int
-		expResp   string
+		desc        string
+		url         string
+		expStatus   int
+		expRespPath string
 	}
 
 	t.Run("Install", func(t *testing.T) {
@@ -69,10 +72,10 @@ func TestPlugins(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		testCases := []testCase{
 			{
-				desc:      "should return all loaded core and bundled plugins",
-				url:       "http://%s/api/plugins",
-				expStatus: http.StatusOK,
-				expResp:   expectedResp(t, "expectedListResp.json"),
+				desc:        "should return all loaded core and bundled plugins",
+				url:         "http://%s/api/plugins",
+				expStatus:   http.StatusOK,
+				expRespPath: "expectedListResp.json",
 			},
 		}
 
@@ -88,7 +91,17 @@ func TestPlugins(t *testing.T) {
 				require.Equal(t, tc.expStatus, resp.StatusCode)
 				b, err := ioutil.ReadAll(resp.Body)
 				require.NoError(t, err)
-				require.JSONEq(t, tc.expResp, string(b))
+
+				expResp := expectedResp(t, tc.expRespPath)
+
+				same := assert.JSONEq(t, expResp, string(b))
+				if !same {
+					if updateSnapshotFlag {
+						t.Log("updating snapshot results")
+						updateRespSnapshot(t, tc.expRespPath, string(b))
+					}
+					t.FailNow()
+				}
 			})
 		}
 	})
@@ -126,10 +139,18 @@ func grafanaAPIURL(username string, grafanaListedAddr string, path string) strin
 }
 
 func expectedResp(t *testing.T, filename string) string {
-	contents, err := ioutil.ReadFile(fmt.Sprintf("data/%s", filename))
+	//nolint:GOSEC
+	contents, err := ioutil.ReadFile(filepath.Join("data", filename))
 	if err != nil {
 		t.Errorf("failed to load %s: %v", filename, err)
 	}
 
 	return string(contents)
+}
+
+func updateRespSnapshot(t *testing.T, filename string, body string) {
+	err := ioutil.WriteFile(filepath.Join("data", filename), []byte(body), 0600)
+	if err != nil {
+		t.Errorf("error writing snapshot %s: %v", filename, err)
+	}
 }

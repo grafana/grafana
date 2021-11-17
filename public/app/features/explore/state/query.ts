@@ -37,7 +37,7 @@ import { localStorageFullAction, richHistoryLimitExceededAction, richHistoryUpda
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
+import { createCacheKey, getResultsFromCache } from './utils';
 import deepEqual from 'fast-deep-equal';
 
 //
@@ -65,17 +65,12 @@ export interface ChangeQueriesPayload {
 export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
 
 /**
- * Clear all queries and results.
- */
-export interface ClearQueriesPayload {
-  exploreId: ExploreId;
-}
-export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/clearQueries');
-
-/**
  * Cancel running queries.
  */
-export const cancelQueriesAction = createAction<ClearQueriesPayload>('explore/cancelQueries');
+export interface CancelQueriesPayload {
+  exploreId: ExploreId;
+}
+export const cancelQueriesAction = createAction<CancelQueriesPayload>('explore/cancelQueries');
 
 export interface QueriesImportedPayload {
   exploreId: ExploreId;
@@ -219,17 +214,6 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
     const query = generateEmptyQuery(queries, index);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
-  };
-}
-
-/**
- * Clear all queries and results.
- */
-export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
-  return (dispatch) => {
-    dispatch(scanStopAction({ exploreId }));
-    dispatch(clearQueriesAction({ exploreId }));
-    dispatch(stateSave());
   };
 }
 
@@ -624,21 +608,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries,
-    };
-  }
-
-  if (clearQueriesAction.match(action)) {
-    const queries = ensureQueries();
-    stopQueryState(state.querySubscription);
-    return {
-      ...state,
-      queries: queries.slice(),
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
-      queryResponse: createEmptyQueryResponse(),
-      loading: false,
     };
   }
 

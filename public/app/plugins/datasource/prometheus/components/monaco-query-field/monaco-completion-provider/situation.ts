@@ -63,17 +63,34 @@ function getNodeText(node: SyntaxNode, text: string): string {
 }
 
 function parsePromQLStringLiteral(text: string): string {
+  // if it is a string-literal, it is inside quotes of some kind
+  const inside = text.slice(1, text.length - 1);
+
   // FIXME: support https://prometheus.io/docs/prometheus/latest/querying/basics/#string-literals
   // FIXME: maybe check other promql code, if all is supported or not
+
+  // for now we do only some very simple un-escaping
+
   // we start with double-quotes
   if (text.startsWith('"') && text.endsWith('"')) {
-    if (text.indexOf('\\') !== -1) {
-      throw new Error('FIXME: escape-sequences not supported in label-values');
-    }
-    return text.slice(1, text.length - 1);
-  } else {
-    throw new Error('FIXME: invalid string literal');
+    // NOTE: this is not 100% perfect, we only unescape the double-quote,
+    // there might be other characters too
+    return inside.replace(/\\"/, '"');
   }
+
+  // then single-quote
+  if (text.startsWith("'") && text.endsWith("'")) {
+    // NOTE: this is not 100% perfect, we only unescape the single-quote,
+    // there might be other characters too
+    return inside.replace(/\\'/, "'");
+  }
+
+  // then backticks
+  if (text.startsWith('`') && text.endsWith('`')) {
+    return inside;
+  }
+
+  throw new Error('FIXME: invalid string literal');
 }
 
 type LabelOperator = '=' | '!=' | '=~' | '!~';

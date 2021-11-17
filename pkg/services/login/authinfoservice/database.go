@@ -80,72 +80,73 @@ func (s *Implementation) GetAuthInfo(query *models.GetAuthInfoQuery) error {
 }
 
 func (s *Implementation) SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
+	authUser := &models.UserAuth{
+		UserId:     cmd.UserId,
+		AuthModule: cmd.AuthModule,
+		AuthId:     cmd.AuthId,
+		Created:    getTime(),
+	}
+
+	if cmd.OAuthToken != nil {
+		secretAccessToken, err := s.encryptAndEncode(cmd.OAuthToken.AccessToken)
+		if err != nil {
+			return err
+		}
+		secretRefreshToken, err := s.encryptAndEncode(cmd.OAuthToken.RefreshToken)
+		if err != nil {
+			return err
+		}
+		secretTokenType, err := s.encryptAndEncode(cmd.OAuthToken.TokenType)
+		if err != nil {
+			return err
+		}
+
+		authUser.OAuthAccessToken = secretAccessToken
+		authUser.OAuthRefreshToken = secretRefreshToken
+		authUser.OAuthTokenType = secretTokenType
+		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
+	}
+
 	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		authUser := &models.UserAuth{
-			UserId:     cmd.UserId,
-			AuthModule: cmd.AuthModule,
-			AuthId:     cmd.AuthId,
-			Created:    getTime(),
-		}
-
-		if cmd.OAuthToken != nil {
-			secretAccessToken, err := s.encryptAndEncode(cmd.OAuthToken.AccessToken)
-			if err != nil {
-				return err
-			}
-			secretRefreshToken, err := s.encryptAndEncode(cmd.OAuthToken.RefreshToken)
-			if err != nil {
-				return err
-			}
-			secretTokenType, err := s.encryptAndEncode(cmd.OAuthToken.TokenType)
-			if err != nil {
-				return err
-			}
-
-			authUser.OAuthAccessToken = secretAccessToken
-			authUser.OAuthRefreshToken = secretRefreshToken
-			authUser.OAuthTokenType = secretTokenType
-			authUser.OAuthExpiry = cmd.OAuthToken.Expiry
-		}
-
 		_, err := sess.Insert(authUser)
 		return err
 	})
 }
 
 func (s *Implementation) UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error {
+	authUser := &models.UserAuth{
+		UserId:     cmd.UserId,
+		AuthModule: cmd.AuthModule,
+		AuthId:     cmd.AuthId,
+		Created:    getTime(),
+	}
+
+	if cmd.OAuthToken != nil {
+		secretAccessToken, err := s.encryptAndEncode(cmd.OAuthToken.AccessToken)
+		if err != nil {
+			return err
+		}
+		secretRefreshToken, err := s.encryptAndEncode(cmd.OAuthToken.RefreshToken)
+		if err != nil {
+			return err
+		}
+		secretTokenType, err := s.encryptAndEncode(cmd.OAuthToken.TokenType)
+		if err != nil {
+			return err
+		}
+
+		authUser.OAuthAccessToken = secretAccessToken
+		authUser.OAuthRefreshToken = secretRefreshToken
+		authUser.OAuthTokenType = secretTokenType
+		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
+	}
+
+	cond := &models.UserAuth{
+		UserId:     cmd.UserId,
+		AuthModule: cmd.AuthModule,
+	}
+
 	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		authUser := &models.UserAuth{
-			UserId:     cmd.UserId,
-			AuthModule: cmd.AuthModule,
-			AuthId:     cmd.AuthId,
-			Created:    getTime(),
-		}
-
-		if cmd.OAuthToken != nil {
-			secretAccessToken, err := s.encryptAndEncode(cmd.OAuthToken.AccessToken)
-			if err != nil {
-				return err
-			}
-			secretRefreshToken, err := s.encryptAndEncode(cmd.OAuthToken.RefreshToken)
-			if err != nil {
-				return err
-			}
-			secretTokenType, err := s.encryptAndEncode(cmd.OAuthToken.TokenType)
-			if err != nil {
-				return err
-			}
-
-			authUser.OAuthAccessToken = secretAccessToken
-			authUser.OAuthRefreshToken = secretRefreshToken
-			authUser.OAuthTokenType = secretTokenType
-			authUser.OAuthExpiry = cmd.OAuthToken.Expiry
-		}
-
-		cond := &models.UserAuth{
-			UserId:     cmd.UserId,
-			AuthModule: cmd.AuthModule,
-		}
 		upd, err := sess.Update(authUser, cond)
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_module", cmd.AuthModule, "rows", upd)
 		return err

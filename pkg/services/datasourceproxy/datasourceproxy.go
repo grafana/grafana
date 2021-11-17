@@ -69,8 +69,8 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	}
 
 	// find plugin
-	plugin := p.pluginStore.Plugin(ds.Type)
-	if plugin == nil {
+	plugin, exists := p.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	if !exists {
 		c.JsonApiErr(http.StatusNotFound, "Unable to find datasource plugin", err)
 		return
 	}
