@@ -41,7 +41,6 @@ query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 
 For more information about writing a query for your data source, refer to the specific [Grafana data source]({{< relref "../datasources/_index.md" >}}) documentation.
 
-
 ### Examples:
 
 - **Relative time:**

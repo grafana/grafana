@@ -11,8 +11,6 @@ Before you can configure and apply transformations:
 
 - You must have entered a query that return data. For more information on queries, refer to [Queries]({{< relref "../queries.md" >}}).
 
-
-
 Another source input...
 
 You can apply transformations from the Transform tab of the Grafana panel editor, which is located next to the Queries tab. See also, [Debug transformations](#debug-transformations).
@@ -31,7 +29,6 @@ To apply a transformation:
    This next transformation acts on the result set returned by the previous transformation.
 
    {{< figure src="/static/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-
 
 Another source input...
 

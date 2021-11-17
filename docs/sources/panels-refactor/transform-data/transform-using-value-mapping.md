@@ -27,7 +27,6 @@ In the field mapping specify:
 
 Grafana will build the value mappings from you query result and apply it the the real data query results. You should see values being mapped and colored according to the config query results.
 
-
 Another source input...
 
 ### Condition

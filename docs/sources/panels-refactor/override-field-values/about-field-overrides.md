@@ -9,16 +9,15 @@ Overrides allow you to change the settings for one or more fields. Field options
 
 For example, you could change the number of decimal places shown in all numeric fields or columns by changing the **Decimals** option for **Fields with type** that matches **Numeric**.
 
-
 Another source input...
 
 ## Example use case for field options and overrides
 
 The following examples show how you might use field options and overrides.
 
-
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Where does this go?
+
 ## Field option example
 
 Let’s assume that our result set is a data frame that consists of two fields: time and temperature.
@@ -72,7 +71,6 @@ The temperature fields look good, but the humidity is nonsensical. We can fix th
 | 2020-01-02 03:04:00 | 45 °C     | 30 °C    | 67%      |
 | 2020-01-02 03:05:00 | 47 °C     | 34 °C    | 68%      |
 | 2020-01-02 03:06:00 | 48 °C     | 31 °C    | 68%      |
-
 
 ## Field overrides
 

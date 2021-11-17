@@ -11,4 +11,3 @@ The Stats tab displays statistics that tell you how long your query takes, how m
 1. Navigate to the Stats tab.
 
 Statistics are displayed in read-only format.
-

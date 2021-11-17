@@ -29,4 +29,3 @@ Optionally, you can click title of the panel and then click **More > Create Libr
 Also, library panels can also be created using the “Share” option for any panel.
 
 Once created, you can modify the library panel using any dashboard on which it appears. Once the library panel changes are saved, all instances of the library panel will reflect these modifications.
-

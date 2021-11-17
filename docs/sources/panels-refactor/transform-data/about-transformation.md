@@ -18,18 +18,16 @@ In case there are multiple transformations, Grafana applies them in the exact se
 
 The order in which transformations are applied can make a huge difference in how your results look. For example, if you use a Reduce transformation to condense all the results of one column into a single value, then you can only apply transformations to that single value.
 
-
-
 Another source input...
+
 > **Note:** This is a new beta transformation introduced in v8.1.
 
 This transformation allow you select one query and from it extract [standard options]({{< relref "../standard-options.md" >}}) like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
 
 If you want to extract a unique config for every row in the config query result then try the [Rows to fields]({{< relref "./rows-to-fields" >}}) transformation instead.
 
-
-
 Another source input...
+
 # Value mappings
 
 Value mapping concept allow you to replace values or ranges in your visualizations with words or emojis.
@@ -70,9 +68,8 @@ Here's an example showing a Table visualization with value mappings. If you want
 
 ![Value mappings table example](/static/img/docs/value-mappings/value-mappings-table-example-8-0.png)
 
-
-
 Another source input...
+
 # Rows to fields transform
 
 > **Note:** This is a new beta transformation introduced in v8.1.
