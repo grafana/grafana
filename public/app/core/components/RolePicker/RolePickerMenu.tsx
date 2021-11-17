@@ -391,7 +391,7 @@ export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithCh
         </div>
         {data.description && (
           <Tooltip content={data.description}>
-            <Icon name="question-circle" className={customStyles.menuOptionInfoSign} />
+            <Icon name="info-circle" className={customStyles.menuOptionInfoSign} />
           </Tooltip>
         )}
       </div>
