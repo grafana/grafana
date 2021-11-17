@@ -15,6 +15,7 @@ import {
   ResourceFolderName,
   TextDimensionConfig,
   defaultTextConfig,
+  TextDimensionMode,
 } from 'app/features/dimensions/types';
 import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
 
@@ -59,6 +60,8 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ va
     onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline as TextBaseline } });
   };
 
+  const hasTextLabel = Boolean(value.text?.fixed || value.text?.mode === TextDimensionMode.Field);
+
   return (
     <>
       <Field label={'Size'}>
@@ -85,8 +88,10 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ va
             {
               settings: {
                 resourceType: 'icon',
-                showSourceRadio: false,
                 folderName: ResourceFolderName.Marker,
+                placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                placeholderValue: defaultStyleConfig.symbol.fixed,
+                showSourceRadio: false,
               },
             } as any
           }
@@ -124,59 +129,58 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ va
           item={{} as any}
         />
       </Field>
-      {value.text?.fixed ||
-        (value.text?.field && (
-          <>
-            <HorizontalGroup>
-              <Field label={'Font size'}>
-                <NumberValueEditor
-                  value={value.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize}
-                  context={context}
-                  onChange={onTextFontSizeChange}
-                  item={{} as any}
-                />
-              </Field>
-              <Field label={'X offset'}>
-                <NumberValueEditor
-                  value={value.textConfig?.offsetX ?? defaultStyleConfig.textConfig.offsetX}
-                  context={context}
-                  onChange={onTextOffsetXChange}
-                  item={{} as any}
-                />
-              </Field>
-              <Field label={'Y offset'}>
-                <NumberValueEditor
-                  value={value.textConfig?.offsetY ?? defaultStyleConfig.textConfig.offsetY}
-                  context={context}
-                  onChange={onTextOffsetYChange}
-                  item={{} as any}
-                />
-              </Field>
-            </HorizontalGroup>
-            <Field label={'Align'}>
-              <RadioButtonGroup
-                value={value.textConfig?.textAlign ?? defaultStyleConfig.textConfig.textAlign}
-                onChange={onTextAlignChange}
-                options={[
-                  { value: TextAlignment.Left, label: TextAlignment.Left },
-                  { value: TextAlignment.Center, label: TextAlignment.Center },
-                  { value: TextAlignment.Right, label: TextAlignment.Right },
-                ]}
+      {(value.text?.fixed || value.text?.field) && (
+        <>
+          <HorizontalGroup>
+            <Field label={'Font size'}>
+              <NumberValueEditor
+                value={value.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize}
+                context={context}
+                onChange={onTextFontSizeChange}
+                item={{} as any}
               />
             </Field>
-            <Field label={'Baseline'}>
-              <RadioButtonGroup
-                value={value.textConfig?.textBaseline ?? defaultStyleConfig.textConfig.textBaseline}
-                onChange={onTextBaselineChange}
-                options={[
-                  { value: TextBaseline.Top, label: TextBaseline.Top },
-                  { value: TextBaseline.Middle, label: TextBaseline.Middle },
-                  { value: TextBaseline.Bottom, label: TextBaseline.Bottom },
-                ]}
+            <Field label={'X offset'}>
+              <NumberValueEditor
+                value={value.textConfig?.offsetX ?? defaultStyleConfig.textConfig.offsetX}
+                context={context}
+                onChange={onTextOffsetXChange}
+                item={{} as any}
               />
             </Field>
-          </>
-        ))}
+            <Field label={'Y offset'}>
+              <NumberValueEditor
+                value={value.textConfig?.offsetY ?? defaultStyleConfig.textConfig.offsetY}
+                context={context}
+                onChange={onTextOffsetYChange}
+                item={{} as any}
+              />
+            </Field>
+          </HorizontalGroup>
+          <Field label={'Align'}>
+            <RadioButtonGroup
+              value={value.textConfig?.textAlign ?? defaultStyleConfig.textConfig.textAlign}
+              onChange={onTextAlignChange}
+              options={[
+                { value: TextAlignment.Left, label: TextAlignment.Left },
+                { value: TextAlignment.Center, label: TextAlignment.Center },
+                { value: TextAlignment.Right, label: TextAlignment.Right },
+              ]}
+            />
+          </Field>
+          <Field label={'Baseline'}>
+            <RadioButtonGroup
+              value={value.textConfig?.textBaseline ?? defaultStyleConfig.textConfig.textBaseline}
+              onChange={onTextBaselineChange}
+              options={[
+                { value: TextBaseline.Top, label: TextBaseline.Top },
+                { value: TextBaseline.Middle, label: TextBaseline.Middle },
+                { value: TextBaseline.Bottom, label: TextBaseline.Bottom },
+              ]}
+            />
+          </Field>
+        </>
+      )}
     </>
   );
 };

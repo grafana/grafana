@@ -12,7 +12,7 @@ import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { getScaledDimension, getColorDimension, getTextDimension } from 'app/features/dimensions';
+import { getScaledDimension, getColorDimension, getTextDimension, TextDimensionMode } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
@@ -74,7 +74,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     }
 
     const style = config.style ?? defaultStyleConfig;
-    const markerMaker = await getMarkerMaker(style.symbol?.fixed);
+    const hasTextLabel = Boolean(style.text?.fixed || style.text?.mode === TextDimensionMode.Field);
+    const markerMaker = await getMarkerMaker(style.symbol?.fixed, hasTextLabel);
 
     return {
       init: () => vectorLayer,

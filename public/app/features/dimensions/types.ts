@@ -65,7 +65,11 @@ export interface TextDimensionConfig extends BaseDimensionConfig<string> {
   mode: TextDimensionMode;
 }
 
-export const defaultTextConfig: TextDimensionConfig = Object.freeze({ fixed: '', mode: TextDimensionMode.Field });
+export const defaultTextConfig: TextDimensionConfig = Object.freeze({
+  fixed: '',
+  mode: TextDimensionMode.Field,
+  field: '',
+});
 
 /** Use the color value from field configs */
 export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
@@ -74,6 +78,9 @@ export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
 export interface ResourceDimensionOptions {
   resourceType: 'icon' | 'image';
   folderName?: ResourceFolderName;
+  placeholderText?: string;
+  placeholderValue?: string;
+  // If you want your icon to be driven by value of a field
   showSourceRadio?: boolean;
 }
 

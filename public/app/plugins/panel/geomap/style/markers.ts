@@ -41,16 +41,26 @@ export function getFillColor(cfg: StyleConfigValues) {
 }
 
 const textLabel = (cfg: StyleConfigValues) => {
+  if (!cfg.text) {
+    return undefined;
+  }
+
   const fontFamily = config.theme2.typography.fontFamily;
   const textConfig = {
     ...defaultStyleConfig.textConfig,
     ...cfg.textConfig,
   };
   return new Text({
-    text: cfg.text ?? '?',
+    text: cfg.text,
     fill: new Fill({ color: cfg.color ?? defaultStyleConfig.color.fixed }),
     font: `normal ${textConfig.fontSize}px ${fontFamily}`,
     ...textConfig,
+  });
+};
+
+export const textMarker = (cfg: StyleConfigValues) => {
+  return new Style({
+    text: textLabel(cfg),
   });
 };
 
@@ -227,9 +237,9 @@ export function getMarkerAsPath(shape?: string): string | undefined {
 }
 
 // Will prepare symbols as necessary
-export async function getMarkerMaker(symbol?: string): Promise<StyleMaker> {
+export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): Promise<StyleMaker> {
   if (!symbol) {
-    return circleMarker;
+    return hasTextLabel ? textMarker : circleMarker;
   }
 
   let maker = markerMakers.getIfExists(symbol);
