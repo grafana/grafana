@@ -16,45 +16,31 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	ErrNoQueries                   = errors.New("no queries found")
-	ErrMissingDatasourceIdentifier = errors.New("missing data source ID/UID")
-	ErrDifferentDatasources        = errors.New("all queries must use the same datasource")
-)
-
-type MissingDatasourceInfoError struct {
-	RefID string
+// ErrBadQuery returned whenever request is malformed and must contain a message
+// suitable to return in API response.
+type ErrBadQuery struct {
+	Message string
 }
 
-func (m MissingDatasourceInfoError) Error() string {
-	return fmt.Sprintf("query mising datasource info: %s", m.RefID)
+func NewErrBadQuery(msg string) *ErrBadQuery {
+	return &ErrBadQuery{Message: msg}
+}
+
+func (e ErrBadQuery) Error() string {
+	return fmt.Sprintf("bad query: %s", e.Message)
 }
 
 func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalResponse {
 	if errors.Is(err, models.ErrDataSourceAccessDenied) {
 		return response.Error(http.StatusForbidden, "Access denied to data source", err)
 	}
-	if errors.Is(err, models.ErrDataSourceNotFound) {
-		return response.Error(http.StatusBadRequest, "Invalid data source ID", err)
+	var badQuery *ErrBadQuery
+	if errors.As(err, &badQuery) {
+		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
 	}
-
-	// TODO: combine all errors to ErrBadQuery with message details.
-	if errors.Is(err, ErrNoQueries) {
-		return response.Error(http.StatusBadRequest, "No queries found in request", err)
-	}
-	if errors.Is(err, ErrMissingDatasourceIdentifier) {
-		return response.Error(http.StatusBadRequest, "Query missing data source ID/UID", err)
-	}
-	if errors.Is(err, ErrDifferentDatasources) {
-		return response.Error(http.StatusBadRequest, "All queries must use the same datasource", err)
-	}
-	var missingRefError MissingDatasourceInfoError
-	if errors.As(err, &missingRefError) {
-		return response.Error(http.StatusBadRequest, "Query missing datasource info: "+missingRefError.RefID, err)
-	}
-
 	return response.Error(http.StatusInternalServerError, "Query data error", err)
 }
 
@@ -130,7 +116,7 @@ func (hs *HTTPServer) handleExpressions(ctx context.Context, user *models.Signed
 
 	for _, pq := range parsedReq.parsedQueries {
 		if pq.datasource == nil {
-			return nil, MissingDatasourceInfoError{RefID: pq.query.RefID}
+			return nil, NewErrBadQuery(fmt.Sprintf("query mising datasource info: %s", pq.query.RefID))
 		}
 
 		exprReq.Queries = append(exprReq.Queries, expr.Query{
@@ -204,7 +190,7 @@ type parsedRequest struct {
 
 func (hs *HTTPServer) parseMetricRequest(user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
-		return nil, ErrNoQueries
+		return nil, NewErrBadQuery("no queries found")
 	}
 
 	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
@@ -221,7 +207,7 @@ func (hs *HTTPServer) parseMetricRequest(user *models.SignedInUser, skipCache bo
 			return nil, err
 		}
 		if ds == nil {
-			return nil, models.ErrDataSourceNotFound
+			return nil, NewErrBadQuery("invalid data source ID")
 		}
 
 		datasources[ds.Uid] = ds
@@ -255,7 +241,7 @@ func (hs *HTTPServer) parseMetricRequest(user *models.SignedInUser, skipCache bo
 	if !req.hasExpression {
 		if len(datasources) > 1 {
 			// We do not (yet) support mixed query type
-			return nil, ErrDifferentDatasources
+			return nil, NewErrBadQuery("all queries must use the same datasource")
 		}
 	}
 
@@ -296,7 +282,7 @@ func (hs *HTTPServer) getDataSourceFromQuery(user *models.SignedInUser, skipCach
 	// Fallback to the datasourceId
 	id, err := query.Get("datasourceId").Int64()
 	if err != nil {
-		return nil, ErrMissingDatasourceIdentifier
+		return nil, NewErrBadQuery("missing data source ID/UID")
 	}
 	ds, err = hs.DataSourceCache.GetDatasource(id, user, skipCache)
 	if err != nil {
