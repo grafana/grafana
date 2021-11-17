@@ -24,7 +24,6 @@ If your panel contains multiple queries or queries multiple nodes, then you have
   1. Click on **Data display options** above the table.
   1. Click on **Apply field configuration** toggle button.
 
-
 From another source...
 
 You can click **Query inspector** to open the Query tab of the panel inspector where you can see the query request sent by the panel and the response.

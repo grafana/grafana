@@ -1,5 +1,5 @@
 +++
-title = "Delete a tranformation"
+title = "Delete a transformation"
 weight = 10
 +++
 

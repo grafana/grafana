@@ -1,5 +1,5 @@
 +++
-title = "Debug a tranformation"
+title = "Debug a transformation"
 weight = 10
 +++
 
