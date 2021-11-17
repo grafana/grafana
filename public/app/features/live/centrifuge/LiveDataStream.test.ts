@@ -19,7 +19,7 @@ import {
   isStreamingResponseData,
   StreamingResponseData,
   StreamingResponseDataType,
-} from '@grafana/data/src/types/streamingDatasource';
+} from '@grafana/runtime/src/services/live';
 
 type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];

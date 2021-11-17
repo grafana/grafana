@@ -1,9 +1,13 @@
 import {
   DataFrame,
-  DataQueryResponse,
+  DataQueryError,
+  DataQueryResponseData,
+  isDataFrame,
   LiveChannelAddress,
   LiveChannelEvent,
   LiveChannelPresenceStatus,
+  LoadingState,
+  StreamingDataFrame,
   StreamingFrameOptions,
 } from '@grafana/data';
 import { Observable } from 'rxjs';
@@ -29,6 +33,86 @@ export interface LiveDataStreamOptions {
 /**
  * @alpha -- experimental
  */
+export enum StreamingResponseDataType {
+  NewValuesSameSchema = 'NewValuesSameSchema',
+  FullFrame = 'FullFrame',
+}
+
+/**
+ * @alpha -- experimental
+ */
+export type StreamingResponseDataTypeToData = {
+  [StreamingResponseDataType.NewValuesSameSchema]: {
+    values: unknown[][];
+  };
+  [StreamingResponseDataType.FullFrame]: {
+    frame: ReturnType<StreamingDataFrame['serialize']>;
+  };
+};
+
+/**
+ * @alpha -- experimental
+ */
+export type StreamingResponseData<T = StreamingResponseDataType> = T extends StreamingResponseDataType
+  ? {
+      type: T;
+    } & StreamingResponseDataTypeToData[T]
+  : never;
+
+/**
+ * @alpha -- experimental
+ */
+export const isStreamingResponseData = <T extends StreamingResponseDataType>(
+  responseData: DataQueryResponseData,
+  type: T
+): responseData is StreamingResponseData<T> => 'type' in responseData && responseData.type === type;
+
+const AllStreamingResponseDataTypes = Object.values(StreamingResponseDataType);
+
+/**
+ * @alpha -- experimental
+ */
+export const isAnyStreamingResponseData = (
+  responseData: DataQueryResponseData
+): responseData is StreamingResponseData =>
+  'type' in responseData && AllStreamingResponseDataTypes.includes(responseData.type);
+
+/**
+ * @alpha -- experimental
+ */
+export const isStreamingDataFrame = (data: DataQueryResponseData): data is StreamingDataFrame =>
+  isDataFrame(data) && 'packetInfo' in data;
+
+/**
+ * @alpha -- experimental
+ */
+export type StreamingDataQueryResponse = {
+  /**
+   * The response data.  When streaming, this may be empty
+   * or a partial result set
+   */
+  data: [StreamingResponseData];
+
+  /**
+   * Unique subscription key
+   */
+  key: string;
+
+  /**
+   * Optionally include error info along with the response data
+   */
+  error?: DataQueryError;
+
+  /**
+   * Use this to control which state the response should have
+   * Defaults to LoadingState.Done if state is not defined
+   */
+  state: LoadingState;
+};
+
+/**
+ * @alpha -- experimental
+ */
 export interface GrafanaLiveSrv {
   /**
    * Listen for changes to the main service
@@ -43,7 +127,7 @@ export interface GrafanaLiveSrv {
   /**
    * Connect to a channel and return results as DataFrames
    */
-  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse>;
+  getDataStream(options: LiveDataStreamOptions): Observable<StreamingDataQueryResponse>;
 
   /**
    * For channels that support presence, this will request the current state from the server.

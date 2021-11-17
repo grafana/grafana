@@ -4,7 +4,7 @@ import { MonoTypeOperatorFunction, Observable, of, ReplaySubject, Unsubscribable
 import { map, mergeMap } from 'rxjs/operators';
 
 // Services & Utils
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, isStreamingDataFrame } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { preProcessPanelData, runRequest } from './runRequest';
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
@@ -37,7 +37,6 @@ import {
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 import { PanelModel } from '../../dashboard/state';
-import { isStreamingDataFrame } from '@grafana/data/src/types/streamingDatasource';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -113,7 +112,8 @@ export class PanelQueryRunner {
             if (
               streamingDataFrame &&
               !streamingDataFrame.packetInfo.schemaChanged &&
-              // TODO: remove below condition after fixing issue with modifying panels
+              // TODO: remove the condition below after fixing
+              // https://github.com/grafana/grafana/pull/41492#issuecomment-970281430
               lastData[0].fields.length === streamingDataFrame.fields.length
             ) {
               processedData = {

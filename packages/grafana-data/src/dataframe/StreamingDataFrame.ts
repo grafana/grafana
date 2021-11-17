@@ -347,6 +347,10 @@ export class StreamingDataFrame implements DataFrame {
   }
 
   pushNewValues = (values: unknown[][]) => {
+    if (!values?.length) {
+      return;
+    }
+
     this.packetInfo.action = StreamingFrameAction.Append;
     this.packetInfo.number++;
     this.packetInfo.length = values[0].length;

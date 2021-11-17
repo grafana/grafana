@@ -1,10 +1,13 @@
-import { LiveDataStreamOptions } from '@grafana/runtime';
+import {
+  LiveDataStreamOptions,
+  StreamingDataQueryResponse,
+  StreamingResponseDataType,
+} from '@grafana/runtime/src/services/live';
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
 import {
   DataFrameJSON,
   dataFrameToJSON,
   DataQueryError,
-  DataQueryResponse,
   Field,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
@@ -17,7 +20,6 @@ import {
 } from '@grafana/data';
 import { map, Observable, ReplaySubject, Subject, Subscriber, Subscription } from 'rxjs';
 import { DataStreamSubscriptionKey } from './service';
-import { StreamingResponseDataType } from '@grafana/data/src/types/streamingDatasource';
 
 const bufferIfNot = (canEmitObservable: Observable<boolean>) => <T>(source: Observable<T>): Observable<T[]> => {
   return new Observable((subscriber: Subscriber<T[]>) => {
@@ -218,7 +220,7 @@ export class LiveDataStream<T = unknown> {
     }
   };
 
-  get = (options: LiveDataStreamOptions, subKey: DataStreamSubscriptionKey): Observable<DataQueryResponse> => {
+  get = (options: LiveDataStreamOptions, subKey: DataStreamSubscriptionKey): Observable<StreamingDataQueryResponse> => {
     if (this.shutdownTimeoutId) {
       clearTimeout(this.shutdownTimeoutId);
       this.shutdownTimeoutId = undefined;
@@ -231,7 +233,7 @@ export class LiveDataStream<T = unknown> {
     const fieldFilterPredicate = dataNeedsFiltering ? ({ name }: Field) => fieldsNamesFilter.includes(name) : undefined;
     let matchingFieldIndexes: number[] | undefined = undefined;
 
-    const getFullFrameResponseData = (error?: DataQueryError) => {
+    const getFullFrameResponseData = (error?: DataQueryError): StreamingDataQueryResponse => {
       matchingFieldIndexes = fieldFilterPredicate
         ? this.frameBuffer.getMatchingFieldIndexes(fieldFilterPredicate)
         : undefined;
@@ -249,7 +251,7 @@ export class LiveDataStream<T = unknown> {
       };
     };
 
-    const getNewValuesSameSchemaResponseData = (values: unknown[][]) => {
+    const getNewValuesSameSchemaResponseData = (values: unknown[][]): StreamingDataQueryResponse => {
       const filteredValues = matchingFieldIndexes
         ? values.filter((v, i) => (matchingFieldIndexes as number[]).includes(i))
         : values;
@@ -298,7 +300,7 @@ export class LiveDataStream<T = unknown> {
       })
     );
 
-    return new Observable<DataQueryResponse>((subscriber) => {
+    return new Observable<StreamingDataQueryResponse>((subscriber) => {
       const sub = transformedInternalStream.subscribe({
         next: (n) => {
           subscriber.next(n);

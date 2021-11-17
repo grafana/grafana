@@ -1,13 +1,10 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
-import { LiveDataStreamOptions } from '@grafana/runtime';
+import { GrafanaLiveSrv, LiveDataStreamOptions } from '@grafana/runtime/src/services/live';
 import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
 import {
-  DataQueryResponse,
   LiveChannelAddress,
   LiveChannelConnectionState,
-  LiveChannelEvent,
   LiveChannelId,
-  LiveChannelPresenceStatus,
   StreamingFrameAction,
   StreamingFrameOptions,
   toLiveChannelId,
@@ -24,29 +21,7 @@ export type CentrifugeSrvDeps = {
   dataStreamSubscriberReadiness: Observable<boolean>;
 };
 
-export interface CentrifugeSrv {
-  /**
-   * Listen for changes to the connection state
-   */
-  getConnectionState(): Observable<boolean>;
-
-  /**
-   * Watch for messages in a channel
-   */
-  getStream<T>(address: LiveChannelAddress): Observable<LiveChannelEvent<T>>;
-
-  /**
-   * Connect to a channel and return results as DataFrames
-   */
-  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse>;
-
-  /**
-   * For channels that support presence, this will request the current state from the server.
-   *
-   * Join and leave messages will be sent to the open stream
-   */
-  getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus>;
-}
+export type CentrifugeSrv = Omit<GrafanaLiveSrv, 'publish'>;
 
 export type DataStreamSubscriptionKey = string;
 
@@ -161,16 +136,16 @@ export class CentrifugeService implements CentrifugeSrv {
   /**
    * Listen for changes to the connection state
    */
-  getConnectionState() {
+  getConnectionState = () => {
     return this.connectionState.asObservable();
-  }
+  };
 
   /**
    * Watch for messages in a channel
    */
-  getStream<T>(address: LiveChannelAddress): Observable<LiveChannelEvent<T>> {
+  getStream: CentrifugeSrv['getStream'] = <T>(address: LiveChannelAddress) => {
     return this.getChannel<T>(address).getStream();
-  }
+  };
 
   private createSubscriptionKey = (options: LiveDataStreamOptions): DataStreamSubscriptionKey =>
     options.key ?? `xstr/${streamCounter++}`;
@@ -199,21 +174,21 @@ export class CentrifugeService implements CentrifugeSrv {
   /**
    * Connect to a channel and return results as DataFrames
    */
-  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse> {
+  getDataStream: CentrifugeSrv['getDataStream'] = (options) => {
     const subscriptionKey = this.createSubscriptionKey(options);
 
     const stream = this.getLiveDataStream(options);
     return stream.get(options, subscriptionKey);
-  }
+  };
 
   /**
    * For channels that support presence, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream
    */
-  getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus> {
+  getPresence: CentrifugeSrv['getPresence'] = (address) => {
     return this.getChannel(address).getPresence();
-  }
+  };
 }
 
 // This is used to give a unique key for each stream.  The actual value does not matter
