@@ -77,13 +77,12 @@ export const RolePickerMenu = ({
 
     const groups = [];
     for (const groupName of Object.keys(groupsMap)) {
-        const groupOptions = groupsMap[groupName].sort(sortRolesByName);
-        groups.push({
-          name: fixedRoleGroupNames[groupName] || capitalize(groupName),
-          value: groupName,
-          options: groupOptions,
-        });
-      }
+      const groupOptions = groupsMap[groupName].sort(sortRolesByName);
+      groups.push({
+        name: fixedRoleGroupNames[groupName] || capitalize(groupName),
+        value: groupName,
+        options: groupOptions,
+      });
     }
     return groups.sort((a, b) => (a.name < b.name ? -1 : 1));
   }, [options]);
@@ -412,10 +411,7 @@ interface RoleMenuGroupsOptionProps {
   root?: HTMLElement;
 }
 
-export const RoleMenuGroupOption = React.forwardRef<
-  HTMLDivElement,
-  RoleMenuGroupsOptionProps>
->(
+export const RoleMenuGroupOption = React.forwardRef<HTMLDivElement, RoleMenuGroupsOptionProps>(
   (
     {
       data,
