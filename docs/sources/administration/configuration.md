@@ -721,6 +721,14 @@ URL to redirect the user to after they sign out.
 Set to `true` to attempt login with OAuth automatically, skipping the login screen.
 This setting is ignored if multiple OAuth providers are configured. Default is `false`.
 
+### oauth_use_id_tokens
+
+Set to `true` to use the ID token (if available) instead of the access token.
+The default is `false`. ID tokens may contain more context than their respective
+access-token counterpart.
+
+On-behalf-of authorization with Azure requires this setting for operation.
+
 ### oauth_state_cookie_max_age
 
 How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)

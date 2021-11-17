@@ -197,6 +197,18 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	}
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
+	if hs.Cfg.UseIDTokens {
+		switch t := token.Extra("id_token").(type) {
+		case nil:
+			oauthLogger.Warn("no ID token in OAuth2 grant response—continue with access token instead")
+		case string:
+			token.AccessToken = t
+			oauthLogger.Debug("access token replaced with ID token")
+
+		default:
+			oauthLogger.Error("wrong datatype for ID token from OAuth2 grant response—continue with access token instead")
+		}
+	}
 
 	oauthLogger.Debug("OAuthLogin Got token", "token", token)
 

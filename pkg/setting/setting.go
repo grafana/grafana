@@ -303,6 +303,7 @@ type Cfg struct {
 	AuthProxySyncTTL          int
 
 	// OAuth
+	UseIDTokens       bool
 	OAuthCookieMaxAge int
 
 	// JWT Auth
@@ -1226,6 +1227,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	cfg.UseIDTokens = auth.Key("oauth_use_id_tokens").MustBool(false)
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
