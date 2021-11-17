@@ -729,7 +729,7 @@ describe('ElasticQueryBuilder', () => {
             { _doc: { order: 'desc' } },
           ]);
 
-          const expectedAggs = {
+          const expectedAggs: any = {
             // FIXME: It's pretty weak to include this '1' in the test as it's not part of what we are testing here and
             // might change as a cause of unrelated changes
             1: {
@@ -743,6 +743,11 @@ describe('ElasticQueryBuilder', () => {
               },
             },
           };
+
+          if (gte(builder.esVersion, '8.0.0')) {
+            expectedAggs['1'].date_histogram.fixed_interval = expectedAggs['1'].date_histogram.interval;
+            delete expectedAggs['1'].date_histogram.interval;
+          }
           expect(query.aggs).toMatchObject(expectedAggs);
         });
 
