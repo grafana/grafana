@@ -140,7 +140,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     const fmt = field.display ?? defaultFormatter;
 
     const scaleKey = buildScaleKey(config);
-    console.log('scaleKey', scaleKey);
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
