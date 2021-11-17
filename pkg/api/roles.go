@@ -124,7 +124,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     2,
 			Name:        "fixed:datasources:compatibility:querier",
 			DisplayName: "Data source compatibility querier",
-			Description: "Query data sources when data source permissions are not in use",
+			Description: "Only used for open source compatibility. Query data sources.",
 			Permissions: []accesscontrol.Permission{
 				{Action: ActionDatasourcesQuery},
 			},
