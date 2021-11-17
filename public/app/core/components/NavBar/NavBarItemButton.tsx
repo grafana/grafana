@@ -46,6 +46,7 @@ export function MenuButton(props: any) {
       }
       if (!isFocused) {
         state.close();
+        setEnableAllItems(false);
       }
     },
   });
@@ -55,24 +56,11 @@ export function MenuButton(props: any) {
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
       switch (e.key) {
-        case 'Enter':
-        case ' ':
-          setEnableAllItems(false);
-          state.close();
-          //should clear up focus or focus on main page
-          break;
         case 'ArrowRight':
           if (!state.isOpen) {
             state.open();
           }
           setEnableAllItems(true);
-
-          break;
-        case 'ArrowLeft':
-          setEnableAllItems(false);
-          break;
-        case 'Tab':
-          setEnableAllItems(false);
           break;
         default:
           break;
