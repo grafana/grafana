@@ -94,9 +94,10 @@ func TestPlugins(t *testing.T) {
 
 				expResp := expectedResp(t, tc.expRespPath)
 
-				if assert.JSONEq(t, expResp, string(b)) {
+				same := assert.JSONEq(t, expResp, string(b))
+				if !same {
 					if updateSnapshotFlag {
-						t.Log("updating expected result")
+						t.Log("updating snapshot results")
 						updateRespSnapshot(t, tc.expRespPath, string(b))
 					}
 					t.FailNow()
