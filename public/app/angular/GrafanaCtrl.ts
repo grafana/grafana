@@ -13,7 +13,7 @@ import { AngularLoader } from 'app/angular/services/AngularLoader';
 
 // Types
 import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
-import { UtilSrv } from 'app/core/services/util_srv';
+import { UtilSrv } from './services/UtilSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { IRootScopeService, IAngularEvent, auto } from 'angular';
 import { AppEvent } from '@grafana/data';

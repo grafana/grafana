@@ -1,18 +1,15 @@
 load(
     'scripts/drone/steps/lib.star',
-    'initialize_step',
-    'download_grabpl',
+    'download_grabpl_step',
     'slack_step',
 )
 
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 def pipeline(
-    name, edition, trigger, steps, ver_mode, services=[], platform='linux', depends_on=[],
-    is_downstream=False, install_deps=True,
+    name, edition, trigger, steps, services=[], platform='linux', depends_on=[],
     ):
     if platform != 'windows':
-        grabpl_step = [download_grabpl()]
         platform_conf = {
             'platform': {
                 'os': 'linux',
@@ -25,7 +22,6 @@ def pipeline(
             }
         }
     else:
-        grabpl_step = []
         platform_conf = {
             'platform': {
                 'os': 'windows',
@@ -40,9 +36,7 @@ def pipeline(
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': grabpl_step + initialize_step(
-            edition, platform, is_downstream=is_downstream, install_deps=install_deps, ver_mode=ver_mode,
-        ) + steps,
+        'steps': steps,
         'depends_on': depends_on,
     }
     pipeline.update(platform_conf)
