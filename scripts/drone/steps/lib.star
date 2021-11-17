@@ -375,7 +375,7 @@ def build_plugins_step(edition, sign=False):
         'name': 'build-plugins',
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'initialize',
         ],
         'environment': env,
         'commands': [
