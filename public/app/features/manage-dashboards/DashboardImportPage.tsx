@@ -157,16 +157,13 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
   render() {
     const { loadingState, navModel } = this.props;
-    const { gcomDashboardId } = this.props.queryParams;
+
     return (
       <Page navModel={navModel}>
         <Page.Contents>
-          {loadingState ==}
-          {loadingState === LoadingState.Done ? (
-            <ImportDashboardOverview />
-          ) : gcomDashboardId ? null : (
-            this.renderImportForm()
-          )}
+          {loadingState === LoadingState.Loading && <span>Loading...</span>}
+          {[LoadingState.Error, LoadingState.NotStarted].includes(loadingState) && this.renderImportForm()}
+          {loadingState === LoadingState.Done && <ImportDashboardOverview />}
         </Page.Contents>
       </Page>
     );
