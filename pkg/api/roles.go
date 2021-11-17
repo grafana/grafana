@@ -65,7 +65,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     2,
 			Name:        "fixed:datasources:reader",
 			DisplayName: "Data source reader",
-			Description: "Read and query all datasources.",
+			Description: "Read and query all data sources.",
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionDatasourcesRead,
