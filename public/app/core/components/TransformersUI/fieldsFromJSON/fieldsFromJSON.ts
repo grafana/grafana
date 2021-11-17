@@ -5,6 +5,7 @@ import {
   Field,
   FieldType,
   guessFieldTypeForField,
+  parseLabels,
   SynchronousDataTransformerInfo,
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
@@ -49,7 +50,9 @@ function addFieldsFromJSON(frame: DataFrame, options: FieldsFromJSONOptions): Da
     if (isString(obj)) {
       try {
         obj = JSON.parse(obj);
-      } catch {}
+      } catch {
+        obj = parseLabels(obj);
+      }
     }
     for (const [key, val] of Object.entries(obj)) {
       let buffer = values.get(key);
