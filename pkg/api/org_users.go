@@ -6,30 +6,29 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // POST /api/org/users
-func AddOrgUserToCurrentOrg(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
 	cmd.OrgId = c.OrgId
-	return addOrgUserHelper(c.Req.Context(), cmd)
+	return hs.addOrgUserHelper(c.Req.Context(), cmd)
 }
 
 // POST /api/orgs/:orgId/users
-func AddOrgUser(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) AddOrgUser(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
 	cmd.OrgId = c.ParamsInt64(":orgId")
-	return addOrgUserHelper(c.Req.Context(), cmd)
+	return hs.addOrgUserHelper(c.Req.Context(), cmd)
 }
 
-func addOrgUserHelper(ctx context.Context, cmd models.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) addOrgUserHelper(ctx context.Context, cmd models.AddOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
-	err := bus.DispatchCtx(ctx, &userQuery)
+	err := hs.SQLStore.GetUserByLogin(ctx, &userQuery)
 	if err != nil {
 		return response.Error(404, "User not found", nil)
 	}
@@ -38,7 +37,7 @@ func addOrgUserHelper(ctx context.Context, cmd models.AddOrgUserCommand) respons
 
 	cmd.UserId = userToAdd.Id
 
-	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+	if err := hs.SQLStore.AddOrgUser(ctx, &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return response.JSON(409, util.DynMap{
 				"message": "User is already member of this organization",
@@ -169,24 +168,24 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(ctx context.Context, c *models.Re
 }
 
 // PATCH /api/org/users/:userId
-func UpdateOrgUserForCurrentOrg(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.ParamsInt64(":userId")
-	return updateOrgUserHelper(c.Req.Context(), cmd)
+	return hs.updateOrgUserHelper(c.Req.Context(), cmd)
 }
 
 // PATCH /api/orgs/:orgId/users/:userId
-func UpdateOrgUser(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.UserId = c.ParamsInt64(":userId")
-	return updateOrgUserHelper(c.Req.Context(), cmd)
+	return hs.updateOrgUserHelper(c.Req.Context(), cmd)
 }
 
-func updateOrgUserHelper(ctx context.Context, cmd models.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) updateOrgUserHelper(ctx context.Context, cmd models.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
-	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+	if err := hs.SQLStore.UpdateOrgUser(ctx, &cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)
 		}
@@ -197,8 +196,8 @@ func updateOrgUserHelper(ctx context.Context, cmd models.UpdateOrgUserCommand) r
 }
 
 // DELETE /api/org/users/:userId
-func RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
-	return removeOrgUserHelper(c.Req.Context(), &models.RemoveOrgUserCommand{
+func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
+	return hs.removeOrgUserHelper(c.Req.Context(), &models.RemoveOrgUserCommand{
 		UserId:                   c.ParamsInt64(":userId"),
 		OrgId:                    c.OrgId,
 		ShouldDeleteOrphanedUser: true,
@@ -206,15 +205,15 @@ func RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
 }
 
 // DELETE /api/orgs/:orgId/users/:userId
-func RemoveOrgUser(c *models.ReqContext) response.Response {
-	return removeOrgUserHelper(c.Req.Context(), &models.RemoveOrgUserCommand{
+func (hs *HTTPServer) RemoveOrgUser(c *models.ReqContext) response.Response {
+	return hs.removeOrgUserHelper(c.Req.Context(), &models.RemoveOrgUserCommand{
 		UserId: c.ParamsInt64(":userId"),
 		OrgId:  c.ParamsInt64(":orgId"),
 	})
 }
 
-func removeOrgUserHelper(ctx context.Context, cmd *models.RemoveOrgUserCommand) response.Response {
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *models.RemoveOrgUserCommand) response.Response {
+	if err := hs.SQLStore.RemoveOrgUser(ctx, cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot remove last organization admin", nil)
 		}
