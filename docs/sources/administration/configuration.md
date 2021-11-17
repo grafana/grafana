@@ -1717,7 +1717,13 @@ Mode `context` will cluster using incognito pages.
 
 ### rendering_clustering_max_concurrency
 
-When rendering_mode = clustered you can define the maximum number of browser instances/incognito pages that can execute concurrently.
+When rendering_mode = clustered you can define the maximum number of browser instances/incognito pages that can execute concurrently. Default is `5`.
+
+### rendering_clustering_timeout
+
+> **Note**: Available in grafana-image-renderer v3.3.0 and later versions.
+
+When rendering_mode = clustered you can instruct how long a rendering request can take before timing out. Default is `30` seconds.
 
 ### rendering_viewport_max_width
 
