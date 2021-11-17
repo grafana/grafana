@@ -444,10 +444,12 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
     commands = [
         'yarn wait-on http://$HOST:$PORT',
     ]
+    failure = 'ignore'
     if ver_mode == 'pr':
         commands.extend([
             'pa11y-ci --config .pa11yci-pr.conf.js',
         ])
+        failure = 'always'
     else:
         commands.extend([
             'pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json',
@@ -464,7 +466,7 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
             'PORT': port,
         },
-        'failure': 'ignore',
+        'failure': failure,
         'commands': commands,
     }
 
