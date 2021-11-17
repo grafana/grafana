@@ -1,11 +1,10 @@
 import React, { FormEvent, PureComponent } from 'react';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { css } from '@emotion/css';
-import { AppEvents, GrafanaTheme2, NavModel } from '@grafana/data';
+import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, stylesFactory, withTheme2, Input, TextArea, Field, Form, FileUpload, Themeable2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
 import { fetchGcomDashboard, importDashboardJson } from './state/actions';
@@ -20,17 +19,19 @@ type DashboardImportPageRouteSearchParams = {
 
 type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageRouteSearchParams>;
 
-interface ConnectedProps {
-  navModel: NavModel;
-  isLoaded: boolean;
-}
+const mapStateToProps = (state: StoreState) => ({
+  navModel: getNavModel(state.navIndex, 'import', undefined, true),
+  isLoaded: state.importDashboard.isLoaded,
+});
 
-interface DispatchProps {
-  fetchGcomDashboard: typeof fetchGcomDashboard;
-  importDashboardJson: typeof importDashboardJson;
-}
+const mapDispatchToProps = {
+  fetchGcomDashboard,
+  importDashboardJson,
+};
 
-type Props = OwnProps & ConnectedProps & DispatchProps;
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class UnthemedDashboardImport extends PureComponent<Props> {
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
@@ -150,26 +151,9 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 }
 
 const DashboardImportUnConnected = withTheme2(UnthemedDashboardImport);
-
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'import', undefined, true),
-  isLoaded: state.importDashboard.isLoaded,
-});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
-  fetchGcomDashboard,
-  importDashboardJson,
-};
-
-export const DashboardImportPage = connectWithCleanUp(
-  mapStateToProps,
-  mapDispatchToProps,
-  (state) => state.importDashboard
-)(DashboardImportUnConnected);
-
-export default DashboardImportPage;
-
-DashboardImportPage.displayName = 'DashboardImport';
+const DashboardImport = connector(DashboardImportUnConnected);
+DashboardImport.displayName = 'DashboardImport';
+export default DashboardImport;
 
 const importStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
