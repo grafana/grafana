@@ -72,7 +72,11 @@ export const Components = {
         },
       },
       BarGauge: {
+        /**
+         * @deprecated use valueV2 from Grafana 8.3 instead
+         */
         value: 'Bar gauge value',
+        valueV2: 'data-testid Bar gauge value',
       },
       PieChart: {
         svgSlice: 'Pie Chart Slice',
