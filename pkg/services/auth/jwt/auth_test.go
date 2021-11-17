@@ -282,7 +282,7 @@ func TestClaimValidation(t *testing.T) {
 		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now().Add(-time.Hour))}))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now().Add(time.Minute + time.Hour))}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now().Add(time.Hour))}))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile)
 
