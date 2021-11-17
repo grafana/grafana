@@ -75,7 +75,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
     // Set the default style
     const style = await getStyleConfigState(config.style);
-    if(!style.fields) {
+    if (!style.fields) {
       vectorLayer.setStyle(style.maker(style.base));
     }
 
@@ -96,16 +96,15 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             continue; // ???
           }
 
-
-          if(style.fields) {
+          if (style.fields) {
             const dims: StyleDimensions = {};
-            if(style.fields.color) {
+            if (style.fields.color) {
               dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
             }
-            if(style.fields.size) {
+            if (style.fields.size) {
               dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
             }
-            if(style.fields.text) {
+            if (style.fields.text) {
               dims.text = getTextDimension(frame, style.config.text!);
             }
             style.dims = dims;
@@ -120,8 +119,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           // Post updates to the legend component
           if (legend) {
             legendProps.next({
-              color: style.dims?.color, // ?? getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme),
-              size: style.dims?.size, // ?? getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size),
+              color: style.dims?.color,
+              size: style.dims?.size,
             });
           }
           break; // Only the first frame for now!
