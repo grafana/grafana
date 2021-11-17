@@ -1,4 +1,3 @@
-
 # Contribute to our documentation
 
 We provide these guidelines to help our contributors make additions or corrections to our documentation.
@@ -6,7 +5,6 @@ We provide these guidelines to help our contributors make additions or correctio
 ## Welcome
 
 Welcome. We're glad you're here to help make our technical documentation even better. We develop content that leads our users to success using Grafana products. Technical accuracy is our primary consideration, and we value the use of inclusive language. We regard your feedback as a gift - thanks for reading through these guidelines.
-
 
 ### Intended audience
 
@@ -16,14 +14,14 @@ We write these guidelines for contributors who are interested in improving our t
 
 All Grafana Enterprise and OSS documentation is located in the [Grafana open source project](https://github.com/grafana/grafana) GitHub repository: https://github.com/grafana/grafana/tree/main/docs/sources.
 
-- The **sources** directory organizes content by topic areas, for example **administration** and **alerting**. 
+- The **sources** directory organizes content by topic areas, for example **administration** and **alerting**.
 - Topic directories include an `_index.md` file, which provides an overview of the topic, and optionally includes subtopics that provide more detail.
 
 > The `_index.md` file is required.
 
 ### Writing in markdown
 
-We write technical documentation using [Markdown](https://en.wikipedia.org/wiki/Markdown). We've put together a short guide to help you how to structure and format your content. 
+We write technical documentation using [Markdown](https://en.wikipedia.org/wiki/Markdown). We've put together a short guide to help you how to structure and format your content.
 
 To access the markdown guide, refer to [Markdown style guide](documentation-markdown-guide.md).
 
@@ -42,15 +40,16 @@ Request a change when you want to make a suggestion about a topic, but don't wan
 GitHub captures your request as an **Issue** logged against the repository.
 
 Before you begin:
-- Create a GitHub account. 
+
+- Create a GitHub account.
 
 To request a change, complete the following steps:
 
 1.  While viewing the topic, click **Request a change**.
 
-   The Issue title auto-populates with the location of the file about which you are requesting a change.
+The Issue title auto-populates with the location of the file about which you are requesting a change.
 
-   ![Request a change](request-change.png)
+![Request a change](request-change.png)
 
 2. Enter a change request description.
 
@@ -70,7 +69,7 @@ Other small changes might include:
 
 Before you begin:
 
-- Create a GitHub account. 
+- Create a GitHub account.
 
 To edit a topic, complete the following steps:
 
@@ -81,7 +80,7 @@ To edit a topic, complete the following steps:
 2. Add your changes to the topic.
 
 3. Scroll to the bottom of the page and enter a branch name.
-   
+
    For example, enter `clarified dashboard panel definition`.
 
 4. Click **Commit**.
@@ -94,19 +93,19 @@ To edit a topic, complete the following steps:
 
 ### Write a topic
 
-At Grafana Labs, we use the principles of topic-based authoring when we write technical documentation. Topic-based authoring provides guidelines for writing three *types* of technical documentation: concept, task, and reference. Before you begin writing, establish the topic type you want to write.
+At Grafana Labs, we use the principles of topic-based authoring when we write technical documentation. Topic-based authoring provides guidelines for writing three _types_ of technical documentation: concept, task, and reference. Before you begin writing, establish the topic type you want to write.
 
 #### Understanding topic types
 
 Technical content is divided into three topic types: concept, task, and reference.
 
-- **Concept**: A concept topic explains *what* a feature (or idea) is, and why it is important.
-- **Task**: A task topic explains *how* to complete an end user procedure in the system. Task topics contain steps.
+- **Concept**: A concept topic explains _what_ a feature (or idea) is, and why it is important.
+- **Task**: A task topic explains _how_ to complete an end user procedure in the system. Task topics contain steps.
 - **Reference** A reference topic contains lookup information that a user might consult when they complete a task. Documenting a list of values with descriptions is a common form of reference topic.
 
 **Example**
 
-Suppose you are writing content for a site called _Doggie handbook_. You might organize your topics like this: 
+Suppose you are writing content for a site called _Doggie handbook_. You might organize your topics like this:
 
 **Concepts**
 
@@ -178,7 +177,7 @@ When you are ready for other people to review your work, perform the following t
 
 1. [Create a PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) in Github.
 
- The docs build system automatically conducts a series of tests to ensure that the content doesn't conflict with other content in the docs repository.
+The docs build system automatically conducts a series of tests to ensure that the content doesn't conflict with other content in the docs repository.
 
 ### Understanding the PR review and approval workflow
 
@@ -200,34 +199,34 @@ Pretend you are explaining your topic to a brand new Grafana user or developer.
 
 ### Write clear and concise sentences and paragraphs
 
-Use the following sentence structure when you write: *subject*—*verb*—*object*. If you are telling a user to do something, write an imperative sentence. For example “Enter the refresh rate time interval and click Save.”
+Use the following sentence structure when you write: _subject_—_verb_—_object_. If you are telling a user to do something, write an imperative sentence. For example “Enter the refresh rate time interval and click Save.”
 
-- You can also start a sentence with an *if* clause, which positions the condition before the action.
+- You can also start a sentence with an _if_ clause, which positions the condition before the action.
 - Limit the number of words in a sentence to 20..
 
 ### Use active voice
 
 Active voice makes the performer of the action the subject
-of the sentence. When you write in passive voice, the recipient of the action (and not the performer) becomes the subject of the sentence. 
+of the sentence. When you write in passive voice, the recipient of the action (and not the performer) becomes the subject of the sentence.
 
-Active-voice sentences are more direct and clearly identify *who* is doing *what*. Not all tasks are completed by a user; sometimes the system can also be a performer (and by extension, the subject of the sentence). When you write in active voice you clearly make that distinction, which results in more engaging and less wordy content.
+Active-voice sentences are more direct and clearly identify _who_ is doing _what_. Not all tasks are completed by a user; sometimes the system can also be a performer (and by extension, the subject of the sentence). When you write in active voice you clearly make that distinction, which results in more engaging and less wordy content.
 
-|  Use (active) | Avoid (passive)  | 
-|---|---|
+| Use (active)                                          | Avoid (passive)                                                      |
+| ----------------------------------------------------- | -------------------------------------------------------------------- | --- |
 | After you upgrade the software, restart the computer. | After the software has been upgraded, the computer can be restarted. |
-| Click **OK** to save the dashboard. | The dashboard is saved when the **OK** button is clicked. |
-| Create a dashboard. | A dashboard is created by you. |.
+| Click **OK** to save the dashboard.                   | The dashboard is saved when the **OK** button is clicked.            |
+| Create a dashboard.                                   | A dashboard is created by you.                                       | .   |
 
 ### Avoid obscure non-English words and abbreviations
 
-Users might be unfamiliar with some non-English words and abbreviations such as *per*, *vs*, and *via*. Latin abbreviations in particular, like *i.e.*, *e.g.*, and *etc.*, are vague.
+Users might be unfamiliar with some non-English words and abbreviations such as _per_, _vs_, and _via_. Latin abbreviations in particular, like _i.e._, _e.g._, and _etc._, are vague.
 
-|  Use  | Don’t use  | 
-|---|---|
-| through | via |
-| that is | i.e. |
+| Use          | Don’t use   |
+| ------------ | ----------- |
+| through      | via         |
+| that is      | i.e.        |
 | according to | per, as per |
-| and so on | etc. |
+| and so on    | etc.        |
 
 ### Write self-contained topics
 
