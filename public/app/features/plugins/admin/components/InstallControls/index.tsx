@@ -63,6 +63,18 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
     return <div className={styles.message}>{message}</div>;
   }
 
+  if (!plugin.isPublished) {
+    return (
+      <div className={styles.message}>
+        <Icon name="exclamation-triangle" /> This plugin is not published to{' '}
+        <a href="https://www.grafana.com/plugins" target="__blank" rel="noreferrer">
+          grafana.com/plugins
+        </a>{' '}
+        and can&#39;t be managed via the catalog.
+      </div>
+    );
+  }
+
   if (!isCompatible) {
     return (
       <div className={styles.message}>

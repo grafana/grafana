@@ -135,7 +135,7 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
     const isBackend = plugin.DataSourceClass.prototype instanceof DataSourceWithBackend;
     const meta = {
       ...pluginInfo,
-      isBackend: isBackend,
+      isBackend: pluginInfo.backend || isBackend,
     };
 
     dispatch(dataSourceMetaLoaded(meta));
