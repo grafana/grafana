@@ -80,6 +80,8 @@
     "@grafana/eslint-config": "2.5.1",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.0.0-rc1",
+    "@lingui/cli": "^3.12.1",
+    "@lingui/macro": "^3.12.1",
     "@microsoft/api-extractor": "7.18.16",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.1",
     "@react-types/button": "3.4.1",
@@ -113,6 +115,7 @@
     "@types/jest": "27.0.2",
     "@types/jquery": "3.3.38",
     "@types/jsurl": "^1.2.28",
+    "@types/lingui__macro": "^3",
     "@types/lodash": "4.14.149",
     "@types/logfmt": "^1.2.1",
     "@types/lru-cache": "^5.1.0",
@@ -153,6 +156,7 @@
     "babel-jest": "27.4.2",
     "babel-loader": "8.2.2",
     "babel-plugin-angularjs-annotate": "0.10.0",
+    "babel-plugin-macros": "^3.1.0",
     "copy-webpack-plugin": "9.0.1",
     "css-loader": "6.5.1",
     "css-minimizer-webpack-plugin": "^3.1.3",
@@ -219,7 +223,8 @@
     "webpack-bundle-analyzer": "4.5.0",
     "webpack-cli": "4.9.1",
     "webpack-dev-server": "4.4.0",
-    "webpack-merge": "5.8.0"
+    "webpack-merge": "5.8.0",
+    "yarn": "^1.22.17"
   },
   "dependencies": {
     "@emotion/css": "11.1.3",
@@ -234,6 +239,8 @@
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
     "@kusto/monaco-kusto": "4.1.2",
+    "@lingui/core": "^3.12.1",
+    "@lingui/react": "^3.12.1",
     "@opentelemetry/api": "1.0.2",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.0.0",
