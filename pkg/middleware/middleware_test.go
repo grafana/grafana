@@ -498,10 +498,9 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should use organisation specified by targetOrgId parameter", func(t *testing.T, sc *scenarioContext) {
-			var storedRoleInfo map[int64]models.RoleType = nil
 			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				if query.UserId > 0 {
-					query.Result = &models.SignedInUser{OrgId: query.OrgId, UserId: userID, OrgRole: storedRoleInfo[orgID]}
+					query.Result = &models.SignedInUser{OrgId: query.OrgId, UserId: userID}
 					return nil
 				}
 				return models.ErrUserNotFound
@@ -509,7 +508,6 @@ func TestMiddlewareContext(t *testing.T) {
 
 			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
 				cmd.Result = &models.User{Id: userID}
-				storedRoleInfo = cmd.ExternalUser.OrgRoles
 				return nil
 			})
 
