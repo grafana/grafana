@@ -13,6 +13,8 @@ export const Messages = {
     telemetryLabel: 'Telemetry',
     telemetryLink: `${GUI_DOC_URL}#server-admin-gui-telemetry`,
     telemetryTooltip: 'Option to send usage data back to Percona to let us make our product better.',
+    telemetryDisclaimer:
+      'Disabling Telemetry while Alerting/STT is on will inactivate intelligence (Downloading check and Alert templates).',
     updatesLabel: 'Check for updates',
     updatesLink: `${GUI_DOC_URL}#check-for-updates`,
     updatesTooltip: 'Option to check new versions and ability to update PMM from UI.',
