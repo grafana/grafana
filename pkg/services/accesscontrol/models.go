@@ -253,7 +253,6 @@ const (
 	ActionUsersQuotasUpdate      = "users.quotas:update"
 
 	// Org actions
-	// TODO: maybe merge with user actions
 	ActionOrgUsersRead       = "org.users:read"
 	ActionOrgUsersAdd        = "org.users:add"
 	ActionOrgUsersRemove     = "org.users:remove"
