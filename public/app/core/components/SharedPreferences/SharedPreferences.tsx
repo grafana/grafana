@@ -150,7 +150,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                     </Tooltip>
                   </Label>
                 }
-                aria-label="User preferences home dashboard drop down"
+                data-testid="User preferences home dashboard drop down"
               >
                 <Select
                   menuShouldPortal
