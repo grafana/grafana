@@ -74,7 +74,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     }
 
     const style = config.style ?? defaultStyleConfig;
-    const hasTextLabel = Boolean(style.text?.fixed || style.text?.mode === TextDimensionMode.Field);
+    const hasTextLabel = Boolean(style.text?.fixed || style.text?.field);
     const markerMaker = await getMarkerMaker(style.symbol?.fixed, hasTextLabel);
 
     return {

@@ -60,7 +60,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ va
     onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline as TextBaseline } });
   };
 
-  const hasTextLabel = Boolean(value.text?.fixed || value.text?.mode === TextDimensionMode.Field);
+  const hasTextLabel = Boolean(value.text?.fixed || value.text?.field);
 
   return (
     <>
