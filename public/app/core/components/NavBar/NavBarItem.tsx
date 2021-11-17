@@ -76,9 +76,11 @@ const NavBarItem = ({
   return showMenu ? (
     <div className={cx(styles.container, className)}>
       <MenuButton link={link} isActive={isActive} reverseDirection={reverseMenuDirection} menuItems={menuItems}>
-        <Item key={id} textValue={link.text}>
-          <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
-        </Item>
+        {!reverseMenuDirection && (
+          <Item key={id} textValue={link.text}>
+            <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
+          </Item>
+        )}
         {filteredItems?.map((item, index) => {
           return (
             <Item key={`${item.id}-${index}`} textValue={item.text}>
@@ -95,6 +97,11 @@ const NavBarItem = ({
             </Item>
           );
         })}
+        {reverseMenuDirection && (
+          <Item key={id} textValue={link.text}>
+            <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
+          </Item>
+        )}
       </MenuButton>
     </div>
   ) : (

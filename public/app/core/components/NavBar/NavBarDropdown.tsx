@@ -28,18 +28,13 @@ const NavBarDropdown = ({
   const theme = useTheme2();
   const styles = getStyles(theme, reverseDirection);
 
-  const disabledKeys = enableAllItems
-    ? items?.map((item: any, index: number) => {
-        if (item.id?.startsWith('divider')) {
-          return `${item.key}-${index}`;
-        }
-        return false;
-      })
-    : items?.map((item: any, index: number) => {
-        return `${item.id}-${index}`;
-      });
-
-  // console.log({ disabledKeys });
+  const disabledKeys = [];
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index];
+    if (item.id?.startsWith('divider') || !enableAllItems) {
+      disabledKeys.push(`${item.id}-${index}`);
+    }
+  }
   // Create menu state based on the incoming props
   const state = useTreeState({ ...rest, disabledKeys });
 
@@ -64,14 +59,14 @@ const NavBarDropdown = ({
 
   useEffect(() => {
     if (enableAllItems && !selectionManager.isFocused) {
-      const firstKey = collection.getFirstKey();
-      selectionManager.setFocusedKey(firstKey);
+      const key = reverseDirection ? collection.getLastKey() : collection.getFirstKey();
+      selectionManager.setFocusedKey(key);
       selectionManager.setFocused(true);
     } else if (!enableAllItems && selectionManager.isFocused) {
       selectionManager.setFocused(false);
       selectionManager.clearSelection();
     }
-  }, [enableAllItems, selectionManager, collection]);
+  }, [enableAllItems, selectionManager, collection, reverseDirection]);
 
   // Wrap in <FocusScope> so that focus is restored back to the
   // trigger when the menu is closed. In addition, add hidden
