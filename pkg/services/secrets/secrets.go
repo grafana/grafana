@@ -6,6 +6,10 @@ import (
 	"xorm.io/xorm"
 )
 
+const (
+	EnvelopeEncryptionFeatureToggle = "envelopeEncryption"
+)
+
 // Service is an envelope encryption service in charge of encrypting/decrypting secrets.
 // It is a replacement for encryption.Service
 type Service interface {
@@ -22,12 +26,6 @@ type Service interface {
 	DecryptJsonData(ctx context.Context, sjd map[string][]byte) (map[string]string, error)
 
 	GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key, fallback string) string
-}
-
-type ProvidersRegistrar interface {
-	CurrentProviderID() string
-	GetProviders() map[string]Provider
-	RegisterProvider(providerID string, provider Provider)
 }
 
 // Store defines methods to interact with secrets storage
