@@ -1,5 +1,6 @@
 load(
     'scripts/drone/steps/lib.star',
+    'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
     'codespell_step',
@@ -53,6 +54,7 @@ def get_steps(edition, is_downstream=False):
     publish = edition != 'enterprise' or is_downstream
     include_enterprise2 = edition == 'enterprise'
     steps = [
+        lint_drone_step(),
         enterprise_downstream_step(edition=edition),
         codespell_step(),
         shellcheck_step(),

@@ -5,9 +5,9 @@ import { StatPanelOptions } from './types';
 
 export class StatSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary } = builder;
+    const { dataSummary: ds } = builder;
 
-    if (!dataSummary.hasData) {
+    if (!ds.hasData) {
       return;
     }
 
@@ -29,14 +29,15 @@ export class StatSuggestionsSupplier {
       },
     });
 
-    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
+    // String and number field with low row count show individual rows
+    if (ds.hasStringField && ds.hasNumberField && ds.frameCount === 1 && ds.rowCountTotal < 10) {
       list.append({
         name: SuggestionName.Stat,
         options: {
           reduceOptions: {
             values: true,
             calcs: [],
-            fields: dataSummary.hasNumberField ? undefined : '/.*/',
+            fields: '/.*/',
           },
         },
       });
@@ -46,12 +47,29 @@ export class StatSuggestionsSupplier {
           reduceOptions: {
             values: true,
             calcs: [],
-            fields: dataSummary.hasNumberField ? undefined : '/.*/',
+            fields: '/.*/',
           },
           colorMode: BigValueColorMode.Background,
         },
       });
-    } else if (dataSummary.hasNumberField) {
+    }
+
+    // Just a single string field
+    if (ds.stringFieldCount === 1 && ds.frameCount === 1 && ds.rowCountTotal < 10 && ds.fieldCount === 1) {
+      list.append({
+        name: SuggestionName.Stat,
+        options: {
+          reduceOptions: {
+            values: true,
+            calcs: [],
+            fields: '/.*/',
+          },
+          colorMode: BigValueColorMode.None,
+        },
+      });
+    }
+
+    if (ds.hasNumberField && ds.hasTimeField) {
       list.append({
         options: {
           reduceOptions: {

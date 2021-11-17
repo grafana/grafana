@@ -67,6 +67,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
       <CollapsableSection label="Time options" isOpen={true}>
         <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
           <TimeZonePicker
+            inputId="time-options-input"
             includeInternal={true}
             value={this.props.timezone}
             onChange={this.onTimeZoneChange}
@@ -74,17 +75,20 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           />
         </Field>
         <Field label="Week start" aria-label={selectors.components.WeekStartPicker.container}>
-          <WeekStartPicker width={40} value={this.props.weekStart} onChange={this.onWeekStartChange} />
+          <WeekStartPicker
+            inputId="week-start-input"
+            width={40}
+            value={this.props.weekStart}
+            onChange={this.onWeekStartChange}
+          />
         </Field>
         <AutoRefreshIntervals
           refreshIntervals={this.props.refreshIntervals}
           onRefreshIntervalChange={this.props.onRefreshIntervalChange}
         />
-        <Field
-          label="Now delay now"
-          description="Enter 1m to ignore the last minute. It might contain incomplete metrics."
-        >
+        <Field label="Now delay" description="Exclude recent data that may be incomplete.">
           <Input
+            id="now-delay-input"
             invalid={!this.state.isNowDelayValid}
             placeholder="0m"
             onChange={this.onNowDelayChange}

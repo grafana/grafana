@@ -54,6 +54,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -166,6 +168,8 @@ var wireBasicSet = wire.NewSet(
 	datasources.ProvideService,
 	pluginsettings.ProvideService,
 	alerting.ProvideService,
+	serviceaccountsmanager.ProvideServiceAccountsService,
+	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsmanager.ServiceAccountsService)),
 	expr.ProvideService,
 )
 

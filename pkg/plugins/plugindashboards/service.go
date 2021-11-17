@@ -81,7 +81,7 @@ func (s *Service) syncPluginDashboards(ctx context.Context, pluginDef *plugins.P
 
 		// update updated ones
 		if dash.ImportedRevision != dash.Revision {
-			if err := s.autoUpdateAppDashboard(dash, orgID); err != nil {
+			if err := s.autoUpdateAppDashboard(ctx, dash, orgID); err != nil {
 				s.logger.Error("Failed to auto update app dashboard", "pluginId", pluginDef.ID, "error", err)
 				return
 			}
@@ -130,7 +130,7 @@ func (s *Service) handlePluginStateChanged(event *models.PluginStateChangedEvent
 	return nil
 }
 
-func (s *Service) autoUpdateAppDashboard(pluginDashInfo *plugins.PluginDashboardInfoDTO, orgID int64) error {
+func (s *Service) autoUpdateAppDashboard(ctx context.Context, pluginDashInfo *plugins.PluginDashboardInfoDTO, orgID int64) error {
 	dash, err := s.pluginDashboardManager.LoadPluginDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func (s *Service) autoUpdateAppDashboard(pluginDashInfo *plugins.PluginDashboard
 	s.logger.Info("Auto updating App dashboard", "dashboard", dash.Title, "newRev",
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
 	user := &models.SignedInUser{UserId: 0, OrgRole: models.ROLE_ADMIN}
-	_, _, err = s.pluginDashboardManager.ImportDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path, orgID, 0, dash.Data, true,
+	_, _, err = s.pluginDashboardManager.ImportDashboard(ctx, pluginDashInfo.PluginId, pluginDashInfo.Path, orgID, 0, dash.Data, true,
 		nil, user)
 	return err
 }
