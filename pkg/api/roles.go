@@ -38,12 +38,6 @@ var (
 	ScopeDatasourceID   = accesscontrol.Scope("datasources", "id", accesscontrol.Parameter(":id"))
 	ScopeDatasourceUID  = accesscontrol.Scope("datasources", "uid", accesscontrol.Parameter(":uid"))
 	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
-
-	ScopeOrgsAll      = accesscontrol.Scope("orgs", "*")
-	ScopeOrgID        = accesscontrol.Scope("orgs", "id", accesscontrol.Parameter(":orgId"))
-	ScopeOrgCurrentID = accesscontrol.Scope("orgs", "id", accesscontrol.Field("OrgID"))
-	ScopeOrgName      = accesscontrol.Scope("orgs", "name", accesscontrol.Parameter(":name"))
-	ScopeOrgCurrent   = accesscontrol.Scope("orgs", "current")
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
@@ -140,19 +134,13 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	currentOrgReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     2,
+			Version:     3,
 			Name:        "fixed:current.org:reader",
 			DisplayName: "Current Organization reader",
 			Description: "Read the current organization, such as its ID, name, address, or quotas.",
 			Permissions: []accesscontrol.Permission{
-				{
-					Action: ActionOrgsRead,
-					Scope:  ScopeOrgCurrent,
-				},
-				{
-					Action: ActionOrgsQuotasRead,
-					Scope:  ScopeOrgCurrent,
-				},
+				{Action: ActionOrgsRead},
+				{Action: ActionOrgsQuotasRead},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -160,23 +148,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	currentOrgWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     2,
+			Version:     3,
 			Name:        "fixed:current.org:writer",
 			DisplayName: "Current Organization writer",
 			Description: "Read the current organization, its quotas, or its preferences. Update the current organization properties, or its preferences.",
 			Permissions: accesscontrol.ConcatPermissions(currentOrgReaderRole.Role.Permissions, []accesscontrol.Permission{
-				{
-					Action: ActionOrgsPreferencesRead,
-					Scope:  ScopeOrgCurrent,
-				},
-				{
-					Action: ActionOrgsWrite,
-					Scope:  ScopeOrgCurrent,
-				},
-				{
-					Action: ActionOrgsPreferencesWrite,
-					Scope:  ScopeOrgCurrent,
-				},
+				{Action: ActionOrgsPreferencesRead},
+				{Action: ActionOrgsWrite},
+				{Action: ActionOrgsPreferencesWrite},
 			}),
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
@@ -189,14 +168,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Organization reader",
 			Description: "Read the organization and its quotas.",
 			Permissions: []accesscontrol.Permission{
-				{
-					Action: ActionOrgsRead,
-					Scope:  ScopeOrgsAll,
-				},
-				{
-					Action: ActionOrgsQuotasRead,
-					Scope:  ScopeOrgsAll,
-				},
+				{Action: ActionOrgsRead},
+				{Action: ActionOrgsQuotasRead},
 			},
 		},
 		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
@@ -204,26 +177,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	orgWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     2,
+			Version:     3,
 			Name:        "fixed:orgs:writer",
 			DisplayName: "Organization writer",
 			Description: "Create, read, write, or delete an organization. Read or write an organization's quotas.",
 			Permissions: accesscontrol.ConcatPermissions(orgReaderRole.Role.Permissions, []accesscontrol.Permission{
-				{
-					Action: ActionOrgsCreate,
-				},
-				{
-					Action: ActionOrgsWrite,
-					Scope:  ScopeOrgsAll,
-				},
-				{
-					Action: ActionOrgsDelete,
-					Scope:  ScopeOrgsAll,
-				},
-				{
-					Action: ActionOrgsQuotasWrite,
-					Scope:  ScopeOrgsAll,
-				},
+				{Action: ActionOrgsCreate},
+				{Action: ActionOrgsWrite},
+				{Action: ActionOrgsDelete},
+				{Action: ActionOrgsQuotasWrite},
 			}),
 		},
 		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},

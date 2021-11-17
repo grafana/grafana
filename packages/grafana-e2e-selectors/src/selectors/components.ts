@@ -200,7 +200,7 @@ export const Components = {
   },
   Select: {
     option: 'Select option',
-    input: () => 'input[id*="react-select-"]',
+    input: () => 'input[id*="time-options-input"]',
     singleValue: () => 'div[class*="-singleValue"]',
   },
   FieldConfigEditor: {
