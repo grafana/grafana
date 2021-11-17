@@ -14,12 +14,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	jose "gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
+
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type scenarioContext struct {
@@ -268,33 +269,30 @@ func TestClaimValidation(t *testing.T) {
 	scenario(t, "validates exp claim of the token", func(t *testing.T, sc scenarioContext) {
 		var err error
 
-		// time.Now should be okay because of default one-minute leeway of go-jose library.
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Expiry: jwt.NewNumericDate(time.Now())}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Expiry: jwt.NewNumericDate(time.Now().Add(-time.Minute - time.Second))}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Expiry: jwt.NewNumericDate(time.Now().Add(-time.Hour))}))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile)
 
 	scenario(t, "validates nbf claim of the token", func(t *testing.T, sc scenarioContext) {
 		var err error
 
-		// time.Now should be okay because of default one-minute leeway of go-jose library.
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now())}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now().Add(-time.Hour))}))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now().Add(time.Minute + time.Second))}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now().Add(time.Hour))}))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile)
 
 	scenario(t, "validates iat claim of the token", func(t *testing.T, sc scenarioContext) {
 		var err error
 
-		// time.Now should be okay because of default one-minute leeway of go-jose library.
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{IssuedAt: jwt.NewNumericDate(time.Now())}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{IssuedAt: jwt.NewNumericDate(time.Now().Add(-time.Hour))}))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{IssuedAt: jwt.NewNumericDate(time.Now().Add(time.Minute + time.Second))}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{IssuedAt: jwt.NewNumericDate(time.Now().Add(time.Hour))}))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile)
 }

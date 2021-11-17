@@ -24,7 +24,7 @@ func GetOrgByID(c *models.ReqContext) response.Response {
 	return getOrgHelper(c.Req.Context(), c.ParamsInt64(":orgId"))
 }
 
-// Get /api/orgs/name/:name
+// GET /api/orgs/name/:name
 func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 	org, err := hs.SQLStore.GetOrgByName(web.Params(c.Req)[":name"])
 	if err != nil {
