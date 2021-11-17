@@ -1,7 +1,7 @@
 ---
 depends_on: []
 kind: pipeline
-name: test-pr
+name: pr-test
 node:
   type: no-parallel
 platform:
@@ -139,7 +139,7 @@ type: docker
 ---
 depends_on: []
 kind: pipeline
-name: build-pr
+name: pr-build-e2e
 node:
   type: no-parallel
 platform:
@@ -3531,6 +3531,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 8dc023cfdfedfbef48a3cfbaa7f80a502de2c9abf684e07c3ea726525707c993
+hmac: 0e3e2c1fb43055cd1b7d45dcfa6b5bdf7d90ebdc690aef3cb5b92822a388e688
 
 ...

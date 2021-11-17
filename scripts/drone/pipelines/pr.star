@@ -108,10 +108,10 @@ def pr_pipelines(edition):
     }
     return [
         pipeline(
-            name='test-pr', edition=edition, trigger=trigger, services=services, steps=test_steps,
+            name='pr-test', edition=edition, trigger=trigger, services=services, steps=test_steps,
             ver_mode=ver_mode,
         ), pipeline(
-            name='build-pr', edition=edition, trigger=trigger, services=[], steps=build_steps,
+            name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=build_steps,
             ver_mode=ver_mode,
         ),
     ]
