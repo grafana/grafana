@@ -161,7 +161,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   pointer: css`
     cursor: pointer;
-    div input[readonly] {
+    input[readonly] {
       cursor: pointer;
     }
   `,
