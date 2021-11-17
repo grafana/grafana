@@ -170,7 +170,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 <TimeZonePicker includeInternal={true} value={timezone} onChange={this.onTimeZoneChanged} />
               </Field>
 
-              <Field label="Week start" aria-label={selectors.components.WeekStartPicker.container}>
+              <Field label="Week start" data-testid={selectors.components.WeekStartPicker.containerV2}>
                 <WeekStartPicker value={weekStart} onChange={this.onWeekStartChanged} />
               </Field>
               <div className="gf-form-button-row">

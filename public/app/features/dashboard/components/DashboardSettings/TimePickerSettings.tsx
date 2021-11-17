@@ -74,7 +74,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
             width={40}
           />
         </Field>
-        <Field label="Week start" aria-label={selectors.components.WeekStartPicker.container}>
+        <Field label="Week start" data-testid={selectors.components.WeekStartPicker.containerV2}>
           <WeekStartPicker
             inputId="week-start-input"
             width={40}

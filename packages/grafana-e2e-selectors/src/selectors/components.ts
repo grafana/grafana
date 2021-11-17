@@ -238,13 +238,18 @@ export const Components = {
   },
   TimeZonePicker: {
     /**
-     * @deprecated use containerV2 from Grafana 8.3 instead
+     * @deprecated use TimeZonePicker.containerV2 from Grafana 8.3 instead
      */
     container: 'Time zone picker select container',
     containerV2: 'data-testid Time zone picker select container',
   },
   WeekStartPicker: {
+    /**
+     * @deprecated use WeekStartPicker.containerV2 from Grafana 8.3 instead
+     */
     container: 'Choose starting day of the week',
+    containerV2: 'data-testid Choose starting day of the week',
+    placeholder: 'Choose starting day of the week',
   },
   TraceViewer: {
     spanBar: () => '[data-test-id="SpanBar--wrapper"]',
