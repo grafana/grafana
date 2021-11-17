@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
-import { Field, FieldSet, Input, Button, useStyles2 } from '@grafana/ui';
+import { Field, FieldSet, Input, Button, LinkButton, useStyles2 } from '@grafana/ui';
 import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useDispatch } from 'react-redux';
@@ -14,6 +14,7 @@ import { initialAsyncRequestState } from '../../utils/redux';
 import { MuteTimingTimeRange } from './MuteTimingTimeRange';
 import { MuteTimingFields, MuteTimingIntervalFields } from '../../types/mute-timing-form';
 import { DAYS_OF_THE_WEEK, MONTHS, validateArrayField, createMuteTiming } from '../../utils/mute-timings';
+import { makeAMLink } from '../../utils/misc';
 
 interface Props {
   muteTiming?: MuteTimeInterval;
@@ -96,7 +97,7 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
 
   return (
     <AlertingPageWrapper pageId="am-routes">
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} disabled />
       {result && !loading && (
         <FormProvider {...formApi}>
           <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">
@@ -229,7 +230,17 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
                   Add another time interval
                 </Button>
               </FieldSet>
-              <Button type="submit">Submit</Button>
+
+              <LinkButton
+                type="button"
+                variant="secondary"
+                href={makeAMLink('/alerting/routes/', alertManagerSourceName)}
+              >
+                Cancel
+              </LinkButton>
+              <Button type="submit" className={styles.submitButton}>
+                Submit
+              </Button>
             </FieldSet>
           </form>
         </FormProvider>
@@ -249,6 +260,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   removeTimeIntervalButton: css`
     margin-top: ${theme.spacing(1)};
+  `,
+  submitButton: css`
+    margin-left: ${theme.spacing(1)};
   `,
 });
 

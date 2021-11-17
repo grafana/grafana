@@ -41,7 +41,7 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
   return (
     <div>
       {!hideActions && <h5>Mute timings</h5>}
-      {items.length > 0 ? <DynamicTable items={items} cols={columns} /> : 'No mute timings configured'}
+      {items.length > 0 ? <DynamicTable items={items} cols={columns} /> : <p>No mute timings configured</p>}
       {!hideActions && (
         <ConfirmModal
           isOpen={!!muteTimingName}
