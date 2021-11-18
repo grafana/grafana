@@ -4,31 +4,40 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
 import { unByKey } from 'ol/Observable';
-import { Feature } from 'ol';
-import { Geometry } from 'ol/geom';
-import { getGeoMapStyle } from '../../utils/getGeoMapStyle';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
-import { ComparisonOperation, FeatureStyleConfig } from '../../types';
-import { Stroke, Style } from 'ol/style';
+import { ComparisonOperation, FeatureRuleConfig, FeatureStyleConfig } from '../../types';
+import { Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
-import { circleMarker } from '../../style/markers';
+import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { getStyleConfigState } from '../../style/utils';
+import { polyStyle } from '../../style/markers';
+import { StyleEditor } from './StyleEditor';
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
 
   // Styles that can be applied
   styles: FeatureStyleConfig[];
+
+  // The default
+  style: StyleConfig;
 }
 
 const defaultOptions: GeoJSONMapperConfig = {
   src: 'public/maps/countries.geojson',
   styles: [],
+  style: defaultStyleConfig,
 };
 
+interface StyleCheckerState {
+  poly: Style | Style[];
+  point: Style | Style[];
+  rule?: FeatureRuleConfig;
+}
+
 export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
-  fillColor: '#1F60C4',
-  strokeWidth: 1,
+  style: defaultStyleConfig,
   rule: {
     property: '',
     operation: ComparisonOperation.EQ,
@@ -68,30 +77,39 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       }
     });
 
-    const defaultStyle = new Style({
-      stroke: new Stroke({
-        color: DEFAULT_STYLE_RULE.fillColor,
-        width: DEFAULT_STYLE_RULE.strokeWidth,
-      }),
-    });
+    const styles:StyleCheckerState[] = [];
+    if(config.styles) {
+      for(const r of config.styles) {
+        if(r.style) {
+          const s = await getStyleConfigState(r.style);
+          styles.push({
+            point: s.maker(s.base),
+            poly: polyStyle(s.base),
+            rule: r.rule,
+          });
+        }
+      }
+    }
+    if(true) {
+      const s = await getStyleConfigState(config.style);
+      styles.push({
+        point: s.maker(s.base),
+        poly: polyStyle(s.base),
+      });
+    }
 
     const vectorLayer = new VectorLayer({
       source,
       style: (feature: FeatureLike) => {
-        const type = feature.getGeometry()?.getType();
-        if (type === 'Point') {
-          return circleMarker({color:DEFAULT_STYLE_RULE.fillColor});
-        }
+        const isPoint = feature.getGeometry()?.getType() === 'Point';
 
-        if (feature && config?.styles?.length) {
-          for (const style of config.styles) {
-            //check if there is no style rule or if the rule matches feature property
-            if (!style.rule || checkFeatureMatchesStyleRule(style.rule, feature as Feature<Geometry>)) {
-              return getGeoMapStyle(style, feature);
-            }
+        for(const check of styles) {
+          if(check.rule && !checkFeatureMatchesStyleRule(check.rule, feature)) {
+            continue
           }
+          return isPoint ? check.point : check.poly;
         }
-        return defaultStyle;
+        return undefined; // unreachable
       },
     });
 
@@ -129,10 +147,20 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             id: 'config.styles',
             path: 'config.styles',
             name: 'Style Rules',
+            description: 'The style for the first matching rule will apply',
             editor: GeomapStyleRulesEditor,
             settings: {},
             defaultValue: [],
-          });
+          })
+          .addCustomEditor({
+            id: 'config.style',
+            path: 'config.style',
+            name: 'Default Style',
+            description: 'The style to apply when no rules above match',
+            editor: StyleEditor,
+            settings: {},
+            defaultValue: defaultOptions.style,
+          })
       },
     };
   },
