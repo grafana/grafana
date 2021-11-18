@@ -50,7 +50,7 @@ With Grafana Enterprise, you get access to new features, including:
 - [Export dashboard as PDF]({{< relref "export-pdf.md" >}})
 - [White labeling]({{< relref "white-labeling.md" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "usage-insights/_index.md" >}}) to understand how your Grafana instance is used.
-- [Vault integration]({{< relref "vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
+- [Hashicorp Vault integration]({{< relref "hashicorp-vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "auditing.md" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "request-security.md" >}}) makes it possible to restrict outgoing requests from the Grafana server.
 - [Settings updates at runtime]({{< relref "settings-updates.md" >}}) allows you to update Grafana settings at runtime without requiring a restart.
