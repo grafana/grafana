@@ -177,6 +177,11 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 }
 
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
+	if !runner.SettingsProvider.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+		logger.Warn("Envelope encryption is not enabled, quitting...")
+		return nil
+	}
+
 	toMigrate := []interface {
 		reencrypt(*manager.SecretsService, *xorm.Session) error
 	}{
