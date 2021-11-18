@@ -5,7 +5,7 @@ import { useGetErrors, useFetchStatus } from '../admin/state/hooks';
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { css } from '@emotion/css';
 
-export function PluginsErrorsInfo({ children }): React.ReactElement | null {
+export function PluginsErrorsInfo(): React.ReactElement | null {
   const errors = useGetErrors();
   const { isLoading } = useFetchStatus();
   const theme = useTheme();
@@ -50,7 +50,6 @@ export function PluginsErrorsInfo({ children }): React.ReactElement | null {
             </div>
           )}
         />
-        {children}
       </div>
     </InfoBox>
   );
