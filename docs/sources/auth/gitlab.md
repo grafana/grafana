@@ -54,7 +54,7 @@ allowed_groups =
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
-correct. For example in case you are serving Grafana behind a proxy.
+correct. For example in case you are serving Grafana behind a proxy, or in special cases define the optional `redirect_url`.
 
 Restart the Grafana backend for your changes to take effect.
 

@@ -21,7 +21,7 @@ You can configure many different OAuth2 authentication services with Grafana usi
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
-correct. For example in case you are serving Grafana behind a proxy.
+correct. For example in case you are serving Grafana behind a proxy, or in special cases define the optional `redirect_url`.
 
 Example config:
 
@@ -137,6 +137,7 @@ Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (ba
    token_url = https://<domain>/oauth/token
    api_url = https://<domain>/userinfo
    use_pkce = true
+   redirect_url = https://<your-oauth-proxy>/<domain>
    ```
 
 ## Set up OAuth2 with Bitbucket
@@ -156,6 +157,7 @@ teams_url = https://api.bitbucket.org/2.0/user/permissions/workspaces
 team_ids_attribute_path = values[*].workspace.slug
 team_ids =
 allowed_organizations =
+redirect_url =
 ```
 
 ## Set up OAuth2 with Centrify
@@ -226,6 +228,7 @@ allowed_organizations =
    api_url = https://<onelogin domain>.onelogin.com/oidc/2/me
    team_ids =
    allowed_organizations =
+   redirect_url =
    ```
 
 ## JMESPath examples
