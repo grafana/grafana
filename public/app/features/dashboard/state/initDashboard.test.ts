@@ -21,6 +21,7 @@ import {
   setDashboardQueryRunnerFactory,
 } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { emptyResult } from '../../query/state/DashboardQueryRunner/utils';
+import { setVariableSettings } from './settings/reducer';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -175,8 +176,8 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[7].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[7].payload.title).toBe('New dashboard');
+    expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[8].payload.title).toBe('New dashboard');
   });
 
   it('Should initialize services', () => {
@@ -247,8 +248,8 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[8].payload.title).toBe('My cool dashboard');
+    expect(ctx.actions[9].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[9].payload.title).toBe('My cool dashboard');
   });
 
   it('Should initialize services', () => {
@@ -258,8 +259,12 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
     expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 
-  it('Should initialize redux variables if newVariables is enabled', () => {
-    expect(ctx.actions[2].type).toBe(variablesInitTransaction.type);
+  it('Should initialize dashboard settings', () => {
+    expect(ctx.actions[2].type).toBe(setVariableSettings.type);
+  });
+
+  it('Should initialize variables', () => {
+    expect(ctx.actions[3].type).toBe(variablesInitTransaction.type);
   });
 });
 

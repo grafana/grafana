@@ -193,12 +193,14 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
   let unknown: VariableUsageTree[] = [];
   const model = dashboard.getSaveModelClone();
 
-  const unknownVariables = getUnknownVariableStrings(variables, model);
-  for (const unknownVariable of unknownVariables) {
-    const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
-    if (Object.keys(props).length) {
-      const variable = ({ id: unknownVariable, name: unknownVariable } as unknown) as VariableModel;
-      unknown.push({ variable, tree: props });
+  if (dashboard.getVariableSettings()?.showUnknowns) {
+    const unknownVariables = getUnknownVariableStrings(variables, model);
+    for (const unknownVariable of unknownVariables) {
+      const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
+      if (Object.keys(props).length) {
+        const variable = ({ id: unknownVariable, name: unknownVariable } as unknown) as VariableModel;
+        unknown.push({ variable, tree: props });
+      }
     }
   }
 
