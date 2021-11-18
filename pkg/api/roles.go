@@ -46,10 +46,11 @@ var (
 func (hs *HTTPServer) declareFixedRoles() error {
 	provisioningWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     2,
+			Version:     3,
 			Name:        "fixed:provisioning:writer",
 			DisplayName: "Provisioning writer",
 			Description: "Reload provisioning.",
+			Group:       "Provisioning",
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
@@ -62,10 +63,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	datasourcesReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     2,
+			Version:     3,
 			Name:        "fixed:datasources:reader",
 			DisplayName: "Data source reader",
 			Description: "Read and query all data sources.",
+			Group:       "Data sources",
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionDatasourcesRead,
@@ -82,10 +84,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	datasourcesWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     2,
+			Version:     3,
 			Name:        "fixed:datasources:writer",
 			DisplayName: "Data source writer",
 			Description: "Create, update, delete, read, or query data sources.",
+			Group:       "Data sources",
 			Permissions: accesscontrol.ConcatPermissions(datasourcesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: ActionDatasourcesWrite,
@@ -105,10 +108,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	datasourcesIdReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     3,
+			Version:     4,
 			Name:        "fixed:datasources.id:reader",
 			DisplayName: "Data source ID reader",
 			Description: "Read the ID of a data source based on its name.",
+			Group:       "Infrequently used",
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionDatasourcesIDRead,
@@ -121,10 +125,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	datasourcesCompatibilityReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     2,
+			Version:     3,
 			Name:        "fixed:datasources:compatibility:querier",
 			DisplayName: "Data source compatibility querier",
 			Description: "Only used for open source compatibility. Query data sources.",
+			Group:       "Infrequently used",
 			Permissions: []accesscontrol.Permission{
 				{Action: ActionDatasourcesQuery},
 			},
@@ -134,10 +139,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	currentOrgReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     3,
+			Version:     4,
 			Name:        "fixed:current.org:reader",
 			DisplayName: "Current Organization reader",
 			Description: "Read the current organization, such as its ID, name, address, or quotas.",
+			Group:       "Organizations",
 			Permissions: []accesscontrol.Permission{
 				{Action: ActionOrgsRead},
 				{Action: ActionOrgsQuotasRead},
@@ -148,10 +154,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	currentOrgWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     3,
+			Version:     4,
 			Name:        "fixed:current.org:writer",
 			DisplayName: "Current Organization writer",
 			Description: "Read the current organization, its quotas, or its preferences. Update the current organization properties, or its preferences.",
+			Group:       "Organizations",
 			Permissions: accesscontrol.ConcatPermissions(currentOrgReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: ActionOrgsPreferencesRead},
 				{Action: ActionOrgsWrite},
@@ -163,10 +170,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	orgReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
+			Version:     2,
 			Name:        "fixed:orgs:reader",
 			DisplayName: "Organization reader",
 			Description: "Read the organization and its quotas.",
+			Group:       "Organizations",
 			Permissions: []accesscontrol.Permission{
 				{Action: ActionOrgsRead},
 				{Action: ActionOrgsQuotasRead},
@@ -177,10 +185,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	orgWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     3,
+			Version:     4,
 			Name:        "fixed:orgs:writer",
 			DisplayName: "Organization writer",
 			Description: "Create, read, write, or delete an organization. Read or write an organization's quotas.",
+			Group:       "Organizations",
 			Permissions: accesscontrol.ConcatPermissions(orgReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: ActionOrgsCreate},
 				{Action: ActionOrgsWrite},
