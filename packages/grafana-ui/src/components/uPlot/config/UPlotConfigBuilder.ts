@@ -4,6 +4,7 @@ import {
   DataFrame,
   DefaultTimeZone,
   EventBus,
+  Field,
   getTimeZoneInfo,
   GrafanaTheme2,
   TimeRange,
@@ -287,8 +288,8 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   eventBus: EventBus;
   allFrames: DataFrame[];
   renderers?: Renderers;
-  tweakScale?: (opts: ScaleProps) => ScaleProps;
-  tweakAxis?: (opts: AxisProps) => AxisProps;
+  tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
+  tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
 } & T;
 
 /** @alpha */
