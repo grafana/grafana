@@ -16,5 +16,5 @@ In Grafana 8 alerting, you can:
 - [Create Cortex or Loki managed recording rule]({{< relref "./create-cortex-loki-managed-recording-rule.md" >}})
 - [Edit Cortex or Loki rule groups and namespaces]({{< relref "./edit-cortex-loki-namespace-group.md" >}})
 - [Create Grafana managed alert rule]({{< relref "./create-grafana-managed-rule.md" >}})
-- [State and hfundamentalsealth of alerting rules]({{< relref "../fundamentals/state-and-health.md" >}})
+- [State and health of alerting rules]({{< relref "../fundamentals/state-and-health.md" >}})
 - [Manage alerting rules]({{< relref "./rule-list.md" >}})

@@ -24,3 +24,15 @@ In Grafana 8 alerting, you can manage Loki and Cortex alerting rules using the s
 ## View and search for alerts from Prometheus compatible data sources
 
 Alerts for Prometheus compatible data sources are now listed under the Grafana alerts section. You can search for labels across multiple data sources to quickly find relevant alerts.
+
+
+## Special alerts for alert state NoData and Error
+
+Grafana 8.0 alerting introduces a new conception of the state alerts. When evaluation of an alerting rule produces state NoData or Error, Grafana alerting will generate special alerts that will have the following labels:
+- `alertname` with value DatasourceNoData or DatasourceError depending on the state.
+- `rulename` name of the alert rule the special alert belong to.
+- `datasource_uid` that will have the UID of the datasource that caused the state.
+- all labels and annotations of the original alert rule
+
+You can handle these alerts the same way as regular alert: add a silence, route to a contact point etc.
+> **Note:** If the rule uses many data sources and one or many returns no data, the special alert will be created for each data source that caused the alert state.

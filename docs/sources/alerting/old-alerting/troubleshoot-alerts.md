@@ -8,6 +8,8 @@ aliases = ["/docs/grafana/latest/alerting/troubleshoot-alerts/"]
 
 # Troubleshoot alerts
 
+>**Note**: Deprecated. Refer to [Grafana 8 alerting]({{< relref "../unified-alerting/_index.md" >}}) for documentation
+
 If alerts are not behaving as you expect, here are some steps you can take to troubleshoot and figure out what is going wrong.
 
 ![Test Rule](/static/img/docs/v4/alert_test_rule.png)

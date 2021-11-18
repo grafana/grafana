@@ -8,6 +8,8 @@ aliases = ["/docs/grafana/latest/alerting/create-alerts/"]
 
 # Create alerts
 
+>**Note**: Deprecated. Refer to [Grafana 8 alerting]({{< relref "../unified-alerting/_index.md" >}}) for documentation
+
 Grafana alerting allows you to attach rules to your dashboard panels. When you save the dashboard, Grafana extracts the alert rules into a separate alert rule storage and schedules them for evaluation.
 
 ![Alerting overview](/static/img/docs/alerting/drag_handles_gif.gif)

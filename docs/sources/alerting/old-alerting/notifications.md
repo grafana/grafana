@@ -8,6 +8,8 @@ aliases = ["/docs/grafana/latest/alerting/notifications/"]
 
 # Alert notifications
 
+>**Note**: Deprecated. Refer to [Grafana 8 alerting]({{< relref "../unified-alerting/_index.md" >}}) for documentation
+
 When an alert changes state, it sends out notifications. Each alert rule can have
 multiple notifications. In order to add a notification to an alert rule you first need
 to add and configure a `notification` channel (can be email, PagerDuty, or other integration).

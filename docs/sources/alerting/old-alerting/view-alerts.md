@@ -8,6 +8,8 @@ aliases = ["/docs/grafana/latest/alerting/view-alerts/"]
 
 # View existing alert rules
 
+>**Note**: Deprecated. Refer to [Grafana 8 alerting]({{< relref "../unified-alerting/_index.md" >}}) for documentation
+
 Grafana stores individual alert rules in the panels where they are defined, but you can also view a list of all existing alert rules and their current state.
 
 In the Grafana side bar, hover your cursor over the Alerting (bell) icon and then click **Alert Rules**. All configured alert rules are listed, along with their current state.

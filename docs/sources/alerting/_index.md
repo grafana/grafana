@@ -23,5 +23,3 @@ Grafana 8 alerting has four key components:
 To learn more, see [What's New with Grafana 8 alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
 
 For information on how to create and manage Grafana 8 alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}) and [Create and manage Grafana 8 alerting rules]({{< relref "./unified-alerting/alerting-rules/_index.md" >}}).
-
-> **Note:** Grafana 8 alerting is an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "./old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerts.

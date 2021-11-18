@@ -6,9 +6,9 @@ weight = 113
 
 # Overview of Grafana 8 alerting
 
-Grafana 8.0 has new and improved alerting that centralizes alerting information in a single, searchable view. It is an [opt-in]({{< relref "./opt-in.md" >}}) feature. We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerting. See also, [What's New with Grafana 8 alerting]({{< relref "./difference-old-new.md" >}}).
+Grafana 8.0 has new and improved alerting that centralizes alerting information in a single, searchable view. Since Grafana 8.3 this is the default feature. We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerting. See also, [What's New with Grafana 8 alerting]({{< relref "./difference-old-new.md" >}}).
 
-When Grafana 8 alerting is enabled, you can:
+You can perform the following tasks for alerts:
 
 - [Create a Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
 - [Create a Cortex or Loki managed alerting rules]({{< relref "alerting-rules/create-cortex-loki-managed-rule.md" >}})
@@ -19,6 +19,8 @@ When Grafana 8 alerting is enabled, you can:
 - [Add or edit silences]({{< relref "./silences.md" >}})
 
 Before you begin using Grafana 8 alerting, we recommend that you familiarize yourself with some [basic concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana 8 alerting.
+
+> **Caution**: If you upgrade from the previous version of Grafana and use [legacy alert]({{< relref "../old-alerting/_index.md" >}}) we recommend you reading an article about [migration]({{< relref "./migration.md" >}}).
 
 ## Limitations
 

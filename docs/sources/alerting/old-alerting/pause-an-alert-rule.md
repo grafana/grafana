@@ -8,6 +8,8 @@ aliases = ["/docs/grafana/latest/alerting/pause-an-alert-rule/"]
 
 # Pause an alert rule
 
+>**Note**: Deprecated. Refer to [Grafana 8 alerting]({{< relref "../unified-alerting/_index.md" >}}) for documentation
+
 Pausing the evaluation of an alert rule can sometimes be useful. For example, during a maintenance window, pausing alert rules can avoid triggering a flood of alerts.
 
 1. In the Grafana side bar, hover your cursor over the Alerting (bell) icon and then click **Alert Rules**. All configured alert rules are listed, along with their current state.
