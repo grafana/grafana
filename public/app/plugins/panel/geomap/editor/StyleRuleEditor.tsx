@@ -46,12 +46,12 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   const LABEL_WIDTH = 10;
 
   const onChangeProperty = useCallback(
-    (selection: SelectableValue) => {
+    (selection?: SelectableValue) => {
       onChange({
         ...value,
         check: {
           ...value.check!,
-          property: selection.value!,
+          property: selection?.value,
         },
       });
     },
@@ -72,12 +72,12 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   );
 
   const onChangeValue = useCallback(
-    (selection: SelectableValue) => {
+    (selection?: SelectableValue) => {
       onChange({
         ...value,
         check: {
           ...value.check!,
-          value: selection.value,
+          value: selection?.value,
         },
       });
     },
