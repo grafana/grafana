@@ -19,28 +19,11 @@ const extJSON: FieldExtractor = {
   },
 };
 
+const strip = /^[ '"]|[ '"]$/g;
+
 /** Strips any leading or trailing decoration */
 function sanitize(v: string): string {
-  const skip = [' ', "'", '"'];
-  let s = 0;
-  let e = v.length - 1;
-  let changed = false;
-  while (s < e) {
-    if (!skip.includes(v.charAt(s))) {
-      break;
-    }
-    s++;
-    changed = true;
-  }
-  while (e > s) {
-    if (!skip.includes(v.charAt(e))) {
-      break;
-    }
-    e--;
-    changed = true;
-  }
-
-  return changed ? v.substring(s, e + 1) : v;
+  return v.replace(strip, '');
 }
 
 const regexp = new RegExp('[ ,;&\n]', 'g');
