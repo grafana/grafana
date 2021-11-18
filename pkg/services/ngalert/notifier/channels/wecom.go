@@ -14,8 +14,9 @@ import (
 )
 
 // NewWeComNotifier is the constructor for WeCom notifier.
-func NewWeComNotifier(model *NotificationChannelConfig, t *template.Template) (*WeComNotifier, error) {
-	url := model.Settings.Get("url").MustString()
+func NewWeComNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
+	url := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
+
 	if url == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find webhook url in settings"}
 	}
@@ -74,8 +75,8 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	}
 
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {
-		w.log.Error("Failed to send WeCom", "error", err, "wecom", w.Name)
-		return false, fmt.Errorf("send notification to wecom: %w", err)
+		w.log.Error("failed to send WeCom webhook", "error", err, "notification", w.Name)
+		return false, err
 	}
 
 	return true, nil
