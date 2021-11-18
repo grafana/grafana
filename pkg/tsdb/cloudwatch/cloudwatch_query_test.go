@@ -2,11 +2,36 @@ package cloudwatch
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCloudWatchQuery(t *testing.T) {
+	t.Run("Deeplink is not generated for MetricQueryTypeQuery", func(t *testing.T) {
+		startTime := time.Now()
+		endTime := startTime.Add(2 * time.Hour)
+		query := &cloudWatchQuery{
+			RefId:      "A",
+			Region:     "us-east-1",
+			Expression: "",
+			Statistic:  "Average",
+			Period:     300,
+			Id:         "id1",
+			MatchExact: true,
+			Dimensions: map[string][]string{
+				"InstanceId": {"i-12345678"},
+			},
+			MetricQueryType:  MetricQueryTypeQuery,
+			MetricEditorMode: MetricEditorModeBuilder,
+		}
+
+		deepLink, err := query.buildDeepLink(startTime, endTime)
+		require.NoError(t, err)
+		assert.Empty(t, deepLink)
+	})
+
 	t.Run("SEARCH(someexpression) was specified in the query editor", func(t *testing.T) {
 		query := &cloudWatchQuery{
 			RefId:      "A",

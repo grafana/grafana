@@ -101,7 +101,7 @@ func (q *cloudWatchQuery) isMultiValuedDimensionExpression() bool {
 }
 
 func (q *cloudWatchQuery) buildDeepLink(startTime time.Time, endTime time.Time) (string, error) {
-	if q.isMathExpression() {
+	if q.isMathExpression() || q.MetricQueryType == MetricQueryTypeQuery {
 		return "", nil
 	}
 
