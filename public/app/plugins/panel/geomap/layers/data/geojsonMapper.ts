@@ -1,4 +1,11 @@
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
+import {
+  MapLayerRegistryItem,
+  MapLayerOptions,
+  PanelData,
+  GrafanaTheme2,
+  PluginState,
+  SelectableValue,
+} from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -60,16 +67,10 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     const features = new ReplaySubject<FeatureLike[]>();
 
     const key = source.on('change', () => {
+      //one geojson loads
       if (source.getState() == 'ready') {
         unByKey(key);
-        // var olFeatures = source.getFeatures(); // olFeatures.length === 1
-        // window.setTimeout(function () {
-        //     var olFeatures = source.getFeatures(); // olFeatures.length > 1
-        //     // Only after using setTimeout can I search the feature list... :(
-        // }, 100)
         features.next(source.getFeatures());
-
-        console.log('SOURCE READY!!!', source.getFeatures().length);
       }
     });
 
@@ -105,14 +106,19 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       update: (data: PanelData) => {
         console.log('todo... find values matching the ID and update');
       },
-
-      // Geojson source url
       registerOptionsUI: (builder) => {
         // get properties for first feature to use as ui options
         const props = features.pipe(
           first(),
           rxjsmap((first) => first[0].getProperties()),
-          rxjsmap((props) => Object.keys(props).map((key) => ({ value: key, label: key })))
+          rxjsmap((props) =>
+            Object.keys(props).reduce((selectables: SelectableValue[], key) => {
+              if (key !== 'geometry') {
+                selectables.push({ value: key, label: key });
+              }
+              return selectables;
+            }, [])
+          )
         );
 
         builder

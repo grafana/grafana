@@ -25,19 +25,15 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   const propertyOptions = useObservable(properties);
   const feats = useObservable(features);
 
-  const uniqueValues = useMemo(() => {
+  const uniqueSelectables = useMemo(() => {
     const uniqueValues: SelectableValue[] = [];
-    if (feats) {
-      if (value?.rule) {
-        const values = [];
-        for (let f = 0; f < feats.length; f++) {
-          if (value.rule) {
-            values.push(feats[f].get(value.rule.property));
-          }
-        }
-        const unique = [...new Set(values)].sort();
-        for (let v = 0; v < unique.length; v++) {
-          uniqueValues.push({ value: unique[v], label: `${unique[v]}` });
+    if (value?.rule?.property && feats) {
+      const property = value.rule.property;
+      const sorted = feats.sort((a, b) => (a.get(property) > b.get(property) ? 1 : -1));
+      for (let v = 1; v < sorted.length; v++) {
+        if (sorted[v - 1].get(property) !== sorted[v].get(value.rule.property)) {
+          const val = sorted[v].get(property);
+          uniqueValues.push({ value: val, label: `${val}` });
         }
       }
     }
@@ -122,6 +118,8 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
             options={propertyOptions}
             onChange={onChangeProperty}
             aria-label={'Feature property'}
+            isClearable={true}
+            allowCustomValue={true}
           />
         </InlineField>
         <InlineField className={styles.inline} grow={true}>
@@ -134,20 +132,15 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
           />
         </InlineField>
         <InlineField className={styles.inline} grow={true}>
-          {/* <Input
-            type="text"
-            placeholder={'value'}
-            value={`${value?.rule?.value}`}
-            onChange={onChangeComparisonValue}
-            aria-label={'Comparison value'}
-          /> */}
           <Select
             menuShouldPortal
             placeholder={'value'}
             value={`${value?.rule?.value}`}
-            options={uniqueValues}
+            options={uniqueSelectables}
             onChange={onChangeValue}
             aria-label={'Comparison value'}
+            isClearable={true}
+            allowCustomValue={true}
           />
         </InlineField>
       </InlineFieldRow>
