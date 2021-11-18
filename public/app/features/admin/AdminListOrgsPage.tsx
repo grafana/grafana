@@ -19,7 +19,7 @@ const getOrgs = async () => {
 };
 
 const getErrorMessage = (error: any) => {
-  if (error != null && error.data != null && error.data.message != null) {
+  if (error?.data?.message) {
     return error.data.message;
   }
   return 'An unexpected error happened.';
