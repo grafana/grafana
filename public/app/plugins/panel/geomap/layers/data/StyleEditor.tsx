@@ -98,8 +98,8 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
   if (item.settings?.simpleFixedValues) {
     return (
       <>
-        <InlineFieldRow>
-          {featuresHavePoints && (
+        {featuresHavePoints && (
+          <InlineFieldRow>
             <InlineField label={'Symbol'}>
               <ResourceDimensionEditor
                 value={value.symbol ?? defaultStyleConfig.symbol}
@@ -118,8 +118,8 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                 }
               />
             </InlineField>
-          )}
-        </InlineFieldRow>
+          </InlineFieldRow>
+        )}
         <InlineFieldRow>
           <InlineField label="Color" labelWidth={10}>
             <InlineLabel width={4}>
