@@ -18,5 +18,5 @@ Mode (AES-GCM) instead, to meet your company’s security requirements or
 in order to maintain consistency with other services.
 
 To change your encryption mode, update the `algorithm` value in the
-[security.encryption] section of your Grafana configuration file.
+`[security.encryption]` section of your Grafana configuration file.
 For details, refer to Enterprise configuration.
