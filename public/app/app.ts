@@ -95,7 +95,7 @@ export class GrafanaApp {
       setPanelRenderer(PanelRenderer);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
-      // Important that extensions are initialized before store
+      // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore();
       initExtensions();
