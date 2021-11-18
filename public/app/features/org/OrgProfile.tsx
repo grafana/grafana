@@ -13,12 +13,12 @@ interface FormDTO {
 }
 
 const OrgProfile: FC<Props> = ({ onSubmit, orgName }) => {
-  const canEditOrg = contextSrv.hasPermission(AccessControlAction.OrgsWrite);
+  const canWriteOrg = contextSrv.hasPermission(AccessControlAction.OrgsWrite);
 
   return (
     <Form defaultValues={{ orgName }} onSubmit={({ orgName }: FormDTO) => onSubmit(orgName)}>
       {({ register }) => (
-        <FieldSet label="Organization profile" disabled={!canEditOrg}>
+        <FieldSet label="Organization profile" disabled={!canWriteOrg}>
           <Field label="Organization name">
             <Input id="org-name-input" type="text" {...register('orgName', { required: true })} />
           </Field>

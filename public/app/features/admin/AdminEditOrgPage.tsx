@@ -41,8 +41,8 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const navModel = getNavModel(navIndex, 'global-orgs');
   const orgId = parseInt(match.params.id, 10);
-  const canEditOrg = contextSrv.hasPermission(AccessControlAction.OrgsWrite);
-  const canListUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
+  const canWriteOrg = contextSrv.hasPermission(AccessControlAction.OrgsWrite);
+  const canReadUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
 
   const [users, setUsers] = useState<OrgUser[]>([]);
 
@@ -79,10 +79,10 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
             >
               {({ register, errors }) => (
                 <>
-                  <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canEditOrg}>
+                  <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canWriteOrg}>
                     <Input {...register('orgName', { required: true })} id="org-name-input" />
                   </Field>
-                  <Button disabled={!canEditOrg}>Update</Button>
+                  <Button disabled={!canWriteOrg}>Update</Button>
                 </>
               )}
             </Form>
@@ -94,8 +94,8 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
             `}
           >
             <Legend>Organization users</Legend>
-            {!canListUsers && renderMissingUserListRightsMessage()}
-            {canListUsers && !!users.length && (
+            {!canReadUsers && renderMissingUserListRightsMessage()}
+            {canReadUsers && !!users.length && (
               <UsersTable
                 users={users}
                 onRoleChange={(role, orgUser) => {
