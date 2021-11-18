@@ -284,6 +284,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - yarn install --immutable
+  image: grafana/build-container:1.4.5
+  name: initialize
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
@@ -291,7 +301,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -307,7 +317,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -440,7 +450,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -456,7 +466,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -895,7 +905,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -911,7 +921,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1279,7 +1289,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1295,7 +1305,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1462,7 +1472,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - grabpl
+  - initialize
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.4.5
@@ -1471,7 +1481,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - grabpl
+  - initialize
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.4.5
@@ -1840,7 +1850,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1856,7 +1866,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2213,7 +2223,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2229,7 +2239,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2388,7 +2398,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - grabpl
+  - initialize
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.4.5
@@ -2397,7 +2407,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - grabpl
+  - initialize
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.4.5
@@ -2771,7 +2781,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2787,7 +2797,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -3116,7 +3126,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -3132,7 +3142,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - grabpl
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -3296,7 +3306,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - grabpl
+  - initialize
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.4.5
@@ -3305,7 +3315,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - grabpl
+  - initialize
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.4.5
@@ -3546,6 +3556,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: e3031b1f6977cc403c3d24244d8d149b8bc258e74d75c8735c31232d43109ebf
+hmac: a65c9c26e3fb9343f39cfb88af9c20f0541f3ad161d26fa698dec1908646991a
 
 ...
