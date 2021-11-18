@@ -97,7 +97,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'name': 'initialize',
                 'image': build_image,
                 'depends_on': [
-                    'grabpl',
+                    'clone',
                 ],
                 'commands': [
                     'mv bin/grabpl /tmp/',
