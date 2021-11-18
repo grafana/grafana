@@ -286,7 +286,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   // https://github.com/facebook/flow/issues/3076#issuecomment-290944051
   getKeyFromIndex = (index: number) => {
     const { isDetail, span } = this.getRowStates()[index];
-    return `${span.spanID}--${isDetail ? 'detail' : 'bar'}`;
+    return `${span.traceID}-${span.spanID}--${isDetail ? 'detail' : 'bar'}`;
   };
 
   getIndexFromKey = (key: string) => {
