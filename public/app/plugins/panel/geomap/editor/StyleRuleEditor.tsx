@@ -39,7 +39,21 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   const uniqueSelectables = useMemo(() => {
     const key = value?.check?.property;
     if (key && feats && value.check?.operation === ComparisonOperation.EQ) {
-      return getUniqueFeatureValues(feats, key).map((v) => ({ value: v, label: v }));
+      return getUniqueFeatureValues(feats, key).map((v) => {
+        let newValue;
+        let isNewValueNumber = !isNaN(Number(v));
+
+        if (isNewValueNumber) {
+          newValue = {
+            value: Number(v),
+            label: v,
+          };
+        } else {
+          newValue = { value: v, label: v };
+        }
+
+        return newValue;
+      });
     }
     return [];
   }, [feats, value]);
@@ -76,20 +90,11 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
 
   const onChangeValue = useCallback(
     (selection?: SelectableValue) => {
-      let newValue;
-      let isNewValueNumber = !isNaN(selection?.value as number);
-
-      if (isNewValueNumber) {
-        newValue = Number(selection?.value);
-      } else {
-        newValue = selection?.value;
-      }
-
       onChange({
         ...value,
         check: {
           ...value.check!,
-          value: newValue,
+          value: selection?.value,
         },
       });
     },
@@ -166,7 +171,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
             {check.operation !== ComparisonOperation.EQ && (
               <NumberInput
                 key={`${check.property}/${check.operation}`}
-                value={!isNaN(check.value as number) ? (check.value as any) : 0}
+                value={!isNaN(Number(check.value)) ? Number(check.value) : 0}
                 placeholder="numeric value"
                 onChange={onChangeNumericValue}
               />
