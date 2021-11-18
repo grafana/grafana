@@ -12,18 +12,12 @@ import { locationUtil, textUtil } from '@grafana/data';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
-import { KioskMode } from 'app/types';
+import { KioskMode, StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
-
-const mapDispatchToProps = {
-  updateTimeZoneForSession,
-};
-
-const connector = connect(null, mapDispatchToProps);
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -31,9 +25,18 @@ export interface OwnProps {
   kioskMode: KioskMode;
   hideTimePicker: boolean;
   folderTitle?: string;
-  title: string;
   onAddPanel: () => void;
 }
+
+const mapStateToProps = (state: StoreState, props: OwnProps) => ({
+  title: state.dashboard.attributes.title,
+});
+
+const mapDispatchToProps = {
+  updateTimeZoneForSession,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 interface DashNavButtonModel {
   show: (props: Props) => boolean;

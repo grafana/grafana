@@ -6,13 +6,17 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state/DashboardModel';
 import { GrafanaTheme2 } from '@grafana/data';
+import { getDashboardSaveModel } from '../../state/getDashboardSaveModel';
+import { StoreState } from 'app/types';
+import { useSelector } from 'react-redux';
 
 interface Props {
   dashboard: DashboardModel;
 }
 
 export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
-  const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboard.getSaveModelClone(), null, 2));
+  const saveModel = useSelector((state: StoreState) => getDashboardSaveModel(state));
+  const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(saveModel, null, 2));
   const onBlur = (value: string) => {
     setDashboardJson(value);
   };

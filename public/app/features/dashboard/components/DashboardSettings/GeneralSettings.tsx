@@ -9,10 +9,22 @@ import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton'
 import { TimePickerSettings } from './TimePickerSettings';
 
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
+import { StoreState } from 'app/types';
+import { setDashboardAttributes } from '../../state/reducers';
 
 interface OwnProps {
   dashboard: DashboardModel;
 }
+
+const mapStateToProps = (state: StoreState, props: OwnProps) => ({
+  attributes: state.dashboard.attributes,
+});
+
+const mapDispatchToProps = {
+  updateTimeZone: updateTimeZoneDashboard,
+  updateWeekStart: updateWeekStartDashboard,
+  setDashboardAttributes: setDashboardAttributes,
+};
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
@@ -22,7 +34,13 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
-export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWeekStart }: Props): JSX.Element {
+export function GeneralSettingsUnconnected({
+  dashboard,
+  updateTimeZone,
+  updateWeekStart,
+  setDashboardAttributes,
+  attributes,
+}: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
@@ -31,8 +49,12 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
     dashboard.meta.hasUnsavedFolderChange = true;
   };
 
-  const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    dashboard[event.currentTarget.name as 'title' | 'description'] = event.currentTarget.value;
+  const onChangeTitle = (event: React.FocusEvent<HTMLInputElement>) => {
+    setDashboardAttributes({ title: event.currentTarget.value });
+  };
+
+  const onChangeDescription = (event: React.FocusEvent<HTMLInputElement>) => {
+    setDashboardAttributes({ description: event.currentTarget.value });
   };
 
   const onTooltipChange = (graphTooltip: number) => {
@@ -92,10 +114,15 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
       </h3>
       <div className="gf-form-group">
         <Field label="Name">
-          <Input id="title-input" name="title" onBlur={onBlur} defaultValue={dashboard.title} />
+          <Input id="title-input" name="title" onBlur={onChangeTitle} defaultValue={attributes.title} />
         </Field>
         <Field label="Description">
-          <Input id="description-input" name="description" onBlur={onBlur} defaultValue={dashboard.description} />
+          <Input
+            id="description-input"
+            name="description"
+            onBlur={onChangeDescription}
+            defaultValue={attributes.description}
+          />
         </Field>
         <Field label="Tags">
           <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} />
@@ -151,11 +178,6 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
   );
 }
 
-const mapDispatchToProps = {
-  updateTimeZone: updateTimeZoneDashboard,
-  updateWeekStart: updateWeekStartDashboard,
-};
-
-const connector = connect(null, mapDispatchToProps);
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export const GeneralSettings = connector(GeneralSettingsUnconnected);

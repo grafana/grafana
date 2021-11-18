@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   DashboardAclDTO,
+  DashboardAttributes,
   DashboardInitError,
   DashboardInitPhase,
   DashboardState,
@@ -19,6 +20,10 @@ export const initialState: DashboardState = {
   permissions: [],
   modifiedQueries: null,
   initError: null,
+  attributes: {
+    title: '',
+    description: '',
+  },
 };
 
 const dashbardSlice = createSlice({
@@ -41,6 +46,12 @@ const dashbardSlice = createSlice({
       state.getModel = () => action.payload;
       state.initPhase = DashboardInitPhase.Completed;
       state.isInitSlow = false;
+      // just for testing  what this could look like
+      state.attributes.title = action.payload.title;
+      state.attributes.description = action.payload.description;
+    },
+    setDashboardAttributes: (state, action: PayloadAction<Partial<DashboardAttributes>>) => {
+      Object.assign(state.attributes, action.payload);
     },
     dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>) => {
       state.initPhase = DashboardInitPhase.Failed;
@@ -90,6 +101,7 @@ export const {
   dashboardInitCompleted,
   dashboardInitServices,
   cleanUpDashboard,
+  setDashboardAttributes,
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,
   addPanel,

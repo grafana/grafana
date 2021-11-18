@@ -4,6 +4,9 @@ import { Button, Checkbox, Form, Modal, TextArea } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { SaveDashboardFormProps } from '../types';
+import { getDashboardSaveModel } from 'app/features/dashboard/state/getDashboardSaveModel';
+import { useSelector } from 'react-redux';
+import { StoreState } from 'app/types';
 
 interface SaveDashboardFormDTO {
   message: string;
@@ -14,6 +17,7 @@ interface SaveDashboardFormDTO {
 export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel, onSuccess, onSubmit }) => {
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
+  const state = useSelector((state: StoreState) => state);
 
   return (
     <Form
@@ -22,7 +26,9 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
           return;
         }
 
-        const result = await onSubmit(dashboard.getSaveModelClone(data), data, dashboard);
+        const saveModel = getDashboardSaveModel(state, data);
+        const result = await onSubmit(saveModel, data, dashboard);
+
         if (result.status === 'success') {
           if (data.saveVariables) {
             dashboard.resetOriginalVariables();

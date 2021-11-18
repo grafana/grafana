@@ -90,4 +90,12 @@ export interface DashboardState {
   initError: DashboardInitError | null;
   permissions: DashboardAcl[];
   modifiedQueries: QueriesToUpdateOnDashboardLoad | null;
+  // Just for testing having some dashboard model attributes in redux
+  attributes: DashboardAttributes;
+}
+
+// Just for testing having some dashboard model attributes in redux
+export interface DashboardAttributes {
+  title: string;
+  description: string;
 }

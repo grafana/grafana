@@ -290,7 +290,7 @@ export class DashboardModel {
     }
   }
 
-  /** Dummy to shorten typescript error list for now */
+  /** Dummy to shorten typescript error list while testing this new way*/
   getSaveModelClone(options?: any): any {
     return { title: this.title, panels: [] };
   }
