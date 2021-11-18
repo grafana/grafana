@@ -11,6 +11,7 @@ import { processAclItems } from 'app/core/utils/acl';
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
 import { PanelPlugin } from '@grafana/data';
+import { dashboardSettingsReducer } from './settings/reducer';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
@@ -99,4 +100,5 @@ export const dashboardReducer = dashbardSlice.reducer;
 
 export default {
   dashboard: dashboardReducer,
+  dashboardSettings: dashboardSettingsReducer,
 };

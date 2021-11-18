@@ -24,6 +24,7 @@ import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { initDashboardSettings } from './settings/actions';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -160,6 +161,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       const { panelId, queries } = storeState.dashboard.modifiedQueries;
       dashboard.meta.fromExplore = !!(panelId && queries);
     }
+
+    // init settings in state
+    dispatch(initDashboardSettings(dashboard));
 
     // template values service needs to initialize completely before the rest of the dashboard can load
     await dispatch(initVariablesTransaction(args.urlUid!, dashboard));

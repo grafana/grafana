@@ -25,6 +25,8 @@ const setupTestContext = (options: Partial<Props>) => {
     } as unknown) as DashboardModel,
     updateTimeZone: jest.fn(),
     updateWeekStart: jest.fn(),
+    updateShowUnknownVariables: jest.fn(),
+    showUnknowns: true,
   };
 
   const props = { ...defaults, ...options };

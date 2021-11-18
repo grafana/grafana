@@ -54,6 +54,7 @@ import {
   VariablesChangedInUrl,
   VariablesFinishedProcessingTimeRangeChange,
 } from '../../variables/types';
+import { DashboardVariablesSettings } from './settings/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -110,6 +111,7 @@ export class DashboardModel {
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
+  private variableSettings?: DashboardVariablesSettings;
 
   // ------------------
   // not persisted
@@ -181,6 +183,7 @@ export class DashboardModel {
     this.panelsAffectedByVariableChange = null;
     this.appEventsSubscription = new Subscription();
     this.lastRefresh = Date.now();
+    this.variableSettings = data.variableSettings ?? { showUnknowns: true };
     this.appEventsSubscription.add(appEvents.subscribe(VariablesChanged, this.variablesChangedHandler.bind(this)));
     this.appEventsSubscription.add(
       appEvents.subscribe(
@@ -1175,6 +1178,15 @@ export class DashboardModel {
     if (shouldUpdateGridPositionLayout) {
       this.events.publish(new DashboardPanelsChangedEvent());
     }
+  }
+
+  updateVariableSettings(settings: DashboardVariablesSettings) {
+    this.variableSettings = settings;
+    this.revision += 1;
+  }
+
+  getVariableSettings(): DashboardVariablesSettings | undefined {
+    return this.variableSettings;
   }
 
   private getPanelRepeatVariable(panel: PanelModel) {

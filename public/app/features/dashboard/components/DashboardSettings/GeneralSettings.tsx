@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { FormEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { TimeZone } from '@grafana/data';
-import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
+import { CollapsableSection, Field, Input, RadioButtonGroup, Switch, TagsInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -9,6 +9,8 @@ import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton'
 import { TimePickerSettings } from './TimePickerSettings';
 
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
+import { updateShowUnknownVariables } from '../../state/settings/actions';
+import { StoreState } from 'app/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -22,7 +24,13 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
-export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWeekStart }: Props): JSX.Element {
+export function GeneralSettingsUnconnected({
+  dashboard,
+  updateTimeZone,
+  updateWeekStart,
+  showUnknowns,
+  updateShowUnknownVariables,
+}: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
@@ -78,6 +86,10 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
   const onEditableChange = (value: boolean) => {
     dashboard.editable = value;
     setRenderCounter(renderCounter + 1);
+  };
+
+  const onShowUnknownChange = (e: FormEvent<HTMLInputElement>) => {
+    updateShowUnknownVariables(e.currentTarget.checked);
   };
 
   const editableOptions = [
@@ -144,6 +156,15 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
         </Field>
       </CollapsableSection>
 
+      <CollapsableSection label="Variables options" isOpen={true}>
+        <Field
+          label="Show unknown variables"
+          description="Controls if the variable page should list all variable references that no longer exist in the dashboard."
+        >
+          <Switch value={showUnknowns} onChange={onShowUnknownChange} id="show-unknown-variables-toggle" />
+        </Field>
+      </CollapsableSection>
+
       <div className="gf-form-button-row">
         {dashboard.meta.canSave && <DeleteDashboardButton dashboard={dashboard} />}
       </div>
@@ -151,11 +172,16 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
   );
 }
 
+const mapStateToProps = (state: StoreState) => ({
+  showUnknowns: state.dashboardSettings.variables.showUnknowns,
+});
+
 const mapDispatchToProps = {
   updateTimeZone: updateTimeZoneDashboard,
   updateWeekStart: updateWeekStartDashboard,
+  updateShowUnknownVariables,
 };
 
-const connector = connect(null, mapDispatchToProps);
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export const GeneralSettings = connector(GeneralSettingsUnconnected);
