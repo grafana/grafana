@@ -39,6 +39,7 @@ func (cmd Command) trimResource(c utils.CommandLine) error {
 
 	var out schema.Resource
 	if apply {
+		out, err = schema.ApplyDefaults(res, sch.CUE())
 	} else {
 		out, err = schema.TrimDefaults(res, sch.CUE())
 	}
