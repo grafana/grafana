@@ -5,40 +5,46 @@ import {
   Field,
   FieldType,
   guessFieldTypeForField,
-  parseLabels,
   SynchronousDataTransformerInfo,
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
 import { isString } from 'lodash';
 import { map } from 'rxjs/operators';
+import { FieldExtractorID, fieldExtractors } from './fieldExtractors';
 
-export interface FieldsFromJSONOptions {
-  field: string;
+export interface ExtractFieldsOptions {
+  source?: string;
+  format?: FieldExtractorID;
   replace?: boolean;
 }
 
-export const fieldsFromJSONTransformer: SynchronousDataTransformerInfo<FieldsFromJSONOptions> = {
-  id: DataTransformerID.fieldsFromJSON,
-  name: 'Fields from JSON',
-  description: 'Extract JSON body into fields',
+export const extractFieldsTransformer: SynchronousDataTransformerInfo<ExtractFieldsOptions> = {
+  id: DataTransformerID.extractFields,
+  name: 'Extract fields',
+  description: 'Parse fields from the contends of another',
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(map((data) => fieldsFromJSONTransformer.transformer(options)(data))),
+  operator: (options) => (source) => source.pipe(map((data) => extractFieldsTransformer.transformer(options)(data))),
 
-  transformer: (options: FieldsFromJSONOptions) => {
+  transformer: (options: ExtractFieldsOptions) => {
     return (data: DataFrame[]) => {
-      return data.map((v) => addFieldsFromJSON(v, options));
+      return data.map((v) => addExtractedFields(v, options));
     };
   },
 };
 
-function addFieldsFromJSON(frame: DataFrame, options: FieldsFromJSONOptions): DataFrame {
-  if (!options.field) {
+function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): DataFrame {
+  if (!options.source) {
     return frame;
   }
-  const source = findField(frame, options.field);
+  const source = findField(frame, options.source);
   if (!source) {
     throw new Error('json field not found');
+  }
+
+  const ext = fieldExtractors.getIfExists(options.format ?? FieldExtractorID.Auto);
+  if (!ext) {
+    throw new Error('unkonwn extractor');
   }
 
   const count = frame.length;
@@ -49,9 +55,9 @@ function addFieldsFromJSON(frame: DataFrame, options: FieldsFromJSONOptions): Da
     let obj = source.values.get(i);
     if (isString(obj)) {
       try {
-        obj = JSON.parse(obj);
+        obj = ext.parse(obj);
       } catch {
-        obj = parseLabels(obj);
+        obj = {}; // empty
       }
     }
     for (const [key, val] of Object.entries(obj)) {

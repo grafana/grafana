@@ -1,10 +1,10 @@
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
-import { FieldsFromJSONOptions, fieldsFromJSONTransformer } from './fieldsFromJSON';
+import { ExtractFieldsOptions, extractFieldsTransformer } from './extractFields';
 
 describe('Fields from JSON', () => {
   it('adds fields from JSON in string', async () => {
-    const cfg: FieldsFromJSONOptions = {
-      field: 'line',
+    const cfg: ExtractFieldsOptions = {
+      source: 'line',
       replace: true,
     };
     const data = toDataFrame({
@@ -12,7 +12,7 @@ describe('Fields from JSON', () => {
       rows: appl,
     });
 
-    const frames = fieldsFromJSONTransformer.transformer(cfg)([data]);
+    const frames = extractFieldsTransformer.transformer(cfg)([data]);
     expect(frames.length).toEqual(1);
     expect(frames[0].fields.map((v) => v.name)).toMatchInlineSnapshot(`
       Array [
