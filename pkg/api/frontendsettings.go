@@ -299,6 +299,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"caching": map[string]bool{
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
+		"recordedQueries": map[string]bool{
+			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(false),
+		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
 	}
 

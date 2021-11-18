@@ -1049,6 +1049,62 @@ func TestSettingsCasting(t *testing.T) {
 
 			assert.Equal(t, 10, dateHistogramAgg.MinDocCount)
 		})
+
+		t.Run("interval parameter", func(t *testing.T) {
+			t.Run("Uses interval with ES < 8.0.0", func(t *testing.T) {
+				c := newFakeClient("7.7.0")
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"id": "2",
+							"settings": {
+								"interval": "1d"							
+							}
+						}
+					],
+					"metrics": [
+						{ "id": "1", "type": "average", "field": "@value" }
+					]
+				}`, from, to, 15*time.Second)
+				assert.Nil(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+				assert.Zero(t, dateHistogramAgg.FixedInterval)
+				assert.NotZero(t, dateHistogramAgg.Interval)
+			})
+
+			t.Run("Uses fixed_interval with ES >= 8.0.0", func(t *testing.T) {
+				c := newFakeClient("8.0.0")
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"id": "2",
+							"settings": {
+								"interval": "1d"							
+							}
+						}
+					],
+					"metrics": [
+						{ "id": "1", "type": "average", "field": "@value" }
+					]
+				}`, from, to, 15*time.Second)
+				assert.Nil(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+				assert.NotZero(t, dateHistogramAgg.FixedInterval)
+				assert.Zero(t, dateHistogramAgg.Interval)
+			})
+		})
 	})
 
 	t.Run("Inline Script", func(t *testing.T) {
