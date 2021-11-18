@@ -18,7 +18,6 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// nolint: unused,deadcode
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.Runner) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
@@ -161,7 +160,7 @@ var adminCommands = []*cli.Command{
 	},
 	{
 		Name:  "data-migration",
-		Usage: "Runs a script that migrates or cleanups data in your db",
+		Usage: "Runs a script that migrates or cleanups data in your database",
 		Subcommands: []*cli.Command{
 			{
 				Name:   "encrypt-datasource-passwords",
@@ -172,7 +171,7 @@ var adminCommands = []*cli.Command{
 	},
 	{
 		Name:  "secrets-migration",
-		Usage: "Runs a script that migrates secrets in your db",
+		Usage: "Runs a script that migrates secrets in your database",
 		Subcommands: []*cli.Command{
 			{
 				Name:   "re-encrypt",

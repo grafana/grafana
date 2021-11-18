@@ -132,6 +132,7 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 	}
 
 	for _, result := range results {
+		result := result
 		postableUserConfig, err := notifier.Load(result.AlertmanagerConfiguration)
 		if err != nil {
 			return err
@@ -176,7 +177,6 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 }
 
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
-
 	toMigrate := []interface {
 		reencrypt(*manager.SecretsService, *xorm.Session) error
 	}{
