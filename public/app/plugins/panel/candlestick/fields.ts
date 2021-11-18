@@ -61,6 +61,7 @@ export const candlestickFieldsInfo: Record<keyof CandlestickFieldMap, FieldPicke
 export interface CandlestickData {
   warn?: string;
   noTimeField?: boolean;
+  autoOpenClose?: boolean;
 
   // Special fields
   open?: Field;
@@ -145,6 +146,7 @@ export function prepareCandlestickFields(
       state: undefined,
     };
     data.frame.fields.push(data.close);
+    data.autoOpenClose = true;
   }
 
   // Use previous close as 'open' value
@@ -159,6 +161,7 @@ export function prepareCandlestickFields(
       state: undefined,
     };
     data.frame.fields.push(data.open);
+    data.autoOpenClose = true;
   }
 
   // Use the open field for min/max if nothing is set

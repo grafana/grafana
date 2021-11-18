@@ -64,6 +64,7 @@ import { PanelDataErrorView } from './features/panel/components/PanelDataErrorVi
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { AngularApp } from './angular';
+import { ModalManager } from './core/services/ModalManager';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -123,6 +124,10 @@ export class GrafanaApp {
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
+
+      // init modal manager
+      const modalManager = new ModalManager();
+      modalManager.init();
 
       // Init angular
       this.angularApp.init();

@@ -330,8 +330,8 @@ func (uss *UsageStats) updateTotalStats(ctx context.Context) {
 }
 
 func (uss *UsageStats) ShouldBeReported(dsType string) bool {
-	ds := uss.pluginStore.Plugin(dsType)
-	if ds == nil {
+	ds, exists := uss.pluginStore.Plugin(context.TODO(), dsType)
+	if !exists {
 		return false
 	}
 
@@ -367,13 +367,13 @@ func (uss *UsageStats) GetUsageStatsId(ctx context.Context) string {
 }
 
 func (uss *UsageStats) appCount() int {
-	return len(uss.pluginStore.Plugins(plugins.App))
+	return len(uss.pluginStore.Plugins(context.TODO(), plugins.App))
 }
 
 func (uss *UsageStats) panelCount() int {
-	return len(uss.pluginStore.Plugins(plugins.Panel))
+	return len(uss.pluginStore.Plugins(context.TODO(), plugins.Panel))
 }
 
 func (uss *UsageStats) dataSourceCount() int {
-	return len(uss.pluginStore.Plugins(plugins.DataSource))
+	return len(uss.pluginStore.Plugins(context.TODO(), plugins.DataSource))
 }
