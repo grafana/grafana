@@ -1,4 +1,10 @@
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
+import {
+  MapLayerRegistryItem,
+  MapLayerOptions,
+  PanelData,
+  GrafanaTheme2,
+  PluginState,
+} from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -13,6 +19,10 @@ import { defaultStyleConfig, StyleConfig } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { polyStyle } from '../../style/markers';
 import { StyleEditor } from './StyleEditor';
+import { ReplaySubject } from 'rxjs';
+import { map as rxjsmap, first } from 'rxjs/operators';
+import { getLayerPropertyInfo } from '../../utils/getFeatures';
+
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -64,16 +74,13 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       format: new GeoJSON(),
     });
 
+    const features = new ReplaySubject<FeatureLike[]>();
+
     const key = source.on('change', () => {
+      //one geojson loads
       if (source.getState() == 'ready') {
         unByKey(key);
-        // var olFeatures = source.getFeatures(); // olFeatures.length === 1
-        // window.setTimeout(function () {
-        //     var olFeatures = source.getFeatures(); // olFeatures.length > 1
-        //     // Only after using setTimeout can I search the feature list... :(
-        // }, 100)
-
-        console.log('SOURCE READY!!!', source.getFeatures().length);
+        features.next(source.getFeatures());
       }
     });
 
@@ -117,17 +124,13 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       init: () => vectorLayer,
       update: (data: PanelData) => {
         console.log('todo... find values matching the ID and update');
-
-        // // Update each feature
-        // source.getFeatures().forEach((f) => {
-        //   console.log('Find: ', f.getId(), f.getProperties());
-        // });
       },
-
-      // Geojson source url
       registerOptionsUI: (builder) => {
-        const features = source.getFeatures();
-        console.log('FEATURES', source.getState(), features.length, options);
+        // get properties for first feature to use as ui options
+        const layerInfo = features.pipe(
+          first(),
+          rxjsmap((v) => getLayerPropertyInfo(v)),
+        );
 
         builder
           .addSelect({
@@ -149,7 +152,10 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             name: 'Style Rules',
             description: 'Apply styles based on feature properties',
             editor: GeomapStyleRulesEditor,
-            settings: {},
+            settings: {
+              features: features,
+              layerInfo: layerInfo,
+            },
             defaultValue: [],
           })
           .addCustomEditor({

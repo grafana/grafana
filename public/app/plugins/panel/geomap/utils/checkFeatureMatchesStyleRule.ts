@@ -8,17 +8,18 @@ import { FeatureRuleConfig, ComparisonOperation } from '../types';
  * @returns boolean
  */
 export const checkFeatureMatchesStyleRule = (rule: FeatureRuleConfig, feature: FeatureLike) => {
+  const val = feature.get(rule.property);
   switch (rule.operation) {
     case ComparisonOperation.EQ:
-      return feature.get(rule.property) === rule.value;
+      return val === rule.value;
     case ComparisonOperation.GT:
-      return feature.get(rule.property) > rule.value;
+      return val > rule.value;
     case ComparisonOperation.GTE:
-      return feature.get(rule.property) >= rule.value;
+      return val >= rule.value;
     case ComparisonOperation.LT:
-      return feature.get(rule.property) < rule.value;
+      return val < rule.value;
     case ComparisonOperation.LTE:
-      return feature.get(rule.property) <= rule.value;
+      return val <= rule.value;
     default:
       return false;
   }
