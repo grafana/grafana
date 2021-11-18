@@ -3,12 +3,14 @@ import {
   addResultsToCache,
   cancelQueries,
   cancelQueriesAction,
+  cleanLogsVolumeAction,
   clearCache,
   importQueries,
   queryReducer,
   runQueries,
   scanStartAction,
   scanStopAction,
+  storeLogsVolumeDataProviderAction,
 } from './query';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 import { interval, Observable, of } from 'rxjs';
@@ -127,7 +129,12 @@ describe('running queries', () => {
       .givenThunk(cancelQueries)
       .whenThunkIsDispatched(exploreId);
 
-    expect(dispatchedActions).toEqual([scanStopAction({ exploreId }), cancelQueriesAction({ exploreId })]);
+    expect(dispatchedActions).toEqual([
+      scanStopAction({ exploreId }),
+      cancelQueriesAction({ exploreId }),
+      storeLogsVolumeDataProviderAction({ exploreId, logsVolumeDataProvider: undefined }),
+      cleanLogsVolumeAction({ exploreId }),
+    ]);
   });
 });
 
@@ -361,7 +368,7 @@ describe('reducer', () => {
       };
     });
 
-    it('should cancel any unfinished logs volume queries', async () => {
+    it('should cancel any unfinished logs volume queries when a new query is run', async () => {
       await dispatch(runQueries(ExploreId.left));
       // first query is run automatically
       // loading in progress - one subscription created, not cleaned up yet
@@ -375,6 +382,35 @@ describe('reducer', () => {
       // first subscription is cleaned up, a new subscription is created automatically
       expect(unsubscribes).toHaveLength(2);
       expect(unsubscribes[1]).not.toBeCalled();
+    });
+
+    it('should cancel log volume query when the main query is canceled', async () => {
+      await dispatch(runQueries(ExploreId.left));
+      expect(unsubscribes).toHaveLength(1);
+      expect(unsubscribes[0]).not.toBeCalled();
+
+      await dispatch(cancelQueries(ExploreId.left));
+      expect(unsubscribes).toHaveLength(1);
+      expect(unsubscribes[0]).toBeCalled();
+
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeUndefined();
+    });
+
+    it('should clean any incomplete log volume data when main query is canceled', async () => {
+      mockLogsVolumeDataProvider = () => {
+        return of({ state: LoadingState.Loading, error: undefined, data: [] });
+      };
+      setupQueryResponse(getState());
+      await dispatch(runQueries(ExploreId.left));
+
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeDefined();
+      expect(getState().explore[ExploreId.left].logsVolumeData!.state).toBe(LoadingState.Loading);
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+
+      await dispatch(cancelQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeUndefined();
     });
 
     it('should load logs volume after running the query', async () => {
