@@ -43,3 +43,14 @@ export enum AccessControlAction {
 
   ActionServerStatsRead = 'server.stats:read',
 }
+
+export interface Role {
+  uid: string;
+  name: string;
+  displayName: string;
+  description: string;
+  global: boolean;
+  version: number;
+  created: string;
+  updated: string;
+}

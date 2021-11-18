@@ -166,7 +166,6 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Post("/revoke-auth-token", bind(models.RevokeAuthTokenCmd{}), routing.Wrap(hs.RevokeUserAuthToken))
 		}, reqSignedInNoAnonymous)
 
-		// users (admin permission required)
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("global", "users", "id", ac.Parameter(":id"))
 			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsers))
