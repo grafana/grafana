@@ -4,6 +4,7 @@ import {
   DataHook,
   useAsyncState,
   useMetricNames,
+  useMetricNamespaces,
   useResourceGroups,
   useResourceNames,
   useResourceTypes,
@@ -92,7 +93,7 @@ interface TestScenario {
   invalidQueryPartial: AzureMetricQuery;
   templateVariableQueryPartial: AzureMetricQuery;
 
-  expectedClearedQueryPartial: AzureMetricQuery;
+  expectedClearedQueryPartial?: AzureMetricQuery;
   expectedOptions: AzureMonitorOption[];
 }
 
@@ -252,6 +253,47 @@ describe('AzureMonitor: metrics dataHooks', () => {
         metricName: undefined,
       },
     },
+
+    {
+      name: 'useMetricNamespaces',
+      hook: useMetricNamespaces,
+      emptyQueryPartial: {
+        resourceGroup: 'web-app-development',
+        metricDefinition: 'azure/vm',
+        resourceName: 'web-server',
+        metricNamespace: 'azure/vm',
+      },
+      validQueryPartial: {
+        resourceGroup: 'web-app-development',
+        metricDefinition: 'azure/vm',
+        resourceName: 'web-server',
+        metricNamespace: 'azure/vm',
+      },
+      invalidQueryPartial: {
+        resourceGroup: 'web-app-development',
+        metricDefinition: 'azure/vm',
+        resourceName: 'web-server',
+        metricNamespace: 'azure/vm',
+        metricName: 'invalid-metric',
+      },
+      templateVariableQueryPartial: {
+        resourceGroup: 'web-app-development',
+        metricDefinition: 'azure/vm',
+        resourceName: 'web-server',
+        metricNamespace: 'azure/vm',
+        metricName: '$variable',
+      },
+      expectedOptions: [
+        {
+          label: 'Compute Virtual Machine',
+          value: 'azure/vmc',
+        },
+        {
+          label: 'Database NS',
+          value: 'azure/dbns',
+        },
+      ],
+    },
   ];
 
   let datasource: MockedObjectDeep<Datasource>;
@@ -283,8 +325,11 @@ describe('AzureMonitor: metrics dataHooks', () => {
     datasource.getMetricNames = jest
       .fn()
       .mockResolvedValue([opt('Percentage CPU', 'percentage-cpu'), opt('Free memory', 'free-memory')]);
-  });
 
+    datasource.getMetricNamespaces = jest
+      .fn()
+      .mockResolvedValue([opt('Compute Virtual Machine', 'azure/vmc'), opt('Database NS', 'azure/dbns')]);
+  });
   describe.each(testTable)('scenario %#: $name', (scenario) => {
     it('returns values', async () => {
       const query = {
@@ -338,10 +383,14 @@ describe('AzureMonitor: metrics dataHooks', () => {
       const { waitForNextUpdate } = renderHook(() => scenario.hook(query, datasource, onChange, setError));
       await waitForNextUpdate(WAIT_OPTIONS);
 
-      expect(onChange).toHaveBeenCalledWith({
-        ...query,
-        azureMonitor: scenario.expectedClearedQueryPartial,
-      });
+      if (scenario.expectedClearedQueryPartial) {
+        expect(onChange).toHaveBeenCalledWith({
+          ...query,
+          azureMonitor: scenario.expectedClearedQueryPartial,
+        });
+      } else {
+        expect(onChange).not.toHaveBeenCalled();
+      }
     });
   });
 });
