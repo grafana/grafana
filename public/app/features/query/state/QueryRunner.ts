@@ -144,8 +144,9 @@ async function getDataSource(
   datasource: DataSourceRef | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
-  if (datasource && (datasource as any).query) {
-    return datasource as DataSourceApi;
+  if (datasource && 'query' in datasource) {
+    return datasource;
   }
+
   return await getDatasourceSrv().get(datasource, scopedVars);
 }

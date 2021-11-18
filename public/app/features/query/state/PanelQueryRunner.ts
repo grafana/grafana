@@ -338,11 +338,12 @@ export class PanelQueryRunner {
 }
 
 async function getDataSource(
-  datasource: DataSourceRef | string | DataSourceApi | null,
+  datasource: DataSourceRef | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
-  if (datasource && (datasource as any).query) {
-    return datasource as DataSourceApi;
+  if (datasource && 'query' in datasource) {
+    return datasource;
   }
-  return await getDatasourceSrv().get(datasource as string, scopedVars);
+
+  return await getDatasourceSrv().get(datasource, scopedVars);
 }
