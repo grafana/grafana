@@ -6,7 +6,6 @@ aliases = [""]
 weight = 430
 +++
 
-
 # Envelope encryption
 
 In Grafana, you can choose to use envelope encryption. Instead of
