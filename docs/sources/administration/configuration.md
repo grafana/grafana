@@ -1117,7 +1117,7 @@ For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{<
 
 ### enabled
 
-Enable the Unified Alerting sub-system and interface. When enabled we'll migrate all of your alert rules and notification channels to the new system. New alert rules will be created and your notification channels will be converted into an Alertmanager configuration. Previous data is preserved to enable backwards compatibility but new data is removed. The default value is `false`.
+Enable the Unified Alerting sub-system and interface. When enabled we'll migrate all of your alert rules and notification channels to the new system. New alert rules will be created and your notification channels will be converted into an Alertmanager configuration. Previous data is preserved to enable backwards compatibility but new data is removed. The default value is `true`.
 
 Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 
@@ -1201,7 +1201,7 @@ For more information about the Alerting feature in Grafana, refer to [Alerts ove
 
 ### enabled
 
-Set to `false` to [enable Grafana 8 alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. Default is `true`.
+Set to `false` to [enable Grafana 8 alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. To enable legacy alerting you need to disable Grafana 8 alerting. Default is `false`.
 
 ### execute_alerts
 
