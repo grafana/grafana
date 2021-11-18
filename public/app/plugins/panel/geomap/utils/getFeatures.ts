@@ -95,5 +95,7 @@ export function getUniqueFeatureValues(features: FeatureLike[], key: string): st
       unique.add(`${v}`); // always string
     }
   }
-  return Array.from(unique);
+  const buffer = Array.from(unique);
+  buffer.sort();
+  return buffer;
 }
