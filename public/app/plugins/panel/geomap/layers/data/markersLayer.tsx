@@ -16,10 +16,10 @@ import { getScaledDimension, getColorDimension, getTextDimension } from 'app/fea
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
-import { FeaturesStylesBuilderConfig, getFeatures } from '../../utils/getFeatures';
-import { getMarkerMaker } from '../../style/markers';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { getFeatures } from '../../utils/getFeatures';
+import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
 import { StyleEditor } from './StyleEditor';
+import { getStyleConfigState } from '../../style/utils';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -73,9 +73,11 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
-    const style = config.style ?? defaultStyleConfig;
-    const hasTextLabel = Boolean(style.text?.fixed || style.text?.field);
-    const markerMaker = await getMarkerMaker(style.symbol?.fixed, hasTextLabel);
+    // Set the default style
+    const style = await getStyleConfigState(config.style);
+    if (!style.fields) {
+      vectorLayer.setStyle(style.maker(style.base));
+    }
 
     return {
       init: () => vectorLayer,
@@ -94,24 +96,21 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             continue; // ???
           }
 
-          const colorDim = getColorDimension(frame, style.color ?? defaultStyleConfig.color, theme);
-          const sizeDim = getScaledDimension(frame, style.size ?? defaultStyleConfig.size);
-          let textDim = undefined;
-          if (style?.text && (style.text.field || style.text.fixed)) {
-            textDim = getTextDimension(frame, style.text);
+          if (style.fields) {
+            const dims: StyleDimensions = {};
+            if (style.fields.color) {
+              dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
+            }
+            if (style.fields.size) {
+              dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
+            }
+            if (style.fields.text) {
+              dims.text = getTextDimension(frame, style.config.text!);
+            }
+            style.dims = dims;
           }
-          const opacity = style?.opacity ?? defaultStyleConfig.opacity;
 
-          const featureDimensionConfig: FeaturesStylesBuilderConfig = {
-            colorDim: colorDim,
-            sizeDim: sizeDim,
-            textDim: textDim,
-            textConfig: style?.textConfig,
-            opacity: opacity,
-            styleMaker: markerMaker,
-          };
-
-          const frameFeatures = getFeatures(frame, info, featureDimensionConfig);
+          const frameFeatures = getFeatures(frame, info, style);
 
           if (frameFeatures) {
             features.push(...frameFeatures);
@@ -120,8 +119,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           // Post updates to the legend component
           if (legend) {
             legendProps.next({
-              color: colorDim,
-              size: sizeDim,
+              color: style.dims?.color,
+              size: style.dims?.size,
             });
           }
           break; // Only the first frame for now!
