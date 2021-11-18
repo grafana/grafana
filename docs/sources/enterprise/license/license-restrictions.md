@@ -119,7 +119,7 @@ For example, if you purchase 150 licenses, you can have 20 admins, 70 editors, a
 To transition from the tiered licensing model to the combined license model, contact your Grafana account team and request to switch to combined user pricing. Once you update your contract with the account team, they will issue you a new license token.
 For instructions about how to update your license, refer to [Activate an Enterprise license]({{< relref "./activate-license.md" >}}).
 
-After you apply the token, Grafana Enterprise resets your license and updates the user counts on the **Utilization** panel .
+After you apply the token, Grafana Enterprise resets your license and updates the user counts on the **Utilization** panel.
 
 > If you are running Grafana Enterprise 8.2 or earlier, the license grants you the total number of licensed users _for each user type_.
 
