@@ -198,6 +198,7 @@ function getStyles(theme: GrafanaTheme2) {
     actions: css({
       position: 'relative',
       alignSelf: 'center',
+      marginTop: '0px',
       opacity: 0,
 
       '.card-parent:hover &, .card-parent:focus-within &': {

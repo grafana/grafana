@@ -276,10 +276,10 @@ export const getCardStyles = (theme: GrafanaTheme2) => {
     secondaryActions: css`
       display: flex;
       grid-area: Secondary;
-      align-items: center;
+      align-self: center;
       color: ${theme.colors.text.secondary};
-      // align to the right
-      margin-left: auto;
+      margin-top: ${theme.spacing(2)};
+
       & > * {
         margin-right: ${theme.spacing(1)} !important;
       }
