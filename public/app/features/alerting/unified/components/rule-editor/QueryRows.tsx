@@ -9,7 +9,7 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { QueryWrapper } from './QueryWrapper';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -211,7 +211,7 @@ export class QueryRows extends PureComponent<Props, State> {
             steps: [
               {
                 value: -Infinity,
-                color: 'green',
+                color: config.theme2.colors.success.main,
               },
             ],
           };
@@ -219,7 +219,7 @@ export class QueryRows extends PureComponent<Props, State> {
 
         record[refId].steps.push({
           value: threshold,
-          color: 'red',
+          color: config.theme2.colors.error.main,
         });
       });
     }

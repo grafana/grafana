@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -16,23 +17,37 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SQLStore) error) func(context *cli.Context) error {
+// nolint: unused,deadcode
+func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.Runner) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		debug := cmd.Bool("debug")
 
-		configOptions := strings.Split(cmd.String("configOverrides"), " ")
-		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-			Config:   cmd.ConfigFile(),
-			HomePath: cmd.HomePath(),
-			Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
-		})
+		cfg, err := initCfg(cmd)
 		if err != nil {
 			return errutil.Wrap("failed to load configuration", err)
 		}
 
-		if debug {
-			cfg.LogConfigSources()
+		r, err := runner.Initialize(cfg)
+		if err != nil {
+			return errutil.Wrap("failed to initialize runner", err)
+		}
+
+		if err := command(cmd, r); err != nil {
+			return err
+		}
+
+		logger.Info("\n\n")
+		return nil
+	}
+}
+
+func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SQLStore) error) func(context *cli.Context) error {
+	return func(context *cli.Context) error {
+		cmd := &utils.ContextCommandLine{Context: context}
+
+		cfg, err := initCfg(cmd)
+		if err != nil {
+			return errutil.Wrap("failed to load configuration", err)
 		}
 
 		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{})
@@ -47,6 +62,25 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		logger.Info("\n\n")
 		return nil
 	}
+}
+
+func initCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
+	configOptions := strings.Split(cmd.String("configOverrides"), " ")
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+		Config:   cmd.ConfigFile(),
+		HomePath: cmd.HomePath(),
+		Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if cmd.Bool("debug") {
+		cfg.LogConfigSources()
+	}
+
+	return cfg, nil
 }
 
 func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {

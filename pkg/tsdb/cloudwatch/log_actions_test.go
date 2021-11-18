@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -285,7 +284,7 @@ func TestQuery_StartQuery(t *testing.T) {
 		})
 		require.Error(t, err)
 
-		assert.Equal(t, fmt.Errorf("invalid time range: start time must be before end time"), err)
+		assert.Contains(t, err.Error(), "invalid time range: start time must be before end time")
 	})
 
 	t.Run("valid time range", func(t *testing.T) {

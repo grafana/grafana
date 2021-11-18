@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { Threshold, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
@@ -24,10 +24,8 @@ export const ThresholdDragHandle: React.FC<ThresholdDragHandleProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const [currentValue, setCurrentValue] = useState(step.value);
-
-  const textColor = useMemo(() => {
-    return theme.colors.getContrastText(theme.visualization.getColorByName(step.color));
-  }, [step.color, theme]);
+  const bgColor = theme.visualization.getColorByName(step.color);
+  const textColor = theme.colors.getContrastText(bgColor);
 
   return (
     <Draggable
@@ -44,7 +42,7 @@ export const ThresholdDragHandle: React.FC<ThresholdDragHandleProps> = ({
     >
       <div
         className={styles.handle}
-        style={{ color: textColor, background: step.color, borderColor: step.color, borderWidth: 0 }}
+        style={{ color: textColor, background: bgColor, borderColor: bgColor, borderWidth: 0 }}
       >
         <span className={styles.handleText}>{formatValue(currentValue)}</span>
       </div>

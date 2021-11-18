@@ -9,8 +9,9 @@ describe('ElasticQueryBuilder', () => {
   const builder6x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '6.0.0' });
   const builder7x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '7.0.0' });
   const builder77 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '7.7.0' });
+  const builder8 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '8.0.0' });
 
-  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x, builder77];
+  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x, builder77, builder8];
 
   allBuilders.forEach((builder) => {
     describe(`version ${builder.esVersion}`, () => {
@@ -728,7 +729,7 @@ describe('ElasticQueryBuilder', () => {
             { _doc: { order: 'desc' } },
           ]);
 
-          const expectedAggs = {
+          const expectedAggs: any = {
             // FIXME: It's pretty weak to include this '1' in the test as it's not part of what we are testing here and
             // might change as a cause of unrelated changes
             1: {
@@ -742,6 +743,11 @@ describe('ElasticQueryBuilder', () => {
               },
             },
           };
+
+          if (gte(builder.esVersion, '8.0.0')) {
+            expectedAggs['1'].date_histogram.fixed_interval = expectedAggs['1'].date_histogram.interval;
+            delete expectedAggs['1'].date_histogram.interval;
+          }
           expect(query.aggs).toMatchObject(expectedAggs);
         });
 
@@ -920,6 +926,46 @@ describe('ElasticQueryBuilder', () => {
           });
 
           expect(query.aggs['2'].date_histogram.field).toBe('@time');
+        });
+
+        describe('interval parameter', () => {
+          it('should use interval if Elasticsearch version <8.0.0', () => {
+            const query = builder77.build({
+              refId: 'A',
+              metrics: [{ type: 'count', id: '1' }],
+              timeField: '@timestamp',
+              bucketAggs: [
+                {
+                  type: 'date_histogram',
+                  id: '2',
+                  field: '@time',
+                  settings: { min_doc_count: '1', interval: '1d' },
+                },
+              ],
+            });
+
+            expect(query.aggs['2'].date_histogram.interval).toBe('1d');
+            expect(query.aggs['2'].date_histogram.fixed_interval).toBeUndefined();
+          });
+        });
+
+        it('should use fixed_interval if Elasticsearch version >=8.0.0', () => {
+          const query = builder8.build({
+            refId: 'A',
+            metrics: [{ type: 'count', id: '1' }],
+            timeField: '@timestamp',
+            bucketAggs: [
+              {
+                type: 'date_histogram',
+                id: '2',
+                field: '@time',
+                settings: { min_doc_count: '1', interval: '1d' },
+              },
+            ],
+          });
+
+          expect(query.aggs['2'].date_histogram.interval).toBeUndefined();
+          expect(query.aggs['2'].date_histogram.fixed_interval).toBe('1d');
         });
       });
     });
