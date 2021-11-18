@@ -12,7 +12,6 @@ import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
 import { FeatureLike } from 'ol/Feature';
 import { getSelectionInfo } from '../utils/selection';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
-import { isNumber } from 'lodash';
 
 export interface StyleRuleEditorSettings {
   features: Observable<FeatureLike[]>;
@@ -77,11 +76,20 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
 
   const onChangeValue = useCallback(
     (selection?: SelectableValue) => {
+      let newValue;
+      let isNewValueNumber = !isNaN(selection?.value as number);
+
+      if (isNewValueNumber) {
+        newValue = Number(selection?.value);
+      } else {
+        newValue = selection?.value;
+      }
+
       onChange({
         ...value,
         check: {
           ...value.check!,
-          value: selection?.value,
+          value: newValue,
         },
       });
     },
@@ -158,7 +166,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
             {check.operation !== ComparisonOperation.EQ && (
               <NumberInput
                 key={`${check.property}/${check.operation}`}
-                value={isNumber(check.value) ? check.value : 0}
+                value={!isNaN(check.value as number) ? (check.value as any) : 0}
                 placeholder="numeric value"
                 onChange={onChangeNumericValue}
               />
