@@ -5,6 +5,7 @@ import { Button, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '
 import { css } from '@emotion/css';
 import { StyleEditor } from '../layers/data/StyleEditor';
 import { defaultStyleConfig, StyleConfig } from '../style/types';
+import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
 
 export interface StyleRuleEditorSettings {
   options: SelectableValue[];
@@ -24,11 +25,11 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
     (e: ChangeEvent<HTMLInputElement>) => {
       onChange({
         ...value,
-        rule: {
-          ...value.rule,
+        check: {
+          ...value.check,
           property: e.currentTarget.value,
-          operation: value.rule?.operation ?? ComparisonOperation.EQ,
-          value: value.rule?.value ?? '',
+          operation: value.check?.operation ?? ComparisonOperation.EQ,
+          value: value.check?.value ?? '',
         },
       });
     },
@@ -39,11 +40,11 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
     (selection: SelectableValue) => {
       onChange({
         ...value,
-        rule: {
-          ...value.rule,
+        check: {
+          ...value.check,
           operation: selection.value ?? ComparisonOperation.EQ,
-          property: value.rule?.property ?? '',
-          value: value.rule?.value ?? '',
+          property: value.check?.property ?? '',
+          value: value.check?.value ?? '',
         },
       });
     },
@@ -54,11 +55,11 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
     (e: ChangeEvent<HTMLInputElement>) => {
       onChange({
         ...value,
-        rule: {
-          ...value.rule,
+        check: {
+          ...value.check,
           value: e.currentTarget.value,
-          operation: value.rule?.operation ?? ComparisonOperation.EQ,
-          property: value.rule?.property ?? '',
+          operation: value.check?.operation ?? ComparisonOperation.EQ,
+          property: value.check?.property ?? '',
         },
       });
     },
@@ -76,6 +77,8 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
     onChange(undefined);
   }, [onChange]);
 
+  const check = value.check ?? DEFAULT_STYLE_RULE.check!;
+
   return (
     <div className={styles.rule}>
       <InlineFieldRow className={styles.row}>
@@ -83,7 +86,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
           <Input
             type="text"
             placeholder={'Feature property'}
-            value={`${value?.rule?.property}`}
+            value={check.property ?? ''}
             onChange={onChangeComparisonProperty}
             aria-label={'Feature property'}
           />
@@ -91,7 +94,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
         <InlineField className={styles.inline} grow={true}>
           <Select
             menuShouldPortal
-            value={`${value?.rule?.operation}` ?? ComparisonOperation.EQ}
+            value={check.operation ?? ComparisonOperation.EQ}
             options={settings.options}
             onChange={onChangeComparison}
             aria-label={'Comparison operator'}
@@ -101,7 +104,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
           <Input
             type="text"
             placeholder={'value'}
-            value={`${value?.rule?.value}`}
+            value={`${check.value}` ?? ''}
             onChange={onChangeComparisonValue}
             aria-label={'Comparison value'}
           />

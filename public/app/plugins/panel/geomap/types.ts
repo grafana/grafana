@@ -47,7 +47,7 @@ export interface GeomapPanelOptions {
 }
 export interface FeatureStyleConfig {
   style?: StyleConfig;
-  rule?: FeatureRuleConfig;
+  check?: FeatureRuleConfig;
 }
 export interface FeatureRuleConfig {
   property: string;
