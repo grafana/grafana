@@ -33,7 +33,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
   render() {
     const { navModel, organization } = this.props;
     const isLoading = Object.keys(organization).length === 0;
-    const canReadwOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
+    const canReadOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
     const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
     const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
 
@@ -42,7 +42,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
         <Page.Contents isLoading={isLoading}>
           {!isLoading && (
             <VerticalGroup spacing="lg">
-              {canReadwOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
+              {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
               {canReadPreferences && <SharedPreferences resourceUri="org" disabled={!canWritePreferences} />}
             </VerticalGroup>
           )}
