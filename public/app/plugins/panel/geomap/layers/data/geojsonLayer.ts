@@ -47,10 +47,10 @@ export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
 
 export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   id: 'geojson',
-  name: 'Load a staic geojson layer',
-  description: 'color features based on query results',
+  name: 'GeoJSON',
+  description: 'Load static data from a geojson file',
   isBaseMap: false,
-  state: PluginState.alpha,
+  state: PluginState.beta,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -144,10 +144,10 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             defaultValue: defaultOptions.src,
           })
           .addCustomEditor({
-            id: 'config.styles',
-            path: 'config.styles',
+            id: 'config.rules',
+            path: 'config.rules',
             name: 'Style Rules',
-            description: 'The style for the first matching rule will apply',
+            description: 'Apply styles based on feature properties',
             editor: GeomapStyleRulesEditor,
             settings: {},
             defaultValue: [],

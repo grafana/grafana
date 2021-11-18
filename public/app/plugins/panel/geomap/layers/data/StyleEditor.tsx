@@ -84,8 +84,8 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
     return (
       <>
         <InlineFieldRow>
-          <InlineField label="Color" labelWidth={10} grow={true}>
-            <InlineLabel>
+          <InlineField label="Color" labelWidth={10}>
+            <InlineLabel width={4}>
               <ColorPicker
                 color={value.color?.fixed ?? defaultStyleConfig.color.fixed}
                 onChange={(v) => {
