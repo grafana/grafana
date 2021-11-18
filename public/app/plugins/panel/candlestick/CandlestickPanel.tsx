@@ -98,7 +98,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
           });
 
           tweakAxis = (opts: AxisProps) => {
-            if (opts.scaleKey === 'short') {
+            if (opts.scaleKey.indexOf('short/') === 0) {
               let filter = (u: uPlot, splits: number[]) => {
                 let _splits = [];
                 let max = u.series[volumeIdx].max as number;
@@ -123,7 +123,7 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
           };
 
           tweakScale = (opts: ScaleProps) => {
-            if (opts.scaleKey === 'short') {
+            if (opts.scaleKey.indexOf('short/') === 0) {
               opts.range = (u: uPlot, min: number, max: number) => [0, max * 7];
             }
 
