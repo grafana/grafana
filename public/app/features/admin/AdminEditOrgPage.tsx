@@ -22,7 +22,7 @@ const getOrg = async (orgId: UrlQueryValue) => {
 
 const getOrgUsers = async (orgId: UrlQueryValue) => {
   if (contextSrv.hasPermission(AccessControlAction.OrgUsersRead)) {
-    return await getBackendSrv().get('/api/orgs/' + orgId + '/users');
+    return await getBackendSrv().get(`/api/orgs/${orgId}/users`);
   }
   return [];
 };
