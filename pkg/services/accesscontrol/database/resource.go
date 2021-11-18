@@ -210,8 +210,6 @@ func createResourcePermission(sess *sqlstore.DBSession, roleID int64, action, re
 }
 
 func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query accesscontrol.GetResourcesPermissionsQuery, managed bool) ([]accesscontrol.ResourcePermission, error) {
-	result := make([]flatResourcePermission, 0)
-
 	if len(query.Actions) == 0 {
 		return nil, nil
 	}
@@ -306,75 +304,44 @@ func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query access
 	builtin := builtinSelect + builtinFrom + where
 	sql := user + "UNION" + team + "UNION" + builtin
 
-	if err := sess.SQL(sql, args...).Find(&result); err != nil {
+	queryResults := make([]flatResourcePermission, 0)
+	if err := sess.SQL(sql, args...).Find(&queryResults); err != nil {
 		return nil, err
 	}
 
 	scopeAll := getResourceAllScope(query.Resource)
 	scopeAllIDs := getResourceAllIDScope(query.Resource)
 
-	out := make([]flatResourcePermission, 0, len(result))
+	byResource := make(map[string][]flatResourcePermission)
 	// Add resourceIds and generate permissions for `*`, `resource:*` and `resource:id:*`
 	for _, id := range query.ResourceIDs {
 		scope := getResourceScope(query.Resource, id)
-		for _, p := range result {
+		for _, p := range queryResults {
 			if p.Scope == scope || p.Scope == scopeAll || p.Scope == scopeAllIDs || p.Scope == "*" {
 				p.ResourceID = id
-				out = append(out, p)
+				byResource[p.ResourceID] = append(byResource[p.ResourceID], p)
 			}
 		}
-	}
-
-	return GroupResourcePermissions(out), nil
-}
-
-// TODO: rename
-func GroupResourcePermissions(permissions []flatResourcePermission) []accesscontrol.ResourcePermission {
-	byResource := make(map[string][]flatResourcePermission)
-
-	for _, p := range permissions {
-		byResource[p.ResourceID] = append(byResource[p.ResourceID], p)
 	}
 
 	var result []accesscontrol.ResourcePermission
-
-	// TODO: Refactor
 	for _, permissions := range byResource {
-		users, teams, builtins := GroupByAssignment(permissions)
+		users, teams, builtins := groupByAssignment(permissions)
 		for _, p := range users {
-			managed, provisioned := SplitByManaged(p)
-			if g := flatToResourcePermissions(managed); g != nil {
-				result = append(result, *g)
-			}
-			if g := flatToResourcePermissions(provisioned); g != nil {
-				result = append(result, *g)
-			}
+			result = append(result, temp(p)...)
 		}
 		for _, p := range teams {
-			managed, provisioned := SplitByManaged(p)
-			if g := flatToResourcePermissions(managed); g != nil {
-				result = append(result, *g)
-			}
-			if g := flatToResourcePermissions(provisioned); g != nil {
-				result = append(result, *g)
-			}
+			result = append(result, temp(p)...)
 		}
 		for _, p := range builtins {
-			managed, provisioned := SplitByManaged(p)
-			if g := flatToResourcePermissions(managed); g != nil {
-				result = append(result, *g)
-			}
-			if g := flatToResourcePermissions(provisioned); g != nil {
-				result = append(result, *g)
-			}
+			result = append(result, temp(p)...)
 		}
 	}
 
-	return result
+	return result, nil
 }
 
-// TODO: rename
-func GroupByAssignment(permissions []flatResourcePermission) (map[int64][]flatResourcePermission, map[int64][]flatResourcePermission, map[string][]flatResourcePermission) {
+func groupByAssignment(permissions []flatResourcePermission) (map[int64][]flatResourcePermission, map[int64][]flatResourcePermission, map[string][]flatResourcePermission) {
 	users := make(map[int64][]flatResourcePermission)
 	teams := make(map[int64][]flatResourcePermission)
 	builtins := make(map[string][]flatResourcePermission)
@@ -391,10 +358,8 @@ func GroupByAssignment(permissions []flatResourcePermission) (map[int64][]flatRe
 	return users, teams, builtins
 }
 
-// TODO: rename
-func SplitByManaged(permissions []flatResourcePermission) ([]flatResourcePermission, []flatResourcePermission) {
+func temp(permissions []flatResourcePermission) []accesscontrol.ResourcePermission {
 	var managed, provisioned []flatResourcePermission
-
 	for _, p := range permissions {
 		if p.Managed() {
 			managed = append(managed, p)
@@ -403,7 +368,15 @@ func SplitByManaged(permissions []flatResourcePermission) ([]flatResourcePermiss
 		}
 	}
 
-	return managed, provisioned
+	var result []accesscontrol.ResourcePermission
+	if g := flatToResourcePermissions(managed); g != nil {
+		result = append(result, *g)
+	}
+	if g := flatToResourcePermissions(provisioned); g != nil {
+		result = append(result, *g)
+	}
+
+	return result
 }
 
 func (s *AccessControlStore) userAdder(sess *sqlstore.DBSession, orgID, userID int64) roleAdder {
