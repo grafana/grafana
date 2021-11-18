@@ -5,6 +5,7 @@
 ### Bug fixes
 
 - **Alerting:** Fix a bug where the metric in the evaluation string was not correctly populated. [#41731](https://github.com/grafana/grafana/pull/41731), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+- **Alerting:** Fix no data behaviour in Legacy Alerting for alert rules using the AND operator. [#41305](https://github.com/grafana/grafana/pull/41305), [@gerobinson](https://github.com/gerobinson)
 - **CloudMonitoring:** Ignore min and max aggregation in MQL queries. [#41302](https://github.com/grafana/grafana/pull/41302), [@sunker](https://github.com/sunker)
 - **Dashboards:** 'Copy' is no longer added to new dashboard titles. [#41344](https://github.com/grafana/grafana/pull/41344), [@joshhunt](https://github.com/joshhunt)
 - **DataProxy:** Fix overriding response body when response is a WebSocket upgrade. [#41364](https://github.com/grafana/grafana/pull/41364), [@marefr](https://github.com/marefr)
@@ -14,6 +15,14 @@
 - **Plugins:** Ensure consistent plugin settings list response. [#41346](https://github.com/grafana/grafana/pull/41346), [@wbrowne](https://github.com/wbrowne)
 - **Tempo:** Fix validation of float durations. [#41400](https://github.com/grafana/grafana/pull/41400), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Tracing:** Correct tags for each span are shown. [#41473](https://github.com/grafana/grafana/pull/41473), [@ivanahuckova](https://github.com/ivanahuckova)
+
+### Breaking changes
+
+### Fix No Data behaviour in Legacy Alerting
+
+In Grafana 8.2.5 and later, this change fixes a bug in the evaluation of alert rules when using the AND operator to compare two or more conditions. In Grafana 8.2.4 and earlier such alert rules would evaluate to `OK` if at least one, but not all, conditions returned no data. This change fixes that bug such that in Grafana 8.2.5 these alert rules now evaluate to `No Data`.
+
+If an alert should evaluate to `OK` when one or all conditions return `No Data` then this can be done via changing `If no data or all values are null` to `OK`. However, this will not preserve the old behaviour in 8.2.4 where an alert will be `OK` if at least one, but not all, conditions return no data and then `No Data` if all conditions return `No Data`. Issue [#41305](https://github.com/grafana/grafana/issues/41305)
 
 <!-- 8.2.5 END -->
 <!-- 8.2.4 START -->
