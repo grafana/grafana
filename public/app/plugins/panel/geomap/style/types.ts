@@ -1,5 +1,6 @@
 import {
   ColorDimensionConfig,
+  DimensionSupplier,
   ResourceDimensionConfig,
   ResourceDimensionMode,
   ScaleDimensionConfig,
@@ -62,6 +63,8 @@ export const defaultStyleConfig = Object.freeze({
     fontSize: 12,
     textAlign: TextAlignment.Center,
     textBaseline: TextBaseline.Middle,
+    offsetX: 0,
+    offsetY: 0,
   },
 });
 
@@ -89,6 +92,28 @@ export interface StyleConfigValues {
 
   // Pass though (not value dependant)
   textConfig?: TextStyleConfig;
+}
+
+/** When the style depends on a field */
+export interface StyleConfigFields {
+  color?: string;
+  size?: string;
+  text?: string;
+}
+
+export interface StyleDimensions {
+  color?: DimensionSupplier<string>;
+  size?: DimensionSupplier<number>;
+  text?: DimensionSupplier<string>;
+}
+
+export interface StyleConfigState {
+  config: StyleConfig;
+  hasText?: boolean;
+  base: StyleConfigValues;
+  fields?: StyleConfigFields;
+  dims?: StyleDimensions;
+  maker: StyleMaker;
 }
 
 /**

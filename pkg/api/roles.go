@@ -44,145 +44,157 @@ var (
 // grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
-	registrations := []accesscontrol.RoleRegistration{
-		{
-			Role: accesscontrol.RoleDTO{
-				Version:     1,
-				Name:        "fixed:provisioning:admin",
-				Description: "Reload provisioning configurations",
-				Permissions: []accesscontrol.Permission{
-					{
-						Action: ActionProvisioningReload,
-						Scope:  ScopeProvisionersAll,
-					},
+	provisioningWriterRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     2,
+			Name:        "fixed:provisioning:writer",
+			DisplayName: "Provisioning writer",
+			Description: "Reload provisioning.",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningReload,
+					Scope:  ScopeProvisionersAll,
 				},
 			},
-			Grants: []string{accesscontrol.RoleGrafanaAdmin},
 		},
-		{
-			Role: accesscontrol.RoleDTO{
-				Version:     1,
-				Name:        "fixed:datasources:admin",
-				Description: "Gives access to create, read, update, delete datasources",
-				Permissions: []accesscontrol.Permission{
-					{
-						Action: ActionDatasourcesRead,
-						Scope:  ScopeDatasourcesAll,
-					},
-					{
-						Action: ActionDatasourcesWrite,
-						Scope:  ScopeDatasourcesAll,
-					},
-					{
-						Action: ActionDatasourcesCreate,
-					},
-					{
-						Action: ActionDatasourcesDelete,
-						Scope:  ScopeDatasourcesAll,
-					},
-					{
-						Action: ActionDatasourcesQuery,
-						Scope:  ScopeDatasourcesAll,
-					},
-				},
-			},
-			Grants: []string{string(models.ROLE_ADMIN)},
-		},
-		{
-			Role: accesscontrol.RoleDTO{
-				Version:     2,
-				Name:        "fixed:datasources:id:viewer",
-				Description: "Gives access to read datasources ID",
-				Permissions: []accesscontrol.Permission{
-					{
-						Action: ActionDatasourcesIDRead,
-						Scope:  ScopeDatasourcesAll,
-					},
-				},
-			},
-			Grants: []string{string(models.ROLE_VIEWER)},
-		},
-		{
-			Role: accesscontrol.RoleDTO{
-				Version:     1,
-				Name:        "fixed:datasources:compatibility:querier",
-				Description: "Query data sources when data source permissions are not in use",
-				Permissions: []accesscontrol.Permission{
-					{Action: ActionDatasourcesQuery},
-				},
-			},
-			Grants: []string{string(models.ROLE_VIEWER)},
-		},
-		{
-			Role: accesscontrol.RoleDTO{
-				Version:     2,
-				Name:        "fixed:current:org:reader",
-				Description: "Read current organization and its quotas.",
-				Permissions: []accesscontrol.Permission{
-					{
-						Action: ActionOrgsRead,
-					},
-					{
-						Action: ActionOrgsQuotasRead,
-					},
-				},
-			},
-			Grants: []string{string(models.ROLE_VIEWER)},
-		},
-		{
-			Role: accesscontrol.RoleDTO{
-				Version:     2,
-				Name:        "fixed:current:org:writer",
-				Description: "Read current organization, its quotas, and its preferences. Write current organization and its preferences.",
-				Permissions: []accesscontrol.Permission{
-					{
-						Action: ActionOrgsRead,
-					},
-					{
-						Action: ActionOrgsQuotasRead,
-					},
-					{
-						Action: ActionOrgsPreferencesRead,
-					},
-					{
-						Action: ActionOrgsWrite,
-					},
-					{
-						Action: ActionOrgsPreferencesWrite,
-					},
-				},
-			},
-			Grants: []string{string(models.ROLE_ADMIN)},
-		},
-		{
-			Role: accesscontrol.RoleDTO{
-				Version:     2,
-				Name:        "fixed:orgs:writer",
-				Description: "Create, read, write, or delete an organization. Read or write an organization's quotas.",
-				Permissions: []accesscontrol.Permission{
-					{Action: ActionOrgsCreate},
-					{
-						Action: ActionOrgsRead,
-					},
-					{
-						Action: ActionOrgsWrite,
-					},
-					{
-						Action: ActionOrgsDelete,
-					},
-					{
-						Action: ActionOrgsQuotasRead,
-					},
-					{
-						Action: ActionOrgsQuotasWrite,
-					},
-				},
-			},
-			Grants: []string{accesscontrol.RoleGrafanaAdmin},
-		},
+		Grants: []string{accesscontrol.RoleGrafanaAdmin},
 	}
 
-	return hs.AccessControl.DeclareFixedRoles(registrations...)
+	datasourcesReaderRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     2,
+			Name:        "fixed:datasources:reader",
+			DisplayName: "Data source reader",
+			Description: "Read and query all data sources.",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionDatasourcesRead,
+					Scope:  ScopeDatasourcesAll,
+				},
+				{
+					Action: ActionDatasourcesQuery,
+					Scope:  ScopeDatasourcesAll,
+				},
+			},
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
+	datasourcesWriterRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     2,
+			Name:        "fixed:datasources:writer",
+			DisplayName: "Data source writer",
+			Description: "Create, update, delete, read, or query data sources.",
+			Permissions: accesscontrol.ConcatPermissions(datasourcesReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{
+					Action: ActionDatasourcesWrite,
+					Scope:  ScopeDatasourcesAll,
+				},
+				{
+					Action: ActionDatasourcesCreate,
+				},
+				{
+					Action: ActionDatasourcesDelete,
+					Scope:  ScopeDatasourcesAll,
+				},
+			}),
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
+	datasourcesIdReaderRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     3,
+			Name:        "fixed:datasources.id:reader",
+			DisplayName: "Data source ID reader",
+			Description: "Read the ID of a data source based on its name.",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionDatasourcesIDRead,
+					Scope:  ScopeDatasourcesAll,
+				},
+			},
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
+	}
+
+	datasourcesCompatibilityReaderRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     2,
+			Name:        "fixed:datasources:compatibility:querier",
+			DisplayName: "Data source compatibility querier",
+			Description: "Only used for open source compatibility. Query data sources.",
+			Permissions: []accesscontrol.Permission{
+				{Action: ActionDatasourcesQuery},
+			},
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
+	}
+
+	currentOrgReaderRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     3,
+			Name:        "fixed:current.org:reader",
+			DisplayName: "Current Organization reader",
+			Description: "Read the current organization, such as its ID, name, address, or quotas.",
+			Permissions: []accesscontrol.Permission{
+				{Action: ActionOrgsRead},
+				{Action: ActionOrgsQuotasRead},
+			},
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
+	}
+
+	currentOrgWriterRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     3,
+			Name:        "fixed:current.org:writer",
+			DisplayName: "Current Organization writer",
+			Description: "Read the current organization, its quotas, or its preferences. Update the current organization properties, or its preferences.",
+			Permissions: accesscontrol.ConcatPermissions(currentOrgReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: ActionOrgsPreferencesRead},
+				{Action: ActionOrgsWrite},
+				{Action: ActionOrgsPreferencesWrite},
+			}),
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
+	orgReaderRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			Name:        "fixed:orgs:reader",
+			DisplayName: "Organization reader",
+			Description: "Read the organization and its quotas.",
+			Permissions: []accesscontrol.Permission{
+				{Action: ActionOrgsRead},
+				{Action: ActionOrgsQuotasRead},
+			},
+		},
+		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+	}
+
+	orgWriterRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     3,
+			Name:        "fixed:orgs:writer",
+			DisplayName: "Organization writer",
+			Description: "Create, read, write, or delete an organization. Read or write an organization's quotas.",
+			Permissions: accesscontrol.ConcatPermissions(orgReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: ActionOrgsCreate},
+				{Action: ActionOrgsWrite},
+				{Action: ActionOrgsDelete},
+				{Action: ActionOrgsQuotasWrite},
+			}),
+		},
+		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+	}
+
+	return hs.AccessControl.DeclareFixedRoles(
+		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
+		datasourcesCompatibilityReaderRole, currentOrgReaderRole, currentOrgWriterRole, orgReaderRole, orgWriterRole,
+	)
 }
 
 // Evaluators

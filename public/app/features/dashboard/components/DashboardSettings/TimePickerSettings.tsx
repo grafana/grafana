@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Input, TimeZonePicker, Field, Switch, CollapsableSection, WeekStartPicker } from '@grafana/ui';
+import { CollapsableSection, Field, Input, Switch, TimeZonePicker, WeekStartPicker } from '@grafana/ui';
 import { rangeUtil, TimeZone } from '@grafana/data';
 import { isEmpty } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
@@ -65,7 +65,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
   render() {
     return (
       <CollapsableSection label="Time options" isOpen={true}>
-        <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
+        <Field label="Timezone" data-testid={selectors.components.TimeZonePicker.containerV2}>
           <TimeZonePicker
             inputId="time-options-input"
             includeInternal={true}
@@ -74,7 +74,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
             width={40}
           />
         </Field>
-        <Field label="Week start" aria-label={selectors.components.WeekStartPicker.container}>
+        <Field label="Week start" data-testid={selectors.components.WeekStartPicker.containerV2}>
           <WeekStartPicker
             inputId="week-start-input"
             width={40}

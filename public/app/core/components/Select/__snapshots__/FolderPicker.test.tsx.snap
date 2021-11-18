@@ -2,7 +2,7 @@
 
 exports[`FolderPicker should render 1`] = `
 <div
-  aria-label="Folder picker select container"
+  data-testid="data-testid Folder picker select container"
 >
   <AsyncSelect
     allowCustomValue={false}

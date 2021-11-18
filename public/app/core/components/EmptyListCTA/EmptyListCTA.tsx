@@ -82,7 +82,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
       href={buttonLink}
       icon={buttonIcon}
       className={ctaElementClassName}
-      aria-label={selectors.components.CallToActionCard.button(buttonTitle)}
+      data-testid={selectors.components.CallToActionCard.buttonV2(buttonTitle)}
       disabled={buttonDisabled}
     >
       {buttonTitle}
