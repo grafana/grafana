@@ -96,8 +96,9 @@ export class GrafanaApp {
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       // Important that extensions are initialized before store
-      initExtensions();
+      addExtensionReducers();
       configureStore();
+      initExtensions();
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -142,6 +143,12 @@ export class GrafanaApp {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
     }
+  }
+}
+
+function addExtensionReducers() {
+  if (extensionsExports.length > 0) {
+    extensionsExports[0].addExtensionReducers();
   }
 }
 
