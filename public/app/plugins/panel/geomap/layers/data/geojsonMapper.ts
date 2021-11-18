@@ -77,10 +77,10 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       }
     });
 
-    const styles:StyleCheckerState[] = [];
-    if(config.styles) {
-      for(const r of config.styles) {
-        if(r.style) {
+    const styles: StyleCheckerState[] = [];
+    if (config.styles) {
+      for (const r of config.styles) {
+        if (r.style) {
           const s = await getStyleConfigState(r.style);
           styles.push({
             point: s.maker(s.base),
@@ -90,7 +90,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         }
       }
     }
-    if(true) {
+    if (true) {
       const s = await getStyleConfigState(config.style);
       styles.push({
         point: s.maker(s.base),
@@ -103,9 +103,9 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       style: (feature: FeatureLike) => {
         const isPoint = feature.getGeometry()?.getType() === 'Point';
 
-        for(const check of styles) {
-          if(check.rule && !checkFeatureMatchesStyleRule(check.rule, feature)) {
-            continue
+        for (const check of styles) {
+          if (check.rule && !checkFeatureMatchesStyleRule(check.rule, feature)) {
+            continue;
           }
           return isPoint ? check.point : check.poly;
         }
@@ -158,9 +158,11 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             name: 'Default Style',
             description: 'The style to apply when no rules above match',
             editor: StyleEditor,
-            settings: {},
+            settings: {
+              simpleFixedValues: true,
+            },
             defaultValue: defaultOptions.style,
-          })
+          });
       },
     };
   },

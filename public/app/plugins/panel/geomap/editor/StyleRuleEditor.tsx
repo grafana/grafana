@@ -120,7 +120,13 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
           value={value.style ?? defaultStyleConfig}
           context={context}
           onChange={onChangeStyle}
-          item={{} as any}
+          item={
+            {
+              settings: {
+                simpleFixedValues: true,
+              },
+            } as any
+          }
         />
       </div>
     </div>
