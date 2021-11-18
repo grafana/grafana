@@ -85,7 +85,6 @@ def get_steps(edition, ver_mode):
         tries = 5
 
     steps = [
-        lint_drone_step(),
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition=edition),

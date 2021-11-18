@@ -30,16 +30,20 @@ describe('datasource', () => {
 
     it('should interpolate variables in the query', async () => {
       const { datasource, fetchMock } = setupMockedDataSource();
-      datasource.query({
-        targets: [
-          {
-            queryMode: 'Logs' as 'Logs',
-            region: '$region',
-            expression: 'fields $fields',
-            logGroupNames: ['/some/$group'],
-          },
-        ],
-      } as any);
+      await lastValueFrom(
+        datasource
+          .query({
+            targets: [
+              {
+                queryMode: 'Logs',
+                region: '$region',
+                expression: 'fields $fields',
+                logGroupNames: ['/some/$group'],
+              },
+            ],
+          } as any)
+          .pipe(toArray())
+      );
       expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
         queryString: 'fields templatedField',
         logGroupNames: ['/some/templatedGroup'],
