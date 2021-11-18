@@ -8,13 +8,15 @@ import { defaultStyleConfig, StyleConfig } from '../style/types';
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
 import { Observable } from 'rxjs';
 import { useObservable } from 'react-use';
+import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
 import { FeatureLike } from 'ol/Feature';
 import { getSelectionInfo } from '../utils/selection';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
+import { isNumber } from 'lodash';
 
 export interface StyleRuleEditorSettings {
   features: Observable<FeatureLike[]>;
-  properties: Observable<SelectableValue[]>;
+  layerInfo: Observable<LayerContentInfo>;
 }
 
 const comparators = [
@@ -30,24 +32,17 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
 ) => {
   const { value, onChange, item, context } = props;
   const settings: StyleRuleEditorSettings = item.settings;
-  const { features, properties } = settings;
+  const { features, layerInfo } = settings;
 
-  const propertyOptions = useObservable(properties);
+  const propertyOptions = useObservable(layerInfo);
   const feats = useObservable(features);
 
   const uniqueSelectables = useMemo(() => {
-    const uniqueValues: SelectableValue[] = [];
-    if (value?.check?.property && feats) {
-      const property = value.check.property;
-      const sorted = feats.sort((a, b) => (a.get(property) > b.get(property) ? 1 : -1));
-      for (let v = 1; v < sorted.length; v++) {
-        const currVal = sorted[v].get(property);
-        if (sorted[v - 1].get(property) !== currVal) {
-          uniqueValues.push({ value: currVal, label: `${currVal}` });
-        }
-      }
+    const key = value?.check?.property;
+    if (key && feats && value.check?.operation === ComparisonOperation.EQ) {
+      return getUniqueFeatureValues(feats, key).map((v) => ({ value: v, label: v }));
     }
-    return uniqueValues;
+    return [];
   }, [feats, value]);
 
   const styles = useStyles2(getStyles);
@@ -118,7 +113,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   }, [onChange]);
 
   const check = value.check ?? DEFAULT_STYLE_RULE.check!;
-  const propv = getSelectionInfo(check.property, propertyOptions);
+  const propv = getSelectionInfo(check.property, propertyOptions?.propertes);
   const valuev = getSelectionInfo(check.value, uniqueSelectables);
 
   return (
@@ -161,7 +156,12 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
               />
             )}
             {check.operation !== ComparisonOperation.EQ && (
-              <NumberInput value={+check.value} onChange={onChangeNumericValue} />
+              <NumberInput
+                key={`${check.property}/${check.operation}`}
+                value={isNumber(check.value) ? check.value : 0}
+                placeholder="numeric value"
+                onChange={onChangeNumericValue}
+              />
             )}
           </>
         </InlineField>

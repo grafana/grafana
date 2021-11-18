@@ -4,7 +4,6 @@ import {
   PanelData,
   GrafanaTheme2,
   PluginState,
-  SelectableValue,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
@@ -22,6 +21,8 @@ import { polyStyle } from '../../style/markers';
 import { StyleEditor } from './StyleEditor';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
+import { getLayerPropertyInfo } from '../../utils/getFeatures';
+
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -126,17 +127,9 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       },
       registerOptionsUI: (builder) => {
         // get properties for first feature to use as ui options
-        const props = features.pipe(
+        const layerInfo = features.pipe(
           first(),
-          rxjsmap((first) => first[0].getProperties()),
-          rxjsmap((props) =>
-            Object.keys(props).reduce((selectables: SelectableValue[], key) => {
-              if (key !== 'geometry') {
-                selectables.push({ value: key, label: key });
-              }
-              return selectables;
-            }, [])
-          )
+          rxjsmap((v) => getLayerPropertyInfo(v)),
         );
 
         builder
@@ -161,7 +154,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             editor: GeomapStyleRulesEditor,
             settings: {
               features: features,
-              properties: props,
+              layerInfo: layerInfo,
             },
             defaultValue: [],
           })

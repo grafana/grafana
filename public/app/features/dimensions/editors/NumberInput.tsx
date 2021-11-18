@@ -66,7 +66,7 @@ export class NumberInput extends PureComponent<Props, State> {
         max={this.props.max}
         step={this.props.step}
         autoFocus={this.props.autoFocus}
-        value={text}
+        value={text ?? ''}
         onChange={this.onChange}
         onBlur={this.onBlur}
         onKeyPress={this.onKeyPress}
