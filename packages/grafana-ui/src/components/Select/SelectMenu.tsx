@@ -8,7 +8,6 @@ import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 
 interface SelectMenuProps {
-  children: any;
   maxHeight: number;
   innerRef: RefCallback<HTMLDivElement>;
   innerProps: {};
