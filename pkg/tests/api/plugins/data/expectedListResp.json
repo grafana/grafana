@@ -202,6 +202,42 @@
     "signatureOrg": ""
   },
   {
+    "name": "Candlestick",
+    "type": "panel",
+    "id": "candlestick",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/candlestick/img/candlestick.svg",
+        "large": "public/app/plugins/panel/candlestick/img/candlestick.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/candlestick/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
     "name": "CloudWatch",
     "type": "datasource",
     "id": "cloudwatch",

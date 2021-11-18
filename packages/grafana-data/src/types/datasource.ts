@@ -128,6 +128,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   sort?: number;
   streaming?: boolean;
   unlicensed?: boolean;
+  backend?: boolean;
   isBackend?: boolean;
 }
 
@@ -236,6 +237,15 @@ abstract class DataSourceApi<
    * public/app/features/datasources/state/actions.ts
    */
   abstract testDatasource(): Promise<any>;
+
+  /**
+   * Override to skip executing a query
+   *
+   * @returns false if the query should be skipped
+   *
+   * @virtual
+   */
+  filterQuery?(query: TQuery): boolean;
 
   /**
    *  Get hints for query improvements
@@ -582,6 +592,9 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
    */
   basicAuth?: string;
   withCredentials?: boolean;
+
+  /** When the name+uid are based on template variables, maintain access to the real values */
+  rawRef?: DataSourceRef;
 }
 
 /**

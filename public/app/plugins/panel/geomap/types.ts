@@ -1,6 +1,7 @@
 import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
 import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
+import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
 
 export interface ControlsOptions {
@@ -45,10 +46,8 @@ export interface GeomapPanelOptions {
   layers: MapLayerOptions[];
 }
 export interface FeatureStyleConfig {
-  fillColor: string; //eventually be ColorDimensionConfig
-  opacity?: number;
-  strokeWidth?: number;
-  rule?: FeatureRuleConfig;
+  style?: StyleConfig;
+  check?: FeatureRuleConfig;
 }
 export interface FeatureRuleConfig {
   property: string;
@@ -71,7 +70,6 @@ export interface GazetteerPathEditorConfigSettings {
 // Runtime model
 //-------------------
 export interface MapLayerState<TConfig = any> {
-  UID: string; // value changes with each initialization
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
   layer: BaseLayer; // the openlayers instance

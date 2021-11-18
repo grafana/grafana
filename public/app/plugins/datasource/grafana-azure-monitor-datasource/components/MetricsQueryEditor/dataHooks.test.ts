@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react-hooks';
 
 import {
   DataHook,
+  updateSubscriptions,
   useAsyncState,
   useMetricNames,
   useResourceGroups,
@@ -340,8 +341,82 @@ describe('AzureMonitor: metrics dataHooks', () => {
 
       expect(onChange).toHaveBeenCalledWith({
         ...query,
-        azureMonitor: scenario.expectedClearedQueryPartial,
+        azureMonitor: {
+          ...scenario.expectedClearedQueryPartial,
+          dimensionFilters: [],
+          timeGrain: '',
+        },
       });
+    });
+  });
+});
+
+describe('AzureMonitor: updateSubscriptions', () => {
+  const bareQuery = {
+    refId: 'A',
+    queryType: AzureQueryType.AzureMonitor,
+  };
+
+  [
+    {
+      description: 'should not update with no subscriptions',
+      query: bareQuery,
+      subscriptionOptions: [],
+    },
+    {
+      description: 'should not update with the subscription as an option',
+      query: { ...bareQuery, subscription: 'foo' },
+      subscriptionOptions: [{ label: 'foo', value: 'foo' }],
+    },
+    {
+      description: 'should update with the first subscription',
+      query: { ...bareQuery },
+      subscriptionOptions: [{ label: 'foo', value: 'foo' }],
+      onChangeArgs: {
+        ...bareQuery,
+        subscription: 'foo',
+        azureMonitor: {
+          dimensionFilters: [],
+          timeGrain: '',
+        },
+      },
+    },
+    {
+      description: 'should update with the default subscription if the current subsription does not exists',
+      query: { ...bareQuery, subscription: 'bar' },
+      subscriptionOptions: [{ label: 'foo', value: 'foo' }],
+      onChangeArgs: {
+        ...bareQuery,
+        subscription: 'foo',
+        azureMonitor: {
+          dimensionFilters: [],
+          timeGrain: '',
+        },
+      },
+    },
+    {
+      description: 'should clean up if neither the default sub nor the current sub exists',
+      query: { ...bareQuery, subscription: 'bar' },
+      subscriptionOptions: [{ label: 'foo', value: 'foo' }],
+      defaultSubscription: 'foobar',
+      onChangeArgs: {
+        ...bareQuery,
+        subscription: '',
+        azureMonitor: {
+          dimensionFilters: [],
+          timeGrain: '',
+        },
+      },
+    },
+  ].forEach((test) => {
+    it(test.description, () => {
+      const onChange = jest.fn();
+      updateSubscriptions(test.query, test.subscriptionOptions, onChange, test.defaultSubscription);
+      if (test.onChangeArgs) {
+        expect(onChange).toHaveBeenCalledWith(test.onChangeArgs);
+      } else {
+        expect(onChange).not.toHaveBeenCalled();
+      }
     });
   });
 });

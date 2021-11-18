@@ -43,7 +43,11 @@ export const Pages = {
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
     DashNav: {
+      /**
+       * @deprecated use navV2 from Grafana 8.3 instead
+       */
       nav: 'Dashboard navigation',
+      navV2: 'data-testid Dashboard navigation',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -61,12 +65,19 @@ export const Pages = {
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
+        /**
+         * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
+         */
         timezone: 'Time zone picker select container',
         title: 'Dashboard settings page title',
       },
       Annotations: {
         List: {
+          /**
+           * @deprecated use addAnnotationCTAV2 from Grafana 8.3 instead
+           */
           addAnnotationCTA: Components.CallToActionCard.button('Add annotation query'),
+          addAnnotationCTAV2: Components.CallToActionCard.buttonV2('Add annotation query'),
         },
         Settings: {
           name: 'Annotations settings name input',
@@ -74,7 +85,11 @@ export const Pages = {
       },
       Variables: {
         List: {
+          /**
+           * @deprecated use addVariableCTAV2 from Grafana 8.3 instead
+           */
           addVariableCTA: Components.CallToActionCard.button('Add variable'),
+          addVariableCTAV2: Components.CallToActionCard.buttonV2('Add variable'),
           newButton: 'Variable editor New variable button',
           table: 'Variable editor Table',
           tableRowNameFields: (variableName: string) => `Variable editor Table Name field ${variableName}`,
@@ -124,6 +139,9 @@ export const Pages = {
   },
   Dashboards: {
     url: '/dashboards',
+    /**
+     * @deprecated use components.Search.dashboardItem from Grafana 8.3 instead
+     */
     dashboards: (title: string) => `Dashboard search item ${title}`,
   },
   SaveDashboardAsModal: {

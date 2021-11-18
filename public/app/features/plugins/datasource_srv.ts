@@ -101,6 +101,7 @@ export class DatasourceSrv implements DataSourceService {
         isDefault: false,
         name: nameOrUid,
         uid: nameOrUid,
+        rawRef: { type: dsSettings.type, uid: dsSettings.uid },
       };
     }
 
@@ -201,9 +202,6 @@ export class DatasourceSrv implements DataSourceService {
         return false;
       }
       if (filters.metrics && !x.meta.metrics) {
-        return false;
-      }
-      if (filters.alerting && !x.meta.alerting) {
         return false;
       }
       if (filters.tracing && !x.meta.tracing) {
