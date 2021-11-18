@@ -103,6 +103,13 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 
 		ss.oAuthProvider[name] = info
 
+		var redirectUrl string
+		if sec.HasKey("redirect_url") {
+			redirectUrl = sec.Key("redirect_url").String()
+		} else {
+			redirectUrl = strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name
+		}
+
 		config := oauth2.Config{
 			ClientID:     info.ClientId,
 			ClientSecret: info.ClientSecret,
@@ -111,7 +118,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 				TokenURL:  info.TokenUrl,
 				AuthStyle: oauth2.AuthStyleAutoDetect,
 			},
-			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
+			RedirectURL: redirectUrl,
 			Scopes:      info.Scopes,
 		}
 
