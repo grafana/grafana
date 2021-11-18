@@ -71,7 +71,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 | Threema                                       | `threema`                 | yes, external only | no                       |
 | VictorOps                                     | `victorops`               | yes, external only | yes                      |
 | [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                      |
-| [WeCom](#wecom)                               | `wecom`                   | yes                | no                       |
+| [WeCom](#wecom)                               | `wecom`                   | yes, external only | no                       |
 
 ### Email
 
@@ -270,9 +270,9 @@ To set up WeCom, you must create a WeCom robot webhook. In WeCom PC Client:
 2. Click "Add Group Robot", select "New Robot" and give your robot a name. Click "Add Robot"
 3. There should be a Webhook URL in the panel. Click "Copy URL" and paste it in Grafana WeCom setting page and click "finish"
 
-| Setting                      | Description                                                               |
-| ---------------------------- | ------------------------------------------------------------------------- |
-| Url                          | WeCom webhook URL.                                                        |
+| Setting | Description        |
+| ------- | ------------------ |
+| Url     | WeCom webhook URL. |
 
 ## Enable images in notifications {#external-image-store}
 
