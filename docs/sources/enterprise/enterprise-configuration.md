@@ -331,6 +331,12 @@ A list of headers that are stripped from the outgoing data source and alerting r
 
 A list of cookies that are stripped from the outgoing data source and alerting requests.
 
+## [security.encryption]
+
+### algorithm
+
+Encryption algorithm used to encrypt secrets stored in the database and cookies. Possible values are `aes-cfb` (default) and `aes-gcm`. AES-CFB stands for _Advanced Encryption Standard_ in _cipher feedback_ mode, and AES-GCM stands for _Advanced Encryption Standard_ in _Galois/Counter Mode_.
+
 ## [caching]
 
 > **Note:** Available in Grafana Enterprise v7.5 and later versions.
