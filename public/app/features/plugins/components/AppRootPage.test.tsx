@@ -10,7 +10,7 @@ import { locationService, setEchoSrv } from '@grafana/runtime';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 
-jest.mock('./PluginSettingsCache', () => ({
+jest.mock('../pluginSettings', () => ({
   getPluginSettings: jest.fn(),
 }));
 jest.mock('../plugin_loader', () => ({
