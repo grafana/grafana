@@ -498,10 +498,7 @@ export const RoleMenuGroupOption = React.forwardRef<HTMLDivElement, RoleMenuGrou
 RoleMenuGroupOption.displayName = 'RoleMenuGroupOption';
 
 const getRoleGroup = (role: Role) => {
-  if (role.group) {
-    return role.group;
-  }
-  return 'Other';
+  return role.group ?? 'Other';
 };
 
 const capitalize = (s: string): string => {
