@@ -55,7 +55,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/cuetsy v0.0.0-20210928021233-5ddfb47f9a7d
 	github.com/grafana/grafana-aws-sdk v0.7.0
-	github.com/grafana/grafana-plugin-sdk-go v0.116.0
+	github.com/grafana/grafana-plugin-sdk-go v0.117.0
 	github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.1
@@ -268,5 +268,3 @@ replace gopkg.in/macaron.v1 => ./pkg/macaron
 replace github.com/go-macaron/binding => ./pkg/macaron/binding
 
 replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
-
-replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.116.1-0.20211118100855-44332cc5651c
