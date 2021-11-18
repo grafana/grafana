@@ -39,8 +39,8 @@ const getFolders = (mediaType: 'icon' | 'image') => {
   }
 };
 
-const folderIfExists = (folders: Array<{ label: string; value: string }>, path: string) => {
-  return folders.filter((folder) => path.indexOf(folder.value) > -1)[0] ?? folders[0];
+const getFolderIfExists = (folders: Array<SelectableValue<string>>, path: string) => {
+  return folders.find((folder) => path.startsWith(folder.value!)) ?? folders[0];
 };
 
 export const ResourcePicker = (props: Props) => {
@@ -50,8 +50,9 @@ export const ResourcePicker = (props: Props) => {
     value: v,
   }));
 
-  const folderOfCurrentValue = value || folderName ? folderIfExists(folders, value ?? folderName) : folders[0];
-  const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>(folderOfCurrentValue);
+  const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>(
+    getFolderIfExists(folders, value?.length ? value : folderName)
+  );
   const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
   const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
   // select between existing icon folder, url, or upload

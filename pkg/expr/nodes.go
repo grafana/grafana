@@ -28,6 +28,10 @@ func (e QueryError) Error() string {
 	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
 }
 
+func (e QueryError) Unwrap() error {
+	return e.Err
+}
+
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64

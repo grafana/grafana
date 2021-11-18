@@ -1,4 +1,4 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SuggestionName } from 'app/types/suggestions';
 import { prepareCandlestickFields } from './fields';
@@ -48,6 +48,7 @@ export class CandlestickSuggestionsSupplier {
         defaults: {},
         overrides: [],
       },
+      score: info.autoOpenClose ? VisualizationSuggestionScore.Good : VisualizationSuggestionScore.Best,
     });
   }
 }

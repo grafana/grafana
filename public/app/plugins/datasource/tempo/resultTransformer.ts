@@ -291,7 +291,8 @@ export function transformFromOTLP(
       }
     }
   } catch (error) {
-    return { error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] };
+    console.error(error);
+    return { error: { message: 'JSON is not valid OpenTelemetry format: ' + error }, data: [] };
   }
 
   let data = [frame];

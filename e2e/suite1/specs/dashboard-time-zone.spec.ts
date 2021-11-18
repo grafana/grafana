@@ -50,7 +50,7 @@ e2e.scenario({
 
     e2e.components.PageToolbar.item('Dashboard settings').click();
 
-    e2e.components.TimeZonePicker.container()
+    e2e.components.TimeZonePicker.containerV2()
       .should('be.visible')
       .within(() => {
         e2e.components.Select.singleValue().should('be.visible').should('have.text', 'Coordinated Universal Time');

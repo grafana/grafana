@@ -1,5 +1,7 @@
 load(
     'scripts/drone/steps/lib.star',
+    'download_grabpl_step',
+    'initialize_step',
     'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
@@ -139,18 +141,20 @@ def main_pipelines(edition):
 
     pipelines = [
         pipeline(
-            name='build-main', edition=edition, trigger=trigger, services=services, steps=steps,
-            ver_mode=ver_mode,
+            name='build-main', edition=edition, trigger=trigger, services=services,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + steps,
         ),
         pipeline(
-            name='windows-main', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
-            depends_on=['build-main'], ver_mode=ver_mode,
+            name='windows-main', edition=edition, trigger=trigger,
+            steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
+            depends_on=['build-main'], platform='windows',
         ),
     ]
     if edition != 'enterprise':
         pipelines.append(pipeline(
-            name='publish-main', edition=edition, trigger=trigger, steps=publish_steps,
-            depends_on=['build-main', 'windows-main',], install_deps=False, ver_mode=ver_mode,
+            name='publish-main', edition=edition, trigger=trigger,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, install_deps=False) + publish_steps,
+            depends_on=['build-main', 'windows-main',],
         ))
 
         pipelines.append(notify_pipeline(
@@ -164,17 +168,18 @@ def main_pipelines(edition):
         }
         steps, windows_steps, publish_steps = get_steps(edition=edition, is_downstream=True)
         pipelines.append(pipeline(
-            name='build-main-downstream', edition=edition, trigger=trigger, services=services, steps=steps,
-            is_downstream=True, ver_mode=ver_mode,
+            name='build-main-downstream', edition=edition, trigger=trigger, services=services,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, is_downstream=True) + steps,
         ))
         pipelines.append(pipeline(
-            name='windows-main-downstream', edition=edition, trigger=trigger, steps=windows_steps,
-            platform='windows', depends_on=['build-main-downstream'], is_downstream=True, ver_mode=ver_mode,
+            name='windows-main-downstream', edition=edition, trigger=trigger,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='windows', ver_mode=ver_mode, is_downstream=True) + windows_steps,
+            platform='windows', depends_on=['build-main-downstream'],
         ))
         pipelines.append(pipeline(
-            name='publish-main-downstream', edition=edition, trigger=trigger, steps=publish_steps,
-            depends_on=['build-main-downstream', 'windows-main-downstream'], is_downstream=True, install_deps=False,
-            ver_mode=ver_mode,
+            name='publish-main-downstream', edition=edition, trigger=trigger,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, is_downstream=True, install_deps=False) + publish_steps,
+            depends_on=['build-main-downstream', 'windows-main-downstream'],
         ))
 
         pipelines.append(notify_pipeline(

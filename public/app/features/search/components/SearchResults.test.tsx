@@ -1,7 +1,9 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { SearchResults, Props } from './SearchResults';
-import { searchResults, generalFolder } from '../testData';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { Props, SearchResults } from './SearchResults';
+import { generalFolder, searchResults } from '../testData';
 import { SearchLayout } from '../types';
 
 beforeEach(() => {
@@ -25,14 +27,15 @@ const setup = (propOverrides?: Partial<Props>) => {
 describe('SearchResults', () => {
   it('should render result items', () => {
     setup();
-    expect(screen.getAllByLabelText('Search section')).toHaveLength(2);
+    expect(screen.getAllByTestId(selectors.components.Search.sectionV2)).toHaveLength(2);
   });
 
   it('should render section items for expanded section', () => {
     setup();
-    expect(screen.getAllByLabelText(/collapse folder/i)).toHaveLength(1);
-    expect(screen.getAllByLabelText('Search items')).toHaveLength(1);
-    expect(screen.getAllByLabelText(/dashboard search item/i)).toHaveLength(2);
+    expect(screen.getAllByTestId(selectors.components.Search.collapseFolder('0'))).toHaveLength(1);
+    expect(screen.getAllByTestId(selectors.components.Search.itemsV2)).toHaveLength(1);
+    expect(screen.getAllByTestId(selectors.components.Search.dashboardItem('Test 1'))).toHaveLength(1);
+    expect(screen.getAllByTestId(selectors.components.Search.dashboardItem('Test 2'))).toHaveLength(1);
   });
 
   it('should not render checkboxes for non-editable results', () => {
@@ -49,7 +52,7 @@ describe('SearchResults', () => {
     const mockOnToggleSection = jest.fn();
     setup({ onToggleSection: mockOnToggleSection });
 
-    fireEvent.click(screen.getByLabelText('Collapse folder 0'));
+    fireEvent.click(screen.getByTestId(selectors.components.Search.collapseFolder('0')));
     expect(mockOnToggleSection).toHaveBeenCalledTimes(1);
     expect(mockOnToggleSection).toHaveBeenCalledWith(generalFolder);
   });

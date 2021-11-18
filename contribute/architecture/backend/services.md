@@ -121,7 +121,7 @@ You can see an example implementation above of the IsDisabled method and custom 
 
 ## Run Wire / generate code
 
-When running `make run` it will call `make gen-go` on the first run. `gen-go` in turn will call the wire binary and generate the code in [wire_gen.go](/pkg/server/wire_gen.go). The wire binary is installed using [bingo](https://github.com/bwplotka/bingo) which will make sure to download and install all the tools needed, including the Wire binary at using a specific version.
+When running `make run` it will call `make gen-go` on the first run. `gen-go` in turn will call the wire binary and generate the code in [wire_gen.go](/pkg/server/wire_gen.go) and [wire_gen.go](/pkg/cmd/grafana-cli/runner/wire_gen.go). The wire binary is installed using [bingo](https://github.com/bwplotka/bingo) which will make sure to download and install all the tools needed, including the Wire binary at using a specific version.
 
 ## OSS vs Enterprise
 
