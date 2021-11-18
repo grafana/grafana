@@ -28,7 +28,7 @@ export function getDashboardSaveModel(state: StoreState, options?: CloneOptions)
     copy[property] = cloneDeep((dashboard as any)[property]);
   }
 
-  // Simple test fo where transition from some state in DashboardModel and redux and glue it together here
+  // Simple test for a transition to state in redux and glue it together here
   copy.title = state.dashboard.attributes.title;
   copy.description = state.dashboard.attributes.description;
 
