@@ -459,7 +459,7 @@ describe('Plugin details page', () => {
       expect(rendered.getByText(message)).toBeInTheDocument();
     });
 
-    it('should display post installation step for installed data source plugins', async () => {
+    it('should display a "Create" button as a post installation step for installed data source plugins', async () => {
       const name = 'Akumuli';
       const { queryByText } = renderPluginDetails({
         name,
@@ -471,7 +471,7 @@ describe('Plugin details page', () => {
       expect(queryByText(`Create a ${name} data source`)).toBeInTheDocument();
     });
 
-    it('should not display post installation step for disabled data source plugins', async () => {
+    it('should not display a "Create" button as a post installation step for disabled data source plugins', async () => {
       const name = 'Akumuli';
       const { queryByText } = renderPluginDetails({
         name,
