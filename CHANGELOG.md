@@ -1,3 +1,21 @@
+<!-- 8.2.5 START -->
+
+# 8.2.5 (2021-11-18)
+
+### Bug fixes
+
+- **Alerting:** Fix a bug where the metric in the evaluation string was not correctly populated. [#41731](https://github.com/grafana/grafana/pull/41731), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+- **CloudMonitoring:** Ignore min and max aggregation in MQL queries. [#41302](https://github.com/grafana/grafana/pull/41302), [@sunker](https://github.com/sunker)
+- **Dashboards:** 'Copy' is no longer added to new dashboard titles. [#41344](https://github.com/grafana/grafana/pull/41344), [@joshhunt](https://github.com/joshhunt)
+- **DataProxy:** Fix overriding response body when response is a WebSocket upgrade. [#41364](https://github.com/grafana/grafana/pull/41364), [@marefr](https://github.com/marefr)
+- **Elasticsearch:** Use field configured in query editor as field for date_histogram aggregations. [#41258](https://github.com/grafana/grafana/pull/41258), [@Elfo404](https://github.com/Elfo404)
+- **Explore:** Fix running queries without a datasource property set. [#40805](https://github.com/grafana/grafana/pull/40805), [@Elfo404](https://github.com/Elfo404)
+- **InfluxDB:** Fix numeric aliases in queries. [#41531](https://github.com/grafana/grafana/pull/41531), [@gabor](https://github.com/gabor)
+- **Plugins:** Ensure consistent plugin settings list response. [#41346](https://github.com/grafana/grafana/pull/41346), [@wbrowne](https://github.com/wbrowne)
+- **Tempo:** Fix validation of float durations. [#41400](https://github.com/grafana/grafana/pull/41400), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Tracing:** Correct tags for each span are shown. [#41473](https://github.com/grafana/grafana/pull/41473), [@ivanahuckova](https://github.com/ivanahuckova)
+
+<!-- 8.2.5 END -->
 <!-- 8.2.4 START -->
 
 # 8.2.4 (2021-11-15)
