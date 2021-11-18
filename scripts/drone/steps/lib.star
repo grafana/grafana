@@ -1,11 +1,12 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.5.5'
-build_image = 'grafana/build-container:1.4.4'
+grabpl_version = '2.6.0'
+build_image = 'grafana/build-container:1.4.5'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.14.2'
+curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
@@ -33,15 +34,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             },
         ]
 
-    download_grabpl_cmds = [
-        'mkdir -p bin',
-        'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
-            grabpl_version
-        ),
-        'chmod +x bin/grabpl',
-    ]
     common_cmds = [
-        './bin/grabpl verify-drone',
         # Generate Go code, will install Wire
         # TODO: Install Wire in Docker image instead
         'make gen-go',
@@ -94,7 +87,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'environment': {
                     'GITHUB_TOKEN': from_secret(github_token),
                 },
-                'commands': download_grabpl_cmds + [
+                'commands': [
                     'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
                     'cd grafana-enterprise',
                     'git checkout {}'.format(committish),
@@ -104,7 +97,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'name': 'initialize',
                 'image': build_image,
                 'depends_on': [
-                    'clone',
+                    'grabpl',
                 ],
                 'commands': [
                     'mv bin/grabpl /tmp/',
@@ -125,11 +118,36 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         {
             'name': 'initialize',
             'image': build_image,
-            'commands': download_grabpl_cmds + common_cmds,
+            'commands': common_cmds,
         },
     ]
 
     return steps
+
+def download_grabpl_step():
+    return {
+        'name': 'grabpl',
+        'image': curl_image,
+        'commands': [
+            'mkdir -p bin',
+            'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+                grabpl_version
+            ),
+            'chmod +x bin/grabpl',
+        ]
+    }
+
+def lint_drone_step():
+    return {
+        'name': 'lint-drone',
+        'image': curl_image,
+        'commands': [
+            './bin/grabpl verify-drone',
+        ],
+        'depends_on': [
+            'grabpl',
+        ],
+    }
 
 def enterprise_downstream_step(edition):
     if edition in ('enterprise', 'enterprise2'):
@@ -294,7 +312,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         'name': 'build-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'test-backend' + enterprise2_suffix(edition),
+            'initialize',
         ],
         'environment': env,
         'commands': cmds,
@@ -327,7 +345,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'name': 'build-frontend',
         'image': build_image,
         'depends_on': [
-            'test-frontend',
+            'initialize',
         ],
         'commands': cmds,
     }
@@ -357,7 +375,7 @@ def build_plugins_step(edition, sign=False):
         'name': 'build-plugins',
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'initialize',
         ],
         'environment': env,
         'commands': [
@@ -371,7 +389,7 @@ def test_backend_step(edition):
         'name': 'test-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'initialize',
         ],
         'commands': [
             './bin/grabpl test-backend --edition {}'.format(edition),
@@ -383,7 +401,7 @@ def test_backend_integration_step(edition):
         'name': 'test-backend-integration' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'initialize',
         ],
         'commands': [
             './bin/grabpl integration-tests --edition {}'.format(edition),
@@ -426,18 +444,20 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
     commands = [
         'yarn wait-on http://$HOST:$PORT',
     ]
+    failure = 'ignore'
     if ver_mode == 'pr':
         commands.extend([
-            'yarn run test:accessibility-pr',
+            'pa11y-ci --config .pa11yci-pr.conf.js',
         ])
+        failure = 'always'
     else:
         commands.extend([
-            'yarn run test:accessibility --json > pa11y-ci-results.json',
+            'pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json',
         ])
 
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'buildkite/puppeteer',
+        'image': 'hugohaggmark/docker-puppeteer',
         'depends_on': [
           'end-to-end-tests-server' + enterprise2_suffix(edition),
         ],
@@ -446,7 +466,7 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
             'PORT': port,
         },
-        'failure': 'ignore',
+        'failure': failure,
         'commands': commands,
     }
 
@@ -668,7 +688,7 @@ def postgres_integration_tests_step():
         'name': 'postgres-integration-tests',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'grabpl',
         ],
         'environment': {
             'PGPASSWORD': 'grafanatest',
@@ -692,7 +712,7 @@ def mysql_integration_tests_step():
         'name': 'mysql-integration-tests',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'grabpl',
         ],
         'environment': {
             'GRAFANA_TEST_DB': 'mysql',
@@ -714,8 +734,7 @@ def redis_integration_tests_step():
         'name': 'redis-integration-tests',
         'image': build_image,
         'depends_on': [
-            'test-backend',
-            'test-frontend',
+            'grabpl',
         ],
         'environment': {
             'REDIS_URL': 'redis://redis:6379/0',
@@ -731,8 +750,7 @@ def memcached_integration_tests_step():
         'name': 'memcached-integration-tests',
         'image': build_image,
         'depends_on': [
-            'test-backend',
-            'test-frontend',
+            'grabpl',
         ],
         'environment': {
             'MEMCACHED_HOSTS': 'memcached:11211',
@@ -919,7 +937,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         else:
             committish = '$$env:DRONE_COMMIT'
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
-        download_grabpl_cmds = [
+        download_grabpl_step_cmds = [
             '$$ProgressPreference = "SilentlyContinue"',
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
         ]
@@ -937,7 +955,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'environment': {
                 'GITHUB_TOKEN': from_secret(github_token),
             },
-            'commands': download_grabpl_cmds + clone_cmds,
+            'commands': download_grabpl_step_cmds + clone_cmds,
         })
         steps[1]['depends_on'] = [
             'clone',

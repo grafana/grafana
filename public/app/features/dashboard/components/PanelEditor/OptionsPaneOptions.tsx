@@ -20,16 +20,17 @@ export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
 
-  const [panelFrameOptions, vizOptions, justOverrides, libraryPanelOptions] = useMemo(
-    () => [
-      getPanelFrameCategory(props),
-      getVizualizationOptions(props),
-      getFieldOverrideCategories(props),
-      getLibraryPanelOptionsCategory(props),
-    ],
+  const [panelFrameOptions, vizOptions, libraryPanelOptions] = useMemo(
+    () => [getPanelFrameCategory(props), getVizualizationOptions(props), getLibraryPanelOptionsCategory(props)],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data, props.instanceState]
+    [panel.configRev, props.data, props.instanceState, searchQuery]
+  );
+
+  const justOverrides = useMemo(
+    () => getFieldOverrideCategories(props, searchQuery),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [panel.configRev, props.data, props.instanceState, searchQuery]
   );
 
   const mainBoxElements: React.ReactNode[] = [];

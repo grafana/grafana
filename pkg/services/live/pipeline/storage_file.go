@@ -9,15 +9,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // FileStorage can load channel rules from a file on disk.
 type FileStorage struct {
-	DataPath          string
-	EncryptionService encryption.Service
+	DataPath       string
+	SecretsService secrets.Service
 }
 
 func (f *FileStorage) ListWriteConfigs(_ context.Context, orgID int64) ([]WriteConfig, error) {
@@ -56,7 +55,7 @@ func (f *FileStorage) CreateWriteConfig(ctx context.Context, orgID int64, cmd Wr
 		cmd.UID = util.GenerateShortUID()
 	}
 
-	secureSettings, err := f.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
+	secureSettings, err := f.SecretsService.EncryptJsonData(ctx, cmd.SecureSettings, secrets.WithoutScope())
 	if err != nil {
 		return WriteConfig{}, fmt.Errorf("error encrypting data: %w", err)
 	}
@@ -88,7 +87,7 @@ func (f *FileStorage) UpdateWriteConfig(ctx context.Context, orgID int64, cmd Wr
 		return WriteConfig{}, fmt.Errorf("can't read write configs: %w", err)
 	}
 
-	secureSettings, err := f.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
+	secureSettings, err := f.SecretsService.EncryptJsonData(ctx, cmd.SecureSettings, secrets.WithoutScope())
 	if err != nil {
 		return WriteConfig{}, fmt.Errorf("error encrypting data: %w", err)
 	}

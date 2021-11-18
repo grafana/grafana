@@ -116,7 +116,7 @@ describe('AnnotationsSettings', () => {
     expect(screen.queryByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('row', { name: /annotations & alerts \(built\-in\) grafana/i })).toBeInTheDocument();
     expect(
-      screen.queryByLabelText(selectors.components.CallToActionCard.button('Add annotation query'))
+      screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
     ).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /annotations documentation/i })).toBeInTheDocument();
 
@@ -140,7 +140,7 @@ describe('AnnotationsSettings', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('row', { name: /my annotation \(built\-in\) grafana/i })).toBeInTheDocument();
     expect(
-      screen.queryByLabelText(selectors.components.CallToActionCard.button('Add annotation query'))
+      screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /new query/i })).not.toBeInTheDocument();
 
@@ -149,7 +149,7 @@ describe('AnnotationsSettings', () => {
 
     expect(screen.queryAllByRole('row').length).toBe(0);
     expect(
-      screen.queryByLabelText(selectors.components.CallToActionCard.button('Add annotation query'))
+      screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
     ).toBeInTheDocument();
   });
 
@@ -210,7 +210,7 @@ describe('AnnotationsSettings', () => {
   test('it renders a form for adding/editing annotations', () => {
     render(<AnnotationsSettings dashboard={dashboard} />);
 
-    userEvent.click(screen.getByLabelText(selectors.components.CallToActionCard.button('Add annotation query')));
+    userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query')));
 
     const heading = screen.getByRole('heading', {
       name: /annotations edit/i,
@@ -237,7 +237,7 @@ describe('AnnotationsSettings', () => {
     expect(screen.queryByRole('row', { name: /my prometheus annotation prometheus/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /new query/i })).toBeInTheDocument();
     expect(
-      screen.queryByLabelText(selectors.components.CallToActionCard.button('Add annotation query'))
+      screen.queryByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
     ).not.toBeInTheDocument();
 
     userEvent.click(screen.getByRole('button', { name: /new query/i }));
