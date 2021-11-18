@@ -688,7 +688,7 @@ def postgres_integration_tests_step():
         'name': 'postgres-integration-tests',
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'initialize',
         ],
         'environment': {
             'PGPASSWORD': 'grafanatest',
@@ -712,7 +712,7 @@ def mysql_integration_tests_step():
         'name': 'mysql-integration-tests',
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'initialize',
         ],
         'environment': {
             'GRAFANA_TEST_DB': 'mysql',
@@ -734,7 +734,7 @@ def redis_integration_tests_step():
         'name': 'redis-integration-tests',
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'initialize',
         ],
         'environment': {
             'REDIS_URL': 'redis://redis:6379/0',
@@ -750,7 +750,7 @@ def memcached_integration_tests_step():
         'name': 'memcached-integration-tests',
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'initialize',
         ],
         'environment': {
             'MEMCACHED_HOSTS': 'memcached:11211',
