@@ -17,7 +17,6 @@ import (
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 )
@@ -588,18 +587,11 @@ func (c *GettableApiAlertingConfig) validate() error {
 
 // Config is the top-level configuration for Alertmanager's config files.
 type Config struct {
-	Global            *config.GlobalConfig       `yaml:"global,omitempty" json:"global,omitempty"`
-	Route             *Route                     `yaml:"route,omitempty" json:"route,omitempty"`
-	InhibitRules      []*config.InhibitRule      `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
-	MuteTimeIntervals []InternalMuteTimeInterval `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
-	Templates         []string                   `yaml:"templates" json:"templates"`
-}
-
-// InternalMuteTimeInterval is a workaround till https://github.com/prometheus/alertmanager/pull/2765
-// gets merged and we can use MuteTimeInterval instead.
-type InternalMuteTimeInterval struct {
-	Name          string                      `yaml:"name" json:"name"`
-	TimeIntervals []timeinterval.TimeInterval `yaml:"time_intervals" json:"time_intervals"`
+	Global            *config.GlobalConfig      `yaml:"global,omitempty" json:"global,omitempty"`
+	Route             *Route                    `yaml:"route,omitempty" json:"route,omitempty"`
+	InhibitRules      []*config.InhibitRule     `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
+	MuteTimeIntervals []config.MuteTimeInterval `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
+	Templates         []string                  `yaml:"templates" json:"templates"`
 }
 
 // A Route is a node that contains definitions of how to handle alerts. This is modified
