@@ -190,11 +190,18 @@ export class StreamingDataFrame implements DataFrame {
   needsResizing = ({ maxLength, maxDelta }: StreamingFrameOptions) => {
     const needsMoreLength = maxLength && this.options.maxLength < maxLength;
     const needsBiggerDelta = maxDelta && this.options.maxDelta < maxDelta;
-    return Boolean(needsMoreLength || needsBiggerDelta);
+    const needsToOverrideDefaultInfinityDelta = maxDelta && this.options.maxDelta === Infinity;
+    return Boolean(needsMoreLength || needsBiggerDelta || needsToOverrideDefaultInfinityDelta);
   };
 
   resize = ({ maxLength, maxDelta }: Partial<StreamingFrameOptions>) => {
-    this.options.maxDelta = maxDelta ? Math.max(maxDelta, this.options.maxDelta) : this.options.maxDelta;
+    if (maxDelta) {
+      if (this.options.maxDelta === Infinity) {
+        this.options.maxDelta = maxDelta;
+      } else {
+        this.options.maxDelta = Math.max(maxDelta, this.options.maxDelta);
+      }
+    }
     this.options.maxLength = Math.max(this.options.maxLength, maxLength ?? 0);
   };
 

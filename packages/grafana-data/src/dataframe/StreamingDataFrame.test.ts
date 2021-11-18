@@ -393,6 +393,33 @@ describe('Streaming JSON', () => {
         expect(frame.getOptions()).toEqual(expected);
       }
     );
+
+    it('should override infinity maxDelta', function () {
+      const frame = StreamingDataFrame.empty({
+        maxLength: 10,
+        maxDelta: Infinity,
+        action: StreamingFrameAction.Replace,
+      });
+      frame.resize({
+        maxLength: 9,
+        maxDelta: 4,
+      });
+      expect(frame.getOptions()).toEqual({
+        maxLength: 10,
+        maxDelta: 4,
+        action: StreamingFrameAction.Replace,
+      });
+    });
+  });
+
+  describe('options with defaults', function () {
+    it('should provide defaults', function () {
+      expect(StreamingDataFrame.optionsWithDefaults()).toEqual({
+        action: StreamingFrameAction.Append,
+        maxDelta: Infinity,
+        maxLength: 1000,
+      });
+    });
   });
 
   describe('when deserialized', function () {
