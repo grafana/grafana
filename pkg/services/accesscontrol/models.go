@@ -187,10 +187,10 @@ type ScopeParams struct {
 }
 
 type ResourcePermission struct {
-	ID          int64  `xorm:"id"`
-	ResourceID  string `xorm:"resource_id"`
+	ID          int64
+	ResourceID  string
 	RoleName    string
-	Action      string
+	Actions     []string
 	Scope       string
 	UserId      int64
 	UserLogin   string
@@ -205,6 +205,30 @@ type ResourcePermission struct {
 
 func (p *ResourcePermission) Managed() bool {
 	return strings.HasPrefix(p.RoleName, "managed:")
+}
+
+func (p *ResourcePermission) Match(targetActions []string) bool {
+	actions := p.Actions
+	if len(actions) != len(targetActions) {
+		return false
+	}
+
+	var contains = func(arr []string, s string) bool {
+		for _, item := range arr {
+			if item == s {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, a := range actions {
+		if !contains(targetActions, a) {
+			return false
+		}
+	}
+
+	return true
 }
 
 type SetResourcePermissionsCommand struct {

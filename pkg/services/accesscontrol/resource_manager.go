@@ -46,7 +46,7 @@ func (r *ResourceManager) GetPermissionsByIds(ctx context.Context, orgID int64, 
 	})
 }
 
-func (r *ResourceManager) SetUserPermissions(ctx context.Context, orgID int64, resourceID string, actions []string, userID int64) ([]ResourcePermission, error) {
+func (r *ResourceManager) SetUserPermissions(ctx context.Context, orgID int64, resourceID string, actions []string, userID int64) (*ResourcePermission, error) {
 	if !r.validateActions(actions) {
 		return nil, fmt.Errorf("invalid actions: %s", actions)
 	}
@@ -58,7 +58,7 @@ func (r *ResourceManager) SetUserPermissions(ctx context.Context, orgID int64, r
 	})
 }
 
-func (r *ResourceManager) SetTeamPermission(ctx context.Context, orgID int64, resourceID string, actions []string, teamID int64) ([]ResourcePermission, error) {
+func (r *ResourceManager) SetTeamPermission(ctx context.Context, orgID int64, resourceID string, actions []string, teamID int64) (*ResourcePermission, error) {
 	if !r.validateActions(actions) {
 		return nil, fmt.Errorf("invalid action: %s", actions)
 	}
@@ -70,7 +70,7 @@ func (r *ResourceManager) SetTeamPermission(ctx context.Context, orgID int64, re
 	})
 }
 
-func (r *ResourceManager) SetBuiltinRolePermissions(ctx context.Context, orgID int64, resourceID string, actions []string, builtinRole string) ([]ResourcePermission, error) {
+func (r *ResourceManager) SetBuiltinRolePermissions(ctx context.Context, orgID int64, resourceID string, actions []string, builtinRole string) (*ResourcePermission, error) {
 	if !r.validateActions(actions) {
 		return nil, fmt.Errorf("invalid action: %s", actions)
 	}
@@ -79,15 +79,6 @@ func (r *ResourceManager) SetBuiltinRolePermissions(ctx context.Context, orgID i
 		Actions:    actions,
 		Resource:   r.resource,
 		ResourceID: resourceID,
-	})
-}
-
-func (r *ResourceManager) RemovePermission(ctx context.Context, orgID int64, resourceID string, permissionID int64) error {
-	return r.store.RemoveResourcePermission(ctx, orgID, RemoveResourcePermissionCommand{
-		Actions:      r.actions,
-		Resource:     r.resource,
-		ResourceID:   resourceID,
-		PermissionID: permissionID,
 	})
 }
 
