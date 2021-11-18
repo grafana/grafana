@@ -6,10 +6,10 @@ import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonMapper';
 import { StyleRuleEditor, StyleRuleEditorSettings } from './StyleRuleEditor';
 
 export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[], any, any>> = (props) => {
-  const { value, onChange, context } = props;
+  const { value, onChange, context, item } = props;
 
   const OPTIONS = getComparisonOperatorOptions();
-
+  const settings = item.settings;
   const onAddRule = useCallback(() => {
     onChange([...value, DEFAULT_STYLE_RULE]);
   }, [onChange, value]);
@@ -32,7 +32,7 @@ export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[]
     value &&
     value.map((style, idx: number) => {
       const itemSettings: StandardEditorsRegistryItem<any, StyleRuleEditorSettings> = {
-        settings: { options: OPTIONS },
+        settings: { ...settings, options: OPTIONS },
       } as any;
 
       return (

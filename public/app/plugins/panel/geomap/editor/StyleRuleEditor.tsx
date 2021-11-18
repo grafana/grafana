@@ -1,31 +1,60 @@
-import React, { ChangeEvent, FC, useCallback } from 'react';
+import React, { FC, useCallback, useMemo } from 'react';
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ComparisonOperation, FeatureStyleConfig } from '../types';
-import { Button, ColorPicker, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import { Button, ColorPicker, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
+import { Observable } from 'rxjs';
+import { useObservable } from 'react-use';
+import { FeatureLike } from 'ol/Feature';
 
 export interface StyleRuleEditorSettings {
   options: SelectableValue[];
+  features: Observable<FeatureLike[]>;
+  properties: Observable<SelectableValue[]>;
 }
 
 export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, any, StyleRuleEditorSettings>> = (
   props
 ) => {
   const { value, onChange, item } = props;
+
   const settings: StyleRuleEditorSettings = item.settings;
+  const { options, features, properties } = settings;
+
+  const propertyOptions = useObservable(properties);
+  const feats = useObservable(features);
+
+  const uniqueValues = useMemo(() => {
+    const uniqueValues: SelectableValue[] = [];
+    if (feats) {
+      if (value?.rule) {
+        const values = [];
+        for (let f = 0; f < feats.length; f++) {
+          if (value.rule) {
+            values.push(feats[f].get(value.rule.property));
+          }
+        }
+        const unique = [...new Set(values)].sort();
+        for (let v = 0; v < unique.length; v++) {
+          uniqueValues.push({ value: unique[v], label: `${unique[v]}` });
+        }
+      }
+    }
+    return uniqueValues;
+  }, [feats, value]);
 
   const styles = useStyles2(getStyles);
 
   const LABEL_WIDTH = 10;
 
-  const onChangeComparisonProperty = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
+  const onChangeProperty = useCallback(
+    (selection: SelectableValue) => {
       onChange({
         ...value,
         rule: {
           ...value.rule,
-          property: e.currentTarget.value,
+          property: selection.value,
           operation: value.rule?.operation ?? ComparisonOperation.EQ,
           value: value.rule?.value ?? '',
         },
@@ -49,13 +78,13 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
     [onChange, value]
   );
 
-  const onChangeComparisonValue = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
+  const onChangeValue = useCallback(
+    (selection: SelectableValue) => {
       onChange({
         ...value,
         rule: {
           ...value.rule,
-          value: e.currentTarget.value,
+          value: selection.value,
           operation: value.rule?.operation ?? ComparisonOperation.EQ,
           property: value.rule?.property ?? '',
         },
@@ -86,11 +115,12 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
     <div className={styles.rule}>
       <InlineFieldRow className={styles.row}>
         <InlineField label="Rule" labelWidth={LABEL_WIDTH} grow={true}>
-          <Input
-            type="text"
+          <Select
+            menuShouldPortal
             placeholder={'Feature property'}
             value={`${value?.rule?.property}`}
-            onChange={onChangeComparisonProperty}
+            options={propertyOptions}
+            onChange={onChangeProperty}
             aria-label={'Feature property'}
           />
         </InlineField>
@@ -98,17 +128,25 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
           <Select
             menuShouldPortal
             value={`${value?.rule?.operation}` ?? ComparisonOperation.EQ}
-            options={settings.options}
+            options={options}
             onChange={onChangeComparison}
             aria-label={'Comparison operator'}
           />
         </InlineField>
         <InlineField className={styles.inline} grow={true}>
-          <Input
+          {/* <Input
             type="text"
             placeholder={'value'}
             value={`${value?.rule?.value}`}
             onChange={onChangeComparisonValue}
+            aria-label={'Comparison value'}
+          /> */}
+          <Select
+            menuShouldPortal
+            placeholder={'value'}
+            value={`${value?.rule?.value}`}
+            options={uniqueValues}
+            onChange={onChangeValue}
             aria-label={'Comparison value'}
           />
         </InlineField>

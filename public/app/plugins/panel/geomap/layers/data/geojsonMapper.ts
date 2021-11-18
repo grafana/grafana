@@ -13,7 +13,8 @@ import { Stroke, Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
 import { circleMarker } from '../../style/markers';
-import { Observable, ReplaySubject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
+import { map as rxjsmap, first } from 'rxjs/operators';
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -55,7 +56,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       url: config.src,
       format: new GeoJSON(),
     });
-    
+
     const features = new ReplaySubject<FeatureLike[]>();
 
     const key = source.on('change', () => {
@@ -84,7 +85,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       style: (feature: FeatureLike) => {
         const type = feature.getGeometry()?.getType();
         if (type === 'Point') {
-          return circleMarker({color:DEFAULT_STYLE_RULE.fillColor});
+          return circleMarker({ color: DEFAULT_STYLE_RULE.fillColor });
         }
 
         if (feature && config?.styles?.length) {
@@ -103,19 +104,16 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       init: () => vectorLayer,
       update: (data: PanelData) => {
         console.log('todo... find values matching the ID and update');
-
-        // // Update each feature
-        // source.getFeatures().forEach((f) => {
-        //   console.log('Find: ', f.getId(), f.getProperties());
-        // });
       },
 
       // Geojson source url
       registerOptionsUI: (builder) => {
-        // const features = source.getFeatures();
-        // console.log('FEATURES', source.getState(), features.length, options);
-
-        const props = features.pipe(map((f) => f));
+        // get properties for first feature to use as ui options
+        const props = features.pipe(
+          first(),
+          rxjsmap((first) => first[0].getProperties()),
+          rxjsmap((props) => Object.keys(props).map((key) => ({ value: key, label: key })))
+        );
 
         builder
           .addSelect({
@@ -137,7 +135,8 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             name: 'Style Rules',
             editor: GeomapStyleRulesEditor,
             settings: {
-              features: props,
+              features: features,
+              properties: props,
             },
             defaultValue: [],
           });
