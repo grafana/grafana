@@ -47,7 +47,7 @@ type WeComNotifier struct {
 
 // Notify send an alert notification to WeCom.
 func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	w.log.Info("Sending WeCom")
+	w.log.Info("executing WeCom notification", "notification", w.Name)
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, w.tmpl, as, w.log, &tmplErr)

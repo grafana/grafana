@@ -650,14 +650,13 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx",
 					PropertyName: "url",
 					Required:     true,
-					Secure:       true
+					Secure:       true,
 				},
-				{ // New in 8.0.
+				{
 					Label:        "Message",
 					Description:  "Custom WeCom message. You can use template variables.",
 					Element:      alerting.ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
-
 					PropertyName: "message",
 				},
 			},

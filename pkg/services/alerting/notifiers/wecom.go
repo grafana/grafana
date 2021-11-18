@@ -1,21 +1,16 @@
 package notifiers
 
 import (
-	"crypto/md5"
-	"encoding/base64"
+	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
+	"net/url"
 )
-
-const weComMsgTypeNews = "news"
-const weComMsgTypeMarkdown = "markdown"
 
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
@@ -34,22 +29,7 @@ func init() {
 				Secure:       true,
 				Required:     true,
 			},
-			{
-				Label:        "Message type",
-				Element:      alerting.ElementTypeSelect,
-				PropertyName: "msgType",
-				SelectOptions: []alerting.SelectOption{
-					{
-						Value: weComMsgTypeMarkdown,
-						Label: "Markdown",
-					},
-					{
-						Value: weComMsgTypeNews,
-						Label: "News",
-					},
-				},
-			},
-    },
+    	},
 	})
 }
 
@@ -58,19 +38,15 @@ func NewWeComNotifier(model *models.AlertNotification, fn alerting.GetDecryptedV
 	urlStr := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString(), setting.SecretKey)
 	webhookURL, err := url.Parse(urlStr)
 	if err != nil {
-	  return fmt.Errorf("invalid URL %q: %w", urlStr, err)
+	  return nil, fmt.Errorf("invalid URL %q: %w", urlStr, err)
 	}
-	if url == "" {
+	if webhookURL.String() == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
-	msgType := model.Settings.Get("msgType").MustString(weComMsgTypeMarkdown)
-
 	return &WeComNotifier{
 		NotifierBase:      NewNotifierBase(model),
-		MsgType:           msgType,
-		URL:               url,
-		UploadSingleImage: uploadSingleImage,
+		URL:               webhookURL.String(),
 		log:               log.New("alerting.notifier.wecom"),
 	}, nil
 }
@@ -88,7 +64,7 @@ type WeComNotifier struct {
 func (w *WeComNotifier) Notify(evalContext *alerting.EvalContext) error {
 	w.log.Info("executing WeCom notification", "ruleId", evalContext.Rule.ID, "notification", w.Name)
 
-	body, err := w.buildBody(evalContext)
+	body, err := w.buildMarkdownBody(evalContext)
 	if err != nil {
 		return err
 	}
@@ -107,49 +83,6 @@ func (w *WeComNotifier) Notify(evalContext *alerting.EvalContext) error {
 	return nil
 }
 
-func (w *WeComNotifier) uploadImage(evalContext *alerting.EvalContext) error {
-	if _, err := os.Stat(evalContext.ImageOnDiskPath); err != nil {
-		return nil
-	}
-
-	imgFile, err := os.Open(evalContext.ImageOnDiskPath)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = imgFile.Close()
-	}()
-
-	f, err := ioutil.ReadAll(imgFile)
-	if err != nil {
-		return err
-	}
-
-	imgBody := map[string]interface{}{
-		"msgtype": "image",
-		"image": map[string]string{
-			"base64": base64.StdEncoding.EncodeToString(f),
-			"md5":    fmt.Sprintf("%x", md5.Sum(f)),
-		},
-	}
-
-	imgBodyJSON, err := json.Marshal(imgBody)
-	if err != nil {
-		return err
-	}
-
-	imgCmd := &models.SendWebhookSync{
-		Url:  w.URL,
-		Body: string(imgBodyJSON),
-	}
-
-	if err := bus.DispatchCtx(evalContext.Ctx, imgCmd); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (w *WeComNotifier) truncate(str string, length int) string {
 	if len(str) <= length {
 		return str
@@ -157,27 +90,9 @@ func (w *WeComNotifier) truncate(str string, length int) string {
 	return str[:length-1] + "..."
 }
 
-func (w *WeComNotifier) buildNewsBody(evalContext *alerting.EvalContext) ([]byte, error) {
-	body := map[string]interface{}{
-		"msgtype": w.MsgType,
-	}
-	messageURL, _ := evalContext.GetRuleURL()
-	body["news"] = map[string]interface{}{
-		"articles": []map[string]interface{}{
-			{
-				"title":       evalContext.GetNotificationTitle(),
-				"description": w.truncate(evalContext.Rule.Message, 512),
-				"url":         messageURL,
-				"picurl":      evalContext.ImagePublicURL,
-			},
-		},
-	}
-	return json.Marshal(body)
-}
-
 func (w *WeComNotifier) buildMarkdownBody(evalContext *alerting.EvalContext) ([]byte, error) {
 	body := map[string]interface{}{
-		"msgtype": w.MsgType,
+		"msgtype": "markdown",
 	}
 	content := fmt.Sprintf("# %v\nState: %s\n",
 		evalContext.GetNotificationTitle(),
@@ -217,15 +132,4 @@ func (w *WeComNotifier) buildMarkdownBody(evalContext *alerting.EvalContext) ([]
 		"content": content,
 	}
 	return json.Marshal(body)
-}
-
-func (w *WeComNotifier) buildBody(evalContext *alerting.EvalContext) ([]byte, error) {
-	switch w.MsgType {
-	case weComMsgTypeNews:
-		return w.buildNewsBody(evalContext)
-	case weComMsgTypeMarkdown:
-		return w.buildMarkdownBody(evalContext)
-	}
-	
-	return nil, fmt.Error("unable to build request body, message type not recognized: %s", w.MsgType)
 }

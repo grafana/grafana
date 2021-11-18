@@ -273,10 +273,6 @@ To set up WeCom, you must create a WeCom robot webhook. In WeCom PC Client:
 | Setting                      | Description                                                               |
 | ---------------------------- | ------------------------------------------------------------------------- |
 | Url                          | WeCom webhook URL.                                                        |
-| Message type                 | Optionally, `markdown` and `news`. Default is `markdown`.                 |
-| Send image as single message | Optionally, Send included image as individual message. Default is `False` |
-
-The rendered image will be uploaded to WeCom if you choose "Send image as single message"
 
 ## Enable images in notifications {#external-image-store}
 

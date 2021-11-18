@@ -3,6 +3,8 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"net/url"
 	"testing"
 
@@ -93,7 +95,9 @@ func TestWeComNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewWeComNotifier(m, tmpl)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
+			pn, err := NewWeComNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return

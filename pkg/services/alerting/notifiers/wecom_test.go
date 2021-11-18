@@ -50,7 +50,7 @@ func TestWeComNotifier(t *testing.T) {
 						State:   models.AlertStateAlerting,
 						Message: `Some kind of message.`,
 					}, &validations.OSSPluginRequestValidator{})
-				body, err := notifier.buildBody(evalContext)
+				body, err := notifier.buildMarkdownBody(evalContext)
 				require.Nil(t, err)
 				require.Contains(t, string(body), "[Alerting] This is an alarm")
 			})
