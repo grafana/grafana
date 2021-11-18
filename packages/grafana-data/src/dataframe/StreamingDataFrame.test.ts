@@ -1,6 +1,6 @@
 import { reduceField, ReducerID } from '..';
 import { getFieldDisplayName } from '../field';
-import { DataFrame, FieldType } from '../types/dataFrame';
+import { DataFrame, FieldType } from '../types';
 import { DataFrameJSON } from './DataFrameJSON';
 import { StreamingDataFrame } from './StreamingDataFrame';
 
@@ -185,6 +185,204 @@ describe('Streaming JSON', () => {
           },
         ]
       `);
+    });
+
+    it('should append data with new schema and fill missed values with undefined', () => {
+      stream.push({
+        schema: {
+          fields: [
+            { name: 'time', type: FieldType.time },
+            { name: 'name', type: FieldType.string },
+            { name: 'value', type: FieldType.number },
+            { name: 'value2', type: FieldType.number },
+          ],
+        },
+        data: {
+          values: [[601], ['i'], [10], [-10]],
+        },
+      });
+
+      expect(stream.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "name": "time",
+            "value": Array [
+              500,
+              501,
+              502,
+              503,
+              601,
+            ],
+          },
+          Object {
+            "name": "name",
+            "value": Array [
+              "e",
+              "f",
+              "g",
+              "h",
+              "i",
+            ],
+          },
+          Object {
+            "name": "value",
+            "value": Array [
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+            ],
+          },
+          Object {
+            "name": "value2",
+            "value": Array [
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              -10,
+            ],
+          },
+        ]
+      `);
+    });
+
+    it('should be able to return values from previous packet', function () {
+      stream.push({
+        data: {
+          values: [
+            [602, 603],
+            ['j', 'k'],
+            [11, 12],
+            [-11, -12],
+          ],
+        },
+      });
+
+      expect(stream.getValuesFromLastPacket()).toEqual([
+        [602, 603],
+        ['j', 'k'],
+        [11, 12],
+        [-11, -12],
+      ]);
+    });
+  });
+
+  describe('serialization', function () {
+    const json: DataFrameJSON = {
+      schema: {
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'name', type: FieldType.string },
+          { name: 'value', type: FieldType.number },
+        ],
+      },
+      data: {
+        values: [
+          [100, 200, 300],
+          ['a', 'b', 'c'],
+          [1, 2, 3],
+        ],
+      },
+    };
+
+    const frame = StreamingDataFrame.fromDataFrameJSON(json, {
+      maxLength: 5,
+      maxDelta: 300,
+    });
+
+    it('should filter fields', function () {
+      const serializedFrame = frame.serialize((f) => ['time'].includes(f.name));
+      expect(serializedFrame.fields).toEqual([
+        {
+          config: {},
+          name: 'time',
+          type: 'time',
+          values: [100, 200, 300],
+        },
+      ]);
+    });
+
+    it('should resize the buffer', function () {
+      const serializedFrame = frame.serialize((f) => ['time', 'name'].includes(f.name), { maxLength: 2 });
+      expect(serializedFrame.fields).toEqual([
+        {
+          config: {},
+          name: 'time',
+          type: 'time',
+          values: [200, 300],
+        },
+        {
+          config: {},
+          name: 'name',
+          type: 'string',
+          values: ['b', 'c'],
+        },
+      ]);
+    });
+  });
+
+  describe('when deserialized', function () {
+    const json: DataFrameJSON = {
+      schema: {
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'name', type: FieldType.string },
+          { name: 'value', type: FieldType.number },
+        ],
+      },
+      data: {
+        values: [
+          [100, 200, 300],
+          ['a', 'b', 'c'],
+          [1, 2, 3],
+        ],
+      },
+    };
+
+    const serializedFrame = StreamingDataFrame.fromDataFrameJSON(json, {
+      maxLength: 5,
+      maxDelta: 300,
+    }).serialize();
+
+    it('should support pushing new values matching the existing schema', function () {
+      const frame = StreamingDataFrame.deserialize(serializedFrame);
+      frame.pushNewValues([[601], ['x'], [10]]);
+      expect(frame.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "name": "time",
+            "value": Array [
+              300,
+              601,
+            ],
+          },
+          Object {
+            "name": "name",
+            "value": Array [
+              "c",
+              "x",
+            ],
+          },
+          Object {
+            "name": "value",
+            "value": Array [
+              3,
+              10,
+            ],
+          },
+        ]
+      `);
+    });
+  });
+
+  describe('when created empty', function () {
+    it('should have no packets', function () {
+      const streamingDataFrame = StreamingDataFrame.empty();
+      expect(streamingDataFrame.hasAtLeastOnePacket()).toEqual(false);
+      expect(streamingDataFrame.fields).toHaveLength(0);
     });
   });
 
