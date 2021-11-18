@@ -70,6 +70,7 @@ export enum PermissionLevelString {
 }
 
 export enum DataSourcePermissionLevel {
+  NoAccess = 0,
   Query = 1,
   Admin = 2,
 }
