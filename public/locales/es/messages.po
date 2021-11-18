@@ -15,4 +15,4 @@ msgstr ""
 
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "edit-user-profile.title"
-msgstr ""
+msgstr "Editar perfil"
