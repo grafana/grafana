@@ -31,9 +31,9 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
       const property = value.rule.property;
       const sorted = feats.sort((a, b) => (a.get(property) > b.get(property) ? 1 : -1));
       for (let v = 1; v < sorted.length; v++) {
-        if (sorted[v - 1].get(property) !== sorted[v].get(value.rule.property)) {
-          const val = sorted[v].get(property);
-          uniqueValues.push({ value: val, label: `${val}` });
+        const currVal = sorted[v].get(property);
+        if (sorted[v - 1].get(property) !== currVal) {
+          uniqueValues.push({ value: currVal, label: `${currVal}` });
         }
       }
     }
