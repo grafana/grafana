@@ -156,7 +156,7 @@ func (s *AccessControlStore) setResourcePermission(
 		return nil, err
 	}
 
-	return flatToResourcePermissions(append(permissions, keptPermissions...)), nil
+	return flatPermissionsToResourcePermission(append(permissions, keptPermissions...)), nil
 }
 
 func (s *AccessControlStore) GetResourcesPermissions(ctx context.Context, orgID int64, query accesscontrol.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
@@ -326,22 +326,22 @@ func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query access
 
 	var result []accesscontrol.ResourcePermission
 	for _, permissions := range byResource {
-		users, teams, builtins := groupByAssignment(permissions)
+		users, teams, builtins := groupPermissionsByAssignment(permissions)
 		for _, p := range users {
-			result = append(result, temp(p)...)
+			result = append(result, flatPermissionsToResourcePermissions(p)...)
 		}
 		for _, p := range teams {
-			result = append(result, temp(p)...)
+			result = append(result, flatPermissionsToResourcePermissions(p)...)
 		}
 		for _, p := range builtins {
-			result = append(result, temp(p)...)
+			result = append(result, flatPermissionsToResourcePermissions(p)...)
 		}
 	}
 
 	return result, nil
 }
 
-func groupByAssignment(permissions []flatResourcePermission) (map[int64][]flatResourcePermission, map[int64][]flatResourcePermission, map[string][]flatResourcePermission) {
+func groupPermissionsByAssignment(permissions []flatResourcePermission) (map[int64][]flatResourcePermission, map[int64][]flatResourcePermission, map[string][]flatResourcePermission) {
 	users := make(map[int64][]flatResourcePermission)
 	teams := make(map[int64][]flatResourcePermission)
 	builtins := make(map[string][]flatResourcePermission)
@@ -355,10 +355,11 @@ func groupByAssignment(permissions []flatResourcePermission) (map[int64][]flatRe
 			builtins[p.BuiltInRole] = append(builtins[p.BuiltInRole], p)
 		}
 	}
+
 	return users, teams, builtins
 }
 
-func temp(permissions []flatResourcePermission) []accesscontrol.ResourcePermission {
+func flatPermissionsToResourcePermissions(permissions []flatResourcePermission) []accesscontrol.ResourcePermission {
 	var managed, provisioned []flatResourcePermission
 	for _, p := range permissions {
 		if p.Managed() {
@@ -369,14 +370,43 @@ func temp(permissions []flatResourcePermission) []accesscontrol.ResourcePermissi
 	}
 
 	var result []accesscontrol.ResourcePermission
-	if g := flatToResourcePermissions(managed); g != nil {
+	if g := flatPermissionsToResourcePermission(managed); g != nil {
 		result = append(result, *g)
 	}
-	if g := flatToResourcePermissions(provisioned); g != nil {
+	if g := flatPermissionsToResourcePermission(provisioned); g != nil {
 		result = append(result, *g)
 	}
 
 	return result
+}
+
+func flatPermissionsToResourcePermission(permissions []flatResourcePermission) *accesscontrol.ResourcePermission {
+	if len(permissions) == 0 {
+		return nil
+	}
+
+	actions := make([]string, 0, len(permissions))
+	for _, p := range permissions {
+		actions = append(actions, p.Action)
+	}
+
+	first := permissions[0]
+	return &accesscontrol.ResourcePermission{
+		ID:          first.ID,
+		ResourceID:  first.ResourceID,
+		RoleName:    first.RoleName,
+		Actions:     actions,
+		Scope:       first.Scope,
+		UserId:      first.UserId,
+		UserLogin:   first.UserLogin,
+		UserEmail:   first.UserEmail,
+		TeamId:      first.TeamId,
+		TeamEmail:   first.TeamEmail,
+		Team:        first.Team,
+		BuiltInRole: first.BuiltInRole,
+		Created:     first.Created,
+		Updated:     first.Updated,
+	}
 }
 
 func (s *AccessControlStore) userAdder(sess *sqlstore.DBSession, orgID, userID int64) roleAdder {
@@ -543,33 +573,4 @@ func getResourceAllScope(resource string) string {
 
 func getResourceAllIDScope(resource string) string {
 	return fmt.Sprintf("%s:id:*", resource)
-}
-
-func flatToResourcePermissions(permissions []flatResourcePermission) *accesscontrol.ResourcePermission {
-	if len(permissions) == 0 {
-		return nil
-	}
-
-	actions := make([]string, 0, len(permissions))
-	for _, p := range permissions {
-		actions = append(actions, p.Action)
-	}
-
-	first := permissions[0]
-	return &accesscontrol.ResourcePermission{
-		ID:          first.ID,
-		ResourceID:  first.ResourceID,
-		RoleName:    first.RoleName,
-		Actions:     actions,
-		Scope:       first.Scope,
-		UserId:      first.UserId,
-		UserLogin:   first.UserLogin,
-		UserEmail:   first.UserEmail,
-		TeamId:      first.TeamId,
-		TeamEmail:   first.TeamEmail,
-		Team:        first.Team,
-		BuiltInRole: first.BuiltInRole,
-		Created:     first.Created,
-		Updated:     first.Updated,
-	}
 }
