@@ -11,7 +11,7 @@ import { CatalogPlugin, PluginTabIds, RequestStatus, ReducerState } from '../typ
 import * as api from '../api';
 import { fetchRemotePlugins } from '../state/actions';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
-import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('@grafana/runtime', () => {
@@ -250,6 +250,13 @@ describe('Plugin details page', () => {
 
   it('should not display install / uninstall buttons for disabled plugins', async () => {
     const { queryByRole } = renderPluginDetails({ id, isInstalled: true, isDisabled: true });
+
+    await waitFor(() => expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
+  });
+
+  it('should not display install / uninstall buttons for renderer plugins', async () => {
+    const { queryByRole } = renderPluginDetails({ id, type: PluginType.renderer });
 
     await waitFor(() => expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument());
     await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
