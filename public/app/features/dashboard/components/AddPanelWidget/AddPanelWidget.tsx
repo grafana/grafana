@@ -254,8 +254,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: 100%;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      column-gap: 8px;
-      row-gap: 8px;
+      column-gap: ${theme.spacing(1)};
+      row-gap: ${theme.spacing(1)};
       padding: ${theme.spacing(0, 1, 1, 1)};
 
       // This is to make the last action full width (if by itself)

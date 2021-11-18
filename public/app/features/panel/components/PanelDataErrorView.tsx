@@ -1,72 +1,55 @@
 import React from 'react';
-import {
-  CoreApp,
-  GrafanaTheme2,
-  PanelDataSummary,
-  VisualizationSuggestion,
-  VisualizationSuggestionsBuilder,
-} from '@grafana/data';
+import { CoreApp, GrafanaTheme2, PanelDataSummary, VisualizationSuggestionsBuilder } from '@grafana/data';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { VisualizationPreview } from './VizTypePicker/VisualizationPreview';
 import { PanelDataErrorViewProps } from '@grafana/runtime';
+import { CardButton } from 'app/core/components/CardButton';
+import { useDispatch } from 'react-redux';
+import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
+import { changePanelPlugin } from '../state/actions';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 export function PanelDataErrorView(props: PanelDataErrorViewProps) {
-  const { data } = props;
   const styles = useStyles2(getStyles);
   const context = usePanelContext();
-  const [suggestions, message] = getSuggestionsAndMessage(props);
+  const builder = new VisualizationSuggestionsBuilder(props.data);
+  const { dataSummary } = builder;
+  const message = getMessageFor(props, dataSummary);
+  const dispatch = useDispatch();
+
+  const openVizPicker = () => {
+    dispatch(toggleVizPicker(true));
+  };
+
+  const switchToTable = () => {
+    const panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);
+    if (!panel) {
+      return;
+    }
+
+    dispatch(
+      changePanelPlugin({
+        panel,
+        pluginId: 'table',
+      })
+    );
+  };
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.message}>{message}</div>
-      {context.app === CoreApp.PanelEditor && suggestions && (
-        <div className={styles.suggestions}>
-          {suggestions.map((suggestion, index) => (
-            <VisualizationPreview
-              key={index}
-              data={data!}
-              suggestion={suggestion}
-              showTitle={true}
-              onChange={() => {}}
-              width={200}
-            />
-          ))}
+      {context.app === CoreApp.PanelEditor && (
+        <div className={styles.actions}>
+          <CardButton icon="table" onClick={switchToTable}>
+            Switch to table
+          </CardButton>
+          <CardButton icon="chart-line" onClick={openVizPicker}>
+            Open visualization suggestions
+          </CardButton>
         </div>
       )}
     </div>
   );
-}
-
-function getSuggestionsAndMessage(props: PanelDataErrorViewProps): [VisualizationSuggestion[], string] {
-  const builder = new VisualizationSuggestionsBuilder(props.data);
-  const { dataSummary } = builder;
-  const message = getMessageFor(props, dataSummary);
-
-  if (!dataSummary.hasTimeField) {
-    const list = builder.getListAppender<any, any>({
-      name: 'Switch to table',
-      pluginId: 'table',
-      options: {},
-    });
-    list.append({});
-  }
-
-  if (dataSummary.hasStringField && dataSummary.hasNumberField) {
-    const list = builder.getListAppender<any, any>({
-      name: 'Switch to bar chart',
-      pluginId: 'barchart',
-      options: {},
-      fieldConfig: {
-        defaults: {},
-        overrides: [],
-      },
-    });
-
-    list.append({});
-  }
-
-  return [builder.getList(), message];
 }
 
 function getMessageFor(
@@ -114,9 +97,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       width: '100%',
     }),
-    suggestions: css({
+    actions: css({
       marginTop: theme.spacing(2),
       display: 'flex',
+      height: '50%',
+      maxHeight: '150px',
+      columnGap: theme.spacing(1),
+      rowGap: theme.spacing(1),
+      width: '100%',
+      maxWidth: '600px',
     }),
   };
 };
