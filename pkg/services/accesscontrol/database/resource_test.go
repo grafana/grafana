@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-type setUserResourcePermissionsTest struct {
+type setUserResourcePermissionTest struct {
 	desc       string
 	orgID      int64
 	userID     int64
@@ -23,8 +23,8 @@ type setUserResourcePermissionsTest struct {
 	seeds      []accesscontrol.SetResourcePermissionsCommand
 }
 
-func TestAccessControlStore_SetUserResourcePermissions(t *testing.T) {
-	tests := []setUserResourcePermissionsTest{
+func TestAccessControlStore_SetUserResourcePermission(t *testing.T) {
+	tests := []setUserResourcePermissionTest{
 		{
 			desc:       "should set resource permission for user",
 			userID:     1,
@@ -69,11 +69,11 @@ func TestAccessControlStore_SetUserResourcePermissions(t *testing.T) {
 			store, _ := setupTestEnv(t)
 
 			for _, s := range test.seeds {
-				_, err := store.SetUserResourcePermissions(context.Background(), test.orgID, test.userID, s)
+				_, err := store.SetUserResourcePermission(context.Background(), test.orgID, test.userID, s)
 				require.NoError(t, err)
 			}
 
-			added, err := store.SetUserResourcePermissions(context.Background(), test.userID, test.userID, accesscontrol.SetResourcePermissionsCommand{
+			added, err := store.SetUserResourcePermission(context.Background(), test.userID, test.userID, accesscontrol.SetResourcePermissionsCommand{
 				Actions:    test.actions,
 				Resource:   test.resource,
 				ResourceID: test.resourceID,
@@ -90,7 +90,7 @@ func TestAccessControlStore_SetUserResourcePermissions(t *testing.T) {
 	}
 }
 
-type setTeamResourcePermissionsTest struct {
+type setTeamResourcePermissionTest struct {
 	desc       string
 	orgID      int64
 	teamID     int64
@@ -100,8 +100,8 @@ type setTeamResourcePermissionsTest struct {
 	seeds      []accesscontrol.SetResourcePermissionsCommand
 }
 
-func TestAccessControlStore_SetTeamResourcePermissions(t *testing.T) {
-	tests := []setTeamResourcePermissionsTest{
+func TestAccessControlStore_SetTeamResourcePermission(t *testing.T) {
+	tests := []setTeamResourcePermissionTest{
 		{
 			desc:       "should add new resource permission for team",
 			orgID:      1,
@@ -147,11 +147,11 @@ func TestAccessControlStore_SetTeamResourcePermissions(t *testing.T) {
 			store, _ := setupTestEnv(t)
 
 			for _, s := range test.seeds {
-				_, err := store.SetTeamResourcePermissions(context.Background(), test.orgID, test.teamID, s)
+				_, err := store.SetTeamResourcePermission(context.Background(), test.orgID, test.teamID, s)
 				require.NoError(t, err)
 			}
 
-			added, err := store.SetTeamResourcePermissions(context.Background(), test.orgID, test.teamID, accesscontrol.SetResourcePermissionsCommand{
+			added, err := store.SetTeamResourcePermission(context.Background(), test.orgID, test.teamID, accesscontrol.SetResourcePermissionsCommand{
 				Actions:    test.actions,
 				Resource:   test.resource,
 				ResourceID: test.resourceID,
@@ -168,7 +168,7 @@ func TestAccessControlStore_SetTeamResourcePermissions(t *testing.T) {
 	}
 }
 
-type setBuiltinResourcePermissionsTest struct {
+type setBuiltinResourcePermissionTest struct {
 	desc        string
 	orgID       int64
 	builtinRole string
@@ -178,8 +178,8 @@ type setBuiltinResourcePermissionsTest struct {
 	seeds       []accesscontrol.SetResourcePermissionsCommand
 }
 
-func TestAccessControlStore_SetBuiltinResourcePermissions(t *testing.T) {
-	tests := []setBuiltinResourcePermissionsTest{
+func TestAccessControlStore_SetBuiltinResourcePermission(t *testing.T) {
+	tests := []setBuiltinResourcePermissionTest{
 		{
 			desc:        "should add new resource permission for builtin role",
 			orgID:       1,
@@ -225,11 +225,11 @@ func TestAccessControlStore_SetBuiltinResourcePermissions(t *testing.T) {
 			store, _ := setupTestEnv(t)
 
 			for _, s := range test.seeds {
-				_, err := store.SetBuiltinResourcePermissions(context.Background(), test.orgID, test.builtinRole, s)
+				_, err := store.SetBuiltinResourcePermission(context.Background(), test.orgID, test.builtinRole, s)
 				require.NoError(t, err)
 			}
 
-			added, err := store.SetBuiltinResourcePermissions(context.Background(), test.orgID, test.builtinRole, accesscontrol.SetResourcePermissionsCommand{
+			added, err := store.SetBuiltinResourcePermission(context.Background(), test.orgID, test.builtinRole, accesscontrol.SetResourcePermissionsCommand{
 				Actions:    test.actions,
 				Resource:   test.resource,
 				ResourceID: test.resourceID,
@@ -303,7 +303,7 @@ func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlst
 		})
 		require.NoError(t, err)
 
-		_, err = store.SetUserResourcePermissions(context.Background(), 1, u.Id, accesscontrol.SetResourcePermissionsCommand{
+		_, err = store.SetUserResourcePermission(context.Background(), 1, u.Id, accesscontrol.SetResourcePermissionsCommand{
 			Actions:    actions,
 			Resource:   resource,
 			ResourceID: resourceID,

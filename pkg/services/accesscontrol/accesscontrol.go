@@ -30,12 +30,12 @@ type PermissionsProvider interface {
 }
 
 type ResourceStore interface {
-	// SetUserResourcePermissions sets permissions for managed user role on a resource
-	SetUserResourcePermissions(ctx context.Context, orgID, userID int64, cmd SetResourcePermissionsCommand) (*ResourcePermission, error)
-	// SetTeamResourcePermissions sets permissions for managed team role on a resource
-	SetTeamResourcePermissions(ctx context.Context, orgID, teamID int64, cmd SetResourcePermissionsCommand) (*ResourcePermission, error)
-	// SetBuiltinResourcePermissions sets permissions for managed builtin role on a resource
-	SetBuiltinResourcePermissions(ctx context.Context, orgID int64, builtinRole string, cmd SetResourcePermissionsCommand) (*ResourcePermission, error)
+	// SetUserResourcePermission sets permission for managed user role on a resource
+	SetUserResourcePermission(ctx context.Context, orgID, userID int64, cmd SetResourcePermissionsCommand) (*ResourcePermission, error)
+	// SetTeamResourcePermission sets permission for managed team role on a resource
+	SetTeamResourcePermission(ctx context.Context, orgID, teamID int64, cmd SetResourcePermissionsCommand) (*ResourcePermission, error)
+	// SetBuiltinResourcePermission sets permissions for managed builtin role on a resource
+	SetBuiltinResourcePermission(ctx context.Context, orgID int64, builtinRole string, cmd SetResourcePermissionsCommand) (*ResourcePermission, error)
 	// GetResourcesPermissions will return all permission for all supplied resource ids
 	GetResourcesPermissions(ctx context.Context, orgID int64, query GetResourcesPermissionsQuery) ([]ResourcePermission, error)
 }

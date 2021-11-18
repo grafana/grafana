@@ -46,12 +46,12 @@ func (r *ResourceManager) GetPermissionsByIds(ctx context.Context, orgID int64, 
 	})
 }
 
-func (r *ResourceManager) SetUserPermissions(ctx context.Context, orgID int64, resourceID string, actions []string, userID int64) (*ResourcePermission, error) {
+func (r *ResourceManager) SetUserPermission(ctx context.Context, orgID int64, resourceID string, actions []string, userID int64) (*ResourcePermission, error) {
 	if !r.validateActions(actions) {
 		return nil, fmt.Errorf("invalid actions: %s", actions)
 	}
 
-	return r.store.SetUserResourcePermissions(ctx, orgID, userID, SetResourcePermissionsCommand{
+	return r.store.SetUserResourcePermission(ctx, orgID, userID, SetResourcePermissionsCommand{
 		Actions:    actions,
 		Resource:   r.resource,
 		ResourceID: resourceID,
@@ -63,19 +63,19 @@ func (r *ResourceManager) SetTeamPermission(ctx context.Context, orgID int64, re
 		return nil, fmt.Errorf("invalid action: %s", actions)
 	}
 
-	return r.store.SetTeamResourcePermissions(ctx, orgID, teamID, SetResourcePermissionsCommand{
+	return r.store.SetTeamResourcePermission(ctx, orgID, teamID, SetResourcePermissionsCommand{
 		Actions:    actions,
 		Resource:   r.resource,
 		ResourceID: resourceID,
 	})
 }
 
-func (r *ResourceManager) SetBuiltinRolePermissions(ctx context.Context, orgID int64, resourceID string, actions []string, builtinRole string) (*ResourcePermission, error) {
+func (r *ResourceManager) SetBuiltinRolePermission(ctx context.Context, orgID int64, resourceID string, actions []string, builtinRole string) (*ResourcePermission, error) {
 	if !r.validateActions(actions) {
 		return nil, fmt.Errorf("invalid action: %s", actions)
 	}
 
-	return r.store.SetBuiltinResourcePermissions(ctx, orgID, builtinRole, SetResourcePermissionsCommand{
+	return r.store.SetBuiltinResourcePermission(ctx, orgID, builtinRole, SetResourcePermissionsCommand{
 		Actions:    actions,
 		Resource:   r.resource,
 		ResourceID: resourceID,
