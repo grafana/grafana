@@ -84,13 +84,13 @@ export class StreamingDataFrame implements DataFrame {
     length: 0,
   };
 
-  private constructor(private options: StreamingFrameOptions) {
+  private constructor(public options: StreamingFrameOptions) {
     // Get Length to show up if you use spread
     Object.defineProperty(this, 'length', {
       enumerable: true,
     });
 
-    // Get Length to show up if you use spread
+    // Get fields to show up if you use spread
     Object.defineProperty(this, 'fields', {
       enumerable: true,
     });
@@ -193,8 +193,8 @@ export class StreamingDataFrame implements DataFrame {
     return Boolean(needsMoreLength || needsBiggerDelta);
   };
 
-  resize = ({ maxLength, maxDelta }: StreamingFrameOptions) => {
-    this.options.maxDelta = Math.min(this.options.maxDelta, maxDelta ?? Infinity);
+  resize = ({ maxLength, maxDelta }: Partial<StreamingFrameOptions>) => {
+    this.options.maxDelta = maxDelta ? Math.max(maxDelta, this.options.maxDelta) : this.options.maxDelta;
     this.options.maxLength = Math.max(this.options.maxLength, maxLength ?? 0);
   };
 
@@ -425,6 +425,8 @@ export class StreamingDataFrame implements DataFrame {
 
     this.labels.add(label);
   }
+
+  getOptions = (): Readonly<StreamingFrameOptions> => this.options;
 }
 
 // converts vertical insertion records with table keys in [0] and column values in [1...N]

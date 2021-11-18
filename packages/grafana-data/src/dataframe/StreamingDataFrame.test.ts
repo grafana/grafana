@@ -1,4 +1,4 @@
-import { reduceField, ReducerID } from '..';
+import { reduceField, ReducerID, StreamingFrameAction, StreamingFrameOptions } from '..';
 import { getFieldDisplayName } from '../field';
 import { DataFrame, FieldType } from '../types';
 import { DataFrameJSON } from './DataFrameJSON';
@@ -322,6 +322,77 @@ describe('Streaming JSON', () => {
         },
       ]);
     });
+  });
+
+  describe('resizing', function () {
+    it.each([
+      [
+        {
+          existing: {
+            maxLength: 10,
+            maxDelta: 5,
+            action: StreamingFrameAction.Replace,
+          },
+          newOptions: {},
+          expected: {
+            maxLength: 10,
+            maxDelta: 5,
+            action: StreamingFrameAction.Replace,
+          },
+        },
+      ],
+      [
+        {
+          existing: {
+            maxLength: 10,
+            maxDelta: 5,
+            action: StreamingFrameAction.Replace,
+          },
+          newOptions: {
+            maxLength: 9,
+            maxDelta: 4,
+          },
+          expected: {
+            maxLength: 10,
+            maxDelta: 5,
+            action: StreamingFrameAction.Replace,
+          },
+        },
+      ],
+      [
+        {
+          existing: {
+            maxLength: 10,
+            maxDelta: 5,
+            action: StreamingFrameAction.Replace,
+          },
+          newOptions: {
+            maxLength: 11,
+            maxDelta: 6,
+          },
+          expected: {
+            maxLength: 11,
+            maxDelta: 6,
+            action: StreamingFrameAction.Replace,
+          },
+        },
+      ],
+    ])(
+      'should always resize to a bigger buffer',
+      ({
+        existing,
+        expected,
+        newOptions,
+      }: {
+        existing: StreamingFrameOptions;
+        newOptions: Partial<StreamingFrameOptions>;
+        expected: StreamingFrameOptions;
+      }) => {
+        const frame = StreamingDataFrame.empty(existing);
+        frame.resize(newOptions);
+        expect(frame.getOptions()).toEqual(expected);
+      }
+    );
   });
 
   describe('when deserialized', function () {
