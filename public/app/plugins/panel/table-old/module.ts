@@ -92,7 +92,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
         .getAnnotations({
           dashboard: this.dashboard,
           panel: this.panel,
-          range: this.range,
+          range: this.timeSrv.timeRange(),
         })
         .then((anno: any) => {
           this.loading = false;
