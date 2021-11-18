@@ -148,6 +148,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             editor: StyleEditor,
             settings: {
               simpleFixedValues: true,
+              features,
             },
             defaultValue: defaultOptions.style,
           })
@@ -158,7 +159,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             description: 'Apply styles based on feature properties',
             editor: GeomapStyleRulesEditor,
             settings: {
-              features: features,
+              features,
               layerInfo: layerInfo,
             },
             defaultValue: [],

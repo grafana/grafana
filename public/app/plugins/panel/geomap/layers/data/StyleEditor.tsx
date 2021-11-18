@@ -11,6 +11,9 @@ import {
   RadioButtonGroup,
   SliderValueEditor,
 } from '@grafana/ui';
+import { FeatureLike } from 'ol/Feature';
+import { Observable } from 'rxjs';
+import { useObservable } from 'react-use';
 
 import {
   ColorDimensionEditor,
@@ -30,6 +33,7 @@ import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '..
 import { styleUsesText } from '../../style/utils';
 
 export interface StyleEditorOptions {
+  features?: Observable<FeatureLike[]>;
   simpleFixedValues?: boolean;
 }
 
@@ -79,10 +83,43 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
     onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline as TextBaseline } });
   };
 
+  let featuresHavePoints = false;
+  if (item.settings?.features) {
+    const feats = useObservable(item.settings?.features);
+
+    if (feats) {
+      featuresHavePoints = feats.some((feat) => feat.getGeometry()?.getType() === 'Point');
+    }
+  }
+
+  const hasTextLabel = styleUsesText(value);
+
   // Simple fixed value display
   if (item.settings?.simpleFixedValues) {
     return (
       <>
+        <InlineFieldRow>
+          {featuresHavePoints && (
+            <InlineField label={'Symbol'}>
+              <ResourceDimensionEditor
+                value={value.symbol ?? defaultStyleConfig.symbol}
+                context={context}
+                onChange={onSymbolChange}
+                item={
+                  {
+                    settings: {
+                      resourceType: 'icon',
+                      folderName: ResourceFolderName.Marker,
+                      placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                      placeholderValue: defaultStyleConfig.symbol.fixed,
+                      showSourceRadio: false,
+                    },
+                  } as any
+                }
+              />
+            </InlineField>
+          )}
+        </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="Color" labelWidth={10}>
             <InlineLabel width={4}>
@@ -96,7 +133,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Opacity" labelWidth={10} grow={true}>
+          <InlineField label="Opacity" labelWidth={10} grow>
             <SliderValueEditor
               value={value.opacity ?? defaultStyleConfig.opacity}
               context={context}
@@ -116,8 +153,6 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
       </>
     );
   }
-
-  const hasTextLabel = styleUsesText(value);
 
   return (
     <>
