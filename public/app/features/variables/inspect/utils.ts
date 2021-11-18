@@ -1,10 +1,11 @@
 import { variableAdapters } from '../adapters';
-import { DashboardModel, PanelModel } from '../../dashboard/state';
+import { PanelModel } from '../../dashboard/state';
 import { isAdHoc } from '../guard';
 import { safeStringifyValue } from '../../../core/utils/explore';
 import { VariableModel } from '../types';
 import { containsVariable, variableRegex, variableRegexExec } from '../utils';
 import { DataLinkBuiltInVars } from '@grafana/data';
+import { DashboardDataDTO } from 'app/types';
 
 export interface GraphNode {
   id: string;
@@ -183,15 +184,10 @@ export interface VariableUsages {
   usages: VariableUsageTree[];
 }
 
-export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel | null): VariableUsages => {
-  if (!dashboard) {
-    return { unUsed: [], unknown: [], usages: [] };
-  }
-
+export const createUsagesNetwork = (variables: VariableModel[], model: DashboardDataDTO): VariableUsages => {
   const unUsed: VariableModel[] = [];
   let usages: VariableUsageTree[] = [];
   let unknown: VariableUsageTree[] = [];
-  const model = dashboard.getSaveModelClone();
 
   const unknownVariables = getUnknownVariableStrings(variables, model);
   for (const unknownVariable of unknownVariables) {

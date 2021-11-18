@@ -17,6 +17,7 @@ import { updateOptions } from '../state/actions';
 import { VariableModel } from '../types';
 import { initInspect } from '../inspect/reducer';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
+import { getDashboardSaveModel } from 'app/features/dashboard/state/getDashboardSaveModel';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
@@ -108,7 +109,7 @@ export const switchToListMode = (): ThunkResult<void> => (dispatch, getState) =>
   dispatch(clearIdInEditor());
   const state = getState();
   const variables = getEditorVariables(state);
-  const dashboard = state.dashboard.getModel();
+  const dashboard = getDashboardSaveModel(state);
   const { unknown, usages } = createUsagesNetwork(variables, dashboard);
   const unknownsNetwork = transformUsagesToNetwork(unknown);
   const unknownExits = Object.keys(unknown).length > 0;

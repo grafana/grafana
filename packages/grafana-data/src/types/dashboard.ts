@@ -20,6 +20,9 @@ export interface PanelModel<TOptions = any, TCustomFieldConfig = any> {
   /** Description */
   description?: string;
 
+  /** Type */
+  type: string;
+
   /** Panel options */
   options: TOptions;
 

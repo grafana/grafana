@@ -4,7 +4,6 @@ import {
   defaults as _defaults,
   each,
   filter,
-  find,
   findIndex,
   indexOf,
   isEqual,
@@ -37,7 +36,6 @@ import {
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
-import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
@@ -46,7 +44,6 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 import { isOnTheSameGridRow } from './utils';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
 import {
@@ -54,12 +51,6 @@ import {
   VariablesChangedInUrl,
   VariablesFinishedProcessingTimeRangeChange,
 } from '../../variables/types';
-
-export interface CloneOptions {
-  saveVariables?: boolean;
-  saveTimerange?: boolean;
-  message?: string;
-}
 
 export type DashboardLinkType = 'link' | 'dashboards';
 
@@ -91,10 +82,12 @@ export class DashboardModel {
   graphTooltip: DashboardCursorSync;
   time: any;
   liveNow: boolean;
-  private originalTime: any;
+  // Should move to redux
+  originalTime: any;
   timepicker: any;
   templating: { list: any[] };
-  private originalTemplating: any;
+  // Should move to redux
+  originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
   refresh: any;
   snapshot: any;
@@ -237,41 +230,6 @@ export class DashboardModel {
     this.meta = meta;
   }
 
-  // cleans meta data and other non persistent state
-  getSaveModelClone(options?: CloneOptions): DashboardModel {
-    const defaults = _defaults(options || {}, {
-      saveVariables: true,
-      saveTimerange: true,
-    });
-
-    // make clone
-    let copy: any = {};
-    for (const property in this) {
-      if (DashboardModel.nonPersistedProperties[property] || !this.hasOwnProperty(property)) {
-        continue;
-      }
-
-      copy[property] = cloneDeep(this[property]);
-    }
-
-    this.updateTemplatingSaveModelClone(copy, defaults);
-
-    if (!defaults.saveTimerange) {
-      copy.time = this.originalTime;
-    }
-
-    // get panel save models
-    copy.panels = this.getPanelSaveModels();
-
-    //  sort by keys
-    copy = sortedDeepCloneWithoutNulls(copy);
-    copy.getVariables = () => {
-      return copy.templating.list;
-    };
-
-    return copy;
-  }
-
   /**
    * This will load a new dashboard, but keep existing panels unchanged
    *
@@ -290,87 +248,6 @@ export class DashboardModel {
       this.events.publish(new DashboardPanelsChangedEvent());
     }
     return info;
-  }
-
-  private getPanelSaveModels() {
-    return this.panels
-      .filter((panel: PanelModel) => {
-        if (this.isSnapshotTruthy()) {
-          return true;
-        }
-        if (panel.type === 'add-panel') {
-          return false;
-        }
-        // skip repeated panels in the saved model
-        if (panel.repeatPanelId) {
-          return false;
-        }
-        // skip repeated rows in the saved model
-        if (panel.repeatedByRow) {
-          return false;
-        }
-        return true;
-      })
-      .map((panel: PanelModel) => {
-        // If we save while editing we should include the panel in edit mode instead of the
-        // unmodified source panel
-        if (this.panelInEdit && this.panelInEdit.id === panel.id) {
-          return this.panelInEdit.getSaveModel();
-        }
-
-        return panel.getSaveModel();
-      })
-      .map((model: any) => {
-        if (this.isSnapshotTruthy()) {
-          return model;
-        }
-        // Clear any scopedVars from persisted mode. This cannot be part of getSaveModel as we need to be able to copy
-        // panel models with preserved scopedVars, for example when going into edit mode.
-        delete model.scopedVars;
-
-        // Clear any repeated panels from collapsed rows
-        if (model.type === 'row' && model.panels && model.panels.length > 0) {
-          model.panels = model.panels
-            .filter((rowPanel: PanelModel) => !rowPanel.repeatPanelId)
-            .map((model: PanelModel) => {
-              delete model.scopedVars;
-              return model;
-            });
-        }
-
-        return model;
-      });
-  }
-
-  private updateTemplatingSaveModelClone(
-    copy: any,
-    defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
-  ) {
-    const originalVariables = this.originalTemplating;
-    const currentVariables = this.getVariablesFromState();
-
-    copy.templating = {
-      list: currentVariables.map((variable) =>
-        variableAdapters.get(variable.type).getSaveModel(variable, defaults.saveVariables)
-      ),
-    };
-
-    if (!defaults.saveVariables) {
-      for (let i = 0; i < copy.templating.list.length; i++) {
-        const current = copy.templating.list[i];
-        const original: any = find(originalVariables, { name: current.name, type: current.type });
-
-        if (!original) {
-          continue;
-        }
-
-        if (current.type === 'adhoc') {
-          copy.templating.list[i].filters = original.filters;
-        } else {
-          copy.templating.list[i].current = original.current;
-        }
-      }
-    }
   }
 
   timeRangeUpdated(timeRange: TimeRange) {
@@ -411,6 +288,11 @@ export class DashboardModel {
     if (!this.otherPanelInFullscreen(panel) && !lastResult) {
       panel.refresh();
     }
+  }
+
+  /** Dummy to shorten typescript error list for now */
+  getSaveModelClone(options?: any): any {
+    return { title: this.title, panels: [] };
   }
 
   otherPanelInFullscreen(panel: PanelModel) {

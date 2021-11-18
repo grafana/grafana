@@ -1,5 +1,5 @@
 import { DashboardAcl } from './acl';
-import { DataQuery } from '@grafana/data';
+import { DataQuery, PanelModel, ScopedVars } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 export interface DashboardDTO {
@@ -39,6 +39,15 @@ export interface DashboardMeta {
 
 export interface DashboardDataDTO {
   title: string;
+  panels: PanelModelDTO[];
+  time?: {
+    from: string;
+    to: string;
+  };
+}
+
+export interface PanelModelDTO extends PanelModel {
+  scopedVars: ScopedVars;
 }
 
 export enum DashboardRoutes {

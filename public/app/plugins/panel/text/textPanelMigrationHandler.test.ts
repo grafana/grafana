@@ -39,6 +39,7 @@ describe('textPanelMigrationHandler', () => {
     it('then should just pass options through', () => {
       const panel: PanelModel<PanelOptions> = {
         id: 1,
+        type: 'text',
         fieldConfig: ({} as unknown) as FieldConfigSource,
         options: {
           content: `# Title
@@ -64,6 +65,7 @@ describe('textPanelMigrationHandler', () => {
       const mode = ('text' as unknown) as TextMode;
       const panel: PanelModel<PanelOptions> = {
         id: 1,
+        type: 'text',
         fieldConfig: ({} as unknown) as FieldConfigSource,
         options: {
           content: `# Title
