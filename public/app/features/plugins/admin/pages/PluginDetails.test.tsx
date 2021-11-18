@@ -18,6 +18,7 @@ import {
 } from '../types';
 import * as api from '../api';
 import { fetchRemotePlugins } from '../state/actions';
+import { usePluginConfig } from '../hooks/usePluginConfig';
 import { PluginErrorCode, PluginSignatureStatus, PluginType, dateTimeFormatTimeAgo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -27,6 +28,14 @@ jest.mock('@grafana/runtime', () => {
   mockedRuntime.config.buildInfo.version = 'v8.1.0';
   return mockedRuntime;
 });
+
+jest.mock('../hooks/usePluginConfig.tsx', () => ({
+  usePluginConfig: jest.fn(() => ({
+    value: {
+      meta: {},
+    },
+  })),
+}));
 
 const renderPluginDetails = (
   pluginOverride: Partial<CatalogPlugin>,
@@ -65,10 +74,17 @@ const renderPluginDetails = (
 
 describe('Plugin details page', () => {
   const id = 'my-plugin';
+  const originalWindowLocation = window.location;
   let dateNow: any;
 
   beforeAll(() => {
     dateNow = jest.spyOn(Date, 'now').mockImplementation(() => 1609470000000); // 2021-01-01 04:00:00
+
+    // Enabling / disabling the plugin is currently reloading the page to propagate the changes
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { reload: jest.fn() },
+    });
   });
 
   afterEach(() => {
@@ -79,6 +95,7 @@ describe('Plugin details page', () => {
 
   afterAll(() => {
     dateNow.mockRestore();
+    Object.defineProperty(window, 'location', { configurable: true, value: originalWindowLocation });
   });
 
   describe('viewed as user with grafana admin permissions', () => {
@@ -442,7 +459,7 @@ describe('Plugin details page', () => {
       expect(rendered.getByText(message)).toBeInTheDocument();
     });
 
-    it('should display post installation step for installed data source plugins', async () => {
+    it('should display a "Create" button as a post installation step for installed data source plugins', async () => {
       const name = 'Akumuli';
       const { queryByText } = renderPluginDetails({
         name,
@@ -454,7 +471,7 @@ describe('Plugin details page', () => {
       expect(queryByText(`Create a ${name} data source`)).toBeInTheDocument();
     });
 
-    it('should not display post installation step for disabled data source plugins', async () => {
+    it('should not display a "Create" button as a post installation step for disabled data source plugins', async () => {
       const name = 'Akumuli';
       const { queryByText } = renderPluginDetails({
         name,
@@ -479,16 +496,136 @@ describe('Plugin details page', () => {
       expect(queryByText(`Create a ${name} data source`)).toBeNull();
     });
 
-    it('should not display post installation step for app plugins', async () => {
+    it('should display an enable button for app plugins that are not enabled as a post installation step', async () => {
       const name = 'Akumuli';
-      const { queryByText } = renderPluginDetails({
+
+      // @ts-ignore
+      usePluginConfig.mockReturnValue({
+        value: {
+          meta: {
+            enabled: false,
+            pinned: false,
+            jsonData: {},
+          },
+        },
+      });
+
+      const { queryByText, queryByRole } = renderPluginDetails({
         name,
         isInstalled: true,
         type: PluginType.app,
       });
 
       await waitFor(() => queryByText('Uninstall'));
-      expect(queryByText(`Create a ${name} data source`)).toBeNull();
+
+      expect(queryByRole('button', { name: /enable/i })).toBeInTheDocument();
+      expect(queryByRole('button', { name: /disable/i })).not.toBeInTheDocument();
+    });
+
+    it('should display a disable button for app plugins that are enabled as a post installation step', async () => {
+      const name = 'Akumuli';
+
+      // @ts-ignore
+      usePluginConfig.mockReturnValue({
+        value: {
+          meta: {
+            enabled: true,
+            pinned: false,
+            jsonData: {},
+          },
+        },
+      });
+
+      const { queryByText, queryByRole } = renderPluginDetails({
+        name,
+        isInstalled: true,
+        type: PluginType.app,
+      });
+
+      await waitFor(() => queryByText('Uninstall'));
+
+      expect(queryByRole('button', { name: /disable/i })).toBeInTheDocument();
+      expect(queryByRole('button', { name: /enable/i })).not.toBeInTheDocument();
+    });
+
+    it('should be possible to enable an app plugin', async () => {
+      const id = 'akumuli-datasource';
+      const name = 'Akumuli';
+
+      // @ts-ignore
+      api.updatePluginSettings = jest.fn();
+
+      // @ts-ignore
+      usePluginConfig.mockReturnValue({
+        value: {
+          meta: {
+            enabled: false,
+            pinned: false,
+            jsonData: {},
+          },
+        },
+      });
+
+      const { queryByText, getByRole } = renderPluginDetails({
+        id,
+        name,
+        isInstalled: true,
+        type: PluginType.app,
+      });
+
+      // Wait for the header to be loaded
+      await waitFor(() => queryByText('Uninstall'));
+
+      // Click on "Enable"
+      userEvent.click(getByRole('button', { name: /enable/i }));
+
+      // Check if the API request was initiated
+      expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
+      expect(api.updatePluginSettings).toHaveBeenCalledWith(id, {
+        enabled: true,
+        pinned: true,
+        jsonData: {},
+      });
+    });
+
+    it('should be possible to disable an app plugin', async () => {
+      const id = 'akumuli-datasource';
+      const name = 'Akumuli';
+
+      // @ts-ignore
+      api.updatePluginSettings = jest.fn();
+
+      // @ts-ignore
+      usePluginConfig.mockReturnValue({
+        value: {
+          meta: {
+            enabled: true,
+            pinned: true,
+            jsonData: {},
+          },
+        },
+      });
+
+      const { queryByText, getByRole } = renderPluginDetails({
+        id,
+        name,
+        isInstalled: true,
+        type: PluginType.app,
+      });
+
+      // Wait for the header to be loaded
+      await waitFor(() => queryByText('Uninstall'));
+
+      // Click on "Disable"
+      userEvent.click(getByRole('button', { name: /disable/i }));
+
+      // Check if the API request was initiated
+      expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
+      expect(api.updatePluginSettings).toHaveBeenCalledWith(id, {
+        enabled: false,
+        pinned: false,
+        jsonData: {},
+      });
     });
 
     it('should not display versions tab for plugins not published to gcom', async () => {

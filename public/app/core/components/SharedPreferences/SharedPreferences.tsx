@@ -24,6 +24,7 @@ import { PreferencesService } from 'app/core/services/PreferencesService';
 
 export interface Props {
   resourceUri: string;
+  disabled?: boolean;
 }
 
 export interface State {
@@ -126,13 +127,14 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   render() {
     const { theme, timezone, weekStart, homeDashboardId, dashboards } = this.state;
+    const { disabled } = this.props;
     const styles = getStyles();
 
     return (
       <Form onSubmit={this.onSubmitForm}>
         {() => {
           return (
-            <FieldSet label="Preferences">
+            <FieldSet label="Preferences" disabled={disabled}>
               <Field label="UI Theme">
                 <RadioButtonGroup
                   options={themes}
