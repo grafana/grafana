@@ -2,7 +2,7 @@ import React, { FC, useCallback } from 'react';
 import { StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { ComparisonOperation, FeatureStyleConfig } from '../types';
 import { Button } from '@grafana/ui';
-import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonMapper';
+import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
 import { StyleRuleEditor, StyleRuleEditorSettings } from './StyleRuleEditor';
 
 export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[], any, any>> = (props) => {
@@ -41,7 +41,7 @@ export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[]
           onChange={onRuleChange(idx)}
           context={context}
           item={itemSettings}
-          key={`${idx}-${style.rule}`}
+          key={`${idx}-${style.check?.property}`}
         />
       );
     });

@@ -1,6 +1,16 @@
 import React, { FC } from 'react';
 import { StandardEditorProps } from '@grafana/data';
-import { Field, HorizontalGroup, NumberValueEditor, RadioButtonGroup, SliderValueEditor } from '@grafana/ui';
+import {
+  ColorPicker,
+  Field,
+  HorizontalGroup,
+  InlineField,
+  InlineFieldRow,
+  InlineLabel,
+  NumberValueEditor,
+  RadioButtonGroup,
+  SliderValueEditor,
+} from '@grafana/ui';
 
 import {
   ColorDimensionEditor,
@@ -17,8 +27,18 @@ import {
   defaultTextConfig,
 } from 'app/features/dimensions/types';
 import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
+import { styleUsesText } from '../../style/utils';
 
-export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ value, context, onChange }) => {
+export interface StyleEditorOptions {
+  simpleFixedValues?: boolean;
+}
+
+export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions, any>> = ({
+  value,
+  context,
+  onChange,
+  item,
+}) => {
   const onSizeChange = (sizeValue: ScaleDimensionConfig | undefined) => {
     onChange({ ...value, size: sizeValue });
   };
@@ -59,7 +79,45 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ va
     onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline as TextBaseline } });
   };
 
-  const hasTextLabel = Boolean(value.text?.fixed || value.text?.field);
+  // Simple fixed value display
+  if (item.settings?.simpleFixedValues) {
+    return (
+      <>
+        <InlineFieldRow>
+          <InlineField label="Color" labelWidth={10}>
+            <InlineLabel width={4}>
+              <ColorPicker
+                color={value.color?.fixed ?? defaultStyleConfig.color.fixed}
+                onChange={(v) => {
+                  onColorChange({ fixed: v });
+                }}
+              />
+            </InlineLabel>
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Opacity" labelWidth={10} grow={true}>
+            <SliderValueEditor
+              value={value.opacity ?? defaultStyleConfig.opacity}
+              context={context}
+              onChange={onOpacityChange}
+              item={
+                {
+                  settings: {
+                    min: 0,
+                    max: 1,
+                    step: 0.1,
+                  },
+                } as any
+              }
+            />
+          </InlineField>
+        </InlineFieldRow>
+      </>
+    );
+  }
+
+  const hasTextLabel = styleUsesText(value);
 
   return (
     <>
@@ -128,7 +186,8 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, any, any>> = ({ va
           item={{} as any}
         />
       </Field>
-      {(value.text?.fixed || value.text?.field) && (
+
+      {hasTextLabel && (
         <>
           <HorizontalGroup>
             <Field label={'Font size'}>
