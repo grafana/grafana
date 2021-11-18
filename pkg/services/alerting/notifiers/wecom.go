@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
-	"net/url"
 )
 
 func init() {
@@ -29,7 +30,7 @@ func init() {
 				Secure:       true,
 				Required:     true,
 			},
-    	},
+		},
 	})
 }
 
@@ -38,16 +39,16 @@ func NewWeComNotifier(model *models.AlertNotification, fn alerting.GetDecryptedV
 	urlStr := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString(), setting.SecretKey)
 	webhookURL, err := url.Parse(urlStr)
 	if err != nil {
-	  return nil, fmt.Errorf("invalid URL %q: %w", urlStr, err)
+		return nil, fmt.Errorf("invalid URL %q: %w", urlStr, err)
 	}
 	if webhookURL.String() == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
 	return &WeComNotifier{
-		NotifierBase:      NewNotifierBase(model),
-		URL:               webhookURL.String(),
-		log:               log.New("alerting.notifier.wecom"),
+		NotifierBase: NewNotifierBase(model),
+		URL:          webhookURL.String(),
+		log:          log.New("alerting.notifier.wecom"),
 	}, nil
 }
 
@@ -78,7 +79,6 @@ func (w *WeComNotifier) Notify(evalContext *alerting.EvalContext) error {
 		w.log.Error("Failed to send WeCom", "error", err, "wecom", w.Name)
 		return err
 	}
-
 
 	return nil
 }
