@@ -32,7 +32,7 @@ func (p *flatResourcePermission) Managed() bool {
 	return strings.HasPrefix(p.RoleName, "managed:")
 }
 
-func (s *AccessControlStore) SetUserResourcePermission(ctx context.Context, orgID, userID int64, cmd accesscontrol.SetResourcePermissionsCommand) (*accesscontrol.ResourcePermission, error) {
+func (s *AccessControlStore) SetUserResourcePermission(ctx context.Context, orgID, userID int64, cmd accesscontrol.SetResourcePermissionCommand) (*accesscontrol.ResourcePermission, error) {
 	if userID == 0 {
 		return nil, models.ErrUserNotFound
 	}
@@ -54,7 +54,7 @@ func (s *AccessControlStore) SetUserResourcePermission(ctx context.Context, orgI
 	return permission, nil
 }
 
-func (s *AccessControlStore) SetTeamResourcePermission(ctx context.Context, orgID, teamID int64, cmd accesscontrol.SetResourcePermissionsCommand) (*accesscontrol.ResourcePermission, error) {
+func (s *AccessControlStore) SetTeamResourcePermission(ctx context.Context, orgID, teamID int64, cmd accesscontrol.SetResourcePermissionCommand) (*accesscontrol.ResourcePermission, error) {
 	if teamID == 0 {
 		return nil, models.ErrTeamNotFound
 	}
@@ -77,7 +77,7 @@ func (s *AccessControlStore) SetTeamResourcePermission(ctx context.Context, orgI
 	return permission, nil
 }
 
-func (s *AccessControlStore) SetBuiltinResourcePermission(ctx context.Context, orgID int64, builtinRole string, cmd accesscontrol.SetResourcePermissionsCommand) (*accesscontrol.ResourcePermission, error) {
+func (s *AccessControlStore) SetBuiltinResourcePermission(ctx context.Context, orgID int64, builtinRole string, cmd accesscontrol.SetResourcePermissionCommand) (*accesscontrol.ResourcePermission, error) {
 	if !models.RoleType(builtinRole).IsValid() || builtinRole == accesscontrol.RoleGrafanaAdmin {
 		return nil, fmt.Errorf("invalid role: %s", builtinRole)
 	}
@@ -100,7 +100,7 @@ func (s *AccessControlStore) SetBuiltinResourcePermission(ctx context.Context, o
 type roleAdder func(roleID int64) error
 
 func (s *AccessControlStore) setResourcePermission(
-	sess *sqlstore.DBSession, orgID int64, roleName string, adder roleAdder, cmd accesscontrol.SetResourcePermissionsCommand,
+	sess *sqlstore.DBSession, orgID int64, roleName string, adder roleAdder, cmd accesscontrol.SetResourcePermissionCommand,
 ) (*accesscontrol.ResourcePermission, error) {
 	role, err := s.getOrCreateManagedRole(sess, orgID, roleName, adder)
 	if err != nil {

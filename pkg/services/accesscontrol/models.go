@@ -231,17 +231,10 @@ func (p *ResourcePermission) Match(targetActions []string) bool {
 	return true
 }
 
-type SetResourcePermissionsCommand struct {
+type SetResourcePermissionCommand struct {
 	Actions    []string
 	Resource   string
 	ResourceID string
-}
-
-type RemoveResourcePermissionCommand struct {
-	Resource     string
-	Actions      []string
-	ResourceID   string
-	PermissionID int64
 }
 
 type GetResourcesPermissionsQuery struct {

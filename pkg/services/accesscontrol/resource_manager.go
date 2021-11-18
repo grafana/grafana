@@ -51,7 +51,7 @@ func (r *ResourceManager) SetUserPermission(ctx context.Context, orgID int64, re
 		return nil, fmt.Errorf("invalid actions: %s", actions)
 	}
 
-	return r.store.SetUserResourcePermission(ctx, orgID, userID, SetResourcePermissionsCommand{
+	return r.store.SetUserResourcePermission(ctx, orgID, userID, SetResourcePermissionCommand{
 		Actions:    actions,
 		Resource:   r.resource,
 		ResourceID: resourceID,
@@ -63,7 +63,7 @@ func (r *ResourceManager) SetTeamPermission(ctx context.Context, orgID int64, re
 		return nil, fmt.Errorf("invalid action: %s", actions)
 	}
 
-	return r.store.SetTeamResourcePermission(ctx, orgID, teamID, SetResourcePermissionsCommand{
+	return r.store.SetTeamResourcePermission(ctx, orgID, teamID, SetResourcePermissionCommand{
 		Actions:    actions,
 		Resource:   r.resource,
 		ResourceID: resourceID,
@@ -75,7 +75,7 @@ func (r *ResourceManager) SetBuiltinRolePermission(ctx context.Context, orgID in
 		return nil, fmt.Errorf("invalid action: %s", actions)
 	}
 
-	return r.store.SetBuiltinResourcePermission(ctx, orgID, builtinRole, SetResourcePermissionsCommand{
+	return r.store.SetBuiltinResourcePermission(ctx, orgID, builtinRole, SetResourcePermissionCommand{
 		Actions:    actions,
 		Resource:   r.resource,
 		ResourceID: resourceID,

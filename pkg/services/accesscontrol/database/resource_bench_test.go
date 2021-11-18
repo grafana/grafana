@@ -94,7 +94,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 				context.Background(),
 				accesscontrol.GlobalOrgID,
 				userIds[i],
-				accesscontrol.SetResourcePermissionsCommand{
+				accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{dsAction},
 					Resource:   dsResource,
 					ResourceID: strconv.Itoa(int(dsID)),
@@ -110,7 +110,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 				context.Background(),
 				accesscontrol.GlobalOrgID,
 				teamIds[i],
-				accesscontrol.SetResourcePermissionsCommand{
+				accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{"datasources:query"},
 					Resource:   "datasources",
 					ResourceID: strconv.Itoa(int(dsID)),
