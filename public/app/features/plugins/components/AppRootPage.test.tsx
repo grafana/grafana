@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import React, { Component } from 'react';
 import AppRootPage from './AppRootPage';
-import { getPluginSettings } from './PluginSettingsCache';
+import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
 import { getMockPlugin } from '../__mocks__/pluginMocks';
 import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';

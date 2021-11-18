@@ -1,5 +1,5 @@
 import { GrafanaPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
-import { getPluginSettings } from './components/PluginSettingsCache';
+import { getPluginSettings } from './pluginSettings';
 import { importAppPlugin, importDataSourcePlugin } from './plugin_loader';
 import { importPanelPluginFromMeta } from './importPanelPlugin';
 
