@@ -19,10 +19,7 @@ const getOrgs = async () => {
 };
 
 const getErrorMessage = (error: any) => {
-  if (error?.data?.message) {
-    return error.data.message;
-  }
-  return 'An unexpected error happened.';
+  return error?.data?.message || 'An unexpected error happened.';
 };
 
 export const AdminListOrgsPages: FC = () => {
