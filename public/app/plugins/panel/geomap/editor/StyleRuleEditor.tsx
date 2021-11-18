@@ -20,6 +20,7 @@ export interface StyleRuleEditorSettings {
 
 const comparators = [
   { label: '==', value: ComparisonOperation.EQ },
+  { label: '!=', value: ComparisonOperation.NEQ },
   { label: '>', value: ComparisonOperation.GT },
   { label: '>=', value: ComparisonOperation.GTE },
   { label: '<', value: ComparisonOperation.LT },
@@ -156,7 +157,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
         </InlineField>
         <InlineField className={styles.inline} grow={true}>
           <>
-            {check.operation === ComparisonOperation.EQ && (
+            {(check.operation === ComparisonOperation.EQ || check.operation === ComparisonOperation.NEQ) && (
               <Select
                 menuShouldPortal
                 placeholder={'value'}
