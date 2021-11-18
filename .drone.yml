@@ -830,12 +830,6 @@ steps:
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
-  - ./bin/grabpl verify-drone
-  depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
-- commands:
   - |-
     echo -e "unknwon
     referer
@@ -1219,12 +1213,6 @@ steps:
   - grabpl
   image: grafana/build-container:1.4.5
   name: initialize
-- commands:
-  - ./bin/grabpl verify-drone
-  depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
 - commands:
   - |-
     echo -e "unknwon
@@ -1787,12 +1775,6 @@ steps:
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
-  - ./bin/grabpl verify-drone
-  depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
-- commands:
   - |-
     echo -e "unknwon
     referer
@@ -2165,12 +2147,6 @@ steps:
   - grabpl
   image: grafana/build-container:1.4.5
   name: initialize
-- commands:
-  - ./bin/grabpl verify-drone
-  depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
 - commands:
   - |-
     echo -e "unknwon
@@ -2730,12 +2706,6 @@ steps:
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
-  - ./bin/grabpl verify-drone
-  depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
-- commands:
   - |-
     echo -e "unknwon
     referer
@@ -3080,12 +3050,6 @@ steps:
   - grabpl
   image: grafana/build-container:1.4.5
   name: initialize
-- commands:
-  - ./bin/grabpl verify-drone
-  depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
 - commands:
   - |-
     echo -e "unknwon
@@ -3582,6 +3546,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: b7bd92dbb29abce13354763502ec83aeb6ad6a190193d4d6ac122753b533ceee
+hmac: e3031b1f6977cc403c3d24244d8d149b8bc258e74d75c8735c31232d43109ebf
 
 ...
