@@ -98,7 +98,8 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("Should get property map from command line args array", func(t *testing.T) {
-		props := getCommandLineProperties([]string{"cfg:test=value", "cfg:map.test=1"})
+		cfg := NewCfg()
+		props := cfg.getCommandLineProperties([]string{"cfg:test=value", "cfg:map.test=1"})
 
 		require.Equal(t, 2, len(props))
 		require.Equal(t, "value", props["test"])
@@ -313,11 +314,12 @@ func TestParseAppURLAndSubURL(t *testing.T) {
 
 	for _, tc := range testCases {
 		f := ini.Empty()
+		cfg := NewCfg()
 		s, err := f.NewSection("server")
 		require.NoError(t, err)
 		_, err = s.NewKey("root_url", tc.rootURL)
 		require.NoError(t, err)
-		appURL, appSubURL, err := parseAppUrlAndSubUrl(s)
+		appURL, appSubURL, err := cfg.parseAppUrlAndSubUrl(s)
 		require.NoError(t, err)
 		require.Equal(t, tc.expectedAppURL, appURL)
 		require.Equal(t, tc.expectedAppSubURL, appSubURL)

@@ -55,8 +55,38 @@ export function useAsyncState<T>(asyncFn: () => Promise<T>, setError: Function, 
   return finalValue;
 }
 
-export const useSubscriptions: DataHook = (query, datasource, onChange, setError) => {
+export const updateSubscriptions = (
+  query: AzureMonitorQuery,
+  subscriptionOptions: AzureMonitorOption[],
+  onChange: OnChangeFn,
+  defaultSubscription?: string
+) => {
   const { subscription } = query;
+
+  // Return early if subscriptions havent loaded, or if the query already has a subscription
+  if (!subscriptionOptions.length || (subscription && hasOption(subscriptionOptions, subscription))) {
+    return;
+  }
+
+  const defaultSub = defaultSubscription || subscriptionOptions[0].value;
+
+  if (!subscription && defaultSub && hasOption(subscriptionOptions, defaultSub)) {
+    onChange(setSubscriptionID(query, defaultSub));
+  }
+
+  // Check if the current subscription is in the list of subscriptions
+  if (subscription && !hasOption(subscriptionOptions, subscription)) {
+    if (hasOption(subscriptionOptions, defaultSub)) {
+      // Use the default sub if is on theh list
+      onChange(setSubscriptionID(query, defaultSub));
+    } else {
+      // Neither the current subscription nor the defaultSub is on the list, remove it
+      onChange(setSubscriptionID(query, ''));
+    }
+  }
+};
+
+export const useSubscriptions: DataHook = (query, datasource, onChange, setError) => {
   const defaultSubscription = datasource.azureMonitorDatasource.defaultSubscriptionId;
 
   const subscriptionOptions = useAsyncState(
@@ -69,17 +99,8 @@ export const useSubscriptions: DataHook = (query, datasource, onChange, setError
   );
 
   useEffect(() => {
-    // Return early if subscriptions havent loaded, or if the query already has a subscription
-    if (!subscriptionOptions.length || (subscription && hasOption(subscriptionOptions, subscription))) {
-      return;
-    }
-
-    const defaultSub = defaultSubscription || subscriptionOptions[0].value;
-
-    if (!subscription && defaultSub && hasOption(subscriptionOptions, defaultSub)) {
-      onChange(setSubscriptionID(query, defaultSub));
-    }
-  }, [subscriptionOptions, query, subscription, defaultSubscription, onChange]);
+    updateSubscriptions(query, subscriptionOptions, onChange, defaultSubscription);
+  }, [subscriptionOptions, query, defaultSubscription, onChange]);
 
   return subscriptionOptions;
 };

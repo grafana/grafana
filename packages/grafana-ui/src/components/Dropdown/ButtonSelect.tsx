@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
+import { FocusScope } from '@react-aria/focus';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
@@ -37,6 +38,13 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
     setIsOpen(!isOpen);
   };
 
+  const onArrowKeyDown = (event: React.KeyboardEvent) => {
+    event.stopPropagation();
+    if (event.key === 'ArrowDown' || event.key === 'Enter') {
+      setIsOpen(!isOpen);
+    }
+  };
+
   const onChangeInternal = (item: SelectableValue<T>) => {
     onChange(item);
     setIsOpen(false);
@@ -48,6 +56,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
         className={className}
         isOpen={isOpen}
         onClick={onToggle}
+        onKeyDown={onArrowKeyDown}
         narrow={narrow}
         variant={variant}
         {...restProps}
@@ -56,17 +65,22 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
       </ToolbarButton>
       {isOpen && (
         <div className={styles.menuWrapper}>
-          <ClickOutsideWrapper onClick={onCloseMenu} parent={document}>
-            <Menu>
-              {options.map((item) => (
-                <MenuItem
-                  key={`${item.value}`}
-                  label={(item.label || item.value) as string}
-                  onClick={() => onChangeInternal(item)}
-                  active={item.value === value?.value}
-                />
-              ))}
-            </Menu>
+          <ClickOutsideWrapper onClick={onCloseMenu} parent={document} includeButtonPress={false}>
+            <FocusScope contain autoFocus restoreFocus>
+              <Menu onClose={onCloseMenu}>
+                {options.map((item) => (
+                  <MenuItem
+                    key={`${item.value}`}
+                    label={(item.label || item.value) as string}
+                    onClick={() => onChangeInternal(item)}
+                    active={item.value === value?.value}
+                    ariaChecked={item.value === value?.value}
+                    ariaLabel={item.ariaLabel || item.label}
+                    role="menuitemradio"
+                  />
+                ))}
+              </Menu>
+            </FocusScope>
           </ClickOutsideWrapper>
         </div>
       )}

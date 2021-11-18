@@ -105,7 +105,7 @@ For more advanced time settings, click the **Dashboard settings** (gear) icon at
   - **Local browser time -** The time zone configured for the viewing user browser is used. This is usually the same time zone as set on the computer.
   - Standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), including UTC.
 - **Auto-refresh -** Customize the options displayed for relative time and the auto-refresh options. Entries are comma separated and accept any valid time unit.
-- **Now delay now- -** Override the `now` value by entering a time delay. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
+- **Now delay -** Override the `now` time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 - **Hide time picker -** Select this option if you do not want Grafana to display the time picker.
 
 ## Panel time overrides and timeshift

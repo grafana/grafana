@@ -6,7 +6,7 @@ import { createHtmlPortalNode, InPortal, OutPortal, HtmlPortalNode } from 'react
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
-import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/nav_model_srv';
+import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { appEvents } from 'app/core/core';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -48,6 +48,7 @@ class AppRootPage extends Component<Props, State> {
   shouldComponentUpdate(nextProps: Props) {
     return nextProps.location.pathname.startsWith('/a/');
   }
+
   async loadPluginSettings() {
     const { params } = this.props.match;
     try {

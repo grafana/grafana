@@ -36,7 +36,7 @@ describe('MetricSelect', () => {
       const wrapper = shallow(<MetricSelect {...props} />);
       const select = wrapper.find(Select);
 
-      select.props().onChange({ value: 'foo' });
+      select.props().onChange({ value: 'foo' }, { action: 'select-option', option: undefined });
 
       expect(select.props().noOptionsMessage).toBeDefined();
 

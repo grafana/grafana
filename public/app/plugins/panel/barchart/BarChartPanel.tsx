@@ -23,10 +23,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return options.orientation;
   }, [width, height, options.orientation]);
 
-  const valueMaxLength = useMemo(() => {
+  const xTickLabelMaxLength = useMemo(() => {
     // If no max length is set, limit the number of characters to a length where it will use a maximum of half of the height of the viz.
-    if (!options.valueMaxLength) {
-      const rotationAngle = options.valueRotation;
+    if (!options.xTickLabelMaxLength) {
+      const rotationAngle = options.xTickLabelRotation;
       const textSize = measureText('M', UPLOT_AXIS_FONT_SIZE).width; // M is usually the widest character so let's use that as an aproximation.
       const maxHeightForValues = height / 2;
 
@@ -36,9 +36,9 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
         3 //Subtract 3 for the "..." added to the end.
       );
     } else {
-      return options.valueMaxLength;
+      return options.xTickLabelMaxLength;
     }
-  }, [height, options.valueRotation, options.valueMaxLength]);
+  }, [height, options.xTickLabelRotation, options.xTickLabelMaxLength]);
 
   // Force 'multi' tooltip setting or stacking mode
   const tooltip = useMemo(() => {
@@ -66,7 +66,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       height={height}
       {...options}
       orientation={orientation}
-      valueMaxLength={valueMaxLength}
+      xTickLabelMaxLength={xTickLabelMaxLength}
     >
       {(config, alignedFrame) => {
         return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;

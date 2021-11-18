@@ -71,9 +71,9 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			if err != nil {
 				plog.Error("Range query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-			} else {
-				response[RangeQueryType] = rangeResponse
+				continue
 			}
+			response[RangeQueryType] = rangeResponse
 		}
 
 		if query.InstantQuery {
@@ -81,16 +81,17 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			if err != nil {
 				plog.Error("Instant query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-			} else {
-				response[InstantQueryType] = instantResponse
+				continue
 			}
+			response[InstantQueryType] = instantResponse
 		}
 
+		// This is a special case
+		// If exemplar query returns error, we want to only log it and continue with other results processing
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
 				plog.Error("Exemplar query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 			} else {
 				response[ExemplarQueryType] = exemplarResponse
 			}
@@ -194,6 +195,12 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 			rangeQuery = true
 		}
 
+		// We never want to run exemplar query for alerting
+		exemplarQuery := model.ExemplarQuery
+		if queryContext.Headers["FromAlert"] == "true" {
+			exemplarQuery = false
+		}
+
 		qs = append(qs, &PrometheusQuery{
 			Expr:          expr,
 			Step:          interval,
@@ -203,7 +210,7 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 			RefId:         query.RefID,
 			InstantQuery:  model.InstantQuery,
 			RangeQuery:    rangeQuery,
-			ExemplarQuery: model.ExemplarQuery,
+			ExemplarQuery: exemplarQuery,
 			UtcOffsetSec:  model.UtcOffsetSec,
 		})
 	}

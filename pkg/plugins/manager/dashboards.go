@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -12,8 +13,8 @@ import (
 )
 
 func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
-	plugin := m.Plugin(pluginID)
-	if plugin == nil {
+	plugin, exists := m.Plugin(context.TODO(), pluginID)
+	if !exists {
 		return nil, plugins.NotFoundError{PluginID: pluginID}
 	}
 
@@ -72,8 +73,8 @@ func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*pl
 }
 
 func (m *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error) {
-	plugin := m.Plugin(pluginID)
-	if plugin == nil {
+	plugin, exists := m.Plugin(context.TODO(), pluginID)
+	if !exists {
 		return nil, plugins.NotFoundError{PluginID: pluginID}
 	}
 
@@ -101,7 +102,7 @@ func (m *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dash
 	return models.NewDashboardFromJson(data), nil
 }
 
-func (m *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
+func (m *PluginManager) ImportDashboard(ctx context.Context, pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 	overwrite bool, inputs []plugins.ImportDashboardInput, user *models.SignedInUser) (plugins.PluginDashboardInfoDTO,
 	*models.Dashboard, error) {
 	var dashboard *models.Dashboard
@@ -140,7 +141,7 @@ func (m *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID i
 		User:      user,
 	}
 
-	savedDash, err := dashboards.NewService(m.sqlStore).ImportDashboard(dto)
+	savedDash, err := dashboards.NewService(m.sqlStore).ImportDashboard(ctx, dto)
 	if err != nil {
 		return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, err
 	}

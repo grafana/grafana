@@ -13,6 +13,7 @@ var config = {
       url: '${HOST}/login',
       wait: 500,
       rootElement: '.main-view',
+      threshold: 12,
     },
     {
       url: '${HOST}/login',
@@ -24,37 +25,39 @@ var config = {
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
-      threshold: 1,
+      threshold: 13,
       rootElement: '.main-view',
     },
     {
       url: '${HOST}/?orgId=1',
       wait: 500,
-      threshold: 7,
+      threshold: 0,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 2,
+      threshold: 0,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 10,
+      threshold: 0,
     },
     {
       url: '${HOST}/?orgId=1&search=open',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 14,
+      threshold: 0,
     },
     {
       url: '${HOST}/alerting/list',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 6,
+      // the unified alerting promotion alert's content contrast is too low
+      // see https://github.com/grafana/grafana/pull/41829
+      threshold: 5,
     },
     {
       url: '${HOST}/datasources',
@@ -66,13 +69,13 @@ var config = {
       url: '${HOST}/org/users',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 3,
+      threshold: 0,
     },
     {
       url: '${HOST}/org/teams',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 1,
+      threshold: 0,
     },
     {
       url: '${HOST}/plugins',
@@ -84,19 +87,19 @@ var config = {
       url: '${HOST}/org',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 2,
+      threshold: 0,
     },
     {
       url: '${HOST}/org/apikeys',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 3,
+      threshold: 0,
     },
     {
       url: '${HOST}/dashboards',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 7,
+      threshold: 0,
     },
   ],
 };
