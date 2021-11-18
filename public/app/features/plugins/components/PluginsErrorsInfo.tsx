@@ -5,7 +5,7 @@ import { useGetErrors, useFetchStatus } from '../admin/state/hooks';
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { css } from '@emotion/css';
 
-export const PluginsErrorsInfo: React.FC = ({ children }) => {
+export function PluginsErrorsInfo({ children }): React.ReactElement | null {
   const errors = useGetErrors();
   const { isLoading } = useFetchStatus();
   const theme = useTheme();
@@ -54,7 +54,7 @@ export const PluginsErrorsInfo: React.FC = ({ children }) => {
       </div>
     </InfoBox>
   );
-};
+}
 
 function mapPluginErrorCodeToSignatureStatus(code: PluginErrorCode) {
   switch (code) {
