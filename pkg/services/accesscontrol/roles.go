@@ -16,10 +16,11 @@ type RoleRegistry interface {
 // Roles definition
 var (
 	datasourcesExplorerRole = RoleDTO{
-		Version:     2,
+		Version:     3,
 		Name:        datasourcesExplorer,
 		DisplayName: "Data source explorer",
 		Description: "Enable the Explore feature. Data source permissions still apply; you can only query data sources for which you have query permissions.",
+		Group:       "Data sources",
 		Permissions: []Permission{
 			{
 				Action: ActionDatasourcesExplore,
@@ -31,7 +32,8 @@ var (
 		Name:        ldapReader,
 		DisplayName: "LDAP reader",
 		Description: "Read LDAP configuration and status.",
-		Version:     2,
+		Group:       "LDAP",
+		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionLDAPUsersRead,
@@ -46,7 +48,8 @@ var (
 		Name:        ldapWriter,
 		DisplayName: "LDAP writer",
 		Description: "Read and update LDAP configuration and read LDAP status.",
-		Version:     3,
+		Group:       "LDAP",
+		Version:     4,
 		Permissions: ConcatPermissions(ldapReaderRole.Permissions, []Permission{
 			{
 				Action: ActionLDAPUsersSync,
@@ -61,7 +64,8 @@ var (
 		Name:        orgUsersWriter,
 		DisplayName: "Organization user writer",
 		Description: "Within a single organization, add a user, invite a user, read information about a user and their role, remove a user from that organization, or change the role of a user.",
-		Version:     2,
+		Group:       "User administration (organizational)",
+		Version:     3,
 		Permissions: ConcatPermissions(orgUsersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionOrgUsersAdd,
@@ -82,7 +86,8 @@ var (
 		Name:        orgUsersReader,
 		DisplayName: "Organization user reader",
 		Description: "Read users within a single organization.",
-		Version:     2,
+		Group:       "User administration (organizational)",
+		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionOrgUsersRead,
@@ -92,9 +97,10 @@ var (
 	}
 
 	settingsReaderRole = RoleDTO{
-		Version:     3,
+		Version:     4,
 		DisplayName: "Setting reader",
 		Description: "Read Grafana instance settings.",
+		Group:       "Settings",
 		Name:        settingsReader,
 		Permissions: []Permission{
 			{
@@ -105,10 +111,11 @@ var (
 	}
 
 	statsReaderRole = RoleDTO{
-		Version:     2,
+		Version:     3,
 		Name:        statsReader,
 		DisplayName: "Statistics reader",
 		Description: "Read Grafana instance statistics.",
+		Group:       "Statistics",
 		Permissions: []Permission{
 			{
 				Action: ActionServerStatsRead,
@@ -120,7 +127,8 @@ var (
 		Name:        usersReader,
 		DisplayName: "User reader",
 		Description: "Read all users and their information, such as team memberships, authentication tokens, and quotas.",
-		Version:     2,
+		Group:       "User administration (global)",
+		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionUsersRead,
@@ -145,7 +153,8 @@ var (
 		Name:        usersWriter,
 		DisplayName: "User writer",
 		Description: "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
-		Version:     2,
+		Group:       "User administration (global)",
+		Version:     3,
 		Permissions: ConcatPermissions(usersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionUsersPasswordUpdate,

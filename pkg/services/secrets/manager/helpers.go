@@ -3,14 +3,12 @@ package manager
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
-
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"gopkg.in/ini.v1"
 )
 
