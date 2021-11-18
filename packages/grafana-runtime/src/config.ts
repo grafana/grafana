@@ -84,6 +84,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
+  pluginCatalogHiddenPlugins: string[] = [];
   expressionsEnabled = false;
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
@@ -99,6 +100,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   unifiedAlertingEnabled = false;
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
+  recordedQueries = {
+    enabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

@@ -231,13 +231,17 @@ export function getAllAffectedPanelIdsForVariableChange(
   variables: VariableModel[],
   panels: PanelModel[]
 ): number[] {
-  let affectedPanelIds: number[] = getAffectedPanelIdsForVariable(variableId, panels);
-  const affectedPanelIdsForAllVariables = getAffectedPanelIdsForVariable(DataLinkBuiltInVars.includeVars, panels);
+  const flattenedPanels = flattenPanels(panels);
+  let affectedPanelIds: number[] = getAffectedPanelIdsForVariable(variableId, flattenedPanels);
+  const affectedPanelIdsForAllVariables = getAffectedPanelIdsForVariable(
+    DataLinkBuiltInVars.includeVars,
+    flattenedPanels
+  );
   affectedPanelIds = [...new Set([...affectedPanelIdsForAllVariables, ...affectedPanelIds])];
 
   const dependencies = getDependenciesForVariable(variableId, variables, new Set());
   for (const dependency of dependencies) {
-    const affectedPanelIdsForDependency = getAffectedPanelIdsForVariable(dependency, panels);
+    const affectedPanelIdsForDependency = getAffectedPanelIdsForVariable(dependency, flattenedPanels);
     affectedPanelIds = [...new Set([...affectedPanelIdsForDependency, ...affectedPanelIds])];
   }
 
@@ -375,3 +379,16 @@ export const getVariableUsages = (variableId: string, usages: VariableUsageTree[
 
   return countLeaves(usage.tree);
 };
+
+export function flattenPanels(panels: PanelModel[]): PanelModel[] {
+  const result: PanelModel[] = [];
+
+  for (const panel of panels) {
+    result.push(panel);
+    if (panel.panels?.length) {
+      result.push(...flattenPanels(panel.panels.map((p: PanelModel) => new PanelModel(p))));
+    }
+  }
+
+  return result;
+}

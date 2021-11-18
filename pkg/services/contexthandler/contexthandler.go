@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -105,8 +106,17 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 		}
 	}
 
-	if targetOrgId := reqContext.QueryInt64("targetOrgId"); targetOrgId != 0 {
-		orgID = targetOrgId
+	queryParameters, err := url.ParseQuery(reqContext.Req.URL.RawQuery)
+	if err != nil {
+		reqContext.Logger.Error("Failed to parse query parameters", "error", err)
+	}
+	if queryParameters.Has("targetOrgId") {
+		targetOrg, err := strconv.ParseInt(queryParameters.Get("targetOrgId"), 10, 64)
+		if err == nil {
+			orgID = targetOrg
+		} else {
+			reqContext.Logger.Error("Invalid target organization ID", "error", err)
+		}
 	}
 
 	// the order in which these are tested are important

@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/kmsproviders"
+	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
@@ -62,6 +64,8 @@ var wireExtsBasicSet = wire.NewSet(
 	acdb.ProvideService,
 	wire.Bind(new(accesscontrol.ResourceStore), new(*acdb.AccessControlStore)),
 	wire.Bind(new(accesscontrol.PermissionsProvider), new(*acdb.AccessControlStore)),
+	osskmsproviders.ProvideService,
+	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
 )
 
 var wireExtsSet = wire.NewSet(
