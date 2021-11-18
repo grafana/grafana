@@ -189,7 +189,7 @@ For general discussions on documentation, you’re welcome to join the `#docs` c
 
 ## Reference: Top five writing tips
 
-While we can't provide a comprehensive style guide to this document, we thought providing a few writing tips to help the writing process.
+While we don't provide a comprehensive style guide in this document, here's a few writing tips to help the writing process.
 
 ### Consider the audience
 
