@@ -268,3 +268,5 @@ replace gopkg.in/macaron.v1 => ./pkg/macaron
 replace github.com/go-macaron/binding => ./pkg/macaron/binding
 
 replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
+
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.116.1-0.20211118100855-44332cc5651c
