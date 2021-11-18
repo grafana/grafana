@@ -2,6 +2,7 @@
 title = "Vault"
 description = ""
 keywords = ["grafana", "vault", "configuration"]
+alias = []
 weight = 1200
 +++
 
