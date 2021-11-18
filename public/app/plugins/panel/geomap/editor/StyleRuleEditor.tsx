@@ -9,12 +9,21 @@ import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
 import { Observable } from 'rxjs';
 import { useObservable } from 'react-use';
 import { FeatureLike } from 'ol/Feature';
+import { getSelectionInfo } from '../utils/selection';
+import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 
 export interface StyleRuleEditorSettings {
-  options: SelectableValue[];
   features: Observable<FeatureLike[]>;
   properties: Observable<SelectableValue[]>;
 }
+
+const comparators = [
+  { label: '==', value: ComparisonOperation.EQ },
+  { label: '>', value: ComparisonOperation.GT },
+  { label: '>=', value: ComparisonOperation.GTE },
+  { label: '<', value: ComparisonOperation.LT },
+  { label: '<=', value: ComparisonOperation.LTE },
+];
 
 export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, any, StyleRuleEditorSettings>> = (
   props
@@ -84,6 +93,19 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
     [onChange, value]
   );
 
+  const onChangeNumericValue = useCallback(
+    (v?: number) => {
+      onChange({
+        ...value,
+        check: {
+          ...value.check!,
+          value: v!,
+        },
+      });
+    },
+    [onChange, value]
+  );
+
   const onChangeStyle = useCallback(
     (style?: StyleConfig) => {
       onChange({ ...value, style });
@@ -96,6 +118,8 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   }, [onChange]);
 
   const check = value.check ?? DEFAULT_STYLE_RULE.check!;
+  const propv = getSelectionInfo(check.property, propertyOptions);
+  const valuev = getSelectionInfo(check.value, uniqueSelectables);
 
   return (
     <div className={styles.rule}>
@@ -104,34 +128,42 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
           <Select
             menuShouldPortal
             placeholder={'Feature property'}
-            value={check.property ?? ''}
+            value={propv.current}
+            options={propv.options}
             onChange={onChangeProperty}
-            options={propertyOptions}
             aria-label={'Feature property'}
-            isClearable={true}
-            allowCustomValue={true}
+            isClearable
+            allowCustomValue
           />
         </InlineField>
-        <InlineField className={styles.inline} grow={true}>
+        <InlineField className={styles.inline}>
           <Select
             menuShouldPortal
-            value={check.operation ?? ComparisonOperation.EQ}
-            options={settings.options}
+            value={comparators.find((v) => v.value === check.operation)}
+            options={comparators}
             onChange={onChangeComparison}
             aria-label={'Comparison operator'}
+            width={6}
           />
         </InlineField>
         <InlineField className={styles.inline} grow={true}>
-          <Select
-            menuShouldPortal
-            placeholder={'value'}
-            value={`${check.value}` ?? ''}
-            options={uniqueSelectables}
-            onChange={onChangeValue}
-            aria-label={'Comparison value'}
-            isClearable={true}
-            allowCustomValue={true}
-          />
+          <>
+            {check.operation === ComparisonOperation.EQ && (
+              <Select
+                menuShouldPortal
+                placeholder={'value'}
+                value={valuev.current}
+                options={valuev.options}
+                onChange={onChangeValue}
+                aria-label={'Comparison value'}
+                isClearable
+                allowCustomValue
+              />
+            )}
+            {check.operation !== ComparisonOperation.EQ && (
+              <NumberInput value={+check.value} onChange={onChangeNumericValue} />
+            )}
+          </>
         </InlineField>
         <Button
           size="md"
