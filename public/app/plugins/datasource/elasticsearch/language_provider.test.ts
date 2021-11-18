@@ -38,7 +38,7 @@ describe('transform abstract query to elasticsearch query', () => {
         { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
       ],
     };
-    const result = instance.importAbstractQuery(abstractQuery);
+    const result = instance.importFromAbstractQuery(abstractQuery);
 
     expect(result).toEqual({
       ...baseLogsQuery,
@@ -50,7 +50,7 @@ describe('transform abstract query to elasticsearch query', () => {
   it('Empty query', () => {
     const instance = new LanguageProvider(dataSource);
     const abstractQuery = { labelMatchers: [], refId: 'foo' };
-    const result = instance.importAbstractQuery(abstractQuery);
+    const result = instance.importFromAbstractQuery(abstractQuery);
 
     expect(result).toEqual({
       ...baseLogsQuery,

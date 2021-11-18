@@ -258,7 +258,7 @@ export const importQueries = (
       importedQueries = queries.map(({ datasource, ...query }) => query);
     } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
       const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
-      importedQueries = await targetDataSource.importAbstractQueries(abstractQueries);
+      importedQueries = await targetDataSource.importFromAbstractQueries(abstractQueries);
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
       importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);

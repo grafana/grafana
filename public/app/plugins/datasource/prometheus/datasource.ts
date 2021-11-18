@@ -174,8 +174,8 @@ export class PrometheusDatasource
     return getBackendSrv().fetch<T>(options);
   }
 
-  async importAbstractQueries(abstractQueries: AbstractQuery[]): Promise<PromQuery[]> {
-    return abstractQueries.map((abstractQuery) => this.languageProvider.importAbstractQuery(abstractQuery));
+  async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<PromQuery[]> {
+    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
   }
 
   async exportToAbstractQueries(queries: PromQuery[]): Promise<AbstractQuery[]> {

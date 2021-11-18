@@ -373,7 +373,7 @@ export class LokiDatasource
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
-  async importAbstractQueries(abstractQueries: AbstractQuery[]): Promise<LokiQuery[]> {
+  async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<LokiQuery[]> {
     await this.languageProvider.start();
     const existingKeys = this.languageProvider.labelKeys;
 
@@ -386,7 +386,7 @@ export class LokiDatasource
       });
     }
 
-    return abstractQueries.map((abstractQuery) => this.languageProvider.importAbstractQuery(abstractQuery));
+    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
   }
 
   async exportToAbstractQueries(queries: LokiQuery[]): Promise<AbstractQuery[]> {

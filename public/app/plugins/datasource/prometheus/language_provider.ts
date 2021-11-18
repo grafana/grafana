@@ -414,7 +414,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   };
 
-  importAbstractQuery(labelBasedQuery: AbstractQuery): PromQuery {
+  importFromAbstractQuery(labelBasedQuery: AbstractQuery): PromQuery {
     return toPromLikeQuery(labelBasedQuery);
   }
 

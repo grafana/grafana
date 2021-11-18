@@ -18,7 +18,7 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
   /**
    * Queries are transformed to an ES Logs query since it's the behaviour most users expect.
    **/
-  importAbstractQuery(abstractQuery: AbstractQuery): ElasticsearchQuery {
+  importFromAbstractQuery(abstractQuery: AbstractQuery): ElasticsearchQuery {
     return {
       metrics: [
         {

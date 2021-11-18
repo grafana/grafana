@@ -331,7 +331,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   }
 
-  importAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
+  importFromAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
     return toPromLikeQuery(labelBasedQuery);
   }
 
