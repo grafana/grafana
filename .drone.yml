@@ -1220,7 +1220,7 @@ steps:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - clone
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
@@ -2154,7 +2154,7 @@ steps:
   - ./bin/grabpl gen-version v7.3.0-test
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - clone
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
@@ -3057,7 +3057,7 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - clone
   image: grafana/build-container:1.4.5
   name: initialize
 - commands:
@@ -3556,6 +3556,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: a65c9c26e3fb9343f39cfb88af9c20f0541f3ad161d26fa698dec1908646991a
+hmac: 12c6a397733d4624d68b34b9eeb4b3b0728eb9a1c678cf6eeb9b435f9b9a652f
 
 ...
