@@ -13,11 +13,14 @@ export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[]
 
   const settings = item.settings;
   const onAddRule = useCallback(() => {
-    const randomColor = theme.visualization.palette[Math.floor(Math.random() * theme.visualization.palette.length)];
+    const {palette} = theme.visualization;
+    const color = {
+       fixed: palette[Math.floor(Math.random() * palette.length)];
+    }
 
     const newRule = [
       ...value,
-      { ...DEFAULT_STYLE_RULE, style: { ...defaultStyleConfig, color: { fixed: randomColor } } },
+      { ...DEFAULT_STYLE_RULE, style: { ...defaultStyleConfig, color } },
     ];
 
     onChange(newRule);
