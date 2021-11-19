@@ -66,7 +66,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       width={width}
       height={height}
       {...options}
-      xTickLabelSpacing={info.xTickLabelSpacing}
       orientation={orientation}
       xTickLabelMaxLength={xTickLabelMaxLength}
     >

@@ -354,7 +354,6 @@ export function prepareBarChartDisplayValues(
     return {
       aligned: frame,
       colorByField,
-      xTickLabelSpacing: getAutoXTickLabelSpacing(xField, options.xTickLabelRotation),
       display: {
         fields: [xField, yField],
         length: xField.values.length,
@@ -445,27 +444,11 @@ export function prepareBarChartDisplayValues(
 
   return {
     aligned: frame,
-    xTickLabelSpacing: getAutoXTickLabelSpacing(firstField, options.xTickLabelRotation),
     display: {
       fields,
       length: firstField.values.length,
     },
   };
-}
-
-function getAutoXTickLabelSpacing(field: Field, rot: number): number {
-  // When rotation exists, don't auto skip anything
-  if (rot != null && rot !== 0) {
-    return 0;
-  }
-
-  if (field.type === FieldType.time && field.display) {
-    const val = field.display(field.values.get(field.values.length - 1)).text;
-    const metrics = measureText(val, 12);
-    const size = Math.floor((metrics.width * 1.75) / 10) * 10;
-    return -Math.max(size, 75);
-  }
-  return 0;
 }
 
 export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);

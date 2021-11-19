@@ -59,7 +59,4 @@ export interface BarChartDisplayValues {
 
   /** Potentialy color by a field value */
   colorByField?: Field;
-
-  /** The label tick size */
-  xTickLabelSpacing: number;
 }
