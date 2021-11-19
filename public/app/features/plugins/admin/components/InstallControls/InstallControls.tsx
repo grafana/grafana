@@ -23,8 +23,7 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
   const hasPermission = isGrafanaAdmin();
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const isCompatible = Boolean(latestCompatibleVersion);
-  const isInstallControlsDisabled =
-    plugin.isCore || plugin.isDisabled || plugin.type === PluginType.renderer || !isInstallControlsEnabled();
+  const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled();
 
   const pluginStatus = plugin.isInstalled
     ? plugin.hasUpdate
@@ -34,6 +33,10 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
 
   if (isInstallControlsDisabled) {
     return null;
+  }
+
+  if (plugin.type === PluginType.renderer) {
+    return <div className={styles.message}>Renderer plugins cannot be managed by the Plugin Catalog.</div>;
   }
 
   if (plugin.isEnterprise && !config.licenseInfo?.hasValidLicense) {

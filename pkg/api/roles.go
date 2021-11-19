@@ -231,3 +231,25 @@ var dataSourcesEditAccessEvaluator = accesscontrol.EvalAll(
 	accesscontrol.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
 	accesscontrol.EvalPermission(ActionDatasourcesWrite),
 )
+
+// orgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
+var orgPreferencesAccessEvaluator = accesscontrol.EvalAny(
+	accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ActionOrgsRead),
+		accesscontrol.EvalPermission(ActionOrgsWrite),
+	),
+	accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ActionOrgsPreferencesRead),
+		accesscontrol.EvalPermission(ActionOrgsPreferencesWrite),
+	),
+)
+
+// orgsAccessEvaluator is used to protect the "Server Admin > Orgs" page access
+// (you need to have read access to update or delete orgs; read is the minimum)
+var orgsAccessEvaluator = accesscontrol.EvalPermission(ActionOrgsRead)
+
+// orgsCreateAccessEvaluator is used to protect the "Server Admin > Orgs > New Org" page access
+var orgsCreateAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(ActionOrgsRead),
+	accesscontrol.EvalPermission(ActionOrgsCreate),
+)

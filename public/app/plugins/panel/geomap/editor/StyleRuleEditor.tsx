@@ -12,7 +12,6 @@ import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
 import { FeatureLike } from 'ol/Feature';
 import { getSelectionInfo } from '../utils/selection';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
-import { isNumber } from 'lodash';
 
 export interface StyleRuleEditorSettings {
   features: Observable<FeatureLike[]>;
@@ -21,6 +20,7 @@ export interface StyleRuleEditorSettings {
 
 const comparators = [
   { label: '==', value: ComparisonOperation.EQ },
+  { label: '!=', value: ComparisonOperation.NEQ },
   { label: '>', value: ComparisonOperation.GT },
   { label: '>=', value: ComparisonOperation.GTE },
   { label: '<', value: ComparisonOperation.LT },
@@ -40,7 +40,21 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
   const uniqueSelectables = useMemo(() => {
     const key = value?.check?.property;
     if (key && feats && value.check?.operation === ComparisonOperation.EQ) {
-      return getUniqueFeatureValues(feats, key).map((v) => ({ value: v, label: v }));
+      return getUniqueFeatureValues(feats, key).map((v) => {
+        let newValue;
+        let isNewValueNumber = !isNaN(Number(v));
+
+        if (isNewValueNumber) {
+          newValue = {
+            value: Number(v),
+            label: v,
+          };
+        } else {
+          newValue = { value: v, label: v };
+        }
+
+        return newValue;
+      });
     }
     return [];
   }, [feats, value]);
@@ -143,7 +157,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
         </InlineField>
         <InlineField className={styles.inline} grow={true}>
           <>
-            {check.operation === ComparisonOperation.EQ && (
+            {(check.operation === ComparisonOperation.EQ || check.operation === ComparisonOperation.NEQ) && (
               <Select
                 menuShouldPortal
                 placeholder={'value'}
@@ -158,7 +172,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
             {check.operation !== ComparisonOperation.EQ && (
               <NumberInput
                 key={`${check.property}/${check.operation}`}
-                value={isNumber(check.value) ? check.value : 0}
+                value={!isNaN(Number(check.value)) ? Number(check.value) : 0}
                 placeholder="numeric value"
                 onChange={onChangeNumericValue}
               />
@@ -183,6 +197,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
             {
               settings: {
                 simpleFixedValues: true,
+                layerInfo,
               },
             } as any
           }
