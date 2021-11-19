@@ -1,6 +1,6 @@
 import React, { useState, useLayoutEffect, useMemo, useRef } from 'react';
-import { FieldConfigSource, ThresholdsConfig, getValueFormat } from '@grafana/data';
-import { UPlotConfigBuilder, FIXED_UNIT } from '@grafana/ui';
+import { FieldConfigSource, ThresholdsConfig, getValueFormat, FieldConfig } from '@grafana/data';
+import { UPlotConfigBuilder, buildScaleKey, GraphFieldConfig } from '@grafana/ui';
 import { ThresholdDragHandle } from './ThresholdDragHandle';
 import uPlot from 'uplot';
 
@@ -42,7 +42,8 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
     if (!thresholds) {
       return null;
     }
-    const scale = fieldConfig.defaults.unit ?? FIXED_UNIT;
+    const scale = buildScaleKey(fieldConfig as FieldConfig<GraphFieldConfig>);
+
     const decimals = fieldConfig.defaults.decimals;
     const handles = [];
 

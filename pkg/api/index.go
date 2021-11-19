@@ -334,12 +334,11 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	adminNavLinks := hs.buildAdminNavLinks(c)
 
 	if len(adminNavLinks) > 0 {
-		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks)
+		navSection := dtos.NavSectionCore
 		if hs.Cfg.IsNewNavigationEnabled() {
-			serverAdminNode.Section = dtos.NavSectionConfig
-		} else {
-			serverAdminNode.Section = dtos.NavSectionCore
+			navSection = dtos.NavSectionConfig
 		}
+		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks, navSection)
 		navTree = append(navTree, serverAdminNode)
 	}
 
