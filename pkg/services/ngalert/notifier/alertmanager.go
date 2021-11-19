@@ -112,6 +112,8 @@ type Alertmanager struct {
 	silencer *silence.Silencer
 	silences *silence.Silences
 
+	// muteTimes is a map where the key is the name of the mute_time_interval
+	// and the value represents all configured time_interval(s)
 	muteTimes map[string][]timeinterval.TimeInterval
 
 	stageMetrics      *notify.Metrics
