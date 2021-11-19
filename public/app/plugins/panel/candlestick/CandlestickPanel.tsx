@@ -43,8 +43,8 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
   const info = useMemo(() => prepareCandlestickFields(data?.series, options, theme), [data, options, theme]);
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
-    let tweakScale = (opts: ScaleProps) => opts;
-    let tweakAxis = (opts: AxisProps) => opts;
+    let tweakScale = (opts: ScaleProps, forField: Field) => opts;
+    let tweakAxis = (opts: AxisProps, forField: Field) => opts;
 
     let doNothing = {
       renderers: [],
@@ -97,8 +97,9 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
             theme: config.theme2,
           });
 
-          tweakAxis = (opts: AxisProps) => {
-            if (opts.scaleKey === 'short') {
+          tweakAxis = (opts: AxisProps, forField: Field) => {
+            // we can't do forField === info.volume because of copies :(
+            if (forField.name === info.volume?.name) {
               let filter = (u: uPlot, splits: number[]) => {
                 let _splits = [];
                 let max = u.series[volumeIdx].max as number;
@@ -122,8 +123,9 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
             return opts;
           };
 
-          tweakScale = (opts: ScaleProps) => {
-            if (opts.scaleKey === 'short') {
+          tweakScale = (opts: ScaleProps, forField: Field) => {
+            // we can't do forField === info.volume because of copies :(
+            if (forField.name === info.volume?.name) {
               opts.range = (u: uPlot, min: number, max: number) => [0, max * 7];
             }
 
