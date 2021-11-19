@@ -98,6 +98,7 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
             {canReadUsers && !!users.length && (
               <UsersTable
                 users={users}
+                orgId={orgId}
                 onRoleChange={(role, orgUser) => {
                   updateOrgUserRole({ ...orgUser, role }, orgId);
                   setUsers(
