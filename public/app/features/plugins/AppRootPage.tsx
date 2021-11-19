@@ -48,6 +48,7 @@ class AppRootPage extends Component<Props, State> {
   shouldComponentUpdate(nextProps: Props) {
     return nextProps.location.pathname.startsWith('/a/');
   }
+
   async loadPluginSettings() {
     const { params } = this.props.match;
     try {

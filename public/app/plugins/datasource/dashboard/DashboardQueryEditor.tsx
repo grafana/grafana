@@ -3,7 +3,7 @@ import { LegacyForms, VerticalGroup } from '@grafana/ui';
 import { DataQuery, PanelData, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
 
-import { DashboardQuery, ResultInfo, SHARED_DASHBODARD_QUERY } from './types';
+import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
 import config from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -115,7 +115,8 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
 
   getPanelDescription = (panel: PanelModel): string => {
     const { defaultDatasource } = this.state;
-    const dsname = panel.datasource ? panel.datasource : defaultDatasource;
+    const datasource = panel.datasource ? panel.datasource : defaultDatasource;
+    const dsname = getDatasourceSrv().getInstanceSettings(datasource)?.name;
 
     if (panel.targets.length === 1) {
       return '1 query to ' + dsname;
@@ -141,7 +142,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
         continue;
       }
 
-      if (panel.targets && panel.datasource !== SHARED_DASHBODARD_QUERY) {
+      if (panel.targets && panel.id !== dashboard.panelInEdit?.id && panel.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
         const item = {
           value: panel.id,
           label: panel.title ? panel.title : 'Panel ' + panel.id,
@@ -174,7 +175,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
           <div className="gf-form-label">Use results from panel</div>
           <Select
             menuShouldPortal
-            placeholder="Choose Panel"
+            placeholder="Choose panel"
             isSearchable={true}
             options={panels}
             value={selected}

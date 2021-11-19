@@ -57,6 +57,7 @@ export interface FeatureRuleConfig {
 
 export enum ComparisonOperation {
   EQ = 'eq',
+  NEQ = 'neq',
   LT = 'lt',
   LTE = 'lte',
   GT = 'gt',

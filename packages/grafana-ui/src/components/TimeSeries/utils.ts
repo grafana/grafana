@@ -146,17 +146,20 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     // The builder will manage unique scaleKeys and combine where appropriate
     builder.addScale(
-      tweakScale({
-        scaleKey,
-        orientation: ScaleOrientation.Vertical,
-        direction: ScaleDirection.Up,
-        distribution: customConfig.scaleDistribution?.type,
-        log: customConfig.scaleDistribution?.log,
-        min: field.config.min,
-        max: field.config.max,
-        softMin: customConfig.axisSoftMin,
-        softMax: customConfig.axisSoftMax,
-      })
+      tweakScale(
+        {
+          scaleKey,
+          orientation: ScaleOrientation.Vertical,
+          direction: ScaleDirection.Up,
+          distribution: customConfig.scaleDistribution?.type,
+          log: customConfig.scaleDistribution?.log,
+          min: field.config.min,
+          max: field.config.max,
+          softMin: customConfig.axisSoftMin,
+          softMax: customConfig.axisSoftMax,
+        },
+        field
+      )
     );
 
     if (!yScaleKey) {
@@ -165,15 +168,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
       builder.addAxis(
-        tweakAxis({
-          scaleKey,
-          label: customConfig.axisLabel,
-          size: customConfig.axisWidth,
-          placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-          formatValue: (v) => formattedValueToString(fmt(v)),
-          theme,
-          grid: { show: customConfig.axisGridShow },
-        })
+        tweakAxis(
+          {
+            scaleKey,
+            label: customConfig.axisLabel,
+            size: customConfig.axisWidth,
+            placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
+            formatValue: (v) => formattedValueToString(fmt(v)),
+            theme,
+            grid: { show: customConfig.axisGridShow },
+          },
+          field
+        )
       );
     }
 

@@ -127,7 +127,7 @@ COPY --from=toolchain /tmp/dockerize /usr/local/bin/
 
 RUN apt-get update && \
     apt-get install -yq  \
-        build-essential clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
+        build-essential netcat-traditional clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
         apt-transport-https \
         python-pip      \
         ca-certificates \
