@@ -296,7 +296,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       completeFilter.map(({ key, operator, value, condition }: Filter) => [
         this.templateSrv.replace(key, scopedVars || {}),
         operator,
-        this.templateSrv.replace(value, scopedVars || {}, 'regex'),
+        this.templateSrv.replace(value, scopedVars || {}),
         ...(condition ? [condition] : []),
       ])
     );
