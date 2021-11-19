@@ -13,18 +13,15 @@ export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[]
 
   const settings = item.settings;
   const onAddRule = useCallback(() => {
-    const {palette} = theme.visualization;
+    const { palette } = theme.visualization;
     const color = {
-       fixed: palette[Math.floor(Math.random() * palette.length)];
-    }
+      fixed: palette[Math.floor(Math.random() * palette.length)],
+    };
 
-    const newRule = [
-      ...value,
-      { ...DEFAULT_STYLE_RULE, style: { ...defaultStyleConfig, color } },
-    ];
+    const newRule = [...value, { ...DEFAULT_STYLE_RULE, style: { ...defaultStyleConfig, color } }];
 
     onChange(newRule);
-  }, [onChange, value, theme.visualization.palette]);
+  }, [onChange, value, theme.visualization]);
 
   const onRuleChange = useCallback(
     (idx) => (style: FeatureStyleConfig | undefined) => {

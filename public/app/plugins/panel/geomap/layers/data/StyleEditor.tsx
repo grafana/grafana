@@ -11,7 +11,6 @@ import {
   RadioButtonGroup,
   SliderValueEditor,
 } from '@grafana/ui';
-import { FeatureLike } from 'ol/Feature';
 import { Observable } from 'rxjs';
 import { useObservable } from 'react-use';
 
@@ -31,9 +30,10 @@ import {
 } from 'app/features/dimensions/types';
 import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
 import { styleUsesText } from '../../style/utils';
+import { LayerContentInfo } from '../../utils/getFeatures';
 
 export interface StyleEditorOptions {
-  features?: Observable<FeatureLike[]>;
+  layerInfo?: Observable<LayerContentInfo>;
   simpleFixedValues?: boolean;
 }
 
@@ -84,12 +84,9 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
   };
 
   let featuresHavePoints = false;
-  if (item.settings?.features) {
-    const feats = useObservable(item.settings?.features);
-
-    if (feats) {
-      featuresHavePoints = feats.some((feat) => feat.getGeometry()?.getType() === 'Point');
-    }
+  if (item.settings?.layerInfo) {
+    const propertyOptions = useObservable(item.settings?.layerInfo);
+    featuresHavePoints = propertyOptions?.geometryType === 'point';
   }
 
   const hasTextLabel = styleUsesText(value);

@@ -197,7 +197,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
             {
               settings: {
                 simpleFixedValues: true,
-                features,
+                layerInfo,
               },
             } as any
           }
