@@ -17,13 +17,35 @@ describe('Extract fields from text', () => {
   it('Split key+values', async () => {
     const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
     const out = extractor.parse('a="1",   "b"=\'2\',c=3  x:y');
-
     expect(out).toMatchInlineSnapshot(`
       Object {
         "a": "1",
         "b": "2",
         "c": "3",
         "x": "y",
+      }
+    `);
+  });
+
+  it('Split URL style parameters', async () => {
+    const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
+    const out = extractor.parse('a=b&c=d&x=123');
+    expect(out).toMatchInlineSnapshot(`
+      Object {
+        "a": "b",
+        "c": "d",
+        "x": "123",
+      }
+    `);
+  });
+
+  it('Prometheus labels style (not really supported)', async () => {
+    const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
+    const out = extractor.parse('{foo="bar", baz="42"}');
+    expect(out).toMatchInlineSnapshot(`
+      Object {
+        "baz": "42\\"}",
+        "{foo": "bar",
       }
     `);
   });
