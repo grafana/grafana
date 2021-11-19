@@ -17,7 +17,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -112,7 +112,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -285,7 +285,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -359,7 +359,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -740,7 +740,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -830,7 +830,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -1196,7 +1196,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -1666,7 +1666,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -1775,7 +1775,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -2130,7 +2130,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -2593,7 +2593,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -2707,7 +2707,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -3034,7 +3034,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -3556,6 +3556,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 0a8b2ffa75c246644f97bba658e79a6685ed74964a9eee43a30a70ef06b93d9c
+hmac: 680fc6fbb881c5e05c62395a4583652197c108835adb25081522b85de926f739
 
 ...

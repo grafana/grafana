@@ -587,10 +587,11 @@ func (c *GettableApiAlertingConfig) validate() error {
 
 // Config is the top-level configuration for Alertmanager's config files.
 type Config struct {
-	Global       *config.GlobalConfig  `yaml:"global,omitempty" json:"global,omitempty"`
-	Route        *Route                `yaml:"route,omitempty" json:"route,omitempty"`
-	InhibitRules []*config.InhibitRule `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
-	Templates    []string              `yaml:"templates" json:"templates"`
+	Global            *config.GlobalConfig      `yaml:"global,omitempty" json:"global,omitempty"`
+	Route             *Route                    `yaml:"route,omitempty" json:"route,omitempty"`
+	InhibitRules      []*config.InhibitRule     `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
+	MuteTimeIntervals []config.MuteTimeInterval `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
+	Templates         []string                  `yaml:"templates" json:"templates"`
 }
 
 // A Route is a node that contains definitions of how to handle alerts. This is modified
