@@ -13,10 +13,10 @@ import (
 type AlertNotificationService struct {
 	Bus               bus.Bus
 	SQLStore          *sqlstore.SQLStore
-	EncryptionService encryption.Service
+	EncryptionService encryption.Internal
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Service,
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Internal,
 ) *AlertNotificationService {
 	s := &AlertNotificationService{
 		Bus:               bus,

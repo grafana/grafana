@@ -58,6 +58,16 @@ describe('check if feature matches style rule', () => {
         feature
       )
     ).toEqual(true);
+    expect(
+      checkFeatureMatchesStyleRule(
+        {
+          operation: ComparisonOperation.NEQ,
+          property: 'number',
+          value: 3,
+        },
+        feature
+      )
+    ).toEqual(false);
   });
   it('can compare with strings', () => {
     const feature = new Feature({
@@ -114,6 +124,16 @@ describe('check if feature matches style rule', () => {
         feature
       )
     ).toEqual(true);
+    expect(
+      checkFeatureMatchesStyleRule(
+        {
+          operation: ComparisonOperation.NEQ,
+          property: 'string',
+          value: 'b',
+        },
+        feature
+      )
+    ).toEqual(false);
   });
   it('can compare with booleans', () => {
     const feature = new Feature({
@@ -172,5 +192,15 @@ describe('check if feature matches style rule', () => {
         feature
       )
     ).toEqual(true);
+    expect(
+      checkFeatureMatchesStyleRule(
+        {
+          operation: ComparisonOperation.NEQ,
+          property: 'boolean',
+          value: false,
+        },
+        feature
+      )
+    ).toEqual(false);
   });
 });

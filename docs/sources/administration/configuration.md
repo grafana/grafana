@@ -1594,6 +1594,10 @@ Set to `true` if you want to enable external management of plugins. Default is `
 
 Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
+### plugin_catalog_hidden_plugins
+
+Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
+
 <hr>
 
 ## [live]
@@ -1707,13 +1711,19 @@ Mode `reusable` will have one browser instance and will create a new incognito p
 
 ### rendering_clustering_mode
 
-When rendering_mode = clustered you can instruct how many browsers or incognito pages can execute concurrently. Default is `browser` and will cluster using browser instances.
+When rendering_mode = clustered, you can instruct how many browsers or incognito pages can execute concurrently. Default is `browser` and will cluster using browser instances.
 
 Mode `context` will cluster using incognito pages.
 
 ### rendering_clustering_max_concurrency
 
-When rendering_mode = clustered you can define the maximum number of browser instances/incognito pages that can execute concurrently.
+When rendering_mode = clustered, you can define the maximum number of browser instances/incognito pages that can execute concurrently. Default is `5`.
+
+### rendering_clustering_timeout
+
+> **Note**: Available in grafana-image-renderer v3.3.0 and later versions.
+
+When rendering_mode = clustered, you can specify the duration a rendering request can take before it will time out. Default is `30` seconds.
 
 ### rendering_viewport_max_width
 

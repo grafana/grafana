@@ -13,8 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/encryption"
-
 	"github.com/centrifugal/centrifuge"
 	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
@@ -41,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -64,7 +63,7 @@ type CoreGrafanaScope struct {
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, encService encryption.Service,
+	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
 	usageStatsService usagestats.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
@@ -75,7 +74,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
-		EncryptionService:     encService,
+		SecretsService:        secretsService,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -183,8 +182,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 		} else {
 			storage := &pipeline.FileStorage{
-				DataPath:          cfg.DataPath,
-				EncryptionService: g.EncryptionService,
+				DataPath:       cfg.DataPath,
+				SecretsService: g.SecretsService,
 			}
 			g.pipelineStorage = storage
 			builder = &pipeline.StorageRuleBuilder{
@@ -193,7 +192,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 				FrameStorage:         pipeline.NewFrameStorage(),
 				Storage:              storage,
 				ChannelHandlerGetter: g,
-				EncryptionService:    g.EncryptionService,
+				SecretsService:       g.SecretsService,
 			}
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
@@ -322,6 +321,12 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		CheckOrigin:     checkOrigin,
 	})
 
+	pushPipelineWSHandler := pushws.NewPipelinePushHandler(g.Pipeline, pushws.Config{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin:     checkOrigin,
+	})
+
 	g.websocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 
@@ -343,12 +348,21 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
+	g.pushPipelineWebsocketHandler = func(ctx *models.ReqContext) {
+		user := ctx.SignedInUser
+		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
+		newCtx = livecontext.SetContextChannelID(newCtx, web.Params(ctx.Req)["*"])
+		r := ctx.Req.WithContext(newCtx)
+		pushPipelineWSHandler.ServeHTTP(ctx.Resp, r)
+	}
+
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/ws", g.websocketHandler)
 	}, middleware.ReqSignedIn)
 
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/push/:streamId", g.pushWebsocketHandler)
+		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
 	}, middleware.ReqOrgAdmin)
 
 	g.registerUsageMetrics()
@@ -369,15 +383,16 @@ type GrafanaLive struct {
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
-	EncryptionService     encryption.Service
+	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
 
 	// Websocket handlers
-	websocketHandler     interface{}
-	pushWebsocketHandler interface{}
+	websocketHandler             interface{}
+	pushWebsocketHandler         interface{}
+	pushPipelineWebsocketHandler interface{}
 
 	// Full channel handler
 	channels   map[string]models.ChannelHandler
@@ -399,8 +414,8 @@ type GrafanaLive struct {
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
-	plugin := g.pluginStore.Plugin(pluginID)
-	if plugin == nil {
+	plugin, exists := g.pluginStore.Plugin(context.TODO(), pluginID)
+	if !exists {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
 	if plugin.SupportsStreaming() {
@@ -1220,7 +1235,7 @@ func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *models.ReqContext) response.R
 		if cmd.SecureSettings == nil {
 			cmd.SecureSettings = map[string]string{}
 		}
-		secureJSONData, err := g.EncryptionService.DecryptJsonData(c.Req.Context(), existingBackend.SecureSettings, setting.SecretKey)
+		secureJSONData, err := g.SecretsService.DecryptJsonData(c.Req.Context(), existingBackend.SecureSettings)
 		if err != nil {
 			logger.Error("Error decrypting secure settings", "error", err)
 			return response.Error(http.StatusInternalServerError, "Error decrypting secure settings", err)

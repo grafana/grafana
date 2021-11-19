@@ -101,7 +101,11 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
 
 const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
   if (isFirst) {
-    e2e.pages.Dashboard.Settings.Annotations.List.addAnnotationCTA().click();
+    if (e2e.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2) {
+      e2e.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2().click();
+    } else {
+      e2e.pages.Dashboard.Settings.Annotations.List.addAnnotationCTA().click();
+    }
   } else {
     cy.contains('New query').click();
   }
@@ -145,7 +149,11 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
   };
 
   if (isFirst) {
-    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
+    if (e2e.pages.Dashboard.Settings.Variables.List.addVariableCTAV2) {
+      e2e.pages.Dashboard.Settings.Variables.List.addVariableCTAV2().click();
+    } else {
+      e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
+    }
   } else {
     e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
   }
