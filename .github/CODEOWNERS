@@ -14,7 +14,7 @@
 # Documentation owner: Jita Chatterjee
 /docs/ @grafana/docs-squad @pkolyvas
 /contribute/ @marcusolsson @grafana/docs-squad @pkolyvas
-/docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad @grafana/plugins-platform
+/docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend @marcusolsson @grafana/docs-squad @grafana/plugins-platform-backend
 /docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
 
