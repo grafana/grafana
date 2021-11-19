@@ -20,11 +20,12 @@ const (
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
 
-func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
+func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 	ts := &TracingService{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
+
 	if err := ts.parseSettings(); err != nil {
 		return nil, err
 	}
@@ -33,7 +34,16 @@ func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 		return ts, ts.initGlobalTracer()
 	}
 
-	return ts, nil
+	ots := &OpentelemetryTracingService{
+		Cfg: cfg,
+		log: log.New("tracing"),
+	}
+
+	if err := ots.parseSettingsOpentelemetry(); err != nil {
+		return nil, ots.initOpentelemetryTracer()
+	}
+
+	return ots, ots.initOpentelemetryTracer()
 }
 
 type TracingService struct {
