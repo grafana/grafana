@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 import { DismissButton, useOverlay } from '@react-aria/overlays';
@@ -13,7 +13,6 @@ interface Props {
   items?: NavModelItem[];
   onHeaderClick?: () => void;
   reverseDirection?: boolean;
-  subtitleText?: string;
   enableAllItems: boolean;
 }
 
@@ -21,7 +20,6 @@ const NavBarDropdown = ({
   items = [],
   onHeaderClick,
   reverseDirection = false,
-  subtitleText,
   enableAllItems = false,
   ...rest
 }: Props) => {
@@ -32,9 +30,14 @@ const NavBarDropdown = ({
   for (let index = 0; index < items.length; index++) {
     const item = items[index];
     if (item.id?.startsWith('divider') || !enableAllItems) {
-      disabledKeys.push(`${item.id}-${index}`);
+      const keyDom = `${item.id}-${index}`;
+      disabledKeys.push(keyDom);
     }
   }
+
+  // Disable all keys that are subtitle they should not be focusable
+  disabledKeys.push('subtitle');
+
   // Create menu state based on the incoming props
   const state = useTreeState({ ...rest, disabledKeys });
 
@@ -83,18 +86,24 @@ const NavBarDropdown = ({
           tabIndex={enableAllItems ? 0 : -1}
         >
           {[...state.collection].map((item) => (
-            <MenuItem key={item.key} item={item} state={state} onAction={rest.onAction} onClose={rest.onClose} />
+            <MenuItem
+              key={item.key}
+              item={item}
+              state={state}
+              onAction={rest.onAction}
+              onClose={rest.onClose}
+              reverseDirection={reverseDirection}
+            />
           ))}
         </ul>
 
-        {subtitleText && <li className={styles.subtitle}>{subtitleText}</li>}
         <DismissButton onDismiss={rest.onClose} />
       </div>
     </FocusScope>
   );
 };
 
-export function MenuItem({ item, state, onAction, onClose }: any) {
+export function MenuItem({ item, state, onAction, onClose, reverseDirection }: any) {
   // Get props for the menu item element
   const ref = React.useRef(null);
 
@@ -112,9 +121,10 @@ export function MenuItem({ item, state, onAction, onClose }: any) {
   // style to the focused menu item
   const [isFocused, setFocused] = React.useState(false);
   const { focusProps } = useFocus({ onFocusChange: setFocused });
+
   const theme = useTheme2();
 
-  const styles = getStylesMenuItem(theme, isFocused);
+  const styles = getStylesMenuItem(theme, isFocused, reverseDirection);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     switch (e.key) {
@@ -140,7 +150,7 @@ export function MenuItem({ item, state, onAction, onClose }: any) {
   );
 }
 
-const getStylesMenuItem = (theme: GrafanaTheme2, isFocused: boolean) => ({
+const getStylesMenuItem = (theme: GrafanaTheme2, isFocused: boolean, reverseDirection) => ({
   menuItem: css`
     background-color: ${isFocused ? theme.colors.action.hover : 'transparent'};
     color: ${isFocused ? 'white' : theme.colors.text.primary};
@@ -155,6 +165,14 @@ const getStylesMenuItem = (theme: GrafanaTheme2, isFocused: boolean) => ({
       transition: none;
     }
   `,
+  subtitle: css`
+      border-${reverseDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.bodySmall.fontWeight};
+      padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
+      white-space: nowrap;
+    `,
 });
 
 export default NavBarDropdown;
@@ -176,14 +194,6 @@ const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirecti
       transition: ${theme.transitions.create('opacity')};
       z-index: ${theme.zIndex.sidemenu};
       list-style: none;
-    `,
-    subtitle: css`
-      border-${reverseDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      font-weight: ${theme.typography.bodySmall.fontWeight};
-      padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
-      white-space: nowrap;
     `,
   };
 };

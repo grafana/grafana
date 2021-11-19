@@ -19,6 +19,7 @@ export interface Props {
   target?: HTMLAnchorElement['target'];
   url?: string;
   id: string;
+  link: NavModelItem;
 }
 
 const NavBarItem = ({
@@ -35,17 +36,16 @@ const NavBarItem = ({
   url,
   id,
   link,
-  index,
 }: Props) => {
   const theme = useTheme2();
+
   let menuItemsSorted;
   if (menuItems) {
     menuItemsSorted = reverseMenuDirection ? menuItems?.reverse() : menuItems;
   }
-
   const filteredItems = menuItemsSorted?.filter((item) => !item.hideFromMenu);
   const adjustHeightForBorder = filteredItems!.length === 0;
-  const styles = getStyles(theme, isActive, adjustHeightForBorder);
+  const styles = getStyles(theme, isActive, adjustHeightForBorder, reverseMenuDirection);
 
   let element = (
     <button className={styles.element} onClick={onClick} aria-label={label}>
@@ -81,6 +81,12 @@ const NavBarItem = ({
             <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
           </Item>
         )}
+        {menuSubTitle && reverseMenuDirection && (
+          <Item key="subtitle" textValue={menuSubTitle}>
+            <div className={styles.subtitle}>{menuSubTitle}</div>
+          </Item>
+        )}
+
         {filteredItems?.map((item, index) => {
           return (
             <Item key={`${item.id}-${index}`} textValue={item.text}>
@@ -102,6 +108,11 @@ const NavBarItem = ({
             <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
           </Item>
         )}
+        {menuSubTitle && !reverseMenuDirection && (
+          <Item key="subtitle" textValue={menuSubTitle}>
+            <div className={styles.subtitle}>{menuSubTitle}</div>
+          </Item>
+        )}
       </MenuButton>
     </div>
   ) : (
@@ -111,7 +122,12 @@ const NavBarItem = ({
 
 export default NavBarItem;
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], adjustHeightForBorder: boolean) => ({
+const getStyles = (
+  theme: GrafanaTheme2,
+  isActive: Props['isActive'],
+  adjustHeightForBorder: boolean,
+  reverseMenuDirection: Props['reverseMenuDirection']
+) => ({
   container: css`
     position: relative;
     color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
@@ -181,4 +197,13 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], adjustHeig
   item: css`
     color: ${theme.colors.text.primary};
   `,
+
+  subtitle: css`
+      border-${reverseMenuDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.bodySmall.fontWeight};
+      padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
+      white-space: nowrap;
+    `,
 });
