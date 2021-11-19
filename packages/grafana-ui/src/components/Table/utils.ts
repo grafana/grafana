@@ -17,6 +17,7 @@ import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
 import { getFooterValue } from './FooterRow';
 import { BarChartCell } from './BarChartCell';
+import { AreaChartCell } from './AreaChartCell';
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -130,6 +131,8 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field): Cell
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
+    case TableCellDisplayMode.AreaChart:
+      return AreaChartCell;
     case TableCellDisplayMode.BarChart:
       return BarChartCell;
   }

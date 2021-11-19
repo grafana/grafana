@@ -3,36 +3,20 @@ import { ArrayVector, Field, FieldType, FieldConfig, getMinMaxAndDelta } from '@
 import { TableCellProps } from './types';
 import { isArray } from 'lodash';
 import { Sparkline } from '../Sparkline/Sparkline';
-import { GraphDrawStyle, GraphFieldConfig, LineInterpolation } from '@grafana/schema';
+import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode } from '@grafana/schema';
 
 export const BarChartCell: FC<TableCellProps> = (props) => {
   const { field, innerWidth, tableStyles, cell, cellProps } = props;
 
-  //   let config = getFieldConfigWithMinMax(field, false);
-  //   if (!config.thresholds) {
-  //     config = {
-  //       ...config,
-  //       thresholds: defaultScale,
-  //     };
-  //   }
-
-  //   const displayValue = field.display!(cell.value);
-  //   let barGaugeMode = BarGaugeDisplayMode.Gradient;
-
-  //   if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {
-  //     barGaugeMode = BarGaugeDisplayMode.Lcd;
-  //   } else if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.BasicGauge) {
-  //     barGaugeMode = BarGaugeDisplayMode.Basic;
-  //   }
-
-  if (!isArray(cell.value)) {
+  const values = cell.value;
+  if (!isArray(values)) {
     return <span>Data is not an array</span>;
   }
 
   const yField: Field = {
     name: 'test',
     type: FieldType.number,
-    values: new ArrayVector(cell.value),
+    values: new ArrayVector(values),
     config: {},
   };
 
@@ -42,12 +26,12 @@ export const BarChartCell: FC<TableCellProps> = (props) => {
   yField.state = { range };
 
   const config: FieldConfig<GraphFieldConfig> = {
-    color: field.config.color,
+    ...field.config,
     custom: {
-      drawStyle: GraphDrawStyle.Line,
-      lineInterpolation: LineInterpolation.Linear,
+      drawStyle: GraphDrawStyle.Bars,
+      gradientMode: GraphGradientMode.Scheme,
       lineWidth: 1,
-      fillOpacity: 20,
+      fillOpacity: 80,
     },
   };
 
