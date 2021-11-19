@@ -351,7 +351,6 @@
     "slate-plain-serializer": "0.7.10",
     "symbol-observable": "4.0.0",
     "test": "link:./public/test",
-    "tether": "1.4.7",
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.4.1",
     "uplot": "1.6.17",
