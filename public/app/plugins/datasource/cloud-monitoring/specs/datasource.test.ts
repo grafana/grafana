@@ -109,9 +109,17 @@ describe('CloudMonitoringDataSource', () => {
       it('should replace the variable with a regex expression', () => {
         const templateSrv = initTemplateSrv(['filtervalue1', 'filtervalue2'], true);
         const { ds } = getTestcontext({ templateSrv });
-        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test:regex]]'], {});
 
         expect(interpolated[2]).toBe('(filtervalue1|filtervalue2)');
+      });
+
+      it('should not escape a regex', () => {
+        const templateSrv = initTemplateSrv('/[a-Z]*.html', true);
+        const { ds } = getTestcontext({ templateSrv });
+        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+
+        expect(interpolated[2]).toBe('/[a-Z]*.html');
       });
     });
   });
