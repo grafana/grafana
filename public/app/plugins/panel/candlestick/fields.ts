@@ -188,48 +188,34 @@ export function prepareCandlestickFields(
     }
   }
 
+  const timeField = frame.fields[timeIndex];
+
   // Make sure first field is time!
+  const fields: Field[] = [timeField];
+
   if (!options.includeAllFields) {
-    const fields: Field[] = [frame.fields[timeIndex]];
-    for (const f of frame.fields) {
-      if (used.has(f)) {
-        fields.push(f);
-      }
-    }
-    data.frame = {
-      ...data.frame,
-      fields,
-    };
+    fields.push(...used);
   } else if (timeIndex > 0) {
-    const fields = frame.fields.slice();
-    const tmp = fields[0];
-    fields[0] = frame.fields[timeIndex];
-    fields[timeIndex] = tmp;
-    data.frame = {
-      ...data.frame,
-      fields,
-    };
+    fields.push(...frame.fields.filter((f) => f !== timeField));
   }
+
+  data.frame = {
+    ...data.frame,
+    fields,
+  };
 
   // Force update all the indicies
   for (let i = 0; i < data.frame.fields.length; i++) {
     const field = data.frame.fields[i];
-    field.state!.seriesIndex = i;
+
+    // time is unused (-1), y series enumerate from 0
+    field.state!.seriesIndex = i - 1;
+
     field.state!.origin = {
       fieldIndex: i,
       frameIndex: 0,
     };
   }
 
-  console.log(
-    'CANDLESTICK DATA!',
-    data.names,
-    data.frame.fields.map((v) => ({
-      name: v.name,
-      type: v.type,
-      first: v.values.get(0),
-      state: v.state,
-    }))
-  );
   return data;
 }
