@@ -16,6 +16,7 @@ import {
   ColorDimensionEditor,
   ResourceDimensionEditor,
   ScaleDimensionEditor,
+  ScalerDimensionEditor,
   TextDimensionEditor,
 } from 'app/features/dimensions/editors';
 import {
@@ -25,6 +26,7 @@ import {
   ResourceFolderName,
   TextDimensionConfig,
   defaultTextConfig,
+  ScalerDimensionConfig,
 } from 'app/features/dimensions/types';
 import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
 import { styleUsesText } from '../../style/utils';
@@ -55,7 +57,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
     onChange({ ...value, opacity: opacityValue });
   };
 
-  const onRotationChange = (rotationValue: ScaleDimensionConfig | undefined) => {
+  const onRotationChange = (rotationValue: ScalerDimensionConfig | undefined) => {
     onChange({ ...value, rotation: rotationValue });
   };
 
@@ -183,7 +185,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
         />
       </Field>
       <Field label={'Rotation angle'}>
-        <ScaleDimensionEditor
+        <ScalerDimensionEditor
           value={value.rotation ?? defaultStyleConfig.rotation}
           context={context}
           onChange={onRotationChange}
