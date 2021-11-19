@@ -80,9 +80,6 @@ def get_steps(edition, ver_mode):
     should_publish = ver_mode in ('release', 'test-release',)
     should_upload = should_publish or ver_mode in ('release-branch',)
     include_enterprise2 = edition == 'enterprise'
-    tries = None
-    if should_publish:
-        tries = 5
 
     steps = [
         codespell_step(),
@@ -92,8 +89,8 @@ def get_steps(edition, ver_mode):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        postgres_integration_tests_step(edition=edition),
+        mysql_integration_tests_step(edition=edition),
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
@@ -101,8 +98,8 @@ def get_steps(edition, ver_mode):
         ensure_cuetsified_step(),
     ]
 
+    edition2 = 'enterprise2'
     if include_enterprise2:
-        edition2 = 'enterprise2'
         steps.extend([
             lint_backend_step(edition=edition2),
             test_backend_step(edition=edition2),
@@ -125,7 +122,7 @@ def get_steps(edition, ver_mode):
         steps.append(build_storybook)
 
     if include_enterprise2:
-      steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
+      steps.extend([redis_integration_tests_step(edition=edition2), memcached_integration_tests_step(edition=edition2)])
 
     if should_upload:
         steps.append(upload_cdn_step(edition=edition))
