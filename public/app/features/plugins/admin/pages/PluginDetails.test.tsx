@@ -459,6 +459,25 @@ describe('Plugin details page', () => {
       expect(rendered.getByText(message)).toBeInTheDocument();
     });
 
+    it('should not display the install / uninstall / update buttons if `pluginAdminEnabled` flag is set to FALSE in the Grafana config', async () => {
+      let rendered: RenderResult;
+
+      // Disable the install controls for the plugins catalog
+      config.pluginAdminEnabled = false;
+
+      // Should not show an "Install" button
+      rendered = renderPluginDetails({ id, isInstalled: false });
+      await waitFor(() => expect(rendered.queryByRole('button', { name: /^install/i })).not.toBeInTheDocument());
+
+      // Should not show an "Uninstall" button
+      rendered = renderPluginDetails({ id, isInstalled: true });
+      await waitFor(() => expect(rendered.queryByRole('button', { name: /^uninstall/i })).not.toBeInTheDocument());
+
+      // Should not show an "Update" button
+      rendered = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
+      await waitFor(() => expect(rendered.queryByRole('button', { name: /^update/i })).not.toBeInTheDocument());
+    });
+
     it('should display a "Create" button as a post installation step for installed data source plugins', async () => {
       const name = 'Akumuli';
       const { queryByText } = renderPluginDetails({
