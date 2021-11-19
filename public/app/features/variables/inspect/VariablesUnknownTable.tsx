@@ -1,14 +1,14 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
+import { useAsync } from 'react-use';
 import { CollapsableSection, HorizontalGroup, Icon, Spinner, Tooltip, useStyles, VerticalGroup } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import { VariableModel } from '../types';
 import { DashboardModel } from '../../dashboard/state';
 import { VariablesUnknownButton } from './VariablesUnknownButton';
 import { getUnknownsNetwork, UsagesToNetwork } from './utils';
-import { useAsync } from 'react-use';
-import { reportInteraction } from '../../../../../packages/grafana-runtime';
 
 export const SLOW_VARIABLES_EXPANSION_THRESHOLD = 1000;
 

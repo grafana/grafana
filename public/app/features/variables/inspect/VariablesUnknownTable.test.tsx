@@ -30,27 +30,27 @@ async function getTestContext(
 
 describe('VariablesUnknownTable', () => {
   describe('when rendered', () => {
-    it('it should render the section header', async () => {
+    it('then it should render the section header', async () => {
       await getTestContext();
     });
   });
 
   describe('when expanding the section', () => {
-    it('it should show loading spinner', async () => {
+    it('then it should show loading spinner', async () => {
       await getTestContext();
 
       userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
       await waitFor(() => expect(screen.getByText('Loading...')).toBeInTheDocument());
     });
 
-    it('it should call getUnknownsNetwork', async () => {
+    it('then it should call getUnknownsNetwork', async () => {
       const { getUnknownsNetworkSpy } = await getTestContext();
 
       userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
       await waitFor(() => expect(getUnknownsNetworkSpy).toHaveBeenCalledTimes(1));
     });
 
-    it('it should report the interaction', async () => {
+    it('then it should report the interaction', async () => {
       const { reportInteractionSpy } = await getTestContext();
 
       userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
@@ -60,8 +60,8 @@ describe('VariablesUnknownTable', () => {
       expect(reportInteractionSpy).toHaveBeenCalledWith('Unknown variables section expanded');
     });
 
-    describe('but expanding it again without changes to variables or dashboard', () => {
-      it('it should not call getUnknownsNetwork', async () => {
+    describe('but when expanding it again without changes to variables or dashboard', () => {
+      it('then it should not call getUnknownsNetwork', async () => {
         const { getUnknownsNetworkSpy } = await getTestContext();
 
         userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
@@ -79,7 +79,7 @@ describe('VariablesUnknownTable', () => {
     });
 
     describe('and there are no renamed or missing variables', () => {
-      it('it should render the correct message', async () => {
+      it('then it should render the correct message', async () => {
         await getTestContext();
 
         userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
@@ -90,7 +90,7 @@ describe('VariablesUnknownTable', () => {
     });
 
     describe('and there are renamed or missing variables', () => {
-      it('it should render the table', async () => {
+      it('then it should render the table', async () => {
         const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
         const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
         const { reportInteractionSpy } = await getTestContext({}, usages);
@@ -107,14 +107,14 @@ describe('VariablesUnknownTable', () => {
         expect(reportInteractionSpy).toHaveBeenCalledWith('Unknown variables section expanded');
       });
 
-      describe('but the unknown processing takes a while', () => {
+      describe('but when the unknown processing takes a while', () => {
         const origDateNow = Date.now;
 
         afterEach(() => {
           Date.now = origDateNow;
         });
 
-        it('it should report slow expansion', async () => {
+        it('then it should report slow expansion', async () => {
           const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
           const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
           const { reportInteractionSpy } = await getTestContext({}, usages);
@@ -125,7 +125,7 @@ describe('VariablesUnknownTable', () => {
           userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
           await waitForElementToBeRemoved(() => screen.getByText('Loading...'));
 
-          // make sure we don't report the interaction for slow expansion
+          // make sure we report the interaction for slow expansion
           expect(reportInteractionSpy).toHaveBeenCalledTimes(2);
           expect(reportInteractionSpy.mock.calls[0][0]).toEqual('Unknown variables section expanded');
           expect(reportInteractionSpy.mock.calls[1][0]).toEqual('Slow unknown variables expansion');

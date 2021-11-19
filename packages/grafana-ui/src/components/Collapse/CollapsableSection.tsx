@@ -5,7 +5,7 @@ import { Icon } from '..';
 import { GrafanaTheme2 } from '@grafana/data';
 
 export interface Props {
-  label: string | ReactNode;
+  label: ReactNode;
   isOpen: boolean;
   /** Callback for the toggle functionality */
   onToggle?: (isOpen: boolean) => void;
