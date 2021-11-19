@@ -115,7 +115,6 @@ export function prepareCandlestickFields(
   if (norm.warn || norm.noTimeField || !norm.frames?.length) {
     return norm as CandlestickData;
   }
-  data.frame = norm.frames[0];
 
   // Find the known fields
   const used = new Set<Field>();
@@ -180,5 +179,12 @@ export function prepareCandlestickFields(
     }
   }
 
+  data.frame = norm.frames[0];
+  if (!options.includeAllFields) {
+    data.frame = {
+      ...data.frame,
+      fields: data.frame.fields.filter((f) => f.type === FieldType.time || used.has(f)),
+    };
+  }
   return data;
 }

@@ -125,6 +125,19 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
       addFieldPicker(builder, candlestickFieldsInfo.volume, info);
     }
 
+    builder.addRadio({
+      path: 'includeAllFields',
+      name: 'Additional fields',
+      description: '',
+      defaultValue: defaultPanelOptions.includeAllFields,
+      settings: {
+        options: [
+          { label: 'Ignore', value: false },
+          { label: 'Include', value: true },
+        ],
+      },
+    });
+
     // commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
   })

@@ -320,11 +320,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   // hook up custom/composite renderers
   renderers?.forEach((r) => {
+    if (!indexByName) {
+      indexByName = getNamesToFieldIndex(frame, allFrames);
+    }
     let fieldIndices: Record<string, number> = {};
 
     for (let key in r.fieldMap) {
       let dispName = r.fieldMap[key];
-      fieldIndices[key] = indexByName!.get(dispName)!;
+      fieldIndices[key] = indexByName.get(dispName)!;
     }
 
     r.init(builder, fieldIndices);
