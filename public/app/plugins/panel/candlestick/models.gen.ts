@@ -69,4 +69,5 @@ export const defaultPanelOptions: CandlestickOptions = {
     placement: 'bottom',
     calcs: [],
   },
+  includeAllFields: false,
 };

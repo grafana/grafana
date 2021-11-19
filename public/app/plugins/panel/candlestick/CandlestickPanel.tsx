@@ -21,7 +21,7 @@ import uPlot from 'uplot';
 
 interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
-export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
+export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   data,
   timeRange,
   timeZone,
@@ -52,14 +52,14 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
       tweakAxis,
     };
 
+    if (!info.names || Object.keys(info.names).length) {
+      return doNothing;
+    }
+
     // Un-encoding the already parsed special fields
     // This takes currently matched fields and saves the name so they can be looked up by name later
     // ¯\_(ツ)_/¯  someday this can make more sense!
     const fieldMap = info.names;
-
-    if (!Object.keys(fieldMap).length) {
-      return doNothing;
-    }
 
     const { mode, candleStyle, colorStrategy } = options;
     const colors = { ...defaultColors, ...options.colors };

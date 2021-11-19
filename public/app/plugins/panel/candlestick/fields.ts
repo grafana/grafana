@@ -115,11 +115,18 @@ export function prepareCandlestickFields(
   if (norm.warn || norm.noTimeField || !norm.frames?.length) {
     return norm as CandlestickData;
   }
+  const frame = (data.frame = norm.frames[0]);
+  const timeIndex = frame.fields.findIndex((f) => f.type === FieldType.time);
+  if (timeIndex < 0) {
+    data.warn = 'Missing time field';
+    data.noTimeField = true;
+    return data;
+  }
 
   // Find the known fields
   const used = new Set<Field>();
   for (const info of Object.values(candlestickFieldsInfo)) {
-    const field = findFieldOrAuto(data.frame, info, fieldMap);
+    const field = findFieldOrAuto(frame, info, fieldMap);
     if (field) {
       data[info.key] = field;
       used.add(field);
@@ -128,7 +135,7 @@ export function prepareCandlestickFields(
 
   // Use first numeric value as open
   if (!data.open && !data.close) {
-    data.open = data.frame.fields.find((f) => f.type === FieldType.number);
+    data.open = frame.fields.find((f) => f.type === FieldType.number);
     if (data.open) {
       used.add(data.open);
     }
@@ -144,7 +151,8 @@ export function prepareCandlestickFields(
       name: 'Next open',
       state: undefined,
     };
-    data.frame.fields.push(data.close);
+    used.add(data.close);
+    frame.fields.push(data.close);
     data.autoOpenClose = true;
   }
 
@@ -152,14 +160,15 @@ export function prepareCandlestickFields(
   if (data.close && !data.open && !fieldMap.open) {
     const values = data.close.values.toArray().slice();
     values.unshift(values[0]); // duplicate first value
-    values.length = data.frame.length;
+    values.length = frame.length;
     data.open = {
       ...data.close,
       values: new ArrayVector(values),
       name: 'Previous close',
       state: undefined,
     };
-    data.frame.fields.push(data.open);
+    used.add(data.open);
+    frame.fields.push(data.open);
     data.autoOpenClose = true;
   }
 
@@ -179,12 +188,32 @@ export function prepareCandlestickFields(
     }
   }
 
-  data.frame = norm.frames[0];
   if (!options.includeAllFields) {
+    const fields: Field[] = [frame.fields[timeIndex]];
+    for (const f of frame.fields) {
+      if (used.has(f)) {
+        fields.push(f);
+      }
+    }
     data.frame = {
       ...data.frame,
-      fields: data.frame.fields.filter((f) => f.type === FieldType.time || used.has(f)),
+      fields,
+    };
+  } else if (timeIndex > 0) {
+    const fields = frame.fields.slice();
+    const tmp = fields[0];
+    fields[0] = frame.fields[timeIndex];
+    fields[timeIndex] = tmp;
+    data.frame = {
+      ...data.frame,
+      fields,
     };
   }
+
+  console.log(
+    'DATA',
+    data.names,
+    data.frame.fields.map((v) => ({ name: v.name, type: v.type, first: v.values.get(0) }))
+  );
   return data;
 }

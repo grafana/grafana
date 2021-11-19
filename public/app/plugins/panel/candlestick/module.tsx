@@ -8,7 +8,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { MarketTrendPanel } from './CandlestickPanel';
+import { CandlestickPanel } from './CandlestickPanel';
 import {
   defaultColors,
   CandlestickOptions,
@@ -68,7 +68,7 @@ function addFieldPicker(
   });
 }
 
-export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(MarketTrendPanel)
+export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(CandlestickPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
