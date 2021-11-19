@@ -140,11 +140,11 @@ func (s *Service) runTestStream(ctx context.Context, path string, conf testStrea
 					secA := t.Second() / 3
 					secB := t.Second() / 7
 
-					labelFrame.Fields[0].Set(0, fmt.Sprintf("s=A,s=p%d", secA))
+					labelFrame.Fields[0].Set(0, fmt.Sprintf("s=A,s=p%d,x=X", secA))
 					labelFrame.Fields[1].Set(0, t)
 					labelFrame.Fields[2].Set(0, walker)
 
-					labelFrame.Fields[0].Set(1, fmt.Sprintf("s=B,s=p%d", secB))
+					labelFrame.Fields[0].Set(1, fmt.Sprintf("s=B,s=p%d,x=X", secB))
 					labelFrame.Fields[1].Set(1, t)
 					labelFrame.Fields[2].Set(1, walker+10)
 					if err := sender.SendFrame(labelFrame, mode); err != nil {
