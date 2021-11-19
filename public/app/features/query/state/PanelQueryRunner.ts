@@ -41,7 +41,7 @@ export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
-  datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
+  datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | string | null;
   queries: TQuery[];
   panelId?: number;
   dashboardId?: number;
@@ -338,10 +338,10 @@ export class PanelQueryRunner {
 }
 
 async function getDataSource(
-  datasource: DataSourceRef | DataSourceApi | null,
+  datasource: string | DataSourceRef | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
-  if (datasource && 'query' in datasource) {
+  if (datasource && typeof datasource !== 'string' && 'query' in datasource) {
     return datasource;
   }
 
