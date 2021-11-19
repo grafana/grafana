@@ -213,7 +213,9 @@ export function prepareCandlestickFields(
 
   // Force update all the indicies
   for (let i = 0; i < data.frame.fields.length; i++) {
-    data.frame.fields[i].state!.origin = {
+    const field = data.frame.fields[i];
+    field.state!.seriesIndex = i;
+    field.state!.origin = {
       fieldIndex: i,
       frameIndex: 0,
     };
