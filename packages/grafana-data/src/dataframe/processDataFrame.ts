@@ -190,9 +190,32 @@ export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType 
 }
 
 /**
+ * Check the field type to see what the contents are
+ */
+export function getFieldTypeFromValue(v: any): FieldType {
+  if (v instanceof Date || isDateTime(v)) {
+    return FieldType.time;
+  }
+
+  if (isNumber(v)) {
+    return FieldType.number;
+  }
+
+  if (isString(v)) {
+    return FieldType.string;
+  }
+
+  if (isBoolean(v)) {
+    return FieldType.boolean;
+  }
+
+  return FieldType.other;
+}
+
+/**
  * Given a value this will guess the best column type
  *
- * TODO: better Date/Time support!  Look for standard date strings?
+ * NOTE: this is will try to see if string values can be mapped to other types (like number)
  */
 export function guessFieldTypeFromValue(v: any): FieldType {
   if (v instanceof Date || isDateTime(v)) {
@@ -237,7 +260,7 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
   // 2. Check the first non-null value
   for (let i = 0; i < field.values.length; i++) {
     const v = field.values.get(i);
-    if (v !== null) {
+    if (v != null) {
       return guessFieldTypeFromValue(v);
     }
   }
