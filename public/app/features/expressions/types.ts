@@ -81,4 +81,3 @@ export type ReducerType =
   | 'percent_diff'
   | 'percent_diff_abs'
   | 'count_non_null';
-  
