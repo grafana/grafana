@@ -142,7 +142,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             path: 'config.style',
             name: 'Styles',
             editor: StyleEditor,
-            settings: {},
+            settings: {
+              displayRotation: true,
+            },
             defaultValue: defaultOptions.style,
           })
           .addBooleanSwitch({

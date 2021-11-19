@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from 'react';
-import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ScalerDimensionConfig, ScalerDimensionOptions } from '../types';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
 import {
@@ -30,7 +30,7 @@ export const ScalerDimensionEditor: FC<StandardEditorProps<ScalerDimensionConfig
   const fieldName = value?.field;
   const isFixed = Boolean(!fieldName);
   const names = useFieldDisplayNames(context.data);
-  const selectOptions = useSelectOptions(names, fieldName, fixedValueOption);
+  const selectOptions = useSelectOptions(names, fieldName, fixedValueOption, FieldType.number);
 
   const styles = useStyles2(getStyles);
 

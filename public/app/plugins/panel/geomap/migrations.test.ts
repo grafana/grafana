@@ -154,6 +154,7 @@ describe('geomap migrations', () => {
                     "fixed": 0,
                     "max": 360,
                     "min": -360,
+                    "mode": "mod",
                   },
                   "size": Object {
                     "field": "Count",

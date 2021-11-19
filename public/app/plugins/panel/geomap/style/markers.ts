@@ -128,8 +128,7 @@ const makers: SymbolMaker[] = [
           fill: getFillColor(cfg),
           points: 4,
           radius,
-          angle: Math.PI / 4,
-          rotation: (rotation * Math.PI) / 180,
+          rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
         }),
         text: textLabel(cfg),
       });
@@ -209,8 +208,7 @@ const makers: SymbolMaker[] = [
           points: 4,
           radius,
           radius2: 0,
-          angle: Math.PI / 4,
-          rotation: (rotation * Math.PI) / 180,
+          rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
         }),
         text: textLabel(cfg),
       });
@@ -292,8 +290,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                   fill: new Fill({ color: 'rgba(0,0,0,0)' }),
                   points: 4,
                   radius: cfg.size,
-                  angle: Math.PI / 4,
-                  rotation: (rotation * Math.PI) / 180,
+                  rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
                 }),
               }),
             ];
