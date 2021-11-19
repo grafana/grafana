@@ -11,7 +11,7 @@ var (
 			Version:     3,
 			Name:        "fixed:serviceaccounts:writer",
 			DisplayName: "Service accounts writer",
-			Description: "Create, update, delete, read, or query service accounts.",
+			Description: "Create, delete, read, or query service accounts.",
 			Group:       "Service accounts",
 			Permissions: []accesscontrol.Permission{
 				{
