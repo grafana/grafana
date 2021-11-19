@@ -8,5 +8,8 @@ var (
 )
 
 const (
+	ActionRead   = "serviceaccounts:read"
+	ActionWrite  = "serviceaccounts:write"
+	ActionCreate = "serviceaccounts:create"
 	ActionDelete = "serviceaccounts:delete"
 )

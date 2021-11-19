@@ -8,11 +8,19 @@ import (
 var (
 	role = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     2,
+			Version:     3,
 			Name:        "fixed:serviceaccounts:writer",
-			Description: "",
+			DisplayName: "Service accounts writer",
+			Description: "Create, delete, read, or query service accounts.",
 			Group:       "Service accounts",
 			Permissions: []accesscontrol.Permission{
+				{
+					Action: serviceaccounts.ActionRead,
+					Scope:  serviceaccounts.ScopeAll,
+				},
+				{
+					Action: serviceaccounts.ActionCreate,
+				},
 				{
 					Action: serviceaccounts.ActionDelete,
 					Scope:  serviceaccounts.ScopeAll,
