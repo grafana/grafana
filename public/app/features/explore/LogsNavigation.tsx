@@ -46,8 +46,8 @@ function LogsNavigation({
   const rangeSpanRef = useRef(0);
 
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
-  const onFirstPage = currentPageIndex === 0;
-  const onLastPage = currentPageIndex === pages.length - 1;
+  const onFirstPage = oldestLogsFirst ? currentPageIndex === pages.length - 1 : currentPageIndex === 0;
+  const onLastPage = oldestLogsFirst ? currentPageIndex === 0 : currentPageIndex === pages.length - 1;
   const theme = useTheme2();
   const styles = getStyles(theme, oldestLogsFirst, loading);
 
