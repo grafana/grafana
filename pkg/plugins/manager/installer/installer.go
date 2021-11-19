@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -113,7 +114,8 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 			return err
 		}
 
-		if version == "" {
+		// if no explicit version requested or requested version is semver expression
+		if version == "" || isSemVerExpr(version) {
 			version = v.Version
 		}
 		pluginZipURL = fmt.Sprintf("%s/%s/versions/%s/download",
@@ -427,54 +429,69 @@ func (i *Installer) GetUpdateInfo(ctx context.Context, pluginID, version, plugin
 }
 
 // selectVersion selects the most appropriate plugin version
-// returns the specified version if supported.
-// returns latest version if no specific version is specified.
-// returns error if the supplied version does not exist.
-// returns error if supplied version exists but is not supported.
+// returns the requested version if supported.
+// returns the latest version if requested version is empty.
+// returns error if the requested version does not exist.
+// returns error if requested version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
-func (i *Installer) selectVersion(plugin *Plugin, version string) (*Version, error) {
-	var ver Version
+func (i *Installer) selectVersion(p *Plugin, requestedVersion string) (*Version, error) {
+	var selectedVersion *Version
 
-	latestForArch := latestSupportedVersion(plugin)
-	if latestForArch == nil {
+	latestSupportedVersion := latestSupportedVersion(p)
+	if latestSupportedVersion == nil {
 		return nil, ErrVersionUnsupported{
-			PluginID:         plugin.ID,
-			RequestedVersion: version,
+			PluginID:         p.ID,
+			RequestedVersion: requestedVersion,
 			SystemInfo:       i.fullSystemInfoString(),
 		}
 	}
 
-	if version == "" {
-		return latestForArch, nil
+	if requestedVersion == "" {
+		return latestSupportedVersion, nil
 	}
-	for _, v := range plugin.Versions {
-		if v.Version == version {
-			ver = v
+
+	for _, v := range p.Versions {
+		if v.Version == requestedVersion {
+			selectedVersion = &v
 			break
 		}
 	}
 
-	if len(ver.Version) == 0 {
-		i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
-			plugin.ID, version, latestForArch.Version)
-		return nil, ErrVersionNotFound{
-			PluginID:         plugin.ID,
-			RequestedVersion: version,
-			SystemInfo:       i.fullSystemInfoString(),
+	if selectedVersion == nil {
+		// try use version as semver constraint
+		constraint, err := semver.NewConstraint(requestedVersion)
+		if err != nil {
+			i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
+				p.ID, requestedVersion, latestSupportedVersion.Version)
+			return nil, ErrVersionNotFound{PluginID: p.ID, RequestedVersion: requestedVersion, SystemInfo: i.fullSystemInfoString()}
+		}
+
+		for _, v := range p.Versions {
+			vers, err := semver.NewVersion(v.Version)
+			if err != nil {
+				i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
+					p.ID, requestedVersion, latestSupportedVersion.Version)
+				return nil, ErrVersionNotFound{PluginID: p.ID, RequestedVersion: requestedVersion, SystemInfo: i.fullSystemInfoString()}
+			}
+
+			if constraint.Check(vers) {
+				selectedVersion = &v
+				break
+			}
 		}
 	}
 
-	if !supportsCurrentArch(&ver) {
-		i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
-			plugin.ID, version, latestForArch.Version)
-		return nil, ErrVersionUnsupported{
-			PluginID:         plugin.ID,
-			RequestedVersion: version,
-			SystemInfo:       i.fullSystemInfoString(),
-		}
+	if selectedVersion == nil {
+		return nil, ErrVersionNotFound{PluginID: p.ID, RequestedVersion: requestedVersion, SystemInfo: i.fullSystemInfoString()}
 	}
 
-	return &ver, nil
+	if !supportsCurrentArch(selectedVersion) {
+		i.log.Debugf("Requested plugin version %s v%s is not supported on your system but potential fallback version '%s' was found",
+			p.ID, requestedVersion, latestSupportedVersion.Version)
+		return nil, ErrVersionUnsupported{PluginID: p.ID, RequestedVersion: requestedVersion, SystemInfo: i.fullSystemInfoString()}
+	}
+
+	return selectedVersion, nil
 }
 
 func (i *Installer) fullSystemInfoString() string {
@@ -688,4 +705,14 @@ func toPluginDTO(pluginDir, pluginID string) (InstalledPlugin, error) {
 	}
 
 	return res, nil
+}
+
+func isSemVerExpr(version string) bool {
+	if version == "" {
+		return false
+	}
+
+	_, err := semver.NewConstraint(version)
+
+	return err == nil
 }
