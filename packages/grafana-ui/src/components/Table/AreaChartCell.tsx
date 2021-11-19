@@ -8,23 +8,6 @@ import { GraphDrawStyle, GraphFieldConfig, LineInterpolation } from '@grafana/sc
 export const AreaChartCell: FC<TableCellProps> = (props) => {
   const { field, innerWidth, tableStyles, cell, cellProps } = props;
 
-  //   let config = getFieldConfigWithMinMax(field, false);
-  //   if (!config.thresholds) {
-  //     config = {
-  //       ...config,
-  //       thresholds: defaultScale,
-  //     };
-  //   }
-
-  //   const displayValue = field.display!(cell.value);
-  //   let barGaugeMode = BarGaugeDisplayMode.Gradient;
-
-  //   if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {
-  //     barGaugeMode = BarGaugeDisplayMode.Lcd;
-  //   } else if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.BasicGauge) {
-  //     barGaugeMode = BarGaugeDisplayMode.Basic;
-  //   }
-
   if (!isArray(cell.value)) {
     return <span>Data is not an array</span>;
   }
