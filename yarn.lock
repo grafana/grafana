@@ -1871,9 +1871,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cypress/request@npm:^2.88.6":
-  version: 2.88.6
-  resolution: "@cypress/request@npm:2.88.6"
+"@cypress/request@npm:^2.88.7":
+  version: 2.88.7
+  resolution: "@cypress/request@npm:2.88.7"
   dependencies:
     aws-sign2: ~0.7.0
     aws4: ^1.8.0
@@ -1894,7 +1894,7 @@ __metadata:
     tough-cookie: ~2.5.0
     tunnel-agent: ^0.6.0
     uuid: ^8.3.2
-  checksum: 31d4586e212e20955091cdf67a0de746c2587f97f7ff0e2b8e84e772d98a73a1c6051c9090dd938ecdf595c37aec9193b6211faf754b5fcf43c7a151b4d274b7
+  checksum: 21544e555afd0841a8a189d4a4af7695c918bc782db3c636f56cadfed9ea1620c2ef43d94a709de984660c4fe9407dd8446f9f65fbe56f4eafa26a0c05792a64
   languageName: node
   linkType: hard
 
@@ -2472,7 +2472,7 @@ __metadata:
     babel-loader: 8.2.2
     blink-diff: 1.0.13
     commander: 8.3.0
-    cypress: 8.4.1
+    cypress: 9.0.0
     cypress-file-upload: 5.0.8
     date-fns: 2.21.3
     execa: 5.1.1
@@ -13781,11 +13781,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:8.4.1":
-  version: 8.4.1
-  resolution: "cypress@npm:8.4.1"
+"cypress@npm:9.0.0":
+  version: 9.0.0
+  resolution: "cypress@npm:9.0.0"
   dependencies:
-    "@cypress/request": ^2.88.6
+    "@cypress/request": ^2.88.7
     "@cypress/xvfb": ^1.2.4
     "@types/node": ^14.14.31
     "@types/sinonjs__fake-timers": ^6.0.2
@@ -13819,7 +13819,7 @@ __metadata:
     minimist: ^1.2.5
     ospath: ^1.2.2
     pretty-bytes: ^5.6.0
-    ramda: ~0.27.1
+    proxy-from-env: 1.0.0
     request-progress: ^3.0.0
     supports-color: ^8.1.1
     tmp: ~0.2.1
@@ -13828,7 +13828,7 @@ __metadata:
     yauzl: ^2.10.0
   bin:
     cypress: bin/cypress
-  checksum: d06e91df458d8052971a6992c0d0e74451bf916ceba0599e9bf0287022b60e831a2ef0b9be64af03894101d06c3fc21b98fed9a3e9f6a0818ee75f0b7358d033
+  checksum: ae481f26f6a51370bad6571b7edd525559c0b4e36fb9c33ac26c822610bd2f0b419614f12c1d87aff59c46afb3c2f06f7e167f924023da65fe2a3987927255c8
   languageName: node
   linkType: hard
 
@@ -17963,7 +17963,7 @@ __metadata:
     core-js: 3.10.0
     css-loader: 6.5.1
     css-minimizer-webpack-plugin: ^3.1.3
-    cypress: 8.4.1
+    cypress: 9.0.0
     d3: 5.15.0
     d3-force: ^2.1.1
     d3-scale-chromatic: 1.5.0
@@ -26472,6 +26472,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"proxy-from-env@npm:1.0.0":
+  version: 1.0.0
+  resolution: "proxy-from-env@npm:1.0.0"
+  checksum: 292e28d1de0c315958d71d8315eb546dd3cd8c8cbc2dab7c54eeb9f5c17f421771964ad0b5e1f77011bab2305bdae42e1757ce33bdb1ccc3e87732322a8efcf1
+  languageName: node
+  linkType: hard
+
 "prr@npm:~1.0.1":
   version: 1.0.1
   resolution: "prr@npm:1.0.1"
@@ -26687,13 +26694,6 @@ __metadata:
   version: 0.21.0
   resolution: "ramda@npm:0.21.0"
   checksum: e08d63c12ed4bab70bfd700a843901d9fa340d1a88c50085a6ef0ecf25f528e5ac7c71848481270923491e7315a34301bb35905d45861cb13cc75b8ca05add32
-  languageName: node
-  linkType: hard
-
-"ramda@npm:~0.27.1":
-  version: 0.27.1
-  resolution: "ramda@npm:0.27.1"
-  checksum: 31a0c0ef739b2525d7615f84cbb5d3cb89ee0c795469b711f729ea1d8df0dccc3cd75d3717a1e9742d42315ce86435680b7c87743eb7618111c60c144a5b8059
   languageName: node
   linkType: hard
 
