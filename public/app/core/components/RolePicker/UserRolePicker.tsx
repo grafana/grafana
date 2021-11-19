@@ -60,11 +60,16 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
   if (orgId) {
     userRolesUrl += `?targetOrgId=${orgId}`;
   }
-  const roles = await getBackendSrv().get(userRolesUrl);
-  if (!roles || !roles.length) {
+  try {
+    const roles = await getBackendSrv().get(userRolesUrl);
+    if (!roles || !roles.length) {
+      return [];
+    }
+    return roles;
+  } catch (error) {
+    error.isHandled = true;
     return [];
   }
-  return roles;
 };
 
 export const updateUserRoles = (roleUids: string[], userId: number, orgId?: number) => {
