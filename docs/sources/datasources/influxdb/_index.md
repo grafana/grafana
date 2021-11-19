@@ -27,12 +27,12 @@ InfluxDB data source options differ depending on which [query language](#query-l
 
 These options apply if you are using the InfluxQL query language. If you are using Flux, refer to [Flux support in Grafana]({{< relref "influxdb-flux.md" >}}).
 
-| Name      | Description                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`    | The data source name. This is how you refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`. |
-| `Default` | Default data source means that it will be pre-selected for new panels.                                                                 |
-| `URL`     | The HTTP protocol, IP address and port of your InfluxDB API. InfluxDB API port is by default 8086.                                     |
-| `Access`  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.  |
+| Name      | Description                                                                                                                                        |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`    | The data source name. This is how you refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`.             |
+| `Default` | Default data source means that it will be pre-selected for new panels.                                                                             |
+| `URL`     | The HTTP protocol, IP address and port of your InfluxDB API. InfluxDB API port is by default 8086.                                                 |
+| `Access`  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser (deprecated) = URL needs to be accessible from the browser. |
 
 **Note**: Browser access is deprecated and will be removed in a future release.
 `Allowed cookies`| Cookies that will be forwarded to the data source. All other cookies will be deleted.
