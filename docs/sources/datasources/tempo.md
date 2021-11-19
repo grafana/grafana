@@ -36,7 +36,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Filter by Trace ID -** Toggle to append the trace ID to the Loki query.
 - **Filter by Span ID -** Toggle to append the span ID to the Loki query.
 
-{{< figure src="/static/img/docs/tempo/traces-to-logs-settings-8-2.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
+{{< figure src="/static/img/docs/explore/traces-to-logs-settings-8-2.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
 
 ### Node Graph
 
