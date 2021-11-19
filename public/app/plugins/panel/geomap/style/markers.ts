@@ -70,7 +70,6 @@ export const circleMarker = (cfg: StyleConfigValues) => {
       stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
       fill: getFillColor(cfg),
       radius: cfg.size ?? DEFAULT_SIZE,
-      rotation: cfg.rotation,
     }),
     text: textLabel(cfg),
   });
@@ -95,7 +94,6 @@ const errorMarker = (cfg: StyleConfigValues) => {
         points: 4,
         radius,
         angle: Math.PI / 4,
-        rotation: cfg.rotation,
       }),
     }),
     new Style({
@@ -105,7 +103,6 @@ const errorMarker = (cfg: StyleConfigValues) => {
         radius,
         radius2: 0,
         angle: 0,
-        rotation: cfg.rotation,
       }),
     }),
   ];
@@ -124,6 +121,7 @@ const makers: SymbolMaker[] = [
     aliasIds: [MarkerShapePath.square],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
+      const rotation = cfg.rotation ?? 0;
       return new Style({
         image: new RegularShape({
           stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
@@ -131,7 +129,7 @@ const makers: SymbolMaker[] = [
           points: 4,
           radius,
           angle: Math.PI / 4,
-          rotation: cfg.rotation,
+          rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
         }),
         text: textLabel(cfg),
       });
@@ -143,13 +141,14 @@ const makers: SymbolMaker[] = [
     aliasIds: [MarkerShapePath.triangle],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
+      const rotation = cfg.rotation ?? 0;
       return new Style({
         image: new RegularShape({
           stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
           fill: getFillColor(cfg),
           points: 3,
           radius,
-          rotation: Math.PI / 4,
+          rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
           angle: 0,
         }),
         text: textLabel(cfg),
@@ -162,6 +161,7 @@ const makers: SymbolMaker[] = [
     aliasIds: [MarkerShapePath.star],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
+      const rotation = cfg.rotation ?? 0;
       return new Style({
         image: new RegularShape({
           stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
@@ -170,7 +170,7 @@ const makers: SymbolMaker[] = [
           radius,
           radius2: radius * 0.4,
           angle: 0,
-          rotation: cfg.rotation,
+          rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
         }),
         text: textLabel(cfg),
       });
@@ -182,6 +182,7 @@ const makers: SymbolMaker[] = [
     aliasIds: [MarkerShapePath.cross],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
+      const rotation = cfg.rotation ?? 0;
       return new Style({
         image: new RegularShape({
           stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
@@ -189,7 +190,7 @@ const makers: SymbolMaker[] = [
           radius,
           radius2: 0,
           angle: 0,
-          rotation: cfg.rotation,
+          rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
         }),
         text: textLabel(cfg),
       });
@@ -201,6 +202,7 @@ const makers: SymbolMaker[] = [
     aliasIds: [MarkerShapePath.x],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
+      const rotation = cfg.rotation ?? 0;
       return new Style({
         image: new RegularShape({
           stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
@@ -208,7 +210,7 @@ const makers: SymbolMaker[] = [
           radius,
           radius2: 0,
           angle: Math.PI / 4,
-          rotation: cfg.rotation,
+          rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
         }),
         text: textLabel(cfg),
       });
@@ -272,6 +274,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
       make: src
         ? (cfg: StyleConfigValues) => {
             const radius = cfg.size ?? DEFAULT_SIZE;
+            const rotation = cfg.rotation ?? 0;
             return [
               new Style({
                 image: new Icon({
@@ -279,7 +282,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                   color: cfg.color,
                   opacity: cfg.opacity ?? 1,
                   scale: (DEFAULT_SIZE + radius) / 100,
-                  rotation: cfg.rotation,
+                  rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
                 }),
                 text: !cfg?.text ? undefined : textLabel(cfg),
               }),

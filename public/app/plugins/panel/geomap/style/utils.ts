@@ -35,6 +35,7 @@ export async function getStyleConfigState(cfg?: StyleConfig): Promise<StyleConfi
       opacity: cfg.opacity ?? defaultStyleConfig.opacity,
       lineWidth: cfg.lineWidth ?? 1,
       size: cfg.size?.fixed ?? defaultStyleConfig.size.fixed,
+      isDegree: cfg.isDegree ?? defaultStyleConfig.isDegree,
       rotation: cfg.rotation?.fixed ?? defaultStyleConfig.rotation.fixed, // add ability follow path later
     },
     maker,

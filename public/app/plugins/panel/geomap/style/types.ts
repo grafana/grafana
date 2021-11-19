@@ -98,6 +98,7 @@ export interface StyleConfigValues {
   size?: number;
   symbol?: string; // the point symbol
   rotation?: number;
+  isDegree?: boolean;
   text?: string;
 
   // Pass though (not value dependant)
