@@ -56,8 +56,8 @@ type SignatureInfo struct {
 }
 
 type Dependency struct {
-	PluginID string `json:"pluginId"`
-	Version  string `json:"version"`
+	Name    string `json:"pluginName"`
+	Version string `json:"version"`
 }
 
 type PluginList []PluginListItem

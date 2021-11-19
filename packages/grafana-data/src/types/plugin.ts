@@ -92,7 +92,7 @@ export interface PluginDependencies {
 }
 
 export interface PluginDependency {
-  pluginId: string;
+  pluginName: string;
   version: string;
 }
 

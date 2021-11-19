@@ -186,6 +186,7 @@ type JWTTokenAuth struct {
 
 type DepPlugin struct {
 	ID      string
+	Name    string
 	Version string
 }
 
@@ -326,6 +327,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 	for _, child := range p.Children {
 		children = append(children, &DepPlugin{
 			ID:      child.ID,
+			Name:    child.Name,
 			Version: child.Info.Version,
 		})
 	}
@@ -334,6 +336,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 	if p.Parent != nil {
 		parent = &DepPlugin{
 			ID:      p.Parent.ID,
+			Name:    p.Name,
 			Version: p.Parent.Info.Version,
 		}
 	}

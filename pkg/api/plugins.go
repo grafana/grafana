@@ -87,7 +87,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			},
 		}
 
-		pDTO.Dependencies = getPluginDependencies(p)
+		pDTO.Dependencies = getPluginDependencies(c.Req.Context(), p, hs.pluginStore)
 
 		if pluginSetting, exists := pluginSettingsMap[p.ID]; exists {
 			pDTO.Enabled = pluginSetting.Enabled
@@ -500,54 +500,76 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	return data, nil
 }
 
-func getPluginDependencies(p plugins.PluginDTO) []dtos.Dependency {
-	dependencies := make(map[string][]dtos.Dependency)
-	if p.Parent != nil {
-		if dependencies[p.Parent.ID] == nil {
-			dependencies[p.Parent.ID] = []dtos.Dependency{{
-				PluginID: p.Parent.ID,
-				Version:  p.Parent.Version,
-			}}
-		} else {
-			dependencies[p.Parent.ID] = append(dependencies[p.Parent.ID], dtos.Dependency{
-				PluginID: p.Parent.ID,
-				Version:  p.Parent.Version,
-			})
-		}
-	}
+type pluginDependencyTree map[string][]dtos.Dependency
 
-	for _, child := range p.Children {
-		if dependencies[child.ID] == nil {
-			dependencies[child.ID] = []dtos.Dependency{{
-				PluginID: child.ID,
-				Version:  child.Version,
-			}}
-		} else {
-			dependencies[child.ID] = append(dependencies[child.ID], dtos.Dependency{
-				PluginID: child.ID,
-				Version:  child.Version,
-			})
-		}
-	}
+type pluginDependency struct {
+	ID, Name, Version string
+}
 
-	for _, dep := range p.Dependencies.Plugins {
-		if dependencies[dep.ID] == nil {
-			dependencies[dep.ID] = []dtos.Dependency{{
-				PluginID: dep.ID,
-				Version:  dep.Version,
-			}}
-		} else {
-			dependencies[dep.ID] = append(dependencies[dep.ID], dtos.Dependency{
-				PluginID: dep.ID,
-				Version:  dep.Version,
-			})
-		}
+func (pdt pluginDependencyTree) Add(dep pluginDependency) {
+	if _, exists := pdt[dep.ID]; !exists {
+		pdt[dep.ID] = []dtos.Dependency{{
+			Name:    dep.Name,
+			Version: dep.Version,
+		}}
+	} else {
+		pdt[dep.ID] = append(pdt[dep.ID], dtos.Dependency{
+			Name:    dep.Name,
+			Version: dep.Version,
+		})
 	}
+}
 
+func (pdt pluginDependencyTree) collect() []dtos.Dependency {
 	deps := make([]dtos.Dependency, 0)
-	for _, dep := range dependencies {
+	for _, dep := range pdt {
 		deps = append(deps, dep...)
 	}
 
 	return deps
+}
+
+func getPluginDependencies(ctx context.Context, p plugins.PluginDTO, pluginStore plugins.Store) []dtos.Dependency {
+	deps := pluginDependencyTree{}
+
+	if p.Parent != nil {
+		deps.Add(pluginDependency{
+			ID:      p.Parent.ID,
+			Name:    p.Parent.Name,
+			Version: p.Parent.Version,
+		})
+	}
+
+	for _, child := range p.Children {
+		deps.Add(pluginDependency{
+			ID:      child.ID,
+			Name:    child.Name,
+			Version: child.Version,
+		})
+	}
+
+	for _, dep := range p.Dependencies.Plugins {
+		deps.Add(pluginDependency{
+			ID:      dep.ID,
+			Name:    dep.Name,
+			Version: dep.Version,
+		})
+	}
+
+	for _, plugin := range pluginStore.Plugins(ctx) {
+		if plugin.ID == p.ID {
+			continue
+		}
+		for _, dep := range plugin.Dependencies.Plugins {
+			if dep.ID == p.ID {
+				deps.Add(pluginDependency{
+					ID:      plugin.ID,
+					Name:    plugin.Name,
+					Version: plugin.Info.Version,
+				})
+			}
+		}
+	}
+
+	return deps.collect()
 }
