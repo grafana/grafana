@@ -167,7 +167,7 @@ func (b *InProcBus) PublishCtx(ctx context.Context, msg Msg) error {
 	if listeners, exists := b.listenersWithCtx[msgName]; exists {
 		params = append(params, reflect.ValueOf(ctx))
 		params = append(params, reflect.ValueOf(msg))
-		if err := checkListeners(listeners, params); err != nil {
+		if err := callListeners(listeners, params); err != nil {
 			return err
 		}
 	}
@@ -177,7 +177,7 @@ func (b *InProcBus) PublishCtx(ctx context.Context, msg Msg) error {
 		if setting.Env == setting.Dev {
 			b.logger.Warn("PublishCtx called with message listener registered using AddEventListener and should be changed to use AddEventListenerCtx", "msgName", msgName)
 		}
-		if err := checkListeners(listeners, params); err != nil {
+		if err := callListeners(listeners, params); err != nil {
 			return err
 		}
 	}
@@ -200,14 +200,14 @@ func (b *InProcBus) Publish(msg Msg) error {
 		if setting.Env == setting.Dev {
 			b.logger.Warn("Publish called with message handler registered using AddEventHandlerCtx and should be changed to use PublishCtx", "msgName", msgName)
 		}
-		if err := checkListeners(listeners, params); err != nil {
+		if err := callListeners(listeners, params); err != nil {
 			return err
 		}
 	}
 
 	if listeners, exists := b.listeners[msgName]; exists {
 		params = append(params, reflect.ValueOf(msg))
-		if err := checkListeners(listeners, params); err != nil {
+		if err := callListeners(listeners, params); err != nil {
 			return err
 		}
 	}
@@ -215,7 +215,7 @@ func (b *InProcBus) Publish(msg Msg) error {
 	return nil
 }
 
-func checkListeners(listeners []HandlerFunc, params []reflect.Value) error {
+func callListeners(listeners []HandlerFunc, params []reflect.Value) error {
 	for _, listenerHandler := range listeners {
 		ret := reflect.ValueOf(listenerHandler).Call(params)
 		e := ret[0].Interface()
