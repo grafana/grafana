@@ -2791,7 +2791,7 @@ __metadata:
     enzyme: 3.11.0
     expose-loader: 3.0.0
     hoist-non-react-statics: 3.3.2
-    immutable: 3.8.2
+    immutable: 4.0.0
     is-hotkey: 0.1.6
     jquery: 3.5.1
     lodash: 4.17.21
@@ -18006,7 +18006,7 @@ __metadata:
     husky: ^7.0.0
     iconscout-unicons-tarball: "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28"
     immer: 9.0.6
-    immutable: 3.8.2
+    immutable: 4.0.0
     jest: 26.6.3
     jest-canvas-mock: 2.3.0
     jest-date-mock: 1.0.8
@@ -19058,7 +19058,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:3.8.2, immutable@npm:^3.8.2":
+"immutable@npm:4.0.0":
+  version: 4.0.0
+  resolution: "immutable@npm:4.0.0"
+  checksum: 4b5e9181e4d5fa06728a481835ec09c86367e5d03268666c95b522b7644ab891098022e4479a43c4c81a68f2ed82f10751ce5d33e208d7b873b6e7f9dfaf4d87
+  languageName: node
+  linkType: hard
+
+"immutable@npm:^3.8.2":
   version: 3.8.2
   resolution: "immutable@npm:3.8.2"
   checksum: 41909b386950ff84ca3cfca77c74cfc87d225a914e98e6c57996fa81a328da61a7c32216d6d5abad40f54747ffdc5c4b02b102e6ad1a504c1752efde8041f964
