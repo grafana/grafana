@@ -17,7 +17,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -112,7 +112,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -285,7 +285,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -359,7 +359,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -740,7 +740,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -830,7 +830,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -1196,7 +1196,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -1289,7 +1289,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1305,7 +1305,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1472,7 +1472,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.4.6
@@ -1481,7 +1481,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.4.6
@@ -1666,7 +1666,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -1775,7 +1775,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -2130,7 +2130,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -2223,7 +2223,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - clone-enterprise
+  - grabpl
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2239,7 +2239,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - clone-enterprise
+  - grabpl
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2398,7 +2398,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - grabpl
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.4.6
@@ -2407,7 +2407,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - grabpl
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.4.6
@@ -2593,7 +2593,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -2707,7 +2707,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - make gen-go
@@ -3034,7 +3034,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -3126,7 +3126,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -3142,7 +3142,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -3306,7 +3306,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.4.6
@@ -3315,7 +3315,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.4.6
@@ -3556,6 +3556,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 0a8b2ffa75c246644f97bba658e79a6685ed74964a9eee43a30a70ef06b93d9c
+hmac: b39d46b8db4a124e8c99b85e07c802abf8f4e1ced98783d9193c1f5af202fbc2
 
 ...
