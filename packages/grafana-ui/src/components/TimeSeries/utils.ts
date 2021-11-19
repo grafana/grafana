@@ -14,7 +14,6 @@ import {
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
-import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -24,11 +23,10 @@ import {
   ScaleDirection,
   ScaleOrientation,
   VizLegendOptions,
-  ScaleDistributionConfig,
-  ScaleDistribution,
 } from '@grafana/schema';
 import { collectStackingGroups, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
+import { buildScaleKey } from '../GraphNG/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -440,35 +438,4 @@ export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): 
     }
   });
   return originNames;
-}
-
-function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {
-  const defaultPart = 'na';
-
-  const scaleRange = `${config.min !== undefined ? config.min : defaultPart}-${
-    config.max !== undefined ? config.max : defaultPart
-  }`;
-
-  const scaleSoftRange = `${config.custom?.axisSoftMin !== undefined ? config.custom.axisSoftMin : defaultPart}-${
-    config.custom?.axisSoftMax !== undefined ? config.custom.axisSoftMax : defaultPart
-  }`;
-
-  const scalePlacement = `${config.custom?.axisPlacement !== undefined ? config.custom?.axisPlacement : defaultPart}`;
-
-  const scaleUnit = config.unit ?? FIXED_UNIT;
-
-  const scaleDistribution = config.custom?.scaleDistribution
-    ? getScaleDistributionPart(config.custom.scaleDistribution)
-    : ScaleDistribution.Linear;
-
-  const scaleLabel = Boolean(config.custom?.axisLabel) ? config.custom!.axisLabel : defaultPart;
-
-  return `${scaleUnit}/${scaleRange}/${scaleSoftRange}/${scalePlacement}/${scaleDistribution}/${scaleLabel}`;
-}
-
-function getScaleDistributionPart(config: ScaleDistributionConfig) {
-  if (config.type === ScaleDistribution.Log) {
-    return `${config.type}${config.log}`;
-  }
-  return config.type;
 }
