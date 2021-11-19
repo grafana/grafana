@@ -265,7 +265,7 @@ export { UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
 export { GraphNG, GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
 export { TimeSeries } from './TimeSeries/TimeSeries';
 export { useGraphNGContext } from './GraphNG/hooks';
-export { preparePlotFrame } from './GraphNG/utils';
+export { preparePlotFrame, buildScaleKey } from './GraphNG/utils';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
