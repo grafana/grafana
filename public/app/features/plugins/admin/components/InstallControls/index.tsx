@@ -30,8 +30,12 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
       : PluginStatus.UNINSTALL
     : PluginStatus.INSTALL;
 
-  if (plugin.isCore || plugin.isDisabled || plugin.type === PluginType.renderer) {
+  if (plugin.isCore || plugin.isDisabled) {
     return null;
+  }
+
+  if (plugin.type === PluginType.renderer) {
+    return <div className={styles.message}>Renderer plugins cannot be managed by the Plugin Catalog.</div>;
   }
 
   if (plugin.isEnterprise && !config.licenseInfo?.hasValidLicense) {
