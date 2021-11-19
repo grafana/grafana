@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { AppEvents } from '@grafana/data';
+import { css } from '@emotion/css';
+import { AppEvents, PluginDependency } from '@grafana/data';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-
 import { CatalogPlugin, PluginStatus, Version } from '../../types';
 import { useInstallStatus, useUninstallStatus, useInstall, useUninstall } from '../../state/hooks';
 
@@ -50,7 +50,7 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
         <ConfirmModal
           isOpen={isConfirmModalVisible}
           title={`Uninstall ${plugin.name}`}
-          body="Are you sure you want to uninstall this plugin?"
+          body={<ConfirmUninstallModal dependencies={plugin.dependencies} />}
           confirmText="Confirm"
           icon="exclamation-triangle"
           onConfirm={onUninstall}
@@ -83,4 +83,35 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
       {isInstalling ? 'Installing' : 'Install'}
     </Button>
   );
+}
+
+type ConfirmUninstallModalProps = { dependencies?: PluginDependency[] };
+
+function ConfirmUninstallModal({ dependencies }: ConfirmUninstallModalProps) {
+  if (dependencies) {
+    return (
+      <>
+        <p>Uninstalling this plugin will affect the following plugins:</p>
+        <ul
+          className={css`
+            margin-bottom: 16px;
+            margin-left: 32px;
+          `}
+        >
+          {dependencies.map((dep) => (
+            <li key={dep.pluginName}>{dep.pluginName}</li>
+          ))}
+        </ul>
+        <p
+          className={css`
+            margin-bottom: 0;
+          `}
+        >
+          Are you sure you want to continue?
+        </p>
+      </>
+    );
+  }
+
+  return <p>Are you sure you want to uninstall this plugin?</p>;
 }

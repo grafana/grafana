@@ -100,6 +100,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     type,
     signature,
     hasUpdate,
+    dependencies,
   } = plugin;
 
   return {
@@ -125,6 +126,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isEnterprise: false,
     type,
     error: error?.errorCode,
+    dependencies,
   };
 }
 
@@ -177,6 +179,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     updatedAt: remote?.updatedAt || local?.json.info.updated || '',
     installedVersion,
     error: error?.errorCode,
+    dependencies: local?.dependencies,
   };
 }
 
