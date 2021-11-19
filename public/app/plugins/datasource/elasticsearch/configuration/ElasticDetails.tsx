@@ -14,7 +14,7 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
 ];
 
-const esVersions = [
+const esVersions: SelectableValue[] = [
   { label: '2.x', value: '2.0.0' },
   { label: '5.x', value: '5.0.0' },
   { label: '5.6+', value: '5.6.0' },
@@ -22,6 +22,11 @@ const esVersions = [
   { label: '7.0+', value: '7.0.0' },
   { label: '7.7+', value: '7.7.0' },
   { label: '7.10+', value: '7.10.0' },
+  {
+    label: '8.0+',
+    value: '8.0.0',
+    description: 'support for Elasticsearch 8 is currently experimental',
+  },
 ];
 
 type Props = {

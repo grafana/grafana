@@ -24,6 +24,8 @@ import {
   ScaleDirection,
   ScaleOrientation,
   VizLegendOptions,
+  ScaleDistributionConfig,
+  ScaleDistribution,
 } from '@grafana/schema';
 import { collectStackingGroups, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
@@ -117,11 +119,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
-    const config = field.config as FieldConfig<GraphFieldConfig>;
-    const customConfig: GraphFieldConfig = {
-      ...defaultConfig,
-      ...config.custom,
-    };
+
+    const config = {
+      ...field.config,
+      custom: {
+        ...defaultConfig,
+        ...field.config.custom,
+      },
+    } as FieldConfig<GraphFieldConfig>;
+
+    const customConfig: GraphFieldConfig = config.custom!;
 
     if (field === xField || field.type !== FieldType.number) {
       continue;
@@ -131,24 +138,28 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     field.state!.seriesIndex = seriesIndex++;
 
     const fmt = field.display ?? defaultFormatter;
-    const scaleKey = config.unit || FIXED_UNIT;
+
+    const scaleKey = buildScaleKey(config);
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
 
     // The builder will manage unique scaleKeys and combine where appropriate
     builder.addScale(
-      tweakScale({
-        scaleKey,
-        orientation: ScaleOrientation.Vertical,
-        direction: ScaleDirection.Up,
-        distribution: customConfig.scaleDistribution?.type,
-        log: customConfig.scaleDistribution?.log,
-        min: field.config.min,
-        max: field.config.max,
-        softMin: customConfig.axisSoftMin,
-        softMax: customConfig.axisSoftMax,
-      })
+      tweakScale(
+        {
+          scaleKey,
+          orientation: ScaleOrientation.Vertical,
+          direction: ScaleDirection.Up,
+          distribution: customConfig.scaleDistribution?.type,
+          log: customConfig.scaleDistribution?.log,
+          min: field.config.min,
+          max: field.config.max,
+          softMin: customConfig.axisSoftMin,
+          softMax: customConfig.axisSoftMax,
+        },
+        field
+      )
     );
 
     if (!yScaleKey) {
@@ -157,15 +168,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
       builder.addAxis(
-        tweakAxis({
-          scaleKey,
-          label: customConfig.axisLabel,
-          size: customConfig.axisWidth,
-          placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-          formatValue: (v) => formattedValueToString(fmt(v)),
-          theme,
-          grid: { show: customConfig.axisGridShow },
-        })
+        tweakAxis(
+          {
+            scaleKey,
+            label: customConfig.axisLabel,
+            size: customConfig.axisWidth,
+            placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
+            formatValue: (v) => formattedValueToString(fmt(v)),
+            theme,
+            grid: { show: customConfig.axisGridShow },
+          },
+          field
+        )
       );
     }
 
@@ -426,4 +440,35 @@ export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): 
     }
   });
   return originNames;
+}
+
+function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {
+  const defaultPart = 'na';
+
+  const scaleRange = `${config.min !== undefined ? config.min : defaultPart}-${
+    config.max !== undefined ? config.max : defaultPart
+  }`;
+
+  const scaleSoftRange = `${config.custom?.axisSoftMin !== undefined ? config.custom.axisSoftMin : defaultPart}-${
+    config.custom?.axisSoftMax !== undefined ? config.custom.axisSoftMax : defaultPart
+  }`;
+
+  const scalePlacement = `${config.custom?.axisPlacement !== undefined ? config.custom?.axisPlacement : defaultPart}`;
+
+  const scaleUnit = config.unit ?? FIXED_UNIT;
+
+  const scaleDistribution = config.custom?.scaleDistribution
+    ? getScaleDistributionPart(config.custom.scaleDistribution)
+    : ScaleDistribution.Linear;
+
+  const scaleLabel = Boolean(config.custom?.axisLabel) ? config.custom!.axisLabel : defaultPart;
+
+  return `${scaleUnit}/${scaleRange}/${scaleSoftRange}/${scalePlacement}/${scaleDistribution}/${scaleLabel}`;
+}
+
+function getScaleDistributionPart(config: ScaleDistributionConfig) {
+  if (config.type === ScaleDistribution.Log) {
+    return `${config.type}${config.log}`;
+  }
+  return config.type;
 }

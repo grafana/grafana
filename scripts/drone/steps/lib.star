@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.5.5'
+grabpl_version = '2.6.1'
 build_image = 'grafana/build-container:1.4.5'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -97,7 +97,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'name': 'initialize',
                 'image': build_image,
                 'depends_on': [
-                    'grabpl',
+                    'clone',
                 ],
                 'commands': [
                     'mv bin/grabpl /tmp/',
@@ -688,7 +688,7 @@ def postgres_integration_tests_step():
         'name': 'postgres-integration-tests',
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'initialize',
         ],
         'environment': {
             'PGPASSWORD': 'grafanatest',
@@ -712,7 +712,7 @@ def mysql_integration_tests_step():
         'name': 'mysql-integration-tests',
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'initialize',
         ],
         'environment': {
             'GRAFANA_TEST_DB': 'mysql',
@@ -734,7 +734,7 @@ def redis_integration_tests_step():
         'name': 'redis-integration-tests',
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'initialize',
         ],
         'environment': {
             'REDIS_URL': 'redis://redis:6379/0',
@@ -750,7 +750,7 @@ def memcached_integration_tests_step():
         'name': 'memcached-integration-tests',
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'initialize',
         ],
         'environment': {
             'MEMCACHED_HOSTS': 'memcached:11211',

@@ -1,5 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { PluginError, renderMarkdown } from '@grafana/data';
+import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
 import { API_ROOT, GCOM_API_ROOT } from './constants';
 import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion } from './types';
 import { isLocalPluginVisible, isRemotePluginVisible } from './helpers';
@@ -97,6 +97,16 @@ export async function installPlugin(id: string) {
 
 export async function uninstallPlugin(id: string) {
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
+}
+
+export async function updatePluginSettings(id: string, data: Partial<PluginMeta>) {
+  const response = await getBackendSrv().datasourceRequest({
+    url: `/api/plugins/${id}/settings`,
+    method: 'POST',
+    data,
+  });
+
+  return response?.data;
 }
 
 export const api = {
