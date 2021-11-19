@@ -211,10 +211,18 @@ export function prepareCandlestickFields(
     };
   }
 
+  // Force update all the indicies
+  for (let i = 0; i < data.frame.fields.length; i++) {
+    data.frame.fields[i].state!.origin = {
+      fieldIndex: i,
+      frameIndex: 0,
+    };
+  }
+
   console.log(
-    'CANDLESTICK DATA',
+    'CANDLESTICK DATA!',
     data.names,
-    data.frame.fields.map((v) => ({ name: v.name, type: v.type, first: v.values.get(0) }))
+    data.frame.fields.map((v) => ({ name: v.name, type: v.type, first: v.values.get(0), info: v.state?.seriesIndex }))
   );
   return data;
 }
