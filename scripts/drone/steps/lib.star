@@ -730,10 +730,10 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     }
 
 
-def postgres_integration_tests_step(edition):
+def postgres_integration_tests_step(edition, ver_mode):
     deps = []
-    if edition in ('enterprise', 'enterprise2'):
-        deps.extend(['clone-enterprise'])
+    if edition in ('enterprise', 'enterprise2') and ver_mode in ('release-branch', 'release'):
+        deps.extend(['initialize'])
     else:
         deps.extend(['grabpl'])
     return {
@@ -758,10 +758,10 @@ def postgres_integration_tests_step(edition):
     }
 
 
-def mysql_integration_tests_step(edition):
+def mysql_integration_tests_step(edition, ver_mode):
     deps = []
-    if edition in ('enterprise', 'enterprise2'):
-        deps.extend(['clone-enterprise'])
+    if edition in ('enterprise', 'enterprise2') and ver_mode in ('release-branch', 'release'):
+        deps.extend(['initialize'])
     else:
         deps.extend(['grabpl'])
     return {
@@ -784,10 +784,10 @@ def mysql_integration_tests_step(edition):
     }
 
 
-def redis_integration_tests_step(edition):
+def redis_integration_tests_step(edition, ver_mode):
     deps = []
-    if edition in ('enterprise', 'enterprise2'):
-        deps.extend(['clone-enterprise'])
+    if edition in ('enterprise', 'enterprise2') and ver_mode in ('release-branch', 'release'):
+        deps.extend(['initialize'])
     else:
         deps.extend(['grabpl'])
     return {
@@ -804,10 +804,10 @@ def redis_integration_tests_step(edition):
     }
 
 
-def memcached_integration_tests_step(edition):
+def memcached_integration_tests_step(edition, ver_mode):
     deps = []
-    if edition in ('enterprise', 'enterprise2'):
-        deps.extend(['clone-enterprise'])
+    if edition in ('enterprise', 'enterprise2') and ver_mode in ('release-branch', 'release'):
+        deps.extend(['initialize'])
     else:
         deps.extend(['grabpl'])
     return {
