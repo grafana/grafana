@@ -168,7 +168,6 @@ type DsPermissionType int
 const (
 	DsPermissionNoAccess DsPermissionType = iota
 	DsPermissionQuery
-	DsPermissionRead
 )
 
 func (p DsPermissionType) String() string {
