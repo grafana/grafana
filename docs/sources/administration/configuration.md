@@ -1582,7 +1582,7 @@ We do _not_ recommend using this option. For more information, refer to [Plugin 
 
 ### plugin_admin_enabled
 
-Available to Grafana administrators only, the plugin admin app is set to `true` by default. Set it to `false` to disable the app.
+Available to Grafana administrators only, enables installing / uninstalling / updating plugins directly from the Grafana UI. Set to `true` by default. Setting it to `false` will hide the install / uninstall / update controls.
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
 

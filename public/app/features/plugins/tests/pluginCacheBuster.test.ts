@@ -1,4 +1,4 @@
-import { invalidatePluginInCache, locateWithCache, registerPluginInCache } from './pluginCacheBuster';
+import { invalidatePluginInCache, locateWithCache, registerPluginInCache } from '../pluginCacheBuster';
 
 describe('PluginCacheBuster', () => {
   const now = 12345;
