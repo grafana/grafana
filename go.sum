@@ -1969,6 +1969,8 @@ github.com/prometheus/alertmanager v0.23.0/go.mod h1:0MLTrjQI8EuVmvykEhcfr/7X0xm
 github.com/prometheus/alertmanager v0.23.1-0.20210914172521-e35efbddb66a/go.mod h1:U7pGu+z7A9ZKhK8lq1MvIOp5GdVlZjwOYk+S0h3LSbA=
 github.com/prometheus/alertmanager v0.23.1-0.20211021072955-1b8afe7cb5aa h1:KKgVswVOfDYOn9GNtO7bR3r4vyM77WXuJsyGxMl1Zgs=
 github.com/prometheus/alertmanager v0.23.1-0.20211021072955-1b8afe7cb5aa/go.mod h1:pRqzxS2B4tciJfx2JUvR67udJrQeSUZ603OQQFFUrIQ=
+github.com/prometheus/alertmanager v0.23.1-0.20211116083607-e2a10119aaf7 h1:OMwDo53awRp+UzaBrwmVC7HJiAMYP/niBJfKcGpPiac=
+github.com/prometheus/alertmanager v0.23.1-0.20211116083607-e2a10119aaf7/go.mod h1:1UH4XA4DAXzsvofKVzcXmC0mqt6Y8BZP9JcQWKDmbFc=
 github.com/prometheus/client_golang v0.0.0-20180209125602-c332b6f63c06/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v0.8.0/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
@@ -2032,6 +2034,8 @@ github.com/prometheus/exporter-toolkit v0.5.0/go.mod h1:OCkM4805mmisBhLmVFw858QY
 github.com/prometheus/exporter-toolkit v0.5.1/go.mod h1:OCkM4805mmisBhLmVFw858QYi3v0wKdY6/UxrT0pZVg=
 github.com/prometheus/exporter-toolkit v0.6.1 h1:Aqk75wQD92N9CqmTlZwjKwq6272nOGrWIbc8Z7+xQO0=
 github.com/prometheus/exporter-toolkit v0.6.1/go.mod h1:ZUBIj498ePooX9t/2xtDjeQYwvRpiPP2lh5u4iblj2g=
+github.com/prometheus/exporter-toolkit v0.7.0 h1:XtYeVeeC5daG4txbc9+mieKq+/AK4gtIBLl9Mulrjnk=
+github.com/prometheus/exporter-toolkit v0.7.0/go.mod h1:ZUBIj498ePooX9t/2xtDjeQYwvRpiPP2lh5u4iblj2g=
 github.com/prometheus/node_exporter v1.0.0-rc.0.0.20200428091818-01054558c289 h1:dTUS1vaLWq+Y6XKOTnrFpoVsQKLCbCp1OLj24TDi7oM=
 github.com/prometheus/node_exporter v1.0.0-rc.0.0.20200428091818-01054558c289/go.mod h1:FGbBv5OPKjch+jNUJmEQpMZytIdyW0NdBtWFcfSKusc=
 github.com/prometheus/procfs v0.0.0-20180125133057-cb4147076ac7/go.mod h1:c3At6R/oaqEKCNdg8wHV1ftS6bRYblBhIjjI8uT2IGk=
