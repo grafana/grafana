@@ -15,6 +15,13 @@ var (
 			Group:       "Service accounts",
 			Permissions: []accesscontrol.Permission{
 				{
+					Action: serviceaccounts.ActionRead,
+					Scope:  serviceaccounts.ScopeAll,
+				},
+				{
+					Action: serviceaccounts.ActionCreate,
+				},
+				{
 					Action: serviceaccounts.ActionDelete,
 					Scope:  serviceaccounts.ScopeAll,
 				},
