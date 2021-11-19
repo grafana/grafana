@@ -81,7 +81,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210904010418-6d279e18f982 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.23.1-0.20211021072955-1b8afe7cb5aa
+	github.com/prometheus/alertmanager v0.23.1-0.20211116083607-e2a10119aaf7
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.32.1
@@ -225,7 +225,7 @@ require (
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
-	github.com/prometheus/exporter-toolkit v0.6.1 // indirect
+	github.com/prometheus/exporter-toolkit v0.7.0 // indirect
 	github.com/prometheus/node_exporter v1.0.0-rc.0.0.20200428091818-01054558c289 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20201118171849-f6a6b3f636fc // indirect
