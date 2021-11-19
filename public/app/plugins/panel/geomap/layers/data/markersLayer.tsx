@@ -107,6 +107,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             if (style.fields.text) {
               dims.text = getTextDimension(frame, style.config.text!);
             }
+            if (style.fields.rotation) {
+              dims.rotation = getScaledDimension(frame, style.config.rotation!);
+            }
             style.dims = dims;
           }
 

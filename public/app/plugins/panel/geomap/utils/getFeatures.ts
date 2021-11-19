@@ -31,6 +31,11 @@ export const getFeatures = (
       if (dims.size) {
         values.size = dims.size.get(i);
       }
+      if (dims.rotation) {
+        //convert to radians or assume already in radians
+        const value = dims.rotation.get(i);
+        values.rotation = style.config.isDegree ? (value * Math.PI) / 180 : value;
+      }
       if (dims.text) {
         values.text = dims.text.get(i);
       }

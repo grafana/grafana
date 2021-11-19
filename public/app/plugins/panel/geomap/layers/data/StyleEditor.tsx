@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { ChangeEvent, FC } from 'react';
 import { StandardEditorProps } from '@grafana/data';
 import {
   ColorPicker,
@@ -10,6 +10,7 @@ import {
   NumberValueEditor,
   RadioButtonGroup,
   SliderValueEditor,
+  Switch,
 } from '@grafana/ui';
 
 import {
@@ -53,6 +54,14 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
 
   const onOpacityChange = (opacityValue: number | undefined) => {
     onChange({ ...value, opacity: opacityValue });
+  };
+
+  const onRotationChange = (rotationValue: ScaleDimensionConfig | undefined) => {
+    onChange({ ...value, rotation: rotationValue });
+  };
+
+  const onAngleTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...value, isDegree: e.currentTarget.checked });
   };
 
   const onTextChange = (textValue: TextDimensionConfig | undefined) => {
@@ -173,6 +182,24 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                 min: 0,
                 max: 1,
                 step: 0.1,
+              },
+            } as any
+          }
+        />
+      </Field>
+      <Field label={'Angle in Degrees'}>
+        <Switch value={value.isDegree ?? defaultStyleConfig.isDegree} onChange={onAngleTypeChange} />
+      </Field>
+      <Field label={'Rotation angle'}>
+        <ScaleDimensionEditor
+          value={value.rotation ?? defaultStyleConfig.rotation}
+          context={context}
+          onChange={onRotationChange}
+          item={
+            {
+              settings: {
+                min: defaultStyleConfig.rotation.min,
+                max: defaultStyleConfig.rotation.max,
               },
             } as any
           }
