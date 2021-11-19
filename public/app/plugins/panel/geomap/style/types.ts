@@ -32,7 +32,6 @@ export interface StyleConfig {
   textConfig?: TextStyleConfig;
 
   // Allow for rotation of markers
-  isDegree?: boolean;
   rotation?: ScaleDimensionConfig;
 }
 
@@ -70,7 +69,6 @@ export const defaultStyleConfig = Object.freeze({
     offsetX: 0,
     offsetY: 0,
   },
-  isDegree: true,
   rotation: {
     fixed: 0,
     min: -360,
@@ -98,7 +96,6 @@ export interface StyleConfigValues {
   size?: number;
   symbol?: string; // the point symbol
   rotation?: number;
-  isDegree?: boolean;
   text?: string;
 
   // Pass though (not value dependant)

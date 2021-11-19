@@ -129,7 +129,7 @@ const makers: SymbolMaker[] = [
           points: 4,
           radius,
           angle: Math.PI / 4,
-          rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
+          rotation: (rotation * Math.PI) / 180,
         }),
         text: textLabel(cfg),
       });
@@ -148,7 +148,7 @@ const makers: SymbolMaker[] = [
           fill: getFillColor(cfg),
           points: 3,
           radius,
-          rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
+          rotation: (rotation * Math.PI) / 180,
           angle: 0,
         }),
         text: textLabel(cfg),
@@ -170,7 +170,7 @@ const makers: SymbolMaker[] = [
           radius,
           radius2: radius * 0.4,
           angle: 0,
-          rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
+          rotation: (rotation * Math.PI) / 180,
         }),
         text: textLabel(cfg),
       });
@@ -190,7 +190,7 @@ const makers: SymbolMaker[] = [
           radius,
           radius2: 0,
           angle: 0,
-          rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
+          rotation: (rotation * Math.PI) / 180,
         }),
         text: textLabel(cfg),
       });
@@ -210,7 +210,7 @@ const makers: SymbolMaker[] = [
           radius,
           radius2: 0,
           angle: Math.PI / 4,
-          rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
+          rotation: (rotation * Math.PI) / 180,
         }),
         text: textLabel(cfg),
       });
@@ -282,7 +282,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                   color: cfg.color,
                   opacity: cfg.opacity ?? 1,
                   scale: (DEFAULT_SIZE + radius) / 100,
-                  rotation: cfg.isDegree ? (rotation * Math.PI) / 180 : rotation,
+                  rotation: (rotation * Math.PI) / 180,
                 }),
                 text: !cfg?.text ? undefined : textLabel(cfg),
               }),
@@ -293,6 +293,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                   points: 4,
                   radius: cfg.size,
                   angle: Math.PI / 4,
+                  rotation: (rotation * Math.PI) / 180,
                 }),
               }),
             ];

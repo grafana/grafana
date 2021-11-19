@@ -149,7 +149,6 @@ describe('geomap migrations', () => {
                     "field": "Price",
                     "fixed": "dark-green",
                   },
-                  "isDegree": true,
                   "opacity": 0.4,
                   "rotation": Object {
                     "fixed": 0,
