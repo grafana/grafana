@@ -224,7 +224,12 @@ export function prepareCandlestickFields(
   console.log(
     'CANDLESTICK DATA!',
     data.names,
-    data.frame.fields.map((v) => ({ name: v.name, type: v.type, first: v.values.get(0), info: v.state?.seriesIndex }))
+    data.frame.fields.map((v) => ({
+      name: v.name,
+      type: v.type,
+      first: v.values.get(0),
+      state: v.state,
+    }))
   );
   return data;
 }

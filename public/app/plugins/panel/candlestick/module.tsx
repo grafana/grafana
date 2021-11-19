@@ -128,7 +128,7 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Cand
     builder.addRadio({
       path: 'includeAllFields',
       name: 'Additional fields',
-      description: '',
+      description: 'Use standard timeseries options to configure any fields not mapped above',
       defaultValue: defaultPanelOptions.includeAllFields,
       settings: {
         options: [
