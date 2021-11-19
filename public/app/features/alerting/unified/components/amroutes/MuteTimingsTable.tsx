@@ -46,7 +46,7 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
         <ConfirmModal
           isOpen={!!muteTimingName}
           title="Delete mute timing"
-          body="Are you sure you would like to delete this mute timing"
+          body={`Are you sure you would like to delete "${muteTimingName}"`}
           confirmText="Delete"
           onConfirm={() => dispatch(deleteMuteTimingAction(alertManagerSourceName, muteTimingName))}
           onDismiss={() => setMuteTimingName('')}
@@ -89,7 +89,9 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
         renderCell: function renderActions({ data }) {
           return (
             <div>
-              <Link href={makeAMLink(`/alerting/routes/mute-timing/${btoa(data.name)}/edit`, alertManagerSourceName)}>
+              <Link
+                href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, { muteName: data.name })}
+              >
                 <IconButton name="edit" title="Edit mute timing" />
               </Link>
               <IconButton name={'trash-alt'} title="Delete mute timing" onClick={() => setMuteTimingName(data.name)} />

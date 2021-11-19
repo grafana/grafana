@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Route, RouteChildrenProps, Switch } from 'react-router-dom';
+import { Route, Redirect, Switch } from 'react-router-dom';
 import MuteTimingForm from './components/amroutes/MuteTimingForm';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useDispatch } from 'react-redux';
@@ -8,8 +8,10 @@ import { fetchAlertManagerConfigAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
 import { AlertmanagerConfig } from 'app/plugins/datasource/alertmanager/types';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 const MuteTimings = () => {
+  const [queryParams] = useQueryParams();
   const dispatch = useDispatch();
   const [alertManagerSourceName] = useAlertManagerSourceName();
 
@@ -32,9 +34,7 @@ const MuteTimings = () => {
 
   const getMuteTimingByName = useCallback(
     (id: string) => {
-      const decryptedString = atob(id);
-
-      return config?.mute_time_intervals?.find(({ name }) => name === decryptedString);
+      return config?.mute_time_intervals?.find(({ name }) => name === id);
     },
     [config]
   );
@@ -52,9 +52,13 @@ const MuteTimings = () => {
           <Route exact path="/alerting/routes/mute-timing/new">
             <MuteTimingForm />
           </Route>
-          <Route exact path="/alerting/routes/mute-timing/:id/edit">
-            {({ match }: RouteChildrenProps<{ id: string }>) => {
-              return match?.params?.id && <MuteTimingForm muteTiming={getMuteTimingByName(match.params.id)} />;
+          <Route exact path="/alerting/routes/mute-timing/edit">
+            {() => {
+              if (queryParams['muteName']) {
+                const muteTiming = getMuteTimingByName(String(queryParams['muteName']));
+                return <MuteTimingForm muteTiming={muteTiming} showError={!muteTiming} />;
+              }
+              return <Redirect to="/alerting/routes" />;
             }}
           </Route>
         </Switch>

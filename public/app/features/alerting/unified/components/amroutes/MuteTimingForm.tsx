@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
-import { Field, FieldSet, Input, Button, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Field, FieldSet, Input, Button, LinkButton, useStyles2 } from '@grafana/ui';
 import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useDispatch } from 'react-redux';
@@ -18,6 +18,7 @@ import { makeAMLink } from '../../utils/misc';
 
 interface Props {
   muteTiming?: MuteTimeInterval;
+  showError?: boolean;
 }
 
 const defaultTimeInterval: MuteTimingIntervalFields = {
@@ -53,7 +54,7 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
   }, [muteTiming]);
 };
 
-const MuteTimingForm = ({ muteTiming }: Props) => {
+const MuteTimingForm = ({ muteTiming, showError }: Props) => {
   const dispatch = useDispatch();
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const styles = useStyles2(getStyles);
@@ -101,6 +102,7 @@ const MuteTimingForm = ({ muteTiming }: Props) => {
       {result && !loading && (
         <FormProvider {...formApi}>
           <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">
+            {showError && <Alert title="No matching mute timing found" />}
             <FieldSet label={'Create mute timing'}>
               <Field
                 required

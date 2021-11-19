@@ -149,9 +149,9 @@ describe('Mute timings', () => {
   });
 
   it('prepoluates the form when editing a mute timing', async () => {
-    const muteId = btoa(muteTimeInterval.name);
-
-    await renderMuteTimings('/alerting/routes/mute-timing/' + muteId + '/edit');
+    await renderMuteTimings(
+      '/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`
+    );
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
     expect(ui.nameField.get()).toBeInTheDocument();
