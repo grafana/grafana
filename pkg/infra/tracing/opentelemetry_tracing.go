@@ -50,19 +50,19 @@ type OpentracingSpan struct {
 	span opentracing.Span
 }
 
-func (ts *OpentelemetryTracingService) parseSettingsOpentelemetry() error {
-	section, err := ts.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
+func (ots *OpentelemetryTracingService) parseSettingsOpentelemetry() error {
+	section, err := ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
 	if err != nil {
 		return err
 	}
-	ts.enabled = section.Key("enabled").MustBool(false)
+	ots.enabled = section.Key("enabled").MustBool(false)
 
 	return nil
 }
 
-func (ts *OpentelemetryTracingService) initTracerProvider() (*tracesdk.TracerProvider, error) {
+func (ots *OpentelemetryTracingService) initTracerProvider() (*tracesdk.TracerProvider, error) {
 	// Create the Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ts.address)))
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.address)))
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (ots *OpentelemetryTracingService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ts *OpentelemetryTracingService) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+func (ots *OpentelemetryTracingService) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
 	ctx, span := GlobalTracer.Start(ctx, spanName)
 	oSpan := OpentelemetrySpan{span: span}
 	return ctx, oSpan
