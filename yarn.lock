@@ -2382,7 +2382,7 @@ __metadata:
     "@swc/helpers": 0.2.13
     "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.9
-    "@testing-library/react": 11.1.2
+    "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": ^3.2.1
     "@testing-library/user-event": 13.3.0
     "@types/braintree__sanitize-url": 4.1.0
@@ -2736,7 +2736,7 @@ __metadata:
     "@swc/helpers": 0.2.13
     "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.9
-    "@testing-library/react": 11.1.2
+    "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": ^3.2.1
     "@testing-library/user-event": 13.3.0
     "@types/classnames": 2.2.7
@@ -6899,22 +6899,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:^7.26.6":
-  version: 7.31.2
-  resolution: "@testing-library/dom@npm:7.31.2"
-  dependencies:
-    "@babel/code-frame": ^7.10.4
-    "@babel/runtime": ^7.12.5
-    "@types/aria-query": ^4.2.0
-    aria-query: ^4.2.2
-    chalk: ^4.1.0
-    dom-accessibility-api: ^0.5.6
-    lz-string: ^1.4.4
-    pretty-format: ^26.6.2
-  checksum: 54fbedd1ecdfe1d47be2e592b98d18b2ab9d7e731f57231caf9b152593fe7329fe5ebe219e0e5d1e0df5b1ab803121cb8acd8b73bd1fb292bfdc2c55663eb01d
-  languageName: node
-  linkType: hard
-
 "@testing-library/jest-dom@npm:5.11.5":
   version: 5.11.5
   resolution: "@testing-library/jest-dom@npm:5.11.5"
@@ -6979,19 +6963,6 @@ __metadata:
     react: ">=16.9.0"
     react-test-renderer: ">=16.9.0"
   checksum: 7ada35cb4114056908990250033527ffd554d055eced797083aca752fb9789b3bc70291077f1d57b8cf64ab5eb7b3827f9de3bcaa38655f2b975c65a33a418d6
-  languageName: node
-  linkType: hard
-
-"@testing-library/react@npm:11.1.2":
-  version: 11.1.2
-  resolution: "@testing-library/react@npm:11.1.2"
-  dependencies:
-    "@babel/runtime": ^7.12.1
-    "@testing-library/dom": ^7.26.6
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 61df2bfc12e81b2d69696b8e2585c028c7213bb019e6bfa285ddbb2a99ee3c565feb714c06a344de11ee20ab1846a7654d4ec2bd710b009346ecaff71d51b36e
   languageName: node
   linkType: hard
 
@@ -14831,7 +14802,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dom-accessibility-api@npm:^0.5.6, dom-accessibility-api@npm:^0.5.9":
+"dom-accessibility-api@npm:^0.5.9":
   version: 0.5.9
   resolution: "dom-accessibility-api@npm:0.5.9"
   checksum: 3988bd1c58e115e972179b9ef881e65ab5da9c2e9d08f4e9646870301971fb0c72d0e0866559e0c06b91b9da6f1fed2f31f0fcbf0b6cffd959b01c0601da2c56
