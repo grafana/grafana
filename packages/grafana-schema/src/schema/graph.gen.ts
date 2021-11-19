@@ -226,6 +226,7 @@ export enum TableCellDisplayMode {
   Image = 'image',
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
+  BarChart = 'bar-chart',
 }
 
 export interface VizTextDisplayOptions {

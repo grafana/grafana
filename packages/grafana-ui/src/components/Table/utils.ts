@@ -16,6 +16,7 @@ import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem } fr
 import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
 import { getFooterValue } from './FooterRow';
+import { BarChartCell } from './BarChartCell';
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -129,6 +130,8 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field): Cell
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
+    case TableCellDisplayMode.BarChart:
+      return BarChartCell;
   }
 
   // Default or Auto

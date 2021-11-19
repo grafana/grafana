@@ -68,6 +68,9 @@ function getBooleanScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCal
   };
 }
 
+/**
+ * @internal
+ */
 export function getMinMaxAndDelta(field: Field): NumericRange {
   if (field.type !== FieldType.number) {
     return { min: 0, max: 100, delta: 100 };
