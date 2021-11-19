@@ -1,8 +1,8 @@
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
-import { ScalerDimensionMode } from '.';
-import { getScalerDimension } from './scaler';
+import { ScalarDimensionMode } from '.';
+import { getScalarDimension } from './scalar';
 
-describe('scaler dimensions', () => {
+describe('scalar dimensions', () => {
   it('handles string field', () => {
     const values = ['-720', '10', '540', '90', '-210'];
     const frame: DataFrame = {
@@ -21,12 +21,12 @@ describe('scaler dimensions', () => {
       ],
     };
 
-    const supplier = getScalerDimension(frame, {
+    const supplier = getScalarDimension(frame, {
       min: -360,
       max: 360,
       field: 'test',
       fixed: 0,
-      mode: ScalerDimensionMode.Capped,
+      mode: ScalarDimensionMode.Capped,
     });
 
     const capped = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
@@ -50,12 +50,12 @@ describe('scaler dimensions', () => {
       ],
     };
 
-    const supplier = getScalerDimension(frame, {
+    const supplier = getScalarDimension(frame, {
       min: -360,
       max: 360,
       field: 'test',
       fixed: 0,
-      mode: ScalerDimensionMode.Capped,
+      mode: ScalarDimensionMode.Capped,
     });
 
     const capped = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
@@ -80,12 +80,12 @@ describe('scaler dimensions', () => {
       ],
     };
 
-    const supplier = getScalerDimension(frame, {
+    const supplier = getScalarDimension(frame, {
       min: -360,
       max: 360,
       field: 'test',
       fixed: 0,
-      mode: ScalerDimensionMode.Mod,
+      mode: ScalarDimensionMode.Mod,
     });
 
     const remainder = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));

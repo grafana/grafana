@@ -1,20 +1,20 @@
 import { DataFrame, Field } from '@grafana/data';
-import { DimensionSupplier, ScalerDimensionConfig, ScalerDimensionMode } from './types';
+import { DimensionSupplier, ScalarDimensionConfig, ScalarDimensionMode } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
-// Scaler dimension
+// Scalar dimension
 //---------------------------------------------------------
-export function getScalerDimension(
+export function getScalarDimension(
   frame: DataFrame | undefined,
-  config: ScalerDimensionConfig
+  config: ScalarDimensionConfig
 ): DimensionSupplier<number> {
-  return getScalerDimensionForField(findField(frame, config?.field), config);
+  return getScalarDimensionForField(findField(frame, config?.field), config);
 }
-export function getScalerDimensionForField(
+export function getScalarDimensionForField(
   field: Field | undefined,
-  cfg: ScalerDimensionConfig,
-  mode?: ScalerDimensionMode
+  cfg: ScalarDimensionConfig,
+  mode?: ScalarDimensionMode
 ): DimensionSupplier<number> {
   //if there is no field
   if (!field) {
@@ -39,7 +39,7 @@ export function getScalerDimensionForField(
   };
 
   //modulus mode
-  if (mode === ScalerDimensionMode.Mod) {
+  if (mode === ScalarDimensionMode.Mod) {
     validated = (value: number) => {
       return value % cfg.max;
     };

@@ -18,7 +18,7 @@ import {
   ColorDimensionEditor,
   ResourceDimensionEditor,
   ScaleDimensionEditor,
-  ScalerDimensionEditor,
+  ScalarDimensionEditor,
   TextDimensionEditor,
 } from 'app/features/dimensions/editors';
 import {
@@ -28,9 +28,9 @@ import {
   ResourceFolderName,
   TextDimensionConfig,
   defaultTextConfig,
-  ScalerDimensionConfig,
+  ScalarDimensionConfig,
 } from 'app/features/dimensions/types';
-import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
+import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
 import { styleUsesText } from '../../style/utils';
 import { LayerContentInfo } from '../../utils/getFeatures';
 
@@ -64,7 +64,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
     onChange({ ...value, opacity: opacityValue });
   };
 
-  const onRotationChange = (rotationValue: ScalerDimensionConfig | undefined) => {
+  const onRotationChange = (rotationValue: ScalarDimensionConfig | undefined) => {
     onChange({ ...value, rotation: rotationValue });
   };
 
@@ -95,7 +95,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
   let featuresHavePoints = false;
   if (settings?.layerInfo) {
     const propertyOptions = useObservable(settings?.layerInfo);
-    featuresHavePoints = propertyOptions?.geometryType === 'point';
+    featuresHavePoints = propertyOptions?.geometryType === GeometryTypeId.Point;;
   }
   const hasTextLabel = styleUsesText(value);
 
@@ -126,7 +126,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
               </InlineField>
             </InlineFieldRow>
             <Field label={'Rotation angle'}>
-              <ScalerDimensionEditor
+              <ScalarDimensionEditor
                 value={value.rotation ?? defaultStyleConfig.rotation}
                 context={context}
                 onChange={onRotationChange}
@@ -237,7 +237,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
       </Field>
       {settings?.displayRotation && (
         <Field label={'Rotation angle'}>
-          <ScalerDimensionEditor
+          <ScalarDimensionEditor
             value={value.rotation ?? defaultStyleConfig.rotation}
             context={context}
             onChange={onRotationChange}

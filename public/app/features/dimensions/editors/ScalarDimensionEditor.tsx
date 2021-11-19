@@ -1,26 +1,22 @@
 import React, { FC, useCallback } from 'react';
 import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
-import { ScalerDimensionConfig, ScalerDimensionOptions } from '../types';
+import { ScalarDimensionConfig, ScalarDimensionMode, ScalarDimensionOptions } from '../types';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
-import {
-  useFieldDisplayNames,
-  useSelectOptions,
-} from '../../../../../packages/grafana-ui/src/components/MatchersUI/utils';
+import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 import { NumberInput } from './NumberInput';
 import { css } from '@emotion/css';
-import { ScalerDimensionMode } from '..';
 
 const fixedValueOption: SelectableValue<string> = {
   label: 'Fixed value',
   value: '_____fixed_____',
 };
 
-const scalerOptions = [
-  { label: 'Mod', value: ScalerDimensionMode.Mod, description: 'Use values, mod from max' },
-  { label: 'Capped', value: ScalerDimensionMode.Capped, description: 'Use field values, capped to max and min' },
+const scalarOptions = [
+  { label: 'Mod', value: ScalarDimensionMode.Mod, description: 'Use values, mod from max' },
+  { label: 'Capped', value: ScalarDimensionMode.Capped, description: 'Use field values, capped to max and min' },
 ];
 
-export const ScalerDimensionEditor: FC<StandardEditorProps<ScalerDimensionConfig, ScalerDimensionOptions, any>> = (
+export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions, any>> = (
   props
 ) => {
   const { value, context, onChange } = props;
@@ -76,14 +72,14 @@ export const ScalerDimensionEditor: FC<StandardEditorProps<ScalerDimensionConfig
   );
 
   const val = value ?? {};
-  const mode = value?.mode ?? ScalerDimensionMode.Mod;
+  const mode = value?.mode ?? ScalarDimensionMode.Mod;
   const selectedOption = isFixed ? fixedValueOption : selectOptions.find((v) => v.value === fieldName);
   return (
     <>
       <div>
         <InlineFieldRow>
           <InlineField label="Limit" labelWidth={8} grow={true}>
-            <RadioButtonGroup value={mode} options={scalerOptions} onChange={onModeChange} fullWidth />
+            <RadioButtonGroup value={mode} options={scalarOptions} onChange={onModeChange} fullWidth />
           </InlineField>
         </InlineFieldRow>
         <Select

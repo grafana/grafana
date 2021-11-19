@@ -51,17 +51,17 @@ export interface ScaleDimensionOptions {
   hideRange?: boolean; // false
 }
 
-export enum ScalerDimensionMode {
+export enum ScalarDimensionMode {
   Mod = 'mod',
   Capped = 'capped',
 }
-export interface ScalerDimensionConfig extends BaseDimensionConfig<number> {
-  mode: ScalerDimensionMode;
+export interface ScalarDimensionConfig extends BaseDimensionConfig<number> {
+  mode: ScalarDimensionMode;
   min: number;
   max: number;
 }
 
-export interface ScalerDimensionOptions {
+export interface ScalarDimensionOptions {
   min: number;
   max: number;
 }
