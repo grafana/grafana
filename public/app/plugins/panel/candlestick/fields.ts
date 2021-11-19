@@ -188,6 +188,7 @@ export function prepareCandlestickFields(
     }
   }
 
+  // Make sure first field is time!
   if (!options.includeAllFields) {
     const fields: Field[] = [frame.fields[timeIndex]];
     for (const f of frame.fields) {
@@ -211,7 +212,7 @@ export function prepareCandlestickFields(
   }
 
   console.log(
-    'DATA',
+    'CANDLESTICK DATA',
     data.names,
     data.frame.fields.map((v) => ({ name: v.name, type: v.type, first: v.values.get(0) }))
   );
