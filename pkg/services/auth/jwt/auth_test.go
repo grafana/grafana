@@ -165,26 +165,6 @@ func TestCachingJWKHTTPResponse(t *testing.T) {
 		cfg.JWTAuthCacheTTL = time.Minute
 	})
 
-	jwkCachingScenario(t, "respects TTL setting (expire cache item)", func(t *testing.T, sc cachingScenarioContext) {
-		var err error
-
-		token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
-
-		_, err = sc.authJWTSvc.Verify(sc.ctx, token)
-		require.NoError(t, err)
-
-		// Sleep for longer than the cache TTL to ensure value is expelled from the cache.
-		time.Sleep(time.Millisecond)
-
-		_, err = sc.authJWTSvc.Verify(sc.ctx, token)
-		require.NoError(t, err)
-
-		assert.Equal(t, 2, *sc.reqCount)
-	}, func(t *testing.T, cfg *setting.Cfg) {
-		// Very low value, to have things enter the cache an then leave almost immediately.
-		cfg.JWTAuthCacheTTL = time.Microsecond
-	})
-
 	jwkCachingScenario(t, "does not cache the response when TTL is zero", func(t *testing.T, sc cachingScenarioContext) {
 		for i := 0; i < 2; i++ {
 			_, err := sc.authJWTSvc.Verify(sc.ctx, sign(t, &jwKeys[i], jwt.Claims{Subject: subject}))
