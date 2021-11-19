@@ -14,6 +14,8 @@
     "d3-scale-chromatic", // we should bump this once we move to esm modules
     "eslint", // wait until `eslint-plugin-react-hooks>4.2.0` is released
     "globby", // we should bump this once we move to esm modules
+    "history", // we should bump this together with react-router-dom
+    "react-router-dom", // we should bump this together with history
     "slate",
     "slate-plain-serializer",
     "systemjs",
