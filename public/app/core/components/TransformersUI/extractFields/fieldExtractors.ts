@@ -19,31 +19,31 @@ const extJSON: FieldExtractor = {
   },
 };
 
-const strip = /^[ '"]|[ '"]$/g;
+// strips quotes and leading/trailing braces in prom labels
+const stripDecor = /['"]|^\{|\}$/g;
+// splits on whitespace and other label pair delimiters
+const splitLines = /[\s,;&]+/g;
+// splits kv pairs
+const splitPair = /[=:]/g;
 
-/** Strips any leading or trailing decoration */
-function sanitize(v: string): string {
-  return v.replace(strip, '');
-}
-
-const regexp = new RegExp('[ ,;&\n]', 'g');
 const extLabels: FieldExtractor = {
   id: FieldExtractorID.KeyValues,
   name: 'Key+value pairs',
   description: 'Look for a=b, c: d values in the line',
   parse: (v: string) => {
     const obj: Record<string, any> = {};
-    for (const part of v.split(regexp)) {
-      let idx = part.indexOf('=');
-      if (idx < 0) {
-        idx = part.indexOf(':');
-      }
-      if (idx > 0) {
-        const k = sanitize(part.substring(0, idx));
-        const v = sanitize(part.substring(idx + 1));
-        obj[k] = v;
-      }
-    }
+
+    v.trim()
+      .replace(stripDecor, '')
+      .split(splitLines)
+      .forEach((pair) => {
+        let [k, v] = pair.split(splitPair);
+
+        if (k != null) {
+          obj[k] = v;
+        }
+      });
+
     return obj;
   },
 };

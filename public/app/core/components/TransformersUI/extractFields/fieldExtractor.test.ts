@@ -16,13 +16,14 @@ describe('Extract fields from text', () => {
 
   it('Split key+values', async () => {
     const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
-    const out = extractor.parse('a="1",   "b"=\'2\',c=3  x:y');
+    const out = extractor.parse('a="1",   "b"=\'2\',c=3  x:y ;\r\nz="7"');
     expect(out).toMatchInlineSnapshot(`
       Object {
         "a": "1",
         "b": "2",
         "c": "3",
         "x": "y",
+        "z": "7",
       }
     `);
   });
@@ -44,8 +45,8 @@ describe('Extract fields from text', () => {
     const out = extractor.parse('{foo="bar", baz="42"}');
     expect(out).toMatchInlineSnapshot(`
       Object {
-        "baz": "42\\"}",
-        "{foo": "bar",
+        "baz": "42",
+        "foo": "bar",
       }
     `);
   });
