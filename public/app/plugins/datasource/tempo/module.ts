@@ -7,5 +7,4 @@ import { TempoQueryField } from './QueryEditor/QueryField';
 export const plugin = new DataSourcePlugin(TempoDatasource)
   .setQueryEditor(TempoQueryField)
   .setConfigEditor(ConfigEditor)
-  .setQueryEditorHelp(CheatSheet)
-  .setExploreQueryField(TempoQueryField);
+  .setQueryEditorHelp(CheatSheet);
