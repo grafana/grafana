@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
 import { prepareGraphableFields } from '../timeseries/utils';
-import { CandlestickOptions, CandlestickFieldMap } from './models.gen';
+import { CandlestickOptions, CandlestickFieldMap, VizDisplayMode } from './models.gen';
 
 export interface FieldPickerInfo {
   /** property name */
@@ -178,6 +178,24 @@ export function prepareCandlestickFields(
   }
   if (!data.low && !fieldMap.low) {
     data.low = data.open;
+  }
+
+  // unmap low and high fields in volume-only mode, and volume field in candles-only mode
+  // so they fall through to unmapped fields and get appropriate includeAllFields treatment
+  if (options.mode === VizDisplayMode.Volume) {
+    if (data.high) {
+      used.delete(data.high);
+      data.high = undefined;
+    }
+    if (data.low) {
+      used.delete(data.low);
+      data.low = undefined;
+    }
+  } else if (options.mode === VizDisplayMode.Candles) {
+    if (data.volume) {
+      used.delete(data.volume);
+      data.volume = undefined;
+    }
   }
 
   // Register the name of each mapped field
