@@ -41,7 +41,7 @@ export const createMuteTiming = (fields: MuteTimingFields): MuteTimeInterval => 
     ({ times, weekdays, days_of_month, months, years }) => {
       const interval = {
         times: times.filter(({ start_time, end_time }) => !!start_time && !!end_time),
-        weekdays: convertStringToArray(weekdays),
+        weekdays: convertStringToArray(weekdays)?.map((v) => v.toLowerCase()),
         days_of_month: convertStringToArray(days_of_month),
         months: convertStringToArray(months),
         years: convertStringToArray(years),

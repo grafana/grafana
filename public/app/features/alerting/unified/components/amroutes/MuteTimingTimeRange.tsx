@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { MuteTimingFields } from '../../types/mute-timing-form';
-import { Field, Input, Button, IconButton, useStyles2 } from '@grafana/ui';
+import { Field, InlineFieldRow, InlineField, Input, Button, IconButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
@@ -29,13 +29,9 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
           {timeRanges.map((timeRange, index) => {
             const formErrors = formState.errors.time_intervals?.[intervalIndex];
             return (
-              <div className={styles.timeRangeSection} key={timeRange.id}>
-                <div className={styles.timeRange}>
-                  <Field
-                    label="Start time"
-                    invalid={!!formErrors?.times?.[index]?.start_time}
-                    error={formErrors?.times?.[index]?.start_time?.message}
-                  >
+              <div className={styles.timeRange} key={timeRange.id}>
+                <InlineFieldRow>
+                  <InlineField label="Start time" invalid={!!formErrors?.times?.[index]?.start_time}>
                     <Input
                       {...register(`time_intervals.${intervalIndex}.times.${index}.start_time`, {
                         pattern: {
@@ -49,12 +45,8 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
                       placeholder="HH:MM"
                       data-testid="mute-timing-starts-at"
                     />
-                  </Field>
-                  <Field
-                    label="End time"
-                    invalid={!!formErrors?.times?.[index]?.end_time}
-                    error={formErrors?.times?.[index]?.end_time?.message}
-                  >
+                  </InlineField>
+                  <InlineField label="End time" invalid={!!formErrors?.times?.[index]?.end_time}>
                     <Input
                       {...register(`time_intervals.${intervalIndex}.times.${index}.end_time`, {
                         pattern: {
@@ -68,9 +60,7 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
                       placeholder="HH:MM"
                       data-testid="mute-timing-ends-at"
                     />
-                  </Field>
-                </div>
-                <div>
+                  </InlineField>
                   <IconButton
                     className={styles.deleteTimeRange}
                     title={'Remove'}
@@ -81,7 +71,7 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
                       removeTimeRange(index);
                     }}
                   />
-                </div>
+                </InlineFieldRow>
               </div>
             );
           })}
@@ -101,12 +91,6 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  timeRangeSection: css`
-    display: flex;
-    align-items: flex-start;
-    margin-left: ${theme.spacing(2)};
-    gap: ${theme.spacing(1)};
-  `,
   timeRange: css`
     margin-bottom: ${theme.spacing(1)};
   `,
@@ -114,6 +98,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 120px;
   `,
   deleteTimeRange: css`
-    margin-top: ${theme.spacing(3)};
+    margin: ${theme.spacing(1)} 0 0 ${theme.spacing(0.5)};
   `,
 });

@@ -117,7 +117,7 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
                   data-testid={'mute-timing-name'}
                 />
               </Field>
-              <FieldSet label="Time intervals">
+              <FieldSet className={styles.timeIntervalLegend} label="Time intervals">
                 {timeIntervals.map((timeInterval, timeIntervalIndex) => {
                   const errors = formApi.formState.errors;
                   return (
@@ -133,7 +133,7 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
                             validate: (value) =>
                               validateArrayField(
                                 value,
-                                (day) => DAYS_OF_THE_WEEK.includes(day),
+                                (day) => DAYS_OF_THE_WEEK.includes(day.toLowerCase()),
                                 'Invalid day of the week'
                               ),
                           })}
@@ -254,6 +254,11 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   input: css`
     width: 400px;
+  `,
+  timeIntervalLegend: css`
+    legend {
+      font-size: 1.25rem;
+    }
   `,
   timeIntervalSection: css`
     background-color: ${theme.colors.background.secondary};
