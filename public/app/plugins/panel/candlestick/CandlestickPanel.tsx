@@ -21,7 +21,7 @@ import uPlot from 'uplot';
 
 interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
-export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
+export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   data,
   timeRange,
   timeZone,
