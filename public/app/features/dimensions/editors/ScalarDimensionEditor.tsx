@@ -12,8 +12,8 @@ const fixedValueOption: SelectableValue<string> = {
 };
 
 const scalarOptions = [
-  { label: 'Mod', value: ScalarDimensionMode.Mod, description: 'Use values, mod from max' },
-  { label: 'Capped', value: ScalarDimensionMode.Capped, description: 'Use field values, capped to max and min' },
+  { label: 'Mod', value: ScalarDimensionMode.Mod, description: 'Use field values, mod from max' },
+  { label: 'Clamped', value: ScalarDimensionMode.Clamped, description: 'Use field values, clamped to max and min' },
 ];
 
 export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions, any>> = (

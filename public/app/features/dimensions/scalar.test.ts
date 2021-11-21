@@ -26,13 +26,13 @@ describe('scalar dimensions', () => {
       max: 360,
       field: 'test',
       fixed: 0,
-      mode: ScalarDimensionMode.Capped,
+      mode: ScalarDimensionMode.Clamped,
     });
 
-    const capped = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
-    expect(capped).toEqual([0, 0, 0, 0, 0]);
+    const clamped = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
+    expect(clamped).toEqual([0, 0, 0, 0, 0]);
   });
-  it('caps out of range values', () => {
+  it('clamps out of range values', () => {
     const values = [-720, 10, 540, 90, -210];
     const frame: DataFrame = {
       name: 'a',
@@ -55,15 +55,15 @@ describe('scalar dimensions', () => {
       max: 360,
       field: 'test',
       fixed: 0,
-      mode: ScalarDimensionMode.Capped,
+      mode: ScalarDimensionMode.Clamped,
     });
 
-    const capped = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
-    expect(capped).toEqual([-360, 10, 360, 90, -210]);
+    const clamped = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
+    expect(clamped).toEqual([-360, 10, 360, 90, -210]);
   });
 
   it('keeps remainder after divisible by max', () => {
-    const values = [-720, 10, 540, 90, -210];
+    const values = [-721, 10, 540, 390, -210];
     const frame: DataFrame = {
       name: 'a',
       length: values.length,
@@ -73,7 +73,7 @@ describe('scalar dimensions', () => {
           type: FieldType.number,
           values: new ArrayVector(values),
           config: {
-            min: -720,
+            min: -721,
             max: 540,
           },
         },
@@ -89,6 +89,6 @@ describe('scalar dimensions', () => {
     });
 
     const remainder = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
-    expect(remainder).toEqual([-360, 10, 360, 90, -210]);
+    expect(remainder).toEqual([-1, 10, 180, 30, -210]);
   });
 });

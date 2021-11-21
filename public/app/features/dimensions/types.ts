@@ -53,7 +53,7 @@ export interface ScaleDimensionOptions {
 
 export enum ScalarDimensionMode {
   Mod = 'mod',
-  Capped = 'capped',
+  Clamped = 'clamped',
 }
 export interface ScalarDimensionConfig extends BaseDimensionConfig<number> {
   mode: ScalarDimensionMode;

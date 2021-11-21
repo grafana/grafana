@@ -13,10 +13,8 @@ export function getScalarDimension(
 }
 export function getScalarDimensionForField(
   field: Field | undefined,
-  cfg: ScalarDimensionConfig,
-  mode?: ScalarDimensionMode
+  cfg: ScalarDimensionConfig
 ): DimensionSupplier<number> {
-  //if there is no field
   if (!field) {
     const v = cfg.fixed ?? 0;
     return {
@@ -27,23 +25,24 @@ export function getScalarDimensionForField(
     };
   }
 
-  //capped mode as default
+  //mod mode as default
   let validated = (value: number) => {
-    if (value < cfg.min) {
-      return cfg.min;
-    }
-    if (value > cfg.max) {
-      return cfg.max;
-    }
-    return value;
+    return value % cfg.max;
   };
 
-  //modulus mode
-  if (mode === ScalarDimensionMode.Mod) {
+  //capped mode
+  if (cfg.mode === ScalarDimensionMode.Clamped) {
     validated = (value: number) => {
-      return value % cfg.max;
+      if (value < cfg.min) {
+        return cfg.min;
+      }
+      if (value > cfg.max) {
+        return cfg.max;
+      }
+      return value;
     };
   }
+
   const get = (i: number) => {
     const v = field.values.get(i);
     if (v === null || typeof v !== 'number') {

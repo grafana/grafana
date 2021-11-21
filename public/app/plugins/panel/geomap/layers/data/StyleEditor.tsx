@@ -95,7 +95,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
   let featuresHavePoints = false;
   if (settings?.layerInfo) {
     const propertyOptions = useObservable(settings?.layerInfo);
-    featuresHavePoints = propertyOptions?.geometryType === GeometryTypeId.Point;;
+    featuresHavePoints = propertyOptions?.geometryType === GeometryTypeId.Point;
   }
   const hasTextLabel = styleUsesText(value);
 
