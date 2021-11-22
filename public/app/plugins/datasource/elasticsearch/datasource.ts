@@ -363,7 +363,7 @@ export class ElasticDatasource
 
   private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
     // Elasticsearch queryString should always be '*' if empty string
-    return this.templateSrv.replace(queryString, scopedVars, 'lucene') || '*';
+    return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
   interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
@@ -646,14 +646,14 @@ export class ElasticDatasource
 
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
-        queryObj = this.queryBuilder.getLogsQuery(target, limit, adhocFilters, target.query);
+        queryObj = this.queryBuilder.getLogsQuery(target, limit, adhocFilters);
       } else {
         logLimits.push();
         if (target.alias) {
           target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
         }
 
-        queryObj = this.queryBuilder.build(target, adhocFilters, target.query);
+        queryObj = this.queryBuilder.build(target, adhocFilters);
       }
 
       const esQuery = JSON.stringify(queryObj);
