@@ -36,10 +36,12 @@ export function VisualizationSuggestionCard({ data, suggestion, onChange, width,
 
   if (cardOptions.imgSrc) {
     return (
-      <button {...commonButtonProps} className={cx(styles.vizBox, styles.imgBox)}>
-        <div className={styles.name}>{suggestion.name}</div>
-        <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
-      </button>
+      <Tooltip content={suggestion.description ?? suggestion.name}>
+        <button {...commonButtonProps} className={cx(styles.vizBox, styles.imgBox)}>
+          <div className={styles.name}>{suggestion.name}</div>
+          <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
+        </button>
+      </Tooltip>
     );
   }
 
