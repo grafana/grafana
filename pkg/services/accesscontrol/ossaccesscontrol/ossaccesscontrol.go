@@ -119,9 +119,8 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user
 				if !exists {
 					continue
 				}
-				for _, p := range role.Permissions {
-					permissions = append(permissions, &p)
-
+				for i := range role.Permissions {
+					permissions = append(permissions, &role.Permissions[i])
 				}
 			}
 		}
