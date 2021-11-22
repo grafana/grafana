@@ -10,7 +10,6 @@ import {
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
   LiveChannelAddress,
-  LiveChannelConfig,
   LiveChannelConnectionState,
   LiveChannelEvent,
   LiveChannelPresenceStatus,
@@ -38,19 +37,19 @@ export interface CentrifugeSrv {
   /**
    * Watch for messages in a channel
    */
-  getStream<T>(address: LiveChannelAddress, config: LiveChannelConfig): Observable<LiveChannelEvent<T>>;
+  getStream<T>(address: LiveChannelAddress): Observable<LiveChannelEvent<T>>;
 
   /**
    * Connect to a channel and return results as DataFrames
    */
-  getDataStream(options: LiveDataStreamOptions, config: LiveChannelConfig): Observable<DataQueryResponse>;
+  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse>;
 
   /**
    * For channels that support presence, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream
    */
-  getPresence(address: LiveChannelAddress, config: LiveChannelConfig): Promise<LiveChannelPresenceStatus>;
+  getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus>;
 }
 
 export class CentrifugeService implements CentrifugeSrv {
@@ -110,7 +109,7 @@ export class CentrifugeService implements CentrifugeSrv {
    * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
    * channel will be returned with an error state indicated in its status
    */
-  private getChannel<TMessage>(addr: LiveChannelAddress, config: LiveChannelConfig): CentrifugeLiveChannel<TMessage> {
+  private getChannel<TMessage>(addr: LiveChannelAddress): CentrifugeLiveChannel<TMessage> {
     const id = `${this.deps.orgId}/${addr.scope}/${addr.namespace}/${addr.path}`;
     let channel = this.open.get(id);
     if (channel != null) {
@@ -118,13 +117,16 @@ export class CentrifugeService implements CentrifugeSrv {
     }
 
     channel = new CentrifugeLiveChannel(id, addr);
+    if (channel.currentStatus.state === LiveChannelConnectionState.Invalid) {
+      return channel;
+    }
     channel.shutdownCallback = () => {
       this.open.delete(id); // remove it from the list of open channels
     };
     this.open.set(id, channel);
 
     // Initialize the channel in the background
-    this.initChannel(config, channel).catch((err) => {
+    this.initChannel(channel).catch((err) => {
       if (channel) {
         channel.currentStatus.state = LiveChannelConnectionState.Invalid;
         channel.shutdownWithError(err);
@@ -136,8 +138,8 @@ export class CentrifugeService implements CentrifugeSrv {
     return channel;
   }
 
-  private async initChannel(config: LiveChannelConfig, channel: CentrifugeLiveChannel): Promise<void> {
-    const events = channel.initalize(config);
+  private async initChannel(channel: CentrifugeLiveChannel): Promise<void> {
+    const events = channel.initalize();
     if (!this.centrifuge.isConnected()) {
       await this.connectionBlocker;
     }
@@ -159,16 +161,16 @@ export class CentrifugeService implements CentrifugeSrv {
   /**
    * Watch for messages in a channel
    */
-  getStream<T>(address: LiveChannelAddress, config: LiveChannelConfig): Observable<LiveChannelEvent<T>> {
-    return this.getChannel<T>(address, config).getStream();
+  getStream<T>(address: LiveChannelAddress): Observable<LiveChannelEvent<T>> {
+    return this.getChannel<T>(address).getStream();
   }
 
   /**
    * Connect to a channel and return results as DataFrames
    */
-  getDataStream(options: LiveDataStreamOptions, config: LiveChannelConfig): Observable<DataQueryResponse> {
+  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse> {
     return new Observable<DataQueryResponse>((subscriber) => {
-      const channel = this.getChannel(options.addr, config);
+      const channel = this.getChannel(options.addr);
       const key = options.key ?? `xstr/${streamCounter++}`;
       let data: StreamingDataFrame | undefined = undefined;
       let filtered: DataFrame | undefined = undefined;
@@ -273,8 +275,8 @@ export class CentrifugeService implements CentrifugeSrv {
    *
    * Join and leave messages will be sent to the open stream
    */
-  getPresence(address: LiveChannelAddress, config: LiveChannelConfig): Promise<LiveChannelPresenceStatus> {
-    return this.getChannel(address, config).getPresence();
+  getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus> {
+    return this.getChannel(address).getPresence();
   }
 }
 

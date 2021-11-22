@@ -42,6 +42,27 @@ type ResourceStore interface {
 	GetResourcesPermissions(ctx context.Context, orgID int64, query GetResourcesPermissionsQuery) ([]ResourcePermission, error)
 }
 
+// HasGlobalAccess checks user access with globally assigned permissions only
+func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
+	return func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
+		if ac.IsDisabled() {
+			return fallback(c)
+		}
+
+		userCopy := *c.SignedInUser
+		userCopy.OrgId = GlobalOrgID
+		userCopy.OrgRole = ""
+		userCopy.OrgName = ""
+		hasAccess, err := ac.Evaluate(c.Req.Context(), &userCopy, evaluator)
+		if err != nil {
+			c.Logger.Error("Error from access control system", "error", err)
+			return false
+		}
+
+		return hasAccess
+	}
+}
+
 func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 	return func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 		if ac.IsDisabled() {

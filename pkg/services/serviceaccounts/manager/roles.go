@@ -9,19 +9,27 @@ import (
 var (
 	roleRegistrations = []accesscontrol.RoleRegistration{
 		{
-
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     3,
 				Name:        "fixed:serviceaccounts:writer",
-				Description: "Allows user to create, delete or update the serviceaccounts",
+				DisplayName: "Service accounts writer",
+				Description: "Create, delete, read, or query service accounts.",
+				Group:       "Service accounts",
 				Permissions: []accesscontrol.Permission{
+					{
+						Action: serviceaccounts.ActionRead,
+						Scope:  serviceaccounts.ScopeAll,
+					},
+					{
+						Action: serviceaccounts.ActionCreate,
+					},
 					{
 						Action: serviceaccounts.ActionDelete,
 						Scope:  serviceaccounts.ScopeAll,
 					},
 				},
 			},
-			Grants: []string{"Admin"},
+			Grants: []string{string(models.ROLE_ADMIN)},
 		},
 		{
 			Role: accesscontrol.RoleDTO{
@@ -35,7 +43,7 @@ var (
 					},
 				},
 			},
-			Grants: []string{string(models.ROLE_ADMIN)},
+			Grants: []string{string(models.ROLE_VIEWER)},
 		},
 		{
 			Role: accesscontrol.RoleDTO{

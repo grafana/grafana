@@ -206,6 +206,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		OrgID:           evalCtx.Rule.OrgID,
 		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
+		Theme:           rendering.ThemeDark,
 	}
 
 	ref, err := evalCtx.GetDashboardUID()

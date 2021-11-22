@@ -49,7 +49,7 @@ export interface FrameGeometrySource {
  */
 export interface MapLayerOptions<TConfig = any> {
   type: string;
-  name?: string; // configured unique display name
+  name: string; // configured unique display name
 
   // Custom options depending on the type
   config?: TConfig;

@@ -21,6 +21,7 @@ type Role struct {
 	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
 	DisplayName string `json:"displayName"`
+	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
 
 	Updated time.Time `json:"updated"`
@@ -61,7 +62,9 @@ type RoleDTO struct {
 	Name        string       `json:"name"`
 	DisplayName string       `json:"displayName"`
 	Description string       `json:"description"`
+	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
+	Delegatable *bool        `json:"delegatable,omitempty"`
 
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
 	OrgID int64 `json:"-" xorm:"org_id"`
@@ -77,6 +80,7 @@ func (r RoleDTO) Role() Role {
 		UID:         r.UID,
 		Name:        r.Name,
 		DisplayName: r.DisplayName,
+		Group:       r.Group,
 		Description: r.Description,
 		Updated:     r.Updated,
 		Created:     r.Created,

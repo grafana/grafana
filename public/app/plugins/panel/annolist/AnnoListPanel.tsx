@@ -129,7 +129,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     });
   }
 
-  onAnnoClick = (anno: AnnotationEvent) => {
+  onAnnoClick = async (anno: AnnotationEvent) => {
     if (!anno.time) {
       return;
     }
@@ -152,17 +152,16 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       return;
     }
 
-    getBackendSrv()
-      .get('/api/search', { dashboardIds: anno.dashboardId })
-      .then((res: any[]) => {
-        if (res && res.length && res[0].id === anno.dashboardId) {
-          const dash = res[0];
-          const newUrl = locationUtil.stripBaseFromUrl(dash.url);
-          locationService.push(newUrl);
-          return;
-        }
-        appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardId]);
-      });
+    const result = await getBackendSrv().get('/api/search', { dashboardIds: anno.dashboardId });
+    if (result && result.length && result[0].id === anno.dashboardId) {
+      const dash = result[0];
+      const url = new URL(dash.url, window.location.origin);
+      url.searchParams.set('from', params.from);
+      url.searchParams.set('to', params.to);
+      locationService.push(locationUtil.stripBaseFromUrl(url.toString()));
+      return;
+    }
+    appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardId]);
   };
 
   _timeOffset(time: number, offset: string, subtract = false): number {
