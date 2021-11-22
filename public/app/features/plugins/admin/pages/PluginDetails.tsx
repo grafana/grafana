@@ -40,7 +40,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
   const prevTabs = usePrevious(tabs);
-  const pageId = (queryParams.page as PluginTabIds) || defaultTab.current;
+  const pageId = (queryParams.page as PluginTabIds) || defaultTab;
 
   // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
         <TabContent className={styles.tabContent}>
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
           <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
-          <PluginDetailsBody queryParams={queryParams} plugin={plugin} defaultPageId={defaultTab.current} />
+          <PluginDetailsBody queryParams={queryParams} plugin={plugin} pageId={pageId} />
         </TabContent>
       </PluginPage>
     </Page>
