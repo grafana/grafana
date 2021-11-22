@@ -10,6 +10,8 @@ var (
 const (
 	ActionDelete = "serviceaccounts:delete"
 	ActionRead   = "serviceaccounts:read"
+	// possible to query the /status endpoint
+	ActionStatusRead = "serviceaccounts.status:read"
 )
 
 type Status struct {
