@@ -114,6 +114,7 @@ function describeQueryRunnerScenario(
           ctx.queryCalledWith = options;
           return Promise.resolve(response);
         },
+        getRef: () => ({ type: 'test', uid: 'TestDB-uid' }),
         testDatasource: jest.fn(),
       };
 
