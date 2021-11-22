@@ -64,7 +64,6 @@ func TestLoki(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
-
 }
 
 func TestParseResponse(t *testing.T) {
