@@ -37,7 +37,7 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 		return nil
 	})
 
-	err := syncOrgRoles(&user, &externalUser)
+	err := syncOrgRoles(context.Background(), &user, &externalUser)
 	require.Empty(t, remResp)
 	require.NoError(t, err)
 }
@@ -72,7 +72,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 		return nil
 	})
 
-	err := syncOrgRoles(&user, &externalUser)
+	err := syncOrgRoles(context.Background(), &user, &externalUser)
 	require.NoError(t, err)
 	assert.Contains(t, logs, models.ErrLastOrgAdmin.Error())
 }
