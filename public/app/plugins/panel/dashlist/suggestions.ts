@@ -13,6 +13,9 @@ export class DashListSuggestionsSupplier {
       name: 'Dashboard list',
       pluginId: 'dashlist',
       options: {},
+      cardOptions: {
+        imgSrc: 'public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg',
+      },
     });
 
     list.append({});

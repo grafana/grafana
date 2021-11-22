@@ -51,21 +51,6 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
     dispatch(toggleVizPicker(false));
   };
 
-  // const onKeyPress = useCallback(
-  //   (e: React.KeyboardEvent<HTMLInputElement>) => {
-  //     if (e.key === 'Enter') {
-  //       const query = e.currentTarget.value;
-  //       const plugins = getAllPanelPluginMeta();
-  //       const match = filterPluginList(plugins, query, plugin.meta);
-
-  //       if (match && match.length) {
-  //         onPluginTypeChange(match[0], false);
-  //       }
-  //     }
-  //   },
-  //   [onPluginTypeChange, plugin.meta]
-  // );
-
   if (!plugin) {
     return null;
   }

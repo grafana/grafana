@@ -12,15 +12,8 @@ export class TextPanelSuggestionSupplier {
     const list = builder.getListAppender<PanelOptions, {}>({
       name: 'Text panel',
       pluginId: 'text',
-      options: {
-        content: `
-# Title
-
-For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
-
-* First item
-* Second item
-* Third item`,
+      cardOptions: {
+        imgSrc: 'public/app/plugins/panel/text/img/icn-text-panel.svg',
       },
     });
 
