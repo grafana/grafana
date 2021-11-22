@@ -46,7 +46,7 @@ Roles with names prefixed by `fixed:` are fixed roles created by Grafana and can
 
 ### Role display name
 
-A role’s display name is human friendly text that is displayed in the UI. When you create a display name for a role, use up to 190 ASCII-based characters. For fixed roles, the display name removes the prefix and separates any `:` (a colon) with ` ` (a space).
+A role’s display name is human friendly text that is displayed in the UI. When you create a display name for a role, use up to 190 ASCII-based characters. For fixed roles, the display name is shown as specified. If the display name has not been set the display name replace any `:` (a colon) with ` ` (a space).
 
 ### Role version
 
