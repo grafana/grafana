@@ -564,7 +564,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     menuOptionBody: css`
       font-weight: ${theme.typography.fontWeightRegular};
-      padding: ${theme.spacing(0, 1, 0, 0)};
+      padding: ${theme.spacing(0, 1.5, 0, 0)};
     `,
     menuOptionDisabled: css`
       color: ${theme.colors.text.disabled};
