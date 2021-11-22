@@ -7,9 +7,9 @@
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
-    "build": "NODE_ENV=production webpack --config scripts/webpack/webpack.prod.js",
+    "build": "yarn i18n:compile && NODE_ENV=production webpack --config scripts/webpack/webpack.prod.js",
     "build:nominify": "yarn run build --env noMinify=1",
-    "dev": "webpack --progress --color --config scripts/webpack/webpack.dev.js",
+    "dev": "yarn i18n:compile && webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
@@ -34,9 +34,9 @@
     "precommit": "yarn run lint-staged",
     "prettier:check": "prettier --list-different \"**/*.{scss,md,mdx}\"",
     "prettier:write": "prettier --list-different \"**/*.{scss,md,mdx}\" --write",
-    "start": "yarn themes:generate && webpack --progress --color --watch --env noTsCheck=0 --config scripts/webpack/webpack.dev.js",
-    "start:hot": "yarn themes:generate && NODE_ENV=hot webpack serve --progress --color --config scripts/webpack/webpack.hot.js",
-    "start:noTsCheck": "yarn themes:generate && webpack --progress --color --watch --env noTsCheck=1 --config scripts/webpack/webpack.dev.js",
+    "start": "yarn themes:generate && yarn dev --watch",
+    "start:noTsCheck": "yarn start --env noTsCheck=1",
+    "start:hot": "yarn themes:generate && NODE_ENV=hot yarn dev --config scripts/webpack/webpack.hot.js",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "storybook": "yarn workspace @grafana/ui storybook --ci",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
@@ -45,6 +45,8 @@
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check",
+    "i18n:extract": "lingui extract",
+    "i18n:compile": "lingui compile",
     "postinstall": "husky install"
   },
   "grafana": {
