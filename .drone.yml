@@ -9,7 +9,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -253,7 +253,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -636,7 +636,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -722,7 +722,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1067,7 +1067,7 @@ clone:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1546,7 +1546,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1652,7 +1652,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1986,7 +1986,7 @@ clone:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -2459,7 +2459,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -2565,7 +2565,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -2870,7 +2870,7 @@ clone:
 
 steps:
 - name: identify-runner
-  image: alpine:3.14.2
+  image: alpine:3.14.3
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -3430,6 +3430,6 @@ get:
 
 ---
 kind: signature
-hmac: eeeaddc047d301b2d0e6a43a611b2f2991f4b1f82a3958dd5351d2b44a62181d
+hmac: 7f4835a96db0d5b5d634f05cf3a91b502539d78e8615fe4e0b89323502e5ddd0
 
 ...
