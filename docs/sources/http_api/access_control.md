@@ -88,8 +88,9 @@ Content-Type: application/json; charset=UTF-8
     {
         "version": 1,
         "uid": "Kz9m_YjGz",
-        "name": "fixed:reporting:admin:edit",
-        "description": "Gives access to edit any report or the organization's general reporting settings.",
+        "name": "fixed:reports:writer",
+        "displayName": "Report writer",
+        "description": "Create, read, update, or delete all reports and shared report settings",
         "global": true,
         "updated": "2021-05-13T16:24:26+02:00",
         "created": "2021-05-13T16:24:26+02:00"
@@ -97,8 +98,8 @@ Content-Type: application/json; charset=UTF-8
     {
         "version": 5,
         "uid": "vi9mlLjGz",
-        "name": "fixed:permissions:admin:read",
-        "description": "Gives access to read and list roles and permissions, as well as built-in role assignments.",
+        "name": "fixed:datasources.permissions:writer",
+        "description: "Create, read or delete data source permissions.",
         "global": true,
         "updated": "2021-05-13T22:41:49+02:00",
         "created": "2021-05-13T16:24:26+02:00"
@@ -143,8 +144,8 @@ Content-Type: application/json; charset=UTF-8
 {
     "version": 2,
     "uid": "jZrmlLCGk",
-    "name": "fixed:permissions:admin:edit",
-    "description": "Gives access to create, update and delete roles, as well as manage built-in role assignments.",
+    "name": "fixed:datasources.permissions:writer",
+    "description": "Create, read or delete data source permissions.",
     "global": true,
     "permissions": [
         {
@@ -199,6 +200,7 @@ Content-Type: application/json
     "version": 1,
     "uid": "jZrmlLCGka",
     "name": "custom:delete:roles",
+    "displayName": "custom delete roles",
     "description": "My custom role which gives users permissions to delete roles",
     "global": true,
     "permissions": [
@@ -238,6 +240,7 @@ Content-Type: application/json; charset=UTF-8
     "version": 2,
     "uid": "jZrmlLCGka",
     "name": "custom:delete:create:roles",
+    "displayName": "custom delete create roles",
     "description": "My custom role which gives users permissions to delete and create roles",
     "global": true,
     "permissions": [
@@ -287,6 +290,7 @@ Content-Type: application/json
 {
     "version": 3,
     "name": "custom:delete:write:roles",
+    "displayName": "custom delete write roles",
     "description": "My custom role which gives users permissions to delete and write roles",
     "global": true,
     "permissions": [
@@ -328,6 +332,7 @@ Content-Type: application/json; charset=UTF-8
     "version":3,
     "uid":"jZrmlLCGka",
     "name":"custom:delete:write:roles",
+    "displayName":"custom delete write roles",
     "description":"My custom role which gives users permissions to delete and write roles",
     "permissions":[
         {
@@ -442,8 +447,9 @@ Content-Type: application/json; charset=UTF-8
         {
             "version": 1,
             "uid": "qQui_LCMk",
-            "name": "fixed:users:org:edit",
-            "description": "",
+            "name": "fixed:users:writer",
+            "name": "User writer",
+            "description": "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users",
             "global": true,
             "updated": "2021-05-13T16:24:26+02:00",
             "created": "2021-05-13T16:24:26+02:00"
@@ -451,8 +457,9 @@ Content-Type: application/json; charset=UTF-8
         {
             "version": 1,
             "uid": "PeXmlYjMk",
-            "name": "fixed:users:org:read",
-            "description": "",
+            "name": "fixed:users:reader",
+            "displayName": "User reader",
+            "description": "Allows every read action for user organizations and in addition allows to administer user organizations",
             "global": true,
             "updated": "2021-05-13T16:24:26+02:00",
             "created": "2021-05-13T16:24:26+02:00"
@@ -462,8 +469,9 @@ Content-Type: application/json; charset=UTF-8
         {
             "version": 1,
             "uid": "qQui_LCMk",
-            "name": "fixed:users:org:edit",
-            "description": "",
+            "name": "fixed:users:writer",
+            "displayName": "User writer",
+            "description": "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users",
             "global": true,
             "updated": "2021-05-13T16:24:26+02:00",
             "created": "2021-05-13T16:24:26+02:00"
