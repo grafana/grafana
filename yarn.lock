@@ -2433,17 +2433,12 @@ __metadata:
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.0.6
     "@types/node": 16.11.6
-    "@types/systemjs": ^0.20.6
-    execa: 5.1.1
     rimraf: 3.0.1
     rollup: 2.58.3
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    ts-loader: 6.2.1
-    ts-node: 9.0.0
     tslib: 2.3.1
     typescript: 4.4.3
-    yaml: ^1.8.3
   languageName: unknown
   linkType: soft
 
