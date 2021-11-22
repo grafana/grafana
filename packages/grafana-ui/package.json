@@ -157,6 +157,7 @@
     "enzyme": "3.11.0",
     "expose-loader": "3.0.0",
     "mock-raf": "1.0.1",
+    "postcss": "8.3.11",
     "postcss-loader": "6.1.1",
     "raw-loader": "4.0.2",
     "react-docgen-typescript-loader": "3.7.2",

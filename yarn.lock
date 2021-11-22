@@ -2773,6 +2773,7 @@ __metadata:
     mock-raf: 1.0.1
     moment: 2.29.1
     monaco-editor: 0.27.0
+    postcss: 8.3.11
     postcss-loader: 6.1.1
     prismjs: 1.25.0
     raw-loader: 4.0.2
@@ -2889,7 +2890,6 @@ __metadata:
   resolution: "@jaegertracing/jaeger-ui-components@workspace:packages/jaeger-ui-components"
   dependencies:
     "@emotion/css": 11.1.3
-    "@emotion/react": 11.1.5
     "@grafana/data": 8.3.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
     "@grafana/ui": 8.3.0-pre
@@ -2898,13 +2898,13 @@ __metadata:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
     "@types/lodash": ^4.14.123
+    "@types/prop-types": ^15
     "@types/react": 17.0.30
     "@types/react-icons": 2.2.7
     "@types/recompose": ^0.30.7
     "@types/reselect": 2.2.0
     "@types/slate-react": 0.22.5
     "@types/tinycolor2": 1.4.2
-    "@wojtekmaj/enzyme-adapter-react-17": 0.6.2
     chance: ^1.0.10
     classnames: ^2.2.5
     combokeys: ^3.0.0
@@ -2930,7 +2930,6 @@ __metadata:
     tslib: 2.3.1
     tween-functions: ^1.2.0
     typescript: 4.4.3
-    webpack: 5.58.1
   languageName: unknown
   linkType: soft
 
@@ -8150,7 +8149,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prop-types@npm:*":
+"@types/prop-types@npm:*, @types/prop-types@npm:^15":
   version: 15.7.4
   resolution: "@types/prop-types@npm:15.7.4"
   checksum: ef6e1899e59b876c273811b1bd845022fc66d5a3d11cb38a25b6c566b30514ae38fe20a40f67622f362a4f4f7f9224e22d8da101cff3d6e97e11d7b4c307cfc1
@@ -25822,6 +25821,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss@npm:8.3.11, postcss@npm:^8.2.1, postcss@npm:^8.2.15, postcss@npm:^8.3.11, postcss@npm:^8.3.5":
+  version: 8.3.11
+  resolution: "postcss@npm:8.3.11"
+  dependencies:
+    nanoid: ^3.1.30
+    picocolors: ^1.0.0
+    source-map-js: ^0.6.2
+  checksum: 1a230553d74c66aa9585c90781ed8ea75f19cefea405d2117b67fbeb24b5b5e0e17be2e0c5a07db31dd085643a13394127ab2222e940771b70498331bf20f35e
+  languageName: node
+  linkType: hard
+
 "postcss@npm:8.3.6":
   version: 8.3.6
   resolution: "postcss@npm:8.3.6"
@@ -25840,17 +25850,6 @@ __metadata:
     picocolors: ^0.2.1
     source-map: ^0.6.1
   checksum: 4ac793f506c23259189064bdc921260d869a115a82b5e713973c5af8e94fbb5721a5cc3e1e26840500d7e1f1fa42a209747c5b1a151918a9bc11f0d7ed9048e3
-  languageName: node
-  linkType: hard
-
-"postcss@npm:^8.2.1, postcss@npm:^8.2.15, postcss@npm:^8.3.11, postcss@npm:^8.3.5":
-  version: 8.3.11
-  resolution: "postcss@npm:8.3.11"
-  dependencies:
-    nanoid: ^3.1.30
-    picocolors: ^1.0.0
-    source-map-js: ^0.6.2
-  checksum: 1a230553d74c66aa9585c90781ed8ea75f19cefea405d2117b67fbeb24b5b5e0e17be2e0c5a07db31dd085643a13394127ab2222e940771b70498331bf20f35e
   languageName: node
   linkType: hard
 
