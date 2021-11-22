@@ -106,9 +106,10 @@ function LogsNavigation({
       onClick={() => {
         //If we are not on the last page, use next page's range
         if (!onLastPage) {
+          const indexChange = oldestLogsFirst ? -1 : 1;
           changeTime({
-            from: pages[currentPageIndex + 1].queryRange.from,
-            to: pages[currentPageIndex + 1].queryRange.to,
+            from: pages[currentPageIndex + indexChange].queryRange.from,
+            to: pages[currentPageIndex + indexChange].queryRange.to,
           });
         } else {
           //If we are on the last page, create new range
@@ -132,9 +133,10 @@ function LogsNavigation({
       onClick={() => {
         //If we are not on the first page, use previous page's range
         if (!onFirstPage) {
+          const indexChange = oldestLogsFirst ? 1 : -1;
           changeTime({
-            from: pages[currentPageIndex - 1].queryRange.from,
-            to: pages[currentPageIndex - 1].queryRange.to,
+            from: pages[currentPageIndex + indexChange].queryRange.from,
+            to: pages[currentPageIndex + indexChange].queryRange.to,
           });
         }
         //If we are on the first page, button is disabled and we do nothing
