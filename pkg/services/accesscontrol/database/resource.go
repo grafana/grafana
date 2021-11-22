@@ -156,7 +156,12 @@ func (s *AccessControlStore) setResourcePermission(
 		return nil, err
 	}
 
-	return flatPermissionsToResourcePermission(append(permissions, keptPermissions...)), nil
+	permission := flatPermissionsToResourcePermission(append(permissions, keptPermissions...))
+	if permission == nil {
+		return &accesscontrol.ResourcePermission{}, nil
+	}
+
+	return permission, nil
 }
 
 func (s *AccessControlStore) GetResourcesPermissions(ctx context.Context, orgID int64, query accesscontrol.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
