@@ -161,7 +161,6 @@ describe('TraceView', () => {
         <TraceView exploreId={ExploreId.left} dataFrames={[frameNew]} splitOpenFn={() => {}} />
       </Provider>
     );
-    //Process is in detail view
     expect(screen.queryByText(/Process/)).not.toBeInTheDocument();
   });
 });
