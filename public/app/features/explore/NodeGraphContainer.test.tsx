@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';
 import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
 import { ExploreId } from '../../types';
-jest.mock('../../plugins/panel/nodeGraph/layout.worker.js');
 
 describe('NodeGraphContainer', () => {
   it('is collapsed if shown with traces', () => {

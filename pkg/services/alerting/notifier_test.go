@@ -365,7 +365,7 @@ func (s *testRenderService) RenderCSV(ctx context.Context, opts rendering.CSVOpt
 	return nil, nil
 }
 
-func (s *testRenderService) RenderErrorImage(err error) (*rendering.RenderResult, error) {
+func (s *testRenderService) RenderErrorImage(theme rendering.Theme, err error) (*rendering.RenderResult, error) {
 	if s.renderErrorImageProvider != nil {
 		return s.renderErrorImageProvider(err)
 	}

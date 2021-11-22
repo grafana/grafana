@@ -50,6 +50,10 @@ export const Components = {
     MenuComponent: (title: string) => `${title} menu`,
     MenuGroup: (title: string) => `${title} menu group`,
     MenuItem: (title: string) => `${title} menu item`,
+    SubMenu: {
+      container: 'SubMenu container',
+      icon: 'SubMenu icon',
+    },
   },
   Panels: {
     Panel: {
@@ -72,7 +76,11 @@ export const Components = {
         },
       },
       BarGauge: {
+        /**
+         * @deprecated use valueV2 from Grafana 8.3 instead
+         */
         value: 'Bar gauge value',
+        valueV2: 'data-testid Bar gauge value',
       },
       PieChart: {
         svgSlice: 'Pie Chart Slice',
@@ -137,8 +145,16 @@ export const Components = {
     active: () => '[class*="-activeTabStyle"]',
   },
   RefreshPicker: {
+    /**
+     * @deprecated use runButtonV2 from Grafana 8.3 instead
+     */
     runButton: 'RefreshPicker run button',
+    /**
+     * @deprecated use intervalButtonV2 from Grafana 8.3 instead
+     */
     intervalButton: 'RefreshPicker interval button',
+    runButtonV2: 'data-testid RefreshPicker run button',
+    intervalButtonV2: 'data-testid RefreshPicker interval button',
   },
   QueryTab: {
     content: 'Query editor tab content',
@@ -156,7 +172,11 @@ export const Components = {
     content: 'Alert editor tab content',
   },
   Alert: {
+    /**
+     * @deprecated use alertV2 from Grafana 8.3 instead
+     */
     alert: (severity: string) => `Alert ${severity}`,
+    alertV2: (severity: string) => `data-testid Alert ${severity}`,
   },
   TransformTab: {
     content: 'Transform editor tab content',
@@ -192,7 +212,7 @@ export const Components = {
   },
   Select: {
     option: 'Select option',
-    input: () => 'input[id*="react-select-"]',
+    input: () => 'input[id*="time-options-input"]',
     singleValue: () => 'div[class*="-singleValue"]',
   },
   FieldConfigEditor: {
@@ -202,7 +222,11 @@ export const Components = {
     content: 'Field overrides editor content',
   },
   FolderPicker: {
+    /**
+     * @deprecated use containerV2 from Grafana 8.3 instead
+     */
     container: 'Folder picker select container',
+    containerV2: 'data-testid Folder picker select container',
     input: 'Select a folder',
   },
   ReadonlyFolderPicker: {
@@ -217,10 +241,19 @@ export const Components = {
     inputV2: 'Select a data source',
   },
   TimeZonePicker: {
+    /**
+     * @deprecated use TimeZonePicker.containerV2 from Grafana 8.3 instead
+     */
     container: 'Time zone picker select container',
+    containerV2: 'data-testid Time zone picker select container',
   },
   WeekStartPicker: {
+    /**
+     * @deprecated use WeekStartPicker.containerV2 from Grafana 8.3 instead
+     */
     container: 'Choose starting day of the week',
+    containerV2: 'data-testid Choose starting day of the week',
+    placeholder: 'Choose starting day of the week',
   },
   TraceViewer: {
     spanBar: () => '[data-test-id="SpanBar--wrapper"]',
@@ -231,8 +264,20 @@ export const Components = {
     select: (name: string) => `Value picker select ${name}`,
   },
   Search: {
+    /**
+     * @deprecated use sectionV2 from Grafana 8.3 instead
+     */
     section: 'Search section',
+    sectionV2: 'data-testid Search section',
+    /**
+     * @deprecated use itemsV2 from Grafana 8.3 instead
+     */
     items: 'Search items',
+    itemsV2: 'data-testid Search items',
+    collapseFolder: (sectionId: string) => `data-testid Collapse folder ${sectionId}`,
+    expandFolder: (sectionId: string) => `data-testid Expand folder ${sectionId}`,
+    dashboardItem: (item: string) => `${Components.Search.dashboardItems} ${item}`,
+    dashboardItems: 'data-testid Dashboard search item',
   },
   DashboardLinks: {
     container: 'data-testid Dashboard link container',
@@ -243,7 +288,11 @@ export const Components = {
     icon: 'Loading indicator',
   },
   CallToActionCard: {
+    /**
+     * @deprecated use buttonV2 from Grafana 8.3 instead
+     */
     button: (name: string) => `Call to action button ${name}`,
+    buttonV2: (name: string) => `data-testid Call to action button ${name}`,
   },
   DataLinksContextMenu: {
     singleLink: 'Data link',

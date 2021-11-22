@@ -32,7 +32,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "21.0.1",
     "@rollup/plugin-node-resolve": "13.0.6",
-    "@types/node": "14.17.27",
+    "@types/node": "16.11.6",
     "@types/rollup-plugin-visualizer": "4.2.1",
     "@types/uuid": "8.3.0",
     "date-fns": "2.21.3",
@@ -55,7 +55,7 @@
     "babel-loader": "8.2.2",
     "blink-diff": "1.0.13",
     "commander": "8.3.0",
-    "cypress": "8.4.1",
+    "cypress": "9.0.0",
     "cypress-file-upload": "5.0.8",
     "execa": "5.1.1",
     "mocha": "7.0.1",

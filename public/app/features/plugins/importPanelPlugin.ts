@@ -2,7 +2,6 @@ import config from 'app/core/config';
 import * as grafanaData from '@grafana/data';
 import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
 import { importPluginModule } from './plugin_loader';
-
 interface PanelCache {
   [key: string]: Promise<grafanaData.PanelPlugin>;
 }
@@ -30,7 +29,7 @@ export function importPanelPluginFromMeta(meta: grafanaData.PanelPluginMeta): Pr
 }
 
 function getPanelPlugin(meta: grafanaData.PanelPluginMeta): Promise<grafanaData.PanelPlugin> {
-  return importPluginModule(meta.module)
+  return importPluginModule(meta.module, meta.info?.version)
     .then((pluginExports) => {
       if (pluginExports.plugin) {
         return pluginExports.plugin as grafanaData.PanelPlugin;
