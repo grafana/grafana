@@ -194,6 +194,7 @@ export const RolePickerMenu = ({
                       key={i}
                       isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
                       partiallySelected={groupPartiallySelected(option.value)}
+                      disabled={option.options?.every(isDelegatable)}
                       onChange={onGroupChange}
                       onOpenSubMenu={onOpenSubMenu}
                       onCloseSubMenu={onCloseSubMenu}
@@ -221,6 +222,7 @@ export const RolePickerMenu = ({
                       data={option}
                       key={i}
                       isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                      disabled={isDelegatable(option)}
                       onChange={onChange}
                       hideDescription
                     />
@@ -237,6 +239,7 @@ export const RolePickerMenu = ({
                     data={option}
                     key={i}
                     isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                    disabled={isDelegatable(option)}
                     onChange={onChange}
                     hideDescription
                   />
@@ -329,7 +332,9 @@ export const RolePickerSubMenu = ({
                     disabledOptions?.find((opt) => opt.uid === option.uid))
                 )
               }
-              disabled={!!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid))}
+              disabled={
+                !!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid)) || isDelegatable(option)
+              }
               onChange={onSelect}
               hideDescription
             />
@@ -506,6 +511,10 @@ const capitalize = (s: string): string => {
 };
 
 const sortRolesByName = (a: Role, b: Role) => a.name.localeCompare(b.name);
+
+const isDelegatable = (role: Role) => {
+  return role.delegatable !== undefined && !role.delegatable;
+};
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
