@@ -58,6 +58,7 @@ export interface CatalogPlugin {
   installedVersion?: string;
   details?: CatalogPluginDetails;
   error?: PluginErrorCode;
+  dependencies?: PluginDependency[];
 }
 
 export interface CatalogPluginDetails {
