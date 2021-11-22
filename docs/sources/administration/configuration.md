@@ -1582,7 +1582,7 @@ We do _not_ recommend using this option. For more information, refer to [Plugin 
 
 ### plugin_admin_enabled
 
-Available to Grafana administrators only, the plugin admin app is set to `true` by default. Set it to `false` to disable the app.
+Available to Grafana administrators only, enables installing / uninstalling / updating plugins directly from the Grafana UI. Set to `true` by default. Setting it to `false` will hide the install / uninstall / update controls.
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
 
@@ -1711,13 +1711,19 @@ Mode `reusable` will have one browser instance and will create a new incognito p
 
 ### rendering_clustering_mode
 
-When rendering_mode = clustered you can instruct how many browsers or incognito pages can execute concurrently. Default is `browser` and will cluster using browser instances.
+When rendering_mode = clustered, you can instruct how many browsers or incognito pages can execute concurrently. Default is `browser` and will cluster using browser instances.
 
 Mode `context` will cluster using incognito pages.
 
 ### rendering_clustering_max_concurrency
 
-When rendering_mode = clustered you can define the maximum number of browser instances/incognito pages that can execute concurrently.
+When rendering_mode = clustered, you can define the maximum number of browser instances/incognito pages that can execute concurrently. Default is `5`.
+
+### rendering_clustering_timeout
+
+> **Note**: Available in grafana-image-renderer v3.3.0 and later versions.
+
+When rendering_mode = clustered, you can specify the duration a rendering request can take before it will time out. Default is `30` seconds.
 
 ### rendering_viewport_max_width
 
