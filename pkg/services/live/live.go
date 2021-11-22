@@ -200,7 +200,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			ManagedStream:        g.ManagedStreamRunner,
 			FrameStorage:         pipeline.NewFrameStorage(),
 			ChannelHandlerGetter: g,
-			EncryptionService:    g.EncryptionService,
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder, builtinBuilder)
 
@@ -1107,7 +1106,6 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) respon
 		ManagedStream:        g.ManagedStreamRunner,
 		FrameStorage:         pipeline.NewFrameStorage(),
 		ChannelHandlerGetter: g,
-		EncryptionService:    g.EncryptionService,
 	}
 	channelRuleGetter := pipeline.NewCacheSegmentedTree(builder, builtinBuilder)
 	pipe, err := pipeline.New(channelRuleGetter)

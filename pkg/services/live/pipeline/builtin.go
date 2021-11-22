@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/centrifugal/centrifuge"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
 
@@ -14,10 +13,9 @@ type BuiltinRuleBuilder struct {
 	FrameStorage         *FrameStorage
 	Storage              Storage
 	ChannelHandlerGetter ChannelHandlerGetter
-	EncryptionService    encryption.Service
 }
 
-func (b *BuiltinRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*LiveChannelRule, error) {
+func (b *BuiltinRuleBuilder) BuildRules(_ context.Context, orgID int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
 			OrgId:   orgID,
