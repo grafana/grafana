@@ -382,7 +382,7 @@ func (i *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 		} else {
 			message = jsonBody["message"]
 		}
-		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: i.fullSystemInfoString()}
+		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: i.systemInfo()}
 	}
 
 	if res.StatusCode/100 != 2 {
@@ -453,7 +453,7 @@ func (i *Installer) selectVersion(p *Plugin, requested string) (*Version, error)
 		return nil, ErrVersionUnsupported{
 			PluginID:         p.ID,
 			RequestedVersion: requested,
-			SystemInfo:       i.fullSystemInfoString(),
+			SystemInfo:       i.systemInfo(),
 		}
 	}
 
@@ -473,15 +473,15 @@ func (i *Installer) selectVersion(p *Plugin, requested string) (*Version, error)
 		constraint, err := semver.NewConstraint(requested)
 		if err != nil {
 			return nil, ErrVersionNotFound{PluginID: p.ID, RequestedVersion: requested,
-				SystemInfo: i.fullSystemInfoString(), FallbackVersion: latestSupported.Version}
+				SystemInfo: i.systemInfo(), FallbackVersion: latestSupported.Version}
 		}
 
-		for _, v := range p.Versions {
+		for j, v := range p.Versions {
 			if vers, err := semver.NewVersion(v.Version); err != nil {
 				return nil, ErrVersionNotFound{PluginID: p.ID, RequestedVersion: requested,
-					SystemInfo: i.fullSystemInfoString(), FallbackVersion: latestSupported.Version}
+					SystemInfo: i.systemInfo(), FallbackVersion: latestSupported.Version}
 			} else if constraint.Check(vers) {
-				selected = &v
+				selected = &p.Versions[j] // cannot use address of loop var `v` here due to gosec G601
 				break
 			}
 		}
@@ -489,18 +489,18 @@ func (i *Installer) selectVersion(p *Plugin, requested string) (*Version, error)
 
 	if selected == nil {
 		return nil, ErrVersionNotFound{PluginID: p.ID, RequestedVersion: requested,
-			SystemInfo: i.fullSystemInfoString(), FallbackVersion: latestSupported.Version}
+			SystemInfo: i.systemInfo(), FallbackVersion: latestSupported.Version}
 	}
 
 	if !supportsCurrentArch(selected) {
 		return nil, ErrVersionUnsupported{PluginID: p.ID, RequestedVersion: requested,
-			SystemInfo: i.fullSystemInfoString(), FallbackVersion: latestSupported.Version}
+			SystemInfo: i.systemInfo(), FallbackVersion: latestSupported.Version}
 	}
 
 	return selected, nil
 }
 
-func (i *Installer) fullSystemInfoString() string {
+func (i *Installer) systemInfo() string {
 	return fmt.Sprintf("Grafana v%s %s", i.grafanaVersion, osAndArchString())
 }
 
