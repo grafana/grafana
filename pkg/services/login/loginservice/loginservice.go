@@ -23,7 +23,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, quotaService *quot
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
 	}
-	bus.AddHandler(s.UpsertUser)
+	bus.AddHandlerCtx(s.UpsertUser)
 	return s
 }
 
@@ -41,10 +41,10 @@ func (ls *Implementation) CreateUser(cmd models.CreateUserCommand) (*models.User
 }
 
 // UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
-func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
+func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
-	user, err := ls.AuthInfoService.LookupAndUpdate(&models.GetUserByAuthInfoQuery{
+	user, err := ls.AuthInfoService.LookupAndUpdate(ctx, &models.GetUserByAuthInfoQuery{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
 		UserId:     extUser.UserId,
