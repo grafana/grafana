@@ -137,7 +137,7 @@
     "@types/react-beautiful-dnd": "13.1.1",
     "@types/react-calendar": "^3.4.3",
     "@types/react-color": "3.0.1",
-    "@types/react-dom": "16.9.9",
+    "@types/react-dom": "17.0.11",
     "@types/react-router-dom": "^5.1.7",
     "@types/react-select": "4.0.13",
     "@types/react-table": "7.7.2",
