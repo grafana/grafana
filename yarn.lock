@@ -5155,7 +5155,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/menu@npm:^3.3.0":
+"@react-types/menu@npm:3.4.1, @react-types/menu@npm:^3.3.0":
   version: 3.4.1
   resolution: "@react-types/menu@npm:3.4.1"
   dependencies:
@@ -5167,7 +5167,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/overlays@npm:^3.5.1":
+"@react-types/overlays@npm:3.5.1, @react-types/overlays@npm:^3.5.1":
   version: 3.5.1
   resolution: "@react-types/overlays@npm:3.5.1"
   dependencies:
@@ -5178,7 +5178,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:^3.8.0, @react-types/shared@npm:^3.9.0":
+"@react-types/shared@npm:3.9.0, @react-types/shared@npm:^3.8.0, @react-types/shared@npm:^3.9.0":
   version: 3.9.0
   resolution: "@react-types/shared@npm:3.9.0"
   peerDependencies:
@@ -18022,6 +18022,9 @@ __metadata:
     "@react-stately/collections": 3.3.4
     "@react-stately/menu": 3.2.3
     "@react-stately/tree": 3.2.0
+    "@react-types/menu": 3.4.1
+    "@react-types/overlays": 3.5.1
+    "@react-types/shared": 3.9.0
     "@reduxjs/toolkit": 1.6.1
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 5.25.0

@@ -13,6 +13,7 @@ import { OrgSwitcher } from '../OrgSwitcher';
 import NavBarItem from './NavBarItem';
 import { NavBarSection } from './NavBarSection';
 import { NavBarMenu } from './NavBarMenu';
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -59,9 +60,9 @@ export const NavBar: FC = React.memo(() => {
       </div>
 
       <NavBarSection>
-        <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false} id="home">
+        <NavBarItemWithoutMenu label="Home" className={styles.grafanaLogo} url={homeUrl}>
           <Branding.MenuLogo />
-        </NavBarItem>
+        </NavBarItemWithoutMenu>
         <NavBarItem
           className={styles.search}
           isActive={activeItem === searchItem}
