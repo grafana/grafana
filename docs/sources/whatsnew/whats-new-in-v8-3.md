@@ -10,7 +10,7 @@ list = false
 
 # What’s new in Grafana v8.3
 
-Grafana 8.3 is an exciting release for Grafana Labs. This release includes the new Candlestick Panel, a new visualization suggestions engine and, for enterprise users, Recorded Queries. 
+Grafana 8.3 is an exciting release for Grafana Labs. This release includes the new Candlestick Panel, a new visualization suggestions engine and, for enterprise users, Recorded Queries.
 
 For Open Source users it also marks the first time Grafana Alerting, formerly unified alerting, is enabled by default for new Grafana installations. Grafana Alerting in 8.3 is the flexible, single pane of glass for all your alerts. Included in this release is expanded provisioning support for notifiers, contact points, and alert rules, alongside auditing and fine-grained access control for our Enterprise customers.
 
@@ -20,13 +20,13 @@ We’ve summarized what’s new in the release here, but you might also be inter
 
 ## Accessibility
 
-We’ve continued to make progress on improving Grafana’s accessibility. In Grafana 8.3 we’ve updated the main menu with improved keyboard navigation. We’ve also improved Grafana’s behavior when navigating through elements with the tab key (tab stops) and finished our work to make Grafana’s viewer roles compatible with assistive technologies such as screen readers. You can read our accessibility statement here and reach out to us with accessibility issues using our community Slack or our community forums. 
+We’ve continued to make progress on improving Grafana’s accessibility. In Grafana 8.3 we’ve updated the main menu with improved keyboard navigation. We’ve also improved Grafana’s behavior when navigating through elements with the tab key (tab stops) and finished our work to make Grafana’s viewer roles compatible with assistive technologies such as screen readers. You can read our accessibility statement here and reach out to us with accessibility issues using our community Slack or our community forums.
 
 ## Dashboards and Visualizations
 
 ### Panel Suggestions
 
-Grafana will now make suggestions for visualization types based on the current data surfaced by a query or queries in a panel. This makes seeing available, possible interpretations of your data more straightforward and can be a useful jumping-off point when building panels and dashboards with specific goals in mind. 
+Grafana will now make suggestions for visualization types based on the current data surfaced by a query or queries in a panel. This makes seeing available, possible interpretations of your data more straightforward and can be a useful jumping-off point when building panels and dashboards with specific goals in mind.
 
 ### Candlestick Panel (Beta)
 
@@ -38,14 +38,13 @@ Grafana 8.3 is shipping with a new Candlestick panel that is so much more. Beyon
 
 Recorded queries turn “point in time” data into time series.
 
-Recorded queries allow you to export the results of certain non-time series queries to the Enterprise backend in order to store data over time and allow customers to construct their own time series. 
+Recorded queries allow you to export the results of certain non-time series queries to the Enterprise backend in order to store data over time and allow customers to construct their own time series.
 
 This new feature is especially helpful for Enterprise customers using plugins because many new plugins, like ServiceNow and Jira, don’t return time series so customers weren’t able to plot historical data over time. With recorded queries, now they can! For more information
 
-
 ## Assign fine-grained permissions directly to users with the new role picker (beta)
 
-Sometimes the Viewer, Editor, and Admin roles just don’t fit what a certain user needs to do in Grafana. Now you can assign fine-grained roles directly to users, so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. The role picker can be access from the Grafana Admin user management page. 
+Sometimes the Viewer, Editor, and Admin roles just don’t fit what a certain user needs to do in Grafana. Now you can assign fine-grained roles directly to users, so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. The role picker can be access from the Grafana Admin user management page.
 
 ## Use fine-grained access control for Organizations and Licensing (beta)
 
@@ -60,7 +59,6 @@ In order to support this, we’ve upgraded Grafana Enterprise to use envelope en
 ## Pay the same for all users, regardless of their permissions
 
 Are you tired of managing user permissions because your license only allows a certain number of Viewers and Editors or Admins? So were we. We’ve added support for combined user pricing, where all users cost the same and fall into the same license bucket in Grafana Enterprise. This is a specific license option and must be updated in your contract. To learn more, refer to our [licensing docs](https://grafana.com/docs/grafana/latest/enterprise/license/license-restrictions/). To switch to combined user pricing, contact your Grafana Labs account team.
-
 
 ## Author dashboards faster with resource caching
 
