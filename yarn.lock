@@ -2759,7 +2759,7 @@ __metadata:
     "@types/react-beautiful-dnd": 13.1.1
     "@types/react-calendar": ^3.4.3
     "@types/react-color": 3.0.1
-    "@types/react-dom": 16.9.9
+    "@types/react-dom": 17.0.11
     "@types/react-router-dom": ^5.1.7
     "@types/react-select": 4.0.13
     "@types/react-table": 7.7.2
@@ -8289,12 +8289,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:16.9.9":
-  version: 16.9.9
-  resolution: "@types/react-dom@npm:16.9.9"
+"@types/react-dom@npm:17.0.11":
+  version: 17.0.11
+  resolution: "@types/react-dom@npm:17.0.11"
   dependencies:
     "@types/react": "*"
-  checksum: b42a788b6a40a79a738346044c21e6c536f136e9b919fce90847aaaba7298e0b7d4d6845a1449d92a5678c5c221f060d66207a7f4968f7f5991e2511aa8e6860
+  checksum: 4d5730dffbef86c887cecad7e3cecda424ce6a64d0b5441c63b5b015d48219868660a2bb1aa15e897e565ad8867fa6b885d4358b04e1c4e589ba4c07c3fda55c
   languageName: node
   linkType: hard
 
