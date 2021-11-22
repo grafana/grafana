@@ -93,8 +93,8 @@ def get_steps(edition, ver_mode):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-        postgres_integration_tests_step(edition=edition),
-        mysql_integration_tests_step(edition=edition),
+        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
@@ -126,7 +126,7 @@ def get_steps(edition, ver_mode):
         build_steps.append(build_storybook)
 
     if include_enterprise2:
-      build_steps.extend([redis_integration_tests_step(edition=edition2), memcached_integration_tests_step(edition=edition2)])
+      build_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     if should_upload:
         publish_steps.append(upload_cdn_step(edition=edition))
@@ -162,7 +162,7 @@ def get_oss_pipelines(trigger, ver_mode):
     return [
         pipeline(
             name='oss-build-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + 
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
               build_steps + package_steps + publish_steps,
         ),
         pipeline(
