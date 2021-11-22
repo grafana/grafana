@@ -25,7 +25,7 @@ import {
   standardTransformersRegistry,
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
-import { importPluginModule } from 'app/features/plugins/plugin_loader';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
 import {
   locationService,
   registerEchoBackend,
@@ -62,6 +62,7 @@ import { getAllOptionEditors } from './core/components/editors/registry';
 import { backendSrv } from './core/services/backend_srv';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { AngularApp } from './angular';
+import { ModalManager } from './core/services/ModalManager';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -94,9 +95,10 @@ export class GrafanaApp {
       setPanelRenderer(PanelRenderer);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
-      // Important that extensions are initialized before store
-      initExtensions();
+      // Important that extension reducers are initialized before store
+      addExtensionReducers();
       configureStore();
+      initExtensions();
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -121,16 +123,15 @@ export class GrafanaApp {
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
 
+      // init modal manager
+      const modalManager = new ModalManager();
+      modalManager.init();
+
       // Init angular
       this.angularApp.init();
 
       // Preload selected app plugins
-      const promises: Array<Promise<any>> = [];
-      for (const plugin of config.pluginsToPreload) {
-        promises.push(importPluginModule(plugin.path, plugin.version));
-      }
-
-      await Promise.all(promises);
+      await preloadPlugins(config.pluginsToPreload);
 
       ReactDOM.render(
         React.createElement(AppWrapper, {
@@ -142,6 +143,12 @@ export class GrafanaApp {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
     }
+  }
+}
+
+function addExtensionReducers() {
+  if (extensionsExports.length > 0) {
+    extensionsExports[0].addExtensionReducers();
   }
 }
 

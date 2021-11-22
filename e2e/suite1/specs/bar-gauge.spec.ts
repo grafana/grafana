@@ -12,7 +12,7 @@ e2e.scenario({
     e2e.flows.openDashboard({ uid: 'O6f11TZWk' });
 
     e2e()
-      .get(`[data-panelid=6] [aria-label^="${selectors.components.Panels.Visualization.BarGauge.value}"]`)
+      .get(`[data-panelid=6] [data-testid^="${selectors.components.Panels.Visualization.BarGauge.valueV2}"]`)
       .should('have.css', 'color', 'rgb(242, 73, 92)')
       .contains('100');
   },

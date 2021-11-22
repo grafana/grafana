@@ -7,8 +7,8 @@ import { useStyles2 } from '@grafana/ui';
 import { CatalogPlugin, PluginTabIds } from '../types';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { AppConfigCtrlWrapper } from '../../wrappers/AppConfigWrapper';
-import { PluginDashboards } from '../../PluginDashboards';
+import { AppConfigCtrlWrapper } from './AppConfigWrapper';
+import { PluginDashboards } from './PluginDashboards';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -34,7 +34,7 @@ export function PluginDetailsBody({ plugin, queryParams }: Props): JSX.Element {
   if (pageId === PluginTabIds.VERSIONS) {
     return (
       <div className={styles.container}>
-        <VersionList versions={plugin.details?.versions} />
+        <VersionList versions={plugin.details?.versions} installedVersion={plugin.installedVersion} />
       </div>
     );
   }

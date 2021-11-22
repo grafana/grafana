@@ -45,7 +45,7 @@
     "@types/history": "^4.7.8",
     "@types/jest": "27.0.2",
     "@types/lodash": "4.14.149",
-    "@types/react": "16.9.9",
+    "@types/react": "17.0.36",
     "@types/rollup-plugin-visualizer": "4.2.1",
     "@types/systemjs": "^0.20.6",
     "lodash": "4.17.21",

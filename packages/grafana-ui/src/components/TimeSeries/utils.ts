@@ -14,7 +14,6 @@ import {
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
-import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -27,6 +26,7 @@ import {
 } from '@grafana/schema';
 import { collectStackingGroups, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
+import { buildScaleKey } from '../GraphNG/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -117,11 +117,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
-    const config = field.config as FieldConfig<GraphFieldConfig>;
-    const customConfig: GraphFieldConfig = {
-      ...defaultConfig,
-      ...config.custom,
-    };
+
+    const config = {
+      ...field.config,
+      custom: {
+        ...defaultConfig,
+        ...field.config.custom,
+      },
+    } as FieldConfig<GraphFieldConfig>;
+
+    const customConfig: GraphFieldConfig = config.custom!;
 
     if (field === xField || field.type !== FieldType.number) {
       continue;
@@ -131,24 +136,28 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     field.state!.seriesIndex = seriesIndex++;
 
     const fmt = field.display ?? defaultFormatter;
-    const scaleKey = config.unit || FIXED_UNIT;
+
+    const scaleKey = buildScaleKey(config);
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
 
     // The builder will manage unique scaleKeys and combine where appropriate
     builder.addScale(
-      tweakScale({
-        scaleKey,
-        orientation: ScaleOrientation.Vertical,
-        direction: ScaleDirection.Up,
-        distribution: customConfig.scaleDistribution?.type,
-        log: customConfig.scaleDistribution?.log,
-        min: field.config.min,
-        max: field.config.max,
-        softMin: customConfig.axisSoftMin,
-        softMax: customConfig.axisSoftMax,
-      })
+      tweakScale(
+        {
+          scaleKey,
+          orientation: ScaleOrientation.Vertical,
+          direction: ScaleDirection.Up,
+          distribution: customConfig.scaleDistribution?.type,
+          log: customConfig.scaleDistribution?.log,
+          min: field.config.min,
+          max: field.config.max,
+          softMin: customConfig.axisSoftMin,
+          softMax: customConfig.axisSoftMax,
+        },
+        field
+      )
     );
 
     if (!yScaleKey) {
@@ -157,15 +166,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
       builder.addAxis(
-        tweakAxis({
-          scaleKey,
-          label: customConfig.axisLabel,
-          size: customConfig.axisWidth,
-          placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-          formatValue: (v) => formattedValueToString(fmt(v)),
-          theme,
-          grid: { show: customConfig.axisGridShow },
-        })
+        tweakAxis(
+          {
+            scaleKey,
+            label: customConfig.axisLabel,
+            size: customConfig.axisWidth,
+            placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
+            formatValue: (v) => formattedValueToString(fmt(v)),
+            theme,
+            grid: { show: customConfig.axisGridShow },
+          },
+          field
+        )
       );
     }
 
@@ -308,11 +320,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   // hook up custom/composite renderers
   renderers?.forEach((r) => {
+    if (!indexByName) {
+      indexByName = getNamesToFieldIndex(frame, allFrames);
+    }
     let fieldIndices: Record<string, number> = {};
 
     for (let key in r.fieldMap) {
       let dispName = r.fieldMap[key];
-      fieldIndices[key] = indexByName!.get(dispName)!;
+      fieldIndices[key] = indexByName.get(dispName)!;
     }
 
     r.init(builder, fieldIndices);
