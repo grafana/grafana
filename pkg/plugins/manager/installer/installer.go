@@ -469,7 +469,7 @@ func (i *Installer) selectVersion(p *Plugin, requested string) (*Version, error)
 	}
 
 	if selected == nil {
-		// try to use version as semver constraint
+		// check if requested version is semver constraint format IE ">=1.3.1"
 		constraint, err := semver.NewConstraint(requested)
 		if err != nil {
 			return nil, ErrVersionNotFound{PluginID: p.ID, RequestedVersion: requested,
