@@ -151,7 +151,7 @@ func (s *AccessControlStore) setResourcePermission(
 		permissions = append(permissions, *p)
 	}
 
-	keptPermissions, err := getManagedPermissions(sess, cmd.ResourceID, keep)
+	keptPermissions, err := getResourcePermissions(sess, cmd.ResourceID, keep)
 	if err != nil {
 		return nil, err
 	}
@@ -505,7 +505,7 @@ func (s *AccessControlStore) getOrCreateManagedRole(sess *sqlstore.DBSession, or
 	return &role, nil
 }
 
-func getManagedPermissions(sess *sqlstore.DBSession, resourceID string, ids []int64) ([]flatResourcePermission, error) {
+func getResourcePermissions(sess *sqlstore.DBSession, resourceID string, ids []int64) ([]flatResourcePermission, error) {
 	var result []flatResourcePermission
 	if len(ids) == 0 {
 		return result, nil
