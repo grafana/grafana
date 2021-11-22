@@ -243,7 +243,7 @@ export class ElasticDatasource
       dateRanges.push({ range: rangeEnd });
     }
 
-    const queryInterpolated = this.templateSrv.replace(queryString, {}, 'lucene');
+    const queryInterpolated = this.interpolateLuceneQuery(queryString);
     const query = {
       bool: {
         filter: [
@@ -361,8 +361,7 @@ export class ElasticDatasource
     );
   }
 
-  private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
-    // Elasticsearch queryString should always be '*' if empty string
+  private interpolateLuceneQuery(queryString: string, scopedVars?: ScopedVars) {
     return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
@@ -377,7 +376,7 @@ export class ElasticDatasource
             ...bucketAgg.settings,
             filters: bucketAgg.settings?.filters?.map((filter) => ({
               ...filter,
-              query: this.interpolateLuceneQuery(filter.query || '', scopedVars),
+              query: this.interpolateLuceneQuery(filter.query, scopedVars) || '*',
             })),
           },
         };
@@ -650,7 +649,7 @@ export class ElasticDatasource
       } else {
         logLimits.push();
         if (target.alias) {
-          target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
+          target.alias = this.interpolateLuceneQuery(target.alias, options.scopedVars);
         }
 
         queryObj = this.queryBuilder.build(target, adhocFilters);
@@ -842,13 +841,13 @@ export class ElasticDatasource
     const parsedQuery = JSON.parse(query);
     if (query) {
       if (parsedQuery.find === 'fields') {
-        parsedQuery.type = this.templateSrv.replace(parsedQuery.type, {}, 'lucene');
+        parsedQuery.type = this.interpolateLuceneQuery(parsedQuery.type);
         return lastValueFrom(this.getFields(parsedQuery.type, range));
       }
 
       if (parsedQuery.find === 'terms') {
-        parsedQuery.field = this.templateSrv.replace(parsedQuery.field, {}, 'lucene');
-        parsedQuery.query = this.templateSrv.replace(parsedQuery.query || '*', {}, 'lucene');
+        parsedQuery.field = this.interpolateLuceneQuery(parsedQuery.field);
+        parsedQuery.query = this.interpolateLuceneQuery(parsedQuery.query) || '*';
         return lastValueFrom(this.getTerms(parsedQuery, range));
       }
     }
