@@ -66,8 +66,8 @@ def pr_pipelines(edition):
         ensure_cuetsified_step(),
     ]
     integration_test_steps = [
-        postgres_integration_tests_step(edition=edition),
-        mysql_integration_tests_step(edition=edition),
+        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
     ]
 
     if include_enterprise2:
@@ -98,8 +98,8 @@ def pr_pipelines(edition):
 
     if include_enterprise2:
         integration_test_steps.extend([
-            redis_integration_tests_step(edition=edition2),
-            memcached_integration_tests_step(edition=edition),
+            redis_integration_tests_step(edition=edition2, ver_mode=ver_mode),
+            memcached_integration_tests_step(edition=edition, ver_mode=ver_mode),
         ])
         build_steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),

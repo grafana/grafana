@@ -65,8 +65,8 @@ def get_steps(edition, is_downstream=False):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-        postgres_integration_tests_step(edition=edition),
-        mysql_integration_tests_step(edition=edition),
+        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
@@ -99,7 +99,7 @@ def get_steps(edition, is_downstream=False):
     ])
 
     if include_enterprise2:
-      steps.extend([redis_integration_tests_step(edition=edition2), memcached_integration_tests_step(edition=edition2)])
+      steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     steps.extend([
         release_canary_npm_packages_step(edition),

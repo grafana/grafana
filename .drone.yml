@@ -1289,7 +1289,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1305,7 +1305,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1472,7 +1472,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.4.5
@@ -1481,7 +1481,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.4.5
@@ -2223,7 +2223,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - clone-enterprise
+  - grabpl
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2239,7 +2239,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - clone-enterprise
+  - grabpl
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2398,7 +2398,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - grabpl
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.4.5
@@ -2407,7 +2407,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - grabpl
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.4.5
@@ -3126,7 +3126,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -3142,7 +3142,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -3306,7 +3306,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.4.5
@@ -3315,7 +3315,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - clone-enterprise
+  - initialize
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.4.5
@@ -3556,6 +3556,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 79b8fbf21117214728689d489c53562a55c8536fa1feb9983bc1be2528dd9087
+hmac: 68182383c80b7e49367441fa69d6c7fb21527649213196a0ee44ddbe9a1d7e41
 
 ...
