@@ -336,7 +336,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 	if p.Parent != nil {
 		parent = &DepPlugin{
 			ID:      p.Parent.ID,
-			Name:    p.Name,
+			Name:    p.Parent.Name,
 			Version: p.Parent.Info.Version,
 		}
 	}
