@@ -139,7 +139,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	orgReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
+			Version:     5,
 			Name:        "fixed:organization:reader",
 			DisplayName: "Organization reader",
 			Description: "Read an organization, such as its ID, name, address, or quotas.",
@@ -154,7 +154,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	orgWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
+			Version:     5,
 			Name:        "fixed:organization:writer",
 			DisplayName: "Organization writer",
 			Description: "Read an organization, its quotas, or its preferences. Update an organization properties, or its preferences.",
@@ -170,7 +170,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	orgManagerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
+			Version:     5,
 			Name:        "fixed:organization:manager",
 			DisplayName: "Organization manager",
 			Description: "Create, read, write, or delete an organization. Read or write an organization's quotas. Needs to be assigned globally.",
