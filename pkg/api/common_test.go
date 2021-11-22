@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -334,7 +335,7 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessContro
 		}
 		hs.AccessControl = acmock
 	} else {
-		ac = ossaccesscontrol.ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
+		ac = ossaccesscontrol.ProvideService(cfg, &usagestats.UsageStatsMock{T: t}, acdb.ProvideService(db))
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()
