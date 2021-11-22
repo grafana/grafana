@@ -3,7 +3,12 @@ import gfunc from '../gfunc';
 import { TemplateSrvStub } from 'test/specs/helpers';
 import { silenceConsoleOutput } from 'test/core/utils/silenceConsoleOutput';
 import { actions } from '../state/actions';
-import { getAltSegmentsSelectables, getTagsSelectables, getTagsAsSegmentsSelectables } from '../state/providers';
+import {
+  getAltSegmentsSelectables,
+  getTagsSelectables,
+  getTagsAsSegmentsSelectables,
+  getTagValuesSelectables,
+} from '../state/providers';
 import { GraphiteSegment } from '../types';
 import { createStore } from '../state/store';
 
@@ -470,6 +475,64 @@ describe('Graphite actions', async () => {
     it('should update target', () => {
       const expected = "seriesByTag('tag2!=~value2')";
       expect(ctx.state.target.target).toEqual(expected);
+    });
+  });
+
+  describe('when auto-completing over a large set of tags and metrics', () => {
+    const manyMetrics: Array<{ text: string }> = [],
+      manyTags: Array<{ text: string }> = [],
+      manyTagValues: Array<{ text: string }> = [],
+      max = 20000;
+
+    beforeEach(() => {
+      for (let i = 0; i < max; i++) {
+        manyMetrics.push({ text: `metric${i}` });
+        manyTags.push({ text: `tag${i}` });
+        manyTagValues.push({ text: `tagValue${i}` });
+      }
+      ctx.state.datasource.metricFindQuery = jest.fn().mockReturnValue(Promise.resolve(manyMetrics));
+      ctx.state.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(Promise.resolve(manyTags));
+      ctx.state.datasource.getTagValuesAutoComplete = jest.fn().mockReturnValue(Promise.resolve(manyTagValues));
+    });
+
+    it('uses limited metrics and tags list', async () => {
+      ctx.state.supportsTags = true;
+      const segments = await getAltSegmentsSelectables(ctx.state, 0, '');
+      expect(segments).toHaveLength(10000);
+      expect(segments[0].value!.value).toBe('*'); // * - is a fixed metric name, always added at the top
+      expect(segments[4999].value!.value).toBe('metric4998');
+      expect(segments[5000].value!.value).toBe('tag: tag0');
+      expect(segments[9999].value!.value).toBe('tag: tag4999');
+    });
+
+    it('uses correct limit for metrics and tags list when tags are not supported', async () => {
+      ctx.state.supportsTags = false;
+      const segments = await getAltSegmentsSelectables(ctx.state, 0, '');
+      expect(segments).toHaveLength(10000);
+      expect(segments[0].value!.value).toBe('*'); // * - is a fixed metric name, always added at the top
+      expect(segments[4999].value!.value).toBe('metric4998');
+      expect(segments[5000].value!.value).toBe('metric4999');
+      expect(segments[9999].value!.value).toBe('metric9998');
+    });
+
+    it('uses limited tags when editing', async () => {
+      const tags = await getTagsAsSegmentsSelectables(ctx.state, 'any');
+      expect(tags).toHaveLength(10000);
+    });
+
+    it('uses limited metrics when adding more metrics', async () => {
+      const segments = await getAltSegmentsSelectables(ctx.state, 1, '');
+      expect(segments).toHaveLength(10000);
+    });
+
+    it('uses limited tag values when editing', async () => {
+      const tagValues = await getTagValuesSelectables(
+        ctx.state,
+        { key: 'test', operator: '=', value: 'test' },
+        1,
+        'test'
+      );
+      expect(tagValues).toHaveLength(10000);
     });
   });
 });

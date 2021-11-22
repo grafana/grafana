@@ -11,6 +11,15 @@ import { mapSegmentsToSelectables, mapStringsToSelectables } from '../components
 import { SelectableValue } from '@grafana/data';
 
 /**
+ * All auto-complete lists are updated while typing. To avoid performance issues we do not render more
+ * than MAX_SUGGESTIONS limits in a single dropdown.
+ *
+ * MAX_SUGGESTIONS is per metrics and tags in total. On the very first dropdown where metrics and tags are
+ * combined together it will show MAX_SUGGESTIONS items in total.
+ */
+const MAX_SUGGESTIONS = 10000;
+
+/**
  * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
  */
 
@@ -79,7 +88,7 @@ async function getAltSegments(
       removeTaggedEntry(altSegments);
       return await addAltTagSegments(state, prefix, altSegments);
     } else {
-      return altSegments;
+      return altSegments.slice(0, MAX_SUGGESTIONS);
     }
   } catch (err) {
     handleMetricsAutoCompleteError(state, err);
@@ -88,6 +97,10 @@ async function getAltSegments(
   return [];
 }
 
+/**
+ * Get the list of segments with tags and metrics. Suggestions are reduced in getAltSegments and addAltTagSegments so in case
+ * we hit MAX_SUGGESTIONS limit there are always some tags and metrics shown.
+ */
 export async function getAltSegmentsSelectables(
   state: GraphiteQueryEditorState,
   index: number,
@@ -109,7 +122,7 @@ async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix
     const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, { range: state.range });
 
     const altTags = map(values, 'text');
-    altTags.splice(0, 0, state.removeTagValue);
+    altTags.splice(0, 0, state.removeTagValue).slice(0, MAX_SUGGESTIONS);
     return altTags;
   } catch (err) {
     handleTagsAutoCompleteError(state, err);
@@ -147,9 +160,12 @@ async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: str
     handleTagsAutoCompleteError(state, err);
   }
 
-  return tagsAsSegments;
+  return tagsAsSegments.slice(0, MAX_SUGGESTIONS);
 }
 
+/**
+ * Get list of tags, used when adding additional tags (first tag is selected from a joined list of metrics and tags)
+ */
 export async function getTagsAsSegmentsSelectables(
   state: GraphiteQueryEditorState,
   tagPrefix: string
@@ -172,7 +188,7 @@ async function getTagValues(
     altValues.push('${' + variable.name + ':regex}');
   });
 
-  return altValues;
+  return altValues.slice(0, MAX_SUGGESTIONS);
 }
 
 export async function getTagValuesSelectables(
@@ -198,6 +214,11 @@ async function addAltTagSegments(
     segment.value = TAG_PREFIX + segment.value;
     return segment;
   });
+
+  if (tagSegments.length + altSegments.length >= MAX_SUGGESTIONS) {
+    tagSegments = tagSegments.slice(0, MAX_SUGGESTIONS / 2);
+    altSegments = altSegments.slice(0, MAX_SUGGESTIONS / 2);
+  }
 
   return altSegments.concat(...tagSegments);
 }
