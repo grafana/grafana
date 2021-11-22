@@ -44,7 +44,7 @@ export const CustomScrollbar: FC<Props> = ({
   const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
   useEffect(() => {
     if (ref.current) {
-      scrollRefCallback?.(ref.current?.view);
+      scrollRefCallback?.(ref.current.view);
     }
   }, [ref, scrollRefCallback]);
   const styles = useStyles2(getStyles);
