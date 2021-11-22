@@ -20,9 +20,9 @@ type LokiFrameOutput struct {
 	lokiWriter *lokiWriter
 }
 
-func NewLokiFrameOutput(endpoint, user, password string) *LokiFrameOutput {
+func NewLokiFrameOutput(endpoint string, basicAuth *BasicAuth) *LokiFrameOutput {
 	return &LokiFrameOutput{
-		lokiWriter: newLokiWriter(endpoint, user, password),
+		lokiWriter: newLokiWriter(endpoint, basicAuth),
 	}
 }
 
@@ -65,18 +65,14 @@ type lokiWriter struct {
 	buffer     []LokiStream
 
 	// Endpoint to send streaming frames to.
-	endpoint string
-	// User is a user for remote write request.
-	user string
-	// Password for remote write endpoint.
-	password string
+	endpoint  string
+	basicAuth *BasicAuth
 }
 
-func newLokiWriter(endpoint, user, password string) *lokiWriter {
+func newLokiWriter(endpoint string, basicAuth *BasicAuth) *lokiWriter {
 	w := &lokiWriter{
-		endpoint: endpoint,
-		user:     user,
-		password: password,
+		endpoint:  endpoint,
+		basicAuth: basicAuth,
 		httpClient: &http.Client{
 			Timeout: 2 * time.Second,
 		},
@@ -129,8 +125,8 @@ func (w *lokiWriter) flush(streams []LokiStream) error {
 		return fmt.Errorf("error constructing loki push request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if w.user != "" {
-		req.SetBasicAuth(w.user, w.password)
+	if w.basicAuth != nil {
+		req.SetBasicAuth(w.basicAuth.User, w.basicAuth.Password)
 	}
 
 	started := time.Now()

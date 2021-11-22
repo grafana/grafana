@@ -16,7 +16,7 @@ import { coreModule } from 'app/angular/core_module';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
-import { EventManager } from 'app/features/annotations/all';
+import { EventManager } from './event_manager';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
@@ -52,7 +52,7 @@ import {
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { getFieldLinksSupplier } from 'app/angular/panel/panellinks/linkSuppliers';
+import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { DashboardModel } from '../../../features/dashboard/state';
 import { isLegacyGraphHoverEvent } from './utils';
 

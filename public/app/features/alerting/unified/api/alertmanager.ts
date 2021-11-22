@@ -14,6 +14,7 @@ import {
   TestReceiversPayload,
   TestReceiversResult,
   TestReceiversAlert,
+  ExternalAlertmanagersResponse,
 } from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -192,6 +193,43 @@ export async function testReceivers(
         .join('; ')
     );
   }
+}
+
+export async function addAlertManagers(alertManagers: string[]): Promise<void> {
+  await lastValueFrom(
+    getBackendSrv().fetch({
+      method: 'POST',
+      data: { alertmanagers: alertManagers },
+      url: '/api/v1/ngalert/admin_config',
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  ).then(() => {
+    fetchExternalAlertmanagerConfig();
+  });
+}
+
+export async function fetchExternalAlertmanagers(): Promise<ExternalAlertmanagersResponse> {
+  const result = await lastValueFrom(
+    getBackendSrv().fetch<ExternalAlertmanagersResponse>({
+      method: 'GET',
+      url: '/api/v1/ngalert/alertmanagers',
+    })
+  );
+
+  return result.data;
+}
+
+export async function fetchExternalAlertmanagerConfig(): Promise<{ alertmanagers: string[] }> {
+  const result = await lastValueFrom(
+    getBackendSrv().fetch<{ alertmanagers: string[] }>({
+      method: 'GET',
+      url: '/api/v1/ngalert/admin_config',
+      showErrorAlert: false,
+    })
+  );
+
+  return result.data;
 }
 
 function escapeQuotes(value: string): string {

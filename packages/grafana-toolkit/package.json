@@ -78,7 +78,7 @@
     "lodash": "4.17.21",
     "md5-file": "^5.0.0",
     "mini-css-extract-plugin": "^0.7.0",
-    "optimize-css-assets-webpack-plugin": "^5.0.3",
+    "optimize-css-assets-webpack-plugin": "6.0.1",
     "ora": "^4.0.3",
     "pixelmatch": "^5.1.0",
     "pngjs": "^6.0.0",
