@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -24,6 +25,7 @@ type SecretsService struct {
 	currentProvider string
 	providers       map[string]secrets.Provider
 	dataKeyCache    map[string]dataKeyCacheItem
+	log             log.Logger
 }
 
 func ProvideSecretsService(
@@ -37,16 +39,24 @@ func ProvideSecretsService(
 		return nil, err
 	}
 
-	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
+	logger := log.New("secrets")
+	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
+
+	currentProvider := settings.KeyValue("security", "encryption_provider")
+	if !enabled && len(currentProvider.Value()) > 0 {
+		logger.Warn("Changing encryption provider requires enabling envelope encryption feature")
+	}
 
 	s := &SecretsService{
 		store:           store,
 		enc:             enc,
 		settings:        settings,
 		providers:       providers,
-		currentProvider: currentProvider,
+		currentProvider: currentProvider.MustString(kmsproviders.Default),
 		dataKeyCache:    make(map[string]dataKeyCacheItem),
+		log:             logger,
 	}
+	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", s.CurrentProviderID())
 
 	return s, nil
 }
@@ -133,6 +143,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 
 		dataKey, err = s.dataKey(ctx, string(key))
 		if err != nil {
+			s.log.Error("Failed to lookup data key", "name", string(key), "error", err)
 			return nil, err
 		}
 	}
