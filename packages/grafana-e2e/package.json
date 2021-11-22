@@ -55,7 +55,7 @@
     "babel-loader": "8.2.2",
     "blink-diff": "1.0.13",
     "commander": "8.3.0",
-    "cypress": "8.4.1",
+    "cypress": "9.0.0",
     "cypress-file-upload": "5.0.8",
     "execa": "5.1.1",
     "mocha": "7.0.1",

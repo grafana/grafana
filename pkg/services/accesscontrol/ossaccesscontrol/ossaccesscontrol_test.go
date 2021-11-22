@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func setupTestEnv(t testing.TB) *OSSAccessControlService {
@@ -19,7 +22,15 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-	ac := ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
+
+	ac := &OSSAccessControlService{
+		cfg:           cfg,
+		usageStats:    &usagestats.UsageStatsMock{T: t},
+		log:           log.New("accesscontrol"),
+		registrations: accesscontrol.RegistrationList{},
+		scopeResolver: accesscontrol.NewScopeResolver(),
+		provider:      database.ProvideService(sqlstore.InitTestDB(t)),
+	}
 	return ac
 }
 
@@ -77,8 +88,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 			desc: "should successfully evaluate access to the endpoint",
 			user: userTestCase{
 				name:           "testuser",
-				orgRole:        "Grafana Admin",
-				isGrafanaAdmin: false,
+				orgRole:        models.ROLE_VIEWER,
+				isGrafanaAdmin: true,
 			},
 			endpoints: []endpointTestCase{
 				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersDisable, accesscontrol.ScopeGlobalUsersAll)},
@@ -140,12 +151,11 @@ func TestUsageMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			if tt.enabled {
-				cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			s := setupTestEnv(t)
+			if !tt.enabled {
+				s.cfg.FeatureToggles = map[string]bool{}
 			}
 
-			s := ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
 			report, err := s.usageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
@@ -377,13 +387,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ac := &OSSAccessControlService{
-				cfg:           setting.NewCfg(),
-				usageStats:    &usagestats.UsageStatsMock{T: t},
-				log:           log.New("accesscontrol-test"),
-				registrations: accesscontrol.RegistrationList{},
-			}
-			ac.cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			ac := setupTestEnv(t)
 
 			// Test
 			err := ac.DeclareFixedRoles(tt.registrations...)
@@ -462,14 +466,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 				}
 			})
 
-			// Setup
-			ac := &OSSAccessControlService{
-				cfg:           setting.NewCfg(),
-				usageStats:    &usagestats.UsageStatsMock{T: t},
-				log:           log.New("accesscontrol-test"),
-				registrations: accesscontrol.RegistrationList{},
-			}
-			ac.cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			ac := setupTestEnv(t)
 			ac.registrations.Append(tt.registrations...)
 
 			// Test
@@ -501,7 +498,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 }
 
 func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
-	testUser := &models.SignedInUser{
+	testUser := models.SignedInUser{
 		UserId:  2,
 		OrgId:   3,
 		OrgName: "TestOrg",
@@ -522,18 +519,11 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 	}
 	tests := []struct {
 		name     string
-		user     *models.SignedInUser
+		user     models.SignedInUser
 		rawPerm  accesscontrol.Permission
 		wantPerm accesscontrol.Permission
 		wantErr  bool
 	}{
-		{
-			name:     "Translate orgs:current",
-			user:     testUser,
-			rawPerm:  accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:current"},
-			wantPerm: accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:id:3"},
-			wantErr:  false,
-		},
 		{
 			name:     "Translate users:self",
 			user:     testUser,
@@ -550,14 +540,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 			})
 
 			// Setup
-			ac := &OSSAccessControlService{
-				cfg:           setting.NewCfg(),
-				usageStats:    &usagestats.UsageStatsMock{T: t},
-				log:           log.New("accesscontrol-test"),
-				registrations: accesscontrol.RegistrationList{},
-				scopeResolver: accesscontrol.NewScopeResolver(),
-			}
-			ac.cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			ac := setupTestEnv(t)
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
 			err := ac.DeclareFixedRoles(registration)
@@ -567,7 +550,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// Test
-			userPerms, err := ac.GetUserPermissions(context.TODO(), tt.user)
+			userPerms, err := ac.GetUserPermissions(context.TODO(), &tt.user)
 			if tt.wantErr {
 				assert.Error(t, err, "Expected an error with GetUserPermissions.")
 				return

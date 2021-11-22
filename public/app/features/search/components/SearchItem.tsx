@@ -1,7 +1,7 @@
 import React, { FC, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { TagList, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
@@ -14,7 +14,7 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
 }
 
-const selectors = e2eSelectors.pages.Dashboards;
+const selectors = e2eSelectors.components.Search;
 
 const getIconFromMeta = (meta = ''): IconName => {
   const metaIconMap = new Map<string, IconName>([
@@ -49,7 +49,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
   const folderTitle = item.folderTitle || 'General';
   return (
     <Card
-      aria-label={selectors.dashboards(item.title)}
+      data-testid={selectors.dashboardItem(item.title)}
       heading={item.title}
       href={item.url}
       style={{ minHeight: SEARCH_ITEM_HEIGHT }}

@@ -92,7 +92,9 @@ scenario('Single frame with time and number field', (ctx) => {
       SuggestionName.LineChart,
       SuggestionName.LineChartSmooth,
       SuggestionName.AreaChart,
+      SuggestionName.LineChartGradientColorScheme,
       SuggestionName.BarChart,
+      SuggestionName.BarChartGradientColorScheme,
       SuggestionName.Gauge,
       SuggestionName.GaugeNoThresholds,
       SuggestionName.Stat,
@@ -101,6 +103,7 @@ scenario('Single frame with time and number field', (ctx) => {
       SuggestionName.BarGaugeLCD,
       SuggestionName.Table,
       SuggestionName.StateTimeline,
+      SuggestionName.StatusHistory,
     ]);
   });
 
@@ -146,6 +149,7 @@ scenario('Single frame with time 2 number fields', (ctx) => {
       SuggestionName.BarGaugeLCD,
       SuggestionName.Table,
       SuggestionName.StateTimeline,
+      SuggestionName.StatusHistory,
     ]);
   });
 
@@ -276,7 +280,7 @@ scenario('Single frame with string and 2 number field', (ctx) => {
   });
 });
 
-scenario('Single frame with string with only string field', (ctx) => {
+scenario('Single frame with only string field', (ctx) => {
   ctx.setData([
     toDataFrame({
       fields: [{ name: 'Name', type: FieldType.string, values: ['Hugo', 'Dominik', 'Marcus'] }],
@@ -284,7 +288,7 @@ scenario('Single frame with string with only string field', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Stat, SuggestionName.StatColoredBackground, SuggestionName.Table]);
+    expect(ctx.names()).toEqual([SuggestionName.Stat, SuggestionName.Table]);
   });
 
   it('Stat panels have reduceOptions.fields set to show all fields', () => {
@@ -293,6 +297,32 @@ scenario('Single frame with string with only string field', (ctx) => {
         expect(suggestion.options.reduceOptions.fields).toBe('/.*/');
       }
     }
+  });
+});
+
+scenario('Given default loki logs data', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      fields: [
+        { name: 'ts', type: FieldType.time, values: ['2021-11-11T13:38:45.440Z', '2021-11-11T13:38:45.190Z'] },
+        {
+          name: 'line',
+          type: FieldType.string,
+          values: [
+            't=2021-11-11T14:38:45+0100 lvl=dbug msg="Client connected" logger=live user=1 client=ee79155b-a8d1-4730-bcb3-94d8690df35c',
+            't=2021-11-11T14:38:45+0100 lvl=dbug msg="Adding CSP header to response" logger=http.server cfg=0xc0005fed00',
+          ],
+          labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
+        },
+      ],
+      meta: {
+        preferredVisualisationType: 'logs',
+      },
+    }),
+  ]);
+
+  it('should return correct suggestions', () => {
+    expect(ctx.names()).toEqual([SuggestionName.Logs, SuggestionName.Table]);
   });
 });
 
