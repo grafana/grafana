@@ -11,6 +11,7 @@ import { prepareGraphableFields } from './utils';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
+import { PanelDataErrorView } from '@grafana/runtime';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -24,6 +25,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   fieldConfig,
   onChangeTimeRange,
   replaceVariables,
+  id,
 }) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
 
@@ -31,13 +33,11 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
+  const { frames, message } = useMemo(() => prepareGraphableFields(data.series, config.theme2), [data]);
 
-  if (!frames || warn) {
+  if (!frames) {
     return (
-      <div className="panel-empty">
-        <p>{warn ?? 'No data found in response'}</p>
-      </div>
+      <PanelDataErrorView panelId={id} data={data} message={message} needsTimeField={true} needsNumberField={true} />
     );
   }
 

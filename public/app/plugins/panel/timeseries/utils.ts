@@ -11,35 +11,33 @@ import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/sche
 
 export interface GraphableFieldsResult {
   frames?: DataFrame[];
-  warn?: string;
-  noTimeField?: boolean;
+  message?: string;
 }
 
 // This will return a set of frames with only graphable values included
-export function prepareGraphableFields(series: DataFrame[] | undefined, theme: GrafanaTheme2): GraphableFieldsResult {
+export function prepareGraphableFields(series: DataFrame[], theme: GrafanaTheme2): GraphableFieldsResult {
   if (!series?.length) {
-    return { warn: 'No data in response' };
+    return { message: 'No data in response' };
   }
 
   let copy: Field;
-  let hasTimeseries = false;
 
   const frames: DataFrame[] = [];
 
   for (let frame of series) {
-    let isTimeseries = false;
-    let changed = false;
     const fields: Field[] = [];
+
+    let hasTimeField = false;
+    let hasValueField = false;
 
     for (const field of frame.fields) {
       switch (field.type) {
         case FieldType.time:
-          isTimeseries = true;
-          hasTimeseries = true;
+          hasTimeField = true;
           fields.push(field);
           break;
         case FieldType.number:
-          changed = true;
+          hasValueField = true;
           copy = {
             ...field,
             values: new ArrayVector(
@@ -60,7 +58,7 @@ export function prepareGraphableFields(series: DataFrame[] | undefined, theme: G
           fields.push(copy);
           break; // ok
         case FieldType.boolean:
-          changed = true;
+          hasValueField = true;
           const custom: GraphFieldConfig = field.config?.custom ?? {};
           const config = {
             ...field.config,
@@ -95,31 +93,19 @@ export function prepareGraphableFields(series: DataFrame[] | undefined, theme: G
 
           fields.push(copy);
           break;
-        default:
-          changed = true;
       }
     }
 
-    if (isTimeseries && fields.length > 1) {
-      hasTimeseries = true;
-      if (changed) {
-        frames.push({
-          ...frame,
-          fields,
-        });
-      } else {
-        frames.push(frame);
-      }
+    if (hasTimeField && hasValueField) {
+      frames.push({
+        ...frame,
+        fields,
+      });
     }
   }
 
-  if (!hasTimeseries) {
-    return { warn: 'Data does not have a time field', noTimeField: true };
+  if (frames.length) {
+    return { frames };
   }
-
-  if (!frames.length) {
-    return { warn: 'No graphable fields' };
-  }
-
-  return { frames };
+  return {};
 }

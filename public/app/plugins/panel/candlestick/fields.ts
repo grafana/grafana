@@ -112,7 +112,7 @@ export function prepareCandlestickFields(
 
   // Apply same filter as everythign else in timeseries
   const norm = prepareGraphableFields([aligned], theme);
-  if (norm.warn || norm.noTimeField || !norm.frames?.length) {
+  if (norm.message || !norm.frames?.length) {
     return norm as CandlestickData;
   }
   const frame = (data.frame = norm.frames[0]);
