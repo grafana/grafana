@@ -11,6 +11,8 @@ export enum SeriesVisibilityChangeBehavior {
 export interface VizLegendBaseProps<T> {
   placement: LegendPlacement;
   className?: string;
+  maxWidth?: string;
+  maxHeight?: string;
   items: Array<VizLegendItem<T>>;
   seriesVisibilityChangeBehavior?: SeriesVisibilityChangeBehavior;
   onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLElement>) => void;

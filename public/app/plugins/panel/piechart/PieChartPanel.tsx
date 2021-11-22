@@ -138,6 +138,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       items={legendItems}
       seriesVisibilityChangeBehavior={SeriesVisibilityChangeBehavior.Hide}
       placement={legendOptions.placement}
+      maxWidth="99%"
       displayMode={legendOptions.displayMode}
     />
   );
