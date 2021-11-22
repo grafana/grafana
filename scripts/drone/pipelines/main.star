@@ -1,5 +1,8 @@
 load(
     'scripts/drone/steps/lib.star',
+    'download_grabpl_step',
+    'initialize_step',
+    'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
     'codespell_step',
@@ -53,6 +56,7 @@ def get_steps(edition, is_downstream=False):
     publish = edition != 'enterprise' or is_downstream
     include_enterprise2 = edition == 'enterprise'
     steps = [
+        lint_drone_step(),
         enterprise_downstream_step(edition=edition),
         codespell_step(),
         shellcheck_step(),
@@ -61,8 +65,8 @@ def get_steps(edition, is_downstream=False):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
@@ -86,7 +90,7 @@ def get_steps(edition, is_downstream=False):
         e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         publish_storybook_step(edition=edition, ver_mode=ver_mode),
-        test_a11y_frontend_step(edition=edition),
+        test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
         frontend_metrics_step(edition=edition),
         build_frontend_docs_step(edition=edition),
         copy_packages_for_docker_step(),
@@ -95,7 +99,7 @@ def get_steps(edition, is_downstream=False):
     ])
 
     if include_enterprise2:
-      steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
+      steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     steps.extend([
         release_canary_npm_packages_step(edition),
@@ -137,18 +141,20 @@ def main_pipelines(edition):
 
     pipelines = [
         pipeline(
-            name='build-main', edition=edition, trigger=trigger, services=services, steps=steps,
-            ver_mode=ver_mode,
+            name='build-main', edition=edition, trigger=trigger, services=services,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + steps,
         ),
         pipeline(
-            name='windows-main', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
-            depends_on=['build-main'], ver_mode=ver_mode,
+            name='windows-main', edition=edition, trigger=trigger,
+            steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
+            depends_on=['build-main'], platform='windows',
         ),
     ]
     if edition != 'enterprise':
         pipelines.append(pipeline(
-            name='publish-main', edition=edition, trigger=trigger, steps=publish_steps,
-            depends_on=['build-main', 'windows-main',], install_deps=False, ver_mode=ver_mode,
+            name='publish-main', edition=edition, trigger=trigger,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, install_deps=False) + publish_steps,
+            depends_on=['build-main', 'windows-main',],
         ))
 
         pipelines.append(notify_pipeline(
@@ -162,17 +168,18 @@ def main_pipelines(edition):
         }
         steps, windows_steps, publish_steps = get_steps(edition=edition, is_downstream=True)
         pipelines.append(pipeline(
-            name='build-main-downstream', edition=edition, trigger=trigger, services=services, steps=steps,
-            is_downstream=True, ver_mode=ver_mode,
+            name='build-main-downstream', edition=edition, trigger=trigger, services=services,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, is_downstream=True) + steps,
         ))
         pipelines.append(pipeline(
-            name='windows-main-downstream', edition=edition, trigger=trigger, steps=windows_steps,
-            platform='windows', depends_on=['build-main-downstream'], is_downstream=True, ver_mode=ver_mode,
+            name='windows-main-downstream', edition=edition, trigger=trigger,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='windows', ver_mode=ver_mode, is_downstream=True) + windows_steps,
+            platform='windows', depends_on=['build-main-downstream'],
         ))
         pipelines.append(pipeline(
-            name='publish-main-downstream', edition=edition, trigger=trigger, steps=publish_steps,
-            depends_on=['build-main-downstream', 'windows-main-downstream'], is_downstream=True, install_deps=False,
-            ver_mode=ver_mode,
+            name='publish-main-downstream', edition=edition, trigger=trigger,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, is_downstream=True, install_deps=False) + publish_steps,
+            depends_on=['build-main-downstream', 'windows-main-downstream'],
         ))
 
         pipelines.append(notify_pipeline(

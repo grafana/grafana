@@ -109,6 +109,7 @@ class DataSourceWithBackend<
 
     const queries = targets.map((q) => {
       let datasource = this.getRef();
+      let datasourceId = this.id;
 
       if (isExpressionReference(q.datasource)) {
         return {
@@ -124,12 +125,14 @@ class DataSourceWithBackend<
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
-        datasource = getDataSourceRef(ds);
+        datasource = ds.rawRef ?? getDataSourceRef(ds);
+        datasourceId = ds.id;
       }
 
       return {
         ...this.applyTemplateVariables(q, request.scopedVars),
         datasource,
+        datasourceId, // deprecated!
         intervalMs,
         maxDataPoints,
       };
@@ -169,15 +172,6 @@ class DataSourceWithBackend<
         })
       );
   }
-
-  /**
-   * Override to skip executing a query
-   *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
-   */
-  filterQuery?(query: TQuery): boolean;
 
   /**
    * Apply template variables for explore

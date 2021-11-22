@@ -10,6 +10,7 @@ import {
 import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder } from '@grafana/ui';
 import React, { useCallback, useLayoutEffect, useRef } from 'react';
 import { ExemplarMarker } from './ExemplarMarker';
+import uPlot from 'uplot';
 
 interface ExemplarsPluginProps {
   config: UPlotConfigBuilder;

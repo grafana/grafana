@@ -1,12 +1,14 @@
 import React from 'react';
-import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { locationService } from '@grafana/runtime';
 import { selectOptionInTest } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
 import * as SearchSrv from 'app/core/services/search_srv';
 import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
-import { locationService } from '@grafana/runtime';
 
 jest.mock('app/core/services/search_srv');
 // Typecast the mock search so the mock import is correctly recognised by TS
@@ -93,9 +95,9 @@ describe('DashboardSearch', () => {
     locationService.push('/');
     setup();
 
-    const section = await screen.findAllByLabelText('Search section');
+    const section = await screen.findAllByTestId(selectors.components.Search.sectionV2);
     expect(section).toHaveLength(2);
-    expect(screen.getAllByLabelText('Search items')).toHaveLength(1);
+    expect(screen.getAllByTestId(selectors.components.Search.itemsV2)).toHaveLength(1);
   });
 
   it('should call search with selected tags', async () => {

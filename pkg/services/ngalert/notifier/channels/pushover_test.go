@@ -61,7 +61,7 @@ func TestPushoverNotifier(t *testing.T) {
 				"title":     "[FIRING:1]  (val1)",
 				"url":       "http://localhost/alerting/list",
 				"url_title": "Show alert rule",
-				"message":   "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"message":   "**Firing**\n\nValue: <no value>\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 				"html":      "1",
 			},
 			expMsgError: nil,

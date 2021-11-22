@@ -571,6 +571,13 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('applyTemplateVariables', () => {
+    const originalAdhocFiltersMock = templateSrvStub.getAdhocFilters();
+    const originalReplaceMock = jest.fn((a: string, ...rest: any) => a);
+    afterAll(() => {
+      templateSrvStub.getAdhocFilters.mockReturnValue(originalAdhocFiltersMock);
+      templateSrvStub.replace = originalReplaceMock;
+    });
+
     it('should call replace function for legendFormat', () => {
       const query = {
         expr: 'test{job="bar"}',
@@ -608,7 +615,32 @@ describe('PrometheusDatasource', () => {
       const interpolatedQuery = ds.applyTemplateVariables(query, { interval: { text: interval, value: interval } });
       expect(interpolatedQuery.interval).not.toBe(interval);
     });
+
+    it('should add ad-hoc filters to expr', () => {
+      templateSrvStub.replace = jest.fn((a: string) => a);
+      templateSrvStub.getAdhocFilters.mockReturnValue([
+        {
+          key: 'k1',
+          operator: '=',
+          value: 'v1',
+        },
+        {
+          key: 'k2',
+          operator: '!=',
+          value: 'v2',
+        },
+      ]);
+
+      const query = {
+        expr: 'test{job="bar"}',
+        refId: 'A',
+      };
+
+      const result = ds.applyTemplateVariables(query, {});
+      expect(result).toMatchObject({ expr: 'test{job="bar",k1="v1",k2!="v2"}' });
+    });
   });
+
   describe('metricFindQuery', () => {
     beforeEach(() => {
       const query = 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))';

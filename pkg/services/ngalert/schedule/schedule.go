@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
@@ -64,11 +64,11 @@ type schedule struct {
 
 	evaluator eval.Evaluator
 
-	ruleStore        store.RuleStore
-	instanceStore    store.InstanceStore
-	adminConfigStore store.AdminConfigurationStore
-	orgStore         store.OrgStore
-	dataService      *tsdb.Service
+	ruleStore         store.RuleStore
+	instanceStore     store.InstanceStore
+	adminConfigStore  store.AdminConfigurationStore
+	orgStore          store.OrgStore
+	expressionService *expr.Service
 
 	stateManager *state.Manager
 
@@ -107,7 +107,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 
 	sch := schedule{
@@ -123,7 +123,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, 
 		ruleStore:               cfg.RuleStore,
 		instanceStore:           cfg.InstanceStore,
 		orgStore:                cfg.OrgStore,
-		dataService:             dataService,
+		expressionService:       expressionService,
 		adminConfigStore:        cfg.AdminConfigStore,
 		multiOrgNotifier:        cfg.MultiOrgNotifier,
 		metrics:                 cfg.Metrics,
@@ -449,7 +449,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 			OrgID:     alertRule.OrgID,
 			Data:      alertRule.Data,
 		}
-		results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
+		results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.expressionService)
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())

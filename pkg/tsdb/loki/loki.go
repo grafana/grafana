@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
@@ -29,17 +28,15 @@ import (
 )
 
 type Service struct {
-	intervalCalculator intervalv2.Calculator
-	im                 instancemgmt.InstanceManager
-	plog               log.Logger
+	im   instancemgmt.InstanceManager
+	plog log.Logger
 }
 
 func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
-		im:                 im,
-		intervalCalculator: intervalv2.NewCalculator(),
-		plog:               log.New("tsdb.loki"),
+		im:   im,
+		plog: log.New("tsdb.loki"),
 	}
 
 	factory := coreplugin.New(backend.ServeOpts{
@@ -131,7 +128,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		},
 	}
 
-	queries, err := s.parseQuery(dsInfo, req)
+	queries, err := parseQuery(dsInfo, req)
 	if err != nil {
 		return result, err
 	}
@@ -183,7 +180,7 @@ func formatLegend(metric model.Metric, query *lokiQuery) string {
 	return string(result)
 }
 
-func (s *Service) parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
+func parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
 		model := &ResponseModel{}
@@ -195,19 +192,12 @@ func (s *Service) parseQuery(dsInfo *datasourceInfo, queryContext *backend.Query
 		start := query.TimeRange.From
 		end := query.TimeRange.To
 
-		dsInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, model.Interval, int64(model.IntervalMS), time.Second)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse Interval: %v", err)
-		}
-
-		interval := s.intervalCalculator.Calculate(query.TimeRange, dsInterval, query.MaxDataPoints)
-
 		var resolution int64 = 1
 		if model.Resolution >= 1 && model.Resolution <= 5 || model.Resolution == 10 {
 			resolution = model.Resolution
 		}
 
-		step := time.Duration(int64(interval.Value) * resolution)
+		step := time.Duration(int64(query.Interval) * resolution)
 
 		qs = append(qs, &lokiQuery{
 			Expr:         model.Expr,

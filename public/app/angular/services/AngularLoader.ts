@@ -3,7 +3,7 @@ import coreModule from 'app/angular/core_module';
 import { assign } from 'lodash';
 
 import { AngularComponent, AngularLoader as AngularLoaderInterface } from '@grafana/runtime';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 
 export class AngularLoader implements AngularLoaderInterface {
   /** @ngInject */
