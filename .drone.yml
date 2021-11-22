@@ -1116,12 +1116,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.6.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -2049,12 +2043,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.6.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -2958,12 +2946,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.6.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -3556,6 +3538,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 68182383c80b7e49367441fa69d6c7fb21527649213196a0ee44ddbe9a1d7e41
+hmac: 45c40d0ca9041f596e025fd4252fb226d41e7826e1e29e2112663036e1d5bfaf
 
 ...
