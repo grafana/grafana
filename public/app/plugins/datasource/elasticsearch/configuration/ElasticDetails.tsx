@@ -37,13 +37,12 @@ type Props = {
 export const ElasticDetails = ({ value, onChange }: Props) => {
   const currentVersion = esVersions.find((version) => version.value === value.jsonData.esVersion);
   const customOption =
-    (!currentVersion &&
-      valid(value.jsonData.esVersion) && {
-        label: value.jsonData.esVersion,
-        value: value.jsonData.esVersion,
-      }) ||
-    undefined;
-
+    !currentVersion && valid(value.jsonData.esVersion)
+      ? {
+          label: value.jsonData.esVersion,
+          value: value.jsonData.esVersion,
+        }
+      : undefined;
   return (
     <>
       <h3 className="page-heading">Elasticsearch details</h3>
