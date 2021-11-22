@@ -261,6 +261,8 @@ export function getLatestCompatibleVersion(versions: Version[] | undefined): Ver
   return latest;
 }
 
+export const isInstallControlsEnabled = () => config.pluginAdminEnabled;
+
 export const isLocalPluginVisible = (p: LocalPlugin) => isPluginVisible(p.id);
 
 export const isRemotePluginVisible = (p: RemotePlugin) => isPluginVisible(p.slug);
