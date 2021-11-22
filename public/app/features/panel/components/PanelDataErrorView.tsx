@@ -95,12 +95,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.size.lg,
       width: '100%',
     }),
-    suggestionsHeading: css({
-      textAlign: 'center',
-      marginTop: theme.spacing(2),
-      color: theme.colors.text.secondary,
-      width: '100%',
-    }),
     actions: css({
       marginTop: theme.spacing(2),
       display: 'flex',
