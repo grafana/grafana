@@ -129,11 +129,13 @@ func TestPagerdutyNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
+			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
-				Name:     "pageduty_testing",
-				Type:     "pagerduty",
-				Settings: settingsJSON,
+				Name:           "pageduty_testing",
+				Type:           "pagerduty",
+				Settings:       settingsJSON,
+				SecureSettings: secureSettings,
 			}
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
