@@ -8,6 +8,9 @@ import { useDispatch } from 'react-redux';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { changePanelPlugin } from '../state/actions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import store from 'app/core/store';
+import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 
 export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const styles = useStyles2(getStyles);
@@ -18,6 +21,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const dispatch = useDispatch();
 
   const openVizPicker = () => {
+    store.setObject(LS_VISUALIZATION_SELECT_TAB_KEY, VisualizationSelectPaneTab.Suggestions);
     dispatch(toggleVizPicker(true));
   };
 

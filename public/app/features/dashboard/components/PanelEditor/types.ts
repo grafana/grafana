@@ -66,3 +66,9 @@ export interface OptionPaneItemOverrideInfo {
   tooltip: string;
   description: string;
 }
+
+export enum VisualizationSelectPaneTab {
+  Visualizations,
+  LibraryPanels,
+  Suggestions,
+}
