@@ -17,7 +17,7 @@ import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { AngularRoot } from './angular/AngularRoot';
 import { I18nProvider } from '@lingui/react';
-import i18n from './core/localisation';
+import { getI18n } from './core/localisation';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -40,6 +40,7 @@ export function addPageBanner(fn: ComponentType) {
 }
 export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   container = React.createRef<HTMLDivElement>();
+  i18n = getI18n();
 
   constructor(props: AppWrapperProps) {
     super(props);
@@ -97,7 +98,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
     return (
       <Provider store={store}>
-        <I18nProvider i18n={i18n}>
+        <I18nProvider i18n={this.i18n}>
           <ErrorBoundaryAlert style="page">
             <ConfigContext.Provider value={config}>
               <ThemeProvider>
