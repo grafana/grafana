@@ -40,7 +40,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			OrgId:       1,
 		}
 
-		err := GetDashboardVersion(&query)
+		err := sqlStore.GetDashboardVersion(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, query.DashboardId, savedDash.Id)
 		require.Equal(t, query.Version, savedDash.Version)
@@ -63,7 +63,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			OrgId:       1,
 		}
 
-		err := GetDashboardVersion(&query)
+		err := sqlStore.GetDashboardVersion(context.Background(), &query)
 		require.Error(t, err)
 		require.Equal(t, models.ErrDashboardVersionNotFound, err)
 	})
@@ -76,7 +76,7 @@ func TestGetDashboardVersions(t *testing.T) {
 	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
 		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
 
-		err := GetDashboardVersions(&query)
+		err := sqlStore.GetDashboardVersions(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(query.Result))
 	})
@@ -84,7 +84,7 @@ func TestGetDashboardVersions(t *testing.T) {
 	t.Run("Attempt to get the versions for a non-existent Dashboard ID", func(t *testing.T) {
 		query := models.GetDashboardVersionsQuery{DashboardId: int64(999), OrgId: 1}
 
-		err := GetDashboardVersions(&query)
+		err := sqlStore.GetDashboardVersions(context.Background(), &query)
 		require.Error(t, err)
 		require.Equal(t, models.ErrNoVersionsForDashboardId, err)
 		require.Equal(t, 0, len(query.Result))
@@ -96,7 +96,7 @@ func TestGetDashboardVersions(t *testing.T) {
 		})
 
 		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
-		err := GetDashboardVersions(&query)
+		err := sqlStore.GetDashboardVersions(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Equal(t, 2, len(query.Result))
@@ -122,11 +122,11 @@ func TestDeleteExpiredVersions(t *testing.T) {
 
 	t.Run("Clean up old dashboard versions", func(t *testing.T) {
 		setup(t)
-		err := DeleteExpiredVersions(&models.DeleteExpiredVersionsCommand{})
+		err := sqlStore.DeleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{})
 		require.Nil(t, err)
 
 		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
-		err = GetDashboardVersions(&query)
+		err = sqlStore.GetDashboardVersions(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, versionsToKeep, len(query.Result))
@@ -139,11 +139,11 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		setup(t)
 		setting.DashboardVersionsToKeep = versionsToWrite
 
-		err := DeleteExpiredVersions(&models.DeleteExpiredVersionsCommand{})
+		err := sqlStore.DeleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{})
 		require.Nil(t, err)
 
 		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWrite}
-		err = GetDashboardVersions(&query)
+		err = sqlStore.GetDashboardVersions(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, versionsToWrite, len(query.Result))
@@ -161,11 +161,11 @@ func TestDeleteExpiredVersions(t *testing.T) {
 			})
 		}
 
-		err := deleteExpiredVersions(&models.DeleteExpiredVersionsCommand{}, perBatch, maxBatches)
+		err := sqlStore.deleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{}, perBatch, maxBatches)
 		require.Nil(t, err)
 
 		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWriteBigNumber}
-		err = GetDashboardVersions(&query)
+		err = sqlStore.GetDashboardVersions(context.Background(), &query)
 		require.Nil(t, err)
 
 		// Ensure we have at least versionsToKeep versions

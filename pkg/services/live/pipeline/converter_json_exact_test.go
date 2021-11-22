@@ -36,6 +36,37 @@ func checkExactConversion(tb testing.TB, file string, fields []Field) *backend.D
 	return dr
 }
 
+func BenchmarkExactJsonConverter_Convert(b *testing.B) {
+	content := loadTestJson(b, "json_exact")
+
+	converter := NewExactJsonConverter(ExactJsonConverterConfig{
+		Fields: []Field{
+			{
+				Name:  "ax",
+				Value: "$.ax",
+				Type:  data.FieldTypeNullableFloat64,
+			}, {
+				Name:  "array_value",
+				Value: "$.string_array[0]",
+				Type:  data.FieldTypeNullableString,
+			}, {
+				Name:  "map_key",
+				Value: "$.map_with_floats['key1']",
+				Type:  data.FieldTypeNullableFloat64,
+			},
+		},
+	})
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := converter.Convert(context.Background(), Vars{}, content)
+		require.NoError(b, err)
+		//require.Len(b, cf, 1)
+		//require.Len(b, cf[0].Frame.Fields, 3)
+	}
+}
+
 func TestExactJsonConverter_Convert(t *testing.T) {
 	checkExactConversion(t, "json_exact", []Field{
 		{
