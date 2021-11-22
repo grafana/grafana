@@ -461,9 +461,9 @@ func (i *Installer) selectVersion(p *Plugin, requested string) (*Version, error)
 		return latestSupported, nil
 	}
 
-	for _, v := range p.Versions {
+	for i, v := range p.Versions {
 		if v.Version == requested {
-			selected = &v
+			selected = &p.Versions[i] // cannot use address of loop var `v` here due to gosec G601
 			break
 		}
 	}
