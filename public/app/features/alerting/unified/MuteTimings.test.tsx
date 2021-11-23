@@ -61,40 +61,43 @@ const ui = {
   submitButton: byText(/submit/i),
 };
 
-describe('Mute timings', () => {
-  const muteTimeInterval: MuteTimeInterval = {
-    name: 'default-mute',
-    time_intervals: [
-      {
-        times: [
-          {
-            start_time: '12:00',
-            end_time: '24:00',
-          },
-        ],
-        days_of_month: ['15', '-1'],
-        months: ['august:december', 'march'],
-      },
-    ],
-  };
-  const defaultConfig: AlertManagerCortexConfig = {
-    alertmanager_config: {
-      receivers: [{ name: 'default' }, { name: 'critical' }],
-      route: {
-        receiver: 'default',
-        group_by: ['alertname'],
-        routes: [
-          {
-            matchers: ['env=prod', 'region!=EU'],
-            mute_time_intervals: [muteTimeInterval.name],
-          },
-        ],
-      },
-      templates: [],
-      mute_time_intervals: [muteTimeInterval],
+const muteTimeInterval: MuteTimeInterval = {
+  name: 'default-mute',
+  time_intervals: [
+    {
+      times: [
+        {
+          start_time: '12:00',
+          end_time: '24:00',
+        },
+      ],
+      days_of_month: ['15', '-1'],
+      months: ['august:december', 'march'],
     },
-    template_files: {},
-  };
+  ],
+};
+
+const defaultConfig: AlertManagerCortexConfig = {
+  alertmanager_config: {
+    receivers: [{ name: 'default' }, { name: 'critical' }],
+    route: {
+      receiver: 'default',
+      group_by: ['alertname'],
+      routes: [
+        {
+          matchers: ['env=prod', 'region!=EU'],
+          mute_time_intervals: [muteTimeInterval.name],
+        },
+      ],
+    },
+    templates: [],
+    mute_time_intervals: [muteTimeInterval],
+  },
+  template_files: {},
+};
+
+const resetMocks = () => {
+  jest.resetAllMocks();
 
   mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
     return Promise.resolve(defaultConfig);
@@ -102,9 +105,12 @@ describe('Mute timings', () => {
   mocks.api.updateAlertManagerConfig.mockImplementation(() => {
     return Promise.resolve();
   });
+};
 
+describe('Mute timings', () => {
   beforeEach(() => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    resetMocks();
   });
 
   it('creates a new mute timing', async () => {
@@ -157,5 +163,21 @@ describe('Mute timings', () => {
     expect(ui.nameField.get()).toBeInTheDocument();
     expect(ui.nameField.get()).toHaveValue(muteTimeInterval.name);
     expect(ui.months.get()).toHaveValue(muteTimeInterval.time_intervals[0].months?.join(', '));
+  });
+
+  it('form is invalid with duplicate mute timing name', async () => {
+    await renderMuteTimings();
+
+    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
+    await waitFor(() => expect(ui.nameField.get()).toBeInTheDocument());
+    await userEvent.type(ui.nameField.get(), 'default-mute');
+    await userEvent.type(ui.days.get(), '1');
+    await waitFor(() => expect(ui.nameField.get()).toHaveValue('default-mute'));
+
+    fireEvent.submit(ui.form.get());
+
+    // Form state should be invalid and prevent firing of update action
+    await waitFor(() => expect(byRole('alert').get()).toBeInTheDocument());
+    expect(mocks.api.updateAlertManagerConfig).not.toHaveBeenCalled();
   });
 });

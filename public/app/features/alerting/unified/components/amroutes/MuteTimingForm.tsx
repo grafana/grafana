@@ -5,7 +5,7 @@ import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
-import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { AlertManagerPicker } from '../AlertManagerPicker';
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
 import { updateAlertManagerConfigAction } from '../../state/actions';
@@ -62,7 +62,7 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
   const { result, loading } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
-  const config = result?.alertmanager_config;
+  const config: AlertmanagerConfig = result?.alertmanager_config;
   const defaultValues = useDefaultValues(muteTiming);
   const formApi = useForm({ defaultValues });
   const {
@@ -75,13 +75,17 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
   });
 
   const onSubmit = (values: MuteTimingFields) => {
-    const muteTiming = createMuteTiming(values);
+    const newMuteTiming = createMuteTiming(values);
+
+    const muteTimings = muteTiming
+      ? config?.mute_time_intervals?.filter(({ name }) => name !== newMuteTiming.name)
+      : config.mute_time_intervals;
 
     const newConfig = {
       ...result,
       alertmanager_config: {
         ...config,
-        mute_time_intervals: [...(config?.mute_time_intervals || []), muteTiming],
+        mute_time_intervals: [...(muteTimings || []), newMuteTiming],
       },
     };
 
@@ -112,7 +116,16 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
                 error={formApi.formState.errors.name?.message}
               >
                 <Input
-                  {...formApi.register('name', { required: true })}
+                  {...formApi.register('name', {
+                    required: true,
+                    validate: (value) => {
+                      if (!muteTiming) {
+                        const existingMuteTiming = config?.mute_time_intervals?.find(({ name }) => value === name);
+                        return existingMuteTiming ? `Mute timing already exists for "${value}"` : true;
+                      }
+                      return value.length > 0 || 'Name is required';
+                    },
+                  })}
                   className={styles.input}
                   data-testid={'mute-timing-name'}
                 />
