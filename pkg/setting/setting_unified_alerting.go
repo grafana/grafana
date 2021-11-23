@@ -81,24 +81,25 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	enabled, err := ua.Key("enabled").Bool()
 	if err == nil {
 		uaCfg.Enabled = &enabled
-	} else {
-		uaCfg.Enabled = nil
-	}
-
-	// if the old feature toggle ngalert is set, enable Grafana 8 Unified Alerting anyway.
-	// TODO: Remove this in v9
-	if uaCfg.Enabled == nil && cfg.FeatureToggles["ngalert"] {
+		// if unified alerting is disabled but legacy is undefined, fallback to the legacy enabled
+		if AlertingEnabled == nil {
+			alertingEnabled := !enabled
+			AlertingEnabled = &alertingEnabled
+		}
+	} else if cfg.FeatureToggles["ngalert"] {
+		// if the old feature toggle ngalert is set, enable Grafana 8 Unified Alerting anyway.
+		//TODO: Remove this in v9
 		cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 		enabled = true
 		uaCfg.Enabled = &enabled
 		alertingEnabled := false
 		AlertingEnabled = &alertingEnabled
-	}
-
-	if uaCfg.Enabled == nil && AlertingEnabled != nil && !*AlertingEnabled {
+	} else if AlertingEnabled != nil && !*AlertingEnabled {
 		// if unified alerting is not defined but the legacy alerting is disabled, enable unified alerting
 		enabled = true
 		uaCfg.Enabled = &enabled
+	} else {
+		uaCfg.Enabled = nil
 	}
 
 	// if the unified alerting is defined explicitly as well as the legacy alerting and both are enabled, return error

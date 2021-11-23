@@ -2,9 +2,15 @@ package ualert
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/require"
@@ -71,6 +77,126 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_AddAlertingEnabledMigration(t *testing.T) {
+	testDB := sqlutil.SQLite3TestDB()
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	require.NoError(t, err)
+
+	t.Run("should do nothing when unified alerting is defined", func(t *testing.T) {
+		enabled := rand.Int63()%2 == 0
+		mg := migrator.NewMigrator(x, &setting.Cfg{
+			UnifiedAlerting: setting.UnifiedAlertingSettings{
+				Enabled: &enabled,
+			},
+		})
+		AddAlertingEnabledMigration(mg)
+		require.Equal(t, 0, mg.MigrationsCount())
+	})
+	t.Run("should add a migration if unified alerting is not defined", func(t *testing.T) {
+		mg := migrator.NewMigrator(x, &setting.Cfg{
+			UnifiedAlerting: setting.UnifiedAlertingSettings{
+				Enabled: nil,
+			},
+		})
+		AddAlertingEnabledMigration(mg)
+		require.Equal(t, 1, mg.MigrationsCount())
+	})
+}
+
+func TestEnableUnifiedAlertingByDefault_Exec(t *testing.T) {
+	testDB := sqlutil.SQLite3TestDB()
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	require.NoError(t, err)
+	_, err = x.Exec("CREATE TABLE alert ( id bigint )")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_, err = x.Exec("DROP TABLE alert")
+		require.NoError(t, err)
+	})
+
+	m := &enableUnifiedAlertingByDefault{}
+
+	t.Run("when 'alert' table has no data", func(t *testing.T) {
+		t.Run("it should fail if legacy alerting is explicitly enabled", func(t *testing.T) {
+			legacyEnabled := true
+			setting.AlertingEnabled = &legacyEnabled
+
+			cfg := setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: nil,
+				},
+			}
+			mg := migrator.NewMigrator(x, &cfg)
+
+			err := m.Exec(x.NewSession(), mg)
+			require.Error(t, err)
+			require.Nil(t, cfg.UnifiedAlerting.Enabled)
+		})
+		t.Run("should enable unified alerting and disable legacy", func(t *testing.T) {
+			setting.AlertingEnabled = nil
+			cfg := setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: nil,
+				},
+			}
+			mg := migrator.NewMigrator(x, &cfg)
+
+			err := m.Exec(x.NewSession(), mg)
+			require.NoError(t, err)
+
+			require.NotNil(t, setting.AlertingEnabled)
+			require.False(t, *setting.AlertingEnabled)
+			require.NotNil(t, cfg.UnifiedAlerting.Enabled)
+			require.True(t, *cfg.UnifiedAlerting.Enabled)
+		})
+	})
+	t.Run("when alert table has data", func(t *testing.T) {
+		_, err := x.Exec("INSERT INTO alert VALUES (1)")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_, err := x.Exec("DELETE FROM alert")
+			require.NoError(t, err)
+		})
+
+		t.Run("it should disable unified alerting and enable legacy", func(t *testing.T) {
+			setting.AlertingEnabled = nil
+			cfg := setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: nil,
+				},
+			}
+			mg := migrator.NewMigrator(x, &cfg)
+
+			err := m.Exec(x.NewSession(), mg)
+			require.NoError(t, err)
+
+			require.NotNil(t, setting.AlertingEnabled)
+			require.True(t, *setting.AlertingEnabled)
+			require.NotNil(t, cfg.UnifiedAlerting.Enabled)
+			require.False(t, *cfg.UnifiedAlerting.Enabled)
+		})
+
+		t.Run("should not change legacy alerting if it is defined", func(t *testing.T) {
+			legacyEnabled := rand.Int63()%2 == 0
+			setting.AlertingEnabled = &legacyEnabled
+			cfg := setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: nil,
+				},
+			}
+			mg := migrator.NewMigrator(x, &cfg)
+
+			err := m.Exec(x.NewSession(), mg)
+			require.NoError(t, err)
+
+			require.NotNil(t, setting.AlertingEnabled)
+			require.Equal(t, legacyEnabled, *setting.AlertingEnabled)
+			require.NotNil(t, cfg.UnifiedAlerting.Enabled)
+			require.False(t, *cfg.UnifiedAlerting.Enabled)
+		})
+	})
 }
 
 func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *PostableUserConfig {
