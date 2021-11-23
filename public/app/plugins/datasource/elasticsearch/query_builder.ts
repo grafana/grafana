@@ -95,7 +95,7 @@ export class ElasticQueryBuilder {
   getDateHistogramAgg(aggDef: DateHistogram) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
-    esAgg.interval = settings.interval;
+
     esAgg.field = aggDef.field || this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;
     esAgg.extended_bounds = { min: '$timeFrom', max: '$timeTo' };
@@ -108,8 +108,14 @@ export class ElasticQueryBuilder {
       esAgg.offset = settings.offset;
     }
 
-    if (esAgg.interval === 'auto') {
-      esAgg.interval = '$__interval';
+    const interval = settings.interval === 'auto' ? '$__interval' : settings.interval;
+
+    if (gte(this.esVersion, '8.0.0')) {
+      // The deprecation was actually introduced in 7.0.0, we might want to use that instead of the removal date,
+      // but it woudl be a breaking change on our side.
+      esAgg.fixed_interval = interval;
+    } else {
+      esAgg.interval = interval;
     }
 
     return esAgg;

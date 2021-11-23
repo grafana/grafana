@@ -71,39 +71,45 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
             {/* Enables annotations creation*/}
-            <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
-              {({ startAnnotating }) => {
-                return (
-                  <ContextMenuPlugin
-                    data={alignedDataFrame}
-                    config={config}
-                    timeZone={timeZone}
-                    replaceVariables={replaceVariables}
-                    defaultItems={
-                      enableAnnotationCreation
-                        ? [
+            {enableAnnotationCreation ? (
+              <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
+                {({ startAnnotating }) => {
+                  return (
+                    <ContextMenuPlugin
+                      data={alignedDataFrame}
+                      config={config}
+                      timeZone={timeZone}
+                      replaceVariables={replaceVariables}
+                      defaultItems={[
+                        {
+                          items: [
                             {
-                              items: [
-                                {
-                                  label: 'Add annotation',
-                                  ariaLabel: 'Add annotation',
-                                  icon: 'comment-alt',
-                                  onClick: (e, p) => {
-                                    if (!p) {
-                                      return;
-                                    }
-                                    startAnnotating({ coords: p.coords });
-                                  },
-                                },
-                              ],
+                              label: 'Add annotation',
+                              ariaLabel: 'Add annotation',
+                              icon: 'comment-alt',
+                              onClick: (e, p) => {
+                                if (!p) {
+                                  return;
+                                }
+                                startAnnotating({ coords: p.coords });
+                              },
                             },
-                          ]
-                        : []
-                    }
-                  />
-                );
-              }}
-            </AnnotationEditorPlugin>
+                          ],
+                        },
+                      ]}
+                    />
+                  );
+                }}
+              </AnnotationEditorPlugin>
+            ) : (
+              <ContextMenuPlugin
+                data={alignedDataFrame}
+                config={config}
+                timeZone={timeZone}
+                replaceVariables={replaceVariables}
+                defaultItems={[]}
+              />
+            )}
             {data.annotations && (
               <ExemplarsPlugin
                 config={config}

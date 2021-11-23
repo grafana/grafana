@@ -1,26 +1,26 @@
 // Library
-import React, { PureComponent, CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties, PureComponent, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 import {
-  TimeSeriesValue,
+  DisplayProcessor,
   DisplayValue,
-  formattedValueToString,
+  DisplayValueAlignmentFactors,
+  FALLBACK_COLOR,
+  FieldColorModeId,
+  FieldConfig,
   FormattedValue,
+  formattedValueToString,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
-  DisplayValueAlignmentFactors,
-  ThresholdsMode,
-  DisplayProcessor,
-  FieldConfig,
-  FieldColorModeId,
   getFieldColorMode,
-  FALLBACK_COLOR,
   TextDisplayOptions,
+  ThresholdsMode,
+  TimeSeriesValue,
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-import { measureText, calculateFontSize } from '../../utils/measureText';
+import { calculateFontSize, measureText } from '../../utils/measureText';
 import { Themeable2 } from '../../types';
 
 const MIN_VALUE_HEIGHT = 18;
@@ -114,7 +114,7 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={styles.wrapper}>
         <FormattedValueDisplay
-          aria-label={selectors.components.Panels.Visualization.BarGauge.value}
+          data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
           value={value}
           style={styles.value}
         />
@@ -195,7 +195,7 @@ export class BarGauge extends PureComponent<Props> {
       <div style={containerStyles}>
         {cells}
         <FormattedValueDisplay
-          aria-label={selectors.components.Panels.Visualization.BarGauge.value}
+          data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
           value={value}
           style={valueStyles}
         />

@@ -33,7 +33,7 @@ export class UsersActionBar extends PureComponent<Props> {
       { label: 'Users', value: 'users' },
       { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
     ];
-    const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
+    const canAddToOrg = contextSrv.hasAccess(AccessControlAction.UsersCreate, canInvite);
 
     return (
       <div className="page-action-bar">
@@ -49,7 +49,7 @@ export class UsersActionBar extends PureComponent<Props> {
             <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
           </div>
         )}
-        {canInvite && canAddToOrg && <LinkButton href="org/users/invite">Invite</LinkButton>}
+        {canAddToOrg && <LinkButton href="org/users/invite">Invite</LinkButton>}
         {externalUserMngLinkUrl && (
           <LinkButton href={externalUserMngLinkUrl} target="_blank" rel="noopener">
             {externalUserMngLinkName}
