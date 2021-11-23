@@ -489,7 +489,7 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
         commands.extend([
             'pa11y-ci --config .pa11yci-pr.conf.js',
         ])
-        failure = 'always'
+        failure = 'ignore'
     else:
         commands.extend([
             'pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json',
