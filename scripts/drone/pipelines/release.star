@@ -167,7 +167,7 @@ def get_oss_pipelines(trigger, ver_mode):
         ),
         pipeline(
             name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
+            steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
             platform='windows', depends_on=['oss-build-{}'.format(ver_mode)],
         ),
     ]
@@ -184,7 +184,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
         ),
         pipeline(
             name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
+            steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
             platform='windows', depends_on=['enterprise-build-{}'.format(ver_mode)],
         ),
     ]

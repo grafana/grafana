@@ -74,7 +74,7 @@ const frame = new MutableDataFrame({
 
 To help filter log lines, many log systems let you query logs based on metadata, or _labels_.
 
-You can add labels to a stream of logs by setting the [labels](../../packages_api/data/field.md#labels-property) property on the [Field]({{< relref "../../packages_api/data/field.md" >}}).
+You can add labels to a stream of logs by setting the labels property on the Field.
 
 **Example**:
 

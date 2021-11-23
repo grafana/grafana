@@ -197,7 +197,7 @@ func parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) 
 			resolution = model.Resolution
 		}
 
-		step := time.Duration(int64(query.Interval) * resolution)
+		step := calculateStep(query.Interval, query.TimeRange.To.Sub(query.TimeRange.From), resolution)
 
 		qs = append(qs, &lokiQuery{
 			Expr:         model.Expr,
