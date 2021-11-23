@@ -12,14 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var logger = log.New("plugin.finder")
-
 type Finder struct {
 	cfg *setting.Cfg
+	log log.Logger
 }
 
 func New(cfg *setting.Cfg) Finder {
-	return Finder{cfg: cfg}
+	return Finder{cfg: cfg, log: log.New("plugin.finder")}
 }
 
 func (f *Finder) Find(pluginDirs []string) ([]string, error) {
@@ -28,10 +27,10 @@ func (f *Finder) Find(pluginDirs []string) ([]string, error) {
 	for _, dir := range pluginDirs {
 		exists, err := fs.Exists(dir)
 		if err != nil {
-			logger.Warn("Error occurred when checking if plugin directory exists", "dir", dir, "err", err)
+			f.log.Warn("Error occurred when checking if plugin directory exists", "dir", dir, "err", err)
 		}
 		if !exists {
-			logger.Warn("Skipping finding plugins as directory does not exist", "dir", dir)
+			f.log.Warn("Skipping finding plugins as directory does not exist", "dir", dir)
 			continue
 		}
 
@@ -76,11 +75,11 @@ func (f *Finder) getPluginJSONPaths(dir string) ([]string, error) {
 			return nil
 		}); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			logger.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", dir, "err", err)
+			f.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", dir, "err", err)
 			return []string{}, nil
 		}
 		if errors.Is(err, os.ErrPermission) {
-			logger.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", dir, "err", err)
+			f.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", dir, "err", err)
 			return []string{}, nil
 		}
 
