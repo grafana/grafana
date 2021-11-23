@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // DashAlertExtractor extracts alerts from the dashboard json.
@@ -170,7 +170,13 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 			panelQuery := findPanelQueryByRefID(panel, queryRefID)
 
 			if panelQuery == nil {
-				reason := fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefID)
+				config := ctx.Value("config").(*setting.Cfg)
+				var reason string
+				if config.UnifiedAlerting.Enabled {
+					reason = fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", alert.PanelId, queryRefID)
+				} else {
+					reason = fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefID)
+				}
 				return nil, ValidationError{Reason: reason}
 			}
 
