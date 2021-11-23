@@ -363,3 +363,7 @@ type fakeLogger struct {
 func (f fakeLogger) New(_ ...interface{}) log15.Logger {
 	return fakeLogger{}
 }
+
+func (f fakeLogger) Warn(_ string, _ ...interface{}) {
+
+}
