@@ -26,17 +26,18 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	handler := NewEvalHandler(nil)
 
 	t.Run("Show return triggered with single passing condition", func(t *testing.T) {
+		match := makeMatchWithValue(t, float64(3))
 		context := NewEvalContext(context.TODO(), &Rule{
 			Conditions: []Condition{&conditionStub{
 				firing:  true,
-				matches: evalMatchesBasedOnState(),
+				matches: []*EvalMatch{match},
 			}},
 		}, &validations.OSSPluginRequestValidator{})
 
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
 		require.Equal(t, "true = true", context.ConditionEvals)
-		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{})
+		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{match})
 	})
 
 	t.Run("Show return triggered with single passing condition2", func(t *testing.T) {
@@ -232,8 +233,9 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 }
 
-//TODO: Create an eval match for cases where we should return data.
-func makeMatchWithValue(v float64) *EvalMatch {
+func makeMatchWithValue(t *testing.T, v float64) *EvalMatch {
+	t.Helper()
+
 	return &EvalMatch{
 		Metric: "High value",
 		Value:  null.FloatFrom(v),
