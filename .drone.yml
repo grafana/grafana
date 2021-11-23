@@ -206,7 +206,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -217,7 +217,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -228,7 +228,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -239,7 +239,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -620,7 +620,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -631,7 +631,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -642,7 +642,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -653,7 +653,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -1139,7 +1139,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -1150,7 +1150,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -1161,7 +1161,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -1172,7 +1172,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -1608,7 +1608,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -1619,7 +1619,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -1630,7 +1630,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -1641,7 +1641,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -1757,7 +1757,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -1768,7 +1768,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -1779,7 +1779,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -1790,7 +1790,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -2222,7 +2222,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -2233,7 +2233,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -2244,7 +2244,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -2255,7 +2255,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -2680,7 +2680,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -2691,7 +2691,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -2702,7 +2702,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -2713,7 +2713,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -2821,7 +2821,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -2832,7 +2832,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -2843,7 +2843,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -2854,7 +2854,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -3289,7 +3289,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -3300,7 +3300,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -3311,7 +3311,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -3322,7 +3322,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -3714,7 +3714,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -3725,7 +3725,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -3736,7 +3736,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -3747,7 +3747,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -3864,7 +3864,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -3875,7 +3875,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -3886,7 +3886,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -3897,7 +3897,7 @@ steps:
   - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/build-container:1.4.6
+  image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite-enterprise2
   volumes:
   - name: cypress_cache
@@ -4158,6 +4158,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 9d8e613c67b092fe700c5698b961b5f813c3cc0850fc1bab27db456877fc7484
+hmac: def0e4d71787e04910e297b89135daa337510411b14a20f4a4321cae24aada39
 
 ...
