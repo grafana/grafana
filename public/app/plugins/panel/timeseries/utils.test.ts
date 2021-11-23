@@ -12,7 +12,7 @@ describe('prepare timeseries graph', () => {
       }),
     ];
     const info = prepareGraphableFields(frames, createTheme());
-    expect(info.message).toEqual('Data does not have a time field');
+    expect(info.frames).toBeUndefined();
   });
 
   it('requires a number or boolean value', () => {
@@ -25,7 +25,7 @@ describe('prepare timeseries graph', () => {
       }),
     ];
     const info = prepareGraphableFields(frames, createTheme());
-    expect(info.message).toEqual('No graphable fields');
+    expect(info.frames).toBeUndefined();
   });
 
   it('will graph numbers and boolean values', () => {

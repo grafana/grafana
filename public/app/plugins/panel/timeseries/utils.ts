@@ -107,5 +107,6 @@ export function prepareGraphableFields(series: DataFrame[], theme: GrafanaTheme2
   if (frames.length) {
     return { frames };
   }
+
   return {};
 }
