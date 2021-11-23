@@ -18,6 +18,15 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	}
 }
 
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, siUser *models.SignedInUser) error {
+	//Create a new service account for the new API key
+	_, err := s.sqlStore.CloneUserToServiceAccount(ctx, siUser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceaccountID int64) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return deleteServiceAccountInTransaction(sess, orgID, serviceaccountID)

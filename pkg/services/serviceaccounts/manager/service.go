@@ -42,6 +42,14 @@ func ProvideServiceAccountsService(
 	return s, nil
 }
 
+func (s *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
+	if !s.cfg.FeatureToggles["service-accounts"] {
+		s.log.Debug(ServiceAccountFeatureToggleNotFound)
+		return nil
+	}
+	return s.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
+}
+
 func (s *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	if !s.cfg.FeatureToggles["service-accounts"] {
 		s.log.Debug(ServiceAccountFeatureToggleNotFound)

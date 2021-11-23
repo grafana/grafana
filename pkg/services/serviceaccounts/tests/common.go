@@ -48,11 +48,18 @@ func SetupMockAccesscontrol(t *testing.T, userpermissionsfunc func(c context.Con
 var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
+	CreateServiceAccount []interface{}
 	DeleteServiceAccount []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
 	Calls Calls
+}
+
+func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
+	// now we can test that the mock has these calls when we call the function
+	s.Calls.DeleteServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
+	return nil
 }
 
 func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
