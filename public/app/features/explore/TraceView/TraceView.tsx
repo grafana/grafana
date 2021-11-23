@@ -18,9 +18,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import { isEqual } from 'lodash';
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
-import { usePrevious } from 'react-use';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { createSpanLinkFactory } from './createSpanLink';
 import { UIElements } from './uiElements';
@@ -43,7 +41,6 @@ type Props = {
 export function TraceView(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
-  const prevFrame = usePrevious(frame);
 
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const {
@@ -56,15 +53,7 @@ export function TraceView(props: Props) {
     detailTagsToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
-    clearDetailStates,
-  } = useDetailState();
-
-  // Clear detail state when new trace arrives
-  useEffect(() => {
-    if (frame && prevFrame && !isEqual(prevFrame, frame)) {
-      clearDetailStates();
-    }
-  }, [frame, prevFrame, clearDetailStates]);
+  } = useDetailState(frame);
 
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
