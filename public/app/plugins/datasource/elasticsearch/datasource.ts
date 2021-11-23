@@ -220,7 +220,7 @@ export class ElasticDatasource
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
-    const queryString = annotation.query || '*';
+    const queryString = annotation.query;
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
@@ -244,7 +244,7 @@ export class ElasticDatasource
     }
 
     const queryInterpolated = this.interpolateLuceneQuery(queryString);
-    const query = {
+    const query: any = {
       bool: {
         filter: [
           {
@@ -253,15 +253,17 @@ export class ElasticDatasource
               minimum_should_match: 1,
             },
           },
-          {
-            query_string: {
-              query: queryInterpolated,
-            },
-          },
         ],
       },
     };
 
+    if (queryInterpolated) {
+      query.bool.filter.push({
+        query_string: {
+          query: queryInterpolated,
+        },
+      });
+    }
     const data: any = {
       query,
       size: 10000,
@@ -847,7 +849,7 @@ export class ElasticDatasource
 
       if (parsedQuery.find === 'terms') {
         parsedQuery.field = this.interpolateLuceneQuery(parsedQuery.field);
-        parsedQuery.query = this.interpolateLuceneQuery(parsedQuery.query) || '*';
+        parsedQuery.query = this.interpolateLuceneQuery(parsedQuery.query);
         return lastValueFrom(this.getTerms(parsedQuery, range));
       }
     }
@@ -860,7 +862,7 @@ export class ElasticDatasource
   }
 
   getTagValues(options: any) {
-    return lastValueFrom(this.getTerms({ field: options.key, query: '*' }));
+    return lastValueFrom(this.getTerms({ field: options.key }));
   }
 
   targetContainsTemplate(target: any) {
