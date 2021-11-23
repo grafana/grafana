@@ -1,5 +1,6 @@
 import {
   ColorDimensionConfig,
+  DimensionSupplier,
   ResourceDimensionConfig,
   ResourceDimensionMode,
   ScaleDimensionConfig,
@@ -33,6 +34,17 @@ export interface StyleConfig {
 
 export const DEFAULT_SIZE = 5;
 
+export enum TextAlignment {
+  Left = 'left',
+  Center = 'center',
+  Right = 'right',
+}
+export enum TextBaseline {
+  Top = 'top',
+  Middle = 'middle',
+  Bottom = 'bottom',
+}
+
 export const defaultStyleConfig = Object.freeze({
   size: {
     fixed: DEFAULT_SIZE,
@@ -47,6 +59,13 @@ export const defaultStyleConfig = Object.freeze({
     mode: ResourceDimensionMode.Fixed,
     fixed: 'img/icons/marker/circle.svg',
   },
+  textConfig: {
+    fontSize: 12,
+    textAlign: TextAlignment.Center,
+    textBaseline: TextBaseline.Middle,
+    offsetX: 0,
+    offsetY: 0,
+  },
 });
 
 /**
@@ -57,8 +76,8 @@ export interface TextStyleConfig {
   fontSize?: number;
   offsetX?: number;
   offsetY?: number;
-  align?: 'left' | 'right' | 'center';
-  baseline?: 'bottom' | 'top' | 'middle';
+  textAlign?: TextAlignment;
+  textBaseline?: TextBaseline;
 }
 
 // Applying the config to real data gives the values
@@ -73,6 +92,28 @@ export interface StyleConfigValues {
 
   // Pass though (not value dependant)
   textConfig?: TextStyleConfig;
+}
+
+/** When the style depends on a field */
+export interface StyleConfigFields {
+  color?: string;
+  size?: string;
+  text?: string;
+}
+
+export interface StyleDimensions {
+  color?: DimensionSupplier<string>;
+  size?: DimensionSupplier<number>;
+  text?: DimensionSupplier<string>;
+}
+
+export interface StyleConfigState {
+  config: StyleConfig;
+  hasText?: boolean;
+  base: StyleConfigValues;
+  fields?: StyleConfigFields;
+  dims?: StyleDimensions;
+  maker: StyleMaker;
 }
 
 /**

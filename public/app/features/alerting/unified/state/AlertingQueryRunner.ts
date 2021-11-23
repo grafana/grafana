@@ -52,7 +52,7 @@ export class AlertingQueryRunner {
     for (const query of queries) {
       if (!isExpressionQuery(query.model)) {
         const ds = await this.dataSourceSrv.get(query.datasourceUid);
-        if (!ds.filterQuery?.(query.model)) {
+        if (ds.filterQuery && !ds.filterQuery(query.model)) {
           const empty = initialState(queries, LoadingState.Done);
           return this.subject.next(empty);
         }

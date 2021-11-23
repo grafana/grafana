@@ -48,7 +48,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 
 			srv.cleanUpTmpFiles()
 			srv.deleteExpiredSnapshots()
-			srv.deleteExpiredDashboardVersions()
+			srv.deleteExpiredDashboardVersions(ctx)
 			srv.cleanUpOldAnnotations(ctxWithTimeout)
 			srv.expireOldUserInvites(ctx)
 			srv.deleteStaleShortURLs(ctx)
@@ -134,9 +134,9 @@ func (srv *CleanUpService) deleteExpiredSnapshots() {
 	}
 }
 
-func (srv *CleanUpService) deleteExpiredDashboardVersions() {
+func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context) {
 	cmd := models.DeleteExpiredVersionsCommand{}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)
