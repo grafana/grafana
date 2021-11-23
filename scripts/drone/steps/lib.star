@@ -653,6 +653,17 @@ def e2e_tests_server_step(edition, port=3001):
         ],
     }
 
+def install_cypress_step():
+    return {
+        'name': 'cypress',
+        'image': 'grafana/ci-e2e:12.19.0-1',
+        'depends_on': [
+            'package',
+            ],
+        'commands': [
+            'yarn run cypress install',
+        ],
+    }
 
 def e2e_tests_step(suite, edition, port=3001, tries=None):
     cmd = './bin/grabpl e2e-tests --port {} --suite {}'.format(port, suite)
@@ -660,17 +671,14 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'grafana/ci-e2e:12.19.0-1',
+        'image': curl_image,
         'depends_on': [
-            'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'cypress',
         ],
         'environment': {
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
         },
         'commands': [
-            # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
-            # even though the Yarn cache directory is beneath /usr/local/share somewhere
-            'yarn run cypress install',
             cmd,
         ],
     }

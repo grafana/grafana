@@ -180,6 +180,12 @@ steps:
   image: grafana/build-container:1.4.6
   name: package
 - commands:
+  - yarn run cypress install
+  depends_on:
+  - package
+  image: grafana/ci-e2e:12.19.0-1
+  name: cypress
+- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -189,40 +195,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite
 - commands:
   - yarn storybook:build
@@ -571,6 +573,12 @@ steps:
   image: grafana/build-container:1.4.6
   name: package
 - commands:
+  - yarn run cypress install
+  depends_on:
+  - package
+  image: grafana/ci-e2e:12.19.0-1
+  name: cypress
+- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -580,40 +588,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite
 - commands:
   - yarn storybook:build
@@ -1064,6 +1068,12 @@ steps:
   image: grafana/build-container:1.4.6
   name: package
 - commands:
+  - yarn run cypress install
+  depends_on:
+  - package
+  image: grafana/ci-e2e:12.19.0-1
+  name: cypress
+- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -1073,40 +1083,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite
 - commands:
   - ls dist/*.tar.gz*
@@ -1508,6 +1514,12 @@ steps:
   image: grafana/build-container:1.4.6
   name: package
 - commands:
+  - yarn run cypress install
+  depends_on:
+  - package
+  image: grafana/ci-e2e:12.19.0-1
+  name: cypress
+- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -1519,40 +1531,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite
 - commands:
   - ls dist/*.tar.gz*
@@ -1660,40 +1668,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite-enterprise2
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
@@ -2090,6 +2094,12 @@ steps:
   image: grafana/build-container:1.4.6
   name: package
 - commands:
+  - yarn run cypress install
+  depends_on:
+  - package
+  image: grafana/ci-e2e:12.19.0-1
+  name: cypress
+- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -2099,40 +2109,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite
 - commands:
   - ls dist/*.tar.gz*
@@ -2523,6 +2529,12 @@ steps:
   image: grafana/build-container:1.4.6
   name: package
 - commands:
+  - yarn run cypress install
+  depends_on:
+  - package
+  image: grafana/ci-e2e:12.19.0-1
+  name: cypress
+- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -2534,40 +2546,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite
 - commands:
   - ls dist/*.tar.gz*
@@ -2667,40 +2675,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite-enterprise2
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
@@ -3100,6 +3104,12 @@ steps:
   image: grafana/build-container:1.4.6
   name: package
 - commands:
+  - yarn run cypress install
+  depends_on:
+  - package
+  image: grafana/ci-e2e:12.19.0-1
+  name: cypress
+- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -3109,40 +3119,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite
 - commands:
   - ls dist/*.tar.gz*
@@ -3500,6 +3506,12 @@ steps:
   image: grafana/build-container:1.4.6
   name: package
 - commands:
+  - yarn run cypress install
+  depends_on:
+  - package
+  image: grafana/ci-e2e:12.19.0-1
+  name: cypress
+- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -3511,40 +3523,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - end-to-end-tests-server
+  - cypress
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite
 - commands:
   - ls dist/*.tar.gz*
@@ -3653,40 +3661,36 @@ steps:
   image: grafana/build-container:1.4.6
   name: end-to-end-tests-server-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-dashboards-suite-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-smoke-tests-suite-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-panels-suite-enterprise2
 - commands:
-  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - cypress
   environment:
     HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
+  image: byrnedo/alpine-curl:0.1.8
   name: end-to-end-tests-various-suite-enterprise2
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
@@ -3938,6 +3942,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 98ae2cf0436f92e2773408044be977f1390af3ea7896cae2fc83b93972a2918b
+hmac: 4af713132c640b285d40afa9ceb9eabc4520cc9fcd2275c52d90562982edfbeb
 
 ...
