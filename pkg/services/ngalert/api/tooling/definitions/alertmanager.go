@@ -753,6 +753,30 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 		}
 	}
 
+	tiNames := make(map[string]struct{})
+	for _, mt := range c.MuteTimeIntervals {
+		if _, ok := tiNames[mt.Name]; ok {
+			return fmt.Errorf("mute time interval %q is not unique", mt.Name)
+		}
+		tiNames[mt.Name] = struct{}{}
+	}
+	return checkTimeInterval(c.Route, tiNames)
+}
+
+func checkTimeInterval(r *Route, timeIntervals map[string]struct{}) error {
+	for _, sr := range r.Routes {
+		if err := checkTimeInterval(sr, timeIntervals); err != nil {
+			return err
+		}
+	}
+	if len(r.MuteTimeIntervals) == 0 {
+		return nil
+	}
+	for _, mt := range r.MuteTimeIntervals {
+		if _, ok := timeIntervals[mt]; !ok {
+			return fmt.Errorf("undefined time interval %q used in route", mt)
+		}
+	}
 	return nil
 }
 

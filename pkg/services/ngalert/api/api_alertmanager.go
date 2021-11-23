@@ -338,10 +338,6 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
 
-	if err := srv.vaildateAlertManagerConfig(body.AlertmanagerConfig); err != nil {
-		return ErrResp(http.StatusBadRequest, fmt.Errorf("error validating Alertmanager config: %w", err), "")
-	}
-
 	// Get the last known working configuration
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: c.OrgId}
 	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
@@ -374,17 +370,6 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
-}
-
-func (srv AlertmanagerSrv) vaildateAlertManagerConfig(config apimodels.PostableApiAlertingConfig) error {
-	muteNames := make(map[string]struct{}, len(config.MuteTimeIntervals))
-	for _, muteTime := range config.MuteTimeIntervals {
-		if _, exists := muteNames[muteTime.Name]; exists {
-			return fmt.Errorf("mute time interval \"%s\" is not unique", muteTime.Name)
-		}
-		muteNames[muteTime.Name] = struct{}{}
-	}
-	return nil
 }
 
 func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.PostableAlerts) response.Response {
