@@ -194,7 +194,6 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 	sess.Asc("user.email", "user.login")
 
 	if err := sess.Find(&query.Result.OrgUsers); err != nil {
-		fmt.Printf("error %v", err)
 		return err
 	}
 
@@ -209,7 +208,6 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 
 	count, err := countSess.Count(&orgUser)
 	if err != nil {
-		fmt.Printf("error2 %v", err)
 		return err
 	}
 	query.Result.TotalCount = count
