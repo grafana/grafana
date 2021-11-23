@@ -9,6 +9,8 @@ import { createCustomVariableAdapter } from '../custom/adapter';
 import { VariablesState } from './types';
 import { DashboardModel } from '../../dashboard/state';
 
+const dashboardModel = new DashboardModel({});
+
 variableAdapters.setInit(() => [createCustomVariableAdapter()]);
 
 async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}) {
@@ -20,14 +22,14 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}) {
 
   const templateVariableValueUpdatedMock = jest.fn();
   const startRefreshMock = jest.fn();
-  const dashboardModel: Partial<DashboardModel> = {
-    templateVariableValueUpdated: templateVariableValueUpdatedMock,
-    startRefresh: startRefreshMock,
-    templating: { list: [custom] },
-  };
   const dashboard: DashboardState = {
     ...initialState,
-    getModel: () => (dashboardModel as unknown) as DashboardModel,
+    getModel: () => {
+      dashboardModel.templateVariableValueUpdated = templateVariableValueUpdatedMock;
+      dashboardModel.startRefresh = startRefreshMock;
+      dashboardModel.templating = { list: [custom] };
+      return dashboardModel;
+    },
   };
 
   const variables: VariablesState = { custom };

@@ -43,7 +43,7 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, Gazet
 
   const { current, options } = useMemo(() => {
     let options = settings?.options ? [...settings.options] : [...defaultPaths];
-    let current = options.find((f) => f.value === gaz?.path);
+    let current = options?.find((f) => f.value === gaz?.path);
     if (!current && gaz) {
       current = {
         label: gaz.path,
@@ -52,7 +52,7 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, Gazet
       options.push(current);
     }
     return { options, current };
-  }, [gaz, settings.options]);
+  }, [gaz, settings?.options]);
 
   return (
     <>

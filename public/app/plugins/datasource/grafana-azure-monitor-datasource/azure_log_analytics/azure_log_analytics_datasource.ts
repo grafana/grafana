@@ -13,7 +13,7 @@ import {
   DataQueryResponse,
   ScopedVars,
   DataSourceInstanceSettings,
-  MetricFindValue,
+  DataSourceRef,
 } from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
@@ -23,7 +23,7 @@ import { isGUIDish } from '../components/ResourcePicker/utils';
 import { interpolateVariable, routeNames } from '../utils/common';
 
 interface AdhocQuery {
-  datasourceId: number;
+  datasource: DataSourceRef;
   path: string;
   resultFormat: string;
 }
@@ -218,60 +218,12 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     };
   }
 
-  /**
-   * This is named differently than DataSourceApi.metricFindQuery
-   * because it's not exposed to Grafana like the main AzureMonitorDataSource.
-   * And some of the azure internal data sources return null in this function, which the
-   * external interface does not support
-   */
-  metricFindQueryInternal(query: string, optionalOptions?: unknown): Promise<MetricFindValue[]> {
-    // workspaces() - Get workspaces in the default subscription
-    const workspacesQuery = query.match(/^workspaces\(\)/i);
-    if (workspacesQuery) {
-      if (this.defaultSubscriptionId) {
-        return this.getWorkspaces(this.defaultSubscriptionId);
-      } else {
-        throw new Error(
-          'No subscription ID. Specify a default subscription ID in the data source config to use workspaces() without a subscription ID'
-        );
-      }
-    }
-
-    // workspaces("abc-def-etc") - Get workspaces a specified subscription
-    const workspacesQueryWithSub = query.match(/^workspaces\(["']?([^\)]+?)["']?\)/i);
-    if (workspacesQueryWithSub) {
-      return this.getWorkspaces((workspacesQueryWithSub[1] || '').trim());
-    }
-
-    // Execute the query as KQL to the default or first workspace
-    return this.getFirstWorkspace().then((resourceURI) => {
-      if (!resourceURI) {
-        return [];
-      }
-
-      const queries = this.buildQuery(query, optionalOptions, resourceURI);
-      const promises = this.doQueries(queries);
-
-      return Promise.all(promises)
-        .then((results) => {
-          return new ResponseParser(results).parseToVariables();
-        })
-        .catch((err) => {
-          if (
-            err.error &&
-            err.error.data &&
-            err.error.data.error &&
-            err.error.data.error.innererror &&
-            err.error.data.error.innererror.innererror
-          ) {
-            throw { message: err.error.data.error.innererror.innererror.message };
-          } else if (err.error && err.error.data && err.error.data.error) {
-            throw { message: err.error.data.error.message };
-          }
-
-          throw err;
-        });
-    }) as Promise<MetricFindValue[]>;
+  /*
+    In 7.5.x it used to be possible to set a default workspace id in the config on the auth page.
+    This has been deprecated, however is still used by a few legacy template queries.
+  */
+  getDeprecatedDefaultWorkSpace() {
+    return this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace;
   }
 
   private buildQuery(query: string, options: any, workspace: string): AdhocQuery[] {
@@ -288,7 +240,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     const queries = [
       {
-        datasourceId: this.id,
+        datasource: this.getRef(),
         path: path,
         resultFormat: 'table',
       },

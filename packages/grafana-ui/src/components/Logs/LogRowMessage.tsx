@@ -63,17 +63,19 @@ function renderLogMessage(
 ) {
   const needsHighlighter =
     highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
-  if (needsHighlighter) {
+  const searchWords = highlights ?? [];
+  if (hasAnsi) {
+    const highlight = needsHighlighter ? { searchWords, highlightClassName } : undefined;
+    return <LogMessageAnsi value={entry} highlight={highlight} />;
+  } else if (needsHighlighter) {
     return (
       <Highlighter
         textToHighlight={entry}
-        searchWords={highlights ?? []}
+        searchWords={searchWords}
         findChunks={findHighlightChunksInText}
         highlightClassName={highlightClassName}
       />
     );
-  } else if (hasAnsi) {
-    return <LogMessageAnsi value={entry} />;
   } else {
     return entry;
   }

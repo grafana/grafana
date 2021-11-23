@@ -7,7 +7,7 @@ import { getAltSegmentsSelectables, getTagsSelectables, getTagsAsSegmentsSelecta
 import { GraphiteSegment } from '../types';
 import { createStore } from '../state/store';
 
-jest.mock('app/core/utils/promiseToDigest', () => ({
+jest.mock('app/angular/promiseToDigest', () => ({
   promiseToDigest: (scope: any) => {
     return (p: Promise<any>) => p;
   },
@@ -208,6 +208,20 @@ describe('Graphite actions', async () => {
     it('should have no segments', () => {
       expect(ctx.altSegments.length).toBe(0);
     });
+  });
+
+  it('current time range is passed when getting list of tags when editing', async () => {
+    const currentRange = { from: 0, to: 1 };
+    ctx.state.range = currentRange;
+    await getTagsSelectables(ctx.state, 0, 'any');
+    expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange });
+  });
+
+  it('current time range is passed when getting list of tags for adding', async () => {
+    const currentRange = { from: 0, to: 1 };
+    ctx.state.range = currentRange;
+    await getTagsAsSegmentsSelectables(ctx.state, 'any');
+    expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange });
   });
 
   describe('when autocomplete for metric names is not available', () => {

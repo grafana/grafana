@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
@@ -343,7 +343,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return (
       <div className={containerClassNames}>
         {kioskMode !== KioskMode.Full && (
-          <header aria-label={selectors.pages.Dashboard.DashNav.nav}>
+          <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
             <DashNav
               dashboard={dashboard}
               title={dashboard.title}

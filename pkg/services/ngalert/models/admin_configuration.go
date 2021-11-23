@@ -3,6 +3,7 @@ package models
 import (
 	"crypto/sha256"
 	"fmt"
+	"net/url"
 )
 
 type AlertmanagersChoice string
@@ -32,6 +33,17 @@ func (ac *AdminConfiguration) AsSHA256() string {
 	h := sha256.New()
 	_, _ = h.Write([]byte(fmt.Sprintf("%v", ac.Alertmanagers)))
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func (ac *AdminConfiguration) Validate() error {
+	for _, u := range ac.Alertmanagers {
+		_, err := url.Parse(u)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (amc AlertmanagersChoice) IsValid() bool {

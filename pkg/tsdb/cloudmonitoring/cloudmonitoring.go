@@ -3,7 +3,6 @@ package cloudmonitoring
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,11 +15,11 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/oauth2/google"
-
+	"github.com/grafana/grafana-google-sdk-go/pkg/utils"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -81,14 +80,57 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, re
 		dsService:          dsService,
 	}
 
+	mux := http.NewServeMux()
+	s.registerRoutes(mux)
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
+		QueryDataHandler:    s,
+		CallResourceHandler: httpadapter.New(mux),
+		CheckHealthHandler:  s,
 	})
 
 	if err := registrar.LoadAndRegister(pluginID, factory); err != nil {
 		slog.Error("Failed to register plugin", "error", err)
 	}
 	return s
+}
+
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	defaultProject, err := s.getDefaultProject(ctx, *dsInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf("%v/v3/projects/%v/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := dsInfo.services[cloudMonitor].client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			slog.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	status := backend.HealthStatusOk
+	message := "Successfully queried the Google Cloud Monitoring API."
+	if res.StatusCode != 200 {
+		status = backend.HealthStatusError
+		message = res.Status
+	}
+	return &backend.CheckHealthResult{
+		Status:  status,
+		Message: message,
+	}, nil
 }
 
 type Service struct {
@@ -110,9 +152,14 @@ type datasourceInfo struct {
 	defaultProject     string
 	clientEmail        string
 	tokenUri           string
-	client             *http.Client
+	services           map[string]datasourceService
 
 	decryptedSecureJSONData map[string]string
+}
+
+type datasourceService struct {
+	url    string
+	client *http.Client
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -152,6 +199,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			clientEmail:             clientEmail,
 			tokenUri:                tokenUri,
 			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
+			services:                map[string]datasourceService{},
 		}
 
 		opts, err := settings.HTTPClientOptions()
@@ -159,9 +207,15 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		dsInfo.client, err = newHTTPClient(dsInfo, opts, httpClientProvider)
-		if err != nil {
-			return nil, err
+		for name, info := range routes {
+			client, err := newHTTPClient(dsInfo, opts, httpClientProvider, name)
+			if err != nil {
+				return nil, err
+			}
+			dsInfo.services[name] = datasourceService{
+				url:    info.url,
+				client: client,
+			}
 		}
 
 		return dsInfo, nil
@@ -190,8 +244,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	switch model.Type {
 	case "annotationQuery":
 		resp, err = s.executeAnnotationQuery(ctx, req, *dsInfo)
-	case "getGCEDefaultProject":
-		resp, err = s.getGCEDefaultProject(ctx, req, *dsInfo)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -199,26 +251,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	return resp, err
-}
-
-func (s *Service) getGCEDefaultProject(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
-	gceDefaultProject, err := s.getDefaultProject(ctx, dsInfo)
-	if err != nil {
-		return backend.NewQueryDataResponse(), fmt.Errorf(
-			"failed to retrieve default project from GCE metadata server, error: %w", err)
-	}
-
-	return &backend.QueryDataResponse{
-		Responses: backend.Responses{
-			req.Queries[0].RefID: {
-				Frames: data.Frames{data.NewFrame("").SetMeta(&data.FrameMeta{
-					Custom: map[string]interface{}{
-						"defaultProject": gceDefaultProject,
-					},
-				})},
-			},
-		},
-	}, nil
 }
 
 func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
@@ -576,7 +608,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, pro
 	if body != nil {
 		method = http.MethodPost
 	}
-	req, err := http.NewRequest(method, cloudMonitoringRoute.url, body)
+	req, err := http.NewRequest(method, dsInfo.services[cloudMonitor].url, body)
 	if err != nil {
 		slog.Error("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -590,19 +622,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, pro
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
-		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
-		if err != nil {
-			return "", fmt.Errorf("failed to retrieve default project from GCE metadata server: %w", err)
-		}
-		token, err := defaultCredentials.TokenSource.Token()
-		if err != nil {
-			return "", fmt.Errorf("failed to retrieve GCP credential token: %w", err)
-		}
-		if !token.Valid() {
-			return "", errors.New("failed to validate GCP credentials")
-		}
-
-		return defaultCredentials.ProjectID, nil
+		return utils.GCEDefaultProject(ctx)
 	}
 	return dsInfo.defaultProject, nil
 }

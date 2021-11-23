@@ -4,3 +4,4 @@ export * from './completion';
 export * from './storybook';
 export * from './forms';
 export * from './icon';
+export * from './select';

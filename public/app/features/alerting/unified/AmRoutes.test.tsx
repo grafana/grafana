@@ -11,7 +11,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
@@ -76,9 +76,10 @@ const ui = {
   editButton: byRole('button', { name: 'Edit' }),
   saveButton: byRole('button', { name: 'Save' }),
 
-  editRouteButton: byTestId('edit-route'),
-  deleteRouteButton: byTestId('delete-route'),
+  editRouteButton: byLabelText('Edit route'),
+  deleteRouteButton: byLabelText('Delete route'),
   newPolicyButton: byRole('button', { name: /New policy/ }),
+  newPolicyCTAButton: byRole('button', { name: /New specific policy/ }),
 
   receiverSelect: byTestId('am-receiver-select'),
   groupSelect: byTestId('am-group-select'),
@@ -505,6 +506,25 @@ describe('AmRoutes', () => {
     expect(ui.deleteRouteButton.query()).not.toBeInTheDocument();
     expect(ui.saveButton.query()).not.toBeInTheDocument();
 
+    expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
+    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
+  });
+
+  it('Prometheus Alertmanager has no CTA button if there are no specific policies', async () => {
+    mocks.api.fetchStatus.mockResolvedValue({
+      ...someCloudAlertManagerStatus,
+      config: {
+        ...someCloudAlertManagerConfig.alertmanager_config,
+        route: {
+          ...someCloudAlertManagerConfig.alertmanager_config.route,
+          routes: undefined,
+        },
+      },
+    });
+    await renderAmRoutes(dataSources.promAlertManager.name);
+    const rootRouteContainer = await ui.rootRouteContainer.find();
+    expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
+    expect(ui.newPolicyCTAButton.query()).not.toBeInTheDocument();
     expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
     expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
   });

@@ -1,5 +1,5 @@
 import { PanelModel } from './PanelModel';
-import { isOnTheSameGridRow } from './utils';
+import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 import { REPEAT_DIR_HORIZONTAL } from '../../../core/constants';
 
 describe('isOnTheSameGridRow', () => {
@@ -30,6 +30,33 @@ describe('isOnTheSameGridRow', () => {
       const otherPanel: PanelModel = ({ gridPos: { x: 4, y: 1, w: 4, h: 4 } } as unknown) as PanelModel;
 
       expect(isOnTheSameGridRow(sourcePanel, otherPanel)).toBe(false);
+    });
+  });
+});
+
+describe('deleteScopeVars', () => {
+  describe('when called with a collapsed row with panels', () => {
+    it('then scopedVars should be deleted on the row and all collapsed panels', () => {
+      const panel1 = new PanelModel({
+        id: 1,
+        type: 'row',
+        collapsed: true,
+        scopedVars: { job: { value: 'myjob', text: 'myjob' } },
+        panels: [
+          { id: 2, type: 'graph', title: 'Graph', scopedVars: { job: { value: 'myjob', text: 'myjob' } } },
+          { id: 3, type: 'graph2', title: 'Graph2', scopedVars: { job: { value: 'myjob', text: 'myjob' } } },
+        ],
+      });
+
+      expect(panel1.scopedVars).toBeDefined();
+      expect(panel1.panels[0].scopedVars).toBeDefined();
+      expect(panel1.panels[1].scopedVars).toBeDefined();
+
+      deleteScopeVars([panel1]);
+
+      expect(panel1.scopedVars).toBeUndefined();
+      expect(panel1.panels[0].scopedVars).toBeUndefined();
+      expect(panel1.panels[1].scopedVars).toBeUndefined();
     });
   });
 });

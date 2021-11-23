@@ -9,7 +9,7 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { TransformationsEditorTransformation } from './types';
-import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
+import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { useToggle } from 'react-use';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 

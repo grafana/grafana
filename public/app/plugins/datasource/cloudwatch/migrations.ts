@@ -27,7 +27,8 @@ export function migrateMultipleStatsAnnotationQuery(
   annotationQuery: CloudWatchAnnotationQuery
 ): Array<AnnotationQuery<DataQuery>> {
   const newAnnotations: CloudWatchAnnotationQuery[] = [];
-  if (annotationQuery?.statistics && annotationQuery?.statistics.length) {
+
+  if (annotationQuery && 'statistics' in annotationQuery && annotationQuery?.statistics?.length) {
     for (const stat of annotationQuery.statistics.splice(1)) {
       const { statistics, name, ...newAnnotation } = annotationQuery;
       newAnnotations.push({ ...newAnnotation, statistic: stat, name: `${name} - ${stat}` });

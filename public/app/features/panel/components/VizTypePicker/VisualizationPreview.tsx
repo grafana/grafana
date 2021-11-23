@@ -77,6 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: none;
       border-radius: ${theme.shape.borderRadius(1)};
       cursor: pointer;
+      text-align: left;
       border: 1px solid ${theme.colors.border.strong};
 
       transition: ${theme.transitions.create(['background'], {

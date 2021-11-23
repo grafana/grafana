@@ -2,6 +2,7 @@ import React, { FC, ReactNode, useState } from 'react';
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import {
+  CoreApp,
   DataQuery,
   DataSourceInstanceSettings,
   getDefaultRelativeTimeRange,
@@ -79,10 +80,11 @@ export const QueryWrapper: FC<Props> = ({
         query={cloneDeep(query.model)}
         onChange={(query) => onChangeQuery(query, index)}
         onRemoveQuery={onRemoveQuery}
-        onAddQuery={onDuplicateQuery}
+        onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
         onRunQuery={onRunQueries}
         queries={queries}
         renderHeaderExtras={() => renderTimePicker(query, index)}
+        app={CoreApp.UnifiedAlerting}
         visualization={
           data.state !== LoadingState.NotStarted ? (
             <VizWrapper
