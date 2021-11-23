@@ -154,7 +154,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
                 onCreateNewPanel();
               }}
             >
-              Create new panel
+              Add a new panel
             </CardButton>
             <CardButton
               icon="wrap-text"
