@@ -168,11 +168,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
-	orgManagerRole := accesscontrol.RoleRegistration{
+	orgMaintainerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     5,
-			Name:        "fixed:organization:manager",
-			DisplayName: "Organization manager",
+			Name:        "fixed:organization:maintainer",
+			DisplayName: "Organization maintainer",
 			Description: "Create, read, write, or delete an organization. Read or write an organization's quotas. Needs to be assigned globally.",
 			Group:       "Organizations",
 			Permissions: accesscontrol.ConcatPermissions(orgReaderRole.Role.Permissions, []accesscontrol.Permission{
@@ -187,7 +187,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgManagerRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole,
 	)
 }
 
