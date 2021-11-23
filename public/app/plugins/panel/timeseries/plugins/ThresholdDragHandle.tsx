@@ -32,7 +32,7 @@ export const ThresholdDragHandle: React.FC<ThresholdDragHandleProps> = ({
   }
 
   // there seems to be a 22px offset at the bottom where the threshold line is still drawn
-  // this is probably the size of the timeline
+  // this is probably offset by the size of the x-axis component
   if (y > (dragBounds.bottom ?? 0) + 22) {
     outOfBounds = 'bottom';
   }
