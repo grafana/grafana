@@ -98,7 +98,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 		}
 	} else {
 		if cmd.CreateNewServiceAccount {
-			return response.Error(500, "Service accounts disabled.  Retry create api request without service account flag.", err)
+			return response.Error(400, "Service accounts disabled.  Retry create api request without service account flag.", err)
 		}
 	}
 
