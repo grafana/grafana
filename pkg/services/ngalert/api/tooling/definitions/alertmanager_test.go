@@ -456,6 +456,64 @@ func Test_ConfigUnmashaling(t *testing.T) {
 			`,
 		},
 		{
+			desc:   "not unique mute time names should error",
+			err:    true,
+			errMsg: "mute time interval \"test1\" is not unique",
+			input: `
+				{
+				  "route": {
+					"receiver": "grafana-default-email"
+				  },
+				  "mute_time_intervals": [
+					{
+					  "name": "test1",
+					  "time_intervals": [
+						{
+						  "times": [
+							{
+							  "start_time": "00:00",
+							  "end_time": "12:00"
+							}
+						  ]
+						}
+					  ]
+					},
+					{
+						"name": "test1",
+						"time_intervals": [
+						  {
+							"times": [
+							  {
+								"start_time": "00:00",
+								"end_time": "12:00"
+							  }
+							]
+						  }
+						]
+					  }
+				  ],
+				  "templates": null,
+				  "receivers": [
+					{
+					  "name": "grafana-default-email",
+					  "grafana_managed_receiver_configs": [
+						{
+						  "uid": "uxwfZvtnz",
+						  "name": "email receiver",
+						  "type": "email",
+						  "disableResolveMessage": false,
+						  "settings": {
+							"addresses": "<example@email.com>"
+						  },
+						  "secureFields": {}
+						}
+					  ]
+					}
+				  ]
+				}
+			`,
+		},
+		{
 			desc:   "mute time intervals on root route should error",
 			err:    true,
 			errMsg: "root route must not have any mute time intervals",
