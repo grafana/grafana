@@ -87,7 +87,10 @@ def pr_pipelines(edition):
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=variants),
         e2e_tests_server_step(edition=edition),
-        e2e_tests_step(edition=edition),
+        e2e_tests_step('dashboards-suite', edition=edition),
+        e2e_tests_step('smoke-tests-suite', edition=edition),
+        e2e_tests_step('panels-suite', edition=edition),
+        e2e_tests_step('various-suite', edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
         build_frontend_docs_step(edition=edition),
@@ -105,6 +108,10 @@ def pr_pipelines(edition):
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002),
+            e2e_tests_step('dashboards-suite', edition=edition2, port=3002),
+            e2e_tests_step('smoke-tests-suite', edition=edition2, port=3002),
+            e2e_tests_step('panels-suite', edition=edition2, port=3002),
+            e2e_tests_step('various-suite', edition=edition2, port=3002),
         ])
 
     trigger = {
