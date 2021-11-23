@@ -407,6 +407,197 @@ Content-Type: application/json; charset=UTF-8
 | 403  | Access denied                                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details.               |
 
+## Create and remove user role assignments
+
+This API lets you create, read, and remove [user role assignments]({{< relref "../enterprise/access-control/roles.md#user-role-assignments" >}}) that grants individual users additional privileges.
+
+### Get all user role assignments for a specific user
+
+`GET /api/access-control/users/:userId/roles`
+
+Get a list of the roles assigned to the user with the ID `:userId`.
+
+#### Required permissions
+
+| Action           | Scope                |
+| ---------------- | -------------------- |
+| users.roles:list | users:id:`<user ID>` |
+
+#### Example request
+
+```http
+GET /api/access-control/users/1/roles
+Accept: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+[
+  {
+    "version": 4,
+    "uid": "CR0fmtDnk",
+    "name": "fixed:settings:writer",
+    "displayName": "Setting writer",
+    "description": "Read and update Grafana instance settings.",
+    "group": "Settings",
+    "updated": "2021-11-18T10:56:58+01:00",
+    "created": "2021-10-06T10:09:04+02:00",
+    "global": false
+  },
+  {
+    "version": 3,
+    "uid": "pGAfmtvnz",
+    "name": "fixed:provisioning:writer",
+    "displayName": "Provisioning writer",
+    "description": "Reload provisioning.",
+    "group": "Provisioning",
+    "updated": "2021-11-18T10:56:58+01:00",
+    "created": "2021-10-06T10:09:04+02:00",
+    "global": false
+  }
+]
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | The user's role assignments are returned.                            |
+| 403  | Access denied.                                                       |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+### Set user role assignments
+
+`PUT /api/access-control/users/:userId/roles`
+
+Update the user's role assignments to match the provided set of UIDs.
+This will remove any assigned roles that aren't in the request and add
+roles that are in the set but are not already assigned to the user.
+
+If you want to add or remove a single role, consider using
+[Add a user role assignment]({{< ref "#add-a-user-role-assignment" >}}) or
+[Remove a user role assignment]({{< ref "#remove-a-user-role-assignment" >}})
+instead.
+
+#### Required permissions
+
+| Action             | Scope                |
+| ------------------ | -------------------- |
+| users.roles:add    | permissions:delegate |
+| users.roles:remove | permissions:delegate |
+
+#### Example request
+
+```http
+PUT /api/access-control/users/1/roles
+Accept: application/json
+Content-Type: application/json
+
+{
+    "global": false,
+    "roleUids": ["AFUXBHKnk"]
+}
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{"message":"User roles have been updated."}
+```
+
+#### Status codes
+
+| Code | Description                                                                    |
+| ---- | ------------------------------------------------------------------------------ |
+| 200  | User role added.                                                               |
+| 403  | Access denied.                                                                 |
+| 404  | User or role not found. Refer to the body and/or server logs for more details. |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.           |
+
+### Add a user role assignment
+
+`POST /api/access-control/users/:userId/roles`
+
+Assign a single role assignment to a user.
+
+For bulk updates consider
+[Set user role assignments]({{< ref "#set-user-role-assignments" >}}).
+
+#### Required permissions
+
+| Action          | Scope                |
+| --------------- | -------------------- |
+| users.roles:add | permissions:delegate |
+
+#### Example request
+
+```http
+PUT /api/access-control/users/1/roles
+Accept: application/json
+Content-Type: application/json
+
+{
+    "global": false,
+    "roleUid": "AFUXBHKnk"
+}
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{"message":"Role added to the user."}
+```
+
+### Remove a user role assignment
+
+`DELETE /api/access-control/users/:userId/roles/:roleUid`
+
+Removes a single role assignment from a user.
+
+For bulk updates consider
+[Set user role assignments]({{< ref "#set-user-role-assignments" >}}).
+
+#### Required permissions
+
+| Action             | Scope                |
+| ------------------ | -------------------- |
+| users.roles:remove | permissions:delegate |
+
+#### Example request
+
+```http
+DELETE /api/access-control/users/1/roles/AFUXBHKnk
+Accept: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{"message":"Role removed from user."}
+```
+
+#### Status codes
+
+| Code | Description                                                                                      |
+| ---- | ------------------------------------------------------------------------------------------------ |
+| 200  | User role deleted.                                                                               |
+| 403  | Access denied.                                                                                   |
+| 404  | User, role assignment, or role not found. Refer to the body and/or server logs for more details. |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.                             |
+
 ## Create and remove built-in role assignments
 
 API set allows to create or remove [built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) and list current assignments.
