@@ -10,8 +10,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-kit/log"
+	gokitlog "github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/go-kit/log/term"
 	"github.com/go-stack/stack"
@@ -21,17 +23,17 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-var llog log.Logger
 var loggersToClose []DisposableHandler
 var loggersToReload []ReloadableHandler
 var filters map[string]level.Option
 var Root MultiLoggers
+var tsFormat = gokitlog.TimestampFormat(time.Now, "01-02|15:04:05")
 
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	loggersToReload = make([]ReloadableHandler, 0)
 	filters = map[string]level.Option{}
-	llog = log.NewLogfmtLogger(os.Stderr)
+	Root.AddLogger(log.NewLogfmtLogger(os.Stderr), "info", filters)
 }
 
 type LogWithFilters struct {
@@ -44,7 +46,7 @@ type MultiLoggers struct {
 	loggers []LogWithFilters
 }
 
-func (ml *MultiLoggers) AddLogger(val log.Logger, levelName string, filters map[string]level.Option) {
+func (ml *MultiLoggers) AddLogger(val gokitlog.Logger, levelName string, filters map[string]level.Option) {
 	logger := LogWithFilters{val: val, filters: filters, maxLevel: getLogLevelFromString(levelName)}
 	ml.loggers = append(ml.loggers, logger)
 }
@@ -58,31 +60,28 @@ func (ml *MultiLoggers) GetLogger() MultiLoggers {
 }
 
 func (ml MultiLoggers) Warn(msg string, args ...interface{}) {
-	for _, multilogger := range ml.loggers {
-		multilogger.val.Log(level.Key(), level.WarnValue(), "msg", msg, args)
-	}
+	args = append([]interface{}{level.Key(), level.WarnValue(), "msg", msg}, args...)
+	ml.Log(args...)
 }
 
 func (ml MultiLoggers) Debug(msg string, args ...interface{}) {
-	for _, multilogger := range ml.loggers {
-		multilogger.val.Log(level.Key(), level.DebugValue(), "msg", msg, args)
-	}
+	args = append([]interface{}{level.Key(), level.DebugValue(), "msg", msg}, args...)
+	ml.Log(args...)
 }
 
 func (ml MultiLoggers) Error(msg string, args ...interface{}) {
-	for _, multilogger := range ml.loggers {
-		multilogger.val.Log(level.Key(), level.ErrorValue(), "msg", msg, args)
-	}
+	args = append([]interface{}{level.Key(), level.ErrorValue(), "msg", msg}, args...)
+	ml.Log(args...)
 }
 
 func (ml MultiLoggers) Info(msg string, args ...interface{}) {
-	for _, multilogger := range ml.loggers {
-		multilogger.val.Log(level.Key(), level.InfoValue(), "msg", msg, args)
-	}
+	args = append([]interface{}{level.Key(), level.InfoValue(), "msg", msg}, args...)
+	ml.Log(args...)
 }
 
 func (ml MultiLoggers) Log(keyvals ...interface{}) error {
 	for _, multilogger := range ml.loggers {
+		multilogger.val = gokitlog.With(multilogger.val, "ts", tsFormat)
 		if err := multilogger.val.Log(keyvals...); err != nil {
 			return err
 		}
@@ -94,12 +93,14 @@ func (ml MultiLoggers) Log(keyvals ...interface{}) error {
 func (ml MultiLoggers) New(ctx ...interface{}) MultiLoggers {
 	var newloger MultiLoggers
 	for _, logWithFilter := range ml.loggers {
-		logWithFilter.val = log.With(logWithFilter.val, ctx)
-		v, ok := logWithFilter.filters[ctx[0].(string)]
-		if ok {
-			logWithFilter.val = level.NewFilter(logWithFilter.val, v)
-		} else {
-			logWithFilter.val = level.NewFilter(logWithFilter.val, logWithFilter.maxLevel)
+		logWithFilter.val = gokitlog.With(logWithFilter.val, ctx)
+		if len(ctx) > 0 {
+			v, ok := logWithFilter.filters[ctx[0].(string)]
+			if ok {
+				logWithFilter.val = level.NewFilter(logWithFilter.val, v)
+			} else {
+				logWithFilter.val = level.NewFilter(logWithFilter.val, logWithFilter.maxLevel)
+			}
 		}
 		newloger.loggers = append(newloger.loggers, logWithFilter)
 	}
@@ -112,7 +113,8 @@ func New(ctx ...interface{}) MultiLoggers {
 	}
 	var newloger MultiLoggers
 	for _, logWithFilter := range Root.loggers {
-		logWithFilter.val = log.With(logWithFilter.val, append([]interface{}{"logger", ctx[0]}, ctx...))
+		ctx = append([]interface{}{"logger"}, ctx...)
+		logWithFilter.val = gokitlog.With(logWithFilter.val, ctx...)
 		v, ok := logWithFilter.filters[ctx[0].(string)]
 		if ok {
 			logWithFilter.val = level.NewFilter(logWithFilter.val, v)
@@ -144,7 +146,7 @@ func getLogLevelFromString(levelName string) level.Option {
 	loglevel, ok := logLevels[levelName]
 
 	if !ok {
-		level.Error(llog).Log("Unknown log level", "level", levelName)
+		level.Error(Root).Log("Unknown log level", "level", levelName)
 		return level.AllowError()
 	}
 
@@ -256,11 +258,12 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
 	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
 
+	var configLoggers []LogWithFilters
 	for _, mode := range modes {
 		mode = strings.TrimSpace(mode)
 		sec, err := cfg.GetSection("log." + mode)
 		if err != nil {
-			level.Error(llog).Log("Unknown log mode", "mode", mode)
+			level.Error(Root).Log("Unknown log mode", "mode", mode)
 			return errutil.Wrapf(err, "failed to get config section log.%s", mode)
 		}
 
@@ -271,7 +274,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		format := getLogFormat(sec.Key("format").MustString(""))
 
 		var handler LogWithFilters
-		// Generate log configuration.
+
 		switch mode {
 		case "console":
 			handler.val = format(os.Stdout)
@@ -279,7 +282,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			fileName := sec.Key("file_name").MustString(filepath.Join(logsPath, "grafana.log"))
 			dpath := filepath.Dir(fileName)
 			if err := os.MkdirAll(dpath, os.ModePerm); err != nil {
-				level.Error(llog).Log("Failed to create directory", "dpath", dpath, "err", err)
+				level.Error(Root).Log("Failed to create directory", "dpath", dpath, "err", err)
 				return errutil.Wrapf(err, "failed to create log directory %q", dpath)
 			}
 			fileHandler := NewFileWriter()
@@ -291,7 +294,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			fileHandler.Daily = sec.Key("daily_rotate").MustBool(true)
 			fileHandler.Maxdays = sec.Key("max_days").MustInt64(7)
 			if err := fileHandler.Init(); err != nil {
-				level.Error(llog).Log("Failed to initialize file handler", "dpath", dpath, "err", err)
+				level.Error(Root).Log("Failed to initialize file handler", "dpath", dpath, "err", err)
 				return errutil.Wrapf(err, "failed to initialize file handler")
 			}
 
@@ -324,7 +327,10 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		handler.filters = modeFilters
 		handler.maxLevel = leveloption
 		// handler = LogFilterHandler(leveloption, modeFilters, handler)
-		Root.loggers = append(Root.loggers, handler)
+		configLoggers = append(configLoggers, handler)
+	}
+	if len(configLoggers) > 0 {
+		Root.loggers = configLoggers
 	}
 	return nil
 }

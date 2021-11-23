@@ -1109,6 +1109,7 @@ func (cfg *Cfg) readSessionConfig() {
 }
 
 func (cfg *Cfg) initLogging(file *ini.File) error {
+	fmt.Print("I am in the initLogging")
 	logModeStr := valueAsString(file.Section("log"), "mode", "console")
 	// split on comma
 	logModes := strings.Split(logModeStr, ",")

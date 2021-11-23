@@ -62,7 +62,7 @@ func NewSyslog(sec *ini.Section, format Formatedlogger) *SysLogHandler {
 	handler.Tag = sec.Key("tag").MustString("")
 
 	if err := handler.Init(); err != nil {
-		level.Error(llog).Log("Failed to init syslog log handler", "error", err)
+		level.Error(Root).Log("Failed to init syslog log handler", "error", err)
 		os.Exit(1)
 	}
 	handler.logger = gokitsyslog.NewSyslogLogger(handler.syslog, format, gokitsyslog.PrioritySelectorOption(selector))
