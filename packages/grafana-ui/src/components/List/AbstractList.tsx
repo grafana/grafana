@@ -7,7 +7,6 @@ export interface ListProps<T> {
   renderItem: (item: T, index: number) => JSX.Element;
   getItemKey?: (item: T) => string;
   className?: string;
-  'aria-labelledby'?: string;
 }
 
 interface AbstractListProps<T> extends ListProps<T> {
@@ -32,11 +31,11 @@ export class AbstractList<T> extends React.PureComponent<AbstractListProps<T>> {
   }
 
   render() {
-    const { items, renderItem, getItemKey, className, inline, 'aria-labelledby': ariaLabelledBy } = this.props;
+    const { items, renderItem, getItemKey, className, inline } = this.props;
     const styles = getStyles(inline);
 
     return (
-      <ul className={cx(styles.list, className)} aria-labelledby={ariaLabelledBy}>
+      <ul className={cx(styles.list, className)}>
         {items.map((item, i) => {
           return (
             <li className={styles.item} key={getItemKey ? getItemKey(item) : i}>

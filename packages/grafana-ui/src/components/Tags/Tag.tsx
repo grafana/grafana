@@ -17,20 +17,18 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   onClick?: OnTagClick;
 }
 
-export const Tag = forwardRef<HTMLButtonElement, Props>(({ name, onClick, className, colorIndex, ...rest }, ref) => {
+export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, className, colorIndex, ...rest }, ref) => {
   const theme = useTheme();
   const styles = getTagStyles(theme, name, colorIndex);
 
-  const onTagClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    onClick?.(name, event);
+  const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (onClick) {
+      onClick(name, event);
+    }
   };
 
-  const Wrapper = onClick ? 'button' : 'span';
   return (
-    <Wrapper
+    <span
       key={name}
       ref={ref}
       onClick={onTagClick}
@@ -38,7 +36,7 @@ export const Tag = forwardRef<HTMLButtonElement, Props>(({ name, onClick, classN
       {...rest}
     >
       {name}
-    </Wrapper>
+    </span>
   );
 });
 
@@ -63,7 +61,6 @@ const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) =>
       text-shadow: none;
       padding: 3px 6px;
       border-radius: ${theme.border.radius.md};
-      border-style: none;
     `,
     hover: css`
       &:hover {
