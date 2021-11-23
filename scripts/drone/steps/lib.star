@@ -496,6 +496,7 @@ def lint_frontend_step():
         'commands': [
             'yarn run prettier:check',
             'yarn run lint',
+            'yarn run i18n:compile', # TODO: right place for this?
             'yarn run typecheck',
         ],
     }

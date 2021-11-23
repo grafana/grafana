@@ -62,6 +62,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -499,6 +500,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -1079,6 +1081,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -1564,6 +1567,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -2095,6 +2099,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -2554,6 +2559,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -3190,6 +3196,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -3626,6 +3633,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -4213,6 +4221,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 095d741ce6f28b818cbf059f4cf19d5403a4e451fabfcad111c8674124e10db9
+hmac: 4a5d47ae5989a19e3a5f204853c7c61f7af67e0f712138b92afc4770f61d4223
 
 ...
