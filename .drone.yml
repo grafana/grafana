@@ -231,7 +231,7 @@ steps:
   - cd /hugo && make prod
   depends_on:
   - build-frontend-docs
-  image: grafana/docs-base:latest
+  image: grafana/docs-base:test
   name: build-docs-website
 - commands:
   - ls dist/*.tar.gz*
