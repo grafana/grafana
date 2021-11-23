@@ -1,6 +1,6 @@
 .PHONY: pull docs docs-quick docs-no-pull docs-test docs-local-static
 
-IMAGE = grafana/grafana-docs-dev:latest
+IMAGE = grafana/docs-base:test
 CONTENT_PATH = /hugo/content/docs/grafana/next
 LOCAL_STATIC_PATH = ../../website/static
 PORT = 3002:3002
@@ -9,16 +9,13 @@ pull:
 	docker pull $(IMAGE)
 
 docs: pull
-	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "make server"
-
-docs-quick: pull
-	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "ln -s /frontend-docs/packages_api /hugo/content/docs/grafana/next/packages_api && make server-quick"
+	docker run -it -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) bash -c "make docs-preview"
 
 docs-no-pull:
-	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "make server"
+	docker run -it -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) bash -c "make docs-preview"
 
 docs-test: pull
-	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z --rm -it $(IMAGE) /bin/bash -c 'make prod'
+	docker run -it -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) bash -c "make docs-test"
 
 # expects that you have grafana/website checked out in same path as the grafana repo.
 docs-local-static: pull
