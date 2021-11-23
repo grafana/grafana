@@ -9,15 +9,12 @@ import {
 } from '@grafana/data';
 import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/schema';
 
-export interface GraphableFieldsResult {
-  frames?: DataFrame[];
-  message?: string;
-}
-
-// This will return a set of frames with only graphable values included
-export function prepareGraphableFields(series: DataFrame[], theme: GrafanaTheme2): GraphableFieldsResult {
+/**
+ * Returns null if there are no graphable fields
+ */
+export function prepareGraphableFields(series: DataFrame[], theme: GrafanaTheme2): DataFrame[] | null {
   if (!series?.length) {
-    return { message: 'No data in response' };
+    return null;
   }
 
   let copy: Field;
@@ -105,8 +102,8 @@ export function prepareGraphableFields(series: DataFrame[], theme: GrafanaTheme2
   }
 
   if (frames.length) {
-    return { frames };
+    return frames;
   }
 
-  return {};
+  return null;
 }
