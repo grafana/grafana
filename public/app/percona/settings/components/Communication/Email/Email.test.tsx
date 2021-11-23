@@ -12,6 +12,7 @@ xdescribe('Email::', () => {
           from: 'from@mail.com',
           smarthost: 'host.com',
           hello: 'hello',
+          require_tls: false,
         }}
         updateSettings={() => {}}
       />
@@ -28,6 +29,7 @@ xdescribe('Email::', () => {
           from: 'from@mail.com',
           smarthost: 'host.com',
           hello: 'hello',
+          require_tls: false,
         }}
         updateSettings={() => {}}
       />
@@ -44,6 +46,7 @@ xdescribe('Email::', () => {
           from: 'from@mail.com',
           smarthost: 'host.com',
           hello: 'hello',
+          require_tls: false,
         }}
         updateSettings={() => {}}
       />
@@ -62,6 +65,7 @@ xdescribe('Email::', () => {
           from: 'from@mail.com',
           smarthost: 'host.com',
           hello: 'hello',
+          require_tls: false,
         }}
         updateSettings={() => {}}
       />

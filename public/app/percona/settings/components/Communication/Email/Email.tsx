@@ -1,7 +1,13 @@
 import { withTypes } from 'react-final-form';
 import React, { FC, useState } from 'react';
 import { Button, Spinner, useTheme } from '@grafana/ui';
-import { TextInputField, PasswordInputField, validators, RadioButtonGroupField } from '@percona/platform-core';
+import {
+  TextInputField,
+  PasswordInputField,
+  validators,
+  RadioButtonGroupField,
+  CheckboxField,
+} from '@percona/platform-core';
 import { FormApi } from 'final-form';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import { getSettingsStyles } from '../../../Settings.styles';
@@ -120,6 +126,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
               validators={values.authType === EmailAuthType.NONE ? [] : [validators.required]}
               name="password"
             />
+            <CheckboxField name="requireTls" label="Require TLS" />
 
             <Button
               className={settingsStyles.actionButton}
