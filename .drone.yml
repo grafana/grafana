@@ -1116,12 +1116,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -1588,12 +1582,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -2048,12 +2036,6 @@ platform:
   version: "1809"
 services: []
 steps:
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
 - commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
@@ -2514,12 +2496,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -2957,12 +2933,6 @@ platform:
   version: "1809"
 services: []
 steps:
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
 - commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
@@ -3422,12 +3392,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $env:DRONE_RUNNER_NAME
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
@@ -3635,6 +3599,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 44152484800d1b0d09e839bb1f25546c82e0ba2f5cdc7411d64e40756b87a1cd
+hmac: e88015b452dfab871767948389489cbbf94d34e79054a4c0e251b5d828780269
 
 ...
