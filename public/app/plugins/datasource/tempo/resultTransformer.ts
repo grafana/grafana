@@ -10,6 +10,7 @@ import {
   TraceLog,
   TraceSpanRow,
 } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
 import { SpanKind, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -56,6 +57,11 @@ export function createTableFrame(
       {
         name: 'Message',
         type: FieldType.string,
+        config: {
+          custom: {
+            displayMode: TableCellDisplayMode.LogView,
+          },
+        },
       },
     ],
     meta: {

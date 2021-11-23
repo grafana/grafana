@@ -14,6 +14,7 @@ import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem } from './types';
 import { JSONViewCell } from './JSONViewCell';
+import { LogViewCell } from './LogViewCell';
 import { ImageCell } from './ImageCell';
 import { getFooterValue } from './FooterRow';
 
@@ -129,6 +130,8 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field): Cell
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
+    case TableCellDisplayMode.LogView:
+      return LogViewCell;
   }
 
   // Default or Auto
