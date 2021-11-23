@@ -611,8 +611,7 @@ func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 
 	// TODO: add to chore, for cleaning up after we have created
 	// service accounts table in the modelling
-	whereConditions = append(whereConditions, "u.is_service_account = ?")
-	whereParams = append(whereParams, false)
+	whereConditions = append(whereConditions, "u.is_service_account = false")
 
 	// Join with only most recent auth module
 	joinCondition := `(
