@@ -746,6 +746,9 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	if len(c.Route.Match) > 0 || len(c.Route.MatchRE) > 0 {
 		return fmt.Errorf("root route must not have any matchers")
 	}
+	if len(c.Route.MuteTimeIntervals) > 0 {
+		return fmt.Errorf("root route must not have any mute time intervals")
+	}
 
 	for _, r := range c.InhibitRules {
 		if err := r.UnmarshalYAML(noopUnmarshal); err != nil {
