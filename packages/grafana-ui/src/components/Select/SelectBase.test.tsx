@@ -62,7 +62,7 @@ describe('SelectBase', () => {
     describe('is provided', () => {
       it('opens on focus', () => {
         render(<SelectBase menuShouldPortal onChange={onChangeHandler} openMenuOnFocus />);
-        fireEvent.focus(screen.getByRole('textbox'));
+        fireEvent.focus(screen.getByRole('combobox'));
         expect(screen.queryByText(/no options found/i)).toBeVisible();
       });
     });
@@ -74,8 +74,8 @@ describe('SelectBase', () => {
         ${' '}
       `('opens on arrow down/up or space', ({ key }) => {
         render(<SelectBase menuShouldPortal onChange={onChangeHandler} />);
-        fireEvent.focus(screen.getByRole('textbox'));
-        fireEvent.keyDown(screen.getByRole('textbox'), { key });
+        fireEvent.focus(screen.getByRole('combobox'));
+        fireEvent.keyDown(screen.getByRole('combobox'), { key });
         expect(screen.queryByText(/no options found/i)).toBeVisible();
       });
     });
