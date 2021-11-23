@@ -1,7 +1,6 @@
 package loki
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -41,7 +40,7 @@ func TestLoki(t *testing.T) {
 		require.Equal(t, `http_request_total{app="backend", device="mobile"}`, formatLegend(metric, query))
 	})
 
-	t.Run("parsing query model with step", func(t *testing.T) {
+	t.Run("parsing query model", func(t *testing.T) {
 		queryContext := &backend.QueryDataRequest{
 			Queries: []backend.DataQuery{
 				{
@@ -64,55 +63,6 @@ func TestLoki(t *testing.T) {
 		models, err := parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
-	})
-
-	t.Run("parsing query model without step parameter", func(t *testing.T) {
-		queryContext1 := &backend.QueryDataRequest{
-			Queries: []backend.DataQuery{
-				{
-					JSON: []byte(`
-					{
-						"expr": "go_goroutines",
-						"format": "time_series",
-						"refId": "A"
-					}`,
-					),
-					TimeRange: backend.TimeRange{
-						From: time.Now().Add(-48 * time.Hour),
-						To:   time.Now(),
-					},
-					Interval: time.Minute * 2,
-				},
-			},
-		}
-		dsInfo := &datasourceInfo{}
-		models, err := parseQuery(dsInfo, queryContext1)
-		require.NoError(t, err)
-		require.Equal(t, time.Minute*2, models[0].Step)
-
-		queryContext2 := &backend.QueryDataRequest{
-			Queries: []backend.DataQuery{
-				{
-					JSON: []byte(`
-					{
-						"expr": "go_goroutines",
-						"format": "time_series",
-						"refId": "A"
-					}`,
-					),
-					TimeRange: backend.TimeRange{
-						From: time.Now().Add(-48 * time.Hour),
-						To:   time.Now(),
-					},
-					Interval: time.Second * 2,
-				},
-			},
-		}
-
-		models, err = parseQuery(dsInfo, queryContext2)
-		require.NoError(t, err)
-		fmt.Println(models)
-		require.Equal(t, time.Second*2, models[0].Step)
 	})
 }
 
