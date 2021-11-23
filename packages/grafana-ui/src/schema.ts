@@ -7,7 +7,7 @@ export {
   GraphDrawStyle as DrawStyle,
   // All exports
   AxisPlacement,
-  PointVisibility,
+  VisibilityMode as PointVisibility,
   LineInterpolation,
   ScaleDistribution,
   GraphGradientMode,
@@ -16,7 +16,7 @@ export {
   ScaleDistributionConfig,
   HideSeriesConfig,
   BarAlignment,
-  BarValueVisibility,
+  VisibilityMode as BarValueVisibility,
   ScaleOrientation,
   ScaleDirection,
   LineConfig,

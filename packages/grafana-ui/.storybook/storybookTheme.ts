@@ -5,8 +5,6 @@ import '../src/components/Icon/iconBundle';
 
 const createStorybookTheme = (theme: GrafanaTheme2) => {
   return create({
-    base: theme.name.includes('Light') ? 'light' : 'dark',
-
     colorPrimary: theme.colors.primary.main,
     colorSecondary: theme.colors.error.main,
 

@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-
 import { Select, Table } from '@grafana/ui';
 import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
 import { PanelOptions } from './models.gen';
@@ -9,6 +8,7 @@ import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Ta
 import { dispatch } from '../../../store/store';
 import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { getFooterCells } from './footer';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -79,6 +79,7 @@ export class TablePanel extends Component<Props> {
 
   renderTable(frame: DataFrame, width: number, height: number) {
     const { options } = this.props;
+    const footerValues = options.footer?.show ? getFooterCells(frame, options.footer) : undefined;
 
     return (
       <Table
@@ -92,21 +93,21 @@ export class TablePanel extends Component<Props> {
         onSortByChange={this.onSortByChange}
         onColumnResize={this.onColumnResize}
         onCellFilterAdded={this.onCellFilterAdded}
+        footerValues={footerValues}
       />
     );
   }
 
-  getCurrentFrameIndex() {
-    const { data, options } = this.props;
-    const count = data.series?.length;
-    return options.frameIndex > 0 && options.frameIndex < count ? options.frameIndex : 0;
+  getCurrentFrameIndex(frames: DataFrame[], options: PanelOptions) {
+    return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
   }
 
   render() {
-    const { data, height, width } = this.props;
+    const { data, height, width, options } = this.props;
 
-    const count = data.series?.length;
-    const hasFields = data.series[0]?.fields.length;
+    const frames = data.series;
+    const count = frames?.length;
+    const hasFields = frames[0]?.fields.length;
 
     if (!count || !hasFields) {
       return <div className={tableStyles.noData}>No data</div>;
@@ -115,8 +116,8 @@ export class TablePanel extends Component<Props> {
     if (count > 1) {
       const inputHeight = config.theme.spacing.formInputHeight;
       const padding = 8 * 2;
-      const currentIndex = this.getCurrentFrameIndex();
-      const names = data.series.map((frame, index) => {
+      const currentIndex = this.getCurrentFrameIndex(frames, options);
+      const names = frames.map((frame, index) => {
         return {
           label: getFrameDisplayName(frame),
           value: index,

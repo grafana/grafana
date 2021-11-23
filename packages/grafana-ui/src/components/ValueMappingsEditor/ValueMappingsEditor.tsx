@@ -44,6 +44,7 @@ export const ValueMappingsEditor = React.memo(({ value, onChange }: Props) => {
                     [{row.from} - {row.to}]
                   </span>
                 )}
+                {row.type === MappingType.RegexToText && row.pattern}
                 {row.type === MappingType.SpecialValue && row.specialMatch}
               </td>
               <td>

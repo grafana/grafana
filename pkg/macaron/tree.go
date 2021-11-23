@@ -260,7 +260,7 @@ func (t *Tree) Add(pattern string, handle Handle) *Leaf {
 	return t.addNextSegment(pattern, handle)
 }
 
-func (t *Tree) matchLeaf(globLevel int, url string, params Params) (Handle, bool) {
+func (t *Tree) matchLeaf(globLevel int, url string, params map[string]string) (Handle, bool) {
 	url, err := urlpkg.PathUnescape(url)
 	if err != nil {
 		return nil, false
@@ -303,7 +303,7 @@ func (t *Tree) matchLeaf(globLevel int, url string, params Params) (Handle, bool
 	return nil, false
 }
 
-func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (Handle, bool) {
+func (t *Tree) matchSubtree(globLevel int, segment, url string, params map[string]string) (Handle, bool) {
 	unescapedSegment, err := urlpkg.PathUnescape(segment)
 	if err != nil {
 		return nil, false
@@ -365,7 +365,7 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 	return nil, false
 }
 
-func (t *Tree) matchNextSegment(globLevel int, url string, params Params) (Handle, bool) {
+func (t *Tree) matchNextSegment(globLevel int, url string, params map[string]string) (Handle, bool) {
 	i := strings.Index(url, "/")
 	if i == -1 {
 		return t.matchLeaf(globLevel, url, params)
@@ -373,10 +373,10 @@ func (t *Tree) matchNextSegment(globLevel int, url string, params Params) (Handl
 	return t.matchSubtree(globLevel, url[:i], url[i+1:], params)
 }
 
-func (t *Tree) Match(url string) (Handle, Params, bool) {
+func (t *Tree) Match(url string) (Handle, map[string]string, bool) {
 	url = strings.TrimPrefix(url, "/")
 	url = strings.TrimSuffix(url, "/")
-	params := make(Params)
+	params := map[string]string{}
 	handle, ok := t.matchNextSegment(0, url, params)
 	return handle, params, ok
 }

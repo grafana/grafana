@@ -217,7 +217,7 @@ const Item: React.FC<ItemProps> = ({ children, title, image }) => {
 
   return (
     <div className={itemStyle}>
-      <img src={imageUrl} />
+      <img src={imageUrl} alt="" />
       <div>
         <div className={titleStyle}>{title}</div>
         {children}

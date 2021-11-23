@@ -9,6 +9,15 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana-server/",
       "env": {},
       "args": ["--homepath", "${workspaceFolder}", "--packaging", "dev"]
+    },
+    {
+      "name": "Debug Jest test",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": ["--inspect-brk", "${workspaceRoot}/node_modules/.bin/jest", "--runInBand", "${file}"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "port": 9229
     }
   ]
 }

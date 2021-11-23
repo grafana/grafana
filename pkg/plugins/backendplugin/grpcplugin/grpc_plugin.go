@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/hashicorp/go-plugin"
 )
@@ -70,6 +71,14 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 
 	if p.pluginClient == nil {
 		return errors.New("no compatible plugin implementation found")
+	}
+
+	elevated, err := process.IsRunningWithElevatedPrivileges()
+	if err != nil {
+		p.logger.Debug("Error checking plugin process execution privilege", "err", err)
+	}
+	if elevated {
+		p.logger.Warn("Plugin process is running with elevated privileges. This is not recommended")
 	}
 
 	return nil

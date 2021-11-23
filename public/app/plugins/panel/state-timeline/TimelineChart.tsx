@@ -1,5 +1,5 @@
 import React from 'react';
-import { LegendDisplayMode, BarValueVisibility } from '@grafana/schema';
+import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
 import {
   PanelContext,
   PanelContextRoot,
@@ -22,7 +22,7 @@ export interface TimelineProps
     Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
   mode: TimelineMode;
   rowHeight: number;
-  showValue: BarValueVisibility;
+  showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
   legendItems?: VizLegendItem[];
@@ -36,12 +36,13 @@ export class TimelineChart extends React.Component<TimelineProps> {
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     this.panelContext = this.context as PanelContext;
-    const { eventBus } = this.panelContext;
+    const { eventBus, sync } = this.panelContext;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
       eventBus,
+      sync,
       allFrames: this.props.frames,
       ...this.props,
 

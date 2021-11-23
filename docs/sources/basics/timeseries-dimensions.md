@@ -22,7 +22,7 @@ To identify unique series within a set of time series, Grafana stores dimensions
 
 ## Labels
 
-Each time series in Grafana optionally has labels. labels are set a of key/value pairs for identifying dimensions. Example labels could are `{location=us}` or `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series. For example, `temperature {country=us,state=ma,city=boston}`.
+Each time series in Grafana optionally has labels. Labels are set a of key/value pairs for identifying dimensions. Example labels could be `{location=us}` or `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series. For example, `temperature {country=us,state=ma,city=boston}` could identify the series of temperature values for the city of Boston in the US.
 
 Different sources of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into dimensions.
 
@@ -32,7 +32,7 @@ In table databases such SQL, these dimensions are generally the `GROUP BY` param
 
 ## Multiple dimensions in table format
 
-In SQL or SQL-like databases that return table responses, additional dimensions usually columns in the query response table.
+In SQL or SQL-like databases that return table responses, additional dimensions are usually represented as columns in the query response table.
 
 ### Single dimension
 
@@ -44,7 +44,7 @@ SELECT BUCKET(StartTime, 1h), AVG(Temperature) AS Temp, Location FROM T
   ORDER BY time asc
 ```
 
-Might return a table with three columns that each respectively have data types time, number, and string.
+This query would return a table with three columns with data types time, number, and string respectively:
 
 | StartTime | Temp | Location |
 | --------- | ---- | -------- |
@@ -53,7 +53,7 @@ Might return a table with three columns that each respectively have data types t
 | 10:00     | 26   | LGA      |
 | 10:00     | 22   | BOS      |
 
-The table format is _long_ formatted time series, also called _tall_. It has repeated time stamps, and repeated values in Location. In this case, we have two time series in the set that would be identified as `Temp {Location=LGA}` and `Temp {Location=BOS}`.
+The table format is a _long_ formatted time series, also called _tall_. It has repeated time stamps, and repeated values in Location. In this case, we have two time series in the set that would be identified as `Temp {Location=LGA}` and `Temp {Location=BOS}`.
 
 Individual time series from the set are extracted by using the time typed column `StartTime` as the time index of the time series, the numeric typed column `Temp` as the series name, and the name and values of the string typed `Location` column to build the labels, such as Location=LGA.
 
@@ -80,6 +80,6 @@ In this case the labels that represent the dimensions will have two keys based o
 
 ### Multiple values
 
-In the case SQL-like data sources, more than one numeric column can be selected, with or without additional string columns to be used as dimensions. For example, `AVG(Temperature) AS AvgTemp, MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
+In the case of SQL-like data sources, more than one numeric column can be selected, with or without additional string columns to be used as dimensions. For example, `AVG(Temperature) AS AvgTemp, MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions, can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
 
 Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series]({{< relref "../developers/plugins/data-frames.md#data-frames-as-time-series" >}}).

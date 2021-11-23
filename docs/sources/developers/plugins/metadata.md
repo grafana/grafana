@@ -209,11 +209,11 @@ For data source plugins. Token authentication section used with an JWT OAuth API
 
 #### Properties
 
-| Property | Type              | Required | Description                                          |
-| -------- | ----------------- | -------- | ---------------------------------------------------- |
-| `params` | [object](#params) | No       | Parameters for the JWT token authentication request. |
-| `scopes` | string            | No       |                                                      |
-| `url`    | string            | No       | URL to fetch the JWT token.                          |
+| Property | Type              | Required | Description                                                           |
+| -------- | ----------------- | -------- | --------------------------------------------------------------------- |
+| `params` | [object](#params) | No       | Parameters for the JWT token authentication request.                  |
+| `scopes` | string[]          | No       | The list of scopes that your application should be granted access to. |
+| `url`    | string            | No       | URL to fetch the JWT token.                                           |
 
 #### params
 
@@ -221,12 +221,11 @@ Parameters for the JWT token authentication request.
 
 ##### Properties
 
-| Property       | Type     | Required | Description |
-| -------------- | -------- | -------- | ----------- |
-| `client_email` | string   | No       |             |
-| `private_key`  | string   | No       |             |
-| `scopes`       | string[] | No       |             |
-| `token_uri`    | string   | No       |             |
+| Property       | Type   | Required | Description |
+| -------------- | ------ | -------- | ----------- |
+| `client_email` | string | No       |             |
+| `private_key`  | string | No       |             |
+| `token_uri`    | string | No       |             |
 
 ### tokenAuth
 
@@ -234,11 +233,11 @@ For data source plugins. Token authentication section used with an OAuth API.
 
 #### Properties
 
-| Property | Type              | Required | Description                                      |
-| -------- | ----------------- | -------- | ------------------------------------------------ |
-| `params` | [object](#params) | No       | Parameters for the token authentication request. |
-| `scopes` | string            | No       |                                                  |
-| `url`    | string            | No       | URL to fetch the authentication token.           |
+| Property | Type              | Required | Description                                                           |
+| -------- | ----------------- | -------- | --------------------------------------------------------------------- |
+| `params` | [object](#params) | No       | Parameters for the token authentication request.                      |
+| `scopes` | string[]          | No       | The list of scopes that your application should be granted access to. |
+| `url`    | string            | No       | URL to fetch the authentication token.                                |
 
 #### params
 

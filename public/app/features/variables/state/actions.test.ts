@@ -15,6 +15,7 @@ import {
   fixSelectedInconsistency,
   initDashboardTemplating,
   initVariablesTransaction,
+  isVariableUrlValueDifferentFromCurrent,
   processVariables,
   validateVariableSelectionState,
 } from './actions';
@@ -61,7 +62,7 @@ import { expect } from '../../../../test/lib/common';
 import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
-import { setDataSourceSrv, setLocationService } from '@grafana/runtime';
+import * as runtime from '@grafana/runtime';
 import { LoadingState } from '@grafana/data';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
 
@@ -85,7 +86,7 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-setDataSourceSrv({
+runtime.setDataSourceSrv({
   get: getDatasource,
   getList: getMetricSources,
 } as any);
@@ -150,7 +151,7 @@ describe('shared actions', () => {
         templating: ({} as unknown) as TemplatingState,
       };
       const locationService: any = { getSearchObject: () => ({}) };
-      setLocationService(locationService);
+      runtime.setLocationService(locationService);
       const variableQueryRunner: any = {
         cancelRequest: jest.fn(),
         queueRequest: jest.fn(),
@@ -218,7 +219,7 @@ describe('shared actions', () => {
       const list = [stats, substats];
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
       const locationService: any = { getSearchObject: () => query };
-      setLocationService(locationService);
+      runtime.setLocationService(locationService);
       const preloadedState = {
         templating: ({} as unknown) as TemplatingState,
       };
@@ -577,13 +578,19 @@ describe('shared actions', () => {
   });
 
   describe('initVariablesTransaction', () => {
-    const constant = constantBuilder().withId('constant').withName('constant').build();
-    const templating: any = { list: [constant] };
-    const uid = 'uid';
-    const dashboard: any = { title: 'Some dash', uid, templating };
+    function getTestContext() {
+      const reportSpy = jest.spyOn(runtime, 'reportInteraction').mockReturnValue(undefined);
+      const constant = constantBuilder().withId('constant').withName('constant').build();
+      const templating: any = { list: [constant] };
+      const uid = 'uid';
+      const dashboard: any = { title: 'Some dash', uid, templating };
+
+      return { reportSpy, constant, templating, uid, dashboard };
+    }
 
     describe('when called and the previous dashboard has completed', () => {
       it('then correct actions are dispatched', async () => {
+        const { constant, uid, dashboard } = getTestContext();
         const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
@@ -610,6 +617,7 @@ describe('shared actions', () => {
 
     describe('when called and the previous dashboard is still processing variables', () => {
       it('then correct actions are dispatched', async () => {
+        const { constant, uid, dashboard } = getTestContext();
         const transactionState = { uid: 'previous-uid', status: TransactionStatus.Fetching };
 
         const tester = await reduxTester<RootReducerType>({
@@ -771,6 +779,66 @@ describe('shared actions', () => {
             { text: 'Y', value: 'Y', selected: false },
             { text: 'Z', value: 'Z', selected: false },
           ]);
+        });
+      });
+    });
+  });
+
+  describe('isVariableUrlValueDifferentFromCurrent', () => {
+    describe('when called with a single valued variable', () => {
+      describe('and values are equal', () => {
+        it('then it should return false', () => {
+          const variable = queryBuilder().withMulti(false).withCurrent('A', 'A').build();
+          const urlValue = 'A';
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+        });
+      });
+
+      describe('and values are different', () => {
+        it('then it should return true', () => {
+          const variable = queryBuilder().withMulti(false).withCurrent('A', 'A').build();
+          const urlValue = 'B';
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+        });
+      });
+    });
+
+    describe('when called with a multi valued variable', () => {
+      describe('and values are equal', () => {
+        it('then it should return false', () => {
+          const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+          const urlValue = ['A'];
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+        });
+
+        describe('but urlValue is not an array', () => {
+          it('then it should return false', () => {
+            const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+            const urlValue = 'A';
+
+            expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+          });
+        });
+      });
+
+      describe('and values are different', () => {
+        it('then it should return true', () => {
+          const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+          const urlValue = ['C'];
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+        });
+
+        describe('but urlValue is not an array', () => {
+          it('then it should return true', () => {
+            const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+            const urlValue = 'C';
+
+            expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+          });
         });
       });
     });

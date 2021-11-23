@@ -12,8 +12,6 @@ export interface DatasourceValidationResult {
   title?: string;
 }
 
-export type AzureResultFormat = 'time_series' | 'table';
-
 /**
  * Azure clouds known to Azure Monitor.
  */
@@ -66,6 +64,8 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   logAnalyticsClientId?: string;
   /** @deprecated Azure Logs credentials */
   logAnalyticsSubscriptionId?: string;
+  /** @deprecated Azure Logs credentials */
+  logAnalyticsDefaultWorkspace?: string;
 
   // App Insights
   appInsightsAppId?: string;

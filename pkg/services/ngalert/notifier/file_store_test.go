@@ -10,6 +10,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestFileStore_FilepathFor_DirectoryNotExist(t *testing.T) {
+	store := newFakeKVStore(t)
+	workingDir := filepath.Join(t.TempDir(), "notexistdir")
+	fs := NewFileStore(1, store, workingDir)
+	filekey := "silences"
+	filePath := filepath.Join(workingDir, filekey)
+
+	// With a file already on the database and the path does not exist yet, it creates the path,
+	// writes the file to disk, then returns the filepath.
+	{
+		require.NoError(t, store.Set(context.Background(), 1, KVNamespace, filekey, encode([]byte("silence1,silence3"))))
+		r, err := fs.FilepathFor(context.Background(), filekey)
+		require.NoError(t, err)
+		require.Equal(t, filePath, r)
+		f, err := ioutil.ReadFile(filepath.Clean(filePath))
+		require.NoError(t, err)
+		require.Equal(t, "silence1,silence3", string(f))
+		require.NoError(t, os.Remove(filePath))
+		require.NoError(t, store.Del(context.Background(), 1, KVNamespace, filekey))
+	}
+}
 func TestFileStore_FilepathFor(t *testing.T) {
 	store := newFakeKVStore(t)
 	workingDir := t.TempDir()

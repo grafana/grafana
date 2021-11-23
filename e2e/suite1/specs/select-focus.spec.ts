@@ -10,26 +10,26 @@ e2e.scenario({
     e2e.flows.openDashboard({ uid: '5SdHCadmz' });
     e2e.components.PageToolbar.item('Dashboard settings').click();
 
-    e2e.components.FolderPicker.container()
+    e2e.components.FolderPicker.containerV2()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('be.visible').click();
+        e2e().get('#dashboard-folder-input').should('be.visible').click();
       });
 
     e2e.components.Select.option().should('be.visible').first().click();
 
-    e2e.components.FolderPicker.container()
+    e2e.components.FolderPicker.containerV2()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('exist').should('have.focus');
+        e2e().get('#dashboard-folder-input').should('exist').should('have.focus');
       });
 
     e2e.pages.Dashboard.Settings.General.title().click();
 
-    e2e.components.FolderPicker.container()
+    e2e.components.FolderPicker.containerV2()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('exist').should('not.have.focus');
+        e2e().get('#dashboard-folder-input').should('exist').should('not.have.focus');
       });
   },
 });

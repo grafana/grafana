@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"testing"
@@ -38,7 +39,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		return nil
 	})
 
-	ae.Bus.AddHandler(func(query *models.GetDataSourceQuery) error {
+	ae.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceQuery) error {
 		ds := map[int64]*models.DataSource{
 			1: {Type: "influxdb"},
 			2: {Type: "graphite"},
@@ -55,7 +56,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		return nil
 	})
 
-	result, err := ae.QueryUsageStats()
+	result, err := ae.QueryUsageStats(context.Background())
 	require.NoError(t, err, "getAlertingUsage should not return error")
 
 	expected := map[string]int{

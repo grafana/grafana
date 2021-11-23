@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
@@ -58,12 +59,13 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 		OrgID:             c.OrgId,
 		UserID:            c.UserId,
 		OrgRole:           c.OrgRole,
-		Path:              c.Params("*") + queryParams,
+		Path:              web.Params(c.Req)["*"] + queryParams,
 		Timezone:          queryReader.Get("tz", ""),
 		Encoding:          queryReader.Get("encoding", ""),
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
 		DeviceScaleFactor: scale,
 		Headers:           headers,
+		Theme:             rendering.ThemeDark,
 	})
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {

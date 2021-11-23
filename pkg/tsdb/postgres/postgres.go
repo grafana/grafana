@@ -13,35 +13,32 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var logger = log.New("tsdb.postgres")
 
-func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar) (*Service, error) {
 	s := &Service{
-		Cfg:        cfg,
 		tlsManager: newTLSManager(logger, cfg.DataPath),
 	}
-	s.im = datasource.NewInstanceManager(s.newInstanceSettings())
+	s.im = datasource.NewInstanceManager(s.newInstanceSettings(cfg))
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
 
-	if err := manager.Register("postgres", factory); err != nil {
+	if err := registrar.LoadAndRegister("postgres", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return s, nil
 }
 
 type Service struct {
-	Cfg        *setting.Cfg
 	tlsManager tlsSettingsProvider
 	im         instancemgmt.InstanceManager
 }
@@ -63,7 +60,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsInfo.QueryData(ctx, req)
 }
 
-func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
+func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		logger.Debug("Creating Postgres query endpoint")
 		jsonData := sqleng.JsonData{
@@ -94,7 +91,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, err
 		}
 
-		if s.Cfg.Env == setting.Dev {
+		if cfg.Env == setting.Dev {
 			logger.Debug("getEngine", "connection", cnnstr)
 		}
 
@@ -103,6 +100,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
+			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
 		queryResultTransformer := postgresQueryResultTransformer{

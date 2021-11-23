@@ -1,20 +1,18 @@
-import { PromMetricsMetadata } from './types';
+import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
 
-export const processHistogramLabels = (labels: string[]) => {
+export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
   const regexp = new RegExp('_bucket($|:)');
-  for (let index = 0; index < labels.length; index++) {
-    const label = labels[index];
-    const isHistogramValue = regexp.test(label);
+  for (let index = 0; index < metrics.length; index++) {
+    const metric = metrics[index];
+    const isHistogramValue = regexp.test(metric);
     if (isHistogramValue) {
-      resultSet.add(label);
+      resultSet.add(metric);
     }
   }
-  const result = [...resultSet];
-
-  return { values: { __name__: result } };
+  return [...resultSet];
 };
 
 export function processLabels(labels: Array<{ [key: string]: string }>, withName = false) {
@@ -169,59 +167,56 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
  *
  * @param metadata HELP and TYPE metadata from /api/v1/metadata
  */
-export function fixSummariesMetadata(metadata: PromMetricsMetadata): PromMetricsMetadata {
+export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMetadataItem[] }): PromMetricsMetadata {
   if (!metadata) {
     return metadata;
   }
+  const baseMetadata: PromMetricsMetadata = {};
   const summaryMetadata: PromMetricsMetadata = {};
   for (const metric in metadata) {
+    // NOTE: based on prometheus-documentation, we can receive
+    // multiple metadata-entries for the given metric, it seems
+    // it happens when the same metric is on multiple targets
+    // and their help-text differs
+    // (https://prometheus.io/docs/prometheus/latest/querying/api/#querying-metric-metadata)
+    // for now we just use the first entry.
     const item = metadata[metric][0];
+    baseMetadata[metric] = item;
+
     if (item.type === 'histogram') {
-      summaryMetadata[`${metric}_bucket`] = [
-        {
-          type: 'counter',
-          help: `Cumulative counters for the observation buckets (${item.help})`,
-        },
-      ];
-      summaryMetadata[`${metric}_count`] = [
-        {
-          type: 'counter',
-          help: `Count of events that have been observed for the histogram metric (${item.help})`,
-        },
-      ];
-      summaryMetadata[`${metric}_sum`] = [
-        {
-          type: 'counter',
-          help: `Total sum of all observed values for the histogram metric (${item.help})`,
-        },
-      ];
+      summaryMetadata[`${metric}_bucket`] = {
+        type: 'counter',
+        help: `Cumulative counters for the observation buckets (${item.help})`,
+      };
+      summaryMetadata[`${metric}_count`] = {
+        type: 'counter',
+        help: `Count of events that have been observed for the histogram metric (${item.help})`,
+      };
+      summaryMetadata[`${metric}_sum`] = {
+        type: 'counter',
+        help: `Total sum of all observed values for the histogram metric (${item.help})`,
+      };
     }
     if (item.type === 'summary') {
-      summaryMetadata[`${metric}_count`] = [
-        {
-          type: 'counter',
-          help: `Count of events that have been observed for the base metric (${item.help})`,
-        },
-      ];
-      summaryMetadata[`${metric}_sum`] = [
-        {
-          type: 'counter',
-          help: `Total sum of all observed values for the base metric (${item.help})`,
-        },
-      ];
+      summaryMetadata[`${metric}_count`] = {
+        type: 'counter',
+        help: `Count of events that have been observed for the base metric (${item.help})`,
+      };
+      summaryMetadata[`${metric}_sum`] = {
+        type: 'counter',
+        help: `Total sum of all observed values for the base metric (${item.help})`,
+      };
     }
   }
   // Synthetic series
   const syntheticMetadata: PromMetricsMetadata = {};
-  syntheticMetadata['ALERTS'] = [
-    {
-      type: 'counter',
-      help:
-        'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
-    },
-  ];
+  syntheticMetadata['ALERTS'] = {
+    type: 'counter',
+    help:
+      'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
+  };
 
-  return { ...metadata, ...summaryMetadata, ...syntheticMetadata };
+  return { ...baseMetadata, ...summaryMetadata, ...syntheticMetadata };
 }
 
 export function roundMsToMin(milliseconds: number): number {
@@ -238,4 +233,29 @@ export function limitSuggestions(items: string[]) {
 
 export function addLimitInfo(items: any[] | undefined): string {
   return items && items.length >= SUGGESTIONS_LIMIT ? `, limited to the first ${SUGGESTIONS_LIMIT} received items` : '';
+}
+
+// NOTE: the following 2 exported functions are very similar to the prometheus*Escape
+// functions in datasource.ts, but they are not exactly the same algorithm, and we found
+// no way to reuse one in the another or vice versa.
+
+// Prometheus regular-expressions use the RE2 syntax (https://github.com/google/re2/wiki/Syntax),
+// so every character that matches something in that list has to be escaped.
+// the list of metacharacters is: *+?()|\.[]{}^$
+// we make a javascript regular expression that matches those characters:
+const RE2_METACHARACTERS = /[*+?()|\\.\[\]{}^$]/g;
+function escapePrometheusRegexp(value: string): string {
+  return value.replace(RE2_METACHARACTERS, '\\$&');
+}
+
+// based on the openmetrics-documentation, the 3 symbols we have to handle are:
+// - \n ... the newline character
+// - \  ... the backslash character
+// - "  ... the double-quote character
+export function escapeLabelValueInExactSelector(labelValue: string): string {
+  return labelValue.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/"/g, '\\"');
+}
+
+export function escapeLabelValueInRegexSelector(labelValue: string): string {
+  return escapeLabelValueInExactSelector(escapePrometheusRegexp(labelValue));
 }

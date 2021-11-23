@@ -26,7 +26,7 @@ To share a direct link:
 1. Send the copied URL to a Grafana user with authorization to view the link.
 1. You also optionally click **Direct link rendered image** to share an image of the panel.
 
-For more information, refer to the topic [Image rendering]({{< relref "../administration/image_rendering.md)" >}}).
+For more information, refer to the topic [Image rendering]({{< relref "../image-rendering/" >}}).
 
 Here is an example of a link to a server-side rendered PNG:
 

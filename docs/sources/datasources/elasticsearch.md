@@ -20,12 +20,12 @@ visualize logs or metrics stored in Elasticsearch. You can also annotate your gr
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
-| Name      | Description                                                                                                                           |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`    | The data source name. This is how you refer to the data source in panels and queries.                                                 |
-| `Default` | Default data source means that it will be pre-selected for new panels.                                                                |
-| `Url`     | The HTTP protocol, IP, and port of your Elasticsearch server.                                                                         |
-| `Access`  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
+| Name      | Description                                                                                                                                                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Name`    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                          |
+| `Default` | Default data source means that it will be pre-selected for new panels.                                                                                                                                                         |
+| `Url`     | The HTTP protocol, IP, and port of your Elasticsearch server.                                                                                                                                                                  |
+| `Access`  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. **Note**: Browser (direct) access is deprecated and will be removed in a future release. |
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
@@ -274,6 +274,6 @@ For more details on AWS SigV4, refer to the [AWS documentation](https://docs.aws
 
 In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled in the Grafana [configuration]({{< relref "../administration/configuration.md#sigv4_auth_enabled" >}}).
 
-Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication]({{<relref "./cloudwatch.md#authentication" >}}) for more information about authentication options.
+Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication]({{< relref "../datasources/aws-cloudwatch/aws-authentication.md" >}}) for more information about authentication options.
 
 {{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}

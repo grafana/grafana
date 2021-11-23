@@ -15,6 +15,7 @@ export interface ValueMappingEditRowModel {
   type: MappingType;
   from?: number;
   to?: number;
+  pattern?: string;
   key?: string;
   isNew?: boolean;
   specialMatch?: SpecialValueMatch;
@@ -93,6 +94,12 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
     });
   };
 
+  const onChangePattern = (event: React.FormEvent<HTMLInputElement>) => {
+    update((mapping) => {
+      mapping.pattern = event.currentTarget.value;
+    });
+  };
+
   const onChangeSpecialMatch = (sel: SelectableValue<SpecialValueMatch>) => {
     update((mapping) => {
       mapping.specialMatch = sel.value;
@@ -146,6 +153,14 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                 />
               </div>
             )}
+            {mapping.type === MappingType.RegexToText && (
+              <Input
+                type="text"
+                value={mapping.pattern ?? ''}
+                placeholder="Regular expression"
+                onChange={onChangePattern}
+              />
+            )}
             {mapping.type === MappingType.SpecialValue && (
               <Select
                 menuShouldPortal
@@ -192,6 +207,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     cursor: 'grab',
   }),
   rangeInputWrapper: css({
+    display: 'flex',
+    '> div:first-child': {
+      marginRight: theme.spacing(2),
+    },
+  }),
+  regexInputWrapper: css({
     display: 'flex',
     '> div:first-child': {
       marginRight: theme.spacing(2),

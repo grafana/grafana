@@ -11,11 +11,7 @@ describe('Trace view', () => {
 
     e2e.pages.Explore.visit();
 
-    e2e.components.DataSourcePicker.container()
-      .should('be.visible')
-      .within(() => {
-        e2e.components.Select.input().should('be.visible').click();
-      });
+    e2e.components.DataSourcePicker.inputV2().should('be.visible').click();
 
     e2e().contains('gdev-jaeger').scrollIntoView().should('be.visible').click();
 
@@ -23,15 +19,19 @@ describe('Trace view', () => {
 
     e2e().wait(500);
 
-    e2e.components.RefreshPicker.runButton().should('be.visible').click();
+    e2e.components.RefreshPicker.runButtonV2().should('be.visible').click();
 
     e2e().wait('@longTrace');
 
     e2e.components.TraceViewer.spanBar().should('be.visible');
 
-    e2e.pages.Explore.General.scrollBar().scrollTo('center');
+    e2e.components.TraceViewer.spanBar()
+      .its('length')
+      .then((oldLength) => {
+        e2e.pages.Explore.General.scrollBar().scrollTo('center');
 
-    // After scrolling we should load more spans
-    e2e.components.TraceViewer.spanBar().should('have.length', 140);
+        // After scrolling we should load more spans
+        e2e.components.TraceViewer.spanBar().its('length').should('be.gt', oldLength);
+      });
   });
 });

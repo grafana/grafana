@@ -16,7 +16,7 @@
 // under the License.
 
 // Package macaron is a high productive and modular web framework in Go.
-package macaron // import "gopkg.in/macaron.v1"
+package macaron // import "gopkg.in/web.v1"
 
 import (
 	"context"
@@ -107,7 +107,7 @@ func New() *Macaron {
 // Macaron stops future process when it returns true.
 type BeforeHandler func(rw http.ResponseWriter, req *http.Request) bool
 
-// macaronContextKey is used to store/fetch macaron.Context inside context.Context
+// macaronContextKey is used to store/fetch web.Context inside context.Context
 type macaronContextKey struct{}
 
 // FromContext returns the macaron context stored in a context.Context, if any.
@@ -118,11 +118,26 @@ func FromContext(c context.Context) *Context {
 	return nil
 }
 
+type paramsKey struct{}
+
+// Params returns the named route parameters for the current request, if any.
+func Params(r *http.Request) map[string]string {
+	if rv := r.Context().Value(paramsKey{}); rv != nil {
+		return rv.(map[string]string)
+	}
+	return map[string]string{}
+}
+
+// SetURLParams sets the named URL parameters for the given request. This should only be used for testing purposes.
+func SetURLParams(r *http.Request, vars map[string]string) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), paramsKey{}, vars))
+}
+
 // UseMiddleware is a traditional approach to writing middleware in Go.
 // A middleware is a function that has a reference to the next handler in the chain
 // and returns the actual middleware handler, that may do its job and optionally
 // call next.
-// Due to how Macaron handles/injects requests and responses we patch the macaron.Context
+// Due to how Macaron handles/injects requests and responses we patch the web.Context
 // to use the new ResponseWriter and http.Request here. The caller may only call
 // `next.ServeHTTP(rw, req)` to pass a modified response writer and/or a request to the
 // further middlewares in the chain.
@@ -157,7 +172,6 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		index:    0,
 		Router:   m.Router,
 		Resp:     NewResponseWriter(req.Method, rw),
-		Data:     make(map[string]interface{}),
 	}
 	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
 	c.Map(c)

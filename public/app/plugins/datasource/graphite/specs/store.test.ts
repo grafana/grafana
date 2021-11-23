@@ -7,7 +7,7 @@ import { getAltSegmentsSelectables, getTagsSelectables, getTagsAsSegmentsSelecta
 import { GraphiteSegment } from '../types';
 import { createStore } from '../state/store';
 
-jest.mock('app/core/utils/promiseToDigest', () => ({
+jest.mock('app/angular/promiseToDigest', () => ({
   promiseToDigest: (scope: any) => {
     return (p: Promise<any>) => p;
   },
@@ -210,6 +210,20 @@ describe('Graphite actions', async () => {
     });
   });
 
+  it('current time range is passed when getting list of tags when editing', async () => {
+    const currentRange = { from: 0, to: 1 };
+    ctx.state.range = currentRange;
+    await getTagsSelectables(ctx.state, 0, 'any');
+    expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange });
+  });
+
+  it('current time range is passed when getting list of tags for adding', async () => {
+    const currentRange = { from: 0, to: 1 };
+    ctx.state.range = currentRange;
+    await getTagsAsSegmentsSelectables(ctx.state, 'any');
+    expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange });
+  });
+
   describe('when autocomplete for metric names is not available', () => {
     silenceConsoleOutput();
     beforeEach(() => {
@@ -341,19 +355,23 @@ describe('Graphite actions', async () => {
     });
   });
 
-  describe('when updating target used in other query', () => {
+  describe('target interpolation', () => {
     beforeEach(async () => {
       ctx.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
       ctx.state.target.refId = 'A';
-      await changeTarget(ctx, 'metrics.foo.count');
-
-      ctx.state.queries = [ctx.state.target, { target: 'sumSeries(#A)', refId: 'B' }];
-
-      await changeTarget(ctx, 'metrics.bar.count');
+      await changeTarget(ctx, 'sumSeries(#B)');
     });
 
-    it('targetFull of other query should update', () => {
-      expect(ctx.state.queries[1].targetFull).toBe('sumSeries(metrics.bar.count)');
+    it('when updating target used in other query, targetFull of other query should update', async () => {
+      ctx.state.queries = [ctx.state.target, { target: 'metrics.foo.count', refId: 'B' }];
+      await changeTarget(ctx, 'sumSeries(#B)');
+      expect(ctx.state.queryModel.target.targetFull).toBe('sumSeries(metrics.foo.count)');
+    });
+
+    it('when updating target from a query from other data source, targetFull of other query should not update', async () => {
+      ctx.state.queries = [ctx.state.target, { someOtherProperty: 'metrics.foo.count', refId: 'B' }];
+      await changeTarget(ctx, 'sumSeries(#B)');
+      expect(ctx.state.queryModel.target.targetFull).toBeUndefined();
     });
   });
 

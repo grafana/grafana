@@ -10,10 +10,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/centrifugal/centrifuge"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
+
+	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type Data struct {
@@ -64,21 +64,21 @@ func postTestData() {
 		jsonData, _ := json.Marshal(d)
 		log.Println(string(jsonData))
 
-		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/push/json/auto", bytes.NewReader(jsonData))
+		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/pipeline/push/stream/json/auto", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
 		_ = resp.Body.Close()
-		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/tip", bytes.NewReader(jsonData))
+		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/pipeline/push/stream/json/tip", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
 		_ = resp.Body.Close()
-		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/exact", bytes.NewReader(jsonData))
+		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/pipeline/push/stream/json/exact", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
@@ -90,29 +90,52 @@ func postTestData() {
 }
 
 type DevRuleBuilder struct {
-	Node          *centrifuge.Node
-	ManagedStream *managedstream.Runner
-	FrameStorage  *FrameStorage
+	Node                 *centrifuge.Node
+	ManagedStream        *managedstream.Runner
+	FrameStorage         *FrameStorage
+	ChannelHandlerGetter ChannelHandlerGetter
 }
 
 func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
-			Pattern:   "plugin/testdata/random-20Hz-stream",
+			Pattern: "plugin/testdata/random-20Hz-stream",
+			DataOutputters: []DataOutputter{
+				NewLokiDataOutput(
+					os.Getenv("GF_LIVE_LOKI_ENDPOINT"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_LOKI_USER"),
+						Password: os.Getenv("GF_LIVE_LOKI_PASSWORD"),
+					},
+				),
+			},
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
-			Outputter: NewMultipleOutput(
-				NewManagedStreamOutput(f.ManagedStream),
-				NewRedirectOutput(RedirectOutputConfig{
-					Channel: "stream/testdata/random-20Hz-stream",
-				}),
-			),
+			FrameOutputters: []FrameOutputter{
+				NewManagedStreamFrameOutput(f.ManagedStream),
+				NewRemoteWriteFrameOutput(
+					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+						Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					},
+					1000,
+				),
+			},
+			Subscribers: []Subscriber{
+				NewBuiltinSubscriber(f.ChannelHandlerGetter),
+				NewManagedStreamSubscriber(f.ManagedStream),
+			},
 		},
 		{
 			Pattern: "stream/testdata/random-20Hz-stream",
-			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
-				FieldNames: []string{"Time", "Min", "Max"},
-			}),
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			FrameProcessors: []FrameProcessor{
+				NewKeepFieldsFrameProcessor(KeepFieldsFrameProcessorConfig{
+					FieldNames: []string{"Time", "Min", "Max"},
+				}),
+			},
+			FrameOutputters: []FrameOutputter{
+				NewManagedStreamFrameOutput(f.ManagedStream),
+			},
 		},
 		{
 			OrgId:   1,
@@ -122,9 +145,11 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			}),
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/influx/input/:rest",
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:   1,
+			Pattern: "stream/influx/input/:rest",
+			FrameOutputters: []FrameOutputter{
+				NewManagedStreamFrameOutput(f.ManagedStream),
+			},
 		},
 		{
 			OrgId:   1,
@@ -133,29 +158,31 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			// since there are cases when labels attached to a field, and cases where labels
 			// set in a first frame column (in Influx converter). For example, this will allow
 			// to leave only "total-cpu" data while dropping individual CPUs.
-			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
-				FieldNames: []string{"labels", "time", "usage_user"},
-			}),
-			Outputter: NewMultipleOutput(
-				NewManagedStreamOutput(f.ManagedStream),
+			FrameProcessors: []FrameProcessor{
+				NewKeepFieldsFrameProcessor(KeepFieldsFrameProcessorConfig{
+					FieldNames: []string{"labels", "time", "usage_user"},
+				}),
+			},
+			FrameOutputters: []FrameOutputter{
+				NewManagedStreamFrameOutput(f.ManagedStream),
 				NewConditionalOutput(
-					NewNumberCompareCondition("usage_user", "gte", 50),
-					NewRedirectOutput(RedirectOutputConfig{
+					NewFrameNumberCompareCondition("usage_user", "gte", 50),
+					NewRedirectFrameOutput(RedirectOutputConfig{
 						Channel: "stream/influx/input/cpu/spikes",
 					}),
 				),
-			),
+			},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/influx/input/cpu/spikes",
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:           1,
+			Pattern:         "stream/influx/input/cpu/spikes",
+			FrameOutputters: []FrameOutputter{NewManagedStreamFrameOutput(f.ManagedStream)},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/json/auto",
-			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{}),
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:           1,
+			Pattern:         "stream/json/auto",
+			Converter:       NewAutoJsonConverter(AutoJsonConverterConfig{}),
+			FrameOutputters: []FrameOutputter{NewManagedStreamFrameOutput(f.ManagedStream)},
 		},
 		{
 			OrgId:   1,
@@ -172,10 +199,14 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 					},
 				},
 			}),
-			Processor: NewDropFieldsProcessor(DropFieldsProcessorConfig{
-				FieldNames: []string{"value2"},
-			}),
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			FrameProcessors: []FrameProcessor{
+				NewDropFieldsFrameProcessor(DropFieldsFrameProcessorConfig{
+					FieldNames: []string{"value2"},
+				}),
+			},
+			FrameOutputters: []FrameOutputter{
+				NewManagedStreamFrameOutput(f.ManagedStream),
+			},
 		},
 		{
 			OrgId:   1,
@@ -267,28 +298,31 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 					},
 				},
 			}),
-			Outputter: NewMultipleOutput(
-				NewManagedStreamOutput(f.ManagedStream),
-				NewRemoteWriteOutput(RemoteWriteConfig{
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-				}),
-				NewChangeLogOutput(f.FrameStorage, ChangeLogOutputConfig{
+			FrameOutputters: []FrameOutputter{
+				NewManagedStreamFrameOutput(f.ManagedStream),
+				NewRemoteWriteFrameOutput(
+					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+						Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					},
+					0,
+				),
+				NewChangeLogFrameOutput(f.FrameStorage, ChangeLogOutputConfig{
 					FieldName: "value3",
 					Channel:   "stream/json/exact/value3/changes",
 				}),
-				NewChangeLogOutput(f.FrameStorage, ChangeLogOutputConfig{
+				NewChangeLogFrameOutput(f.FrameStorage, ChangeLogOutputConfig{
 					FieldName: "annotation",
 					Channel:   "stream/json/exact/annotation/changes",
 				}),
 				NewConditionalOutput(
-					NewMultipleConditionChecker(
+					NewMultipleFrameConditionChecker(
 						ConditionAll,
-						NewNumberCompareCondition("value1", "gte", 3.0),
-						NewNumberCompareCondition("value2", "gte", 3.0),
+						NewFrameNumberCompareCondition("value1", "gte", 3.0),
+						NewFrameNumberCompareCondition("value2", "gte", 3.0),
 					),
-					NewRedirectOutput(RedirectOutputConfig{
+					NewRedirectFrameOutput(RedirectOutputConfig{
 						Channel: "stream/json/exact/condition",
 					}),
 				),
@@ -296,34 +330,43 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 					FieldName: "value4",
 					Channel:   "stream/json/exact/value4/state",
 				}),
-			),
+			},
 		},
 		{
 			OrgId:   1,
 			Pattern: "stream/json/exact/value3/changes",
-			Outputter: NewMultipleOutput(
-				NewManagedStreamOutput(f.ManagedStream),
-				NewRemoteWriteOutput(RemoteWriteConfig{
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-				}),
-			),
+			FrameOutputters: []FrameOutputter{
+				NewManagedStreamFrameOutput(f.ManagedStream),
+				NewRemoteWriteFrameOutput(
+					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					&BasicAuth{
+						User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+						Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					},
+					0,
+				),
+			},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/annotation/changes",
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:   1,
+			Pattern: "stream/json/exact/annotation/changes",
+			FrameOutputters: []FrameOutputter{
+				NewManagedStreamFrameOutput(f.ManagedStream),
+			},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/condition",
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:   1,
+			Pattern: "stream/json/exact/condition",
+			FrameOutputters: []FrameOutputter{
+				NewManagedStreamFrameOutput(f.ManagedStream),
+			},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/value4/state",
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:   1,
+			Pattern: "stream/json/exact/value4/state",
+			FrameOutputters: []FrameOutputter{
+				NewManagedStreamFrameOutput(f.ManagedStream),
+			},
 		},
 	}, nil
 }

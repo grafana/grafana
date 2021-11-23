@@ -52,6 +52,7 @@ var metricsMap = map[string][]string{
 	"AWS/Athena":                  {"EngineExecutionTime", "QueryPlanningTime", "QueryQueueTime", "ProcessedBytes", "ServiceProcessingTime", "TotalExecutionTime"},
 	"AWS/AutoScaling":             {"GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"},
 	"AWS/Billing":                 {"EstimatedCharges"},
+	"AWS/Backup":                  {"NumberOfBackupJobsAborted", "NumberOfBackupJobsCompleted", "NumberOfBackupJobsCreated", "NumberOfBackupJobsExpired", "NumberOfBackupJobsFailed", "NumberOfBackupJobsPending", "NumberOfBackupJobsRunning", "NumberOfCopyJobsCompleted", "NumberOfCopyJobsCreated", "NumberOfCopyJobsFailed", "NumberOfCopyJobsRunning", "NumberOfRecoveryPointsCold", "NumberOfRecoveryPointsCompleted", "NumberOfRecoveryPointsDeleting", "NumberOfRecoveryPointsExpired", "NumberOfRecoveryPointsPartial", "NumberOfRestoreJobsCompleted", "NumberOfRestoreJobsFailed", "NumberOfRestoreJobsPending", "NumberOfRestoreJobsRunning"},
 	"AWS/CertificateManager":      {"DaysToExpiry"},
 	"AWS/Chatbot":                 {"EventsThrottled", "EventsProcessed", "MessageDeliverySuccess", "MessageDeliveryFailure", "UnsupportedEvents"},
 	"AWS/ClientVPN":               {"ActiveConnectionsCount", "AuthenticationFailures", "CrlDaysToExpiry", "EgressBytes", "EgressPackets", "IngressBytes", "IngressPackets", "SelfServicePortalClientConfigurationDownloads"},
@@ -71,6 +72,7 @@ var metricsMap = map[string][]string{
 	"AWS/DynamoDB":                {"ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "OnlineIndexConsumedWriteCapacity", "OnlineIndexPercentageProgress", "OnlineIndexThrottleEvents", "PendingReplicationCount", "ProvisionedReadCapacityUnits", "ProvisionedWriteCapacityUnits", "ReadThrottleEvents", "ReplicationLatency", "ReturnedBytes", "ReturnedItemCount", "ReturnedRecordsCount", "SuccessfulRequestLatency", "SystemErrors", "ThrottledRequests", "TimeToLiveDeletedItemCount", "UserErrors", "WriteThrottleEvents"},
 	"AWS/EBS":                     {"BurstBalance", "VolumeConsumedReadWriteOps", "VolumeIdleTime", "VolumeQueueLength", "VolumeReadBytes", "VolumeReadOps", "VolumeThroughputPercentage", "VolumeTotalReadTime", "VolumeTotalWriteTime", "VolumeWriteBytes", "VolumeWriteOps"},
 	"AWS/EC2":                     {"CPUCreditBalance", "CPUCreditUsage", "CPUSurplusCreditBalance", "CPUSurplusCreditsCharged", "CPUUtilization", "DiskReadBytes", "DiskReadOps", "DiskWriteBytes", "DiskWriteOps", "EBSByteBalance%", "EBSIOBalance%", "EBSReadBytes", "EBSReadOps", "EBSWriteBytes", "EBSWriteOps", "MetadataNoToken", "NetworkIn", "NetworkOut", "NetworkPacketsIn", "NetworkPacketsOut", "StatusCheckFailed", "StatusCheckFailed_Instance", "StatusCheckFailed_System"},
+	"AWS/ElasticGPUs":             {"GPUConnectivityCheckFailed", "GPUHealthCheckFailed", "GPUMemoryUtilization"},
 	"AWS/EC2/API":                 {"ClientErrors", "RequestLimitExceeded", "ServerErrors", "SuccessfulCalls"},
 	"AWS/EC2CapacityReservations": {"AvailableInstanceCount", "InstanceUtilization", "TotalInstanceCount", "UsedInstanceCount"},
 	"AWS/EC2Spot":                 {"AvailableInstancePoolsCount", "BidsSubmittedForCapacity", "EligibleInstancePoolCount", "FulfilledCapacity", "MaxPercentCapacityAllocation", "PendingCapacity", "PercentCapacityAllocation", "TargetCapacity", "TerminatingCapacity"},
@@ -87,6 +89,7 @@ var metricsMap = map[string][]string{
 	"AWS/FSx":                     {"DataReadBytes", "DataReadOperations", "DataWriteBytes", "DataWriteOperations", "FreeDataStorageCapacity", "FreeStorageCapacity", "MetadataOperations"},
 	"AWS/Firehose":                {"BackupToS3.Bytes", "BackupToS3.DataFreshness", "BackupToS3.Records", "BackupToS3.Success", "DataReadFromKinesisStream.Bytes", "DataReadFromKinesisStream.Records", "DeliveryToElasticsearch.Bytes", "DeliveryToElasticsearch.Records", "DeliveryToElasticsearch.Success", "DeliveryToRedshift.Bytes", "DeliveryToRedshift.Records", "DeliveryToRedshift.Success", "DeliveryToS3.Bytes", "DeliveryToS3.DataFreshness", "DeliveryToS3.Records", "DeliveryToS3.Success", "DeliveryToSplunk.Bytes", "DeliveryToSplunk.DataFreshness", "DeliveryToSplunk.Records", "DeliveryToSplunk.Success", "DescribeDeliveryStream.Latency", "DescribeDeliveryStream.Requests", "ExecuteProcessing.Duration", "ExecuteProcessing.Success", "FailedConversion.Bytes", "FailedConversion.Records", "IncomingBytes", "IncomingRecords", "KinesisMillisBehindLatest", "ListDeliveryStreams.Latency", "ListDeliveryStreams.Requests", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Requests", "PutRecordBatch.Bytes", "PutRecordBatch.Latency", "PutRecordBatch.Records", "PutRecordBatch.Requests", "SucceedConversion.Bytes", "SucceedConversion.Records", "SucceedProcessing.Bytes", "SucceedProcessing.Records", "ThrottledDescribeStream", "ThrottledGetRecords", "ThrottledGetShardIterator", "UpdateDeliveryStream.Latency", "UpdateDeliveryStream.Requests"},
 	"AWS/GameLift":                {"ActivatingGameSessions", "ActiveGameSessions", "ActiveInstances", "ActiveServerProcesses", "AvailableGameSessions", "AverageWaitTime", "CurrentPlayerSessions", "CurrentTickets", "DesiredInstances", "FirstChoiceNotViable", "FirstChoiceOutOfCapacity", "GameSessionInterruptions", "HealthyServerProcesses", "IdleInstances", "InstanceInterruptions", "LowestLatencyPlacement", "LowestPricePlacement", "MatchAcceptancesTimedOut", "MatchesAccepted", "MatchesCreated", "MatchesPlaced", "MatchesRejected", "MaxInstances", "MinInstances", "PercentAvailableGameSessions", "PercentHealthyServerProcesses", "PercentIdleInstances", "Placement", "PlacementsCanceled", "PlacementsFailed", "PlacementsStarted", "PlacementsSucceeded", "PlacementsTimedOut", "PlayerSessionActivations", "PlayersStarted", "QueueDepth", "RuleEvaluationsFailed", "RuleEvaluationsPassed", "ServerProcessAbnormalTerminations", "ServerProcessActivations", "ServerProcessTerminations", "TicketsFailed", "TicketsStarted", "TicketsTimedOut", "TimeToMatch", "TimeToTicketSuccess"},
+	"AWS/GlobalAccelerator":       {"NewFlowCount", "ProcessedBytesIn", "ProcessedBytesOut", "HealthyEndpointCount", "UnhealthyEndpointCount"},
 	"AWS/Glue":                    {"glue.driver.BlockManager.disk.diskSpaceUsed_MB", "glue.driver.ExecutorAllocationManager.executors.numberAllExecutors", "glue.driver.ExecutorAllocationManager.executors.numberMaxNeededExecutors", "glue.driver.aggregate.bytesRead", "glue.driver.aggregate.elapsedTime", "glue.driver.aggregate.numCompletedStages", "glue.driver.aggregate.numCompletedTasks", "glue.driver.aggregate.numFailedTasks", "glue.driver.aggregate.numKilledTasks", "glue.driver.aggregate.recordsRead", "glue.driver.aggregate.shuffleBytesWritten", "glue.driver.aggregate.shuffleLocalBytesRead", "glue.driver.jvm.heap.usage  glue.executorId.jvm.heap.usage  glue.ALL.jvm.heap.usage", "glue.driver.jvm.heap.used  glue.executorId.jvm.heap.used  glue.ALL.jvm.heap.used", "glue.driver.s3.filesystem.read_bytes  glue.executorId.s3.filesystem.read_bytes  glue.ALL.s3.filesystem.read_bytes", "glue.driver.s3.filesystem.write_bytes  glue.executorId.s3.filesystem.write_bytes  glue.ALL.s3.filesystem.write_bytes", "glue.driver.system.cpuSystemLoad  glue.executorId.system.cpuSystemLoad  glue.ALL.system.cpuSystemLoad"},
 	"AWS/GroundStation":           {"BitErrorRate", "BlockErrorRate", "ReceivedPower", "Es/N0"},
 	"AWS/Inspector":               {"TotalAssessmentRunFindings", "TotalAssessmentRuns", "TotalHealthyAgents", "TotalMatchingAgents"},
@@ -111,11 +114,13 @@ var metricsMap = map[string][]string{
 	"AWS/NATGateway":              {"ActiveConnectionCount", "BytesInFromDestination", "BytesInFromSource", "BytesOutToDestination", "BytesOutToSource", "ConnectionAttemptCount", "ConnectionEstablishedCount", "ErrorPortAllocation", "IdleTimeoutCount", "PacketsDropCount", "PacketsInFromDestination", "PacketsInFromSource", "PacketsOutToDestination", "PacketsOutToSource"},
 	"AWS/Neptune":                 {"CPUUtilization", "ClusterReplicaLag", "ClusterReplicaLagMaximum", "ClusterReplicaLagMinimum", "EngineUptime", "FreeLocalStorage", "FreeableMemory", "GremlinErrors", "GremlinHttp1xx", "GremlinHttp2xx", "GremlinHttp4xx", "GremlinHttp5xx", "GremlinRequests", "GremlinRequestsPerSec", "GremlinWebSocketAvailableConnections", "GremlinWebSocketClientErrors", "GremlinWebSocketServerErrors", "GremlinWebSocketSuccess", "Http100", "Http101", "Http1xx", "Http200", "Http2xx", "Http400", "Http403", "Http405", "Http413", "Http429", "Http4xx", "Http500", "Http501", "Http5xx", "LoaderErrors", "LoaderRequests", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "SparqlErrors", "SparqlHttp1xx", "SparqlHttp2xx", "SparqlHttp4xx", "SparqlHttp5xx", "SparqlRequests", "SparqlRequestsPerSec", "StatusErrors", "StatusRequests", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs"},
 	"AWS/NetworkELB":              {"ActiveFlowCount", "ActiveFlowCount_TLS", "ClientTLSNegotiationErrorCount", "ConsumedLCUs", "HealthyHostCount", "NewFlowCount", "NewFlowCount_TLS", "ProcessedBytes", "ProcessedBytes_TLS", "TCP_Client_Reset_Count", "TCP_ELB_Reset_Count", "TCP_Target_Reset_Count", "TargetTLSNegotiationErrorCount", "UnHealthyHostCount"},
+	"AWS/GatewayELB":              {"ActiveFlowCount", "ConsumedLCUs", "HealthyHostCount", "NewFlowCount", "ProcessedBytes", "UnHealthyHostCount"},
 	"AWS/NetworkFirewall":         {"DroppedPackets", "Packets", "PassedPackets", "ReceivedPacketCount"},
 	"AWS/OpsWorks":                {"cpu_idle", "cpu_nice", "cpu_steal", "cpu_system", "cpu_user", "cpu_waitio", "load_1", "load_15", "load_5", "memory_buffers", "memory_cached", "memory_free", "memory_swap", "memory_total", "memory_used", "procs"},
 	"AWS/Polly":                   {"2XXCount", "4XXCount", "5XXCount", "RequestCharacters", "ResponseLatency"},
 	"AWS/RDS":                     {"ActiveTransactions", "AuroraBinlogReplicaLag", "AuroraGlobalDBDataTransferBytes", "AuroraGlobalDBReplicatedWriteIO", "AuroraGlobalDBReplicationLag", "AuroraReplicaLag", "AuroraReplicaLagMaximum", "AuroraReplicaLagMinimum", "AvailabilityPercentage", "BacktrackChangeRecordsCreationRate", "BacktrackChangeRecordsStored", "BacktrackWindowActual", "BacktrackWindowAlert", "BackupRetentionPeriodStorageUsed", "BinLogDiskUsage", "BlockedTransactions", "BufferCacheHitRatio", "BurstBalance", "CPUCreditBalance", "CPUCreditUsage", "CPUUtilization", "ClientConnections", "ClientConnectionsClosed", "ClientConnectionsNoTLS", "ClientConnectionsReceived", "ClientConnectionsSetupFailedAuth", "ClientConnectionsSetupSucceeded", "ClientConnectionsTLS", "CommitLatency", "CommitThroughput", "DDLLatency", "DDLThroughput", "DMLLatency", "DMLThroughput", "DatabaseConnectionRequests", "DatabaseConnectionRequestsWithTLS", "DatabaseConnections", "DatabaseConnectionsBorrowLatency", "DatabaseConnectionsCurrentlyBorrowed", "DatabaseConnectionsCurrentlyInTransaction", "DatabaseConnectionsCurrentlySessionPinned", "DatabaseConnectionsSetupFailed", "DatabaseConnectionsSetupSucceeded", "DatabaseConnectionsWithTLS", "Deadlocks", "DeleteLatency", "DeleteThroughput", "DiskQueueDepth", "EngineUptime", "FailedSQLServerAgentJobsCount", "FreeLocalStorage", "FreeStorageSpace", "FreeableMemory", "InsertLatency", "InsertThroughput", "LoginFailures", "MaxDatabaseConnectionsAllowed", "MaximumUsedTransactionIDs", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "OldestReplicationSlotLag", "Queries", "QueryDatabaseResponseLatency", "QueryRequests", "QueryRequestsNoTLS", "QueryRequestsTLS", "QueryResponseLatency", "RDSToAuroraPostgreSQLReplicaLag", "ReadIOPS", "ReadLatency", "ReadThroughput", "ReplicaLag", "ReplicationSlotDiskUsage", "ResultSetCacheHitRatio", "SelectLatency", "SelectThroughput", "ServerlessDatabaseCapacity", "SnapshotStorageUsed", "SwapUsage", "TotalBackupStorageBilled", "TransactionLogsDiskUsage", "TransactionLogsGeneration", "UpdateLatency", "UpdateThroughput", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 	"AWS/Redshift":                {"CommitQueueLength", "ConcurrencyScalingActiveClusters", "ConcurrencyScalingSeconds", "CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "MaxConfiguredConcurrencyScalingClusters", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "QueriesCompletedPerSecond", "QueryDuration", "QueryRuntimeBreakdown", "ReadIOPS", "ReadLatency", "ReadThroughput", "TotalTableCount", "WLMQueueLength", "WLMQueueWaitTime", "WLMQueriesCompletedPerSecond", "WLMQueryDuration", "WLMRunningQueries", "WriteIOPS", "WriteLatency", "WriteThroughput", "SchemaQuota", "NumExceededSchemaQuotas", "StorageUsed", "PercentageQuotaUsed"},
+	"AWS/Robomaker":               {"RealTimeFactor", "vCPU", "Memory", "SimulationUnit"},
 	"AWS/Route53":                 {"ChildHealthCheckHealthyCount", "ConnectionTime", "DNSQueries", "HealthCheckPercentageHealthy", "HealthCheckStatus", "SSLHandshakeTime", "TimeToFirstByte"},
 	"AWS/Route53Resolver":         {"InboundQueryVolume", "OutboundQueryVolume", "OutboundQueryAggregatedVolume"},
 	"AWS/S3":                      {"4xxErrors", "5xxErrors", "AllRequests", "BucketSizeBytes", "BytesDownloaded", "BytesUploaded", "DeleteRequests", "FirstByteLatency", "GetRequests", "HeadRequests", "ListRequests", "NumberOfObjects", "PostRequests", "PutRequests", "SelectRequests", "SelectReturnedBytes", "SelectScannedBytes", "TotalRequestLatency"},
@@ -132,6 +137,7 @@ var metricsMap = map[string][]string{
 	"AWS/Timestream":              {"SuccessfulRequestLatency", "SystemErrors", "UserErrors", "DataScannedBytes"},
 	"AWS/ThingsGraph":             {"EventStoreQueueSize", "FlowExecutionTime", "FlowExecutionsFailed", "FlowExecutionsStarted", "FlowExecutionsSucceeded", "FlowStepExecutionTime", "FlowStepExecutionsFailed", "FlowStepExecutionsStarted", "FlowStepExecutionsSucceeded"},
 	"AWS/TransitGateway":          {"BytesIn", "BytesOut", "PacketDropCountBlackhole", "PacketDropCountNoRoute", "PacketsIn", "PacketsOut"},
+	"AWS/Transfer":                {"BytesIn", "BytesOut", "FilesIn", "FilesOut"},
 	"AWS/Translate":               {"CharacterCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
 	"AWS/TrustedAdvisor":          {"GreenChecks", "RedChecks", "RedResources", "ServiceLimitUsage", "YellowChecks", "YellowResources"},
 	"AWS/Usage":                   {"CallCount", "ResourceCount"},
@@ -141,7 +147,7 @@ var metricsMap = map[string][]string{
 	"AWS/WorkSpaces":              {"Available", "ConnectionAttempt", "ConnectionFailure", "ConnectionSuccess", "InSessionLatency", "Maintenance", "SessionDisconnect", "SessionLaunchTime", "Stopped", "Unhealthy", "UserConnected"},
 	"ECS/ContainerInsights":       {"ContainerInstanceCount", "CpuUtilized", "CpuReserved", "DeploymentCount", "DesiredTaskCount", "MemoryUtilized", "MemoryReserved", "NetworkRxBytes", "NetworkTxBytes", "PendingTaskCount", "RunningTaskCount", "ServiceCount", "StorageReadBytes", "StorageWriteBytes", "TaskCount", "TaskSetCount", "instance_cpu_limit", "instance_cpu_reserved_capacity", "instance_cpu_usage_total", "instance_cpu_utilization", "instance_filesystem_utilization", "instance_memory_limit", "instance_memory_reserved_capacity", "instance_memory_utliization", "instance_memory_working_set", "instance_network_total_bytes", "instance_number_of_running_tasks"},
 	"ContainerInsights":           {"cluster_failed_node_count", "cluster_node_count", "namespace_number_of_running_pods", "node_cpu_limit", "node_cpu_reserved_capacity", "node_cpu_usage_total", "node_cpu_utilization", "node_filesystem_utilization", "node_memory_limit", "node_memory_reserved_capacity", "node_memory_utilization", "node_memory_working_set", "node_network_total_bytes", "node_number_of_running_containers", "node_number_of_running_pods", "pod_cpu_reserved_capacity", "pod_cpu_utilization", "pod_cpu_utilization_over_pod_limit", "pod_memory_reserved_capacity", "pod_memory_utilization", "pod_memory_utilization_over_pod_limit", "pod_number_of_container_restarts", "pod_network_rx_bytes", "pod_network_tx_bytes", "service_number_of_running_pods"},
-	"Rekognition":                 {"DetectedFaceCount", "DetectedLabelCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
+	"AWS/Rekognition":             {"DetectedFaceCount", "DetectedLabelCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
 	"AWS/Cassandra":               {"AccountMaxReads", "AccountMaxTableLevelReads", "AccountMaxTableLevelWrites", "AccountMaxWrites", "AccountProvisionedReadCapacityUtilization", "AccountProvisionedWriteCapacityUtilization", "ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "MaxProvisionedTableReadCapacityUtilization", "MaxProvisionedTableWriteCapacityUtilization", "ReturnedItemCount", "ReturnedItemCountBySelect", "SuccessfulRequestCount", "SuccessfulRequestLatency", "SystemErrors", "UserErrors"},
 	"AWS/AmplifyHosting":          {"Requests", "BytesDownloaded", "BytesUploaded", "4XXErrors", "5XXErrors", "Latency"},
 }
@@ -155,6 +161,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/ApplicationELB":          {"AvailabilityZone", "LoadBalancer", "TargetGroup"},
 	"AWS/Athena":                  {"QueryState", "QueryType", "WorkGroup"},
 	"AWS/AutoScaling":             {"AutoScalingGroupName"},
+	"AWS/Backup":                  {"BackupVaultName", "ResourceType"},
 	"AWS/Billing":                 {"Currency", "LinkedAccount", "ServiceName"},
 	"AWS/CertificateManager":      {},
 	"AWS/Chatbot":                 {"ConfigurationName"},
@@ -175,6 +182,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/DynamoDB":                {"GlobalSecondaryIndexName", "Operation", "ReceivingRegion", "StreamLabel", "TableName"},
 	"AWS/EBS":                     {"VolumeId"},
 	"AWS/EC2":                     {"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"},
+	"AWS/ElasticGPUs":             {"EGPUId", "InstanceId"},
 	"AWS/EC2/API":                 {},
 	"AWS/EC2CapacityReservations": {"CapacityReservationId"},
 	"AWS/EC2Spot":                 {"AvailabilityZone", "FleetRequestId", "InstanceType"},
@@ -191,6 +199,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/FSx":                     {"FileSystemId"},
 	"AWS/Firehose":                {"DeliveryStreamName"},
 	"AWS/GameLift":                {"FleetId", "InstanceType", "MatchmakingConfigurationName", "MatchmakingConfigurationName-RuleName", "MetricGroups", "OperatingSystem", "QueueName"},
+	"AWS/GlobalAccelerator":       {"Accelerator", "Listener", "EndpointGroup", "SourceRegion", "DestinationEdge", "TransportProtocol", "AcceleratorIPAddress"},
 	"AWS/Glue":                    {"JobName", "JobRunId", "Type"},
 	"AWS/GroundStation":           {"Channel", "Polarization", "SatelliteId"},
 	"AWS/Inspector":               {},
@@ -215,11 +224,13 @@ var dimensionsMap = map[string][]string{
 	"AWS/NATGateway":              {"NatGatewayId"},
 	"AWS/Neptune":                 {"DBClusterIdentifier", "DatabaseClass", "EngineName", "Role"},
 	"AWS/NetworkELB":              {"AvailabilityZone", "LoadBalancer", "TargetGroup"},
+	"AWS/GatewayELB":              {"AvailabilityZone", "LoadBalancer", "TargetGroup"},
 	"AWS/NetworkFirewall":         {"AvailabilityZone", "CustomAction", "Engine", "FirewallName"},
 	"AWS/OpsWorks":                {"InstanceId", "LayerId", "StackId"},
 	"AWS/Polly":                   {"Operation"},
 	"AWS/RDS":                     {"DBClusterIdentifier", "DBInstanceIdentifier", "DatabaseClass", "DbClusterIdentifier", "EngineName", "ProxyName", "Role", "SourceRegion", "Target", "TargetGroup", "TargetRole"},
 	"AWS/Redshift":                {"ClusterIdentifier", "NodeID", "service class", "stage", "latency", "wlmid"},
+	"AWS/Robomaker":               {"SimulationJobId"},
 	"AWS/Route53":                 {"HealthCheckId", "Region", "HostedZoneId"},
 	"AWS/Route53Resolver":         {"EndpointId"},
 	"AWS/S3":                      {"BucketName", "FilterId", "StorageType"},
@@ -236,6 +247,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Timestream":              {"Operation", "DatabaseName", "TableName"},
 	"AWS/ThingsGraph":             {"FlowTemplateId", "StepName", "SystemTemplateId"},
 	"AWS/TransitGateway":          {"TransitGateway", "TransitGatewayAttachment"},
+	"AWS/Transfer":                {"ServerId"},
 	"AWS/Translate":               {"LanguagePair", "Operation"},
 	"AWS/TrustedAdvisor":          {},
 	"AWS/Usage":                   {"Class", "Resource", "Service", "Type"},
@@ -245,7 +257,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/WorkSpaces":              {"DirectoryId", "WorkspaceId"},
 	"ECS/ContainerInsights":       {"ClusterName", "ServiceName", "TaskDefinitionFamily", "EC2InstanceId", "ContainerInstanceId"},
 	"ContainerInsights":           {"ClusterName", "NodeName", "Namespace", "InstanceId", "PodName", "Service"},
-	"Rekognition":                 {},
+	"AWS/Rekognition":             {},
 	"AWS/Cassandra":               {"Keyspace", "Operation", "TableName"},
 	"AWS/AmplifyHosting":          {"App"},
 }
@@ -264,6 +276,8 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, model *
 		data, err = e.handleGetNamespaces(ctx, model, pluginCtx)
 	case "metrics":
 		data, err = e.handleGetMetrics(ctx, model, pluginCtx)
+	case "all_metrics":
+		data, err = e.handleGetAllMetrics(ctx, model, pluginCtx)
 	case "dimension_keys":
 		data, err = e.handleGetDimensions(ctx, model, pluginCtx)
 	case "dimension_values":
@@ -422,15 +436,90 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	return result, nil
 }
 
+// handleGetAllMetrics returns a slice of suggestData structs with metric and its namespace
+func (e *cloudWatchExecutor) handleGetAllMetrics(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
+	result := make([]suggestData, 0)
+	for namespace, metrics := range metricsMap {
+		for _, metric := range metrics {
+			result = append(result, suggestData{Text: namespace, Value: metric})
+		}
+	}
+
+	return result, nil
+}
+
+// handleGetDimensions returns a slice of suggestData structs with dimension keys.
+// If a dimension filters parameter is specified, a new api call to list metrics will be issued to load dimension keys for the given filter.
+// If no dimension filter is specified, dimension keys will be retrieved from the hard coded map in this file.
 func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
+	metricName := parameters.Get("metricName").MustString("")
+	dimensionFilters := parameters.Get("dimensionFilters").MustMap()
 
 	var dimensionValues []string
 	if !isCustomMetrics(namespace) {
-		var exists bool
-		if dimensionValues, exists = dimensionsMap[namespace]; !exists {
-			return nil, fmt.Errorf("unable to find dimension %q", namespace)
+		if len(dimensionFilters) != 0 {
+			var dimensions []*cloudwatch.DimensionFilter
+			addDimension := func(key string, value string) {
+				filter := &cloudwatch.DimensionFilter{
+					Name: aws.String(key),
+				}
+				// if value is not specified or a wildcard is used, simply don't use the value field
+				if value != "" && value != "*" {
+					filter.Value = aws.String(value)
+				}
+				dimensions = append(dimensions, filter)
+			}
+			for k, v := range dimensionFilters {
+				// due to legacy, value can be a string, a string slice or nil
+				if vv, ok := v.(string); ok {
+					addDimension(k, vv)
+				} else if vv, ok := v.([]interface{}); ok {
+					for _, v := range vv {
+						addDimension(k, v.(string))
+					}
+				} else if v == nil {
+					addDimension(k, "")
+				}
+			}
+
+			input := &cloudwatch.ListMetricsInput{
+				Namespace:  aws.String(namespace),
+				Dimensions: dimensions,
+			}
+
+			if metricName != "" {
+				input.MetricName = aws.String(metricName)
+			}
+
+			metrics, err := e.listMetrics(region, input, pluginCtx)
+
+			if err != nil {
+				return nil, errutil.Wrap("unable to call AWS API", err)
+			}
+
+			dupCheck := make(map[string]bool)
+			for _, metric := range metrics {
+				for _, dim := range metric.Dimensions {
+					if _, exists := dupCheck[*dim.Name]; exists {
+						continue
+					}
+
+					// keys in the dimension filter should not be included
+					if _, ok := dimensionFilters[*dim.Name]; ok {
+						continue
+					}
+
+					dupCheck[*dim.Name] = true
+					dimensionValues = append(dimensionValues, *dim.Name)
+				}
+			}
+		} else {
+			var exists bool
+			if dimensionValues, exists = dimensionsMap[namespace]; !exists {
+				return nil, fmt.Errorf("unable to find dimension %q", namespace)
+			}
 		}
 	} else {
 		var err error
@@ -448,6 +537,8 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	return result, nil
 }
 
+// handleGetDimensionValues returns a slice of suggestData structs with dimension values.
+// A call to the list metrics api is issued to retrieve the dimension values. All parameters are used as input args to the list metrics call.
 func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
@@ -456,19 +547,26 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	dimensionsJson := parameters.Get("dimensions").MustMap()
 
 	var dimensions []*cloudwatch.DimensionFilter
+	addDimension := func(key string, value string) {
+		filter := &cloudwatch.DimensionFilter{
+			Name: aws.String(key),
+		}
+		// if value is not specified or a wildcard is used, simply don't use the value field
+		if value != "" && value != "*" {
+			filter.Value = aws.String(value)
+		}
+		dimensions = append(dimensions, filter)
+	}
 	for k, v := range dimensionsJson {
+		// due to legacy, value can be a string, a string slice or nil
 		if vv, ok := v.(string); ok {
-			dimensions = append(dimensions, &cloudwatch.DimensionFilter{
-				Name:  aws.String(k),
-				Value: aws.String(vv),
-			})
+			addDimension(k, vv)
 		} else if vv, ok := v.([]interface{}); ok {
 			for _, v := range vv {
-				dimensions = append(dimensions, &cloudwatch.DimensionFilter{
-					Name:  aws.String(k),
-					Value: aws.String(v.(string)),
-				})
+				addDimension(k, v.(string))
 			}
+		} else if v == nil {
+			addDimension(k, "")
 		}
 	}
 

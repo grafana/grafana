@@ -1,6 +1,6 @@
 import { Alert, CodeEditor, Select } from '@grafana/ui';
 import React from 'react';
-import { AzureMonitorOption, AzureMonitorQuery, AzureResultFormat } from '../../types';
+import { AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { Field } from '../Field';
 import { Space } from '../Space';
 
@@ -8,7 +8,7 @@ interface InsightsAnalyticsEditorProps {
   query: AzureMonitorQuery;
 }
 
-const FORMAT_OPTIONS: Array<AzureMonitorOption<AzureResultFormat>> = [
+const FORMAT_OPTIONS: Array<AzureMonitorOption<string>> = [
   { label: 'Time series', value: 'time_series' },
   { label: 'Table', value: 'table' },
 ];

@@ -15,7 +15,7 @@ type Evaluator interface {
 	// Evaluate permissions that are grouped by action
 	Evaluate(permissions map[string]map[string]struct{}) (bool, error)
 	// Inject params into the evaluator's templated scopes. e.g. "settings:" + eval.Parameters(":id") and returns a new Evaluator
-	Inject(params map[string]string) (Evaluator, error)
+	Inject(params ScopeParams) (Evaluator, error)
 	// String returns a string representation of permission required by the evaluator
 	String() string
 }
@@ -89,7 +89,7 @@ func match(scope, target string) (bool, error) {
 	return scope == target, nil
 }
 
-func (p permissionEvaluator) Inject(params map[string]string) (Evaluator, error) {
+func (p permissionEvaluator) Inject(params ScopeParams) (Evaluator, error) {
 	scopes := make([]string, 0, len(p.Scopes))
 	for _, scope := range p.Scopes {
 		tmpl, err := template.New("scope").Parse(scope)
@@ -129,7 +129,7 @@ func (a allEvaluator) Evaluate(permissions map[string]map[string]struct{}) (bool
 	return true, nil
 }
 
-func (a allEvaluator) Inject(params map[string]string) (Evaluator, error) {
+func (a allEvaluator) Inject(params ScopeParams) (Evaluator, error) {
 	var injected []Evaluator
 	for _, e := range a.allOf {
 		i, err := e.Inject(params)
@@ -173,7 +173,7 @@ func (a anyEvaluator) Evaluate(permissions map[string]map[string]struct{}) (bool
 	return false, nil
 }
 
-func (a anyEvaluator) Inject(params map[string]string) (Evaluator, error) {
+func (a anyEvaluator) Inject(params ScopeParams) (Evaluator, error) {
 	var injected []Evaluator
 	for _, e := range a.anyOf {
 		i, err := e.Inject(params)

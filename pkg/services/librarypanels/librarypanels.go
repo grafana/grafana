@@ -1,6 +1,9 @@
 package librarypanels
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -25,9 +28,10 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister
 
 // Service is a service for operating on library panels.
 type Service interface {
-	LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
+	LoadLibraryPanelsForDashboard(c context.Context, dash *models.Dashboard) error
 	CleanLibraryPanelsForDashboard(dash *models.Dashboard) error
-	ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
+	ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error
+	ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error
 }
 
 // LibraryPanelService is the service for the Panel Library feature.
@@ -41,7 +45,7 @@ type LibraryPanelService struct {
 
 // LoadLibraryPanelsForDashboard loops through all panels in dashboard JSON and replaces any library panel JSON
 // with JSON stored for library panel in db.
-func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c context.Context, dash *models.Dashboard) error {
 	elements, err := lps.LibraryElementService.GetElementsForDashboard(c, dash.Id)
 	if err != nil {
 		return err
@@ -70,20 +74,20 @@ func loadLibraryPanelsRecursively(elements map[string]libraryelements.LibraryEle
 		}
 
 		// we have a library panel
-		uid := libraryPanel.Get("uid").MustString()
-		if len(uid) == 0 {
+		UID := libraryPanel.Get("uid").MustString()
+		if len(UID) == 0 {
 			return errLibraryPanelHeaderUIDMissing
 		}
 
-		elementInDB, ok := elements[uid]
+		elementInDB, ok := elements[UID]
 		if !ok {
 			name := libraryPanel.Get("name").MustString()
 			elem := parent.Get("panels").GetIndex(i)
 			elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
 			elem.Set("id", panelAsJSON.Get("id").MustInt64())
-			elem.Set("type", fmt.Sprintf("Name: \"%s\", UID: \"%s\"", name, uid))
+			elem.Set("type", fmt.Sprintf("Name: \"%s\", UID: \"%s\"", name, UID))
 			elem.Set("libraryPanel", map[string]interface{}{
-				"uid":  uid,
+				"uid":  UID,
 				"name": name,
 			})
 			continue
@@ -166,8 +170,8 @@ func cleanLibraryPanelsRecursively(parent *simplejson.Json) error {
 		}
 
 		// we have a library panel
-		uid := libraryPanel.Get("uid").MustString()
-		if len(uid) == 0 {
+		UID := libraryPanel.Get("uid").MustString()
+		if len(UID) == 0 {
 			return errLibraryPanelHeaderUIDMissing
 		}
 		name := libraryPanel.Get("name").MustString()
@@ -177,12 +181,12 @@ func cleanLibraryPanelsRecursively(parent *simplejson.Json) error {
 
 		// keep only the necessary JSON properties, the rest of the properties should be safely stored in library_panels table
 		gridPos := panelAsJSON.Get("gridPos").MustMap()
-		id := panelAsJSON.Get("id").MustInt64(int64(i))
+		ID := panelAsJSON.Get("id").MustInt64(int64(i))
 		parent.Get("panels").SetIndex(i, map[string]interface{}{
-			"id":      id,
+			"id":      ID,
 			"gridPos": gridPos,
 			"libraryPanel": map[string]interface{}{
-				"uid":  uid,
+				"uid":  UID,
 				"name": name,
 			},
 		})
@@ -192,7 +196,7 @@ func cleanLibraryPanelsRecursively(parent *simplejson.Json) error {
 }
 
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
-func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
 	panels := dash.Data.Get("panels").MustArray()
 	libraryPanels := make(map[string]string)
 	err := connectLibraryPanelsRecursively(c, panels, libraryPanels)
@@ -205,14 +209,14 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 		elementUIDs = append(elementUIDs, libraryPanel)
 	}
 
-	return lps.LibraryElementService.ConnectElementsToDashboard(c, elementUIDs, dash.Id)
+	return lps.LibraryElementService.ConnectElementsToDashboard(c, signedInUser, elementUIDs, dash.Id)
 }
 
 func isLibraryPanelOrRow(panel *simplejson.Json, panelType string) bool {
 	return panel.Interface() != nil || panelType == "row"
 }
 
-func connectLibraryPanelsRecursively(c *models.ReqContext, panels []interface{}, libraryPanels map[string]string) error {
+func connectLibraryPanelsRecursively(c context.Context, panels []interface{}, libraryPanels map[string]string) error {
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")
@@ -232,14 +236,84 @@ func connectLibraryPanelsRecursively(c *models.ReqContext, panels []interface{},
 		}
 
 		// we have a library panel
-		uid := libraryPanel.Get("uid").MustString()
-		if len(uid) == 0 {
+		UID := libraryPanel.Get("uid").MustString()
+		if len(UID) == 0 {
 			return errLibraryPanelHeaderUIDMissing
 		}
-		_, exists := libraryPanels[uid]
+		_, exists := libraryPanels[UID]
 		if !exists {
-			libraryPanels[uid] = uid
+			libraryPanels[UID] = UID
 		}
+	}
+
+	return nil
+}
+
+// ImportLibraryPanelsForDashboard loops through all panels in dashboard JSON and creates any missing library panels in the database.
+func (lps *LibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error {
+	return importLibraryPanelsRecursively(c, lps.LibraryElementService, signedInUser, dash.Data, folderID)
+}
+
+func importLibraryPanelsRecursively(c context.Context, service libraryelements.Service, signedInUser *models.SignedInUser, parent *simplejson.Json, folderID int64) error {
+	panels := parent.Get("panels").MustArray()
+	for _, panel := range panels {
+		panelAsJSON := simplejson.NewFromAny(panel)
+		libraryPanel := panelAsJSON.Get("libraryPanel")
+		panelType := panelAsJSON.Get("type").MustString()
+		if !isLibraryPanelOrRow(libraryPanel, panelType) {
+			continue
+		}
+
+		// we have a row
+		if panelType == "row" {
+			err := importLibraryPanelsRecursively(c, service, signedInUser, panelAsJSON, folderID)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		// we have a library panel
+		UID := libraryPanel.Get("uid").MustString()
+		if len(UID) == 0 {
+			return errLibraryPanelHeaderUIDMissing
+		}
+		name := libraryPanel.Get("name").MustString()
+		if len(name) == 0 {
+			return errLibraryPanelHeaderNameMissing
+		}
+
+		_, err := service.GetElement(c, signedInUser, UID)
+		if err == nil {
+			continue
+		}
+		if errors.Is(err, libraryelements.ErrLibraryElementNotFound) {
+			panelAsJSON.Set("libraryPanel",
+				map[string]interface{}{
+					"uid":  UID,
+					"name": name,
+				})
+			Model, err := json.Marshal(&panelAsJSON)
+			if err != nil {
+				return err
+			}
+
+			var cmd = libraryelements.CreateLibraryElementCommand{
+				FolderID: folderID,
+				Name:     name,
+				Model:    Model,
+				Kind:     int64(models.PanelElement),
+				UID:      UID,
+			}
+			_, err = service.CreateElement(c, signedInUser, cmd)
+			if err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		return err
 	}
 
 	return nil

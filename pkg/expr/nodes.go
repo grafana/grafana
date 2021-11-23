@@ -19,6 +19,19 @@ var (
 	logger = log.New("expr")
 )
 
+type QueryError struct {
+	RefID string
+	Err   error
+}
+
+func (e QueryError) Error() string {
+	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
+}
+
+func (e QueryError) Unwrap() error {
+	return e.Err
+}
+
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
@@ -30,19 +43,19 @@ type rawNode struct {
 	Query         map[string]interface{}
 	QueryType     string
 	TimeRange     TimeRange
-	DatasourceUID string
+	DatasourceUID string // Gets populated from Either DatasourceUID or Datasource.UID
 }
 
-func (rn *rawNode) GetDatasourceName() (string, error) {
-	rawDs, ok := rn.Query["datasource"]
-	if !ok {
-		return "", nil
+func (rn *rawNode) IsExpressionQuery() bool {
+	if IsDataSource(rn.DatasourceUID) {
+		return true
 	}
-	dsName, ok := rawDs.(string)
-	if !ok {
-		return "", fmt.Errorf("expted datasource identifier to be a string, got %T", rawDs)
+	if v, ok := rn.Query["datasourceId"]; ok {
+		if v == OldDatasourceUID {
+			return true
+		}
 	}
-	return dsName, nil
+	return false
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -170,18 +183,15 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 		request:    *req,
 	}
 
+	// support old datasourceId property
 	rawDsID, ok := rn.Query["datasourceId"]
-	switch ok {
-	case true:
+	if ok {
 		floatDsID, ok := rawDsID.(float64)
 		if !ok {
 			return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
 		}
 		dsNode.datasourceID = int64(floatDsID)
-	default:
-		if rn.DatasourceUID == "" {
-			return nil, fmt.Errorf("neither datasourceId or datasourceUid in expression data source request for refId %v", rn.RefID)
-		}
+	} else {
 		dsNode.datasourceUID = rn.DatasourceUID
 	}
 
@@ -243,7 +253,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 	vals := make([]mathexp.Value, 0)
 	for refID, qr := range resp.Responses {
 		if qr.Error != nil {
-			return mathexp.Results{}, fmt.Errorf("failed to execute query %v: %w", refID, qr.Error)
+			return mathexp.Results{}, QueryError{RefID: refID, Err: qr.Error}
 		}
 
 		if len(qr.Frames) == 1 {

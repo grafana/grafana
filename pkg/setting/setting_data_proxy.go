@@ -2,6 +2,8 @@ package setting
 
 import "gopkg.in/ini.v1"
 
+const defaultDataProxyRowLimit = int64(1000000)
+
 func readDataProxySettings(iniFile *ini.File, cfg *Cfg) error {
 	dataproxy := iniFile.Section("dataproxy")
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
@@ -15,6 +17,11 @@ func readDataProxySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt()
 	cfg.DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.ResponseLimit = dataproxy.Key("response_limit").MustInt64(0)
+	cfg.DataProxyRowLimit = dataproxy.Key("row_limit").MustInt64(defaultDataProxyRowLimit)
+
+	if cfg.DataProxyRowLimit <= 0 {
+		cfg.DataProxyRowLimit = defaultDataProxyRowLimit
+	}
 
 	if val, err := dataproxy.Key("max_idle_connections_per_host").Int(); err == nil {
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'max_idle_connections_per_host' is deprecated, please use 'max_idle_connections' instead")

@@ -32,22 +32,46 @@ export const Simple: Story<MenuProps> = (args) => {
     <VerticalGroup>
       <StoryExample name="Simple">
         <Menu>
-          <MenuItem label="Google" icon="search-plus" ariaLabel="Menu item" />
-          <MenuItem label="Filter" icon="filter" ariaLabel="Menu item" />
-          <MenuItem label="History" icon="history" ariaLabel="Menu item" />
-          <MenuItem label="Active" icon="history" active ariaLabel="Menu item" />
-          <MenuItem label="Apps" icon="apps" ariaLabel="Menu item" />
+          <MenuItem label="Google" icon="search-plus" />
+          <MenuItem label="Filter" icon="filter" />
+          <MenuItem label="History" icon="history" />
+          <MenuItem label="Active" icon="history" active />
+          <MenuItem label="Apps" icon="apps" />
         </Menu>
       </StoryExample>
       <StoryExample name="With header & groups">
         <Menu header={args.header} ariaLabel="Menu header">
-          <MenuGroup label="Group 1" ariaLabel="Menu Group">
-            <MenuItem label="item1" icon="history" ariaLabel="Menu item" />
-            <MenuItem label="item2" icon="filter" ariaLabel="Menu item" />
+          <MenuGroup label="Group 1">
+            <MenuItem label="item1" icon="history" />
+            <MenuItem label="item2" icon="filter" />
           </MenuGroup>
-          <MenuGroup label="Group 2" ariaLabel="Menu Group">
-            <MenuItem label="item1" icon="history" ariaLabel="Menu item" />
+          <MenuGroup label="Group 2">
+            <MenuItem label="item1" icon="history" />
           </MenuGroup>
+        </Menu>
+      </StoryExample>
+      <StoryExample name="With submenu">
+        <Menu>
+          <MenuItem label="item1" icon="history" />
+          <MenuItem
+            label="item2"
+            icon="apps"
+            childItems={[
+              <MenuItem key="subitem1" label="subitem1" icon="history" />,
+              <MenuItem key="subitem2" label="subitem2" icon="apps" />,
+              <MenuItem
+                key="subitem3"
+                label="subitem3"
+                icon="search-plus"
+                childItems={[
+                  <MenuItem key="subitem1" label="subitem1" icon="history" />,
+                  <MenuItem key="subitem2" label="subitem2" icon="apps" />,
+                  <MenuItem key="subitem3" label="subitem3" icon="search-plus" />,
+                ]}
+              />,
+            ]}
+          />
+          <MenuItem label="item3" icon="filter" />
         </Menu>
       </StoryExample>
     </VerticalGroup>

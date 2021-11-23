@@ -8,6 +8,7 @@ import {
   ensureQueries,
   generateNewKeyAndAddRefIdIfMissing,
   getTimeRangeFromUrl,
+  ExploreGraphStyle,
 } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { queryReducer, runQueries, setQueriesAction } from './query';
@@ -19,12 +20,13 @@ import {
   loadAndInitDatasource,
   createEmptyQueryResponse,
   getUrlStateFromPaneState,
+  storeGraphStyle,
 } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
 import { EventBusExtended, DataQuery, ExploreUrlState, TimeRange, HistoryItem, DataSourceApi } from '@grafana/data';
 // Types
 import { ThunkResult } from 'app/types';
-import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getRichHistory } from '../../../core/utils/richHistory';
 import { richHistoryUpdatedAction } from './main';
@@ -43,17 +45,6 @@ export interface ChangeSizePayload {
   height: number;
 }
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
-
-/**
- * Highlight expressions in the log results
- */
-export interface HighlightLogsExpressionPayload {
-  exploreId: ExploreId;
-  expressions: string[];
-}
-export const highlightLogsExpressionAction = createAction<HighlightLogsExpressionPayload>(
-  'explore/highlightLogsExpression'
-);
 
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -85,6 +76,20 @@ export function changeSize(
   { height, width }: { height: number; width: number }
 ): PayloadAction<ChangeSizePayload> {
   return changeSizeAction({ exploreId, height, width });
+}
+
+interface ChangeGraphStylePayload {
+  exploreId: ExploreId;
+  graphStyle: ExploreGraphStyle;
+}
+
+const changeGraphStyleAction = createAction<ChangeGraphStylePayload>('explore/changeGraphStyle');
+
+export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphStyle): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    storeGraphStyle(graphStyle);
+    dispatch(changeGraphStyleAction({ exploreId, graphStyle }));
+  };
 }
 
 /**
@@ -164,7 +169,8 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     }
 
     const timeZone = getTimeZone(getState().user);
-    const range = getTimeRangeFromUrl(urlRange, timeZone);
+    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
+    const range = getTimeRangeFromUrl(urlRange, timeZone, fiscalYearStartMonth);
 
     // commit changes based on the diff of new url vs old url
 
@@ -210,15 +216,9 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return { ...state, containerWidth };
   }
 
-  if (highlightLogsExpressionAction.match(action)) {
-    const { expressions: newExpressions } = action.payload;
-    const { logsHighlighterExpressions: currentExpressions } = state;
-
-    return {
-      ...state,
-      // Prevents re-renders. As logsHighlighterExpressions [] comes from datasource, we cannot control if it returns new array or not.
-      logsHighlighterExpressions: isEqual(newExpressions, currentExpressions) ? currentExpressions : newExpressions,
-    };
+  if (changeGraphStyleAction.match(action)) {
+    const { graphStyle } = action.payload;
+    return { ...state, graphStyle };
   }
 
   if (initializeExploreAction.match(action)) {
@@ -237,7 +237,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       history,
       datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
-      logsHighlighterExpressions: undefined,
       cache: [],
     };
   }

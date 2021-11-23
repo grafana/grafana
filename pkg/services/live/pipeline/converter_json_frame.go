@@ -7,8 +7,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type JsonFrameConverterConfig struct{}
-
 // JsonFrameConverter decodes single data.Frame from JSON.
 type JsonFrameConverter struct {
 	config JsonFrameConverterConfig
@@ -18,6 +16,12 @@ func NewJsonFrameConverter(c JsonFrameConverterConfig) *JsonFrameConverter {
 	return &JsonFrameConverter{
 		config: c,
 	}
+}
+
+const ConverterTypeJsonFrame = "jsonFrame"
+
+func (c *JsonFrameConverter) Type() string {
+	return ConverterTypeJsonFrame
 }
 
 func (c *JsonFrameConverter) Convert(_ context.Context, _ Vars, body []byte) ([]*ChannelFrame, error) {

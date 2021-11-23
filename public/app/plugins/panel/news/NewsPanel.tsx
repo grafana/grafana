@@ -133,7 +133,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   itemWide: css`
     flex-direction: row;
   `,
-  body: css``,
+  body: css`
+    display: flex;
+    flex-direction: column;
+  `,
   socialImage: css`
     display: flex;
     align-items: center;
@@ -161,7 +164,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     }
   `,
   title: css`
-    max-width: calc(100% - 70px);
     font-size: 16px;
     margin-bottom: ${theme.spacing(0.5)};
   `,

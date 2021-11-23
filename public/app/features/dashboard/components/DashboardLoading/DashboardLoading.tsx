@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Button, HorizontalGroup, Spinner, useStyles, VerticalGroup } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 import { GrafanaTheme } from '@grafana/data';

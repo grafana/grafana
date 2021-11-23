@@ -92,4 +92,8 @@ export abstract class OptionsUIRegistryBuilder<
       return this.properties;
     });
   }
+
+  getItems() {
+    return this.properties;
+  }
 }

@@ -48,8 +48,6 @@ Logs of usage insights contain the following fields, where the fields followed b
 
 ## Configuration
 
-The following procedure assumes that you have installed Loki. Refer to [Install Loki](/docs/loki/latest/installation/).
-
 To export your logs, enable the usage insights feature and [configure]({{< relref "../../administration/configuration.md" >}}) an export location in the configuration file:
 
 ```ini
@@ -58,7 +56,16 @@ To export your logs, enable the usage insights feature and [configure]({{< relre
 enabled = true
 # Storage type
 storage = loki
+```
 
+The options for storage type are `loki` and `logger` (added in Grafana Enterprise 8.2).
+
+If the storage type is set to `loki` you'll need to also configure Grafana
+to export to a Loki ingestion server. To do this, you'll need Loki installed.
+Refer to [Install Loki](/docs/loki/latest/installation/) for instructions
+on how to install Loki.
+
+```ini
 [usage_insights.export.storage.loki]
 # Set the communication protocol to use with Loki (can be grpc or http)
 type = grpc
@@ -68,9 +75,12 @@ url = localhost:9095
 tls = true
 ```
 
+Using `logger` will print usage insights to your [Grafana server log]({{< relref "../../administration/configuration.md#log" >}}).
+There is no option for configuring the `logger` storage type.
+
 ## Visualize Loki usage insights in Grafana
 
-Now that your logs are exported into Loki, you can build Grafana dashboards to understand your Grafana instance usage.
+If you export logs into Loki, you can build Grafana dashboards to understand your Grafana instance usage.
 
 1. Add Loki as a data source. Refer to [Grafana fundamentals tutorial](/tutorials/grafana-fundamentals/#6).
 1. Import one of the following dashboards:

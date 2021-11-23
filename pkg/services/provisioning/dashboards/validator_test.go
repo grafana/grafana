@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"sort"
 	"testing"
 
@@ -31,7 +32,7 @@ func TestDuplicatesValidator(t *testing.T) {
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
-		folderID, err := getOrCreateFolderID(cfg, fakeService, folderName)
+		folderID, err := getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
 		require.NoError(t, err)
 
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
@@ -53,10 +54,10 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		duplicateValidator := newDuplicateValidator(logger, []*FileReader{reader1, reader2})
 
-		err = reader1.walkDisk()
+		err = reader1.walkDisk(context.Background())
 		require.NoError(t, err)
 
-		err = reader2.walkDisk()
+		err = reader2.walkDisk(context.Background())
 		require.NoError(t, err)
 
 		duplicates := duplicateValidator.getDuplicates()
@@ -94,15 +95,15 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		duplicateValidator := newDuplicateValidator(logger, []*FileReader{reader1, reader2})
 
-		err = reader1.walkDisk()
+		err = reader1.walkDisk(context.Background())
 		require.NoError(t, err)
 
-		err = reader2.walkDisk()
+		err = reader2.walkDisk(context.Background())
 		require.NoError(t, err)
 
 		duplicates := duplicateValidator.getDuplicates()
 
-		folderID, err := getOrCreateFolderID(cfg, fakeService, cfg1.Folder)
+		folderID, err := getOrCreateFolderID(context.Background(), cfg, fakeService, cfg1.Folder)
 		require.NoError(t, err)
 
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}

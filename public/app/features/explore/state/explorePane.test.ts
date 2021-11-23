@@ -62,6 +62,7 @@ function setup(state?: any) {
       query: jest.fn(),
       name: 'newDs',
       meta: { id: 'newDs' },
+      getRef: () => ({ uid: 'newDs' }),
     },
     someDs: {
       testDatasource: jest.fn(),
@@ -69,6 +70,7 @@ function setup(state?: any) {
       query: jest.fn(),
       name: 'someDs',
       meta: { id: 'someDs' },
+      getRef: () => ({ uid: 'someDs' }),
     },
   };
 
@@ -77,7 +79,7 @@ function setup(state?: any) {
       return Object.values(datasources).map((d) => ({ name: d.name }));
     },
     getInstanceSettings(name: string) {
-      return { name: 'hello' };
+      return { name, getRef: () => ({ uid: name }) };
     },
     get(name?: string) {
       return Promise.resolve(
@@ -119,7 +121,7 @@ describe('refreshExplore', () => {
     await dispatch(
       refreshExplore(
         ExploreId.left,
-        serializeStateToUrlParam({ datasource: 'someDs', queries: [{ expr: 'count()' }], range: testRange })
+        serializeStateToUrlParam({ datasource: 'someDs', queries: [{ expr: 'count()', refId: 'A' }], range: testRange })
       )
     );
     // same
@@ -138,7 +140,7 @@ describe('refreshExplore', () => {
     await dispatch(
       refreshExplore(
         ExploreId.left,
-        serializeStateToUrlParam({ datasource: 'newDs', queries: [{ expr: 'count()' }], range: testRange })
+        serializeStateToUrlParam({ datasource: 'newDs', queries: [{ expr: 'count()', refId: 'A' }], range: testRange })
       )
     );
 

@@ -3,9 +3,11 @@ import { stylesFactory } from '@grafana/ui';
 import { DataFrame, Field, formattedValueToString, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
+import { FeatureLike } from 'ol/Feature';
 
 export interface Props {
   data?: DataFrame; // source data
+  feature?: FeatureLike;
   rowIndex?: number; // the hover row
   columnIndex?: number; // the hover column
 }
@@ -14,7 +16,26 @@ export class DataHoverView extends PureComponent<Props> {
   style = getStyles(config.theme2);
 
   render() {
-    const { data, rowIndex, columnIndex } = this.props;
+    const { data, feature, rowIndex, columnIndex } = this.props;
+
+    if (feature) {
+      return (
+        <table className={this.style.infoWrap}>
+          <tbody>
+            {Object.entries(feature.getProperties()).map(
+              (e, i) =>
+                e[0] === 'geometry' || ( //don't include geojson feature geometry
+                  <tr key={`${e}-${i}`}>
+                    <th>{`${e[0]}: `}</th>
+                    <td>{`${e[1]}`}</td>
+                  </tr>
+                )
+            )}
+          </tbody>
+        </table>
+      );
+    }
+
     if (!data || rowIndex == null) {
       return null;
     }

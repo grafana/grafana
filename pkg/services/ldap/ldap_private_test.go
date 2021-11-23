@@ -3,271 +3,252 @@ package ldap
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/stretchr/testify/assert"
+
+	"gopkg.in/ldap.v3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/ldap.v3"
 )
 
-func TestLDAPPrivateMethods(t *testing.T) {
-	Convey("getSearchRequest()", t, func() {
-		Convey("with enabled GroupSearchFilterUserAttribute setting", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Attr: AttributeMap{
-						Username: "username",
-						Name:     "name",
-						MemberOf: "memberof",
-						Email:    "email",
-					},
-					GroupSearchFilterUserAttribute: "gansta",
-					SearchBaseDNs:                  []string{"BaseDNHere"},
-				},
-				log: log.New("test-logger"),
-			}
+func TestServer_getSearchRequest(t *testing.T) {
+	expected := &ldap.SearchRequest{
+		BaseDN:       "killa",
+		Scope:        2,
+		DerefAliases: 0,
+		SizeLimit:    0,
+		TimeLimit:    0,
+		TypesOnly:    false,
+		Filter:       "(|)",
+		Attributes: []string{
+			"username",
+			"email",
+			"name",
+			"memberof",
+			"gansta",
+		},
+		Controls: nil,
+	}
 
-			result := server.getSearchRequest("killa", []string{"gorilla"})
+	server := &Server{
+		Config: &ServerConfig{
+			Attr: AttributeMap{
+				Username: "username",
+				Name:     "name",
+				MemberOf: "memberof",
+				Email:    "email",
+			},
+			GroupSearchFilterUserAttribute: "gansta",
+			SearchBaseDNs:                  []string{"BaseDNHere"},
+		},
+		log: log.New("test-logger"),
+	}
 
-			So(result, ShouldResemble, &ldap.SearchRequest{
-				BaseDN:       "killa",
-				Scope:        2,
-				DerefAliases: 0,
-				SizeLimit:    0,
-				TimeLimit:    0,
-				TypesOnly:    false,
-				Filter:       "(|)",
-				Attributes: []string{
-					"username",
-					"email",
-					"name",
-					"memberof",
-					"gansta",
+	result := server.getSearchRequest("killa", []string{"gorilla"})
+
+	assert.EqualValues(t, expected, result)
+}
+
+func TestSerializeUsers(t *testing.T) {
+	t.Run("simple case", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				Attr: AttributeMap{
+					Username: "username",
+					Name:     "name",
+					MemberOf: "memberof",
+					Email:    "email",
 				},
-				Controls: nil,
-			})
-		})
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			Connection: &MockConnection{},
+			log:        log.New("test-logger"),
+		}
+
+		entry := ldap.Entry{
+			DN: "dn",
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"roelgerrits"}},
+				{Name: "surname", Values: []string{"Gerrits"}},
+				{Name: "email", Values: []string{"roel@test.com"}},
+				{Name: "name", Values: []string{"Roel"}},
+				{Name: "memberof", Values: []string{"admins"}},
+			},
+		}
+		users := [][]*ldap.Entry{{&entry}}
+
+		result, err := server.serializeUsers(users)
+		require.NoError(t, err)
+
+		assert.Equal(t, "roelgerrits", result[0].Login)
+		assert.Equal(t, "roel@test.com", result[0].Email)
+		assert.Contains(t, result[0].Groups, "admins")
 	})
 
-	Convey("serializeUsers()", t, func() {
-		Convey("simple case", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Attr: AttributeMap{
-						Username: "username",
-						Name:     "name",
-						MemberOf: "memberof",
-						Email:    "email",
-					},
-					SearchBaseDNs: []string{"BaseDNHere"},
+	t.Run("without lastname", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				Attr: AttributeMap{
+					Username: "username",
+					Name:     "name",
+					MemberOf: "memberof",
+					Email:    "email",
 				},
-				Connection: &MockConnection{},
-				log:        log.New("test-logger"),
-			}
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			Connection: &MockConnection{},
+			log:        log.New("test-logger"),
+		}
 
-			entry := ldap.Entry{
-				DN: "dn",
-				Attributes: []*ldap.EntryAttribute{
-					{Name: "username", Values: []string{"roelgerrits"}},
-					{Name: "surname", Values: []string{"Gerrits"}},
-					{Name: "email", Values: []string{"roel@test.com"}},
-					{Name: "name", Values: []string{"Roel"}},
-					{Name: "memberof", Values: []string{"admins"}},
-				},
-			}
-			users := []*ldap.Entry{&entry}
+		entry := ldap.Entry{
+			DN: "dn",
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"roelgerrits"}},
+				{Name: "email", Values: []string{"roel@test.com"}},
+				{Name: "name", Values: []string{"Roel"}},
+				{Name: "memberof", Values: []string{"admins"}},
+			},
+		}
+		users := [][]*ldap.Entry{{&entry}}
 
-			result, err := server.serializeUsers(users)
+		result, err := server.serializeUsers(users)
+		require.NoError(t, err)
 
-			So(err, ShouldBeNil)
-			So(result[0].Login, ShouldEqual, "roelgerrits")
-			So(result[0].Email, ShouldEqual, "roel@test.com")
-			So(result[0].Groups, ShouldContain, "admins")
-		})
-
-		Convey("without lastname", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Attr: AttributeMap{
-						Username: "username",
-						Name:     "name",
-						MemberOf: "memberof",
-						Email:    "email",
-					},
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: &MockConnection{},
-				log:        log.New("test-logger"),
-			}
-
-			entry := ldap.Entry{
-				DN: "dn",
-				Attributes: []*ldap.EntryAttribute{
-					{Name: "username", Values: []string{"roelgerrits"}},
-					{Name: "email", Values: []string{"roel@test.com"}},
-					{Name: "name", Values: []string{"Roel"}},
-					{Name: "memberof", Values: []string{"admins"}},
-				},
-			}
-			users := []*ldap.Entry{&entry}
-
-			result, err := server.serializeUsers(users)
-
-			So(err, ShouldBeNil)
-			So(result[0].IsDisabled, ShouldBeFalse)
-			So(result[0].Name, ShouldEqual, "Roel")
-		})
-
-		Convey("a user without matching groups should be marked as disabled", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Groups: []*GroupToOrgRole{{
-						GroupDN: "foo",
-						OrgId:   1,
-						OrgRole: models.ROLE_EDITOR,
-					}},
-				},
-				Connection: &MockConnection{},
-				log:        log.New("test-logger"),
-			}
-
-			entry := ldap.Entry{
-				DN: "dn",
-				Attributes: []*ldap.EntryAttribute{
-					{Name: "memberof", Values: []string{"admins"}},
-				},
-			}
-			users := []*ldap.Entry{&entry}
-
-			result, err := server.serializeUsers(users)
-
-			So(err, ShouldBeNil)
-			So(len(result), ShouldEqual, 1)
-			So(result[0].IsDisabled, ShouldBeTrue)
-		})
+		assert.False(t, result[0].IsDisabled)
+		assert.Equal(t, "Roel", result[0].Name)
 	})
 
-	Convey("validateGrafanaUser()", t, func() {
-		Convey("Returns error when user does not belong in any of the specified LDAP groups", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Groups: []*GroupToOrgRole{
-						{
-							OrgId: 1,
-						},
+	t.Run("mark user without matching group as disabled", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				Groups: []*GroupToOrgRole{{
+					GroupDN: "foo",
+					OrgId:   1,
+					OrgRole: models.ROLE_EDITOR,
+				}},
+			},
+			Connection: &MockConnection{},
+			log:        log.New("test-logger"),
+		}
+
+		entry := ldap.Entry{
+			DN: "dn",
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "memberof", Values: []string{"admins"}},
+			},
+		}
+		users := [][]*ldap.Entry{{&entry}}
+
+		result, err := server.serializeUsers(users)
+		require.NoError(t, err)
+
+		assert.Len(t, result, 1)
+		assert.True(t, result[0].IsDisabled)
+	})
+}
+
+func TestServer_validateGrafanaUser(t *testing.T) {
+	t.Run("no group config", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				Groups: []*GroupToOrgRole{},
+			},
+			log: logger.New("test"),
+		}
+
+		user := &models.ExternalUserInfo{
+			Login: "markelog",
+		}
+
+		err := server.validateGrafanaUser(user)
+		require.NoError(t, err)
+	})
+
+	t.Run("user in group", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				Groups: []*GroupToOrgRole{
+					{
+						OrgId: 1,
 					},
 				},
-				log: logger.New("test"),
-			}
+			},
+			log: logger.New("test"),
+		}
 
-			user := &models.ExternalUserInfo{
-				Login: "markelog",
-			}
+		user := &models.ExternalUserInfo{
+			Login: "markelog",
+			OrgRoles: map[int64]models.RoleType{
+				1: "test",
+			},
+		}
 
-			result := server.validateGrafanaUser(user)
+		err := server.validateGrafanaUser(user)
+		require.NoError(t, err)
+	})
 
-			So(result, ShouldEqual, ErrInvalidCredentials)
-		})
-
-		Convey("Does not return error when group config is empty", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Groups: []*GroupToOrgRole{},
-				},
-				log: logger.New("test"),
-			}
-
-			user := &models.ExternalUserInfo{
-				Login: "markelog",
-			}
-
-			result := server.validateGrafanaUser(user)
-
-			So(result, ShouldBeNil)
-		})
-
-		Convey("Does not return error when groups are there", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Groups: []*GroupToOrgRole{
-						{
-							OrgId: 1,
-						},
+	t.Run("user not in group", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				Groups: []*GroupToOrgRole{
+					{
+						OrgId: 1,
 					},
 				},
-				log: logger.New("test"),
-			}
+			},
+			log: logger.New("test"),
+		}
 
-			user := &models.ExternalUserInfo{
-				Login: "markelog",
-				OrgRoles: map[int64]models.RoleType{
-					1: "test",
-				},
-			}
+		user := &models.ExternalUserInfo{
+			Login: "markelog",
+		}
 
-			result := server.validateGrafanaUser(user)
+		err := server.validateGrafanaUser(user)
+		require.ErrorIs(t, err, ErrInvalidCredentials)
+	})
+}
 
-			So(result, ShouldBeNil)
-		})
+func TestServer_binds(t *testing.T) {
+	t.Run("single bind with cn wildcard", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				BindDN: "cn=%s,dc=grafana,dc=org",
+			},
+		}
+
+		assert.True(t, server.shouldSingleBind())
+		assert.Equal(t, "cn=test,dc=grafana,dc=org", server.singleBindDN("test"))
 	})
 
-	Convey("shouldAdminBind()", t, func() {
-		Convey("it should require admin userBind", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					BindPassword: "test",
-				},
-			}
+	t.Run("don't single bind", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				BindDN: "cn=admin,dc=grafana,dc=org",
+			},
+		}
 
-			result := server.shouldAdminBind()
-			So(result, ShouldBeTrue)
-		})
-
-		Convey("it should not require admin userBind", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					BindPassword: "",
-				},
-			}
-
-			result := server.shouldAdminBind()
-			So(result, ShouldBeFalse)
-		})
+		assert.False(t, server.shouldSingleBind())
 	})
 
-	Convey("shouldSingleBind()", t, func() {
-		Convey("it should allow single bind", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					BindDN: "cn=%s,dc=grafana,dc=org",
-				},
-			}
+	t.Run("admin user bind", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				BindPassword: "test",
+			},
+		}
 
-			result := server.shouldSingleBind()
-			So(result, ShouldBeTrue)
-		})
-
-		Convey("it should not allow single bind", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					BindDN: "cn=admin,dc=grafana,dc=org",
-				},
-			}
-
-			result := server.shouldSingleBind()
-			So(result, ShouldBeFalse)
-		})
+		assert.True(t, server.shouldAdminBind())
 	})
 
-	Convey("singleBindDN()", t, func() {
-		Convey("it should allow single bind", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					BindDN: "cn=%s,dc=grafana,dc=org",
-				},
-			}
+	t.Run("don't admin user bind", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				BindPassword: "",
+			},
+		}
 
-			result := server.singleBindDN("test")
-			So(result, ShouldEqual, "cn=test,dc=grafana,dc=org")
-		})
+		assert.False(t, server.shouldAdminBind())
 	})
 }

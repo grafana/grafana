@@ -32,6 +32,11 @@ export interface DimensionSupplier<T = any> {
   get: (index: number) => T;
 }
 
+export enum ScaleDimensionMode {
+  Linear = 'linear',
+  Quadratic = 'quad',
+}
+
 /** This will map the field value% to a scaled value within the range */
 export interface ScaleDimensionConfig extends BaseDimensionConfig<number> {
   min: number;
@@ -60,12 +65,23 @@ export interface TextDimensionConfig extends BaseDimensionConfig<string> {
   mode: TextDimensionMode;
 }
 
+export const defaultTextConfig: TextDimensionConfig = Object.freeze({
+  fixed: '',
+  mode: TextDimensionMode.Field,
+  field: '',
+});
+
 /** Use the color value from field configs */
 export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
 
 /** Places that use the value */
 export interface ResourceDimensionOptions {
   resourceType: 'icon' | 'image';
+  folderName?: ResourceFolderName;
+  placeholderText?: string;
+  placeholderValue?: string;
+  // If you want your icon to be driven by value of a field
+  showSourceRadio?: boolean;
 }
 
 export enum ResourceDimensionMode {
@@ -78,4 +94,11 @@ export enum ResourceDimensionMode {
 /** Get the path to a resource (URL) */
 export interface ResourceDimensionConfig extends BaseDimensionConfig<string> {
   mode: ResourceDimensionMode;
+}
+
+export enum ResourceFolderName {
+  Icon = 'img/icons/unicons',
+  IOT = 'img/icons/iot',
+  Marker = 'img/icons/marker',
+  BG = 'img/bg',
 }

@@ -29,16 +29,20 @@ exports[`Render should render component 1`] = `
       className="cta-form"
     >
       <CloseButton
+        aria-label="Close 'Add team member' dialogue"
         onClick={[Function]}
       />
-      <h5>
+      <Label
+        htmlFor="user-picker"
+      >
         Add team member
-      </h5>
+      </Label>
       <div
         className="gf-form-inline"
       >
         <UserPicker
           className="min-width-30"
+          inputId="user-picker"
           onSelected={[Function]}
         />
       </div>
@@ -113,16 +117,20 @@ exports[`Render should render team members 1`] = `
       className="cta-form"
     >
       <CloseButton
+        aria-label="Close 'Add team member' dialogue"
         onClick={[Function]}
       />
-      <h5>
+      <Label
+        htmlFor="user-picker"
+      >
         Add team member
-      </h5>
+      </Label>
       <div
         className="gf-form-inline"
       >
         <UserPicker
           className="min-width-30"
+          inputId="user-picker"
           onSelected={[Function]}
         />
       </div>

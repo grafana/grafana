@@ -1,4 +1,5 @@
-import { OptionsWithTooltip, OptionsWithLegend, HideableFieldConfig, BarValueVisibility } from '@grafana/schema';
+import { DashboardCursorSync } from '@grafana/data';
+import { HideableFieldConfig, OptionsWithLegend, OptionsWithTooltip, VisibilityMode } from '@grafana/schema';
 
 /**
  * @alpha
@@ -6,7 +7,7 @@ import { OptionsWithTooltip, OptionsWithLegend, HideableFieldConfig, BarValueVis
 export interface TimelineOptions extends OptionsWithLegend, OptionsWithTooltip {
   mode: TimelineMode; // not in the saved model!
 
-  showValue: BarValueVisibility;
+  showValue: VisibilityMode;
   rowHeight: number;
 
   // only used for "samples" mode (status-history)
@@ -15,6 +16,8 @@ export interface TimelineOptions extends OptionsWithLegend, OptionsWithTooltip {
   mergeValues?: boolean;
   // only used in "changes" mode (state-timeline)
   alignValue?: TimelineValueAlignment;
+
+  sync?: DashboardCursorSync;
 }
 
 export type TimelineValueAlignment = 'center' | 'left' | 'right';
@@ -31,7 +34,7 @@ export interface TimelineFieldConfig extends HideableFieldConfig {
  * @alpha
  */
 export const defaultPanelOptions: Partial<TimelineOptions> = {
-  showValue: BarValueVisibility.Auto,
+  showValue: VisibilityMode.Auto,
   alignValue: 'left',
   mergeValues: true,
   rowHeight: 0.9,

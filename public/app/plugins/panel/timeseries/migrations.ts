@@ -22,7 +22,7 @@ import {
   GraphTresholdsStyleMode,
   LineInterpolation,
   LineStyle,
-  PointVisibility,
+  VisibilityMode,
   ScaleDistribution,
   StackingMode,
 } from '@grafana/schema';
@@ -166,7 +166,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
           case 'points':
             rule.properties.push({
               id: 'custom.showPoints',
-              value: v ? PointVisibility.Always : PointVisibility.Never,
+              value: v ? VisibilityMode.Always : VisibilityMode.Never,
             });
             break;
           case 'bars':
@@ -260,13 +260,13 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   graph.drawStyle = angular.bars ? GraphDrawStyle.Bars : angular.lines ? GraphDrawStyle.Line : GraphDrawStyle.Points;
 
   if (angular.points) {
-    graph.showPoints = PointVisibility.Always;
+    graph.showPoints = VisibilityMode.Always;
 
     if (isNumber(angular.pointradius)) {
       graph.pointSize = 2 + angular.pointradius * 2;
     }
   } else if (graph.drawStyle !== GraphDrawStyle.Points) {
-    graph.showPoints = PointVisibility.Never;
+    graph.showPoints = VisibilityMode.Never;
   }
 
   graph.lineWidth = angular.linewidth;

@@ -21,13 +21,16 @@ import {
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
+  DataSourceRef,
   DataTransformerConfig,
+  getDefaultTimeRange,
   LoadingState,
   PanelData,
   rangeUtil,
   ScopedVars,
   TimeRange,
   TimeZone,
+  toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
@@ -38,7 +41,7 @@ export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
-  datasource: string | DataSourceApi<TQuery, TOptions> | null;
+  datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
   dashboardId?: number;
@@ -85,6 +88,15 @@ export class PanelQueryRunner {
     const fastCompare = (a: DataFrame, b: DataFrame) => {
       return compareDataFrameStructures(a, b, true);
     };
+
+    if (this.dataConfigSource.snapshotData) {
+      const snapshotPanelData: PanelData = {
+        state: LoadingState.Done,
+        series: this.dataConfigSource.snapshotData.map((v) => toDataFrame(v)),
+        timeRange: getDefaultTimeRange(), // Don't need real time range for snapshots
+      };
+      return of(snapshotPanelData);
+    }
 
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),
@@ -223,7 +235,7 @@ export class PanelQueryRunner {
       // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
         if (!query.datasource) {
-          query.datasource = ds.name;
+          query.datasource = ds.getRef();
         }
         return query;
       });
@@ -257,8 +269,7 @@ export class PanelQueryRunner {
 
     if (dataSupport.alertStates || dataSupport.annotations) {
       const panel = (this.dataConfigSource as unknown) as PanelModel;
-      const id = panel.editSourceId ?? panel.id;
-      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(id));
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panel.id));
     }
 
     this.subscription = panelData.subscribe({
@@ -292,6 +303,12 @@ export class PanelQueryRunner {
     }
   };
 
+  clearLastResult() {
+    this.lastResult = undefined;
+    // A new subject is also needed since it's a replay subject that remembers/sends last value
+    this.subject = new ReplaySubject(1);
+  }
+
   /**
    * Called when the panel is closed
    */
@@ -321,7 +338,7 @@ export class PanelQueryRunner {
 }
 
 async function getDataSource(
-  datasource: string | DataSourceApi | null,
+  datasource: DataSourceRef | string | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
   if (datasource && (datasource as any).query) {

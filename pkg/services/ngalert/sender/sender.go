@@ -41,7 +41,7 @@ type Sender struct {
 	sdManager *discovery.Manager
 }
 
-func New(metrics *metrics.Metrics) (*Sender, error) {
+func New(_ *metrics.Scheduler) (*Sender, error) {
 	l := log.New("sender")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &Sender{
@@ -51,6 +51,8 @@ func New(metrics *metrics.Metrics) (*Sender, error) {
 	}
 
 	s.manager = notifier.NewManager(
+		// Injecting a new registry here means these metrics are not exported.
+		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
 		&notifier.Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
 		s.gokitLogger,
 	)

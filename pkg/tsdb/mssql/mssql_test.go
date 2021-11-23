@@ -57,6 +57,7 @@ func TestMSSQL(t *testing.T) {
 		ConnectionString:  "",
 		DSInfo:            dsInfo,
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
+		RowLimit:          1000000,
 	}
 	endpoint, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	require.NoError(t, err)
@@ -794,6 +795,7 @@ func TestMSSQL(t *testing.T) {
 					ConnectionString:  "",
 					DSInfo:            dsInfo,
 					MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
+					RowLimit:          1000000,
 				}
 				endpoint, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 				require.NoError(t, err)
@@ -1188,6 +1190,83 @@ func TestMSSQL(t *testing.T) {
 
 			require.Equal(t, data.FieldTypeNullableTime, frames[0].Fields[0].Type())
 			require.Equal(t, data.FieldTypeNullableTime, frames[0].Fields[1].Type())
+		})
+
+		t.Run("When row limit set to 1", func(t *testing.T) {
+			queryResultTransformer := mssqlQueryResultTransformer{
+				log: logger,
+			}
+			dsInfo := sqleng.DataSourceInfo{}
+			config := sqleng.DataPluginConfiguration{
+				DriverName:        "mssql",
+				ConnectionString:  "",
+				DSInfo:            dsInfo,
+				MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
+				RowLimit:          1,
+			}
+
+			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+			require.NoError(t, err)
+
+			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
+				query := &backend.QueryDataRequest{
+					Queries: []backend.DataQuery{
+						{
+							JSON: []byte(`{
+							"rawSql": "SELECT 1 as value UNION ALL select 2 as value",
+							"format": "table"
+						}`),
+							RefID: "A",
+							TimeRange: backend.TimeRange{
+								From: time.Now(),
+								To:   time.Now(),
+							},
+						},
+					},
+				}
+
+				resp, err := handler.QueryData(context.Background(), query)
+				require.NoError(t, err)
+				queryResult := resp.Responses["A"]
+				require.NoError(t, queryResult.Error)
+				frames := queryResult.Frames
+				require.NoError(t, err)
+				require.Equal(t, 1, len(frames))
+				require.Equal(t, 1, len(frames[0].Fields))
+				require.Equal(t, 1, frames[0].Rows())
+				require.Len(t, frames[0].Meta.Notices, 1)
+				require.Equal(t, data.NoticeSeverityWarning, frames[0].Meta.Notices[0].Severity)
+			})
+
+			t.Run("When doing a time series that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
+				query := &backend.QueryDataRequest{
+					Queries: []backend.DataQuery{
+						{
+							JSON: []byte(`{
+							"rawSql": "SELECT 1 as time, 1 as value UNION ALL select 2 as time, 2 as value",
+							"format": "time_series"
+						}`),
+							RefID: "A",
+							TimeRange: backend.TimeRange{
+								From: time.Now(),
+								To:   time.Now(),
+							},
+						},
+					},
+				}
+
+				resp, err := handler.QueryData(context.Background(), query)
+				require.NoError(t, err)
+				queryResult := resp.Responses["A"]
+				require.NoError(t, queryResult.Error)
+				frames := queryResult.Frames
+				require.NoError(t, err)
+				require.Equal(t, 1, len(frames))
+				require.Equal(t, 2, len(frames[0].Fields))
+				require.Equal(t, 1, frames[0].Rows())
+				require.Len(t, frames[0].Meta.Notices, 1)
+				require.Equal(t, data.NoticeSeverityWarning, frames[0].Meta.Notices[0].Severity)
+			})
 		})
 	})
 }

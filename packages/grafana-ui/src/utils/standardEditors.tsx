@@ -171,7 +171,7 @@ export const getStandardFieldConfigs = () => {
     process: valueMappingsOverrideProcessor,
     settings: {},
     defaultValue: [],
-    shouldApply: () => true,
+    shouldApply: (x) => x.type !== FieldType.time,
     category: ['Value mappings'],
     getItemsCount: (value?) => (value ? value.length : 0),
   };
@@ -229,6 +229,8 @@ export const getStandardFieldConfigs = () => {
 
 /**
  * Returns collection of standard option editors definitions
+ *
+ * @internal
  */
 export const getStandardOptionEditors = () => {
   const number: StandardEditorsRegistryItem<number> = {

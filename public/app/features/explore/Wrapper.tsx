@@ -42,7 +42,7 @@ class WrapperUnconnected extends PureComponent<Props> {
     this.props.richHistoryUpdatedAction({ richHistory });
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props) {
     const { left, right } = this.props.queryParams;
     const hasSplit = Boolean(left) && Boolean(right);
     const datasourceTitle = hasSplit

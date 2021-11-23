@@ -26,6 +26,11 @@ const stats: ServerStat = {
 jest.mock('./state/apis', () => ({
   getServerStats: async () => stats,
 }));
+jest.mock('../../core/services/context_srv', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+  },
+}));
 
 describe('ServerStats', () => {
   it('Should render page with stats', async () => {

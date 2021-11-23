@@ -25,8 +25,8 @@ type Props = {
 
 const renderRemovableNameMenuItems = (onClick: () => void) => {
   return (
-    <MenuGroup label="" ariaLabel="">
-      <MenuItem label="remove" ariaLabel="remove" onClick={onClick} />
+    <MenuGroup label="">
+      <MenuItem label="remove" onClick={onClick} />
     </MenuGroup>
   );
 };

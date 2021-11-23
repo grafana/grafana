@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { updateAlertManagerConfigAction } from '../../../state/actions';
 import { CloudChannelValues, ReceiverFormValues, CloudChannelMap } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import { makeAMLink } from '../../../utils/misc';
 import {
   cloudReceiverToFormValues,
@@ -31,6 +32,7 @@ const defaultChannelValues: CloudChannelValues = Object.freeze({
 
 export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName, config }) => {
   const dispatch = useDispatch();
+  const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
 
   // transform receiver DTO to form values
   const [existingValue] = useMemo((): [ReceiverFormValues<CloudChannelValues> | undefined, CloudChannelMap] => {
@@ -60,9 +62,11 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
 
   return (
     <>
-      <Alert title="Info" severity="info">
-        Note that empty string values will be replaced with global defaults were appropriate.
-      </Alert>
+      {!isVanillaAM && (
+        <Alert title="Info" severity="info">
+          Note that empty string values will be replaced with global defaults were appropriate.
+        </Alert>
+      )}
       <ReceiverForm<CloudChannelValues>
         config={config}
         onSubmit={onSubmit}

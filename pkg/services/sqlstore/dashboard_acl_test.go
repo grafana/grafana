@@ -4,239 +4,245 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardAclDataAccess(t *testing.T) {
-	Convey("Testing DB", t, func() {
-		sqlStore := InitTestDB(t)
+	var sqlStore *SQLStore
+	var currentUser models.User
+	var savedFolder, childDash *models.Dashboard
 
-		Convey("Given a dashboard folder and a user", func() {
-			currentUser := createUser(t, sqlStore, "viewer", "Viewer", false)
-			savedFolder := insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
-			childDash := insertTestDashboard(t, sqlStore, "2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
+	setup := func(t *testing.T) {
+		sqlStore = InitTestDB(t)
+		currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
+		savedFolder = insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
+		childDash = insertTestDashboard(t, sqlStore, "2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
+	}
 
-			Convey("When adding dashboard permission with userId and teamId set to 0", func() {
-				err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
-					OrgID:       1,
-					DashboardID: savedFolder.Id,
-					Permission:  models.PERMISSION_EDIT,
-				})
-				So(err, ShouldEqual, models.ErrDashboardAclInfoMissing)
+	t.Run("Dashboard permission with userId and teamId set to 0", func(t *testing.T) {
+		setup(t)
+		err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
+			OrgID:       1,
+			DashboardID: savedFolder.Id,
+			Permission:  models.PERMISSION_EDIT,
+		})
+		require.Equal(t, models.ErrDashboardAclInfoMissing, err)
+	})
+
+	t.Run("Folder acl should include default acl", func(t *testing.T) {
+		setup(t)
+		query := models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
+
+		err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
+		require.Nil(t, err)
+
+		require.Equal(t, 2, len(query.Result))
+		defaultPermissionsId := int64(-1)
+		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
+		require.Equal(t, models.ROLE_VIEWER, *query.Result[0].Role)
+		require.False(t, query.Result[0].Inherited)
+		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
+		require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
+		require.False(t, query.Result[1].Inherited)
+	})
+
+	t.Run("Dashboard acl should include acl for parent folder", func(t *testing.T) {
+		setup(t)
+		query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
+
+		err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
+		require.Nil(t, err)
+
+		require.Equal(t, 2, len(query.Result))
+		defaultPermissionsId := int64(-1)
+		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
+		require.Equal(t, models.ROLE_VIEWER, *query.Result[0].Role)
+		require.True(t, query.Result[0].Inherited)
+		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
+		require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
+		require.True(t, query.Result[1].Inherited)
+	})
+
+	t.Run("Folder with removed default permissions returns no acl items", func(t *testing.T) {
+		setup(t)
+		err := sqlStore.UpdateDashboardACL(savedFolder.Id, nil)
+		require.Nil(t, err)
+
+		query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
+		err = sqlStore.GetDashboardAclInfoList(context.Background(), &query)
+		require.Nil(t, err)
+
+		require.Equal(t, 0, len(query.Result))
+	})
+
+	t.Run("Given a dashboard folder and a user", func(t *testing.T) {
+
+		t.Run("Given dashboard folder permission", func(t *testing.T) {
+			setup(t)
+			err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
+				OrgID:       1,
+				UserID:      currentUser.Id,
+				DashboardID: savedFolder.Id,
+				Permission:  models.PERMISSION_EDIT,
+			})
+			require.Nil(t, err)
+
+			t.Run("When reading dashboard acl should include acl for parent folder", func(t *testing.T) {
+				query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
+
+				err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
+				require.Nil(t, err)
+
+				require.Equal(t, 1, len(query.Result))
+				require.Equal(t, savedFolder.Id, query.Result[0].DashboardId)
 			})
 
-			Convey("Given dashboard folder with default permissions", func() {
-				Convey("When reading folder acl should include default acl", func() {
-					query := models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-
-					err := GetDashboardAclInfoList(&query)
-					So(err, ShouldBeNil)
-
-					So(len(query.Result), ShouldEqual, 2)
-					defaultPermissionsId := -1
-					So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
-					So(*query.Result[0].Role, ShouldEqual, models.ROLE_VIEWER)
-					So(query.Result[0].Inherited, ShouldBeFalse)
-					So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
-					So(*query.Result[1].Role, ShouldEqual, models.ROLE_EDITOR)
-					So(query.Result[1].Inherited, ShouldBeFalse)
-				})
-
-				Convey("When reading dashboard acl should include acl for parent folder", func() {
-					query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
-
-					err := GetDashboardAclInfoList(&query)
-					So(err, ShouldBeNil)
-
-					So(len(query.Result), ShouldEqual, 2)
-					defaultPermissionsId := -1
-					So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
-					So(*query.Result[0].Role, ShouldEqual, models.ROLE_VIEWER)
-					So(query.Result[0].Inherited, ShouldBeTrue)
-					So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
-					So(*query.Result[1].Role, ShouldEqual, models.ROLE_EDITOR)
-					So(query.Result[1].Inherited, ShouldBeTrue)
-				})
-			})
-
-			Convey("Given dashboard folder with removed default permissions", func() {
-				err := sqlStore.UpdateDashboardACL(savedFolder.Id, nil)
-				So(err, ShouldBeNil)
-
-				Convey("When reading dashboard acl should return no acl items", func() {
-					query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
-
-					err := GetDashboardAclInfoList(&query)
-					So(err, ShouldBeNil)
-
-					So(len(query.Result), ShouldEqual, 0)
-				})
-			})
-
-			Convey("Given dashboard folder permission", func() {
-				err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
-					OrgID:       1,
-					UserID:      currentUser.Id,
-					DashboardID: savedFolder.Id,
-					Permission:  models.PERMISSION_EDIT,
-				})
-				So(err, ShouldBeNil)
-
-				Convey("When reading dashboard acl should include acl for parent folder", func() {
-					query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
-
-					err := GetDashboardAclInfoList(&query)
-					So(err, ShouldBeNil)
-
-					So(len(query.Result), ShouldEqual, 1)
-					So(query.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-				})
-
-				Convey("Given child dashboard permission", func() {
-					err := testHelperUpdateDashboardAcl(t, sqlStore, childDash.Id, models.DashboardAcl{
-						OrgID:       1,
-						UserID:      currentUser.Id,
-						DashboardID: childDash.Id,
-						Permission:  models.PERMISSION_EDIT,
-					})
-					So(err, ShouldBeNil)
-
-					Convey("When reading dashboard acl should include acl for parent folder and child", func() {
-						query := models.GetDashboardAclInfoListQuery{OrgID: 1, DashboardID: childDash.Id}
-
-						err := GetDashboardAclInfoList(&query)
-						So(err, ShouldBeNil)
-
-						So(len(query.Result), ShouldEqual, 2)
-						So(query.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-						So(query.Result[0].Inherited, ShouldBeTrue)
-						So(query.Result[1].DashboardId, ShouldEqual, childDash.Id)
-						So(query.Result[1].Inherited, ShouldBeFalse)
-					})
-				})
-			})
-
-			Convey("Given child dashboard permission in folder with no permissions", func() {
+			t.Run("Given child dashboard permission", func(t *testing.T) {
 				err := testHelperUpdateDashboardAcl(t, sqlStore, childDash.Id, models.DashboardAcl{
 					OrgID:       1,
 					UserID:      currentUser.Id,
 					DashboardID: childDash.Id,
 					Permission:  models.PERMISSION_EDIT,
 				})
-				So(err, ShouldBeNil)
+				require.Nil(t, err)
 
-				Convey("When reading dashboard acl should include default acl for parent folder and the child acl", func() {
+				t.Run("When reading dashboard acl should include acl for parent folder and child", func(t *testing.T) {
 					query := models.GetDashboardAclInfoListQuery{OrgID: 1, DashboardID: childDash.Id}
 
-					err := GetDashboardAclInfoList(&query)
-					So(err, ShouldBeNil)
+					err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
+					require.Nil(t, err)
 
-					defaultPermissionsId := -1
-					So(len(query.Result), ShouldEqual, 3)
-					So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
-					So(*query.Result[0].Role, ShouldEqual, models.ROLE_VIEWER)
-					So(query.Result[0].Inherited, ShouldBeTrue)
-					So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
-					So(*query.Result[1].Role, ShouldEqual, models.ROLE_EDITOR)
-					So(query.Result[1].Inherited, ShouldBeTrue)
-					So(query.Result[2].DashboardId, ShouldEqual, childDash.Id)
-					So(query.Result[2].Inherited, ShouldBeFalse)
-				})
-			})
-
-			Convey("Should be able to add dashboard permission", func() {
-				err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
-					OrgID:       1,
-					UserID:      currentUser.Id,
-					DashboardID: savedFolder.Id,
-					Permission:  models.PERMISSION_EDIT,
-				})
-				So(err, ShouldBeNil)
-
-				q1 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-				err = GetDashboardAclInfoList(q1)
-				So(err, ShouldBeNil)
-
-				So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-				So(q1.Result[0].Permission, ShouldEqual, models.PERMISSION_EDIT)
-				So(q1.Result[0].PermissionName, ShouldEqual, "Edit")
-				So(q1.Result[0].UserId, ShouldEqual, currentUser.Id)
-				So(q1.Result[0].UserLogin, ShouldEqual, currentUser.Login)
-				So(q1.Result[0].UserEmail, ShouldEqual, currentUser.Email)
-
-				Convey("Should be able to delete an existing permission", func() {
-					err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id)
-					So(err, ShouldBeNil)
-
-					q3 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-					err = GetDashboardAclInfoList(q3)
-					So(err, ShouldBeNil)
-					So(len(q3.Result), ShouldEqual, 0)
-				})
-			})
-
-			Convey("Given a team", func() {
-				team1, err := sqlStore.CreateTeam("group1 name", "", 1)
-				So(err, ShouldBeNil)
-
-				Convey("Should be able to add a user permission for a team", func() {
-					err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
-						OrgID:       1,
-						TeamID:      team1.Id,
-						DashboardID: savedFolder.Id,
-						Permission:  models.PERMISSION_EDIT,
-					})
-					So(err, ShouldBeNil)
-
-					q1 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-					err = GetDashboardAclInfoList(q1)
-					So(err, ShouldBeNil)
-					So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q1.Result[0].Permission, ShouldEqual, models.PERMISSION_EDIT)
-					So(q1.Result[0].TeamId, ShouldEqual, team1.Id)
-				})
-
-				Convey("Should be able to update an existing permission for a team", func() {
-					err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
-						OrgID:       1,
-						TeamID:      team1.Id,
-						DashboardID: savedFolder.Id,
-						Permission:  models.PERMISSION_ADMIN,
-					})
-					So(err, ShouldBeNil)
-
-					q3 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-					err = GetDashboardAclInfoList(q3)
-					So(err, ShouldBeNil)
-					So(len(q3.Result), ShouldEqual, 1)
-					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q3.Result[0].Permission, ShouldEqual, models.PERMISSION_ADMIN)
-					So(q3.Result[0].TeamId, ShouldEqual, team1.Id)
+					require.Equal(t, 2, len(query.Result))
+					require.Equal(t, savedFolder.Id, query.Result[0].DashboardId)
+					require.True(t, query.Result[0].Inherited)
+					require.Equal(t, childDash.Id, query.Result[1].DashboardId)
+					require.False(t, query.Result[1].Inherited)
 				})
 			})
 		})
 
-		Convey("Given a root folder", func() {
-			var rootFolderId int64 = 0
-
-			Convey("When reading dashboard acl should return default permissions", func() {
-				query := models.GetDashboardAclInfoListQuery{DashboardID: rootFolderId, OrgID: 1}
-
-				err := GetDashboardAclInfoList(&query)
-				So(err, ShouldBeNil)
-
-				So(len(query.Result), ShouldEqual, 2)
-				defaultPermissionsId := -1
-				So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
-				So(*query.Result[0].Role, ShouldEqual, models.ROLE_VIEWER)
-				So(query.Result[0].Inherited, ShouldBeFalse)
-				So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
-				So(*query.Result[1].Role, ShouldEqual, models.ROLE_EDITOR)
-				So(query.Result[1].Inherited, ShouldBeFalse)
+		t.Run("Reading dashboard acl should include default acl for parent folder and the child acl", func(t *testing.T) {
+			setup(t)
+			err := testHelperUpdateDashboardAcl(t, sqlStore, childDash.Id, models.DashboardAcl{
+				OrgID:       1,
+				UserID:      currentUser.Id,
+				DashboardID: childDash.Id,
+				Permission:  models.PERMISSION_EDIT,
 			})
+			require.Nil(t, err)
+
+			query := models.GetDashboardAclInfoListQuery{OrgID: 1, DashboardID: childDash.Id}
+
+			err = sqlStore.GetDashboardAclInfoList(context.Background(), &query)
+			require.Nil(t, err)
+
+			defaultPermissionsId := int64(-1)
+			require.Equal(t, 3, len(query.Result))
+			require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
+			require.Equal(t, models.ROLE_VIEWER, *query.Result[0].Role)
+			require.True(t, query.Result[0].Inherited)
+			require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
+			require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
+			require.True(t, query.Result[1].Inherited)
+			require.Equal(t, childDash.Id, query.Result[2].DashboardId)
+			require.False(t, query.Result[2].Inherited)
 		})
+
+		t.Run("Add and delete dashboard permission", func(t *testing.T) {
+			setup(t)
+			err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
+				OrgID:       1,
+				UserID:      currentUser.Id,
+				DashboardID: savedFolder.Id,
+				Permission:  models.PERMISSION_EDIT,
+			})
+			require.Nil(t, err)
+
+			q1 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
+			err = sqlStore.GetDashboardAclInfoList(context.Background(), q1)
+			require.Nil(t, err)
+
+			require.Equal(t, savedFolder.Id, q1.Result[0].DashboardId)
+			require.Equal(t, models.PERMISSION_EDIT, q1.Result[0].Permission)
+			require.Equal(t, "Edit", q1.Result[0].PermissionName)
+			require.Equal(t, currentUser.Id, q1.Result[0].UserId)
+			require.Equal(t, currentUser.Login, q1.Result[0].UserLogin)
+			require.Equal(t, currentUser.Email, q1.Result[0].UserEmail)
+
+			err = testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id)
+			require.Nil(t, err)
+
+			q3 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
+			err = sqlStore.GetDashboardAclInfoList(context.Background(), q3)
+			require.Nil(t, err)
+			require.Equal(t, 0, len(q3.Result))
+		})
+
+		t.Run("Should be able to add a user permission for a team", func(t *testing.T) {
+			setup(t)
+			team1, err := sqlStore.CreateTeam("group1 name", "", 1)
+			require.Nil(t, err)
+
+			err = testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
+				OrgID:       1,
+				TeamID:      team1.Id,
+				DashboardID: savedFolder.Id,
+				Permission:  models.PERMISSION_EDIT,
+			})
+			require.Nil(t, err)
+
+			q1 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
+			err = sqlStore.GetDashboardAclInfoList(context.Background(), q1)
+			require.Nil(t, err)
+			require.Equal(t, savedFolder.Id, q1.Result[0].DashboardId)
+			require.Equal(t, models.PERMISSION_EDIT, q1.Result[0].Permission)
+			require.Equal(t, team1.Id, q1.Result[0].TeamId)
+		})
+
+		t.Run("Should be able to update an existing permission for a team", func(t *testing.T) {
+			setup(t)
+			team1, err := sqlStore.CreateTeam("group1 name", "", 1)
+			require.Nil(t, err)
+			err = testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
+				OrgID:       1,
+				TeamID:      team1.Id,
+				DashboardID: savedFolder.Id,
+				Permission:  models.PERMISSION_ADMIN,
+			})
+			require.Nil(t, err)
+
+			q3 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
+			err = sqlStore.GetDashboardAclInfoList(context.Background(), q3)
+			require.Nil(t, err)
+			require.Equal(t, 1, len(q3.Result))
+			require.Equal(t, savedFolder.Id, q3.Result[0].DashboardId)
+			require.Equal(t, models.PERMISSION_ADMIN, q3.Result[0].Permission)
+			require.Equal(t, team1.Id, q3.Result[0].TeamId)
+		})
+	})
+
+	t.Run("Default permissions for root folder dashboards", func(t *testing.T) {
+		setup(t)
+		var rootFolderId int64 = 0
+		sqlStore := InitTestDB(t)
+
+		query := models.GetDashboardAclInfoListQuery{DashboardID: rootFolderId, OrgID: 1}
+
+		err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
+		require.Nil(t, err)
+
+		require.Equal(t, 2, len(query.Result))
+		defaultPermissionsId := int64(-1)
+		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
+		require.Equal(t, models.ROLE_VIEWER, *query.Result[0].Role)
+		require.False(t, query.Result[0].Inherited)
+		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
+		require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
+		require.False(t, query.Result[1].Inherited)
 	})
 }

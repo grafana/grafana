@@ -13,11 +13,10 @@ export interface PanelRendererProps<P extends object = any, F extends object = a
   data: PanelData;
   pluginId: string;
   title: string;
-  options?: P;
+  options?: Partial<P>;
   onOptionsChange?: (options: P) => void;
   onChangeTimeRange?: (timeRange: AbsoluteTimeRange) => void;
-  fieldConfig?: FieldConfigSource<F>;
-  onFieldConfigChange?: (config: FieldConfigSource<F>) => void;
+  fieldConfig?: FieldConfigSource<Partial<F>>;
   timeZone?: string;
   width: number;
   height: number;

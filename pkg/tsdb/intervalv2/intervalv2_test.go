@@ -15,19 +15,24 @@ func TestIntervalCalculator_Calculate(t *testing.T) {
 	timeNow := time.Now()
 
 	testCases := []struct {
-		name      string
-		timeRange backend.TimeRange
-		expected  string
+		name       string
+		timeRange  backend.TimeRange
+		resolution int64
+		expected   string
 	}{
-		{"from 5m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(5 * time.Minute)}, "200ms"},
-		{"from 15m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(15 * time.Minute)}, "500ms"},
-		{"from 30m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(30 * time.Minute)}, "1s"},
-		{"from 1h to now", backend.TimeRange{From: timeNow, To: timeNow.Add(60 * time.Minute)}, "2s"},
+		{"from 5m to now and default resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(5 * time.Minute)}, 0, "200ms"},
+		{"from 5m to now and 500 resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(5 * time.Minute)}, 500, "500ms"},
+		{"from 15m to now and default resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(15 * time.Minute)}, 0, "500ms"},
+		{"from 15m to now and 100 resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(15 * time.Minute)}, 100, "10s"},
+		{"from 30m to now and default resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(30 * time.Minute)}, 0, "1s"},
+		{"from 30m to now and 3000 resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(30 * time.Minute)}, 3000, "500ms"},
+		{"from 1h to now and default resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(60 * time.Minute)}, 0, "2s"},
+		{"from 1h to now and 1000 resoluion", backend.TimeRange{From: timeNow, To: timeNow.Add(60 * time.Minute)}, 1000, "5s"},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			interval := calculator.Calculate(tc.timeRange, time.Millisecond*1)
+			interval := calculator.Calculate(tc.timeRange, time.Millisecond*1, tc.resolution)
 			assert.Equal(t, tc.expected, interval.Text)
 		})
 	}
@@ -107,6 +112,7 @@ func TestGetIntervalFrom(t *testing.T) {
 		{"45s", nil, "45s", 0, time.Second * 15, time.Second * 45},
 		{"45", nil, "45", 0, time.Second * 15, time.Second * 45},
 		{"2m", nil, "2m", 0, time.Second * 15, time.Minute * 2},
+		{"1d", nil, "1d", 0, time.Second * 15, time.Hour * 24},
 		{"intervalMs", nil, "", 45000, time.Second * 15, time.Second * 45},
 		{"intervalMs sub-seconds", nil, "", 45200, time.Second * 15, time.Millisecond * 45200},
 		{"defaultInterval when interval empty", nil, "", 0, time.Second * 15, time.Second * 15},

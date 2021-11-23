@@ -12,18 +12,17 @@ import (
 	"time"
 
 	"github.com/VividCortex/mysqlerr"
+	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -44,22 +43,21 @@ func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager, httpClientProvider httpclient.Provider) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar, httpClientProvider httpclient.Provider) (*Service, error) {
 	s := &Service{
-		Cfg: cfg,
-		im:  datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		im: datasource.NewInstanceManager(newInstanceSettings(cfg, httpClientProvider)),
 	}
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
 
-	if err := manager.Register("mysql", factory); err != nil {
+	if err := registrar.LoadAndRegister("mysql", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return s, nil
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:    0,
@@ -117,7 +115,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(dsInfo.JsonData.Timezone))
 		}
 
-		if setting.Env == setting.Dev {
+		if cfg.Env == setting.Dev {
 			logger.Debug("getEngine", "connection", cnnstr)
 		}
 
@@ -127,6 +125,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			DSInfo:            dsInfo,
 			TimeColumnNames:   []string{"time", "time_sec"},
 			MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
+			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
 		rowTransformer := mysqlQueryResultTransformer{

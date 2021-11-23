@@ -18,6 +18,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 
 	if query.Expression != "" {
 		mdq.Expression = aws.String(query.Expression)
+		mdq.Period = aws.Int64(int64(query.Period))
 	} else {
 		if query.isSearchExpression() {
 			mdq.Expression = aws.String(buildSearchExpression(query, query.Statistic))

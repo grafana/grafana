@@ -3,9 +3,9 @@ package libraryelements
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -15,12 +15,12 @@ func TestGetLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// by uid
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": "unknown"})
 			resp := sc.service.getHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 
 			// by name
-			sc.reqContext.ReplaceAllParams(map[string]string{":name": "unknown"})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": "unknown"})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 		})
@@ -68,7 +68,7 @@ func TestGetLibraryElement(t *testing.T) {
 			}
 
 			// by uid
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.getHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 
@@ -77,7 +77,7 @@ func TestGetLibraryElement(t *testing.T) {
 			}
 
 			// by name
-			sc.reqContext.ReplaceAllParams(map[string]string{":name": sc.initialResult.Result.Name})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			arrayResult := validateAndUnMarshalArrayResponse(t, resp)
 
@@ -119,7 +119,7 @@ func TestGetLibraryElement(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
 			require.NoError(t, err)
 
 			expected := func(res libraryElementResult) libraryElementResult {
@@ -163,7 +163,7 @@ func TestGetLibraryElement(t *testing.T) {
 			}
 
 			// by uid
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.getHandler(sc.reqContext)
 			result := validateAndUnMarshalResponse(t, resp)
 
@@ -172,7 +172,7 @@ func TestGetLibraryElement(t *testing.T) {
 			}
 
 			// by name
-			sc.reqContext.ReplaceAllParams(map[string]string{":name": sc.initialResult.Result.Name})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			arrayResult := validateAndUnMarshalArrayResponse(t, resp)
 			if diff := cmp.Diff(libraryElementArrayResult{Result: []libraryElement{expected(result).Result}}, arrayResult, getCompareOptions()...); diff != "" {
@@ -186,12 +186,12 @@ func TestGetLibraryElement(t *testing.T) {
 			sc.reqContext.SignedInUser.OrgRole = models.ROLE_ADMIN
 
 			// by uid
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.getHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 
 			// by name
-			sc.reqContext.ReplaceAllParams(map[string]string{":name": sc.initialResult.Result.Name})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 		})

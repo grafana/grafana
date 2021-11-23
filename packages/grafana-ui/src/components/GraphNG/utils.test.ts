@@ -18,7 +18,7 @@ import {
   GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  PointVisibility,
+  VisibilityMode,
   StackingMode,
 } from '@grafana/schema';
 
@@ -48,7 +48,7 @@ function mockDataFrame() {
       spanNulls: false,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'A',
         mode: StackingMode.Normal,
@@ -72,7 +72,7 @@ function mockDataFrame() {
       barAlignment: BarAlignment.Before,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'A',
         mode: StackingMode.Normal,
@@ -96,7 +96,7 @@ function mockDataFrame() {
       spanNulls: false,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'B',
         mode: StackingMode.Normal,
@@ -119,7 +119,7 @@ function mockDataFrame() {
       barAlignment: BarAlignment.Before,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'B',
         mode: StackingMode.Normal,
@@ -142,7 +142,7 @@ function mockDataFrame() {
       barAlignment: BarAlignment.Before,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'B',
         mode: StackingMode.None,

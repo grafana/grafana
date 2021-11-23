@@ -72,7 +72,7 @@ export const UserInviteForm: FC<Props> = ({}) => {
               />
             </Field>
             <Field label="Send invite email">
-              <Switch {...register('sendEmail')} />
+              <Switch id="send-email-switch" {...register('sendEmail')} />
             </Field>
             <HorizontalGroup>
               <Button type="submit">Submit</Button>

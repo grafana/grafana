@@ -1,24 +1,17 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { PromExploreExtraFieldProps, PromExploreExtraField } from './PromExploreExtraField';
-import { Observable } from 'rxjs';
+import { PromExploreExtraFieldProps, PromExploreExtraField, testIds } from './PromExploreExtraField';
 
 const setup = (propOverrides?: PromExploreExtraFieldProps) => {
-  const queryType = 'range';
-  const stepValue = '1';
   const query = { exemplar: false };
-  const datasource = { exemplarErrors: new Observable() };
-  const onStepChange = jest.fn();
-  const onQueryTypeChange = jest.fn();
-  const onKeyDownFunc = jest.fn();
+  const datasource = {};
+  const onChange = jest.fn();
+  const onRunQuery = jest.fn();
 
   const props: any = {
-    queryType,
-    stepValue,
+    onChange,
+    onRunQuery,
     query,
-    onStepChange,
-    onQueryTypeChange,
-    onKeyDownFunc,
     datasource,
   };
 
@@ -30,11 +23,11 @@ const setup = (propOverrides?: PromExploreExtraFieldProps) => {
 describe('PromExploreExtraField', () => {
   it('should render step field', () => {
     setup();
-    expect(screen.getByTestId('stepField')).toBeInTheDocument();
+    expect(screen.getByTestId(testIds.stepField)).toBeInTheDocument();
   });
 
   it('should render query type field', () => {
     setup();
-    expect(screen.getByTestId('queryTypeField')).toBeInTheDocument();
+    expect(screen.getByTestId(testIds.queryTypeField)).toBeInTheDocument();
   });
 });

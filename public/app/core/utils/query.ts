@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, DataSourceRef } from '@grafana/data';
 
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
@@ -9,10 +9,15 @@ export const getNextRefIdChar = (queries: DataQuery[]): string => {
   }
 };
 
-export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>): DataQuery[] {
+export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datasource?: DataSourceRef): DataQuery[] {
   const q = query || {};
   q.refId = getNextRefIdChar(queries);
   q.hide = false;
+
+  if (!q.datasource && datasource) {
+    q.datasource = datasource;
+  }
+
   return [...queries, q as DataQuery];
 }
 

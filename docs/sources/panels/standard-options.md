@@ -67,7 +67,6 @@ You can use the unit dropdown to also specify custom units, custom prefix or suf
 
 To select a custom unit enter the unit and select the last `Custom: xxx` option in the dropdown.
 
-- If y u want a space -> If you want a space
 - `suffix:<suffix>` for custom unit that should go after value.
 - `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. See [formats](https://momentjs.com/docs/#/displaying/) for the format syntax and options.
 - `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the

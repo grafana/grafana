@@ -142,6 +142,7 @@ export default class InfluxQueryModel {
   }
 
   private renderTagCondition(tag: InfluxQueryTag, index: number, interpolate?: boolean) {
+    // FIXME: merge this function with query_builder/renderTagCondition
     let str = '';
     let operator = tag.operator;
     let value = tag.value;

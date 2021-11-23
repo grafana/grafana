@@ -1,5 +1,5 @@
 const execa = require('execa');
-const program = require('commander');
+const { program } = require('commander');
 const resolveBin = require('resolve-as-bin');
 const { resolve, sep } = require('path');
 

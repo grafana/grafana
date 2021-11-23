@@ -25,7 +25,7 @@ export interface MetricMetadata {
 type SetErrorFn = (source: string, error: AzureMonitorErrorish | undefined) => void;
 type OnChangeFn = (newQuery: AzureMonitorQuery) => void;
 
-type DataHook = (
+export type DataHook = (
   query: AzureMonitorQuery,
   datasource: Datasource,
   onChange: OnChangeFn,
@@ -55,8 +55,38 @@ export function useAsyncState<T>(asyncFn: () => Promise<T>, setError: Function, 
   return finalValue;
 }
 
-export const useSubscriptions: DataHook = (query, datasource, onChange, setError) => {
+export const updateSubscriptions = (
+  query: AzureMonitorQuery,
+  subscriptionOptions: AzureMonitorOption[],
+  onChange: OnChangeFn,
+  defaultSubscription?: string
+) => {
   const { subscription } = query;
+
+  // Return early if subscriptions havent loaded, or if the query already has a subscription
+  if (!subscriptionOptions.length || (subscription && hasOption(subscriptionOptions, subscription))) {
+    return;
+  }
+
+  const defaultSub = defaultSubscription || subscriptionOptions[0].value;
+
+  if (!subscription && defaultSub && hasOption(subscriptionOptions, defaultSub)) {
+    onChange(setSubscriptionID(query, defaultSub));
+  }
+
+  // Check if the current subscription is in the list of subscriptions
+  if (subscription && !hasOption(subscriptionOptions, subscription)) {
+    if (hasOption(subscriptionOptions, defaultSub)) {
+      // Use the default sub if is on theh list
+      onChange(setSubscriptionID(query, defaultSub));
+    } else {
+      // Neither the current subscription nor the defaultSub is on the list, remove it
+      onChange(setSubscriptionID(query, ''));
+    }
+  }
+};
+
+export const useSubscriptions: DataHook = (query, datasource, onChange, setError) => {
   const defaultSubscription = datasource.azureMonitorDatasource.defaultSubscriptionId;
 
   const subscriptionOptions = useAsyncState(
@@ -69,17 +99,8 @@ export const useSubscriptions: DataHook = (query, datasource, onChange, setError
   );
 
   useEffect(() => {
-    // Return early if subscriptions havent loaded, or if the query already has a subscription
-    if (!subscriptionOptions.length || (subscription && hasOption(subscriptionOptions, subscription))) {
-      return;
-    }
-
-    const defaultSub = defaultSubscription || subscriptionOptions[0].value;
-
-    if (!subscription && defaultSub && hasOption(subscriptionOptions, defaultSub)) {
-      onChange(setSubscriptionID(query, defaultSub));
-    }
-  }, [subscriptionOptions, query, subscription, defaultSubscription, onChange]);
+    updateSubscriptions(query, subscriptionOptions, onChange, defaultSubscription);
+  }, [subscriptionOptions, query, defaultSubscription, onChange]);
 
   return subscriptionOptions;
 };
@@ -97,7 +118,7 @@ export const useResourceGroups: DataHook = (query, datasource, onChange, setErro
       const results = await datasource.getResourceGroups(subscription);
       const options = results.map(toOption);
 
-      if (resourceGroup && !hasOption(options, resourceGroup)) {
+      if (isInvalidOption(resourceGroup, options, datasource.getVariables())) {
         onChange(setResourceGroup(query, undefined));
       }
 
@@ -121,7 +142,7 @@ export const useResourceTypes: DataHook = (query, datasource, onChange, setError
       const results = await datasource.getMetricDefinitions(subscription, resourceGroup);
       const options = results.map(toOption);
 
-      if (metricDefinition && !hasOption(options, metricDefinition)) {
+      if (isInvalidOption(metricDefinition, options, datasource.getVariables())) {
         onChange(setResourceType(query, undefined));
       }
 
@@ -145,7 +166,7 @@ export const useResourceNames: DataHook = (query, datasource, onChange, setError
       const results = await datasource.getResourceNames(subscription, resourceGroup, metricDefinition);
       const options = results.map(toOption);
 
-      if (resourceName && !hasOption(options, resourceName)) {
+      if (isInvalidOption(resourceName, options, datasource.getVariables())) {
         onChange(setResourceName(query, undefined));
       }
 
@@ -170,9 +191,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
       const options = results.map(toOption);
 
       // Do some cleanup of the query state if need be
-      if ((!metricNamespace && options.length) || options.length === 1) {
-        onChange(setMetricNamespace(query, options[0].value));
-      } else if (options[0] && metricNamespace && !hasOption(options, metricNamespace)) {
+      if (!metricNamespace && options.length) {
         onChange(setMetricNamespace(query, options[0].value));
       }
 
@@ -205,7 +224,7 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
 
       const options = results.map(toOption);
 
-      if (metricName && !hasOption(options, metricName)) {
+      if (isInvalidOption(metricName, options, datasource.getVariables())) {
         onChange(setMetricName(query, undefined));
       }
 
@@ -277,3 +296,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
 
   return metricMetadata;
 };
+
+function isInvalidOption(value: string | undefined, options: AzureMonitorOption[], templateVariables: string[]) {
+  return value && !templateVariables.includes(value) && !hasOption(options, value);
+}

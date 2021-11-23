@@ -57,6 +57,7 @@ You can map values to three different conditions:
 
 - **Value** maps text values to a color or different display text. For example, if a value is `10`, I want Grafana to display **Perfection!** rather than the number.
 - **Range** maps numerical ranges to a display text and color. For example, if a value is within a certain range, I want Grafana to display **Low** or **High** rather than the number.
+- **Regex** maps regular expressions to replacement text and a color. For example, if a value is 'www.example.com', I want Grafana to display just **www**, truncating the domain.
 - **Special** maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to a display text and color. For example, if Grafana encounters a `null`, I want Grafana to display **N/A**.
 
 You can also use the dots on the left as a "handle" to drag and reorder value mappings in the list.
@@ -110,6 +111,20 @@ Create a mapping for a range of values.
 1. Click **Add a new mapping** and then select **Range**.
 1. Enter the beginning and ending values in the range for Grafana to match.
 1. (Optional) Enter display text.
+1. (Optional) Set the color.
+1. Click **Update** to save the value mapping.
+
+## Map a regular expression
+
+Create a mapping based on a regular expression.
+
+![Map a regular expression](/static/img/docs/value-mappings/map-regex-8-0.png)
+
+1. [Open the panel editor]({{< relref "./panel-editor.md#open-the-panel-editor" >}}).
+1. In the Value mappings section of the side pane, click **Add value mappings**.
+1. Click **Add a new mapping** and then select **Regex**.
+1. Enter the regular expression pattern for Grafana to match.
+1. (Optional) Enter display text, which can include items such as $1 for replacements.
 1. (Optional) Set the color.
 1. Click **Update** to save the value mapping.
 

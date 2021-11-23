@@ -6,26 +6,27 @@ import { BarGauge } from './BarGauge';
 # BarGauge
 
 ## Usage
+
 ```tsx
 import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 
 const field: Partial<Field> = {
-    type: FieldType.number,
-    config: {
-      min: minValue,
-      max: maxValue,
-      thresholds: {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          { value: -Infinity, color: 'green' },
-          { value: threshold1Value, color: threshold1Color },
-          { value: threshold2Value, color: threshold2Color },
-        ],
-      },
+  type: FieldType.number,
+  config: {
+    min: minValue,
+    max: maxValue,
+    thresholds: {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: threshold1Value, color: threshold1Color },
+        { value: threshold2Value, color: threshold2Color },
+      ],
     },
-  };
-  field.display = getDisplayProcessor({ field });
+  },
+};
+field.display = getDisplayProcessor({ field });
 
 const value = {
   text: value.toString(),
@@ -34,7 +35,14 @@ const value = {
 };
 
 //...
-<BarGauge value={70} field={field.config} display={field.display} value={value} orientation={VizOrientation.Vertical} displayMode={BarGaugeDisplayMode.Basic}/>
+<BarGauge
+  value={70}
+  field={field.config}
+  display={field.display}
+  value={value}
+  orientation={VizOrientation.Vertical}
+  displayMode={BarGaugeDisplayMode.Basic}
+/>;
 ```
 
 <Props of={BarGauge} />

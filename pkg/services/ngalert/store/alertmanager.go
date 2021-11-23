@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"xorm.io/builder"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -33,6 +35,22 @@ func (st *DBstore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAle
 	})
 }
 
+// GetAllLatestAlertmanagerConfiguration returns the latest configuration of every organization
+func (st *DBstore) GetAllLatestAlertmanagerConfiguration(ctx context.Context) ([]*models.AlertConfiguration, error) {
+	var result []*models.AlertConfiguration
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		condition := builder.In("id", builder.Select("MAX(id)").From("alert_configuration").GroupBy("org_id"))
+		if err := sess.Table("alert_configuration").Where(condition).Find(&result); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 // SaveAlertmanagerConfiguration creates an alertmanager configuration.
 func (st DBstore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	return st.SaveAlertmanagerConfigurationWithCallback(cmd, func() error { return nil })
@@ -41,7 +59,7 @@ func (st DBstore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerConf
 type SaveCallback func() error
 
 // SaveAlertmanagerConfigurationWithCallback creates an alertmanager configuration version and then executes a callback.
-// If the callback results in error in rollsback the transaction.
+// If the callback results in error it rolls back the transaction.
 func (st DBstore) SaveAlertmanagerConfigurationWithCallback(cmd *models.SaveAlertmanagerConfigurationCmd, callback SaveCallback) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		config := models.AlertConfiguration{

@@ -49,6 +49,7 @@ type OAuthInfo struct {
 	TlsClientKey           string
 	TlsClientCa            string
 	TlsSkipVerify          bool
+	UsePKCE                bool
 }
 
 func ProvideService(cfg *setting.Cfg) *SocialService {
@@ -84,6 +85,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			TlsClientKey:         sec.Key("tls_client_key").String(),
 			TlsClientCa:          sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:        sec.Key("tls_skip_verify_insecure").MustBool(),
+			UsePKCE:              sec.Key("use_pkce").MustBool(),
 		}
 
 		// when empty_scopes parameter exists and is true, overwrite scope with empty value
@@ -126,9 +128,10 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:    newSocialBase(name, &config, info),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:        newSocialBase(name, &config, info),
+				apiUrl:            info.ApiUrl,
+				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
+				roleAttributePath: info.RoleAttributePath,
 			}
 		}
 

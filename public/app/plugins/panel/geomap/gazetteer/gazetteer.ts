@@ -1,6 +1,7 @@
 import { KeyValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { loadWorldmapPoints } from './worldmap';
+import { loadFromGeoJSON } from './geojson';
 
 // http://geojson.xyz/
 
@@ -25,6 +26,12 @@ export function loadGazetteer(path: string, data: any): Gazetteer {
     if (first.latitude && first.longitude && (first.key || first.keys)) {
       return loadWorldmapPoints(path, data);
     }
+  }
+
+  // try loading geojson
+  const features = data?.features;
+  if (Array.isArray(features) && data?.type === 'FeatureCollection') {
+    return loadFromGeoJSON(path, data);
   }
 
   return {

@@ -6,3 +6,5 @@ devenv
 data
 dist
 e2e/tmp
+public/lib/monaco
+deployment_tools_config.json

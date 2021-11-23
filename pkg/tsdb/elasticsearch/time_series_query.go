@@ -28,7 +28,6 @@ var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
 	}
 }
 
-// nolint:staticcheck
 func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	tsQueryParser := newTimeSeriesQueryParser()
 	queries, err := tsQueryParser.parse(e.dataQueries)
@@ -63,14 +62,13 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	return rp.getTimeSeries()
 }
 
-// nolint:staticcheck
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
 	result backend.QueryDataResponse) error {
 	minInterval, err := e.client.GetMinInterval(q.Interval)
 	if err != nil {
 		return err
 	}
-	interval := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval)
+	interval := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, q.MaxDataPoints)
 
 	b := ms.Search(interval)
 	b.Size(0)
@@ -264,6 +262,12 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 			a.Missing = &missing
 		}
 
+		if timezone, err := bucketAgg.Settings.Get("timeZone").String(); err == nil {
+			if timezone != "utc" {
+				a.TimeZone = timezone
+			}
+		}
+
 		aggBuilder = b
 	})
 
@@ -400,13 +404,14 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery []backend.DataQuery) ([]*Query, 
 		interval := model.Get("interval").MustString("")
 
 		queries = append(queries, &Query{
-			TimeField:  timeField,
-			RawQuery:   rawQuery,
-			BucketAggs: bucketAggs,
-			Metrics:    metrics,
-			Alias:      alias,
-			Interval:   interval,
-			RefID:      q.RefID,
+			TimeField:     timeField,
+			RawQuery:      rawQuery,
+			BucketAggs:    bucketAggs,
+			Metrics:       metrics,
+			Alias:         alias,
+			Interval:      interval,
+			RefID:         q.RefID,
+			MaxDataPoints: q.MaxDataPoints,
 		})
 	}
 

@@ -29,6 +29,7 @@ import { css } from '@emotion/css';
 import { useComponentInstanceId } from '@grafana/ui/src/utils/useComponetInstanceId';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 import { selectors } from '@grafana/e2e-selectors';
+import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 /**
  * @beta
@@ -62,9 +63,7 @@ export const PieChart: FC<PieChartProps> = ({
     scroll: true,
   });
 
-  const filteredFieldDisplayValues = fieldDisplayValues.filter((dv) => {
-    return !dv.field.custom.hideFrom.viz;
-  });
+  const filteredFieldDisplayValues = fieldDisplayValues.filter(filterDisplayItems);
 
   const getValue = (d: FieldDisplay) => d.display.numeric;
   const getGradientId = (color: string) => `${componentInstanceId}-${tinycolor(color).toHex()}`;
@@ -74,7 +73,7 @@ export const PieChart: FC<PieChartProps> = ({
 
   const showLabel = displayLabels.length > 0;
   const showTooltip = tooltipOptions.mode !== 'none' && tooltip.tooltipOpen;
-  const total = filteredFieldDisplayValues.reduce((acc, item) => item.display.numeric + acc, 0);
+  const total = filteredFieldDisplayValues.reduce(sumDisplayItemsReducer, 0);
   const layout = getPieLayout(width, height, pieType);
   const colors = [
     ...new Set(

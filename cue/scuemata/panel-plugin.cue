@@ -8,10 +8,10 @@ package scuemata
 // the larger Dashboard schema.
 #PanelSchema: {
     // Defines plugin specific options for a panel
-    PanelOptions: {...}
+    PanelOptions: {...} @cuetsy(kind="interface")
 
     // Define the custom properties that exist within standard field config
-    PanelFieldConfig?: {...}
+    PanelFieldConfig?: {...} @cuetsy(kind="interface")
 
     // Panels may define their own types
     ...

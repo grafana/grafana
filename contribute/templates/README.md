@@ -15,34 +15,37 @@ Feel free to add templates to the `templates` folder. Try to make them as generi
 
 ## Documentation templates
 
-In an ideal world, each topic will correspond to an information *type* ([task](doc-task-template.md), [reference](doc-reference-template.md), [concept](doc-concept-template.md)) and contain only that type of information.
+In an ideal world, each topic will correspond to an information _type_ ([task](doc-task-template.md), [reference](doc-reference-template.md), [concept](doc-concept-template.md)) and contain only that type of information.
 
 However, this is not always practical. For example, you have a series of short topics, you can group them into one topic.
 
-Try to *chunk* your content. This means you should organize the document so that the same kinds of content are grouped together.
+Try to _chunk_ your content. This means you should organize the document so that the same kinds of content are grouped together.
 
 ### Chunking example
 
-If I was writing content for a site called *Doggie handbook*, I might organize it like this. 
+If I was writing content for a site called _Doggie handbook_, I might organize it like this.
 
 **Concept**
+
 - What a dog is
 - Brief history of dogs
 - Why you might want a dog
 - Tasks dogs can be trained to do
-  
+
 **Tasks**
+
 - Feed the dog
 - Groom the dog
 - Train the dog
 
 **Reference**
+
 - List of dog equipment you will need
 - Table of breeds that includes breed name, size range, short or long hair, and type of dog
 
 ### Audience
 
-Write for an audience that is computer literate and has general technical knowledge, but is not necessarily familiar with Grafana or the finer points of observability. 
+Write for an audience that is computer literate and has general technical knowledge, but is not necessarily familiar with Grafana or the finer points of observability.
 
 Pretend you are explaining your topic to a brand new Grafana user or developer.
 
@@ -50,7 +53,7 @@ Pretend you are explaining your topic to a brand new Grafana user or developer.
 
 Thanks to search engines, every page in the documentation might be a reader's entry point. This means that each page needs to be self-contained and make sense on its own. The reader should not need to read other topics in order to perform the task or understand the concept.
 
-However, try to be helpful and link to related information. Using the *Doggie handbook* example, the concept topic that explains what dogs can be trained to do might link to the Train the dog task.
+However, try to be helpful and link to related information. Using the _Doggie handbook_ example, the concept topic that explains what dogs can be trained to do might link to the Train the dog task.
 
 ## Code templates
 

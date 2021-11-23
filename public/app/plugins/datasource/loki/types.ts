@@ -33,11 +33,13 @@ export interface LokiQuery extends DataQuery {
   resolution?: number;
   range?: boolean;
   instant?: boolean;
+  volumeQuery?: boolean;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
   derivedFields?: DerivedFieldConfig[];
+  alertmanager?: string;
 }
 
 export interface LokiStats {

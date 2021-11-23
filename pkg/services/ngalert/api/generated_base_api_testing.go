@@ -24,7 +24,7 @@ type TestingApiService interface {
 	RouteTestRuleConfig(*models.ReqContext, apimodels.TestRulePayload) response.Response
 }
 
-func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, m *metrics.Metrics) {
+func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/v1/eval"),

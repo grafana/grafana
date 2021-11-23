@@ -60,7 +60,11 @@ export class TimeSrv {
     // remember time at load so we can go back to it
     this.timeAtLoad = cloneDeep(this.time);
 
-    const range = rangeUtil.convertRawToRange(this.time, this.dashboard?.getTimezone());
+    const range = rangeUtil.convertRawToRange(
+      this.time,
+      this.dashboard?.getTimezone(),
+      this.dashboard?.fiscalYearStartMonth
+    );
 
     if (range.to.isBefore(range.from)) {
       this.setTime(
@@ -327,8 +331,8 @@ export class TimeSrv {
     const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
 
     return {
-      from: dateMath.parse(raw.from, false, timezone)!,
-      to: dateMath.parse(raw.to, true, timezone)!,
+      from: dateMath.parse(raw.from, false, timezone, this.dashboard?.fiscalYearStartMonth)!,
+      to: dateMath.parse(raw.to, true, timezone, this.dashboard?.fiscalYearStartMonth)!,
       raw: raw,
     };
   }
@@ -348,6 +352,23 @@ export class TimeSrv {
       from: toUtc(from),
       to: toUtc(to),
     });
+  }
+
+  // isRefreshOutsideThreshold function calculates the difference between last refresh and now
+  // if the difference is outside 5% of the current set time range then the function will return true
+  // if the difference is within 5% of the current set time range then the function will return false
+  // if the current time range is absolute (i.e. not using relative strings like now-5m) then the function will return false
+  isRefreshOutsideThreshold(lastRefresh: number, threshold = 0.05) {
+    const timeRange = this.timeRange();
+
+    if (dateMath.isMathString(timeRange.raw.from)) {
+      const totalRange = timeRange.to.diff(timeRange.from);
+      const msSinceLastRefresh = Date.now() - lastRefresh;
+      const msThreshold = totalRange * threshold;
+      return msSinceLastRefresh >= msThreshold;
+    }
+
+    return false;
   }
 }
 

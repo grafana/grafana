@@ -13,7 +13,7 @@ import {
   AxisPlacement,
   GraphDrawStyle,
   GraphFieldConfig,
-  PointVisibility,
+  VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
 } from '@grafana/schema';
@@ -39,7 +39,7 @@ interface State {
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
-  showPoints: PointVisibility.Auto,
+  showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Hidden,
 };
 
@@ -50,7 +50,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     const alignedDataFrame = preparePlotFrame(props.sparkline, props.config);
 
     this.state = {
-      data: preparePlotData(alignedDataFrame),
+      data: preparePlotData([alignedDataFrame]),
       alignedDataFrame,
       configBuilder: this.prepareConfig(alignedDataFrame),
     };
@@ -64,7 +64,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
     return {
       ...state,
-      data: preparePlotData(frame),
+      data: preparePlotData([frame]),
       alignedDataFrame: frame,
     };
   }
@@ -91,6 +91,15 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
   getYRange(field: Field) {
     let { min, max } = this.state.alignedDataFrame.fields[1].state?.range!;
+
+    if (min === max) {
+      if (min === 0) {
+        max = 100;
+      } else {
+        min = 0;
+        max! *= 2;
+      }
+    }
 
     return [
       Math.max(min!, field.config.min ?? -Infinity),
@@ -163,7 +172,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
       const pointsMode =
-        customConfig.drawStyle === GraphDrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+        customConfig.drawStyle === GraphDrawStyle.Points ? VisibilityMode.Always : customConfig.showPoints;
 
       builder.addSeries({
         pxAlign: false,

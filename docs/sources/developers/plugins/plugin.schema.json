@@ -370,8 +370,11 @@
                 "description": "URL to fetch the authentication token."
               },
               "scopes": {
-                "type": "string",
-                "description": ""
+                "type": "array",
+                "description": "The list of scopes that your application should be granted access to.",
+                "items": {
+                  "type": "string"
+                }
               },
               "params": {
                 "type": "object",
@@ -409,21 +412,17 @@
                 "format": "uri"
               },
               "scopes": {
-                "type": "string",
-                "description": ""
+                "type": "array",
+                "description": "The list of scopes that your application should be granted access to.",
+                "items": {
+                  "type": "string"
+                }
               },
               "params": {
                 "type": "object",
                 "description": "Parameters for the JWT token authentication request.",
                 "additionalProperties": false,
                 "properties": {
-                  "scopes": {
-                    "type": "array",
-                    "description": "",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "token_uri": {
                     "type": "string",
                     "description": ""

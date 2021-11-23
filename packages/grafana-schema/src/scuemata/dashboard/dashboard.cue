@@ -57,7 +57,7 @@ Family: scuemata.#Family & {
                     // Datasource to use for annotation.
                     datasource: string
                     // Whether annotation is enabled.
-                    enable?: bool | *true
+                    enable: bool | *true
                     // Whether to hide annotation.
                     hide?: bool | *false
                     // Annotation icon color.
@@ -320,6 +320,7 @@ Family: scuemata.#Family & {
                     if !list.Contains(compose._panelTypes, type) {
                         options: {...}
                         fieldConfig: defaults: custom: {...}
+                        ...
                     }
                 }
 

@@ -3,10 +3,11 @@ import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv
 import {
   AnnotationQuery,
   AnnotationQueryRequest,
+  DataFrameView,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  DatasourceRef,
+  DataSourceRef,
   isValidLiveChannelAddress,
   parseLiveChannelAddress,
   StreamingFrameOptions,
@@ -17,6 +18,8 @@ import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQue
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 import { isString } from 'lodash';
+import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
+import { map } from 'rxjs/operators';
 
 let counter = 100;
 
@@ -37,10 +40,16 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         return json;
       },
       prepareQuery(anno: AnnotationQuery<GrafanaAnnotationQuery>): GrafanaQuery {
-        let datasource: DatasourceRef | undefined | null = undefined;
+        let datasource: DataSourceRef | undefined | null = undefined;
         if (isString(anno.datasource)) {
-          datasource = anno.datasource as DatasourceRef;
+          const ref = migrateDatasourceNameToRef(anno.datasource);
+          if (ref) {
+            datasource = ref;
+          }
+        } else {
+          datasource = anno.datasource as DataSourceRef;
         }
+
         return { ...anno, refId: anno.name, queryType: GrafanaQueryType.Annotations, datasource };
       },
     };
@@ -124,6 +133,23 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     return of(); // nothing
   }
 
+  listFiles(path: string): Observable<DataFrameView<FileElement>> {
+    return this.query({
+      targets: [
+        {
+          refId: 'A',
+          queryType: GrafanaQueryType.List,
+          path,
+        },
+      ],
+    } as any).pipe(
+      map((v) => {
+        const frame = v.data[0] ?? toDataFrame({});
+        return new DataFrameView<FileElement>(frame);
+      })
+    );
+  }
+
   metricFindQuery(options: any) {
     return Promise.resolve([]);
   }
@@ -182,4 +208,9 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   testDatasource() {
     return Promise.resolve();
   }
+}
+
+export interface FileElement {
+  name: string;
+  ['media-type']: string;
 }

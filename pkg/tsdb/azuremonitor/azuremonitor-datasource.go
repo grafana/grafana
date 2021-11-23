@@ -28,6 +28,9 @@ type AzureMonitorDatasource struct {
 var (
 	// 1m, 5m, 15m, 30m, 1h, 6h, 12h, 1d in milliseconds
 	defaultAllowedIntervalsMS = []int64{60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000}
+
+	// Used to convert the aggregation value to the Azure enum for deep linking
+	aggregationTypeMap = map[string]int{"None": 0, "Total": 1, "Minimum": 2, "Maximum": 3, "Average": 4, "Count": 7}
 )
 
 const azureMonitorAPIVersion = "2018-01-01"
@@ -49,18 +52,7 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 	}
 
 	for _, query := range queries {
-		queryRes, resp, err := e.executeQuery(ctx, query, dsInfo, client, url)
-		if err != nil {
-			return nil, err
-		}
-
-		frames, err := e.parseResponse(resp, query)
-		if err != nil {
-			queryRes.Error = err
-		} else {
-			queryRes.Frames = frames
-		}
-		result.Responses[query.RefID] = queryRes
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url)
 	}
 
 	return result, nil
@@ -155,13 +147,13 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 	return azureMonitorQueries, nil
 }
 
-func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, dsInfo datasourceInfo, cli *http.Client, url string) (backend.DataResponse, AzureMonitorResponse, error) {
+func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, dsInfo datasourceInfo, cli *http.Client, url string) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	req, err := e.createRequest(ctx, dsInfo, url)
 	if err != nil {
 		dataResponse.Error = err
-		return dataResponse, AzureMonitorResponse{}, nil
+		return dataResponse
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
@@ -181,7 +173,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
 		dataResponse.Error = err
-		return dataResponse, AzureMonitorResponse{}, nil
+		return dataResponse
 	}
 
 	azlog.Debug("AzureMonitor", "Request ApiURL", req.URL.String())
@@ -189,7 +181,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 	res, err := ctxhttp.Do(ctx, cli, req)
 	if err != nil {
 		dataResponse.Error = err
-		return dataResponse, AzureMonitorResponse{}, nil
+		return dataResponse
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
@@ -200,10 +192,22 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 	data, err := e.unmarshalResponse(res)
 	if err != nil {
 		dataResponse.Error = err
-		return dataResponse, AzureMonitorResponse{}, nil
+		return dataResponse
 	}
 
-	return dataResponse, data, nil
+	azurePortalUrl, err := getAzurePortalUrl(dsInfo.Cloud)
+	if err != nil {
+		dataResponse.Error = err
+		return dataResponse
+	}
+
+	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl)
+	if err != nil {
+		dataResponse.Error = err
+		return dataResponse
+	}
+
+	return dataResponse
 }
 
 func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, url string) (*http.Request, error) {
@@ -239,10 +243,14 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 	return data, nil
 }
 
-func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *AzureMonitorQuery) (
-	data.Frames, error) {
+func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *AzureMonitorQuery, azurePortalUrl string) (data.Frames, error) {
 	if len(amr.Value) == 0 {
 		return nil, nil
+	}
+
+	queryUrl, err := getQueryUrl(query, azurePortalUrl)
+	if err != nil {
+		return nil, err
 	}
 
 	frames := data.Frames{}
@@ -299,10 +307,69 @@ func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *
 			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		frames = append(frames, frame)
+		frameWithLink := addConfigLinks(*frame, queryUrl)
+		frames = append(frames, &frameWithLink)
 	}
 
 	return frames, nil
+}
+
+// Gets the deep link for the given query
+func getQueryUrl(query *AzureMonitorQuery, azurePortalUrl string) (string, error) {
+	aggregationType := aggregationTypeMap["Average"]
+	aggregation := query.Params.Get("aggregation")
+	if aggregation != "" {
+		if aggType, ok := aggregationTypeMap[aggregation]; ok {
+			aggregationType = aggType
+		}
+	}
+
+	timespan, err := json.Marshal(map[string]interface{}{
+		"absolute": struct {
+			Start string `json:"startTime"`
+			End   string `json:"endTime"`
+		}{
+			Start: query.TimeRange.From.UTC().Format(time.RFC3339Nano),
+			End:   query.TimeRange.To.UTC().Format(time.RFC3339Nano),
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	escapedTime := url.QueryEscape(string(timespan))
+
+	id := fmt.Sprintf("/subscriptions/%v/resourceGroups/%v/providers/%v/%v",
+		query.UrlComponents["subscription"],
+		query.UrlComponents["resourceGroup"],
+		query.UrlComponents["metricDefinition"],
+		query.UrlComponents["resourceName"],
+	)
+	chartDef, err := json.Marshal(map[string]interface{}{
+		"v2charts": []interface{}{
+			map[string]interface{}{
+				"metrics": []metricChartDefinition{
+					{
+						ResourceMetadata: map[string]string{
+							"id": id,
+						},
+						Name:            query.Params.Get("metricnames"),
+						AggregationType: aggregationType,
+						Namespace:       query.Params.Get("metricnamespace"),
+						MetricVisualization: metricVisualization{
+							DisplayName:         query.Params.Get("metricnames"),
+							ResourceDisplayName: query.UrlComponents["resourceName"],
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	escapedChart := url.QueryEscape(string(chartDef))
+
+	return fmt.Sprintf("%s/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%s/ChartDefinition/%s", azurePortalUrl, escapedTime, escapedChart), nil
 }
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name

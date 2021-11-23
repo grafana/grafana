@@ -15,15 +15,15 @@ import (
 // DashboardProvisioner is responsible for syncing dashboard from disk to
 // Grafana's database.
 type DashboardProvisioner interface {
-	Provision() error
+	Provision(ctx context.Context) error
 	PollChanges(ctx context.Context)
 	GetProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
-	CleanUpOrphanedDashboards()
+	CleanUpOrphanedDashboards(ctx context.Context)
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(string, dashboards.Store) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(context.Context, string, dashboards.Store) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -34,10 +34,10 @@ type Provisioner struct {
 }
 
 // New returns a new DashboardProvisioner
-func New(configDirectory string, store dashboards.Store) (DashboardProvisioner, error) {
+func New(ctx context.Context, configDirectory string, store dashboards.Store) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger}
-	configs, err := cfgReader.readConfig()
+	configs, err := cfgReader.readConfig(ctx)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}
@@ -59,9 +59,9 @@ func New(configDirectory string, store dashboards.Store) (DashboardProvisioner, 
 
 // Provision scans the disk for dashboards and updates
 // the database with the latest versions of those dashboards.
-func (provider *Provisioner) Provision() error {
+func (provider *Provisioner) Provision(ctx context.Context) error {
 	for _, reader := range provider.fileReaders {
-		if err := reader.walkDisk(); err != nil {
+		if err := reader.walkDisk(ctx); err != nil {
 			if os.IsNotExist(err) {
 				// don't stop the provisioning service in case the folder is missing. The folder can appear after the startup
 				provider.log.Warn("Failed to provision config", "name", reader.Cfg.Name, "error", err)
@@ -77,14 +77,14 @@ func (provider *Provisioner) Provision() error {
 }
 
 // CleanUpOrphanedDashboards deletes provisioned dashboards missing a linked reader.
-func (provider *Provisioner) CleanUpOrphanedDashboards() {
+func (provider *Provisioner) CleanUpOrphanedDashboards(ctx context.Context) {
 	currentReaders := make([]string, len(provider.fileReaders))
 
 	for index, reader := range provider.fileReaders {
 		currentReaders[index] = reader.Cfg.Name
 	}
 
-	if err := bus.Dispatch(&models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
+	if err := bus.DispatchCtx(ctx, &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
 		provider.log.Warn("Failed to delete orphaned provisioned dashboards", "err", err)
 	}
 }

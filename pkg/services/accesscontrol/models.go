@@ -1,6 +1,8 @@
 package accesscontrol
 
 import (
+	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -11,37 +13,222 @@ type RoleRegistration struct {
 	Grants []string
 }
 
+// Role is the model for Role in RBAC.
 type Role struct {
+	ID          int64  `json:"-" xorm:"pk autoincr 'id'"`
+	OrgID       int64  `json:"-" xorm:"org_id"`
 	Version     int64  `json:"version"`
-	UID         string `json:"uid"`
+	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
 
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
 }
 
+func (r Role) Global() bool {
+	return r.OrgID == GlobalOrgID
+}
+
+func (r Role) IsFixed() bool {
+	return strings.HasPrefix(r.Name, FixedRolePrefix)
+}
+
+func (r Role) GetDisplayName() string {
+	if r.IsFixed() && r.DisplayName == "" {
+		r.DisplayName = fallbackDisplayName(r.Name)
+	}
+	return r.DisplayName
+}
+
+func (r Role) MarshalJSON() ([]byte, error) {
+	type Alias Role
+
+	r.DisplayName = r.GetDisplayName()
+	return json.Marshal(&struct {
+		Alias
+		Global bool `json:"global" xorm:"-"`
+	}{
+		Alias:  (Alias)(r),
+		Global: r.Global(),
+	})
+}
+
 type RoleDTO struct {
 	Version     int64        `json:"version"`
-	UID         string       `json:"uid"`
+	UID         string       `xorm:"uid" json:"uid"`
 	Name        string       `json:"name"`
+	DisplayName string       `json:"displayName"`
 	Description string       `json:"description"`
+	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
+	Delegatable *bool        `json:"delegatable,omitempty"`
+
+	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
+	OrgID int64 `json:"-" xorm:"org_id"`
+
+	Updated time.Time `json:"updated"`
+	Created time.Time `json:"created"`
 }
 
-type Permission struct {
-	Action string `json:"action"`
-	Scope  string `json:"scope"`
-}
-
-func (p RoleDTO) Role() Role {
+func (r RoleDTO) Role() Role {
 	return Role{
-		Name:        p.Name,
-		Description: p.Description,
+		ID:          r.ID,
+		OrgID:       r.OrgID,
+		UID:         r.UID,
+		Name:        r.Name,
+		DisplayName: r.DisplayName,
+		Group:       r.Group,
+		Description: r.Description,
+		Updated:     r.Updated,
+		Created:     r.Created,
 	}
 }
 
+func (r RoleDTO) Global() bool {
+	return r.OrgID == GlobalOrgID
+}
+
+func (r RoleDTO) IsFixed() bool {
+	return strings.HasPrefix(r.Name, FixedRolePrefix)
+}
+
+func (r RoleDTO) GetDisplayName() string {
+	if r.IsFixed() && r.DisplayName == "" {
+		r.DisplayName = fallbackDisplayName(r.Name)
+	}
+	if r.DisplayName == "" {
+		return r.Name
+	}
+	return r.DisplayName
+}
+
+func (r RoleDTO) MarshalJSON() ([]byte, error) {
+	type Alias RoleDTO
+
+	r.DisplayName = r.GetDisplayName()
+	return json.Marshal(&struct {
+		Alias
+		Global bool `json:"global" xorm:"-"`
+	}{
+		Alias:  (Alias)(r),
+		Global: r.Global(),
+	})
+}
+
+// fallbackDisplayName provides a fallback name for role
+// that can be displayed in the ui for better readability
+// example: currently this would give:
+// fixed:datasources:name -> datasources name
+// datasources:admin      -> datasources admin
+func fallbackDisplayName(rName string) string {
+	// removing prefix for fixed roles
+	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
+	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
+}
+
+type TeamRole struct {
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	TeamID int64 `json:"teamId" xorm:"team_id"`
+
+	Created time.Time
+}
+
+type UserRole struct {
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	UserID int64 `json:"userId" xorm:"user_id"`
+
+	Created time.Time
+}
+
+type BuiltinRole struct {
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	Role   string
+
+	Updated time.Time
+	Created time.Time
+}
+
+// Permission is the model for access control permissions.
+type Permission struct {
+	ID     int64  `json:"-" xorm:"pk autoincr 'id'"`
+	RoleID int64  `json:"-" xorm:"role_id"`
+	Action string `json:"action"`
+	Scope  string `json:"scope"`
+
+	Updated time.Time `json:"updated"`
+	Created time.Time `json:"created"`
+}
+
+func (p Permission) OSSPermission() Permission {
+	return Permission{
+		Action: p.Action,
+		Scope:  p.Scope,
+	}
+}
+
+type GetUserPermissionsQuery struct {
+	OrgID  int64 `json:"-"`
+	UserID int64 `json:"userId"`
+	Roles  []string
+}
+
+// ScopeParams holds the parameters used to fill in scope templates
+type ScopeParams struct {
+	OrgID     int64
+	URLParams map[string]string
+}
+
+type ResourcePermission struct {
+	ID          int64  `xorm:"id"`
+	ResourceID  string `xorm:"resource_id"`
+	RoleName    string
+	Action      string
+	Scope       string
+	UserId      int64
+	UserLogin   string
+	UserEmail   string
+	TeamId      int64
+	TeamEmail   string
+	Team        string
+	BuiltInRole string
+	Created     time.Time
+	Updated     time.Time
+}
+
+func (p *ResourcePermission) Managed() bool {
+	return strings.HasPrefix(p.RoleName, "managed:")
+}
+
+type SetResourcePermissionsCommand struct {
+	Actions    []string
+	Resource   string
+	ResourceID string
+}
+
+type RemoveResourcePermissionCommand struct {
+	Resource     string
+	Actions      []string
+	ResourceID   string
+	PermissionID int64
+}
+
+type GetResourcesPermissionsQuery struct {
+	Actions     []string
+	Resource    string
+	ResourceIDs []string
+}
+
 const (
+	GlobalOrgID = 0
 	// Permission actions
 
 	// Users actions
@@ -98,8 +285,20 @@ const (
 
 	// Settings scope
 	ScopeSettingsAll = "settings:*"
+
+	// Licensing related actions
+	ActionLicensingRead        = "licensing:read"
+	ActionLicensingUpdate      = "licensing:update"
+	ActionLicensingDelete      = "licensing:delete"
+	ActionLicensingReportsRead = "licensing.reports:read"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
 
 const FixedRolePrefix = "fixed:"
+
+// LicensingPageReaderAccess defines permissions that grant access to the licensing and stats page
+var LicensingPageReaderAccess = EvalAny(
+	EvalPermission(ActionLicensingRead),
+	EvalPermission(ActionServerStatsRead),
+)

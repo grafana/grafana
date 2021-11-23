@@ -27,6 +27,8 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
   useEffect(() => {
     if (state.value) {
       dashboard.version = state.value.version;
+      dashboard.clearUnsavedChanges();
+
       // important that these happen before location redirect below
       appEvents.publish(new DashboardSavedEvent());
       appEvents.emit(AppEvents.alertSuccess, ['Dashboard saved']);

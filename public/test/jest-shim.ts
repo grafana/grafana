@@ -1,5 +1,3 @@
-declare var global: NodeJS.Global;
-
 (global as any).requestAnimationFrame = (callback: any) => {
   setTimeout(callback, 0);
 };

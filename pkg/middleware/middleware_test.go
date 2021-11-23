@@ -4,20 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -30,6 +28,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func fakeGetTime() func() time.Time {
@@ -498,6 +499,58 @@ func TestMiddlewareContext(t *testing.T) {
 			cfg.AuthProxyAutoSignUp = true
 		})
 
+		middlewareScenario(t, "Should use organisation specified by targetOrgId parameter", func(t *testing.T, sc *scenarioContext) {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+				if query.UserId > 0 {
+					query.Result = &models.SignedInUser{OrgId: query.OrgId, UserId: userID}
+					return nil
+				}
+				return models.ErrUserNotFound
+			})
+
+			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+				cmd.Result = &models.User{Id: userID}
+				return nil
+			})
+
+			targetOrgID := 123
+			sc.fakeReq("GET", fmt.Sprintf("/?targetOrgId=%d", targetOrgID))
+			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
+			sc.exec()
+
+			assert.True(t, sc.context.IsSignedIn)
+			assert.Equal(t, userID, sc.context.UserId)
+			assert.Equal(t, int64(targetOrgID), sc.context.OrgId)
+		}, func(cfg *setting.Cfg) {
+			configure(cfg)
+			cfg.LDAPEnabled = false
+			cfg.AuthProxyAutoSignUp = true
+		})
+
+		middlewareScenario(t, "Request body should not be read in default context handler", func(t *testing.T, sc *scenarioContext) {
+			sc.fakeReq("POST", "/?targetOrgId=123")
+			body := "key=value"
+			sc.req.Body = io.NopCloser(strings.NewReader(body))
+
+			sc.handlerFunc = func(c *models.ReqContext) {
+				t.Log("Handler called")
+				defer func() {
+					err := c.Req.Body.Close()
+					require.NoError(t, err)
+				}()
+
+				bodyAfterHandler, e := io.ReadAll(c.Req.Body)
+				require.NoError(t, e)
+				require.Equal(t, body, string(bodyAfterHandler))
+			}
+
+			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
+			sc.req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			sc.req.Header.Set("Content-Length", strconv.Itoa(len(body)))
+			sc.m.Post("/", sc.defaultHandler)
+			sc.exec()
+		})
+
 		middlewareScenario(t, "Should get an existing user from header", func(t *testing.T, sc *scenarioContext) {
 			const userID int64 = 12
 			const orgID int64 = 2
@@ -628,10 +681,10 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		require.NoError(t, err)
 		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
 
-		sc.m = macaron.New()
+		sc.m = web.New()
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.UseMiddleware(AddCSPHeader(cfg, logger))
-		sc.m.UseMiddleware(macaron.Renderer(viewsPath, "[[", "]]"))
+		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
 		ctxHdlr := getContextHandler(t, cfg)
 		sc.sqlStore = ctxHdlr.SQLStore

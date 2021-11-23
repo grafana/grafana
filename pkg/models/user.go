@@ -34,8 +34,9 @@ type User struct {
 	HelpFlags1    HelpFlags1
 	IsDisabled    bool
 
-	IsAdmin bool
-	OrgId   int64
+	IsAdmin          bool
+	IsServiceAccount bool
+	OrgId            int64
 
 	Created    time.Time
 	Updated    time.Time
@@ -56,18 +57,19 @@ func (u *User) NameOrFallback() string {
 // COMMANDS
 
 type CreateUserCommand struct {
-	Email          string
-	Login          string
-	Name           string
-	Company        string
-	OrgId          int64
-	OrgName        string
-	Password       string
-	EmailVerified  bool
-	IsAdmin        bool
-	IsDisabled     bool
-	SkipOrgSetup   bool
-	DefaultOrgRole string
+	Email            string
+	Login            string
+	Name             string
+	Company          string
+	OrgId            int64
+	OrgName          string
+	Password         string
+	EmailVerified    bool
+	IsAdmin          bool
+	IsDisabled       bool
+	SkipOrgSetup     bool
+	DefaultOrgRole   string
+	IsServiceAccount bool
 
 	Result User
 }
@@ -138,17 +140,13 @@ type GetUserProfileQuery struct {
 	Result UserProfileDTO
 }
 
-type SearchUsersFilter string
-
-const ActiveLast30Days SearchUsersFilter = "activeLast30Days"
-
 type SearchUsersQuery struct {
 	OrgId      int64
 	Query      string
 	Page       int
 	Limit      int
 	AuthModule string
-	Filter     SearchUsersFilter
+	Filters    []Filter
 
 	IsDisabled *bool
 
