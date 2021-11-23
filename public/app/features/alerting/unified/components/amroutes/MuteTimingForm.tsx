@@ -15,6 +15,7 @@ import { MuteTimingTimeRange } from './MuteTimingTimeRange';
 import { MuteTimingFields, MuteTimingIntervalFields } from '../../types/mute-timing-form';
 import { DAYS_OF_THE_WEEK, MONTHS, validateArrayField, createMuteTiming } from '../../utils/mute-timings';
 import { makeAMLink } from '../../utils/misc';
+import { renameMuteTimings } from '../../utils/alertmanager';
 
 interface Props {
   muteTiming?: MuteTimeInterval;
@@ -36,21 +37,22 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
       time_intervals: [defaultTimeInterval],
     };
 
-    if (muteTiming) {
-      const intervals = muteTiming.time_intervals.map((interval) => ({
-        times: interval.times ?? defaultTimeInterval.times,
-        weekdays: interval?.weekdays?.join(', ') ?? defaultTimeInterval.weekdays,
-        days_of_month: interval?.days_of_month?.join(', ') ?? defaultTimeInterval.days_of_month,
-        months: interval?.months?.join(', ') ?? defaultTimeInterval.months,
-        years: interval?.years?.join(', ') ?? defaultTimeInterval.years,
-      }));
-      return {
-        name: muteTiming.name,
-        time_intervals: intervals,
-      };
-    } else {
+    if (!muteTiming) {
       return defaultValues;
     }
+
+    const intervals = muteTiming.time_intervals.map((interval) => ({
+      times: interval.times ?? defaultTimeInterval.times,
+      weekdays: interval?.weekdays?.join(', ') ?? defaultTimeInterval.weekdays,
+      days_of_month: interval?.days_of_month?.join(', ') ?? defaultTimeInterval.days_of_month,
+      months: interval?.months?.join(', ') ?? defaultTimeInterval.months,
+      years: interval?.years?.join(', ') ?? defaultTimeInterval.years,
+    }));
+
+    return {
+      name: muteTiming.name,
+      time_intervals: intervals,
+    };
   }, [muteTiming]);
 };
 
@@ -78,13 +80,17 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
     const newMuteTiming = createMuteTiming(values);
 
     const muteTimings = muteTiming
-      ? config?.mute_time_intervals?.filter(({ name }) => name !== newMuteTiming.name)
+      ? config?.mute_time_intervals?.filter(({ name }) => name !== muteTiming.name)
       : config.mute_time_intervals;
 
     const newConfig = {
       ...result,
       alertmanager_config: {
         ...config,
+        route:
+          muteTiming && newMuteTiming.name !== muteTiming.name
+            ? renameMuteTimings(newMuteTiming.name, muteTiming.name, config.route ?? {})
+            : config.route,
         mute_time_intervals: [...(muteTimings || []), newMuteTiming],
       },
     };
@@ -254,7 +260,7 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
                 Cancel
               </LinkButton>
               <Button type="submit" className={styles.submitButton}>
-                Submit
+                {muteTiming ? 'Save' : 'Submit'}
               </Button>
             </FieldSet>
           </form>

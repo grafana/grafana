@@ -100,7 +100,7 @@ const resetMocks = () => {
   jest.resetAllMocks();
 
   mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
-    return Promise.resolve(defaultConfig);
+    return Promise.resolve({ ...defaultConfig });
   });
   mocks.api.updateAlertManagerConfig.mockImplementation(() => {
     return Promise.resolve();
@@ -163,6 +163,60 @@ describe('Mute timings', () => {
     expect(ui.nameField.get()).toBeInTheDocument();
     expect(ui.nameField.get()).toHaveValue(muteTimeInterval.name);
     expect(ui.months.get()).toHaveValue(muteTimeInterval.time_intervals[0].months?.join(', '));
+
+    userEvent.clear(ui.startsAt.getAll()?.[0]);
+    userEvent.clear(ui.endsAt.getAll()?.[0]);
+    userEvent.clear(ui.weekdays.get());
+    userEvent.clear(ui.days.get());
+    userEvent.clear(ui.months.get());
+    userEvent.clear(ui.years.get());
+
+    userEvent.type(ui.weekdays.get(), 'monday');
+    userEvent.type(ui.days.get(), '-7:-1');
+    userEvent.type(ui.months.get(), '3, 6, 9, 12');
+    userEvent.type(ui.years.get(), '2021:2024');
+
+    fireEvent.submit(ui.form.get());
+
+    await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith('grafana', {
+      alertmanager_config: {
+        receivers: [
+          {
+            name: 'default',
+          },
+          {
+            name: 'critical',
+          },
+        ],
+        route: {
+          receiver: 'default',
+          group_by: ['alertname'],
+          routes: [
+            {
+              matchers: ['env=prod', 'region!=EU'],
+              mute_time_intervals: ['default-mute'],
+            },
+          ],
+        },
+        templates: [],
+        mute_time_intervals: [
+          {
+            name: 'default-mute',
+            time_intervals: [
+              {
+                times: [],
+                weekdays: ['monday'],
+                days_of_month: ['-7:-1'],
+                months: ['3', '6', '9', '12'],
+                years: ['2021:2024'],
+              },
+            ],
+          },
+        ],
+      },
+      template_files: {},
+    });
   });
 
   it('form is invalid with duplicate mute timing name', async () => {
@@ -179,5 +233,63 @@ describe('Mute timings', () => {
     // Form state should be invalid and prevent firing of update action
     await waitFor(() => expect(byRole('alert').get()).toBeInTheDocument());
     expect(mocks.api.updateAlertManagerConfig).not.toHaveBeenCalled();
+  });
+
+  it('replaces mute timings in routes when the mute timing name is changed', async () => {
+    await renderMuteTimings(
+      '/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`
+    );
+
+    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
+    expect(ui.nameField.get()).toBeInTheDocument();
+    expect(ui.nameField.get()).toHaveValue(muteTimeInterval.name);
+
+    userEvent.clear(ui.nameField.get());
+    userEvent.type(ui.nameField.get(), 'Lunch breaks');
+
+    fireEvent.submit(ui.form.get());
+
+    await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith('grafana', {
+      alertmanager_config: {
+        receivers: [
+          {
+            name: 'default',
+          },
+          {
+            name: 'critical',
+          },
+        ],
+        route: {
+          receiver: 'default',
+          group_by: ['alertname'],
+          routes: [
+            {
+              matchers: ['env=prod', 'region!=EU'],
+              mute_time_intervals: ['Lunch breaks'],
+            },
+          ],
+        },
+        templates: [],
+        mute_time_intervals: [
+          {
+            name: 'Lunch breaks',
+            time_intervals: [
+              {
+                times: [
+                  {
+                    start_time: '12:00',
+                    end_time: '24:00',
+                  },
+                ],
+                days_of_month: ['15', '-1'],
+                months: ['august:december', 'march'],
+              },
+            ],
+          },
+        ],
+      },
+      template_files: {},
+    });
   });
 });

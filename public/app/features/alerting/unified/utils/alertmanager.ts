@@ -37,6 +37,16 @@ export function removeMuteTimingFromRoute(muteTiming: string, route: Route): Rou
   return newRoute;
 }
 
+export function renameMuteTimings(newMuteTimingName: string, oldMuteTimingName: string, route: Route): Route {
+  return {
+    ...route,
+    mute_time_intervals: route.mute_time_intervals?.map((name) =>
+      name === oldMuteTimingName ? newMuteTimingName : name
+    ),
+    routes: route.routes?.map((subRoute) => renameMuteTimings(newMuteTimingName, oldMuteTimingName, subRoute)),
+  };
+}
+
 function isReceiverUsedInRoute(receiver: string, route: Route): boolean {
   return (
     (route.receiver === receiver || route.routes?.some((route) => isReceiverUsedInRoute(receiver, route))) ?? false
