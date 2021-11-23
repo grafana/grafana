@@ -22,7 +22,7 @@ scope
 ## Action definitions
 
 The following list contains fine-grained access control actions.
-<!-- TODO: add user role assignment permissions -->
+
 | Action                           | Applicable scope                                                                            | Description                                                                                                                                                |
 | -------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `roles:list`                     | `roles:*`                                                                                   | List available roles without permissions.                                                                                                                  |
