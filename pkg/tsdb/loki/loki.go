@@ -142,11 +142,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		defer span.Finish()
 
 		//Currently hard coded as not used - applies to log queries
-		limit := 1000
-		//Currently hard coded as not used - applies to queries which produce a stream response
-		interval := time.Second * 1
+		limit := 1
 
-		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
+		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, 0, false)
 		if err != nil {
 			return result, err
 		}
