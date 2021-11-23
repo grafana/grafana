@@ -755,6 +755,9 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 
 	tiNames := make(map[string]struct{})
 	for _, mt := range c.MuteTimeIntervals {
+		if mt.Name == "" {
+			return fmt.Errorf("missing name in mute time interval")
+		}
 		if _, ok := tiNames[mt.Name]; ok {
 			return fmt.Errorf("mute time interval %q is not unique", mt.Name)
 		}
