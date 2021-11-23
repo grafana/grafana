@@ -145,7 +145,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = (props) => {
     <Card className={cx(styles.card, 'card-parent', { 'add-data-source-item--phantom': isPhantom })} onClick={onClick}>
       <Card.Heading
         className={styles.heading}
-        aria-label={selectors.pages.AddDataSource.dataSourcePlugins2(plugin.name)}
+        aria-label={selectors.pages.AddDataSource.dataSourcePluginsV2(plugin.name)}
       >
         {plugin.name}
       </Card.Heading>

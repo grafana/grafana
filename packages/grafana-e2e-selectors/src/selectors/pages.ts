@@ -29,9 +29,9 @@ export const Pages = {
   },
   AddDataSource: {
     url: '/datasources/new',
-    /** @deprecated */
+    /** @deprecated Use dataSourcePluginsV2 */
     dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
-    dataSourcePlugins2: (pluginName: string) => `Add data source ${pluginName}`,
+    dataSourcePluginsV2: (pluginName: string) => `Add data source ${pluginName}`,
   },
   ConfirmModal: {
     delete: 'Confirm Modal Danger Button',
