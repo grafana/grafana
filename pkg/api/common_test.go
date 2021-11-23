@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/ldap"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -231,6 +232,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
+		ldapGroups:         ldap.ProvideGroupsService(),
 	}
 
 	sc := setupScenarioContext(t, url)

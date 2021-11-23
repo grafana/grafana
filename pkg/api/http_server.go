@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -117,6 +118,7 @@ type HTTPServer struct {
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
 	expressionService         *expr.Service
+	ldapGroups                ldap.Groups
 }
 
 type ServerOptions struct {
@@ -143,7 +145,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service, secretsService secrets.Service, expressionService *expr.Service) (*HTTPServer, error) {
+	dataSourcesService *datasources.Service, secretsService secrets.Service, expressionService *expr.Service,
+	ldapGroups ldap.Groups) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -198,6 +201,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
 		expressionService:         expressionService,
+		ldapGroups:                ldapGroups,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
