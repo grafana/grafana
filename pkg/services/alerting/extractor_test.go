@@ -160,7 +160,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		config := &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{Enabled: true}}
 
-		_, err = extractor.GetAlerts(context.WithValue(context.Background(), "config", config))
+		_, err = extractor.GetAlerts(context.WithValue(context.Background(), CtxCfg{}, config))
 		require.Equal(t, "alert validation error: Alert on PanelId: 2 refers to query(B) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", err.Error())
 	})
 
