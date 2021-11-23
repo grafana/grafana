@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,13 +31,16 @@ func TestService(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
+	encr := ossencryption.ProvideService()
+	settings := setting.ProvideProvider(cfg)
 
-	secretsService := manager.ProvideSecretsService(
+	secretsService, err := manager.ProvideSecretsService(
 		fakes.NewFakeSecretsStore(),
-		bus.GetBus(),
-		ossencryption.ProvideService(),
-		setting.ProvideProvider(cfg),
+		osskmsproviders.ProvideService(encr, settings),
+		encr,
+		settings,
 	)
+	require.NoError(t, err)
 
 	s := Service{
 		cfg:            cfg,

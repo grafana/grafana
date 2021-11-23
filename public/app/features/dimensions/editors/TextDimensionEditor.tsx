@@ -5,8 +5,9 @@ import {
   StandardEditorsRegistryItem,
   StringFieldConfigSettings,
 } from '@grafana/data';
+import { Button, InlineField, InlineFieldRow, RadioButtonGroup, StringValueEditor } from '@grafana/ui';
+
 import { TextDimensionConfig, TextDimensionMode, TextDimensionOptions } from '../types';
-import { InlineField, InlineFieldRow, RadioButtonGroup, StringValueEditor } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 
 const textOptions = [
@@ -57,6 +58,12 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
     [onChange, value]
   );
 
+  const onClearFixedText = () => {
+    // Need to first change to field in order to clear fixed value in editor
+    onChange({ mode: TextDimensionMode.Field, fixed: '', field: '' });
+    onChange({ mode: TextDimensionMode.Fixed, fixed: '', field: '' });
+  };
+
   const mode = value?.mode ?? TextDimensionMode.Fixed;
 
   return (
@@ -81,12 +88,17 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
       {mode === TextDimensionMode.Fixed && (
         <InlineFieldRow>
           <InlineField label={'Value'} labelWidth={labelWidth} grow={true}>
-            <StringValueEditor
-              context={context}
-              value={value?.fixed}
-              onChange={onFixedChange}
-              item={dummyStringSettings}
-            />
+            <>
+              <StringValueEditor
+                context={context}
+                value={value?.fixed}
+                onChange={onFixedChange}
+                item={dummyStringSettings}
+              />
+              {value.fixed && (
+                <Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClearFixedText} />
+              )}
+            </>
           </InlineField>
         </InlineFieldRow>
       )}
