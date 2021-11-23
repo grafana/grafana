@@ -49,11 +49,3 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 	}
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
-
-func (sa *ServiceAccountsService) IsDisabled() bool {
-	if sa.cfg == nil {
-		return true
-	}
-	_, exists := sa.cfg.FeatureToggles["service-accounts"]
-	return !exists
-}
