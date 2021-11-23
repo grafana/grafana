@@ -13,12 +13,12 @@ import { PluginDashboards } from '../../PluginDashboards';
 type Props = {
   plugin: CatalogPlugin;
   queryParams: UrlQueryMap;
+  pageId: string;
 };
 
-export function PluginDetailsBody({ plugin, queryParams }: Props): JSX.Element {
+export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
-  const pageId = queryParams.page;
 
   if (pageId === PluginTabIds.OVERVIEW) {
     return (
