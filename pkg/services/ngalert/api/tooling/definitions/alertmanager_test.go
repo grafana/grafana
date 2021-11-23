@@ -742,36 +742,6 @@ alertmanager_config: ""
 			},
 		},
 		{
-			desc: "empty mute times name",
-			input: `
-template_files: {foo: bar}
-alertmanager_config: |
-                      route:
-                          receiver: am
-                          continue: false
-                          routes:
-                          - receiver: am
-                            continue: false
-                      templates: []
-                      mute_time_intervals:
-                      - name: ''
-                        time_intervals:
-                        - years:
-                          - 2020:2022
-                          - "2030"
-                      receivers:
-                      - name: am
-                        email_configs:
-                        - to: foo
-                          from: bar
-                          headers:
-                            Bazz: buzz
-                          text: hi
-                          html: there
-`,
-			err: false,
-		},
-		{
 			desc: "existing am config",
 			input: `
 template_files: {foo: bar}
