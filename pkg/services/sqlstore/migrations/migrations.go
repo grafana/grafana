@@ -46,6 +46,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addUserAuthTokenMigrations(mg)
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
+	ualert.AddAlertingEnabledMigration(mg)
 	ualert.AddTablesMigrations(mg)
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
