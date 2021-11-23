@@ -157,7 +157,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     5,
 			Name:        "fixed:organization:writer",
 			DisplayName: "Organization writer",
-			Description: "Read an organization, its quotas, or its preferences. Update an organization properties, or its preferences.",
+			Description: "Read an organization, its quotas, or its preferences. Update organization properties, or its preferences.",
 			Group:       "Organizations",
 			Permissions: accesscontrol.ConcatPermissions(orgReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: ActionOrgsPreferencesRead},
