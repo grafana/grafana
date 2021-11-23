@@ -85,8 +85,7 @@ export const NavBar: FC = React.memo(() => {
             target={link.target}
             url={link.url}
             link={link}
-            id={link.id}
-            index={index}
+            id={link.id ?? link.text}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -109,8 +108,7 @@ export const NavBar: FC = React.memo(() => {
             target={link.target}
             url={link.url}
             link={link}
-            id={link.id}
-            index={index}
+            id={link.id ?? link.text}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}

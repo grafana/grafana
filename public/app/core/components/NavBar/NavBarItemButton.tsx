@@ -9,8 +9,6 @@ import { useButton } from '@react-aria/button';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
-import NavBarDropdown from './NavBarDropdown';
-
 export function MenuButton(props: any) {
   const theme = useTheme2();
 
@@ -116,17 +114,17 @@ export function MenuButton(props: any) {
   return (
     <li className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
       {element}
-      {state.isOpen && (
-        <NavBarDropdown
-          {...rest}
-          items={menuItems}
-          enableAllItems={enableAllItems}
-          domProps={menuProps}
-          autoFocus={state.focusStrategy}
-          onClose={() => state.close()}
-          reverseDirection={reverseDirection}
-        />
-      )}
+      {/*{state.isOpen && (*/}
+      {/*  <NavBarDropdown*/}
+      {/*    {...rest}*/}
+      {/*    items={menuItems}*/}
+      {/*    enableAllItems={enableAllItems}*/}
+      {/*    domProps={menuProps}*/}
+      {/*    autoFocus={state.focusStrategy}*/}
+      {/*    onClose={() => state.close()}*/}
+      {/*    reverseDirection={reverseDirection}*/}
+      {/*  />*/}
+      {/*)}*/}
     </li>
   );
 }

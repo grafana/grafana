@@ -2,10 +2,11 @@ import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { IconName, useTheme2 } from '@grafana/ui';
-import { MenuButton } from './NavBarItemButton';
-import { Item } from '@react-stately/collections';
+import { Item, Section } from '@react-stately/collections';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarItemMenu, NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
+import { getNavModelItemKey } from './utils';
 
 export interface Props {
   isActive?: boolean;
@@ -40,55 +41,60 @@ const NavBarItem = ({
 }: Props) => {
   const theme = useTheme2();
 
-  let menuItemsSorted;
-  if (menuItems) {
-    menuItemsSorted = reverseMenuDirection ? menuItems?.reverse() : menuItems;
-  }
-  const filteredItems = menuItemsSorted?.filter((item) => !item.hideFromMenu);
-  const adjustHeightForBorder = filteredItems!.length === 0;
+  const menuItemsSorted = reverseMenuDirection ? menuItems.reverse() : menuItems;
+  const filteredItems = menuItemsSorted.filter((item) => !item.hideFromMenu);
+  const adjustHeightForBorder = filteredItems.length === 0;
   const styles = getStyles(theme, isActive, adjustHeightForBorder, reverseMenuDirection);
+  const section = { ...link, subTitle: menuSubTitle, children: filteredItems };
+  const disabledKeys = filteredItems.filter((item) => item.divider).map(getNavModelItemKey);
+  // Disable all keys that are subtitle they should not be focusable
+  disabledKeys.push('subtitle');
 
   return showMenu ? (
     <div className={cx(styles.container, className)}>
-      <MenuButton link={link} isActive={isActive} reverseDirection={reverseMenuDirection} menuItems={menuItems}>
-        {!reverseMenuDirection && (
-          <Item key={id} textValue={link.text}>
-            <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
-          </Item>
-        )}
-        {menuSubTitle && reverseMenuDirection && (
-          <Item key="subtitle" textValue={menuSubTitle}>
-            <div className={styles.subtitle}>{menuSubTitle}</div>
-          </Item>
-        )}
-
-        {filteredItems?.map((item, index) => {
-          return (
-            <Item key={`${item.id}-${index}`} textValue={item.text}>
-              <NavBarMenuItem
-                key={`${item.url}-${index}`}
-                isDivider={item.divider}
-                icon={item.icon as IconName}
-                onClick={item.onClick}
-                target={item.target}
-                text={item.text}
-                url={item.url}
-                styleOverrides={styles.item}
-              />
-            </Item>
-          );
-        })}
-        {reverseMenuDirection && (
-          <Item key={id} textValue={link.text}>
-            <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
-          </Item>
-        )}
-        {menuSubTitle && !reverseMenuDirection && (
-          <Item key="subtitle" textValue={menuSubTitle}>
-            <div className={styles.subtitle}>{menuSubTitle}</div>
-          </Item>
-        )}
-      </MenuButton>
+      <NavBarItemMenuTrigger item={section}>
+        <NavBarItemMenu
+          items={[section]}
+          reverseMenuDirection={reverseMenuDirection}
+          adjustHeightForBorder={adjustHeightForBorder}
+          disabledKeys={disabledKeys}
+        >
+          {(item: NavModelItem) => {
+            return (
+              <Section
+                key={getNavModelItemKey(section)}
+                items={item.children}
+                title={
+                  <NavBarMenuItem
+                    target={target}
+                    text={label}
+                    url={url}
+                    onClick={onClick}
+                    styleOverrides={styles.header}
+                  />
+                }
+              >
+                {(item: NavModelItem) => {
+                  return (
+                    <Item key={getNavModelItemKey(item)}>
+                      <NavBarMenuItem
+                        key={`${item.url}-${item.id}`}
+                        isDivider={item.divider}
+                        icon={item.icon as IconName}
+                        onClick={item.onClick}
+                        target={item.target}
+                        text={item.text}
+                        url={item.url}
+                        styleOverrides={styles.item}
+                      />
+                    </Item>
+                  );
+                }}
+              </Section>
+            );
+          }}
+        </NavBarItemMenu>
+      </NavBarItemMenuTrigger>
     </div>
   ) : (
     <NavBarItemWithoutMenu
@@ -126,7 +132,6 @@ const getStyles = (
   item: css`
     color: ${theme.colors.text.primary};
   `,
-
   subtitle: css`
       border-${reverseMenuDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
       color: ${theme.colors.text.secondary};

@@ -5133,7 +5133,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/button@npm:^3.4.1":
+"@react-types/button@npm:3.4.1, @react-types/button@npm:^3.4.1":
   version: 3.4.1
   resolution: "@react-types/button@npm:3.4.1"
   dependencies:
@@ -18022,6 +18022,7 @@ __metadata:
     "@react-stately/collections": 3.3.4
     "@react-stately/menu": 3.2.3
     "@react-stately/tree": 3.2.0
+    "@react-types/button": 3.4.1
     "@react-types/menu": 3.4.1
     "@react-types/overlays": 3.5.1
     "@react-types/shared": 3.9.0
