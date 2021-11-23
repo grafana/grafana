@@ -2,6 +2,7 @@ package definitions
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -407,13 +408,12 @@ email_configs:
 
 func Test_ConfigUnmashaling(t *testing.T) {
 	for _, tc := range []struct {
-		desc, input, errMsg string
-		err                 bool
+		desc, input string
+		err         error
 	}{
 		{
-			desc:   "empty mute time name should error",
-			err:    true,
-			errMsg: "missing name in mute time interval",
+			desc: "empty mute time name should error",
+			err:  errors.New("missing name in mute time interval"),
 			input: `
 				{
 				  "route": {
@@ -456,9 +456,8 @@ func Test_ConfigUnmashaling(t *testing.T) {
 			`,
 		},
 		{
-			desc:   "not unique mute time names should error",
-			err:    true,
-			errMsg: "mute time interval \"test1\" is not unique",
+			desc: "not unique mute time names should error",
+			err:  errors.New("mute time interval \"test1\" is not unique"),
 			input: `
 				{
 				  "route": {
@@ -514,9 +513,8 @@ func Test_ConfigUnmashaling(t *testing.T) {
 			`,
 		},
 		{
-			desc:   "mute time intervals on root route should error",
-			err:    true,
-			errMsg: "root route must not have any mute time intervals",
+			desc: "mute time intervals on root route should error",
+			err:  errors.New("root route must not have any mute time intervals"),
 			input: `
 				{
 				  "route": {
@@ -560,9 +558,8 @@ func Test_ConfigUnmashaling(t *testing.T) {
 			`,
 		},
 		{
-			desc:   "undefined mute time names in routes should error",
-			err:    true,
-			errMsg: "undefined time interval \"test2\" used in route",
+			desc: "undefined mute time names in routes should error",
+			err:  errors.New("undefined time interval \"test2\" used in route"),
 			input: `
 				{
 				  "route": {
@@ -681,12 +678,7 @@ func Test_ConfigUnmashaling(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			var out Config
 			err := json.Unmarshal([]byte(tc.input), &out)
-			if tc.err {
-				require.Error(t, err)
-				require.Equal(t, tc.errMsg, err.Error())
-				return
-			}
-			require.Nil(t, err)
+			require.Equal(t, tc.err, err)
 		})
 	}
 }
