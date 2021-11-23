@@ -18,9 +18,10 @@ import (
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		SocialBase        *SocialBase
-		allowedGroups     []string
-		autoAssignOrgRole string
+		SocialBase          *SocialBase
+		allowedGroups       []string
+		autoAssignOrgRole   string
+		roleAttributeStrict bool
 	}
 	type args struct {
 		client *http.Client
@@ -150,7 +151,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:   "me@example.com",
 				Login:   "me@example.com",
 				Company: "",
-				Role:    "Viewer",
+				Role:    "",
 				Groups:  []string{},
 			},
 		},
@@ -279,13 +280,30 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Error if user role is invalid and strict attribute role is true",
+			fields: fields{
+				roleAttributeStrict: true,
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"foo"},
+				Groups:            []string{},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
-				SocialBase:        tt.fields.SocialBase,
-				allowedGroups:     tt.fields.allowedGroups,
-				autoAssignOrgRole: tt.fields.autoAssignOrgRole,
+				SocialBase:          tt.fields.SocialBase,
+				allowedGroups:       tt.fields.allowedGroups,
+				autoAssignOrgRole:   tt.fields.autoAssignOrgRole,
+				roleAttributeStrict: tt.fields.roleAttributeStrict,
 			}
 
 			key := []byte("secret")

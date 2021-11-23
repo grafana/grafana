@@ -17,8 +17,9 @@ import (
 
 type SocialAzureAD struct {
 	*SocialBase
-	allowedGroups     []string
-	autoAssignOrgRole string
+	allowedGroups       []string
+	autoAssignOrgRole   string
+	roleAttributeStrict bool
 }
 
 type azureClaims struct {
@@ -71,6 +72,9 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 
 	role := extractRole(claims, s.autoAssignOrgRole)
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
+	if s.roleAttributeStrict && !role.IsValid() {
+		return nil, errors.New("invalid role")
+	}
 
 	groups, err := extractGroups(client, claims, token)
 	if err != nil {
@@ -135,7 +139,7 @@ func extractRole(claims azureClaims, autoAssignRole string) models.RoleType {
 		}
 	}
 
-	return models.ROLE_VIEWER
+	return models.RoleType("")
 }
 
 func hasRole(roles []string, role models.RoleType) bool {
