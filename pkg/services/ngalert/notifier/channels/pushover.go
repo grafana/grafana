@@ -43,6 +43,9 @@ func NewPushoverNotifier(model *NotificationChannelConfig, t *template.Template,
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 
 	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString())
 	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString())

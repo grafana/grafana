@@ -22,7 +22,9 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Templ
 	if model.Settings == nil {
 		return nil, receiverInitError{Reason: "no settings supplied"}
 	}
-
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 	urlStr := model.Settings.Get("url").MustString()
 	if urlStr == "" {
 		return nil, receiverInitError{Reason: "could not find url property in settings", Cfg: *model}

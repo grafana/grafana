@@ -55,7 +55,9 @@ export interface Role {
   name: string;
   displayName: string;
   description: string;
+  group: string;
   global: boolean;
+  delegatable?: boolean;
   version: number;
   created: string;
   updated: string;
