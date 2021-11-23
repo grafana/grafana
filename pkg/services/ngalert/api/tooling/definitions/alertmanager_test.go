@@ -405,6 +405,246 @@ email_configs:
 	}
 }
 
+func Test_ConfigUnmashaling(t *testing.T) {
+	for _, tc := range []struct {
+		desc, input, errMsg string
+		err                 bool
+	}{
+		{
+			desc:   "empty mute time name should error",
+			err:    true,
+			errMsg: "missing name in mute time interval",
+			input: `
+				{
+				  "route": {
+					"receiver": "grafana-default-email"
+				  },
+				  "mute_time_intervals": [
+					{
+					  "name": "",
+					  "time_intervals": [
+						{
+						  "times": [
+							{
+							  "start_time": "00:00",
+							  "end_time": "12:00"
+							}
+						  ]
+						}
+					  ]
+					}
+				  ],
+				  "templates": null,
+				  "receivers": [
+					{
+					  "name": "grafana-default-email",
+					  "grafana_managed_receiver_configs": [
+						{
+						  "uid": "uxwfZvtnz",
+						  "name": "email receiver",
+						  "type": "email",
+						  "disableResolveMessage": false,
+						  "settings": {
+							"addresses": "<example@email.com>"
+						  },
+						  "secureFields": {}
+						}
+					  ]
+					}
+				  ]
+				}
+			`,
+		},
+		{
+			desc:   "not unique mute time names should error",
+			err:    true,
+			errMsg: "mute time interval \"test1\" is not unique",
+			input: `
+				{
+				  "route": {
+					"receiver": "grafana-default-email"
+				  },
+				  "mute_time_intervals": [
+					{
+					  "name": "test1",
+					  "time_intervals": [
+						{
+						  "times": [
+							{
+							  "start_time": "00:00",
+							  "end_time": "12:00"
+							}
+						  ]
+						}
+					  ]
+					},
+					{
+						"name": "test1",
+						"time_intervals": [
+						  {
+							"times": [
+							  {
+								"start_time": "00:00",
+								"end_time": "12:00"
+							  }
+							]
+						  }
+						]
+					  }
+				  ],
+				  "templates": null,
+				  "receivers": [
+					{
+					  "name": "grafana-default-email",
+					  "grafana_managed_receiver_configs": [
+						{
+						  "uid": "uxwfZvtnz",
+						  "name": "email receiver",
+						  "type": "email",
+						  "disableResolveMessage": false,
+						  "settings": {
+							"addresses": "<example@email.com>"
+						  },
+						  "secureFields": {}
+						}
+					  ]
+					}
+				  ]
+				}
+			`,
+		},
+		{
+			desc:   "undefined mute time names in routes should error",
+			err:    true,
+			errMsg: "undefined time interval \"test2\" used in route",
+			input: `
+				{
+				  "route": {
+					"receiver": "grafana-default-email",
+					"routes": [
+						{
+						  "receiver": "grafana-default-email",
+						  "object_matchers": [
+							[
+							  "a",
+							  "=",
+							  "b"
+							]
+						  ],
+						  "mute_time_intervals": [
+							"test2"
+						  ]
+						}
+					  ]
+				  },
+				  "mute_time_intervals": [
+					{
+					  "name": "test1",
+					  "time_intervals": [
+						{
+						  "times": [
+							{
+							  "start_time": "00:00",
+							  "end_time": "12:00"
+							}
+						  ]
+						}
+					  ]
+					}
+				  ],
+				  "templates": null,
+				  "receivers": [
+					{
+					  "name": "grafana-default-email",
+					  "grafana_managed_receiver_configs": [
+						{
+						  "uid": "uxwfZvtnz",
+						  "name": "email receiver",
+						  "type": "email",
+						  "disableResolveMessage": false,
+						  "settings": {
+							"addresses": "<example@email.com>"
+						  },
+						  "secureFields": {}
+						}
+					  ]
+					}
+				  ]
+				}
+			`,
+		},
+		{
+			desc: "valid config should not error",
+			input: `
+				{
+				  "route": {
+					"receiver": "grafana-default-email",
+					"routes": [
+						{
+						  "receiver": "grafana-default-email",
+						  "object_matchers": [
+							[
+							  "a",
+							  "=",
+							  "b"
+							]
+						  ],
+						  "mute_time_intervals": [
+							"test1"
+						  ]
+						}
+					  ]
+				  },
+				  "mute_time_intervals": [
+					{
+					  "name": "test1",
+					  "time_intervals": [
+						{
+						  "times": [
+							{
+							  "start_time": "00:00",
+							  "end_time": "12:00"
+							}
+						  ]
+						}
+					  ]
+					}
+				  ],
+				  "templates": null,
+				  "receivers": [
+					{
+					  "name": "grafana-default-email",
+					  "grafana_managed_receiver_configs": [
+						{
+						  "uid": "uxwfZvtnz",
+						  "name": "email receiver",
+						  "type": "email",
+						  "disableResolveMessage": false,
+						  "settings": {
+							"addresses": "<example@email.com>"
+						  },
+						  "secureFields": {}
+						}
+					  ]
+					}
+				  ]
+				}
+			`,
+		},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			var out Config
+			err := json.Unmarshal([]byte(tc.input), &out)
+			if tc.err {
+				require.Error(t, err)
+				require.Equal(t, tc.errMsg, err.Error())
+				return
+			}
+			require.Nil(t, err)
+		})
+	}
+}
+
 func Test_GettableUserConfigUnmarshaling(t *testing.T) {
 	for _, tc := range []struct {
 		desc, input string
@@ -454,6 +694,36 @@ alertmanager_config: ""
 			output: GettableUserConfig{
 				TemplateFiles: map[string]string{"foo": "bar"},
 			},
+		},
+		{
+			desc: "empty mute times name",
+			input: `
+template_files: {foo: bar}
+alertmanager_config: |
+                      route:
+                          receiver: am
+                          continue: false
+                          routes:
+                          - receiver: am
+                            continue: false
+                      templates: []
+                      mute_time_intervals:
+                      - name: ''
+                        time_intervals:
+                        - years:
+                          - 2020:2022
+                          - "2030"
+                      receivers:
+                      - name: am
+                        email_configs:
+                        - to: foo
+                          from: bar
+                          headers:
+                            Bazz: buzz
+                          text: hi
+                          html: there
+`,
+			err: false,
 		},
 		{
 			desc: "existing am config",
