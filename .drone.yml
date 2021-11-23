@@ -51,44 +51,6 @@ steps:
   - initialize
   image: grafana/build-container:1.4.6
   name: shellcheck
-- commands:
-  - ./bin/grabpl lint-backend --edition oss
-  depends_on:
-  - initialize
-  environment:
-    CGO_ENABLED: "1"
-  image: grafana/build-container:1.4.6
-  name: lint-backend
-- commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  depends_on:
-  - initialize
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.4.6
-  name: lint-frontend
-- commands:
-  - ./bin/grabpl test-backend --edition oss
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.6
-  name: test-backend
-- commands:
-  - ./bin/grabpl integration-tests --edition oss
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.6
-  name: test-backend-integration
-- commands:
-  - yarn run ci:test-frontend
-  depends_on:
-  - initialize
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.4.6
-  name: test-frontend
 trigger:
   event:
   - pull_request
@@ -180,24 +142,6 @@ steps:
   image: grafana/build-container:1.4.6
   name: package
 - commands:
-  - ./e2e/start-server
-  depends_on:
-  - package
-  detach: true
-  environment:
-    PORT: 3001
-  image: grafana/build-container:1.4.6
-  name: end-to-end-tests-server
-- commands:
-  - yarn run cypress install
-  - ./bin/grabpl e2e-tests --port 3001
-  depends_on:
-  - end-to-end-tests-server
-  environment:
-    HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests
-- commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
@@ -206,19 +150,6 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.6
   name: build-storybook
-- commands:
-  - yarn wait-on http://$HOST:$PORT
-  - pa11y-ci --config .pa11yci-pr.conf.js
-  depends_on:
-  - end-to-end-tests-server
-  environment:
-    GRAFANA_MISC_STATS_API_KEY:
-      from_secret: grafana_misc_stats_api_key
-    HOST: end-to-end-tests-server
-    PORT: 3001
-  failure: always
-  image: hugohaggmark/docker-puppeteer
-  name: test-a11y-frontend
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
@@ -3599,6 +3530,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: e88015b452dfab871767948389489cbbf94d34e79054a4c0e251b5d828780269
+hmac: d6fd0a0b9161e0e7ba7760547ca1b06ddf40b397d8c98c893606ccd1427bb838
 
 ...

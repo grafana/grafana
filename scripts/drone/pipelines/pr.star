@@ -52,11 +52,6 @@ def pr_pipelines(edition):
         lint_drone_step(),
         codespell_step(),
         shellcheck_step(),
-        lint_backend_step(edition=edition),
-        lint_frontend_step(),
-        test_backend_step(edition=edition),
-        test_backend_integration_step(edition=edition),
-        test_frontend_step(),
     ]
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
@@ -86,10 +81,7 @@ def pr_pipelines(edition):
     # Insert remaining build_steps
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=variants),
-        e2e_tests_server_step(edition=edition),
-        e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
-        test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
         build_frontend_docs_step(edition=edition),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
