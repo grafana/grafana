@@ -194,6 +194,7 @@ export const RolePickerMenu = ({
                       key={i}
                       isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
                       partiallySelected={groupPartiallySelected(option.value)}
+                      disabled={option.options?.every(isNotDelegatable)}
                       onChange={onGroupChange}
                       onOpenSubMenu={onOpenSubMenu}
                       onCloseSubMenu={onCloseSubMenu}
@@ -221,6 +222,7 @@ export const RolePickerMenu = ({
                       data={option}
                       key={i}
                       isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                      disabled={isNotDelegatable(option)}
                       onChange={onChange}
                       hideDescription
                     />
@@ -237,6 +239,7 @@ export const RolePickerMenu = ({
                     data={option}
                     key={i}
                     isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                    disabled={isNotDelegatable(option)}
                     onChange={onChange}
                     hideDescription
                   />
@@ -329,7 +332,9 @@ export const RolePickerSubMenu = ({
                     disabledOptions?.find((opt) => opt.uid === option.uid))
                 )
               }
-              disabled={!!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid))}
+              disabled={
+                !!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid)) || isNotDelegatable(option)
+              }
               onChange={onSelect}
               hideDescription
             />
@@ -507,6 +512,10 @@ const capitalize = (s: string): string => {
 
 const sortRolesByName = (a: Role, b: Role) => a.name.localeCompare(b.name);
 
+const isNotDelegatable = (role: Role) => {
+  return role.delegatable !== undefined && !role.delegatable;
+};
+
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     menuWrapper: css`
@@ -564,7 +573,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     menuOptionBody: css`
       font-weight: ${theme.typography.fontWeightRegular};
-      padding: ${theme.spacing(0, 1, 0, 0)};
+      padding: ${theme.spacing(0, 1.5, 0, 0)};
     `,
     menuOptionDisabled: css`
       color: ${theme.colors.text.disabled};

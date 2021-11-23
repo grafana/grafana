@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { PluginError } from '@grafana/data';
 import { setDisplayMode } from './reducer';
 import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall } from './actions';
 import { CatalogPlugin, PluginCatalogStoreState, PluginListDisplayMode } from '../types';
@@ -11,6 +12,7 @@ import {
   selectRequestError,
   selectIsRequestNotFetched,
   selectDisplayMode,
+  selectPluginErrors,
 } from './selectors';
 import { sortPlugins, Sorters } from '../helpers';
 
@@ -51,6 +53,12 @@ export const useGetSingle = (id: string): CatalogPlugin | undefined => {
   useFetchDetails(id);
 
   return useSelector((state: PluginCatalogStoreState) => selectById(state, id));
+};
+
+export const useGetErrors = (): PluginError[] => {
+  useFetchAll();
+
+  return useSelector(selectPluginErrors);
 };
 
 export const useInstall = () => {

@@ -36,9 +36,9 @@ export const UserRolePicker: FC<Props> = ({
 };
 
 export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
-  let rolesUrl = '/api/access-control/roles';
+  let rolesUrl = '/api/access-control/roles?delegatable=true';
   if (orgId) {
-    rolesUrl += `?targetOrgId=${orgId}`;
+    rolesUrl += `&targetOrgId=${orgId}`;
   }
   const roles = await getBackendSrv().get(rolesUrl);
   if (!roles || !roles.length) {
@@ -60,11 +60,16 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
   if (orgId) {
     userRolesUrl += `?targetOrgId=${orgId}`;
   }
-  const roles = await getBackendSrv().get(userRolesUrl);
-  if (!roles || !roles.length) {
+  try {
+    const roles = await getBackendSrv().get(userRolesUrl);
+    if (!roles || !roles.length) {
+      return [];
+    }
+    return roles;
+  } catch (error) {
+    error.isHandled = true;
     return [];
   }
-  return roles;
 };
 
 export const updateUserRoles = (roleUids: string[], userId: number, orgId?: number) => {

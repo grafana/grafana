@@ -237,14 +237,14 @@ func TestDashboardService(t *testing.T) {
 		t.Run("Given provisioned dashboard", func(t *testing.T) {
 			t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
 				result := setupDeleteHandlers(t, &fakeStore, true)
-				err := service.DeleteProvisionedDashboard(1, 1)
+				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 				require.True(t, result.deleteWasCalled)
 			})
 
 			t.Run("DeleteDashboard should fail to delete it", func(t *testing.T) {
 				result := setupDeleteHandlers(t, &fakeStore, true)
-				err := service.DeleteDashboard(1, 1)
+				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.Equal(t, err, models.ErrDashboardCannotDeleteProvisionedDashboard)
 				require.False(t, result.deleteWasCalled)
 			})
@@ -254,13 +254,13 @@ func TestDashboardService(t *testing.T) {
 			result := setupDeleteHandlers(t, &fakeStore, false)
 
 			t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
-				err := service.DeleteProvisionedDashboard(1, 1)
+				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 				require.True(t, result.deleteWasCalled)
 			})
 
 			t.Run("DeleteDashboard should delete it", func(t *testing.T) {
-				err := service.DeleteDashboard(1, 1)
+				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 				require.True(t, result.deleteWasCalled)
 			})
