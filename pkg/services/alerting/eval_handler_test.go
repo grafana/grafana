@@ -229,7 +229,6 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		require.ElementsMatch(t, context.EvalMatches, []*EvalMatch{
 			{Value: null.Float{}, Metric: "NoData"},
 		})
-
 	})
 }
 
