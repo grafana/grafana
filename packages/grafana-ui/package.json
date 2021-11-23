@@ -41,7 +41,7 @@
     "@popperjs/core": "2.5.4",
     "@react-aria/focus": "3.4.1",
     "@react-aria/overlays": "3.7.2",
-    "@sentry/browser": "5.25.0",
+    "@sentry/browser": "6.15.0",
     "ansicolor": "1.1.95",
     "calculate-size": "1.1.1",
     "classnames": "2.2.6",
