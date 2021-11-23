@@ -3467,31 +3467,110 @@ trigger:
 type: docker
 ---
 kind: pipeline
-name: scan-docker-images
+name: scan-grafana/grafana:latest-image
 platform:
   arch: amd64
   os: linux
-services: []
 steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
-  image: aquasec/trivy:0.18.3
-  name: scan-docker-images-unkown-low-medium-vulnerabilities
+  image: aquasec/trivy:0.21.0
+  name: scan-unkown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
-  image: aquasec/trivy:0.18.3
-  name: scan-docker-images-high-critical-vulnerabilities
+  image: aquasec/trivy:0.21.0
+  name: scan-high-critical-vulnerabilities
 - image: plugins/slack
   name: slack-notify-failure
   settings:
     channel: grafana-backend-ops
-    template: 'Nightly docker image scan job for {{repo.name}} failed: {{build.link}}'
+    template: 'Nightly docker image scan job for grafana/grafana:latest failed: {{build.link}}'
+    webhook:
+      from_secret: slack_webhook_backend
+  when:
+    status: failure
+trigger:
+  cron: nightly
+  event: cron
+type: docker
+---
+kind: pipeline
+name: scan-grafana/grafana:main-image
+platform:
+  arch: amd64
+  os: linux
+steps:
+- commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
+  image: aquasec/trivy:0.21.0
+  name: scan-unkown-low-medium-vulnerabilities
+- commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
+  image: aquasec/trivy:0.21.0
+  name: scan-high-critical-vulnerabilities
+- image: plugins/slack
+  name: slack-notify-failure
+  settings:
+    channel: grafana-backend-ops
+    template: 'Nightly docker image scan job for grafana/grafana:main failed: {{build.link}}'
+    webhook:
+      from_secret: slack_webhook_backend
+  when:
+    status: failure
+trigger:
+  cron: nightly
+  event: cron
+type: docker
+---
+kind: pipeline
+name: scan-grafana/grafana:latest-ubuntu-image
+platform:
+  arch: amd64
+  os: linux
+steps:
+- commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
+  image: aquasec/trivy:0.21.0
+  name: scan-unkown-low-medium-vulnerabilities
+- commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
+  image: aquasec/trivy:0.21.0
+  name: scan-high-critical-vulnerabilities
+- image: plugins/slack
+  name: slack-notify-failure
+  settings:
+    channel: grafana-backend-ops
+    template: 'Nightly docker image scan job for grafana/grafana:latest-ubuntu failed:
+      {{build.link}}'
+    webhook:
+      from_secret: slack_webhook_backend
+  when:
+    status: failure
+trigger:
+  cron: nightly
+  event: cron
+type: docker
+---
+kind: pipeline
+name: scan-grafana/grafana:main-ubuntu-image
+platform:
+  arch: amd64
+  os: linux
+steps:
+- commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
+  image: aquasec/trivy:0.21.0
+  name: scan-unkown-low-medium-vulnerabilities
+- commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
+  image: aquasec/trivy:0.21.0
+  name: scan-high-critical-vulnerabilities
+- image: plugins/slack
+  name: slack-notify-failure
+  settings:
+    channel: grafana-backend-ops
+    template: 'Nightly docker image scan job for grafana/grafana:main-ubuntu failed:
+      {{build.link}}'
     webhook:
       from_secret: slack_webhook_backend
   when:
@@ -3520,6 +3599,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 506f659ace94bf2db684864909ea29b8963f3655d4f02b5dbd0d3440271be38f
+hmac: e88015b452dfab871767948389489cbbf94d34e79054a4c0e251b5d828780269
 
 ...
