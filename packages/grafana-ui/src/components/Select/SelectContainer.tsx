@@ -9,13 +9,13 @@ import { focusCss } from '../../themes/mixins';
 import { components, ContainerProps as BaseContainerProps, GroupBase } from 'react-select';
 
 // isFocus prop is actually available, but its not in the types for the version we have.
-export interface ContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>>
+export interface SelectContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>>
   extends BaseContainerProps<Option, isMulti, Group> {
   isFocused: boolean;
 }
 
 export const SelectContainer = <Option, isMulti extends boolean, Group extends GroupBase<Option>>(
-  props: ContainerProps<Option, isMulti, Group>
+  props: SelectContainerProps<Option, isMulti, Group>
 ) => {
   const { isDisabled, isFocused, children } = props;
 
