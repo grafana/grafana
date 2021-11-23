@@ -42,14 +42,9 @@ type ScopeResolver struct {
 func NewScopeResolver() ScopeResolver {
 	return ScopeResolver{
 		keywordResolvers: map[string]KeywordScopeResolveFunc{
-			"orgs:current": resolveCurrentOrg,
-			"users:self":   resolveUserSelf,
+			"users:self": resolveUserSelf,
 		},
 	}
-}
-
-func resolveCurrentOrg(u *models.SignedInUser) (string, error) {
-	return Scope("orgs", "id", fmt.Sprintf("%v", u.OrgId)), nil
 }
 
 func resolveUserSelf(u *models.SignedInUser) (string, error) {

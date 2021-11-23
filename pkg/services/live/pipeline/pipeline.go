@@ -169,15 +169,6 @@ type Label struct {
 	Value string `json:"value"` // Can be JSONPath or Goja script.
 }
 
-// Field description.
-type Field struct {
-	Name   string            `json:"name"`
-	Type   data.FieldType    `json:"type"`
-	Value  string            `json:"value"` // Can be JSONPath or Goja script.
-	Labels []Label           `json:"labels,omitempty"`
-	Config *data.FieldConfig `json:"config,omitempty"`
-}
-
 type ChannelRuleGetter interface {
 	Get(orgID int64, channel string) (*LiveChannelRule, bool, error)
 }

@@ -184,14 +184,26 @@ describe('LokiDatasource', () => {
 
       it('should add volume hint param for log volume queries', () => {
         const target = { expr: '{job="grafana"}', refId: 'B', volumeQuery: true };
-        const req = ds.createRangeQuery(target, options as any, 1000);
-        expect(req.hint).toBe('logvolhist');
+        ds.runRangeQuery(target, options);
+        expect(backendSrv.fetch).toBeCalledWith(
+          expect.objectContaining({
+            headers: {
+              'X-Query-Tag': 'Source=logvolhist',
+            },
+          })
+        );
       });
 
       it('should not add volume hint param for regular queries', () => {
         const target = { expr: '{job="grafana"}', refId: 'B', volumeQuery: false };
-        const req = ds.createRangeQuery(target, options as any, 1000);
-        expect(req.hint).not.toBeDefined();
+        ds.runRangeQuery(target, options);
+        expect(backendSrv.fetch).not.toBeCalledWith(
+          expect.objectContaining({
+            headers: {
+              'X-Query-Tag': 'Source=logvolhist',
+            },
+          })
+        );
       });
     });
   });

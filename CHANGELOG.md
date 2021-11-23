@@ -1,3 +1,103 @@
+<!-- 8.3.0-beta1 START -->
+
+# 8.3.0-beta1 (2021-11-18)
+
+### Features and enhancements
+
+- **AccessControl:** Apply fine-grained access control to licensing. (Enterprise)
+- **Alerting:** Add UI for contact point testing with custom annotations and labels. [#40491](https://github.com/grafana/grafana/pull/40491), [@nathanrodman](https://github.com/nathanrodman)
+- **Alerting:** Make alert state indicator in panel header work with Grafana 8 alerts. [#38713](https://github.com/grafana/grafana/pull/38713), [@domasx2](https://github.com/domasx2)
+- **Alerting:** Option for Discord notifier to use webhook name. [#40463](https://github.com/grafana/grafana/pull/40463), [@Skyebold](https://github.com/Skyebold)
+- **Annotations:** Deprecate AnnotationsSrv. [#39631](https://github.com/grafana/grafana/pull/39631), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Auditing:** Add audit logs for unified alerting endpoints. (Enterprise)
+- **Auditing:** Add endpoints (plugins, datasources, library elements). (Enterprise)
+- **Auth:** Omit all base64 paddings in JWT tokens for the JWT auth. [#35602](https://github.com/grafana/grafana/pull/35602), [@gillg](https://github.com/gillg)
+- **Azure Monitor:** Clean up fields when editing Metrics. [#41762](https://github.com/grafana/grafana/pull/41762), [@andresmgot](https://github.com/andresmgot)
+- **AzureMonitor:** Add new starter dashboards. [#39876](https://github.com/grafana/grafana/pull/39876), [@jcolladokuri](https://github.com/jcolladokuri)
+- **AzureMonitor:** Add starter dashboard for app monitoring with Application Insights. [#40725](https://github.com/grafana/grafana/pull/40725), [@jcolladokuri](https://github.com/jcolladokuri)
+- **Barchart/Time series:** Allow x axis label. [#41142](https://github.com/grafana/grafana/pull/41142), [@oscarkilhed](https://github.com/oscarkilhed)
+- **CLI:** Improve error handling for installing plugins. [#41257](https://github.com/grafana/grafana/pull/41257), [@marefr](https://github.com/marefr)
+- **CloudMonitoring:** Migrate to use backend plugin SDK contracts. [#38650](https://github.com/grafana/grafana/pull/38650), [@idafurjes](https://github.com/idafurjes)
+- **CloudWatch Logs:** Add retry strategy for hitting max concurrent queries. [#39290](https://github.com/grafana/grafana/pull/39290), [@aocenas](https://github.com/aocenas)
+- **CloudWatch:** Add AWS RoboMaker metrics and dimension. [#41450](https://github.com/grafana/grafana/pull/41450), [@ilyastoli](https://github.com/ilyastoli)
+- **CloudWatch:** Add AWS Transfer metrics and dimension. [#41168](https://github.com/grafana/grafana/pull/41168), [@ilyastoli](https://github.com/ilyastoli)
+- **Dashboard:** replace datasource name with a reference object. [#33817](https://github.com/grafana/grafana/pull/33817), [@ryantxu](https://github.com/ryantxu)
+- **Dashboards:** Show logs on time series when hovering. [#40110](https://github.com/grafana/grafana/pull/40110), [@ryantxu](https://github.com/ryantxu)
+- **Elasticsearch:** Add support for Elasticsearch 8.0 (Beta). [#41729](https://github.com/grafana/grafana/pull/41729), [@Elfo404](https://github.com/Elfo404)
+- **Elasticsearch:** Add time zone setting to Date Histogram aggregation. [#40882](https://github.com/grafana/grafana/pull/40882), [@Elfo404](https://github.com/Elfo404)
+- **Elasticsearch:** Enable full range log volume histogram. [#41202](https://github.com/grafana/grafana/pull/41202), [@ifrost](https://github.com/ifrost)
+- **Elasticsearch:** Full range logs volume. [#40700](https://github.com/grafana/grafana/pull/40700), [@ifrost](https://github.com/ifrost)
+- **Explore:** Allow changing the graph type. [#40522](https://github.com/grafana/grafana/pull/40522), [@gabor](https://github.com/gabor)
+- **Explore:** Show ANSI colors when highlighting matched words in the logs panel. [#40971](https://github.com/grafana/grafana/pull/40971), [@oliverfrye](https://github.com/oliverfrye)
+- **Graph(old) panel:** Listen to events from Time series panel. [#41033](https://github.com/grafana/grafana/pull/41033), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Import:** Load gcom dashboards from URL. [#41799](https://github.com/grafana/grafana/pull/41799), [@ashharrison90](https://github.com/ashharrison90)
+- **LibraryPanels:** Improves export and import of library panels between orgs. [#39214](https://github.com/grafana/grafana/pull/39214), [@hugohaggmark](https://github.com/hugohaggmark)
+- **OAuth:** Support PKCE. [#39948](https://github.com/grafana/grafana/pull/39948), [@sakjur](https://github.com/sakjur)
+- **Panel edit:** Overrides now highlight correctly when searching. [#41684](https://github.com/grafana/grafana/pull/41684), [@ashharrison90](https://github.com/ashharrison90)
+- **PanelEdit:** Display drag indicators on draggable sections. [#41711](https://github.com/grafana/grafana/pull/41711), [@ashharrison90](https://github.com/ashharrison90)
+- **Plugins:** Refactor Plugin Management. [#40477](https://github.com/grafana/grafana/pull/40477), [@wbrowne](https://github.com/wbrowne)
+- **Prometheus:** Add custom query parameters when creating PromLink url. [#41213](https://github.com/grafana/grafana/pull/41213), [@Ian-Yy](https://github.com/Ian-Yy)
+- **Prometheus:** Remove limits on metrics, labels, and values in Metrics Browser. [#40660](https://github.com/grafana/grafana/pull/40660), [@autoric](https://github.com/autoric)
+- **StateTimeline:** Share cursor with rest of the panels. [#41038](https://github.com/grafana/grafana/pull/41038), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Tempo:** Add error details when json upload fails. [#41803](https://github.com/grafana/grafana/pull/41803), [@aocenas](https://github.com/aocenas)
+- **Tempo:** Add filtering for service graph query. [#41162](https://github.com/grafana/grafana/pull/41162), [@aocenas](https://github.com/aocenas)
+- **Tempo:** Add links to nodes in Service Graph pointing to Prometheus metrics. [#41135](https://github.com/grafana/grafana/pull/41135), [@aocenas](https://github.com/aocenas)
+- **Time series/Bar chart panel:** Add ability to sort series via legend. [#40226](https://github.com/grafana/grafana/pull/40226), [@zoltanbedi](https://github.com/zoltanbedi)
+- **TimeSeries:** Allow multiple axes for the same unit. [#41635](https://github.com/grafana/grafana/pull/41635), [@dprokop](https://github.com/dprokop)
+- **TraceView:** Allow span links defined on dataFrame. [#40563](https://github.com/grafana/grafana/pull/40563), [@aocenas](https://github.com/aocenas)
+- **Transformations:** Support a rows mode in labels to fields. [#41020](https://github.com/grafana/grafana/pull/41020), [@ryantxu](https://github.com/ryantxu)
+- **ValueMappings:** Don't apply field config defaults to time fields. [#41132](https://github.com/grafana/grafana/pull/41132), [@torkelo](https://github.com/torkelo)
+- **Variables:** Only update panels that are impacted by variable change. [#39420](https://github.com/grafana/grafana/pull/39420), [@hugohaggmark](https://github.com/hugohaggmark)
+
+### Bug fixes
+
+- **API:** Fix dashboard quota limit for imports. [#41495](https://github.com/grafana/grafana/pull/41495), [@yangkb09](https://github.com/yangkb09)
+- **Alerting:** Fix rule editor issues with Azure Monitor data source. [#41317](https://github.com/grafana/grafana/pull/41317), [@domasx2](https://github.com/domasx2)
+- **Azure monitor:** Make sure alert rule editor is not enabled when template variables are being used. [#41335](https://github.com/grafana/grafana/pull/41335), [@sunker](https://github.com/sunker)
+- **CloudMonitoring:** Fix annotation queries. [#41529](https://github.com/grafana/grafana/pull/41529), [@sunker](https://github.com/sunker)
+- **CodeEditor:** Trigger the latest getSuggestions() passed to CodeEditor. [#40544](https://github.com/grafana/grafana/pull/40544), [@DukeManh](https://github.com/DukeManh)
+- **Dashboard:** Remove the current panel from the list of options in the Dashboard datasource. [#41826](https://github.com/grafana/grafana/pull/41826), [@ashharrison90](https://github.com/ashharrison90)
+- **Encryption:** Fix decrypting secrets in alerting migration. [#41061](https://github.com/grafana/grafana/pull/41061), [@undef1nd](https://github.com/undef1nd)
+- **InfluxDB:** Fix corner case where index is too large in ALIAS field. [#41562](https://github.com/grafana/grafana/pull/41562), [@gabor](https://github.com/gabor)
+- **NavBar:** Order App plugins alphabetically. [#40078](https://github.com/grafana/grafana/pull/40078), [@ashharrison90](https://github.com/ashharrison90)
+- **NodeGraph:** Fix zooming sensitivity on touchpads. [#40718](https://github.com/grafana/grafana/pull/40718), [@aocenas](https://github.com/aocenas)
+- **Plugins:** Add OAuth pass-through logic to api/ds/query endpoint. [#41352](https://github.com/grafana/grafana/pull/41352), [@wbrowne](https://github.com/wbrowne)
+- **Snapshots:** Fix panel inspector for snapshot data. [#41530](https://github.com/grafana/grafana/pull/41530), [@joshhunt](https://github.com/joshhunt)
+- **Tempo:** Fix basic auth password reset on adding tag. [#41808](https://github.com/grafana/grafana/pull/41808), [@aocenas](https://github.com/aocenas)
+- **ValueMapping:** Fixes issue with regex mappings. [#41515](https://github.com/grafana/grafana/pull/41515), [@mcdee](https://github.com/mcdee)
+
+### Plugin development fixes & changes
+
+- **grafana/ui:** Enable slider marks display. [#41275](https://github.com/grafana/grafana/pull/41275), [@dprokop](https://github.com/dprokop)
+
+<!-- 8.3.0-beta1 END -->
+<!-- 8.2.5 START -->
+
+# 8.2.5 (2021-11-18)
+
+### Bug fixes
+
+- **Alerting:** Fix a bug where the metric in the evaluation string was not correctly populated. [#41731](https://github.com/grafana/grafana/pull/41731), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+- **Alerting:** Fix no data behaviour in Legacy Alerting for alert rules using the AND operator. [#41305](https://github.com/grafana/grafana/pull/41305), [@gerobinson](https://github.com/gerobinson)
+- **CloudMonitoring:** Ignore min and max aggregation in MQL queries. [#41302](https://github.com/grafana/grafana/pull/41302), [@sunker](https://github.com/sunker)
+- **Dashboards:** 'Copy' is no longer added to new dashboard titles. [#41344](https://github.com/grafana/grafana/pull/41344), [@joshhunt](https://github.com/joshhunt)
+- **DataProxy:** Fix overriding response body when response is a WebSocket upgrade. [#41364](https://github.com/grafana/grafana/pull/41364), [@marefr](https://github.com/marefr)
+- **Elasticsearch:** Use field configured in query editor as field for date_histogram aggregations. [#41258](https://github.com/grafana/grafana/pull/41258), [@Elfo404](https://github.com/Elfo404)
+- **Explore:** Fix running queries without a datasource property set. [#40805](https://github.com/grafana/grafana/pull/40805), [@Elfo404](https://github.com/Elfo404)
+- **InfluxDB:** Fix numeric aliases in queries. [#41531](https://github.com/grafana/grafana/pull/41531), [@gabor](https://github.com/gabor)
+- **Plugins:** Ensure consistent plugin settings list response. [#41346](https://github.com/grafana/grafana/pull/41346), [@wbrowne](https://github.com/wbrowne)
+- **Tempo:** Fix validation of float durations. [#41400](https://github.com/grafana/grafana/pull/41400), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Tracing:** Correct tags for each span are shown. [#41473](https://github.com/grafana/grafana/pull/41473), [@ivanahuckova](https://github.com/ivanahuckova)
+
+### Breaking changes
+
+### Fix No Data behaviour in Legacy Alerting
+
+In Grafana 8.2.5 and later, this change fixes a bug in the evaluation of alert rules when using the AND operator to compare two or more conditions. In Grafana 8.2.4 and earlier such alert rules would evaluate to `OK` if at least one, but not all, conditions returned no data. This change fixes that bug such that in Grafana 8.2.5 these alert rules now evaluate to `No Data`.
+
+If an alert should evaluate to `OK` when one or all conditions return `No Data` then this can be done via changing `If no data or all values are null` to `OK`. However, this will not preserve the old behaviour in 8.2.4 where an alert will be `OK` if at least one, but not all, conditions return no data and then `No Data` if all conditions return `No Data`. Issue [#41305](https://github.com/grafana/grafana/issues/41305)
+
+<!-- 8.2.5 END -->
 <!-- 8.2.4 START -->
 
 # 8.2.4 (2021-11-15)

@@ -44,7 +44,7 @@ import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
-import { isOnTheSameGridRow } from './utils';
+import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { Subscription } from 'rxjs';
@@ -553,9 +553,7 @@ export class DashboardModel {
     const panelsToRemove = [];
 
     // cleanup scopedVars
-    for (const panel of this.panels) {
-      delete panel.scopedVars;
-    }
+    deleteScopeVars(this.panels);
 
     for (let i = 0; i < this.panels.length; i++) {
       const panel = this.panels[i];

@@ -23,7 +23,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
     }
   >
     <FormattedDisplayValue
-      aria-label="Bar gauge value"
+      data-testid="data-testid Bar gauge value"
       style={
         Object {
           "alignItems": "center",

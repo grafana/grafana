@@ -248,12 +248,9 @@ export class LokiDatasource
       };
     }
 
-    const hint: { hint?: 'logvolhist' } = target.volumeQuery ? { hint: 'logvolhist' } : {};
-
     return {
       ...DEFAULT_QUERY_PARAMS,
       ...range,
-      ...hint,
       query,
       limit,
     };
@@ -284,7 +281,9 @@ export class LokiDatasource
     }
     const query = this.createRangeQuery(target, options, maxDataPoints);
 
-    return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
+    const headers = target.volumeQuery ? { 'X-Query-Tag': 'Source=logvolhist' } : undefined;
+
+    return this._request(RANGE_QUERY_ENDPOINT, query, { headers }).pipe(
       catchError((err) => throwError(() => this.processError(err, target))),
       switchMap((response) =>
         processRangeQueryResponse(
