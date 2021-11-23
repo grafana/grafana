@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useRef } from 'react';
+import React, { FC, RefCallback, useCallback, useEffect, useRef } from 'react';
 import { isNil } from 'lodash';
 import classNames from 'classnames';
 import { css } from '@emotion/css';
@@ -16,6 +16,7 @@ interface Props {
   hideTracksWhenNotNeeded?: boolean;
   hideHorizontalTrack?: boolean;
   hideVerticalTrack?: boolean;
+  scrollRefCallback?: RefCallback<HTMLDivElement>;
   scrollTop?: number;
   setScrollTop?: (position: ScrollbarPosition) => void;
   autoHeightMin?: number | string;
@@ -35,11 +36,17 @@ export const CustomScrollbar: FC<Props> = ({
   hideTracksWhenNotNeeded = false,
   hideHorizontalTrack,
   hideVerticalTrack,
+  scrollRefCallback,
   updateAfterMountMs,
   scrollTop,
   children,
 }) => {
-  const ref = useRef<Scrollbars>(null);
+  const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
+  useEffect(() => {
+    if (ref.current) {
+      scrollRefCallback?.(ref.current.view);
+    }
+  }, [ref, scrollRefCallback]);
   const styles = useStyles2(getStyles);
 
   const updateScroll = () => {

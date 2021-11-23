@@ -4,6 +4,8 @@ import {
   ResourceDimensionConfig,
   ResourceDimensionMode,
   ScaleDimensionConfig,
+  ScalarDimensionConfig,
+  ScalarDimensionMode,
   TextDimensionConfig,
 } from 'app/features/dimensions';
 import { Style } from 'ol/style';
@@ -30,6 +32,9 @@ export interface StyleConfig {
   // Can show markers and text together!
   text?: TextDimensionConfig;
   textConfig?: TextStyleConfig;
+
+  // Allow for rotation of markers
+  rotation?: ScalarDimensionConfig;
 }
 
 export const DEFAULT_SIZE = 5;
@@ -66,6 +71,12 @@ export const defaultStyleConfig = Object.freeze({
     offsetX: 0,
     offsetY: 0,
   },
+  rotation: {
+    fixed: 0,
+    mode: ScalarDimensionMode.Mod,
+    min: -360,
+    max: 360,
+  },
 });
 
 /**
@@ -99,12 +110,14 @@ export interface StyleConfigFields {
   color?: string;
   size?: string;
   text?: string;
+  rotation?: string;
 }
 
 export interface StyleDimensions {
   color?: DimensionSupplier<string>;
   size?: DimensionSupplier<number>;
   text?: DimensionSupplier<string>;
+  rotation?: DimensionSupplier<number>;
 }
 
 export interface StyleConfigState {
