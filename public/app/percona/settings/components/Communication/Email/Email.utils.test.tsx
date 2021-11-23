@@ -33,6 +33,7 @@ describe('Communication::Email::utils', () => {
           from: 'from@mail.com',
           smarthost: 'host.com',
           hello: 'hello',
+          require_tls: false,
         })
       ).toBe(EmailAuthType.PLAIN);
     });
@@ -44,6 +45,7 @@ describe('Communication::Email::utils', () => {
           from: 'from@mail.com',
           smarthost: 'host.com',
           hello: 'hello',
+          require_tls: false,
         })
       ).toBe(EmailAuthType.CRAM);
     });
@@ -55,6 +57,7 @@ describe('Communication::Email::utils', () => {
           from: 'from@mail.com',
           smarthost: 'host.com',
           hello: 'hello',
+          require_tls: false,
         })
       ).toBe(EmailAuthType.LOGIN);
     });
@@ -65,6 +68,7 @@ describe('Communication::Email::utils', () => {
           from: 'from@mail.com',
           smarthost: 'host.com',
           hello: 'hello',
+          require_tls: false,
         })
       ).toBe(EmailAuthType.NONE);
     });
@@ -80,6 +84,7 @@ describe('Communication::Email::utils', () => {
           username: 'user',
           password: 'pass',
           identity: 'ident',
+          require_tls: true,
         })
       ).toEqual<FormEmailSettings>({
         from: 'from@mail.com',
@@ -88,6 +93,7 @@ describe('Communication::Email::utils', () => {
         username: 'user',
         password: 'pass',
         authType: EmailAuthType.PLAIN,
+        requireTls: true,
       });
     });
   });
@@ -103,6 +109,7 @@ describe('Communication::Email::utils', () => {
           username: 'user',
           password: 'pass',
           authType: EmailAuthType.LOGIN,
+          requireTls: false,
         })
       ).toEqual({
         from: 'from@mail.com',
@@ -110,6 +117,7 @@ describe('Communication::Email::utils', () => {
         hello: 'hello',
         username: 'user',
         password: 'pass',
+        require_tls: false,
       });
 
       expect(
@@ -120,6 +128,7 @@ describe('Communication::Email::utils', () => {
           username: 'user',
           password: 'pass',
           authType: EmailAuthType.PLAIN,
+          requireTls: true,
         })
       ).toEqual({
         from: 'from@mail.com',
@@ -128,6 +137,7 @@ describe('Communication::Email::utils', () => {
         username: 'user',
         password: 'pass',
         identity: 'fakeBtoa',
+        require_tls: true,
       });
 
       expect(
@@ -138,6 +148,7 @@ describe('Communication::Email::utils', () => {
           username: 'user',
           password: 'pass',
           authType: EmailAuthType.CRAM,
+          requireTls: false,
         })
       ).toEqual({
         from: 'from@mail.com',
@@ -145,6 +156,7 @@ describe('Communication::Email::utils', () => {
         hello: 'hello',
         username: 'user',
         secret: 'pass',
+        require_tls: false,
       });
 
       expect(
@@ -155,11 +167,13 @@ describe('Communication::Email::utils', () => {
           username: 'user',
           password: 'pass',
           authType: EmailAuthType.NONE,
+          requireTls: false,
         })
       ).toEqual({
         from: 'from@mail.com',
         smarthost: 'host.com',
         hello: 'hello',
+        require_tls: false,
       });
     });
   });

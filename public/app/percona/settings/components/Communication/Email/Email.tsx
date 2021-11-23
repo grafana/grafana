@@ -1,4 +1,10 @@
-import { TextInputField, PasswordInputField, validators, RadioButtonGroupField } from '@percona/platform-core';
+import {
+  TextInputField,
+  PasswordInputField,
+  validators,
+  RadioButtonGroupField,
+  CheckboxField,
+} from '@percona/platform-core';
 import { FormApi } from 'final-form';
 import React, { FC, useState } from 'react';
 import { withTypes } from 'react-final-form';
@@ -123,6 +129,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
               validators={values.authType === EmailAuthType.NONE ? [] : [validators.required]}
               name="password"
             />
+            <CheckboxField name="requireTls" label="Require TLS" />
 
             <Button
               className={settingsStyles.actionButton}

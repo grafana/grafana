@@ -23,6 +23,7 @@ export const stub: Settings = {
       from: 'from',
       smarthost: 'host',
       hello: 'hello',
+      require_tls: false,
     },
     slack: {
       url: 'slack.foo.com',

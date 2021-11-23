@@ -6,6 +6,7 @@ export interface EmailProps {
   updateSettings: (body: EmailPayload, callback: LoadingCallback) => void;
 }
 
-export interface FormEmailSettings extends Omit<EmailSettings, 'identity' | 'secret'> {
+export interface FormEmailSettings extends Omit<EmailSettings, 'identity' | 'secret' | 'require_tls'> {
   authType: EmailAuthType;
+  requireTls: boolean;
 }
