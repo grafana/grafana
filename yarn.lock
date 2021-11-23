@@ -1995,7 +1995,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/cache@npm:^11.0.0, @emotion/cache@npm:^11.1.3, @emotion/cache@npm:^11.5.0":
+"@emotion/cache@npm:^11.1.3, @emotion/cache@npm:^11.4.0, @emotion/cache@npm:^11.5.0":
   version: 11.5.0
   resolution: "@emotion/cache@npm:11.5.0"
   dependencies:
@@ -2761,7 +2761,6 @@ __metadata:
     "@types/react-color": 3.0.1
     "@types/react-dom": 17.0.11
     "@types/react-router-dom": ^5.1.7
-    "@types/react-select": 4.0.13
     "@types/react-table": 7.7.2
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.0
@@ -2821,7 +2820,7 @@ __metadata:
     react-inlinesvg: 2.3.0
     react-popper: 2.2.4
     react-router-dom: ^5.2.0
-    react-select: 4.3.0
+    react-select: 5.2.1
     react-select-event: ^5.1.0
     react-table: 7.7.0
     react-test-renderer: 17.0.1
@@ -8378,18 +8377,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-select@npm:4.0.13":
-  version: 4.0.13
-  resolution: "@types/react-select@npm:4.0.13"
-  dependencies:
-    "@emotion/serialize": ^1.0.0
-    "@types/react": "*"
-    "@types/react-dom": "*"
-    "@types/react-transition-group": "*"
-  checksum: 1a3fdd93a33e8b3fd59ba32c4e952cf057e0f745a3506ac556172ceba4c849e33494dfba1553783f6f55d864a530869f33feefc55306b212146758d612117dba
-  languageName: node
-  linkType: hard
-
 "@types/react-syntax-highlighter@npm:11.0.5":
   version: 11.0.5
   resolution: "@types/react-syntax-highlighter@npm:11.0.5"
@@ -8417,21 +8404,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-transition-group@npm:*":
-  version: 4.4.4
-  resolution: "@types/react-transition-group@npm:4.4.4"
-  dependencies:
-    "@types/react": "*"
-  checksum: 86e9ff9731798e12bc2afe0304678918769633b531dcf6397f86af81718fb7930ef8648e894eeb3718fc6eab6eb885cfb9b82a44d1d74e10951ee11ebc4643ae
-  languageName: node
-  linkType: hard
-
 "@types/react-transition-group@npm:4.4.0":
   version: 4.4.0
   resolution: "@types/react-transition-group@npm:4.4.0"
   dependencies:
     "@types/react": "*"
   checksum: ba44361d7b055922b60a557389a68d5320a190785cd80173839ef8c096aeb0808bd9c35fc9a70badbfe959dc668fdb1b82211e4914140a5edc9ed87d760c9812
+  languageName: node
+  linkType: hard
+
+"@types/react-transition-group@npm:^4.4.0":
+  version: 4.4.4
+  resolution: "@types/react-transition-group@npm:4.4.4"
+  dependencies:
+    "@types/react": "*"
+  checksum: 86e9ff9731798e12bc2afe0304678918769633b531dcf6397f86af81718fb7930ef8648e894eeb3718fc6eab6eb885cfb9b82a44d1d74e10951ee11ebc4643ae
   languageName: node
   linkType: hard
 
@@ -17980,7 +17967,6 @@ __metadata:
     "@types/react-loadable": 5.5.2
     "@types/react-redux": 7.1.20
     "@types/react-router-dom": ^5.1.7
-    "@types/react-select": 4.0.13
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.0
     "@types/react-virtualized-auto-sizer": 1.0.0
@@ -18135,7 +18121,7 @@ __metadata:
     react-resizable: 3.0.4
     react-reverse-portal: ^2.0.1
     react-router-dom: ^5.2.0
-    react-select: 4.3.0
+    react-select: 5.2.1
     react-select-event: ^5.1.0
     react-split-pane: 0.1.89
     react-test-renderer: 17.0.1
@@ -27678,21 +27664,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:4.3.0":
-  version: 4.3.0
-  resolution: "react-select@npm:4.3.0"
+"react-select@npm:5.2.1":
+  version: 5.2.1
+  resolution: "react-select@npm:5.2.1"
   dependencies:
     "@babel/runtime": ^7.12.0
-    "@emotion/cache": ^11.0.0
+    "@emotion/cache": ^11.4.0
     "@emotion/react": ^11.1.1
+    "@types/react-transition-group": ^4.4.0
     memoize-one: ^5.0.0
     prop-types: ^15.6.0
-    react-input-autosize: ^3.0.0
     react-transition-group: ^4.3.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
-  checksum: 00946ed4dfa46523bc44cd26aab11431396632097207081b471d1965fa53cf7f5a006ac11d89b8a65df05cc5376b1c4438edb1d5259323bdc6d3adf01c79d53e
+  checksum: 014cde5d23ca466795bd7f02455769efda74522c41f11109ec2d6f0e3c77f401ea91ae23cdccce997efb653aa6ea88688a16f40e59bfdef2a2414d0cfd10f374
   languageName: node
   linkType: hard
 
