@@ -66,8 +66,7 @@
   "alerting": true,
   "annotations": true,
   "queryOptions": {
-    "minInterval": true,
-    "cacheTimeout": true
+    "minInterval": true
   },
   "info": {
     "description": "Open source time series database & alerting",
