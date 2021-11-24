@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import React from 'react';
-import { ActionMeta as SelectActionMeta } from 'react-select';
+import { ActionMeta as SelectActionMeta, GroupBase, OptionsOrGroups } from 'react-select';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 export type ActionMeta = SelectActionMeta<{}>;
@@ -77,7 +77,7 @@ export interface SelectCommonProps<T> {
   isValidNewOption?: (
     inputValue: string,
     value: SelectableValue<T> | null,
-    options: Readonly<Array<SelectableValue<T>>>
+    options: OptionsOrGroups<unknown, GroupBase<unknown>>
   ) => boolean;
 }
 
