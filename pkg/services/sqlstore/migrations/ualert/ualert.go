@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -752,6 +751,15 @@ func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
 	if migrator.Cfg.UnifiedAlerting.Enabled != nil {
 		return nil
 	}
+	var ualertEnabled bool
+	// this duplicates the logic in setting.ReadUnifiedAlertingSettings, and is put here just for logical completeness.
+	if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
+		ualertEnabled = true
+		migrator.Cfg.UnifiedAlerting.Enabled = &ualertEnabled
+		migrator.Logger.Debug("Unified alerting is enabled because the legacy is disabled explicitly")
+		return nil
+	}
+
 	resp := &struct {
 		Count int64
 	}{}
@@ -761,23 +769,16 @@ func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
 	}
 	if exist {
 		if _, err := migrator.DBEngine.SQL("SELECT COUNT(1) as count FROM alert").Get(resp); err != nil {
-			return fmt.Errorf("failed to access the database to determine alerting status: %w", err)
+			return fmt.Errorf("failed to read 'alert' table: %w", err)
 		}
 	}
-	hasLegacyAlerts := resp.Count > 0
+	// if table does not exist then we treat it as absence of legacy alerting and therefore enable unified alerting.
 
-	if hasLegacyAlerts {
-		migrator.Logger.Debug("legacy alerts were found in the database. Unified alerting is disabled.")
-	} else {
-		if setting.AlertingEnabled != nil && *setting.AlertingEnabled {
-			return errors.New("both legacy and Grafana 8 Alerts are enabled. Disable one of them and restart")
-		}
-		migrator.Logger.Debug("there are no legacy alerts found in database. Unified alerting is enabled.")
-	}
-	ualertEnabled := !hasLegacyAlerts
+	ualertEnabled = resp.Count == 0
+	legacyEnabled := !ualertEnabled
 	migrator.Cfg.UnifiedAlerting.Enabled = &ualertEnabled
-	if setting.AlertingEnabled == nil {
-		setting.AlertingEnabled = &hasLegacyAlerts
-	}
+	setting.AlertingEnabled = &legacyEnabled
+
+	migrator.Logger.Debug(fmt.Sprintf("Found %d legacy alerts in the database. Unified alerting enabled is %v", resp.Count, ualertEnabled))
 	return nil
 }

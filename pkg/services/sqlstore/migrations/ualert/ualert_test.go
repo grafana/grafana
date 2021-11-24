@@ -2,7 +2,6 @@ package ualert
 
 import (
 	"fmt"
-	"math/rand"
 	"testing"
 
 	"xorm.io/xorm"
@@ -90,24 +89,71 @@ func TestCheckUnifiedAlertingEnabledByDefault(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("when 'alert' table has no data", func(t *testing.T) {
-		t.Run("it should fail if legacy alerting is explicitly enabled", func(t *testing.T) {
-			legacyEnabled := true
-			setting.AlertingEnabled = &legacyEnabled
+	tests := []struct {
+		title                   string
+		legacyAlertExists       bool
+		legacyIsDefined         bool
+		legacyValue             bool
+		expectedUnifiedAlerting bool
+	}{
+		{
+			title:                   "enable unified alerting when there are no legacy alerts",
+			legacyIsDefined:         false,
+			legacyAlertExists:       false,
+			expectedUnifiedAlerting: true,
+		},
+		{
+			title:                   "enable unified alerting when there are no legacy alerts and legacy enabled",
+			legacyIsDefined:         true,
+			legacyValue:             true,
+			legacyAlertExists:       false,
+			expectedUnifiedAlerting: true,
+		},
+		{
+			title:                   "enable unified alerting when there are no legacy alerts and legacy disabled",
+			legacyIsDefined:         true,
+			legacyValue:             false,
+			legacyAlertExists:       false,
+			expectedUnifiedAlerting: true,
+		},
+		{
+			title:                   "enable unified alerting when there are legacy alerts but legacy disabled",
+			legacyIsDefined:         true,
+			legacyValue:             false,
+			legacyAlertExists:       true,
+			expectedUnifiedAlerting: true,
+		},
+		{
+			title:                   "disable unified alerting when there are legacy alerts",
+			legacyIsDefined:         false,
+			legacyAlertExists:       true,
+			expectedUnifiedAlerting: false,
+		},
+		{
+			title:                   "disable unified alerting when there are legacy alerts and it is enabled",
+			legacyIsDefined:         true,
+			legacyValue:             true,
+			legacyAlertExists:       true,
+			expectedUnifiedAlerting: false,
+		},
+	}
 
-			cfg := setting.Cfg{
-				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: nil,
-				},
-			}
-			mg := migrator.NewMigrator(x, &cfg)
-
-			err := CheckUnifiedAlertingEnabledByDefault(mg)
-			require.Error(t, err)
-			require.Nil(t, cfg.UnifiedAlerting.Enabled)
-		})
-		t.Run("should enable unified alerting and disable legacy", func(t *testing.T) {
+	for _, test := range tests {
+		t.Run(test.title, func(t *testing.T) {
 			setting.AlertingEnabled = nil
+			if test.legacyIsDefined {
+				value := test.legacyValue
+				setting.AlertingEnabled = &value
+			}
+
+			if test.legacyAlertExists {
+				_, err := x.Exec("INSERT INTO alert VALUES (1)")
+				require.NoError(t, err)
+			} else {
+				_, err := x.Exec("DELETE FROM alert")
+				require.NoError(t, err)
+			}
+
 			cfg := setting.Cfg{
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
 					Enabled: nil,
@@ -117,58 +163,12 @@ func TestCheckUnifiedAlertingEnabledByDefault(t *testing.T) {
 
 			err := CheckUnifiedAlertingEnabledByDefault(mg)
 			require.NoError(t, err)
-
 			require.NotNil(t, setting.AlertingEnabled)
-			require.False(t, *setting.AlertingEnabled)
 			require.NotNil(t, cfg.UnifiedAlerting.Enabled)
-			require.True(t, *cfg.UnifiedAlerting.Enabled)
+			require.Equal(t, *cfg.UnifiedAlerting.Enabled, test.expectedUnifiedAlerting)
+			require.Equal(t, *setting.AlertingEnabled, !test.expectedUnifiedAlerting)
 		})
-	})
-	t.Run("when alert table has data", func(t *testing.T) {
-		_, err := x.Exec("INSERT INTO alert VALUES (1)")
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			_, err := x.Exec("DELETE FROM alert")
-			require.NoError(t, err)
-		})
-
-		t.Run("it should disable unified alerting and enable legacy", func(t *testing.T) {
-			setting.AlertingEnabled = nil
-			cfg := setting.Cfg{
-				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: nil,
-				},
-			}
-			mg := migrator.NewMigrator(x, &cfg)
-
-			err := CheckUnifiedAlertingEnabledByDefault(mg)
-			require.NoError(t, err)
-
-			require.NotNil(t, setting.AlertingEnabled)
-			require.True(t, *setting.AlertingEnabled)
-			require.NotNil(t, cfg.UnifiedAlerting.Enabled)
-			require.False(t, *cfg.UnifiedAlerting.Enabled)
-		})
-
-		t.Run("should not change legacy alerting if it is defined", func(t *testing.T) {
-			legacyEnabled := rand.Int63()%2 == 0
-			setting.AlertingEnabled = &legacyEnabled
-			cfg := setting.Cfg{
-				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: nil,
-				},
-			}
-			mg := migrator.NewMigrator(x, &cfg)
-
-			err := CheckUnifiedAlertingEnabledByDefault(mg)
-			require.NoError(t, err)
-
-			require.NotNil(t, setting.AlertingEnabled)
-			require.Equal(t, legacyEnabled, *setting.AlertingEnabled)
-			require.NotNil(t, cfg.UnifiedAlerting.Enabled)
-			require.False(t, *cfg.UnifiedAlerting.Enabled)
-		})
-	})
+	}
 }
 
 func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *PostableUserConfig {
