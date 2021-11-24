@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -739,42 +740,36 @@ func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
 	return "code migration"
 }
 
-// AddAlertingEnabledMigration adds a migration step that determines what alerting system is supposed to be run
-// in the case the unified alerting setting is not defined explicitly
-func AddAlertingEnabledMigration(mg *migrator.Migrator) {
-	if mg.Cfg.UnifiedAlerting.Enabled != nil {
-		return // if UA is explicitly enabled or disabled, do nothing
-	}
-	mg.AddMigration("enable-ualert", &enableUnifiedAlertingByDefault{})
-}
-
-type enableUnifiedAlertingByDefault struct {
-	migrator.MigrationBase
-}
-
-var _ migrator.CodeMigration = &enableUnifiedAlertingByDefault{}
-
-func (e enableUnifiedAlertingByDefault) SQL(migrator.Dialect) string {
-	return "enable unified-alerting by default"
-}
-
-func (e enableUnifiedAlertingByDefault) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+// CheckUnifiedAlertingEnabledByDefault determines the final status of unified alerting, if it is not enabled explicitly.
+// Checks table `alert` and if it is empty, then it changes UnifiedAlerting.Enabled to true. Oterwise, it sets the flag to false.
+// After this method the status of alerting should be determined.
+// Note: this is not a real migration but a step that other migrations depend on.
+// TODO Delete when unified alerting is enabled by default unconditionally (Grafana v9)
+func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
 	if migrator.Cfg.UnifiedAlerting.Enabled != nil {
 		return nil
 	}
-	type count struct {
+	resp := &struct {
 		Count int64
+	}{}
+	exist, err := migrator.DbEngine.IsTableExist("alert")
+	if err != nil {
+		return fmt.Errorf("failed to access the database to determine alerting status: %w", err)
 	}
-	resp := make([]*count, 0)
-	if err := sess.SQL("SELECT COUNT(*) as count FROM alert").Find(&resp); err != nil {
-		return fmt.Errorf("failed to query database for number of legacy alerts: %w. To skip this step enable or disable unified alerting", err)
-	}
-	hasLegacyAlerts := len(resp) > 0 && resp[0].Count > 0
-	if !hasLegacyAlerts {
-		if setting.AlertingEnabled != nil && *setting.AlertingEnabled {
-			return fmt.Errorf("both legacy and Grafana 8 Alerts are enabled. Disable one of them and restart")
+	if exist {
+		if _, err := migrator.DbEngine.SQL("SELECT COUNT(*) as count FROM alert").Get(resp); err != nil {
+			return fmt.Errorf("failed to access the database to determine alerting status: %w", err)
 		}
-		migrator.Logger.Debug("there are no legacy alerts found in database. Enable unified alerting as the default")
+	}
+	hasLegacyAlerts := resp.Count > 0
+
+	if hasLegacyAlerts {
+		migrator.Logger.Debug("legacy alerts were found in the database. Unified alerting is disabled.")
+	} else {
+		if setting.AlertingEnabled != nil && *setting.AlertingEnabled {
+			return errors.New("both legacy and Grafana 8 Alerts are enabled. Disable one of them and restart")
+		}
+		migrator.Logger.Debug("there are no legacy alerts found in database. Unified alerting is enabled.")
 	}
 	ualertEnabled := !hasLegacyAlerts
 	migrator.Cfg.UnifiedAlerting.Enabled = &ualertEnabled
