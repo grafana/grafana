@@ -96,6 +96,10 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 				return response.Error(403, "Target service is not in the same organisation as requesting user or api key", err)
 			}
 		}
+	} else {
+		if cmd.CreateNewServiceAccount {
+			return response.Error(400, "Service accounts disabled.  Retry create api request without service account flag.", err)
+		}
 	}
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
