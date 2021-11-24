@@ -21,7 +21,7 @@ Fine-grained access control considers a) _who_ has an access (`identity`), and b
 
 You can grant, change, or revoke access to _users_ (`identity`). When an authenticated user tries to access a Grafana resource, the authorization system checks the required fine-grained permissions for the resource and determines whether or not the action is allowed. Refer to [Fine-grained permissions]({{< relref "./permissions.md" >}}) for a complete list of available permissions.
 
-To grant or revoke access to your users, create or remove built-in role assignments. For more information, refer to [Built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
+Refer to [Assign roles]({{< relref "./roles.md#assign-roles" >}}) to learn about grant or revoke access to your users.
 
 ## Resources with fine-grained permissions
 
