@@ -285,6 +285,7 @@ describe('Candlestick data', () => {
     expect(info.volume).toBeDefined();
 
     expect(info.frame.fields).toContain(info.open);
+    expect(info.frame.fields).toContain(info.close);
     expect(info.frame.fields).toContain(info.volume);
 
     // includeAllFields: false
