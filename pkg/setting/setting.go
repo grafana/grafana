@@ -915,9 +915,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
 	}
-	if err := cfg.ReadUnifiedAlertingSettings(iniFile); err != nil {
-		return err
-	}
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
