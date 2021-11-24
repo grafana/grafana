@@ -64,10 +64,13 @@ type UnifiedAlertingSettings struct {
 	EvaluationTimeout              time.Duration
 	ExecuteAlerts                  bool
 	DefaultConfiguration           string
-	Enabled                        *bool
+	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
 	DisabledOrgs                   map[int64]struct{}
 }
 
+// IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
+// It hides the implementation details of the Enabled and simplifies its usage.
+// It is supposed to be used in background services.
 func (u *UnifiedAlertingSettings) IsEnabled() bool {
 	return u.Enabled == nil || *u.Enabled
 }
