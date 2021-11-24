@@ -2,7 +2,7 @@
 title = "Permissions"
 description = "Understand fine-grained access control permissions"
 keywords = ["grafana", "fine-grained access-control", "roles", "permissions", "enterprise"]
-weight = 115
+weight = 110
 +++
 
 # Permissions
@@ -54,6 +54,10 @@ The following list contains fine-grained access control actions.
 | `users:logout`                   | `global:users:*` <br> `global:users:id:*`                                                   | Sign out a user.                                                                                                                                           |
 | `users.quotas:list`              | `global:users:*` <br> `global:users:id:*`                                                   | List a user’s quotas.                                                                                                                                      |
 | `users.quotas:update`            | `global:users:*` <br> `global:users:id:*`                                                   | Update a user’s quotas.                                                                                                                                    |
+| `users.roles:list`               | `users:*`                                                                                   | List roles assigned directly to a user.                                                                                                                    |
+| `users.roles:add`                | `permissions:delegate`                                                                      | Assign a role to a user.                                                                                                                                   |
+| `users.roles:remove`             | `permissions:delegate`                                                                      | Unassign a role from a auser.                                                                                                                              |
+| `users.permissions:list`         | `users:*`                                                                                   | List permissions of a user.                                                                                                                                |
 | `org.users:read`                 | `users:*` <br> `users:id:*`                                                                 | Get user profiles within an organization.                                                                                                                  |
 | `org.users:add`                  | `users:*`                                                                                   | Add a user to an organization.                                                                                                                             |
 | `org.users:remove`               | `users:*` <br> `users:id:*`                                                                 | Remove a user from an organization.                                                                                                                        |
