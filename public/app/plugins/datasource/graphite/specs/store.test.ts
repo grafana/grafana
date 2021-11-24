@@ -215,18 +215,18 @@ describe('Graphite actions', async () => {
     });
   });
 
-  it('current time range is passed when getting list of tags when editing', async () => {
+  it('current time range and limit is passed when getting list of tags when editing', async () => {
     const currentRange = { from: 0, to: 1 };
     ctx.state.range = currentRange;
     await getTagsSelectables(ctx.state, 0, 'any');
-    expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange });
+    expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange, limit: 5000 });
   });
 
-  it('current time range is passed when getting list of tags for adding', async () => {
+  it('current time range and limit is passed when getting list of tags for adding', async () => {
     const currentRange = { from: 0, to: 1 };
     ctx.state.range = currentRange;
     await getTagsAsSegmentsSelectables(ctx.state, 'any');
-    expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange });
+    expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange, limit: 5000 });
   });
 
   describe('when autocomplete for metric names is not available', () => {
@@ -480,19 +480,27 @@ describe('Graphite actions', async () => {
 
   describe('when auto-completing over a large set of tags and metrics', () => {
     const manyMetrics: Array<{ text: string }> = [],
-      manyTags: Array<{ text: string }> = [],
-      manyTagValues: Array<{ text: string }> = [],
       max = 20000;
 
     beforeEach(() => {
       for (let i = 0; i < max; i++) {
         manyMetrics.push({ text: `metric${i}` });
-        manyTags.push({ text: `tag${i}` });
-        manyTagValues.push({ text: `tagValue${i}` });
       }
       ctx.state.datasource.metricFindQuery = jest.fn().mockReturnValue(Promise.resolve(manyMetrics));
-      ctx.state.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(Promise.resolve(manyTags));
-      ctx.state.datasource.getTagValuesAutoComplete = jest.fn().mockReturnValue(Promise.resolve(manyTagValues));
+      ctx.state.datasource.getTagsAutoComplete = jest.fn((_tag, _prefix, { limit }) => {
+        const tags = [];
+        for (let i = 0; i < limit; i++) {
+          tags.push({ text: `tag${i}` });
+        }
+        return tags;
+      });
+      ctx.state.datasource.getTagValuesAutoComplete = jest.fn((_expression, _tag, _prefix, { limit }) => {
+        const tagValues = [];
+        for (let i = 0; i < limit; i++) {
+          tagValues.push({ text: `tagValue${i}` });
+        }
+        return tagValues;
+      });
     });
 
     it('uses limited metrics and tags list', async () => {
@@ -508,21 +516,19 @@ describe('Graphite actions', async () => {
     it('uses correct limit for metrics and tags list when tags are not supported', async () => {
       ctx.state.supportsTags = false;
       const segments = await getAltSegmentsSelectables(ctx.state, 0, '');
-      expect(segments).toHaveLength(10000);
+      expect(segments).toHaveLength(5000);
       expect(segments[0].value!.value).toBe('*'); // * - is a fixed metric name, always added at the top
       expect(segments[4999].value!.value).toBe('metric4998');
-      expect(segments[5000].value!.value).toBe('metric4999');
-      expect(segments[9999].value!.value).toBe('metric9998');
     });
 
     it('uses limited tags when editing', async () => {
       const tags = await getTagsAsSegmentsSelectables(ctx.state, 'any');
-      expect(tags).toHaveLength(10000);
+      expect(tags).toHaveLength(5000);
     });
 
     it('uses limited metrics when adding more metrics', async () => {
       const segments = await getAltSegmentsSelectables(ctx.state, 1, '');
-      expect(segments).toHaveLength(10000);
+      expect(segments).toHaveLength(5000);
     });
 
     it('uses limited tag values when editing', async () => {
@@ -532,7 +538,7 @@ describe('Graphite actions', async () => {
         1,
         'test'
       );
-      expect(tagValues).toHaveLength(10000);
+      expect(tagValues).toHaveLength(5000);
     });
   });
 });

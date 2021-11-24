@@ -14,10 +14,10 @@ import { SelectableValue } from '@grafana/data';
  * All auto-complete lists are updated while typing. To avoid performance issues we do not render more
  * than MAX_SUGGESTIONS limits in a single dropdown.
  *
- * MAX_SUGGESTIONS is per metrics and tags in total. On the very first dropdown where metrics and tags are
- * combined together it will show MAX_SUGGESTIONS items in total.
+ * MAX_SUGGESTIONS is per metrics and tags separately. On the very first dropdown where metrics and tags are
+ * combined together meaning it may end up with max of 2 * MAX_SUGGESTIONS items in total.
  */
-const MAX_SUGGESTIONS = 10000;
+const MAX_SUGGESTIONS = 5000;
 
 /**
  * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
@@ -81,14 +81,16 @@ async function getAltSegments(
       });
     });
 
-    // add wildcard option
+    // add wildcard option and limit number of suggestions (API doesn't support limiting
+    // hence we are doing it here)
     altSegments.unshift({ value: '*', expandable: true });
+    altSegments.splice(MAX_SUGGESTIONS);
 
     if (state.supportsTags && index === 0) {
       removeTaggedEntry(altSegments);
       return await addAltTagSegments(state, prefix, altSegments);
     } else {
-      return altSegments.slice(0, MAX_SUGGESTIONS);
+      return altSegments;
     }
   } catch (err) {
     handleMetricsAutoCompleteError(state, err);
@@ -119,10 +121,13 @@ export function getTagOperatorsSelectables(): Array<SelectableValue<GraphiteTagO
 async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
   try {
     const tagExpressions = state.queryModel.renderTagExpressions(index);
-    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, { range: state.range });
+    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, {
+      range: state.range,
+      limit: MAX_SUGGESTIONS,
+    });
 
     const altTags = map(values, 'text');
-    altTags.splice(0, 0, state.removeTagValue).slice(0, MAX_SUGGESTIONS);
+    altTags.splice(0, 0, state.removeTagValue);
     return altTags;
   } catch (err) {
     handleTagsAutoCompleteError(state, err);
@@ -147,7 +152,10 @@ async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: str
   let tagsAsSegments: GraphiteSegment[];
   try {
     const tagExpressions = state.queryModel.renderTagExpressions();
-    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, { range: state.range });
+    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, {
+      range: state.range,
+      limit: MAX_SUGGESTIONS,
+    });
     tagsAsSegments = map(values, (val) => {
       return {
         value: val.text,
@@ -160,7 +168,7 @@ async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: str
     handleTagsAutoCompleteError(state, err);
   }
 
-  return tagsAsSegments.slice(0, MAX_SUGGESTIONS);
+  return tagsAsSegments;
 }
 
 /**
@@ -181,14 +189,16 @@ async function getTagValues(
 ): Promise<string[]> {
   const tagExpressions = state.queryModel.renderTagExpressions(index);
   const tagKey = tag.key;
-  const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {});
+  const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {
+    limit: MAX_SUGGESTIONS,
+  });
   const altValues = map(values, 'text');
   // Add template variables as additional values
   eachRight(state.templateSrv.getVariables(), (variable) => {
     altValues.push('${' + variable.name + ':regex}');
   });
 
-  return altValues.slice(0, MAX_SUGGESTIONS);
+  return altValues;
 }
 
 export async function getTagValuesSelectables(
@@ -214,11 +224,6 @@ async function addAltTagSegments(
     segment.value = TAG_PREFIX + segment.value;
     return segment;
   });
-
-  if (tagSegments.length + altSegments.length >= MAX_SUGGESTIONS) {
-    tagSegments = tagSegments.slice(0, MAX_SUGGESTIONS / 2);
-    altSegments = altSegments.slice(0, MAX_SUGGESTIONS / 2);
-  }
 
   return altSegments.concat(...tagSegments);
 }
