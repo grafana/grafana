@@ -29,6 +29,10 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 // create mock for serviceaccountservice
 type ServiceAccountMock struct{}
 
+func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, siUser *models.SignedInUser) error {
+	return nil
+}
+
 func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	return nil
 }
@@ -56,9 +60,9 @@ type ServiceAccountsStoreMock struct {
 	Calls Calls
 }
 
-func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
+func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, siUser *models.SignedInUser) error {
 	// now we can test that the mock has these calls when we call the function
-	s.Calls.DeleteServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
+	s.Calls.DeleteServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, siUser})
 	return nil
 }
 
