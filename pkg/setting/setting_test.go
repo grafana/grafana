@@ -526,6 +526,7 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
 				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
 				assert.NotNil(t, AlertingEnabled)
 				assert.Equal(t, *AlertingEnabled, true)
