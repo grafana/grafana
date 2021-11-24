@@ -4,6 +4,7 @@ import { PanelModel } from '../../state';
 import { getLocationSrv } from '@grafana/runtime';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 import { DataQuery } from '@grafana/data';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
   /** Current panel */
@@ -27,8 +28,12 @@ export class PanelEditorQueries extends PureComponent<Props> {
           default: true,
         };
 
+    // dataSource.meta.queryOptions?.cacheTimeout
+
+    const datasourceSettings = getDatasourceSrv().getInstanceSettings(dataSource.uid);
+
     return {
-      cacheTimeout: panel.cacheTimeout,
+      cacheTimeout: datasourceSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : null,
       dataSource,
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,
