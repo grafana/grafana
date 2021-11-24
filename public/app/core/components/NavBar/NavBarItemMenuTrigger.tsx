@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { css, cx } from '@emotion/css';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
 import { MenuTriggerProps, SpectrumMenuProps } from '@react-types/menu';
 import { useMenuTriggerState } from '@react-stately/menu';
 import { useMenu, useMenuItem, useMenuTrigger } from '@react-aria/menu';
@@ -21,6 +21,7 @@ import { DismissButton, useOverlay } from '@react-aria/overlays';
 import { FocusScope } from '@react-aria/focus';
 import { mergeProps } from '@react-aria/utils';
 import { Node } from '@react-types/shared';
+import { getNavModelItemKey } from './utils';
 
 export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   children: ReactElement;
@@ -231,8 +232,8 @@ export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
   reverseMenuDirection?: boolean;
 }
 
-export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement {
-  const { reverseMenuDirection, adjustHeightForBorder, disabledKeys, ...rest } = props;
+export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null {
+  const { reverseMenuDirection, adjustHeightForBorder, disabledKeys, onAction, ...rest } = props;
   const contextProps = useNavBarItemMenuContext();
   const completeProps = {
     ...mergeProps(contextProps, rest),
@@ -241,9 +242,43 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement {
   const theme = useTheme2();
   const styles = getNavBarItemMenuStyles(theme, adjustHeightForBorder, reverseMenuDirection);
   const state = useTreeState<NavModelItem>({ ...rest, disabledKeys });
-  const section = [...state.collection].filter((item) => item.type === 'section')[0];
   const ref = useRef(null);
   const { menuProps } = useMenu(completeProps, { ...state }, ref);
+  const allItems = [...state.collection];
+  const items = allItems.filter((item) => item.value.menuItemType === NavMenuItemType.Item);
+  const section = allItems.find((item) => item.value.menuItemType === NavMenuItemType.Section);
+
+  useEffect(() => {
+    if (enableAllItems && !state.selectionManager.isFocused) {
+      state.selectionManager.setFocusedKey(section?.key ?? '');
+      state.selectionManager.setFocused(true);
+    } else if (!enableAllItems && state.selectionManager.isFocused) {
+      state.selectionManager.setFocused(false);
+      state.selectionManager.clearSelection();
+    }
+  }, [enableAllItems, state.selectionManager, reverseMenuDirection, section?.key]);
+
+  if (!section) {
+    return null;
+  }
+
+  const menuSubTitle = section.value.subTitle;
+
+  const sectionComponent = (
+    <NavBarItemMenuItem
+      key={section.key}
+      item={section}
+      state={state}
+      onAction={onAction}
+      reverseDirection={reverseMenuDirection}
+    />
+  );
+
+  const subTitleComponent = (
+    <li key={menuSubTitle} className={styles.menuItem}>
+      <div className={styles.subtitle}>{menuSubTitle}</div>
+    </li>
+  );
 
   return (
     <ul
@@ -252,12 +287,21 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement {
       {...mergeProps(menuProps, contextMenuProps)}
       tabIndex={enableAllItems ? 0 : -1}
     >
-      <NavBarItemMenuSection
-        item={section}
-        reverseDirection={reverseMenuDirection}
-        state={state}
-        onAction={props.onAction}
-      />
+      {!reverseMenuDirection ? sectionComponent : null}
+      {menuSubTitle && reverseMenuDirection ? subTitleComponent : null}
+      {items.map((item, index) => {
+        return (
+          <NavBarItemMenuItem
+            key={getNavModelItemKey(item.value)}
+            item={item}
+            state={state}
+            onAction={onAction}
+            reverseDirection={reverseMenuDirection}
+          />
+        );
+      })}
+      {reverseMenuDirection ? sectionComponent : null}
+      {menuSubTitle && !reverseMenuDirection ? subTitleComponent : null}
     </ul>
   );
 }
@@ -318,72 +362,6 @@ function getNavBarItemMenuStyles(
       white-space: nowrap;
     `,
   };
-}
-
-export interface NavBarItemMenuSectionProps {
-  item: Node<NavModelItem>;
-  state: TreeState<NavModelItem>;
-  reverseDirection?: boolean;
-  onAction?: (key: Key) => void;
-}
-
-export function NavBarItemMenuSection({
-  item,
-  state,
-  onAction,
-  reverseDirection = false,
-}: NavBarItemMenuSectionProps): ReactElement {
-  const { enableAllItems } = useNavBarItemMenuContext();
-  const theme = useTheme2();
-  const styles = getNavBarItemMenuStyles(theme, false, reverseDirection);
-  const menuSubTitle = item.value.subTitle;
-  const items = item.hasChildNodes ? [...item.childNodes] : [];
-
-  useEffect(() => {
-    if (enableAllItems && !state.selectionManager.isFocused) {
-      state.selectionManager.setFocusedKey(item.key);
-      state.selectionManager.setFocused(true);
-    } else if (!enableAllItems && state.selectionManager.isFocused) {
-      state.selectionManager.setFocused(false);
-      state.selectionManager.clearSelection();
-    }
-  }, [enableAllItems, state.selectionManager, reverseDirection, item.key]);
-
-  const section = (
-    <NavBarItemMenuItem
-      key={`${item.key}`}
-      item={item}
-      state={state}
-      onAction={onAction}
-      reverseDirection={reverseDirection}
-    />
-  );
-
-  const subTitle = (
-    <li key={menuSubTitle} className={styles.menuItem}>
-      <div className={styles.subtitle}>{menuSubTitle}</div>
-    </li>
-  );
-
-  return (
-    <>
-      {!reverseDirection ? section : null}
-      {menuSubTitle && reverseDirection ? subTitle : null}
-      {items.map((item, index) => {
-        return (
-          <NavBarItemMenuItem
-            key={`${item.key}-${index}`}
-            item={item}
-            state={state}
-            onAction={onAction}
-            reverseDirection={reverseDirection}
-          />
-        );
-      })}
-      {reverseDirection ? section : null}
-      {menuSubTitle && !reverseDirection ? subTitle : null}
-    </>
-  );
 }
 
 export interface NavBarItemMenuItemProps {
