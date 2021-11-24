@@ -748,7 +748,7 @@ func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
 // Note: this is not a real migration but a step that other migrations depend on.
 // TODO Delete when unified alerting is enabled by default unconditionally (Grafana v9)
 func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
-    // if [unified_alerting][enabled] is explicitly set, we've got nothing to do here.
+	// if [unified_alerting][enabled] is explicitly set, we've got nothing to do here.
 	if migrator.Cfg.UnifiedAlerting.Enabled != nil {
 		return nil
 	}
