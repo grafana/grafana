@@ -9,5 +9,9 @@ weight = 130
 
 > **Note:** Fine-grained access control is in beta, and you can expect changes in future releases.
 
-Currently [roles]({{< relref "../roles.md" >}}) can only be assigned to users.
-[Manage user role assignments]({{< relref "manage-user-role-assignments.md" >}}) page provides details on how to grant and revoke user role assignments.
+[Roles]({{< relref "../roles.md" >}}) can be granted to users and [organization roles]({{< relref "../../../permissions/organization_roles.md" >}}).
+
+The following pages provide more information on how to grant roles:
+
+- [Manage user role assignments]({{< relref "manage-user-role-assignments.md" >}})
+- [Manage built-in role assignments]({{< relref "manage-built-in-role-assignments.md" >}})

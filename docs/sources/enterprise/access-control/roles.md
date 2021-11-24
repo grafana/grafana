@@ -48,6 +48,10 @@ Roles with names prefixed by `fixed:` are fixed roles created by Grafana and can
 
 A role's display name is intended as a human friendly identifier for the role, helping users understand the purpose of a role. The display name of the role is displayed in the role picker in the UI.
 
+### Group
+
+A role's group is used to organize roles in the role picker in the UI.
+
 ### Role version
 
 The version of a role is a positive integer which defines the current version of the role. When updating a role, you can either omit the version field to increment the previous value by 1 or set a new version which must be strictly larger than the previous version for the update to succeed.
@@ -75,20 +79,14 @@ Note that you won't be able to create, update or delete a custom role with permi
 
 To control what your users can access or not, you can assign or unassign [Custom roles]({{< ref "#custom-roles" >}}) or [Fixed roles]({{< ref "#fixed-roles" >}}) directly to your users.
 
-Visit [Manage role assignments]({{< relref "manage-role-assignments/_index.md" >}}) page for details on how to revoe or assign roles to users.
+Visit [Manage role assignments]({{< relref "manage-role-assignments/_index.md" >}}) page for details on how to revoke or assign roles to users.
 
 ## Built-in role assignments
 
-To control what your users can access or not, you can assign or unassign [Custom roles]({{< ref "#custom-roles" >}}) or [Fixed roles]({{< ref "#fixed-roles" >}}) to the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) or to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role.
+Fine-grained access control roles can be assigned to the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) or to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role.
 These assignments are called built-in role assignments.
 
-During startup, Grafana will create default assignments for you. When you make any changes to the built-on role assignments, Grafana will take them into account and won’t overwrite during next start.
-
-For more information, refer to [Fine-grained access control references]({{< relref "./fine-grained-access-control-references.md#default-built-in-role-assignments" >}}).
-
-### Create and remove built-in role assignments
-
-You can create or remove built-in role assignments using [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}}) or using [Grafana Provisioning]({{< relref "./provisioning" >}}).
+Visit [Manage built-in assignments]({{< relref "manage-built-in-assignments/_index.md" >}}) page for details.
 
 ### Scope of assignments
 
