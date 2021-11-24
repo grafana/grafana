@@ -39,13 +39,19 @@ func ProvideSecretsService(
 		return nil, err
 	}
 
+	logger := log.New("secrets")
+	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
 	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
 
-	logger := log.New("secrets")
-	if _, ok := providers[currentProvider]; !ok {
-		logger.Error("Configuration for current encryption provider is missing", "provider", currentProvider)
+	if _, ok := providers[currentProvider]; enabled && !ok {
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProvider)
 	}
+
+	if !enabled && currentProvider != kmsproviders.Default {
+		logger.Warn("Changing encryption provider requires enabling envelope encryption feature")
+	}
+
+	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProvider)
 
 	s := &SecretsService{
 		store:           store,
@@ -56,13 +62,6 @@ func ProvideSecretsService(
 		dataKeyCache:    make(map[string]dataKeyCacheItem),
 		log:             logger,
 	}
-
-	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
-	if !enabled && currentProvider != kmsproviders.Default {
-		logger.Warn("Changing encryption provider requires enabling envelope encryption feature")
-	}
-
-	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProvider)
 
 	return s, nil
 }
