@@ -93,7 +93,7 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 			return &enabled, nil // if legacy alerting is explicitly disabled, enable the unified alerting by default.
 		}
 		// NOTE: If the enabled flag is still not defined, the final decision is made during migration (see sqlstore.migrations.ualert.CheckUnifiedAlertingEnabledByDefault).
-		cfg.Logger.Info("The state of unified alerting is still not defined. The decision will be made during migration")
+		cfg.Logger.Info("The state of unified alerting is still not defined. The decision will be made during as we run the database migrations")
 		return nil, nil // the flag is not defined
 	}
 
