@@ -748,6 +748,7 @@ func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
 // Note: this is not a real migration but a step that other migrations depend on.
 // TODO Delete when unified alerting is enabled by default unconditionally (Grafana v9)
 func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
+    // if [unified_alerting][enabled] is explicitly set, we've got nothing to do here.
 	if migrator.Cfg.UnifiedAlerting.Enabled != nil {
 		return nil
 	}
@@ -756,7 +757,7 @@ func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
 	}{}
 	exist, err := migrator.DBEngine.IsTableExist("alert")
 	if err != nil {
-		return fmt.Errorf("failed to access the database to determine alerting status: %w", err)
+		return fmt.Errorf("failed to verify if the 'alert' table exists: %w", err)
 	}
 	if exist {
 		if _, err := migrator.DBEngine.SQL("SELECT COUNT(1) as count FROM alert").Get(resp); err != nil {
