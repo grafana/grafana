@@ -35,7 +35,7 @@ export async function getStyleConfigState(cfg?: StyleConfig): Promise<StyleConfi
       opacity: cfg.opacity ?? defaultStyleConfig.opacity,
       lineWidth: cfg.lineWidth ?? 1,
       size: cfg.size?.fixed ?? defaultStyleConfig.size.fixed,
-      rotation: 0, // dynamic will follow path
+      rotation: cfg.rotation?.fixed ?? defaultStyleConfig.rotation.fixed, // add ability follow path later
     },
     maker,
   };
@@ -45,6 +45,9 @@ export async function getStyleConfigState(cfg?: StyleConfig): Promise<StyleConfi
   }
   if (cfg.size?.field?.length) {
     fields.size = cfg.size.field;
+  }
+  if (cfg.rotation?.field?.length) {
+    fields.rotation = cfg.rotation.field;
   }
 
   if (hasText) {

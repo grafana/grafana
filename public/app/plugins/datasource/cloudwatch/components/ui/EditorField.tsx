@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Field, Icon, PopoverContent, stylesFactory, Tooltip, useTheme2 } from '@grafana/ui';
-import { getChildId } from '@grafana/ui/src/utils/children';
+import { Field, Icon, PopoverContent, stylesFactory, Tooltip, useTheme2, ReactUtils } from '@grafana/ui';
 import { Space } from 'app/plugins/datasource/grafana-azure-monitor-datasource/components/Space';
 import React from 'react';
 
@@ -18,7 +17,7 @@ const EditorField: React.FC<EditorFieldProps> = (props) => {
 
   const theme = useTheme2();
   const styles = getStyles(theme, props);
-  const childInputId = getChildId(children);
+  const childInputId = ReactUtils.getChildId(children);
 
   const labelEl = (
     <>

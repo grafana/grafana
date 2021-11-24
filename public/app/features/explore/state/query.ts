@@ -110,11 +110,11 @@ export interface StoreLogsVolumeDataProvider {
 /**
  * Stores available logs volume provider after running the query. Used internally by runQueries().
  */
-const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
+export const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
   'explore/storeLogsVolumeDataProviderAction'
 );
 
-const cleanLogsVolumeAction = createAction<{ exploreId: ExploreId }>('explore/cleanLogsVolumeAction');
+export const cleanLogsVolumeAction = createAction<{ exploreId: ExploreId }>('explore/cleanLogsVolumeAction');
 
 export interface StoreLogsVolumeDataSubscriptionPayload {
   exploreId: ExploreId;
@@ -221,9 +221,19 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
  * Cancel running queries
  */
 export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch(scanStopAction({ exploreId }));
     dispatch(cancelQueriesAction({ exploreId }));
+    dispatch(
+      storeLogsVolumeDataProviderAction({
+        exploreId,
+        logsVolumeDataProvider: undefined,
+      })
+    );
+    // clear any incomplete data
+    if (getState().explore[exploreId]!.logsVolumeData?.state !== LoadingState.Done) {
+      dispatch(cleanLogsVolumeAction({ exploreId }));
+    }
     dispatch(stateSave());
   };
 }
