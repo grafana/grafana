@@ -16,6 +16,7 @@ import {
   ScopedVars,
   TimeRange,
   DataFrame,
+  dateTime,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -789,11 +790,33 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
   async testDatasource() {
     const now = new Date().getTime();
-    const query = { expr: '1+1' } as PromQueryRequest;
-    const response = await lastValueFrom(this.performInstantQuery(query, now / 1000));
-    return response.data.status === 'success'
-      ? { status: 'success', message: 'Data source is working' }
-      : { status: 'error', message: response.data.error };
+    const request: DataQueryRequest<PromQuery> = {
+      targets: [{ refId: 'test', expr: '1+1', instant: true }],
+      requestId: `${this.id}-health`,
+      scopedVars: {},
+      dashboardId: 0,
+      panelId: 0,
+      interval: '1m',
+      intervalMs: 60000,
+      maxDataPoints: 1,
+      range: {
+        from: dateTime(now - 1000),
+        to: dateTime(now),
+      },
+    } as DataQueryRequest<PromQuery>;
+
+    return lastValueFrom(this.query(request))
+      .then((res: DataQueryResponse) => {
+        if (!res || !res.data || res.state !== LoadingState.Done) {
+          return { status: 'error', message: `Error reading Prometheus: ${res?.error?.message}` };
+        } else {
+          return { status: 'success', message: 'Data source is working' };
+        }
+      })
+      .catch((err: any) => {
+        console.error('Prometheus Error', err);
+        return { status: 'error', message: err.message };
+      });
   }
 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
