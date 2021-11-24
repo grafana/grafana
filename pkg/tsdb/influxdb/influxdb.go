@@ -22,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
+const pluginID = "influxdb"
+
 type Service struct {
 	QueryParser    *InfluxdbQueryParser
 	ResponseParser *ResponseParser
@@ -32,7 +34,7 @@ type Service struct {
 
 var ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
-func ProvideService(httpClient httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
+func ProvideService(httpClient httpclient.Provider, pluginStore plugins.Store, cfg *setting.Cfg) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClient))
 	s := &Service{
 		QueryParser:    &InfluxdbQueryParser{},
@@ -45,7 +47,8 @@ func ProvideService(httpClient httpclient.Provider, registrar plugins.CoreBacken
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.LoadAndRegister("influxdb", factory); err != nil {
+	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		s.glog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

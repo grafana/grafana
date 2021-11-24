@@ -30,12 +30,14 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
+const pluginID = "graphite"
+
 type Service struct {
 	logger log.Logger
 	im     instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
+func ProvideService(httpClientProvider httpclient.Provider, pluginStore plugins.Store, cfg *setting.Cfg) (*Service, error) {
 	s := &Service{
 		logger: log.New("tsdb.graphite"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
@@ -45,7 +47,8 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.LoadAndRegister("graphite", factory); err != nil {
+	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		s.logger.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

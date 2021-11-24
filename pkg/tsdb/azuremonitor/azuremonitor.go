@@ -22,7 +22,7 @@ import (
 
 const (
 	timeSeries = "time_series"
-	dsName     = "grafana-azure-monitor-datasource"
+	pluginID   = "grafana-azure-monitor-datasource"
 )
 
 var (
@@ -30,7 +30,7 @@ var (
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, registrar plugins.CoreBackendRegistrar) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginStore plugins.Store) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
@@ -55,7 +55,8 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, r
 		CallResourceHandler: httpadapter.New(resourceMux),
 	})
 
-	if err := registrar.LoadAndRegister(dsName, factory); err != nil {
+	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		azlog.Error("Failed to register plugin", "error", err)
 	}
 

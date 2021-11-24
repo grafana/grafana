@@ -19,6 +19,8 @@ type Store interface {
 
 	// Add adds a plugin to the store.
 	Add(ctx context.Context, pluginID, version string, opts AddOpts) error
+	// AddWithFactory adds a plugin to the store.
+	AddWithFactory(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc, resolver PluginPathResolver) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
 }
@@ -27,13 +29,15 @@ type AddOpts struct {
 	PluginInstallDir, PluginZipURL, PluginRepoURL string
 }
 
+type PluginPathResolver func() (string, error)
+
 // Loader is responsible for loading plugins from the file system.
 type Loader interface {
 	// Load will return a list of plugins found in the provided file system paths.
-	Load(paths []string, ignore map[string]struct{}) ([]*Plugin, error)
+	Load(ctx context.Context, paths []string, ignore map[string]struct{}) ([]*Plugin, error)
 	// LoadWithFactory will return a plugin found in the provided file system path and use the provided factory to
 	// construct the plugin backend client.
-	LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*Plugin, error)
+	LoadWithFactory(ctx context.Context, path string, factory backendplugin.PluginFactoryFunc) (*Plugin, error)
 }
 
 // Installer is responsible for managing plugins (add / remove) on the file system.
@@ -62,14 +66,14 @@ type Client interface {
 	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
 }
 
+// BackendFactoryProvider provides a backend factory for a provided plugin.
+type BackendFactoryProvider interface {
+	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
+}
+
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
 	Renderer() *Plugin
-}
-
-type CoreBackendRegistrar interface {
-	// LoadAndRegister loads and registers a Core backend plugin
-	LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error
 }
 
 type StaticRouteResolver interface {

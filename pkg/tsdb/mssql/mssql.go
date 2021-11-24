@@ -26,11 +26,13 @@ import (
 
 var logger = log.New("tsdb.mssql")
 
+const pluginID = "mssql"
+
 type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, error) {
 	s := &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
 	}
@@ -38,7 +40,8 @@ func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar) (*
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.LoadAndRegister("mssql", factory); err != nil {
+	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return s, nil

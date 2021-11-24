@@ -2,10 +2,12 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 func (m *PluginManager) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
@@ -85,7 +87,30 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 		return err
 	}
 
-	err = m.loadPlugins(opts.PluginInstallDir)
+	err = m.loadPlugins(context.Background(), opts.PluginInstallDir)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PluginManager) AddWithFactory(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc,
+	pathResolver plugins.PluginPathResolver) error {
+	if m.isRegistered(pluginID) {
+		return fmt.Errorf("plugin %s is already registered", pluginID)
+	}
+
+	path, err := pathResolver()
+	if err != nil {
+		return err
+	}
+
+	p, err := m.pluginLoader.LoadWithFactory(ctx, path, factory)
+	if err != nil {
+		return err
+	}
+	err = m.register(p)
 	if err != nil {
 		return err
 	}

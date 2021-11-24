@@ -66,7 +66,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins("test/path")
+		err := pm.loadPlugins(context.Background(), "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, pc.startCount)
@@ -92,7 +92,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins("test/path")
+		err := pm.loadPlugins(context.Background(), "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 0, pc.startCount)
@@ -118,7 +118,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins("test/path")
+		err := pm.loadPlugins(context.Background(), "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 0, pc.startCount)
@@ -144,7 +144,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins("test/path")
+		err := pm.loadPlugins(context.Background(), "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 0, pc.startCount)
@@ -259,7 +259,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins("test/path")
+		err := pm.loadPlugins(context.Background(), "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, pc.startCount)
@@ -293,7 +293,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins("test/path")
+		err := pm.loadPlugins(context.Background(), "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, pc.startCount)
@@ -627,13 +627,13 @@ type fakeLoader struct {
 	plugins.Loader
 }
 
-func (l *fakeLoader) Load(paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *fakeLoader) Load(_ context.Context, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
 	l.loadedPaths = append(l.loadedPaths, paths...)
 
 	return l.mockedLoadedPlugins, nil
 }
 
-func (l *fakeLoader) LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
+func (l *fakeLoader) LoadWithFactory(_ context.Context, path string, _ backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
 	l.loadedPaths = append(l.loadedPaths, path)
 
 	return l.mockedFactoryLoadedPlugin, nil

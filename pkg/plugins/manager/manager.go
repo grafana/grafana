@@ -37,7 +37,6 @@ var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.PluginDashboardManager = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
-var _ plugins.CoreBackendRegistrar = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
@@ -91,25 +90,25 @@ func (m *PluginManager) init() error {
 	m.log.Info("Initialising plugins")
 
 	// install Core plugins
-	err = m.loadPlugins(m.corePluginPaths()...)
+	err = m.loadPlugins(context.Background(), m.corePluginPaths()...)
 	if err != nil {
 		return err
 	}
 
 	// install Bundled plugins
-	err = m.loadPlugins(m.cfg.BundledPluginsPath)
+	err = m.loadPlugins(context.Background(), m.cfg.BundledPluginsPath)
 	if err != nil {
 		return err
 	}
 
 	// install External plugins
-	err = m.loadPlugins(m.cfg.PluginsPath)
+	err = m.loadPlugins(context.Background(), m.cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
 
 	// install plugins from cfg.PluginSettings
-	err = m.loadPlugins(m.pluginSettingPaths()...)
+	err = m.loadPlugins(context.Background(), m.pluginSettingPaths()...)
 	if err != nil {
 		return err
 	}
@@ -167,7 +166,7 @@ func (m *PluginManager) plugins() []*plugins.Plugin {
 	return res
 }
 
-func (m *PluginManager) loadPlugins(paths ...string) error {
+func (m *PluginManager) loadPlugins(ctx context.Context, paths ...string) error {
 	if len(paths) == 0 {
 		return nil
 	}
@@ -179,7 +178,7 @@ func (m *PluginManager) loadPlugins(paths ...string) error {
 		}
 	}
 
-	loadedPlugins, err := m.pluginLoader.Load(pluginPaths, m.registeredPlugins())
+	loadedPlugins, err := m.pluginLoader.Load(ctx, pluginPaths, m.registeredPlugins())
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
 		return err
@@ -498,31 +497,6 @@ func (m *PluginManager) isRegistered(pluginID string) bool {
 	}
 
 	return !p.IsDecommissioned()
-}
-
-func (m *PluginManager) LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	if m.isRegistered(pluginID) {
-		return fmt.Errorf("backend plugin %s already registered", pluginID)
-	}
-
-	pluginRootDir := pluginID
-	if pluginID == "stackdriver" {
-		pluginRootDir = "cloud-monitoring"
-	}
-
-	path := filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource", pluginRootDir)
-
-	p, err := m.pluginLoader.LoadWithFactory(path, factory)
-	if err != nil {
-		return err
-	}
-
-	err = m.register(p)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (m *PluginManager) Routes() []*plugins.StaticRoute {

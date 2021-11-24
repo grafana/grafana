@@ -1,19 +1,22 @@
 package loader
 
 import (
+	"context"
 	"errors"
 	"path/filepath"
 	"sort"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/inconshreveable/log15"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -336,7 +339,7 @@ func TestLoader_Load(t *testing.T) {
 	for _, tt := range tests {
 		l := newLoader(tt.cfg)
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := l.Load(tt.pluginPaths, tt.existingPlugins)
+			got, err := l.Load(context.Background(), tt.pluginPaths, tt.existingPlugins)
 			require.NoError(t, err)
 			if !cmp.Equal(got, tt.want, compareOpts) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
@@ -433,7 +436,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				})
 				setting.AppUrl = tt.appURL
 
-				got, err := l.Load(tt.pluginPaths, tt.existingPlugins)
+				got, err := l.Load(context.Background(), tt.pluginPaths, tt.existingPlugins)
 				require.NoError(t, err)
 				sort.SliceStable(got, func(i, j int) bool {
 					return got[i].ID < got[j].ID
@@ -497,7 +500,7 @@ func TestLoader_Signature_RootURL(t *testing.T) {
 		}
 
 		l := newLoader(&setting.Cfg{PluginsPath: filepath.Join(parentDir)})
-		got, err := l.Load(paths, map[string]struct{}{})
+		got, err := l.Load(context.Background(), paths, map[string]struct{}{})
 		assert.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
@@ -569,7 +572,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			PluginsPath: filepath.Dir(pluginDir),
 		})
 
-		got, err := l.Load([]string{pluginDir, pluginDir}, map[string]struct{}{})
+		got, err := l.Load(context.Background(), []string{pluginDir, pluginDir}, map[string]struct{}{})
 		assert.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
@@ -658,7 +661,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: parentDir,
 		})
 
-		got, err := l.Load([]string{"../testdata/nested-plugins"}, map[string]struct{}{})
+		got, err := l.Load(context.Background(), []string{"../testdata/nested-plugins"}, map[string]struct{}{})
 		assert.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -680,7 +683,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: parentDir,
 		})
 
-		got, err := l.Load([]string{"../testdata/nested-plugins"}, map[string]struct{}{
+		got, err := l.Load(context.Background(), []string{"../testdata/nested-plugins"}, map[string]struct{}{
 			"test-panel": {},
 		})
 		assert.NoError(t, err)
@@ -739,10 +742,10 @@ func TestLoader_readPluginJSON(t *testing.T) {
 					},
 				},
 				Includes: []*plugins.Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard"},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard"},
-					{Name: "Nginx Panel", Type: "panel"},
-					{Name: "Nginx Datasource", Type: "datasource"},
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: models.ROLE_VIEWER},
+					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: models.ROLE_VIEWER},
+					{Name: "Nginx Panel", Type: "panel", Role: models.ROLE_VIEWER},
+					{Name: "Nginx Datasource", Type: "datasource", Role: models.ROLE_VIEWER},
 				},
 				Backend: false,
 			},
@@ -821,6 +824,28 @@ func Test_validatePluginJSON(t *testing.T) {
 	}
 }
 
+func Test_setPathsBasedOnApp(t *testing.T) {
+	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
+		child := &plugins.Plugin{
+			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata\\datasources\\datasource",
+		}
+		parent := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID: "testdata",
+			},
+			Class:     plugins.Core,
+			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata",
+			BaseURL:   "public/app/plugins/app/testdata",
+		}
+
+		setChildModule(parent, child)
+
+		assert.Equal(t, "app/plugins/app/testdata/datasources/datasource/module", child.Module)
+		assert.Equal(t, "testdata", child.IncludedInAppID)
+		assert.Equal(t, "public/app/plugins/app/testdata", child.BaseURL)
+	})
+}
+
 func Test_pluginClass(t *testing.T) {
 	type args struct {
 		pluginDir string
@@ -885,7 +910,7 @@ func newLoader(cfg *setting.Cfg) *Loader {
 	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(cfg),
-		pluginInitializer:  initializer.New(cfg, &fakeLicensingService{}),
+		pluginInitializer:  initializer.New(cfg, &provider.Service{}, &fakeLicensingService{}),
 		signatureValidator: signature.NewValidator(&signature.UnsignedPluginAuthorizer{Cfg: cfg}),
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                &fakeLogger{},
@@ -932,6 +957,10 @@ func (t *fakeLicensingService) Environment() map[string]string {
 
 type fakeLogger struct {
 	log.Logger
+}
+
+func (fl fakeLogger) New(_ ...interface{}) log15.Logger {
+	return fakeLogger{}
 }
 
 func (fl fakeLogger) Info(_ string, _ ...interface{}) {

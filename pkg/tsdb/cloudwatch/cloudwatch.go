@@ -45,6 +45,8 @@ type datasourceInfo struct {
 	datasourceID int64
 }
 
+const pluginID = "cloudwatch"
+
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
 const defaultRegion = "default"
 
@@ -55,7 +57,7 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, logsService *LogsService, registrar plugins.CoreBackendRegistrar) (*CloudWatchService, error) {
+func ProvideService(cfg *setting.Cfg, logsService *LogsService, pluginStore plugins.Store) (*CloudWatchService, error) {
 	plog.Debug("initing")
 
 	executor := newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings()), cfg, awsds.NewSessionCache())
@@ -63,7 +65,8 @@ func ProvideService(cfg *setting.Cfg, logsService *LogsService, registrar plugin
 		QueryDataHandler: executor,
 	})
 
-	if err := registrar.LoadAndRegister("cloudwatch", factory); err != nil {
+	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

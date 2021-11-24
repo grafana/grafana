@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -42,7 +44,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	license := &licensing.OSSLicensingService{
 		Cfg: cfg,
 	}
-	pm := newManager(cfg, nil, loader.New(license, cfg, &signature.UnsignedPluginAuthorizer{Cfg: cfg}), nil)
+	pm := newManager(cfg, nil, loader.New(license, cfg, &signature.UnsignedPluginAuthorizer{Cfg: cfg}, &provider.Service{}), nil)
 
 	err = pm.init()
 	require.NoError(t, err)
