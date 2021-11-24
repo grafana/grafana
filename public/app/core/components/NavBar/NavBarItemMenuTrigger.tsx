@@ -47,7 +47,6 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
 
   const { hoverProps } = useHover({
     onHoverChange: (isHovering) => {
-      console.log({ stateHover: state.isOpen });
       if (isHovering) {
         state.open();
       }

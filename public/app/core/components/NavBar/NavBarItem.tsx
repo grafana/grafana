@@ -12,8 +12,6 @@ export interface Props {
   isActive?: boolean;
   children: ReactNode;
   className?: string;
-  label: string;
-  menuItems?: NavModelItem[];
   menuSubTitle?: string;
   onClick?: () => void;
   reverseMenuDirection?: boolean;
@@ -27,8 +25,6 @@ const NavBarItem = ({
   isActive = false,
   children,
   className,
-  label,
-  menuItems = [],
   menuSubTitle,
   onClick,
   reverseMenuDirection = false,
@@ -38,7 +34,8 @@ const NavBarItem = ({
   link,
 }: Props) => {
   const theme = useTheme2();
-
+  const menuItems = link.children ?? [];
+  const label = link.text;
   const menuItemsSorted = reverseMenuDirection ? menuItems.reverse() : menuItems;
   const filteredItems = menuItemsSorted
     .filter((item) => !item.hideFromMenu)

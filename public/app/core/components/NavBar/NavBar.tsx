@@ -66,7 +66,6 @@ export const NavBar: FC = React.memo(() => {
         <NavBarItem
           className={styles.search}
           isActive={activeItem === searchItem}
-          label={searchItem.text}
           onClick={searchItem.onClick}
           link={searchItem}
         >
@@ -79,8 +78,6 @@ export const NavBar: FC = React.memo(() => {
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            label={link.text}
-            menuItems={link.children}
             target={link.target}
             url={link.url}
             link={link}
@@ -98,8 +95,6 @@ export const NavBar: FC = React.memo(() => {
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            label={link.text}
-            menuItems={link.children}
             menuSubTitle={link.subTitle}
             onClick={link.onClick}
             reverseMenuDirection
