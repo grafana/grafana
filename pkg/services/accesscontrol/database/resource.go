@@ -355,7 +355,7 @@ func groupPermissionsByAssignment(permissions []flatResourcePermission) (map[int
 		if p.UserId != 0 {
 			users[p.UserId] = append(users[p.UserId], p)
 		} else if p.TeamId != 0 {
-			teams[p.TeamId] = append(users[p.TeamId], p)
+			teams[p.TeamId] = append(teams[p.TeamId], p)
 		} else if p.BuiltInRole != "" {
 			builtins[p.BuiltInRole] = append(builtins[p.BuiltInRole], p)
 		}
