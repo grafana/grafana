@@ -20,7 +20,7 @@ export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
 
 export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactElement {
   const { item, isActive, children: menu, ...rest } = props;
-  const [enableAllItems, setEnableAllItems] = useState(false);
+  const [menuHasFocus, setMenuHasFocus] = useState(false);
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
 
@@ -52,7 +52,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       }
       if (!isFocused) {
         state.close();
-        setEnableAllItems(false);
+        setMenuHasFocus(false);
       }
     },
   });
@@ -64,7 +64,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           if (!state.isOpen) {
             state.open();
           }
-          setEnableAllItems(true);
+          setMenuHasFocus(true);
           break;
         default:
           break;
@@ -134,7 +134,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     <li className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
       {element}
       {state.isOpen && (
-        <NavBarItemMenuContext.Provider value={{ menuProps, enableAllItems, onClose: () => state.close() }}>
+        <NavBarItemMenuContext.Provider value={{ menuProps, menuHasFocus: menuHasFocus, onClose: () => state.close() }}>
           <FocusScope restoreFocus>
             <div {...overlayProps} ref={overlayRef}>
               <DismissButton onDismiss={() => state.close()} />

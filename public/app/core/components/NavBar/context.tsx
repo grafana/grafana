@@ -1,13 +1,13 @@
 import { createContext, HTMLAttributes, useContext } from 'react';
 
 export interface NavBarItemMenuContextProps {
-  enableAllItems: boolean;
+  menuHasFocus: boolean;
   onClose: () => void;
   menuProps?: HTMLAttributes<HTMLElement>;
 }
 
 export const NavBarItemMenuContext = createContext<NavBarItemMenuContextProps>({
-  enableAllItems: false,
+  menuHasFocus: false,
   onClose: () => undefined,
 });
 

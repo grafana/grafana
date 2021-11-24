@@ -22,7 +22,7 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
   const completeProps = {
     ...mergeProps(contextProps, rest),
   };
-  const { enableAllItems, menuProps: contextMenuProps = {} } = contextProps;
+  const { menuHasFocus, menuProps: contextMenuProps = {} } = contextProps;
   const theme = useTheme2();
   const styles = getStyles(theme, adjustHeightForBorder, reverseMenuDirection);
   const state = useTreeState<NavModelItem>({ ...rest, disabledKeys });
@@ -33,14 +33,14 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
   const section = allItems.find((item) => item.value.menuItemType === NavMenuItemType.Section);
 
   useEffect(() => {
-    if (enableAllItems && !state.selectionManager.isFocused) {
+    if (menuHasFocus && !state.selectionManager.isFocused) {
       state.selectionManager.setFocusedKey(section?.key ?? '');
       state.selectionManager.setFocused(true);
-    } else if (!enableAllItems && state.selectionManager.isFocused) {
+    } else if (!menuHasFocus && state.selectionManager.isFocused) {
       state.selectionManager.setFocused(false);
       state.selectionManager.clearSelection();
     }
-  }, [enableAllItems, state.selectionManager, reverseMenuDirection, section?.key]);
+  }, [menuHasFocus, state.selectionManager, reverseMenuDirection, section?.key]);
 
   if (!section) {
     return null;
@@ -61,7 +61,7 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
       className={`${styles.menu} navbar-dropdown`}
       ref={ref}
       {...mergeProps(menuProps, contextMenuProps)}
-      tabIndex={enableAllItems ? 0 : -1}
+      tabIndex={menuHasFocus ? 0 : -1}
     >
       {!reverseMenuDirection ? sectionComponent : null}
       {menuSubTitle && reverseMenuDirection ? subTitleComponent : null}
