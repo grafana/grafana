@@ -42,6 +42,7 @@ describe('Graphite actions', async () => {
       waitForFuncDefsLoaded: jest.fn(() => Promise.resolve(null)),
       createFuncInstance: gfunc.createFuncInstance,
       getTagsAutoComplete: jest.fn().mockReturnValue(Promise.resolve([])),
+      getTagValuesAutoComplete: jest.fn().mockReturnValue(Promise.resolve([])),
     },
     target: { target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)' },
   } as any;
@@ -227,6 +228,11 @@ describe('Graphite actions', async () => {
     ctx.state.range = currentRange;
     await getTagsAsSegmentsSelectables(ctx.state, 'any');
     expect(ctx.state.datasource.getTagsAutoComplete).toBeCalledWith([], 'any', { range: currentRange, limit: 5000 });
+  });
+
+  it('limit is passed when getting list of tag values', async () => {
+    await getTagValuesSelectables(ctx.state, { key: 'key', operator: '=', value: 'value' }, 1, 'test');
+    expect(ctx.state.datasource.getTagValuesAutoComplete).toBeCalledWith([], 'key', 'test', { limit: 5000 });
   });
 
   describe('when autocomplete for metric names is not available', () => {
@@ -494,13 +500,6 @@ describe('Graphite actions', async () => {
         }
         return tags;
       });
-      ctx.state.datasource.getTagValuesAutoComplete = jest.fn((_expression, _tag, _prefix, { limit }) => {
-        const tagValues = [];
-        for (let i = 0; i < limit; i++) {
-          tagValues.push({ text: `tagValue${i}` });
-        }
-        return tagValues;
-      });
     });
 
     it('uses limited metrics and tags list', async () => {
@@ -521,24 +520,9 @@ describe('Graphite actions', async () => {
       expect(segments[4999].value!.value).toBe('metric4998');
     });
 
-    it('uses limited tags when editing', async () => {
-      const tags = await getTagsAsSegmentsSelectables(ctx.state, 'any');
-      expect(tags).toHaveLength(5000);
-    });
-
     it('uses limited metrics when adding more metrics', async () => {
       const segments = await getAltSegmentsSelectables(ctx.state, 1, '');
       expect(segments).toHaveLength(5000);
-    });
-
-    it('uses limited tag values when editing', async () => {
-      const tagValues = await getTagValuesSelectables(
-        ctx.state,
-        { key: 'test', operator: '=', value: 'test' },
-        1,
-        'test'
-      );
-      expect(tagValues).toHaveLength(5000);
     });
   });
 });
