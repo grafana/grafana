@@ -1,12 +1,17 @@
 import React, { createRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
-import { throttle } from 'lodash';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { getFocusStyles } from '../../themes/mixins';
 import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
 import { PlotProps } from './types';
 
-const PIXELS_PER_MS = 0.1;
-const SHIFT_MULTIPLIER = 2;
-const SUPPORTED_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Shift'] as const;
+import { stylesFactory } from '../../themes/stylesFactory';
+import { ThemeContext } from '../../themes/ThemeContext';
+
+const PIXELS_PER_MS = 0.1 as const;
+const SHIFT_MULTIPLIER = 2 as const;
+const SUPPORTED_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Shift', ' '] as const;
 type SupportedKey = typeof SUPPORTED_KEYS[number];
 
 function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
@@ -33,8 +38,25 @@ function sameTimeRange(prevProps: PlotProps, nextProps: PlotProps) {
 
 type UPlotChartState = {
   plot: uPlot | null;
+};
+
+interface KeyboardState {
   pressedKeys: Record<SupportedKey, boolean>;
-  keyHandleTimestamp: number;
+  keysLastHandledAt: number | null;
+  dragStartX: number | null;
+}
+
+const initialKeyboardState: KeyboardState = {
+  pressedKeys: {
+    ArrowUp: false,
+    ArrowDown: false,
+    ArrowLeft: false,
+    ArrowRight: false,
+    Shift: false,
+    ' ': false,
+  },
+  keysLastHandledAt: null,
+  dragStartX: null,
 };
 
 /**
@@ -46,25 +68,8 @@ type UPlotChartState = {
 export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
   plotContainer = createRef<HTMLDivElement>();
   plotCanvasBBox = createRef<DOMRect>();
-  throttledHandleKeys: (e: React.KeyboardEvent) => void;
-
-  constructor(props: PlotProps) {
-    super(props);
-
-    this.state = {
-      plot: null,
-      pressedKeys: {
-        ArrowUp: false,
-        ArrowDown: false,
-        ArrowLeft: false,
-        ArrowRight: false,
-        Shift: false,
-      },
-      keyHandleTimestamp: 0,
-    };
-
-    this.throttledHandleKeys = throttle(this.handleKeys, 16.7);
-  }
+  keyboardState = initialKeyboardState;
+  state: UPlotChartState = { plot: null };
 
   reinitPlot() {
     let { width, height, plotRef } = this.props;
@@ -86,7 +91,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       ...DEFAULT_PLOT_CONFIG,
       width: this.props.width,
       height: this.props.height,
-      ms: 1 as 1,
+      ms: 1,
       ...this.props.config.getConfig(),
     };
 
@@ -136,13 +141,21 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     }
   }
 
-  moveCursor = (dx: number, dy: number) => {
-    const cursor = this.state.plot?.cursor;
+  handleKeyRelease = (e: React.KeyboardEvent) => {
+    if (!SUPPORTED_KEYS.includes(e.key as SupportedKey)) {
+      return;
+    }
 
-    this.state.plot?.setCursor({
-      left: (cursor?.left ?? this.state.plot?.width / 2) + dx,
-      top: (cursor?.top ?? this.state.plot?.height / 2) + dy,
-    });
+    this.keyboardState.pressedKeys[e.key as SupportedKey] = false;
+
+    if (e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // We do this so setSelect hooks get fired, zooming the plot
+      this.state.plot?.setSelect(this.state.plot.select);
+      this.keyboardState.dragStartX = null;
+    }
   };
 
   handleKeys = (e: React.KeyboardEvent) => {
@@ -153,96 +166,125 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     e.preventDefault();
     e.stopPropagation();
 
-    const initiateAnimationLoop = Object.values(this.state.pressedKeys).every((pressed) => pressed === false);
+    const newKey = !this.keyboardState.pressedKeys[e.key as SupportedKey];
+    if (newKey) {
+      const initiateAnimationLoop = Object.values(this.keyboardState.pressedKeys).every((pressed) => pressed === false);
+      this.keyboardState.pressedKeys[e.key as SupportedKey] = true;
+      this.keyboardState.dragStartX =
+        e.key === ' ' && this.keyboardState.dragStartX === null
+          ? this.state.plot?.cursor.left!
+          : this.keyboardState.dragStartX;
 
-    this.setState(
-      (state) => ({
-        pressedKeys: { ...state.pressedKeys, [e.key]: true },
-        keyHandleTimestamp: initiateAnimationLoop ? performance.now() : state.keyHandleTimestamp,
-      }),
-      () => {
-        if (initiateAnimationLoop) {
-          window.requestAnimationFrame(this.handlePressedKeys);
-        }
+      if (initiateAnimationLoop) {
+        window.requestAnimationFrame(this.handlePressedKeys);
       }
-    );
-  };
-
-  handleKeyRelease = (e: React.KeyboardEvent) => {
-    if (!SUPPORTED_KEYS.includes(e.key as SupportedKey)) {
-      return;
     }
-
-    this.setState((state) => ({
-      pressedKeys: { ...state.pressedKeys, [e.key]: false },
-    }));
   };
 
   handlePressedKeys = (time: number) => {
-    const nothingPressed = Object.values(this.state.pressedKeys).every((pressed) => pressed === false);
-    if (nothingPressed) {
+    const nothingPressed = Object.values(this.keyboardState.pressedKeys).every((pressed) => pressed === false);
+    if (nothingPressed || !this.state.plot) {
+      this.keyboardState.keysLastHandledAt = null;
       return;
     }
 
-    const dt = time - this.state.keyHandleTimestamp;
+    const dt = time - (this.keyboardState.keysLastHandledAt ?? time);
     const dx = dt * PIXELS_PER_MS;
     let horValue = 0;
     let vertValue = 0;
-    if (this.state.pressedKeys['ArrowUp']) {
+
+    if (this.keyboardState.pressedKeys.ArrowUp) {
       vertValue -= dx;
     }
-    if (this.state.pressedKeys['ArrowDown']) {
+    if (this.keyboardState.pressedKeys.ArrowDown) {
       vertValue += dx;
     }
-    if (this.state.pressedKeys['ArrowLeft']) {
+    if (this.keyboardState.pressedKeys.ArrowLeft) {
       horValue -= dx;
     }
-    if (this.state.pressedKeys['ArrowRight']) {
+    if (this.keyboardState.pressedKeys.ArrowRight) {
       horValue += dx;
     }
-    if (this.state.pressedKeys['Shift']) {
+    if (this.keyboardState.pressedKeys.Shift) {
       horValue *= SHIFT_MULTIPLIER;
       vertValue *= SHIFT_MULTIPLIER;
     }
 
     this.moveCursor(horValue, vertValue);
-    this.setState(
-      {
-        keyHandleTimestamp: time,
-      },
-      () => {
-        window.requestAnimationFrame(this.handlePressedKeys);
-      }
-    );
+
+    const cursor = this.state.plot.cursor;
+    if (this.keyboardState.pressedKeys[' '] && cursor) {
+      const drawHeight = Number(this.state.plot.over.style.height.slice(0, -2));
+
+      this.state.plot.setSelect(
+        {
+          left: cursor.left! < this.keyboardState.dragStartX! ? cursor.left! : this.keyboardState.dragStartX!,
+          top: 0,
+          width: Math.abs(cursor.left! - (this.keyboardState.dragStartX ?? cursor.left!)),
+          height: drawHeight,
+        },
+        false
+      );
+    }
+
+    this.keyboardState.keysLastHandledAt = time;
+    window.requestAnimationFrame(this.handlePressedKeys);
+  };
+
+  moveCursor = (dx: number, dy: number) => {
+    if (this.state.plot?.cursor.left === undefined) {
+      return;
+    }
+
+    const { cursor } = this.state.plot;
+    this.state.plot.setCursor({
+      left: cursor.left! + dx,
+      top: cursor.top! + dy,
+    });
   };
 
   handleFocus = () => {
-    this.state.plot?.setCursor({ left: this.state.plot.width / 2, top: this.state.plot.height / 2 });
+    // Is there a more idiomatic way to do this?
+    const drawWidth = Number(this.state.plot?.over.style.width.slice(0, -2));
+    const drawHeight = Number(this.state.plot?.over.style.height.slice(0, -2));
+
+    this.state.plot?.setCursor({ left: drawWidth / 2, top: drawHeight / 2 });
   };
 
   handleBlur = () => {
-    this.setState({
-      pressedKeys: SUPPORTED_KEYS.reduce(
-        (pressed, cur) => ({ ...pressed, [cur]: false }),
-        {} as Record<SupportedKey, boolean>
-      ),
-    });
+    this.keyboardState = initialKeyboardState;
+    this.state.plot?.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
   };
 
   render() {
     return (
       <div style={{ position: 'relative' }}>
-        <div
-          ref={this.plotContainer}
-          data-testid="uplot-main-div"
-          tabIndex={0}
-          onFocusCapture={this.handleFocus}
-          onBlur={this.handleBlur}
-          onKeyDown={this.throttledHandleKeys}
-          onKeyUp={this.handleKeyRelease}
-        />
+        <ThemeContext.Consumer>
+          {(theme) => {
+            const styles = getStyles(theme);
+            return (
+              <div
+                className={styles.focusStyle}
+                ref={this.plotContainer}
+                data-testid="uplot-main-div"
+                tabIndex={0}
+                onFocusCapture={this.handleFocus}
+                onBlur={this.handleBlur}
+                onKeyDown={this.handleKeys}
+                onKeyUp={this.handleKeyRelease}
+              />
+            );
+          }}
+        </ThemeContext.Consumer>
         {this.props.children}
       </div>
     );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+  focusStyle: css({
+    borderRadius: theme.shape.borderRadius(1),
+    '&:focus-visible': getFocusStyles(theme),
+  }),
+}));
