@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -24,6 +25,7 @@ type SecretsService struct {
 	currentProvider string
 	providers       map[string]secrets.Provider
 	dataKeyCache    map[string]dataKeyCacheItem
+	log             log.Logger
 }
 
 func ProvideSecretsService(
@@ -37,7 +39,19 @@ func ProvideSecretsService(
 		return nil, err
 	}
 
+	logger := log.New("secrets")
+	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
 	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
+
+	if _, ok := providers[currentProvider]; enabled && !ok {
+		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProvider)
+	}
+
+	if !enabled && currentProvider != kmsproviders.Default {
+		logger.Warn("Changing encryption provider requires enabling envelope encryption feature")
+	}
+
+	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProvider)
 
 	s := &SecretsService{
 		store:           store,
@@ -46,6 +60,7 @@ func ProvideSecretsService(
 		providers:       providers,
 		currentProvider: currentProvider,
 		dataKeyCache:    make(map[string]dataKeyCacheItem),
+		log:             logger,
 	}
 
 	return s, nil
@@ -133,6 +148,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 
 		dataKey, err = s.dataKey(ctx, string(key))
 		if err != nil {
+			s.log.Error("Failed to lookup data key", "name", string(key), "error", err)
 			return nil, err
 		}
 	}
@@ -272,14 +288,6 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	return decrypted, nil
-}
-
-func (s *SecretsService) RegisterProvider(providerID string, provider secrets.Provider) {
-	s.providers[providerID] = provider
-}
-
-func (s *SecretsService) CurrentProviderID() string {
-	return s.currentProvider
 }
 
 func (s *SecretsService) GetProviders() map[string]secrets.Provider {
