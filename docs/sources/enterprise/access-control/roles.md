@@ -67,6 +67,10 @@ If a Grafana Server Admin wants to delegate that privilege to other users, they 
 
 Note that you won't be able to create, update or delete a custom role with permissions which you yourself do not have. For example, if the only permission you have is a `users:create`, you won't be able to create a role with other permissions.
 
+## Assign roles
+
+[Manage role assignments]({{< relref "manage-role-assignments/_index.md" >}}) page explains how roles can be granted and revoked.
+
 ## Built-in role assignments
 
 To control what your users can access or not, you can assign or unassign [Custom roles]({{< ref "#custom-roles" >}}) or [Fixed roles]({{< ref "#fixed-roles" >}}) to the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) or to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role.
