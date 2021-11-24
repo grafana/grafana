@@ -23,3 +23,4 @@ Before you begin using Grafana 8 alerting, we recommend that you familiarize you
 ## Limitations
 
 - The Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch rules from other supported data sources.
+- Our aim is to support the latest two [minor](https://semver.org/) versions of both Prometheus and Alertmanager, older versions might work without any guarantees. As an example, if the current Prometheus version is `2.31.1`, we would support `>= 2.29.0`.
