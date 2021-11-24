@@ -12,12 +12,8 @@ export interface Props {
   isActive?: boolean;
   children: ReactNode;
   className?: string;
-  menuSubTitle?: string;
-  onClick?: () => void;
   reverseMenuDirection?: boolean;
   showMenu?: boolean;
-  target?: HTMLAnchorElement['target'];
-  url?: string;
   link: NavModelItem;
 }
 
@@ -25,26 +21,20 @@ const NavBarItem = ({
   isActive = false,
   children,
   className,
-  menuSubTitle,
-  onClick,
   reverseMenuDirection = false,
   showMenu = true,
-  target,
-  url,
   link,
 }: Props) => {
   const theme = useTheme2();
   const menuItems = link.children ?? [];
-  const label = link.text;
   const menuItemsSorted = reverseMenuDirection ? menuItems.reverse() : menuItems;
   const filteredItems = menuItemsSorted
     .filter((item) => !item.hideFromMenu)
     .map((i) => ({ ...i, menuItemType: NavMenuItemType.Item }));
   const adjustHeightForBorder = filteredItems.length === 0;
-  const styles = getStyles(theme, isActive, adjustHeightForBorder, reverseMenuDirection);
+  const styles = getStyles(theme, adjustHeightForBorder, isActive, reverseMenuDirection);
   const section: NavModelItem = {
     ...link,
-    subTitle: menuSubTitle,
     children: filteredItems,
     menuItemType: NavMenuItemType.Section,
   };
@@ -52,10 +42,11 @@ const NavBarItem = ({
   // Disable all keys that are subtitle they should not be focusable
   disabledKeys.push('subtitle');
   const items: NavModelItem[] = [section].concat(filteredItems);
+  console.log({ isActive, text: link.text });
 
   return showMenu ? (
     <div className={cx(styles.container, className)}>
-      <NavBarItemMenuTrigger item={section}>
+      <NavBarItemMenuTrigger item={section} isActive={isActive}>
         <NavBarItemMenu
           items={items}
           reverseMenuDirection={reverseMenuDirection}
@@ -67,10 +58,10 @@ const NavBarItem = ({
               return (
                 <Item key={getNavModelItemKey(item)}>
                   <NavBarMenuItem
-                    target={target}
-                    text={label}
-                    url={url}
-                    onClick={onClick}
+                    target={item.target}
+                    text={item.text}
+                    url={item.url}
+                    onClick={item.onClick}
                     styleOverrides={styles.header}
                   />
                 </Item>
@@ -96,12 +87,12 @@ const NavBarItem = ({
     </div>
   ) : (
     <NavBarItemWithoutMenu
-      label={label}
+      label={link.text}
       className={className}
       isActive={isActive}
-      url={url}
-      onClick={onClick}
-      target={target}
+      url={link.url}
+      onClick={link.onClick}
+      target={link.target}
     >
       {children}
     </NavBarItemWithoutMenu>
@@ -112,9 +103,9 @@ export default NavBarItem;
 
 const getStyles = (
   theme: GrafanaTheme2,
-  isActive: Props['isActive'],
   adjustHeightForBorder: boolean,
-  reverseMenuDirection: Props['reverseMenuDirection']
+  isActive?: boolean,
+  reverseMenuDirection?: boolean
 ) => ({
   ...getNavBarItemWithoutMenuStyles(theme, isActive),
   header: css`

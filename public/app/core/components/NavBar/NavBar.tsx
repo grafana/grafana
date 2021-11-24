@@ -63,12 +63,7 @@ export const NavBar: FC = React.memo(() => {
         <NavBarItemWithoutMenu label="Home" className={styles.grafanaLogo} url={homeUrl}>
           <Branding.MenuLogo />
         </NavBarItemWithoutMenu>
-        <NavBarItem
-          className={styles.search}
-          isActive={activeItem === searchItem}
-          onClick={searchItem.onClick}
-          link={searchItem}
-        >
+        <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
           <Icon name="search" size="xl" />
         </NavBarItem>
       </NavBarSection>
@@ -78,9 +73,7 @@ export const NavBar: FC = React.memo(() => {
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            target={link.target}
-            url={link.url}
-            link={link}
+            link={{ ...link, subTitle: undefined, onClick: undefined }}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -95,11 +88,7 @@ export const NavBar: FC = React.memo(() => {
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            menuSubTitle={link.subTitle}
-            onClick={link.onClick}
             reverseMenuDirection
-            target={link.target}
-            url={link.url}
             link={link}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}

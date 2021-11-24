@@ -61,12 +61,7 @@ export const NavBarNext: FC = React.memo(() => {
         <NavBarItemWithoutMenu label="Main menu" className={styles.grafanaLogo} onClick={() => setMenuOpen(!menuOpen)}>
           <Branding.MenuLogo />
         </NavBarItemWithoutMenu>
-        <NavBarItem
-          className={styles.search}
-          isActive={activeItem === searchItem}
-          onClick={searchItem.onClick}
-          link={searchItem}
-        >
+        <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
           <Icon name="search" size="xl" />
         </NavBarItem>
       </NavBarSection>
@@ -76,9 +71,7 @@ export const NavBarNext: FC = React.memo(() => {
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            target={link.target}
-            url={link.url}
-            link={link}
+            link={{ ...link, subTitle: undefined, onClick: undefined }}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -89,15 +82,7 @@ export const NavBarNext: FC = React.memo(() => {
       {pluginItems.length > 0 && (
         <NavBarSection>
           {pluginItems.map((link, index) => (
-            <NavBarItem
-              key={`${link.id}-${index}`}
-              isActive={isMatchOrChildMatch(link, activeItem)}
-              menuSubTitle={link.subTitle}
-              onClick={link.onClick}
-              target={link.target}
-              url={link.url}
-              link={link}
-            >
+            <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
               {link.icon && <Icon name={link.icon as IconName} size="xl" />}
               {link.img && <img src={link.img} alt={`${link.text} logo`} />}
             </NavBarItem>
@@ -112,11 +97,7 @@ export const NavBarNext: FC = React.memo(() => {
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            menuSubTitle={link.subTitle}
-            onClick={link.onClick}
             reverseMenuDirection
-            target={link.target}
-            url={link.url}
             link={link}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}

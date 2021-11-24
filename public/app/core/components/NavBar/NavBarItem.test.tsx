@@ -6,7 +6,6 @@ import userEvent from '@testing-library/user-event';
 
 const onClickMock = jest.fn();
 const defaults: Props = {
-  onClick: onClickMock,
   children: undefined,
   link: {
     text: 'Parent Node',

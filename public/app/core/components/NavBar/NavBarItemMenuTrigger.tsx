@@ -113,7 +113,15 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           </span>
         </Link>
       ) : (
-        <a href={item.url} target={item.target} onClick={item?.onClick} {...buttonProps} {...keyboardProps} ref={ref}>
+        <a
+          href={item.url}
+          target={item.target}
+          onClick={item?.onClick}
+          {...buttonProps}
+          {...keyboardProps}
+          ref={ref}
+          className={styles.element}
+        >
           <span className={styles.icon}>
             {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
             {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
