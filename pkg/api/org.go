@@ -109,13 +109,12 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 func UpdateCurrentOrg(c *models.ReqContext) response.Response {
 	form := dtos.UpdateOrgForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
-
-		// PUT /api/orgs/:orgId
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return updateOrgHelper(c.Req.Context(), form, c.OrgId)
 }
 
+// PUT /api/orgs/:orgId
 func UpdateOrg(c *models.ReqContext) response.Response {
 	form := dtos.UpdateOrgForm{}
 	if err := web.Bind(c.Req, &form); err != nil {

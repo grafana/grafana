@@ -2,6 +2,7 @@ package libraryelements
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -24,7 +25,12 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 }
 
 // createHandler handles POST /api/library-elements.
-func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLibraryElementCommand) response.Response {
+func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Response {
+	cmd := CreateLibraryElementCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
 	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
@@ -77,7 +83,12 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 }
 
 // patchHandler handles PATCH /api/library-elements/:uid
-func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibraryElementCommand) response.Response {
+func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Response {
+	cmd := patchLibraryElementCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
 	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to update library element")

@@ -12,10 +12,10 @@ var (
 	}
 )
 
-func Wrap(action interface{}) web.Handler {
+func Wrap(handler func(c *models.ReqContext) response.Response) web.Handler {
 	return func(c *models.ReqContext) {
 		var res response.Response
-		val, err := c.Invoke(action)
+		val, err := c.Invoke(handler)
 		if err == nil && val != nil && len(val) > 0 {
 			res = val[0].Interface().(response.Response)
 		} else {

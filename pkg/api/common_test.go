@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -375,4 +377,9 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 	recorder := httptest.NewRecorder()
 	server.ServeHTTP(recorder, req)
 	return recorder
+}
+
+func mockRequestBody(v interface{}) io.ReadCloser {
+	b, _ := json.Marshal(v)
+	return io.NopCloser(bytes.NewReader(b))
 }
