@@ -2,7 +2,7 @@
 title = "Azure Key Vault"
 description = "Using Azure Key Vault to encrypt database secrets"
 keywords = ["grafana", "Azure key vault"]
-weight = 3
+weight = 2
 +++
 
 # Using Azure Key Vault to encrypt database secrets
