@@ -1,16 +1,16 @@
 +++
-title = "HashiCorp Vault"
+title = "Hashicorp Vault"
 description = ""
 keywords = ["grafana", "hashicorp vault", "configuration"]
 aliases = ["../docs/grafana/latest/enterprise/vault/"]
 weight = 1
 +++
 
-# HashiCorp Vault integration
+# Hashicorp Vault integration
 
 **> Note:** Available in Grafana Enterprise v7.1+.
 
-If you manage your secrets with [HashiCorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../../administration/configuration.md" >}})
+If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../../administration/configuration.md" >}})
 and [Provisioning]({{< relref "../../administration/provisioning.md" >}}).
 
 > **Note:** If you have Grafana [set up for high availability]({{< relref "../../administration/set-up-for-high-availability.md" >}}), then we advise not to use dynamic secrets for provisioning files.
@@ -18,19 +18,19 @@ and [Provisioning]({{< relref "../../administration/provisioning.md" >}}).
 
 ## Configuration
 
-Before using HashiCorp Vault, you need to activate it by providing a URL, authentication method (currently only token),
-and a token for your HashiCorp Vault service. Grafana automatically renews the service token if it is renewable and
+Before using Hashicorp Vault, you need to activate it by providing a URL, authentication method (currently only token),
+and a token for your Hashicorp Vault service. Grafana automatically renews the service token if it is renewable and
 set up with a limited lifetime.
 
 If you're using short-lived leases, then you can also configure how often Grafana should renew the lease and for how long. We recommend keeping the defaults unless you run into problems.
 
 ```ini
 [keystore.vault]
-# Location of the HashiCorp Vault server
+# Location of the Hashicorp Vault server
 ;url =
-# Vault namespace if using HashiCorp Vault with multi-tenancy
+# Vault namespace if using Hashicorp Vault with multi-tenancy
 ;namespace =
-# Method for authenticating towards HashiCorp Vault that is inactive if this option is not set
+# Method for authenticating towards Hashicorp Vault that is inactive if this option is not set
 # Possible values: token
 ;auth_method =
 # Secret token to connect to Hashicorop Vault when auth_method is token
@@ -39,7 +39,7 @@ If you're using short-lived leases, then you can also configure how often Grafan
 ;lease_renewal_interval = 5m
 # Time until expiration for tokens which are renewed. Should have a value higher than lease_renewal_interval
 ;lease_renewal_expires_within = 15m
-# New duration for renewed tokens. You can configure HashiCorp Vault to ignore this value and impose a stricter limit.
+# New duration for renewed tokens. You can configure Hashicorp Vault to ignore this value and impose a stricter limit.
 ;lease_renewal_increment = 1h
 ```
 
@@ -55,10 +55,10 @@ token = s.sAZLyI0r7sFLMPq6MWtoOhAN # replace with your key
 ## Using the Vault expander
 
 After you configure Vault, you must set the configuration or provisioning files you wish to
-use HashiCorp Vault. The HashiCorp Vault configuration is an extension of the configuration's [variable expansion]({{< relref "../../administration/configuration.md#variable-expansion" >}}) and follows the
+use Hashicorp Vault. The Hashicorp Vault configuration is an extension of the configuration's [variable expansion]({{< relref "../../administration/configuration.md#variable-expansion" >}}) and follows the
 `$__vault{<argument>}` syntax.
 
-The argument to HashiCorp Vault consists of three parts separated by a colon:
+The argument to Hashicorp Vault consists of three parts separated by a colon:
 
 - The first part specifies which secrets engine should be used.
 - The second part specifies which secret should be accessed.
@@ -74,7 +74,7 @@ authorized user. Grafana supports a subset of these which are most likely to be 
 
 #### Key/Value
 
-Grafana supports HashiCorp Vault's [K/V version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) storage engine which
+Grafana supports Hashicorp Vault's [K/V version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) storage engine which
 is used to store and retrieve arbitrary secrets as `kv`.
 
 ```ini
@@ -83,7 +83,7 @@ $__vault{kv:secret/grafana/smtp:username}
 
 #### Databases
 
-The HashiCorp Vault [databases secrets engines](https://www.vaultproject.io/docs/secrets/databases) is a family of
+The Hashicorp Vault [databases secrets engines](https://www.vaultproject.io/docs/secrets/databases) is a family of
 secret engines which shares a similar syntax and grants the user dynamic access to a database.
 You can use this both for setting up Grafana's own database access and for provisioning data sources.
 
@@ -93,11 +93,11 @@ $__vault{database:database/creds/grafana:username}
 
 ### Examples
 
-The following examples show you how to set your [configuration]({{< relref "../../administration/configuration.md" >}}) or [provisioning]({{< relref "../../administration/provisioning.md" >}}) files to use HashiCorp Vault to retrieve configuration values.
+The following examples show you how to set your [configuration]({{< relref "../../administration/configuration.md" >}}) or [provisioning]({{< relref "../../administration/provisioning.md" >}}) files to use Hashicorp Vault to retrieve configuration values.
 
 #### Configuration
 
-The following is a partial example for using HashiCorp Vault to set up a Grafana configuration file's email and database credentials.
+The following is a partial example for using Hashicorp Vault to set up a Grafana configuration file's email and database credentials.
 Refer to [Configuration]({{< relref "../../administration/configuration.md" >}}) for more information.
 
 ```ini
@@ -117,7 +117,7 @@ password = $__vault{database:database/creds/grafana:password}
 
 #### Provisioning
 
-The following is a full examples of a provisioning YAML file setting up a MySQL data source using HashiCorp Vault's
+The following is a full examples of a provisioning YAML file setting up a MySQL data source using Hashicorp Vault's
 database secrets engine.
 Refer to [Provisioning]({{< relref "../../administration/provisioning.md" >}}) for more information.
 

@@ -97,7 +97,7 @@ General features are included in the Grafana Enterprise edition software.
 
 ### Support for HashiCorp Vault
 
-You can now use HashiCorp Vault to get secrets for configuration and provisioning of Grafana Enterprise. For more information about HashiCorp Vault, refer to [HashiCorp Vault]({{<relref "../enterprise/kms-integration/hashicorp-vault.md">}}).
+You can now use HashiCorp Vault to get secrets for configuration and provisioning of Grafana Enterprise. For more information about HashiCorp Vault, refer to [Hashicorp Vault]({{<relref "../enterprise/kms-integration/hashicorp-vault.md">}}).
 
 ### Support for monthly schedules in reports
 
