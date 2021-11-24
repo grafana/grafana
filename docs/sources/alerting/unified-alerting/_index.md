@@ -1,5 +1,5 @@
 +++
-title = "Grafana Alerts"
+title = "Grafana alerts"
 aliases = ["/docs/grafana/latest/alerting/metrics/"]
 weight = 113
 +++
