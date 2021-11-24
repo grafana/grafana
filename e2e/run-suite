@@ -8,25 +8,35 @@ PORT=${PORT:-$DEFAULT_PORT}
 
 echo -e "Starting Cypress scenarios"
 
+args=("$@")
+
 CMD="start"
 PARAMS=""
 SLOWMO=0
 URL=${BASE_URL:-"http://$HOST:$PORT"}
-SUITE=${SUITE:-$DEFAULT_SUITE}
-
-if [ "$1" == "debug" ]; then
-    echo -e "Debug mode"
-    SLOWMO=1
-    PARAMS="--no-exit"
-fi
-
-if [ "$1" == "dev" ]; then
-    echo "Dev mode"
-    CMD="open"
-fi
+integrationFolder=../../e2e 
+testFiles=*-suite/*spec.ts
 
 cd packages/grafana-e2e
 
+case "$1" in 
+    "debug")
+        echo -e "Debug mode"
+        SLOWMO=1
+        PARAMS="--no-exit"
+        ;;
+    "dev")
+        echo "Dev mode"
+        CMD="open"
+        ;;
+    "")
+        ;;
+    *)
+        integrationFolder=../../e2e/"${args[0]}"
+        testFiles="*.spec.ts"
+        ;;
+esac
+
 yarn $CMD --env BASE_URL=$URL,SLOWMO=$SLOWMO \
-  --config defaultCommandTimeout=30000,integrationFolder=../../e2e/$SUITE/specs,screenshotsFolder=../../e2e/$SUITE/screenshots,videosFolder=../../e2e/$SUITE/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false,videoUploadOnPasses=false \
+  --config defaultCommandTimeout=30000,testFiles=$testFiles,integrationFolder=$integrationFolder,screenshotsFolder=../../e2e/"${args[0]}"/screenshots,videosFolder=../../e2e/"${args[0]}"/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false,videoUploadOnPasses=false \
   $PARAMS
