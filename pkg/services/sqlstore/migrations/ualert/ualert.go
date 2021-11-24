@@ -754,12 +754,12 @@ func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
 	resp := &struct {
 		Count int64
 	}{}
-	exist, err := migrator.DbEngine.IsTableExist("alert")
+	exist, err := migrator.DBEngine.IsTableExist("alert")
 	if err != nil {
 		return fmt.Errorf("failed to access the database to determine alerting status: %w", err)
 	}
 	if exist {
-		if _, err := migrator.DbEngine.SQL("SELECT COUNT(*) as count FROM alert").Get(resp); err != nil {
+		if _, err := migrator.DBEngine.SQL("SELECT COUNT(*) as count FROM alert").Get(resp); err != nil {
 			return fmt.Errorf("failed to access the database to determine alerting status: %w", err)
 		}
 	}

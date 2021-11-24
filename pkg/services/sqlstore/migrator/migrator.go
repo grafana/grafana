@@ -15,7 +15,7 @@ import (
 )
 
 type Migrator struct {
-	DbEngine   *xorm.Engine
+	DBEngine   *xorm.Engine
 	Dialect    Dialect
 	migrations []Migration
 	Logger     log.Logger
@@ -33,10 +33,10 @@ type MigrationLog struct {
 
 func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 	mg := &Migrator{}
-	mg.DbEngine = engine
+	mg.DBEngine = engine
 	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
-	mg.Dialect = NewDialect(mg.DbEngine)
+	mg.Dialect = NewDialect(mg.DBEngine)
 	mg.Cfg = cfg
 	return mg
 }
@@ -62,7 +62,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	logMap := make(map[string]MigrationLog)
 	logItems := make([]MigrationLog, 0)
 
-	exists, err := mg.DbEngine.IsTableExist(new(MigrationLog))
+	exists, err := mg.DBEngine.IsTableExist(new(MigrationLog))
 	if err != nil {
 		return nil, errutil.Wrap("failed to check table existence", err)
 	}
@@ -70,7 +70,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 		return logMap, nil
 	}
 
-	if err = mg.DbEngine.Find(&logItems); err != nil {
+	if err = mg.DBEngine.Find(&logItems); err != nil {
 		return nil, err
 	}
 
@@ -141,7 +141,7 @@ func (mg *Migrator) Start() error {
 	mg.Logger.Info("migrations completed", "performed", migrationsPerformed, "skipped", migrationsSkipped, "duration", time.Since(start))
 
 	// Make sure migrations are synced
-	return mg.DbEngine.Sync2()
+	return mg.DBEngine.Sync2()
 }
 
 func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
@@ -187,7 +187,7 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 type dbTransactionFunc func(sess *xorm.Session) error
 
 func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
-	sess := mg.DbEngine.NewSession()
+	sess := mg.DBEngine.NewSession()
 	defer sess.Close()
 
 	if err := sess.Begin(); err != nil {
