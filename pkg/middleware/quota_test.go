@@ -219,7 +219,8 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 
-			cfg.UnifiedAlerting.Enabled = true
+			cfg.UnifiedAlerting.Enabled = new(bool)
+			*cfg.UnifiedAlerting.Enabled = true
 			cfg.Quota.Org.AlertRule = quotaUsed
 		})
 
@@ -233,7 +234,8 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 
-			cfg.UnifiedAlerting.Enabled = true
+			cfg.UnifiedAlerting.Enabled = new(bool)
+			*cfg.UnifiedAlerting.Enabled = true
 			cfg.Quota.Org.AlertRule = quotaUsed + 1
 		})
 
