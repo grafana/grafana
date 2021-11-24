@@ -37,7 +37,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 20
               },
               {
                 "color": "red",
@@ -320,7 +320,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 20
               },
               {
                 "color": "red",
