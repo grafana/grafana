@@ -23,23 +23,24 @@ You can use an encryption key from AWS Key Management Service to encrypt secrets
 3. Create a [programmatic credential](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys) (access key ID and secret access key), which has permission to view the key that you created.
    <br><br>In AWS, you can control access to your KMS keys by using [key policies](https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html), [IAM policies](https://docs.aws.amazon.com/kms/latest/developerguide/iam-policies.html), and [grants](https://docs.aws.amazon.com/kms/latest/developerguide/grants.html). You can also create [temporary credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html), which must provide a session token along with an access key ID and a secret access key.
 
-4. From within Grafana, turn on [envelope encryption]({{< relref "../../../administration/envelope-encryption.md" >}}).
+4. From within Grafana, turn on [envelope encryption]({{< relref "../../administration/envelope-encryption.md" >}}).
 5. Add your AWS KMS details to the Grafana configuration file; depending on your operating system, it is usually named `grafana.ini`:
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.awskms.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
    <br><br>b. Fill in the section with the following values:
    <br>
-   * `key_id`: a reference to a key stored in the KMS. This can be a key ID, a key Amazon Resource Name (ARN), an alias name, or an alias ARN. If you are using an alias, use the prefix `alias/`. To specify a KMS key in a different AWS account, use its ARN or alias. For more information about how to retrieve a key ID from AWS, refer to [Finding the key ID and key ARN](https://docs.aws.amazon.com/kms/latest/developerguide/find-cmk-id-arn.html).<br>
-   | `key_id` option | Example value |
-   | --- | --- |
-   | Key ID | `1234abcd-12ab-34cd-56ef-1234567890ab` |
-   | Key ARN | `arn:aws:kms:us-east-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab` |
-   | Alias name | `alias/ExampleAlias` |
-   | Alias ARN | `arn:aws:kms:us-east-2:111122223333:alias/ExampleAlias` |
-   
-   * `access_key_id`: The AWS Access Key ID that you previously generated.
-   * `secret_access_key`: The AWS Secret Access Key you previously generated.
-   * `token`: (Optional) An AWS Session Token, which you must provide if you created temporary credentials.
-   * `region`: The AWS region where you created the KMS key. The region is contained in the key’s ARN. For example: `arn:aws:kms:*us-east-2*:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab`
+
+   - `key_id`: a reference to a key stored in the KMS. This can be a key ID, a key Amazon Resource Name (ARN), an alias name, or an alias ARN. If you are using an alias, use the prefix `alias/`. To specify a KMS key in a different AWS account, use its ARN or alias. For more information about how to retrieve a key ID from AWS, refer to [Finding the key ID and key ARN](https://docs.aws.amazon.com/kms/latest/developerguide/find-cmk-id-arn.html).<br>
+     | `key_id` option | Example value |
+     | --- | --- |
+     | Key ID | `1234abcd-12ab-34cd-56ef-1234567890ab` |
+     | Key ARN | `arn:aws:kms:us-east-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab` |
+     | Alias name | `alias/ExampleAlias` |
+     | Alias ARN | `arn:aws:kms:us-east-2:111122223333:alias/ExampleAlias` |
+
+   - `access_key_id`: The AWS Access Key ID that you previously generated.
+   - `secret_access_key`: The AWS Secret Access Key you previously generated.
+   - `token`: (Optional) An AWS Session Token, which you must provide if you created temporary credentials.
+   - `region`: The AWS region where you created the KMS key. The region is contained in the key’s ARN. For example: `arn:aws:kms:*us-east-2*:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab`
 
    An example of an AWS KMS provider section in the `grafana.ini` file is as follows:
 
