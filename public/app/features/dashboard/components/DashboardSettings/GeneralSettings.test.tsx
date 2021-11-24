@@ -35,11 +35,11 @@ const setupTestContext = (options: Partial<Props>) => {
 
 describe('General Settings', () => {
   describe('when component is mounted with timezone', () => {
-    it('should render correctly', () => {
+    it('should render correctly', async () => {
       setupTestContext({});
       screen.getByDisplayValue('test dashboard title');
       screen.getByDisplayValue('test dashboard description');
-      expect(screen.getByTestId(selectors.components.TimeZonePicker.containerV2)).toHaveTextContent(
+      expect(await screen.findByTestId(selectors.components.TimeZonePicker.containerV2)).toHaveTextContent(
         'Coordinated Universal Time'
       );
     });

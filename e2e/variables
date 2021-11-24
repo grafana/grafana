@@ -8,4 +8,3 @@ DEFAULT_PACKAGE_FILE=dist/grafana-*linux-amd64.tar.gz
 PROV_DIR=$RUNDIR/conf/provisioning
 DEFAULT_HOST=localhost
 DEFAULT_PORT=3001
-DEFAULT_SUITE=suite1

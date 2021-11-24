@@ -18,6 +18,7 @@ import {
   ColorDimensionEditor,
   ResourceDimensionEditor,
   ScaleDimensionEditor,
+  ScalarDimensionEditor,
   TextDimensionEditor,
 } from 'app/features/dimensions/editors';
 import {
@@ -27,14 +28,16 @@ import {
   ResourceFolderName,
   TextDimensionConfig,
   defaultTextConfig,
+  ScalarDimensionConfig,
 } from 'app/features/dimensions/types';
-import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
+import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
 import { styleUsesText } from '../../style/utils';
 import { LayerContentInfo } from '../../utils/getFeatures';
 
 export interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;
   simpleFixedValues?: boolean;
+  displayRotation?: boolean;
 }
 
 export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions, any>> = ({
@@ -43,6 +46,8 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
   onChange,
   item,
 }) => {
+  const settings = item.settings;
+
   const onSizeChange = (sizeValue: ScaleDimensionConfig | undefined) => {
     onChange({ ...value, size: sizeValue });
   };
@@ -57,6 +62,10 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
 
   const onOpacityChange = (opacityValue: number | undefined) => {
     onChange({ ...value, opacity: opacityValue });
+  };
+
+  const onRotationChange = (rotationValue: ScalarDimensionConfig | undefined) => {
+    onChange({ ...value, rotation: rotationValue });
   };
 
   const onTextChange = (textValue: TextDimensionConfig | undefined) => {
@@ -84,38 +93,54 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
   };
 
   let featuresHavePoints = false;
-  if (item.settings?.layerInfo) {
-    const propertyOptions = useObservable(item.settings?.layerInfo);
-    featuresHavePoints = propertyOptions?.geometryType === 'point';
+  if (settings?.layerInfo) {
+    const propertyOptions = useObservable(settings?.layerInfo);
+    featuresHavePoints = propertyOptions?.geometryType === GeometryTypeId.Point;
   }
-
   const hasTextLabel = styleUsesText(value);
 
   // Simple fixed value display
-  if (item.settings?.simpleFixedValues) {
+  if (settings?.simpleFixedValues) {
     return (
       <>
         {featuresHavePoints && (
-          <InlineFieldRow>
-            <InlineField label={'Symbol'}>
-              <ResourceDimensionEditor
-                value={value.symbol ?? defaultStyleConfig.symbol}
+          <>
+            <InlineFieldRow>
+              <InlineField label={'Symbol'}>
+                <ResourceDimensionEditor
+                  value={value.symbol ?? defaultStyleConfig.symbol}
+                  context={context}
+                  onChange={onSymbolChange}
+                  item={
+                    {
+                      settings: {
+                        resourceType: 'icon',
+                        folderName: ResourceFolderName.Marker,
+                        placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                        placeholderValue: defaultStyleConfig.symbol.fixed,
+                        showSourceRadio: false,
+                      },
+                    } as any
+                  }
+                />
+              </InlineField>
+            </InlineFieldRow>
+            <Field label={'Rotation angle'}>
+              <ScalarDimensionEditor
+                value={value.rotation ?? defaultStyleConfig.rotation}
                 context={context}
-                onChange={onSymbolChange}
+                onChange={onRotationChange}
                 item={
                   {
                     settings: {
-                      resourceType: 'icon',
-                      folderName: ResourceFolderName.Marker,
-                      placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
-                      placeholderValue: defaultStyleConfig.symbol.fixed,
-                      showSourceRadio: false,
+                      min: defaultStyleConfig.rotation.min,
+                      max: defaultStyleConfig.rotation.max,
                     },
                   } as any
                 }
               />
-            </InlineField>
-          </InlineFieldRow>
+            </Field>
+          </>
         )}
         <InlineFieldRow>
           <InlineField label="Color" labelWidth={10}>
@@ -210,6 +235,23 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
           }
         />
       </Field>
+      {settings?.displayRotation && (
+        <Field label={'Rotation angle'}>
+          <ScalarDimensionEditor
+            value={value.rotation ?? defaultStyleConfig.rotation}
+            context={context}
+            onChange={onRotationChange}
+            item={
+              {
+                settings: {
+                  min: defaultStyleConfig.rotation.min,
+                  max: defaultStyleConfig.rotation.max,
+                },
+              } as any
+            }
+          />
+        </Field>
+      )}
       <Field label={'Text label'}>
         <TextDimensionEditor
           value={value.text ?? defaultTextConfig}
