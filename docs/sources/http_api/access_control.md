@@ -94,7 +94,7 @@ Content-Type: application/json; charset=UTF-8
         "group": "Reports",
         "updated": "2021-11-19T10:48:00+01:00",
         "created": "2021-11-19T10:48:00+01:00",
-        "global": true
+        "global": false
     },
     {
         "version": 4,
@@ -105,7 +105,7 @@ Content-Type: application/json; charset=UTF-8
         "group": "Reports",
         "updated": "2021-11-19T10:48:00+01:00",
         "created": "2021-11-19T10:48:00+01:00",
-        "global": true
+        "global": false
     },
 ]
 ```
@@ -197,7 +197,7 @@ Content-Type: application/json; charset=UTF-8
     ],
     "updated": "2021-11-19T10:48:00+01:00",
     "created": "2021-11-19T10:48:00+01:00",
-    "global": true
+    "global": false
 }
 ```
 
@@ -238,7 +238,7 @@ Content-Type: application/json
     "description": "My custom role which gives users permissions to delete roles",
     "group":"My Group",
     "displayName": "My Custom Role",
-    "global": true,
+    "global": false,
     "permissions": [
         {
             "action": "roles:delete",
@@ -281,7 +281,7 @@ Content-Type: application/json; charset=UTF-8
     "description": "My custom role which gives users permissions to delete and create roles",
     "group":"My Group",
     "displayName": "My Custom Role",
-    "global": true,
+    "global": false,
     "permissions": [
         {
             "action": "roles:delete",
@@ -332,7 +332,7 @@ Content-Type: application/json
     "description": "My custom role which gives users permissions to delete and write roles",
     "group":"My Group",
     "displayName": "My Custom Role",
-    "global": true,
+    "global": false,
     "permissions": [
         {
             "action": "roles:delete",
@@ -393,7 +393,7 @@ Content-Type: application/json; charset=UTF-8
     ],
     "updated":"2021-08-06T18:27:41+02:00",
     "created":"2021-08-06T18:27:40+02:00",
-    "global":true
+    "global":false
 }
 ```
 
@@ -425,7 +425,7 @@ For example, if a user does not have required permissions for creating users, th
 #### Example request
 
 ```http
-DELETE /api/access-control/roles/jZrmlLCGka?force=true&global=true
+DELETE /api/access-control/roles/jZrmlLCGka?force=true&global=false
 Accept: application/json
 ```
 
@@ -761,7 +761,7 @@ Content-Type: application/json; charset=UTF-8
             "uid": "qQui_LCMk",
             "name": "fixed:users:org:edit",
             "description": "",
-            "global": true,
+            "global": false,
             "updated": "2021-05-13T16:24:26+02:00",
             "created": "2021-05-13T16:24:26+02:00"
         },
@@ -770,7 +770,7 @@ Content-Type: application/json; charset=UTF-8
             "uid": "PeXmlYjMk",
             "name": "fixed:users:org:read",
             "description": "",
-            "global": true,
+            "global": false,
             "updated": "2021-05-13T16:24:26+02:00",
             "created": "2021-05-13T16:24:26+02:00"
         }
@@ -781,7 +781,7 @@ Content-Type: application/json; charset=UTF-8
             "uid": "qQui_LCMk",
             "name": "fixed:users:org:edit",
             "description": "",
-            "global": true,
+            "global": false,
             "updated": "2021-05-13T16:24:26+02:00",
             "created": "2021-05-13T16:24:26+02:00"
         }
