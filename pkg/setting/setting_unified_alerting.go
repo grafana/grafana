@@ -87,7 +87,7 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 			AlertingEnabled = &legacyAlerting
 			return &enabled, nil
 		}
-		// then check whether legacy flag
+		// next, check whether legacy flag is set
 		if AlertingEnabled != nil && !*AlertingEnabled {
 			enabled = true
 			return &enabled, nil // if legacy alerting is explicitly disabled, enable the unified alerting by default.
