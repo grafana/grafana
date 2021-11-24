@@ -17,4 +17,4 @@ Service accounts differ from user accounts in a few key ways:
 - Service accounts do not have passwords, and cannot log in via browsers or cookies.
 - Service accounts are associated with private/public RSA key-pairs that are used for authentication to Grafana.
 - You can let other users or service accounts impersonate a service account.
-- Service accounts lives on a organizational level, but it does not restrict them from acting cross organizational, such as adding/editing user information.
+- Service accounts lives on a organizational level, but it does not restrict them from acting cross organizational, such as adding or editing user information.
