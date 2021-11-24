@@ -3,21 +3,33 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // POST /api/org/users
-func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Response {
+	cmd := models.AddOrgUserCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.
+
+			// POST /api/orgs/:orgId/users
+			Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.OrgId
 	return hs.addOrgUserHelper(c.Req.Context(), cmd)
 }
 
-// POST /api/orgs/:orgId/users
-func (hs *HTTPServer) AddOrgUser(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) AddOrgUser(c *models.ReqContext) response.Response {
+	cmd := models.AddOrgUserCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	return hs.addOrgUserHelper(c.Req.Context(), cmd)
 }
@@ -168,14 +180,24 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(ctx context.Context, c *models.Re
 }
 
 // PATCH /api/org/users/:userId
-func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
+	cmd := models.UpdateOrgUserCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data",
+
+			// PATCH /api/orgs/:orgId/users/:userId
+			err)
+	}
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.ParamsInt64(":userId")
 	return hs.updateOrgUserHelper(c.Req.Context(), cmd)
 }
 
-// PATCH /api/orgs/:orgId/users/:userId
-func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext) response.Response {
+	cmd := models.UpdateOrgUserCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.UserId = c.ParamsInt64(":userId")
 	return hs.updateOrgUserHelper(c.Req.Context(), cmd)

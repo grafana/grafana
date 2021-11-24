@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -30,12 +31,18 @@ func GetPendingOrgInvites(c *models.ReqContext) response.Response {
 	return response.JSON(200, query.Result)
 }
 
-func AddOrgInvite(c *models.ReqContext, inviteDto dtos.AddInviteForm) response.Response {
+func AddOrgInvite(c *models.ReqContext) response.Response {
+	inviteDto := dtos.AddInviteForm{}
+	if err := web.Bind(c.Req, &inviteDto); err != nil {
+		return response.Error(http.
+
+			// first try get existing user
+			StatusBadRequest, "bad request data", err)
+	}
 	if !inviteDto.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
 
-	// first try get existing user
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
 	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
 		if !errors.Is(err, models.ErrUserNotFound) {
@@ -165,7 +172,11 @@ func GetInviteInfoByCode(c *models.ReqContext) response.Response {
 	})
 }
 
-func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.CompleteInviteForm) response.Response {
+func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
+	completeInvite := dtos.CompleteInviteForm{}
+	if err := web.Bind(c.Req, &completeInvite); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	query := models.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 
 	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
