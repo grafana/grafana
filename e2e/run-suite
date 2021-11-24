@@ -25,6 +25,11 @@ if [ "$1" == "dev" ]; then
     CMD="open"
 fi
 
+if [ "$1" == "perf" ]; then
+  echo "Perf"
+  CMD="start-benchmark"
+fi
+
 cd packages/grafana-e2e
 
 yarn $CMD --env BASE_URL=$URL,SLOWMO=$SLOWMO \
