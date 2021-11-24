@@ -20,7 +20,6 @@ export interface Props {
   showMenu?: boolean;
   target?: HTMLAnchorElement['target'];
   url?: string;
-  id: string;
   link: NavModelItem;
 }
 
@@ -36,7 +35,6 @@ const NavBarItem = ({
   showMenu = true,
   target,
   url,
-  id,
   link,
 }: Props) => {
   const theme = useTheme2();

@@ -68,7 +68,6 @@ export const NavBar: FC = React.memo(() => {
           isActive={activeItem === searchItem}
           label={searchItem.text}
           onClick={searchItem.onClick}
-          id="search"
           link={searchItem}
         >
           <Icon name="search" size="xl" />
@@ -85,7 +84,6 @@ export const NavBar: FC = React.memo(() => {
             target={link.target}
             url={link.url}
             link={link}
-            id={link.id ?? link.text}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -108,7 +106,6 @@ export const NavBar: FC = React.memo(() => {
             target={link.target}
             url={link.url}
             link={link}
-            id={link.id ?? link.text}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}

@@ -32,21 +32,25 @@ export function NavBarItemWithoutMenu({
           <span className={styles.icon}>{children}</span>
         </button>
       )}
-      {url && !target && url.startsWith('/') ? (
-        <Link
-          className={styles.element}
-          href={url}
-          target={target}
-          aria-label={label}
-          onClick={onClick}
-          aria-haspopup="true"
-        >
-          <span className={styles.icon}>{children}</span>
-        </Link>
-      ) : (
-        <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
-          <span className={styles.icon}>{children}</span>
-        </a>
+      {url && (
+        <>
+          {!target && url.startsWith('/') ? (
+            <Link
+              className={styles.element}
+              href={url}
+              target={target}
+              aria-label={label}
+              onClick={onClick}
+              aria-haspopup="true"
+            >
+              <span className={styles.icon}>{children}</span>
+            </Link>
+          ) : (
+            <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
+              <span className={styles.icon}>{children}</span>
+            </a>
+          )}
+        </>
       )}
     </div>
   );

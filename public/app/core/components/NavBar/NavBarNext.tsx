@@ -3,14 +3,17 @@ import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { KioskMode } from 'app/types';
-import { enrichConfigItems, getActiveItem, isSearchActive, SEARCH_ITEM_ID } from './utils';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { NavBarSection } from './NavBarSection';
 import { NavBarMenu } from './NavBarMenu';
+import NavBarItem from './NavBarItem';
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { Branding } from '../Branding/Branding';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -55,91 +58,78 @@ export const NavBarNext: FC = React.memo(() => {
       </div>
 
       <NavBarSection>
-        {/*<NavBarItem*/}
-        {/*  onClick={() => setMenuOpen(!menuOpen)}*/}
-        {/*  label="Main menu"*/}
-        {/*  className={styles.grafanaLogo}*/}
-        {/*  showMenu={false}*/}
-        {/*  id="home"*/}
-        {/*>*/}
-        {/*  <Branding.MenuLogo />*/}
-        {/*</NavBarItem>*/}
-        {/*<NavBarItem*/}
-        {/*  className={styles.search}*/}
-        {/*  isActive={activeItem === searchItem}*/}
-        {/*  label={searchItem.text}*/}
-        {/*  onClick={searchItem.onClick}*/}
-        {/*  id="search"*/}
-        {/*  link={searchItem}*/}
-        {/*>*/}
-        {/*  <Icon name="search" size="xl" />*/}
-        {/*</NavBarItem>*/}
+        <NavBarItemWithoutMenu label="Main menu" className={styles.grafanaLogo} onClick={() => setMenuOpen(!menuOpen)}>
+          <Branding.MenuLogo />
+        </NavBarItemWithoutMenu>
+        <NavBarItem
+          className={styles.search}
+          isActive={activeItem === searchItem}
+          label={searchItem.text}
+          onClick={searchItem.onClick}
+          link={searchItem}
+        >
+          <Icon name="search" size="xl" />
+        </NavBarItem>
       </NavBarSection>
 
       <NavBarSection>
-        {/*{coreItems.map((link, index) => (*/}
-        {/*  <NavBarItem*/}
-        {/*    key={`${link.id}-${index}`}*/}
-        {/*    isActive={isMatchOrChildMatch(link, activeItem)}*/}
-        {/*    label={link.text}*/}
-        {/*    menuItems={link.children}*/}
-        {/*    target={link.target}*/}
-        {/*    url={link.url}*/}
-        {/*    link={link}*/}
-        {/*    id={link.id}*/}
-        {/*    index={index}*/}
-        {/*  >*/}
-        {/*    {link.icon && <Icon name={link.icon as IconName} size="xl" />}*/}
-        {/*    {link.img && <img src={link.img} alt={`${link.text} logo`} />}*/}
-        {/*  </NavBarItem>*/}
-        {/*))}*/}
+        {coreItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={isMatchOrChildMatch(link, activeItem)}
+            label={link.text}
+            menuItems={link.children}
+            target={link.target}
+            url={link.url}
+            link={link}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
       </NavBarSection>
 
-      {/*{pluginItems.length > 0 && (*/}
-      {/*  <NavBarSection>*/}
-      {/*    {pluginItems.map((link, index) => (*/}
-      {/*      <NavBarItem*/}
-      {/*        key={`${link.id}-${index}`}*/}
-      {/*        isActive={isMatchOrChildMatch(link, activeItem)}*/}
-      {/*        label={link.text}*/}
-      {/*        menuItems={link.children}*/}
-      {/*        menuSubTitle={link.subTitle}*/}
-      {/*        onClick={link.onClick}*/}
-      {/*        target={link.target}*/}
-      {/*        url={link.url}*/}
-      {/*        link={link}*/}
-      {/*        id={link.id}*/}
-      {/*        index={index}*/}
-      {/*      >*/}
-      {/*        {link.icon && <Icon name={link.icon as IconName} size="xl" />}*/}
-      {/*        {link.img && <img src={link.img} alt={`${link.text} logo`} />}*/}
-      {/*      </NavBarItem>*/}
-      {/*    ))}*/}
-      {/*  </NavBarSection>*/}
-      {/*)}*/}
+      {pluginItems.length > 0 && (
+        <NavBarSection>
+          {pluginItems.map((link, index) => (
+            <NavBarItem
+              key={`${link.id}-${index}`}
+              isActive={isMatchOrChildMatch(link, activeItem)}
+              label={link.text}
+              menuItems={link.children}
+              menuSubTitle={link.subTitle}
+              onClick={link.onClick}
+              target={link.target}
+              url={link.url}
+              link={link}
+            >
+              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+              {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+            </NavBarItem>
+          ))}
+        </NavBarSection>
+      )}
 
       <div className={styles.spacer} />
 
       <NavBarSection>
-        {/*{configItems.map((link, index) => (*/}
-        {/*  <NavBarItem*/}
-        {/*    key={`${link.id}-${index}`}*/}
-        {/*    isActive={isMatchOrChildMatch(link, activeItem)}*/}
-        {/*    label={link.text}*/}
-        {/*    menuItems={link.children}*/}
-        {/*    menuSubTitle={link.subTitle}*/}
-        {/*    onClick={link.onClick}*/}
-        {/*    reverseMenuDirection*/}
-        {/*    target={link.target}*/}
-        {/*    url={link.url}*/}
-        {/*    link={link}*/}
-        {/*    id={link.id}*/}
-        {/*    index={index}*/}
-        {/*  >*/}
-        {/*    {link.icon && <Icon name={link.icon as IconName} size="xl" />}*/}
-        {/*    {link.img && <img src={link.img} alt={`${link.text} logo`} />}*/}
-        {/*  </NavBarItem>*/}
-        {/*))}*/}
+        {configItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={isMatchOrChildMatch(link, activeItem)}
+            label={link.text}
+            menuItems={link.children}
+            menuSubTitle={link.subTitle}
+            onClick={link.onClick}
+            reverseMenuDirection
+            target={link.target}
+            url={link.url}
+            link={link}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
       </NavBarSection>
 
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
