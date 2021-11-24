@@ -1,7 +1,7 @@
 +++
 title = "Manage user role assignments"
 description = "Manage user role assignments"
-keywords = ["grafana", "fine-grained-access-control", "roles", "permissions", "fine-grained-access-control-usage", "enterprise", "user"]
+keywords = ["grafana", "fine-grained-access-control", "roles", "permissions", "fine-grained-access-control-usage", "enterprise"]
 weight = 200
 +++
 
