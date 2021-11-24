@@ -36,9 +36,9 @@ export const UserRolePicker: FC<Props> = ({
 };
 
 export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
-  let rolesUrl = '/api/access-control/roles';
+  let rolesUrl = '/api/access-control/roles?delegatable=true';
   if (orgId) {
-    rolesUrl += `?targetOrgId=${orgId}`;
+    rolesUrl += `&targetOrgId=${orgId}`;
   }
   const roles = await getBackendSrv().get(rolesUrl);
   if (!roles || !roles.length) {

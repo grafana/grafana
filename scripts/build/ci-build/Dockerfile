@@ -132,7 +132,6 @@ RUN apt-get update && \
         python-pip      \
         ca-certificates \
         curl            \
-        libfontconfig1  \
         gcc             \
         g++             \
         git             \

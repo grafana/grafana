@@ -69,8 +69,8 @@ function getTestContext({
   fetchMock.mockImplementation(mockImplementation ?? defaultMock);
 
   const templateSrv: any = {
-    replace: jest.fn((text) => {
-      if (text.startsWith('$')) {
+    replace: jest.fn((text?: string) => {
+      if (text?.startsWith('$')) {
         return `resolvedVariable`;
       } else {
         return text;
@@ -884,7 +884,7 @@ describe('ElasticDatasource', function (this: any) {
     expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('resolvedVariable');
   });
 
-  it('should correctly handle empty query strings', () => {
+  it('should correctly handle empty query strings in filters bucket aggregation', () => {
     const { ds } = getTestContext();
     const query: ElasticsearchQuery = {
       refId: 'A',
@@ -895,7 +895,6 @@ describe('ElasticDatasource', function (this: any) {
 
     const interpolatedQuery = ds.interpolateVariablesInQueries([query], {})[0];
 
-    expect(interpolatedQuery.query).toBe('*');
     expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
   });
 });

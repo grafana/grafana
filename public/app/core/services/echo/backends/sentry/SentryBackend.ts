@@ -21,7 +21,7 @@ export class SentryEchoBackend implements EchoBackend<SentryEchoEvent, SentryEch
     // set up transports to post events to grafana backend and/or Sentry
     this.transports = [];
     if (options.dsn) {
-      this.transports.push(new FetchTransport({ dsn: options.dsn }));
+      this.transports.push(new FetchTransport({ dsn: options.dsn }, fetch));
     }
     if (options.customEndpoint) {
       this.transports.push(new CustomEndpointTransport({ endpoint: options.customEndpoint }));

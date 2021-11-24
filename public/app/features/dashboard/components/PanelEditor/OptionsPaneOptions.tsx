@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
-import { getVizualizationOptions } from './getVizualizationOptions';
+import { getVisualizationOptions } from './getVisualizationOptions';
 import { css } from '@emotion/css';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
@@ -21,7 +21,7 @@ export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
   const styles = useStyles2(getStyles);
 
   const [panelFrameOptions, vizOptions, libraryPanelOptions] = useMemo(
-    () => [getPanelFrameCategory(props), getVizualizationOptions(props), getLibraryPanelOptionsCategory(props)],
+    () => [getPanelFrameCategory(props), getVisualizationOptions(props), getLibraryPanelOptionsCategory(props)],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel.configRev, props.data, props.instanceState, searchQuery]
