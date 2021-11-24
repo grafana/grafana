@@ -147,7 +147,7 @@ describe('UserProfileEditPage', () => {
   });
 
   describe('when user has loaded', () => {
-    it.only('should show edit profile form', async () => {
+    it('should show edit profile form', async () => {
       await getTestContext();
 
       const { name, email, username, saveProfile } = getSelectors();

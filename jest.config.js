@@ -21,13 +21,14 @@ module.exports = {
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
   snapshotSerializers: ['enzyme-to-json/serializer'],
   globals: {
-    'ts-jest': { isolatedModules: true, babelConfig: true },
+    'ts-jest': { isolatedModules: true },
     __webpack_public_path__: '', // empty string
   },
   moduleNameMapper: {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
+    '@lingui/macro': '<rootDir>/public/test/mocks/linguiMacro.tsx',
   },
   watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
 };
