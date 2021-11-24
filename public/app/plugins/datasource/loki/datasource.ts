@@ -281,7 +281,7 @@ export class LokiDatasource
     }
     const query = this.createRangeQuery(target, options, maxDataPoints);
 
-    const headers = target.volumeQuery ? { 'X-Query-Tag': 'Source=logvolhist' } : undefined;
+    const headers = target.volumeQuery ? { 'X-Query-Tags': 'Source=logvolhist' } : undefined;
 
     return this._request(RANGE_QUERY_ENDPOINT, query, { headers }).pipe(
       catchError((err) => throwError(() => this.processError(err, target))),
