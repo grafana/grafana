@@ -59,7 +59,7 @@ You can use an encryption key from AWS Key Management Service to encrypt secrets
    ;region = eu-north-1
    ```
 
-6. Update the `[security]` section of the `grafana.ini` configuration file with the Encryption Provider key that you created:
+6. Update the `[security]` section of the `grafana.ini` configuration file with the new Encryption Provider key that you created:
 
    ```
    [security]
