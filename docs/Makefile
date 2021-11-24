@@ -1,6 +1,6 @@
 .PHONY: pull docs docs-quick docs-no-pull docs-test docs-local-static
 
-IMAGE = grafana/docs-base:test
+IMAGE = grafana/docs-base:latest
 CONTENT_PATH = /hugo/content/docs/grafana/next
 LOCAL_STATIC_PATH = ../../website/static
 PORT = 3002:3002
@@ -8,11 +8,12 @@ PORT = 3002:3002
 pull:
 	docker pull $(IMAGE)
 
-docs: pull
+run:
 	docker run -it -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) bash -c "make docs-preview"
 
-docs-no-pull:
-	docker run -it -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) bash -c "make docs-preview"
+docs: pull run
+
+docs-no-pull: run
 
 docs-test: pull
 	docker run -it -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) bash -c "make docs-test"

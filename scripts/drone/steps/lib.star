@@ -677,7 +677,7 @@ def build_docs_website_step():
     return {
         'name': 'build-docs-website',
         # Use latest revision here, since we want to catch if it breaks
-        'image': 'grafana/docs-base:test',
+        'image': 'grafana/docs-base:latest',
         'depends_on': [
             'build-frontend-docs',
         ],
