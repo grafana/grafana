@@ -5,7 +5,8 @@ import { IconName, useTheme2 } from '@grafana/ui';
 import { Item } from '@react-stately/collections';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { NavBarItemMenu, NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
+import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
+import { NavBarItemMenu } from './NavBarItemMenu';
 import { getNavModelItemKey } from './utils';
 
 export interface Props {
