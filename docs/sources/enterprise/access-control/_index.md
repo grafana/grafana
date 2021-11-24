@@ -25,11 +25,13 @@ To grant or revoke access to your users, create or remove built-in role assignme
 
 ## Resources with fine-grained permissions
 
-Fine-grained access control is currently available for [Reporting]({{< relref "../reporting.md" >}}) and [Managing Users]({{< relref "../../manage-users/_index.md" >}}).
-To learn more about specific endpoints where you can use access control, refer to [Permissions]({{< relref "./permissions.md" >}}) and to the relevant API guide:
+To learn about the endpoints where you can use access control, refer to [Permissions]({{< relref "./permissions.md" >}}) and to the relevant API guide:
 
 - [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}})
 - [Admin API]({{< relref "../../http_api/admin.md" >}})
+- [Data source API]({{< relref "../../http_api/data_source.md" >}})
+- [Data source permissions API]({{< relref "../../http_api/datasource_permissions.md" >}})
+- [Licensing API]({{< relref "../../http_api/licensing.md" >}})
 - [Organization API]({{< relref "../../http_api/org.md" >}})
 - [Reporting API]({{< relref "../../http_api/reporting.md" >}})
 - [User API]({{< relref "../../http_api/user.md" >}})
