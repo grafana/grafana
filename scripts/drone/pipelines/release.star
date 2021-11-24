@@ -17,6 +17,7 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
+    'install_cypress_step',
     'e2e_tests_server_step',
     'e2e_tests_step',
     'build_storybook_step',
@@ -77,15 +78,15 @@ def release_npm_packages_step(edition, ver_mode):
     }
 
 def get_steps(edition, ver_mode):
+    build_steps = []
+    package_steps = []
+    windows_package_steps = []
+    publish_steps = []
     should_publish = ver_mode in ('release', 'test-release',)
     should_upload = should_publish or ver_mode in ('release-branch',)
     include_enterprise2 = edition == 'enterprise'
-    tries = None
-    if should_publish:
-        tries = 5
 
-    steps = [
-        lint_drone_step(),
+    build_steps = [
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition=edition),
@@ -93,8 +94,8 @@ def get_steps(edition, ver_mode):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
@@ -102,9 +103,9 @@ def get_steps(edition, ver_mode):
         ensure_cuetsified_step(),
     ]
 
+    edition2 = 'enterprise2'
     if include_enterprise2:
-        edition2 = 'enterprise2'
-        steps.extend([
+        build_steps.extend([
             lint_backend_step(edition=edition2),
             test_backend_step(edition=edition2),
             test_backend_integration_step(edition=edition2),
@@ -112,10 +113,14 @@ def get_steps(edition, ver_mode):
         ])
 
     # Insert remaining steps
-    steps.extend([
+    build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
+        install_cypress_step(),
         e2e_tests_server_step(edition=edition),
-        e2e_tests_step(edition=edition, tries=3),
+        e2e_tests_step('dashboards-suite', edition=edition, tries=3),
+        e2e_tests_step('smoke-tests-suite', edition=edition, tries=3),
+        e2e_tests_step('panels-suite', edition=edition, tries=3),
+        e2e_tests_step('various-suite', edition=edition, tries=3),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
@@ -123,50 +128,54 @@ def get_steps(edition, ver_mode):
 
     build_storybook = build_storybook_step(edition=edition, ver_mode=ver_mode)
     if build_storybook:
-        steps.append(build_storybook)
+        build_steps.append(build_storybook)
 
     if include_enterprise2:
-      steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
+      build_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     if should_upload:
-        steps.append(upload_cdn_step(edition=edition))
-        steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
+        publish_steps.append(upload_cdn_step(edition=edition))
+        publish_steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
     if should_publish:
         publish_step = publish_storybook_step(edition=edition, ver_mode=ver_mode)
         release_npm_step = release_npm_packages_step(edition=edition, ver_mode=ver_mode)
         if publish_step:
-            steps.append(publish_step)
+            publish_steps.append(publish_step)
         if release_npm_step:
-            steps.append(release_npm_step)
-    windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
+            publish_steps.append(release_npm_step)
+    windows_package_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
     if include_enterprise2:
         edition2 = 'enterprise2'
-        steps.extend([
+        publish_steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
             e2e_tests_server_step(edition=edition2, port=3002),
-            e2e_tests_step(edition=edition2, port=3002, tries=3),
+            e2e_tests_step('dashboards-suite', edition=edition2, port=3002, tries=3),
+            e2e_tests_step('smoke-tests-suite', edition=edition2, port=3002, tries=3),
+            e2e_tests_step('panels-suite', edition=edition2, port=3002, tries=3),
+            e2e_tests_step('various-suite', edition=edition2, port=3002, tries=3),
             upload_cdn_step(edition=edition2),
         ])
         if should_upload:
             step = upload_packages_step(edition=edition2, ver_mode=ver_mode)
             if step:
-                steps.append(step)
+                publish_steps.append(step)
 
-    return steps, windows_steps
+    return build_steps, package_steps, windows_package_steps, publish_steps
 
 def get_oss_pipelines(trigger, ver_mode):
     edition = 'oss'
     services = integration_test_services(edition=edition)
-    steps, windows_steps = get_steps(edition=edition, ver_mode=ver_mode)
+    build_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     return [
         pipeline(
             name='oss-build-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + steps,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+              build_steps + package_steps + publish_steps,
         ),
         pipeline(
             name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
+            steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
             platform='windows', depends_on=['oss-build-{}'.format(ver_mode)],
         ),
     ]
@@ -174,15 +183,16 @@ def get_oss_pipelines(trigger, ver_mode):
 def get_enterprise_pipelines(trigger, ver_mode):
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
-    steps, windows_steps = get_steps(edition=edition, ver_mode=ver_mode)
+    build_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     return [
         pipeline(
             name='enterprise-build-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + steps,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+              build_steps + package_steps + publish_steps,
         ),
         pipeline(
             name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
+            steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
             platform='windows', depends_on=['enterprise-build-{}'.format(ver_mode)],
         ),
     ]

@@ -10,7 +10,7 @@ import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourcePlugins } from './state/actions';
 import { getDataSourcePlugins } from './state/selectors';
 import { setDataSourceTypeSearchQuery } from './state/reducers';
-import { PluginsErrorsInfo } from '../plugins/PluginsErrorsInfo';
+import { PluginsErrorsInfo } from '../plugins/components/PluginsErrorsInfo';
 
 function mapStateToProps(state: StoreState) {
   return {

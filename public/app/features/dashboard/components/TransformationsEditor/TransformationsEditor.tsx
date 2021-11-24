@@ -33,7 +33,7 @@ import { TransformationsEditorTransformation } from './types';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
-import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
+import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 const LOCAL_STORAGE_KEY = 'dashboard.components.TransformationEditor.featureInfoBox.isDismissed';
 
