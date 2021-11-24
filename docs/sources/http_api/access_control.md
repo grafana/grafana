@@ -461,7 +461,7 @@ Content-Type: application/json; charset=UTF-8
 
 `GET /api/access-control/users/:userId/roles`
 
-Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor or Admin), and it does not include roles that have been inherited from a team.
+Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.
 
 #### Required permissions
 

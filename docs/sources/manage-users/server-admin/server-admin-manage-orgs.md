@@ -5,7 +5,7 @@ weight = 200
 
 # Manage organizations as a Server Admin
 
-This topic explains organization management tasks performed by Grafana Server Admins.
+This topic explains organization management tasks performed by Grafana Server Adhttp_api/access_control.mdmins.
 
 In order to perform any of these tasks, you must be logged in to Grafana on an account with Grafana Server Admin permissions. For more information about Grafana Admin permissions, refer to [Grafana Server Admin role]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}})
 
