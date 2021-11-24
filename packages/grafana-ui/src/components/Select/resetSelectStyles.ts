@@ -1,3 +1,5 @@
+import { CSSObjectWithLabel } from 'react-select';
+
 export default function resetSelectStyles() {
   return {
     clearIndicator: () => ({}),
@@ -8,10 +10,12 @@ export default function resetSelectStyles() {
     groupHeading: () => ({}),
     indicatorsContainer: () => ({}),
     indicatorSeparator: () => ({}),
-    input: () => ({
-      gridArea: '1 / 1 / 2 / 3',
-      gridTemplateColumns: '0px min-content',
-    }),
+    input: function (originalStyles: CSSObjectWithLabel) {
+      return {
+        ...originalStyles,
+        color: 'inherit',
+      };
+    },
     loadingIndicator: () => ({}),
     loadingMessage: () => ({}),
     menu: () => ({}),

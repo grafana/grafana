@@ -213,7 +213,7 @@ export const Components = {
   Select: {
     option: 'Select option',
     input: () => 'input[id*="time-options-input"]',
-    singleValue: () => 'div[class*="-singleValue"]',
+    singleValue: () => 'div[class*="-SingleValue"]',
   },
   FieldConfigEditor: {
     content: 'Field config editor content',

@@ -33,9 +33,6 @@ const getInputControlStyles = stylesFactory(
           padding-right: 0;
           position: relative;
           box-sizing: border-box;
-          input {
-            cursor: pointer;
-          }
         `,
         withPrefix &&
           css`
