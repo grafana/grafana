@@ -61,4 +61,4 @@ The user's permissions will update immediately, and the UI will reflect their ne
 
 ## Manage users' roles via API
 
-To manage user role assignment via API, refer to the [fine-grained access control HTTP API docs]({{< relref "../../http_api/access_control.md#create-and-remove-user-role-assignments" >}}).
+To manage user role assignment via API, refer to the [fine-grained access control HTTP API docs]({{< relref "../../../http_api/access_control.md#create-and-remove-user-role-assignments" >}}).
