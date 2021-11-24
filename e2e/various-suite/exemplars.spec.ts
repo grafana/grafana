@@ -4,7 +4,7 @@ const dataSourceName = 'PromExemplar';
 const addDataSource = () => {
   e2e.flows.addDataSource({
     type: 'Prometheus',
-    expectedAlertMessage: 'Bad Gateway',
+    expectedAlertMessage: 'Error reading Prometheus',
     name: dataSourceName,
     form: () => {
       e2e.components.DataSource.Prometheus.configPage.exemplarsAddButton().click();
