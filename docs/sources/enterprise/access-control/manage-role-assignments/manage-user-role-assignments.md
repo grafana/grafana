@@ -7,13 +7,13 @@ weight = 200
 
 # Manage user role assignments
 
-There are two ways to grant roles directly to users: in the UI using the role picker, and using the API.
+There are two ways to assign roles directly to users: in the UI using the role picker, and using the API.
 
 ## Manage users' roles within a specific Organization using the role picker
 
 In order to assign roles to a user within a specific Organization using the role picker, you must have a user account with one of the following:
 
-- The Admin builtin role.
+- The Admin built-in role.
 - The Server Admin role.
 - The fixed role `fixed:permissions:writer`, [assigned for the given Organization]({{< relref "../roles/#scope-of-assignments" >}}).
 - A custom role with `users.roles:add` and `users.roles:remove` permissions.

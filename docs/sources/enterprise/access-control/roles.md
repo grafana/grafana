@@ -77,11 +77,11 @@ Note that you won't be able to create, update or delete a custom role with permi
 
 ## Assign roles
 
-[Custom roles]({{< ref "#custom-roles" >}}) and [Fixed roles]({{< ref "#fixed-roles" >}}) can be assigned to users, teams, the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) and to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role.
+[Custom roles]({{< ref "#custom-roles" >}}) and [Fixed roles]({{< ref "#fixed-roles" >}}) can be assigned to users, the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) and to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role.
 
 Visit [Manage role assignments]({{< relref "manage-role-assignments/_index.md" >}}) page for more details.
 
 ### Scope of assignments
 
-A built-in role assignment can be either _global_ or _organization local_. _Global_ assignments are not mapped to any specific organization and will be applied to all organizations, whereas _organization local_ assignments are only applied for that specific organization.
+A role assignment can be either _global_ or _organization local_. _Global_ assignments are not mapped to any specific organization and will be applied to all organizations, whereas _organization local_ assignments are only applied for that specific organization.
 You can only create _organization local_ assignments for _organization local_ roles.
