@@ -467,11 +467,21 @@ Lists the roles that have been directly assigned to a given user. The list does 
 
 | Action           | Scope    |
 | ---------------- | -------- |
-| users.roles:list | users:\* |
+| users.roles:list | users:id:`<user ID>` |
+
+#### Example request
+
+```http
+GET /api/access-control/users/1/roles
+Accept: application/json
+```
 
 #### Example response
 
 ```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
 [
     {
         "version": 4,
@@ -505,11 +515,21 @@ Lists the permissions that a given user has.
 
 | Action                 | Scope    |
 | ---------------------- | -------- |
-| users.permissions:list | users:\* |
+| users.permissions:list | users:id:`<user ID>` |
+
+#### Example request
+
+```http
+GET /api/access-control/users/1/permissions
+Accept: application/json
+```
 
 #### Example response
 
 ```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
 [
     {
         "action": "ldap.status:read",
@@ -530,11 +550,14 @@ Lists the permissions that a given user has.
 | 403  | Access denied.                                                       |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
-### Assign a role to a user
+### Add a user role assignment
 
 `POST /api/access-control/users/:userId/roles`
 
 Assign a role to a specific user.
+
+For bulk updates consider
+[Set user role assignments]({{< ref "#set-user-role-assignments" >}}).
 
 #### Required permissions
 
@@ -548,8 +571,12 @@ For example, if a user does not have required permissions for creating users, th
 #### Example request
 
 ```http
+POST /api/access-control/users/1/roles
+Accept: application/json
+Content-Type: application/json
+
 {
-    "global": true,
+    "global": false,
     "roleUid": "XvHQJq57z"
 }
 ```
@@ -564,6 +591,9 @@ For example, if a user does not have required permissions for creating users, th
 #### Example response
 
 ```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
 {
     "message": "Role added to the user."
 }
@@ -578,11 +608,14 @@ For example, if a user does not have required permissions for creating users, th
 | 404  | Role not found.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
-## Unassign a role from a user
+## Remove a user role assignment
 
 `DELETE /api/access-control/users/:userId/roles/:roleUID`
 
-Unassign a role from a user.
+Revoke a role from a user.
+
+For bulk updates consider
+[Set user role assignments]({{< ref "#set-user-role-assignments" >}}).
 
 #### Required permissions
 
@@ -599,9 +632,19 @@ For example, if a user does not have required permissions for creating users, th
 | ------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | global | boolean | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to remove assignment. |
 
+#### Example request
+
+```http
+DELETE /api/access-control/users/1/roles/AFUXBHKnk
+Accept: application/json
+```
+
 #### Example response
 
 ```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
 {
     "message": "Role removed from user."
 }
@@ -615,11 +658,18 @@ For example, if a user does not have required permissions for creating users, th
 | 403  | Access denied.                                                       |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
-### Assign roles to a user in bulk
+### Set user role assignments
 
 `PUT /api/access-control/users/:userId/roles`
 
-Assigns roles to a user in bulk. The assignment is idempotent and replaces current assignments of a user.
+Update the user's role assignments to match the provided set of UIDs.
+This will remove any assigned roles that aren't in the request and add
+roles that are in the set but are not already assigned to the user.
+
+If you want to add or remove a single role, consider using
+[Add a user role assignment]({{< ref "#add-a-user-role-assignment" >}}) or
+[Remove a user role assignment]({{< ref "#remove-a-user-role-assignment" >}})
+instead.
 
 #### Required permissions
 
@@ -634,8 +684,12 @@ For example, if a user does not have required permissions for creating users, th
 #### Example request
 
 ```http
+PUT /api/access-control/users/1/roles
+Accept: application/json
+Content-Type: application/json
+
 {
-    "global": true,
+    "global": false,
     "roleUids": [
         "ZiHQJq5nk",
         "GzNQ1357k"
@@ -653,6 +707,9 @@ For example, if a user does not have required permissions for creating users, th
 #### Example response
 
 ```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
 {
     "message": "User roles have been updated."
 }
