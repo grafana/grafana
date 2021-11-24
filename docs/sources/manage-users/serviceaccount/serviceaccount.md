@@ -9,7 +9,7 @@ A service account is a special kind of user used by an application or compute wo
 
 For example, a all reporting could be setup and run as a service account from your application, and that account can be given permissions to access the resources it needs. This way the service account is the identity of the service, and the service account's permissions control which resources the service can access.
 
-A service account is identified by its login name, which is unique to the entire sweet of organizations. The name is set upon creation of the service account.
+A service account is identified by its login name, which is unique to the entire suite of organizations. The name is set upon creation of the service account.
 
 Differences between a service account and a user account
 Service accounts differ from user accounts in a few key ways:
