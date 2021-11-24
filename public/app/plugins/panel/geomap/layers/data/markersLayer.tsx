@@ -12,7 +12,7 @@ import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { getScaledDimension, getColorDimension, getTextDimension } from 'app/features/dimensions';
+import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
@@ -107,6 +107,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             if (style.fields.text) {
               dims.text = getTextDimension(frame, style.config.text!);
             }
+            if (style.fields.rotation) {
+              dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
+            }
             style.dims = dims;
           }
 
@@ -139,7 +142,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             path: 'config.style',
             name: 'Styles',
             editor: StyleEditor,
-            settings: {},
+            settings: {
+              displayRotation: true,
+            },
             defaultValue: defaultOptions.style,
           })
           .addBooleanSwitch({

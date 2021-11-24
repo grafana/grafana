@@ -13,7 +13,7 @@ var config = {
       url: '${HOST}/login',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 12,
+      threshold: 13,
     },
     {
       url: '${HOST}/login',
@@ -25,7 +25,7 @@ var config = {
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
-      threshold: 13,
+      threshold: 14,
       rootElement: '.main-view',
     },
     {

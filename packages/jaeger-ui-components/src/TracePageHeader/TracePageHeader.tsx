@@ -167,7 +167,7 @@ export const HEADER_ITEMS = [
     label: 'Trace Start',
     renderer(trace: Trace, timeZone: TimeZone, styles: ReturnType<typeof getStyles>) {
       // Convert date from micro to milli seconds
-      const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone });
+      const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
       const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
       return match ? (
         <span className={styles.TracePageHeaderOverviewItemValue}>

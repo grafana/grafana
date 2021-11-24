@@ -14,6 +14,7 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
+    'install_cypress_step',
     'e2e_tests_server_step',
     'e2e_tests_step',
     'build_storybook_step',
@@ -65,8 +66,8 @@ def get_steps(edition, is_downstream=False):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
@@ -86,8 +87,12 @@ def get_steps(edition, is_downstream=False):
     # Insert remaining steps
     steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, is_downstream=is_downstream),
+        install_cypress_step(),
         e2e_tests_server_step(edition=edition),
-        e2e_tests_step(edition=edition),
+        e2e_tests_step('dashboards-suite', edition=edition),
+        e2e_tests_step('smoke-tests-suite', edition=edition),
+        e2e_tests_step('panels-suite', edition=edition),
+        e2e_tests_step('various-suite', edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         publish_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
@@ -99,7 +104,7 @@ def get_steps(edition, is_downstream=False):
     ])
 
     if include_enterprise2:
-      steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
+      steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     steps.extend([
         release_canary_npm_packages_step(edition),
@@ -113,6 +118,10 @@ def get_steps(edition, is_downstream=False):
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64'], is_downstream=is_downstream),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002),
+            e2e_tests_step('dashboards-suite', edition=edition2, port=3002),
+            e2e_tests_step('smoke-tests-suite', edition=edition2, port=3002),
+            e2e_tests_step('panels-suite', edition=edition2, port=3002),
+            e2e_tests_step('various-suite', edition=edition2, port=3002),
             upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),
             upload_cdn_step(edition=edition2)
         ])
