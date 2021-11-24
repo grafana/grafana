@@ -4,25 +4,15 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/inconshreveable/log15"
-	"github.com/mattn/go-isatty"
+	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
-
-func getLogFormat() log15.Format {
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		return log15.TerminalFormat()
-	}
-	return log15.LogfmtFormat()
-}
 
 func newLogger(name string, lev string) log.Logger {
 	logger := log.Root.New("logger", name)
@@ -650,7 +640,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 		}
 

@@ -10,13 +10,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/go-kit/log"
 	gokitlog "github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/go-kit/log/term"
 	"github.com/go-stack/stack"
+	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	isatty "github.com/mattn/go-isatty"
@@ -27,17 +25,16 @@ var loggersToClose []DisposableHandler
 var loggersToReload []ReloadableHandler
 var filters map[string]level.Option
 var Root MultiLoggers
-var tsFormat = gokitlog.TimestampFormat(time.Now, "01-02|15:04:05")
 
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	loggersToReload = make([]ReloadableHandler, 0)
 	filters = map[string]level.Option{}
-	Root.AddLogger(log.NewLogfmtLogger(os.Stderr), "info", filters)
+	Root.AddLogger(gokitlog.NewLogfmtLogger(os.Stderr), "info", filters)
 }
 
 type LogWithFilters struct {
-	val      log.Logger
+	val      gokitlog.Logger
 	filters  map[string]level.Option
 	maxLevel level.Option
 }
@@ -81,7 +78,7 @@ func (ml MultiLoggers) Info(msg string, args ...interface{}) {
 
 func (ml MultiLoggers) Log(keyvals ...interface{}) error {
 	for _, multilogger := range ml.loggers {
-		multilogger.val = gokitlog.With(multilogger.val, "ts", tsFormat)
+		multilogger.val = gokitlog.With(multilogger.val, "ts", gokitlog.DefaultTimestamp)
 		if err := multilogger.val.Log(keyvals...); err != nil {
 			return err
 		}
@@ -173,7 +170,7 @@ func Stack(skip int) string {
 	return s.String()
 }
 
-type Formatedlogger func(w io.Writer) log.Logger
+type Formatedlogger func(w io.Writer) gokitlog.Logger
 
 func terminalColorFn(keyvals ...interface{}) term.FgBgColor {
 	for i := 0; i < len(keyvals)-1; i += 2 {
@@ -204,24 +201,24 @@ func getLogFormat(format string) Formatedlogger {
 	switch format {
 	case "console":
 		if isatty.IsTerminal(os.Stdout.Fd()) {
-			return func(w io.Writer) log.Logger {
-				return term.NewLogger(w, log.NewLogfmtLogger, terminalColorFn)
+			return func(w io.Writer) gokitlog.Logger {
+				return term.NewLogger(w, gokitlog.NewLogfmtLogger, terminalColorFn)
 			}
 		}
-		return func(w io.Writer) log.Logger {
-			return log.NewLogfmtLogger(w)
+		return func(w io.Writer) gokitlog.Logger {
+			return gokitlog.NewLogfmtLogger(w)
 		}
 	case "text":
-		return func(w io.Writer) log.Logger {
-			return log.NewLogfmtLogger(w)
+		return func(w io.Writer) gokitlog.Logger {
+			return gokitlog.NewLogfmtLogger(w)
 		}
 	case "json":
-		return func(w io.Writer) log.Logger {
-			return log.NewJSONLogger(log.NewSyncWriter(w))
+		return func(w io.Writer) gokitlog.Logger {
+			return gokitlog.NewJSONLogger(gokitlog.NewSyncWriter(w))
 		}
 	default:
-		return func(w io.Writer) log.Logger {
-			return log.NewLogfmtLogger(w)
+		return func(w io.Writer) gokitlog.Logger {
+			return gokitlog.NewLogfmtLogger(w)
 		}
 	}
 }

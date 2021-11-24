@@ -11,11 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var frontendLogger = log.New("frontend")
+var frontendLogger log.MultiLoggers
 
 type frontendLogMessageHandler func(c *models.ReqContext) response.Response
 
 func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) frontendLogMessageHandler {
+	frontendLogger = log.New("frontend")
 	return func(c *models.ReqContext) response.Response {
 		event := frontendlogging.FrontendSentryEvent{}
 		if err := web.Bind(c.Req, &event); err != nil {
