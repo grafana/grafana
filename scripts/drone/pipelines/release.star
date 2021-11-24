@@ -51,33 +51,84 @@ load(
     'failure_template',
     'drone_change_template',
 )
+load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-def release_npm_packages_step(edition, ver_mode):
-    if edition == 'enterprise':
+def build_npm_packages_step(edition, ver_mode):
+    if edition == 'enterprise' or ver_mode != 'release':
         return None
 
-    if ver_mode == 'release':
-        commands = ['./scripts/build/release-packages.sh ${DRONE_TAG}']
-    else:
-        commands = []
-
     return {
-        'name': 'release-npm-packages',
+        'name': 'build-npm-packages',
         'image': build_image,
         'depends_on': [
             # Has to run after publish-storybook since this step cleans the files publish-storybook depends on
             'publish-storybook',
         ],
         'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+        },
+        'commands': ['./scripts/build/build-npm-packages.sh ${DRONE_TAG}'],
+    }
+
+def store_npm_packages_step(edition, ver_mode):
+    if edition == 'enterprise' or ver_mode != 'release':
+        return None
+
+    return {
+        'name': 'store-npm-packages',
+        'image': publish_image,
+        'depends_on': [
+            'build-npm-packages',
+        ],
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+            'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
+        },
+        'commands': ['./scripts/build/store-npm-packages.sh ${DRONE_TAG}'],
+    }
+
+def retrieve_npm_packages_step(edition, ver_mode):
+    if edition == 'enterprise' or ver_mode != 'release':
+        return None
+
+    return {
+        'name': 'retrieve-npm-packages',
+        'image': publish_image,
+        'depends_on': [
+            # Has to run after publish-storybook since this step cleans the files publish-storybook depends on
+            'publish-storybook',
+        ],
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+            'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
+        },
+        'commands': ['./scripts/build/retrieve-npm-packages.sh ${DRONE_TAG}'],
+    }
+
+def release_npm_packages_step(edition, ver_mode):
+    if edition == 'enterprise' or ver_mode != 'release':
+        return None
+
+    return {
+        'name': 'release-npm-packages',
+        'image': build_image,
+        'environment': {
             'NPM_TOKEN': {
                 'from_secret': 'npm_token',
+            },
+            'depends_on': [
+                'retrieve-npm-packages',
+            ],
+            'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
             },
             'GITHUB_PACKAGE_TOKEN': {
                 'from_secret': 'github_package_token',
             },
         },
-        'commands': commands,
+        'commands': ['./scripts/build/release-npm-packages.sh ${DRONE_TAG}'],
     }
+
 
 def get_steps(edition, ver_mode):
     build_steps = []
@@ -140,11 +191,13 @@ def get_steps(edition, ver_mode):
         publish_steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
     if should_publish:
         publish_step = publish_storybook_step(edition=edition, ver_mode=ver_mode)
-        release_npm_step = release_npm_packages_step(edition=edition, ver_mode=ver_mode)
+        build_npm_step = build_npm_packages_step(edition=edition, ver_mode=ver_mode)
+        store_npm_step = store_npm_packages_step(edition=edition, ver_mode=ver_mode)
         if publish_step:
             publish_steps.append(publish_step)
-        if release_npm_step:
-            publish_steps.append(release_npm_step)
+        if build_npm_step and store_npm_step:
+            publish_steps.append(build_npm_step)
+            publish_steps.append(store_npm_step)
     windows_package_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
     if include_enterprise2:
@@ -226,7 +279,7 @@ def release_pipelines(ver_mode='release', trigger=None):
             steps=[download_grabpl_step()] + initialize_step(edition='oss', platform='linux', ver_mode=ver_mode, install_deps=False) + steps,
             depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines],
         )
-        pipelines.append(publish_pipeline)
+        #pipelines.append(publish_pipeline)
 
     pipelines.append(notify_pipeline(
         name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
