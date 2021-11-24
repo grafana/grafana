@@ -57,7 +57,9 @@ export const importDashboard = (dashboardToImport: Dashboard, queryTimeout?: num
     // note: this does not prove that data came back as we expected it,
     // it could get `state: Done` for no data for example
     // but it ensures we didn't hit a 401 or 500 or something like that
-    e2e.components.CodeEditor.container().should('be.visible').contains('"state": "Done"');
+    e2e.components.CodeEditor.container()
+      .should('be.visible')
+      .contains(/"state": "(Done|Streaming)"/);
 
     // need to close panel
     e2e.components.Drawer.General.close().click();
