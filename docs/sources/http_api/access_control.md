@@ -465,8 +465,8 @@ Lists the roles that have been directly assigned to a given user. The list does 
 
 #### Required permissions
 
-| Action           | Scope    |
-| ---------------- | -------- |
+| Action           | Scope                |
+| ---------------- | -------------------- |
 | users.roles:list | users:id:`<user ID>` |
 
 #### Example request
@@ -513,8 +513,8 @@ Lists the permissions that a given user has.
 
 #### Required permissions
 
-| Action                 | Scope    |
-| ---------------------- | -------- |
+| Action                 | Scope                |
+| ---------------------- | -------------------- |
 | users.permissions:list | users:id:`<user ID>` |
 
 #### Example request
