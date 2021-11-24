@@ -141,10 +141,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		//Currently hard coded as not used - applies to log queries
+		// `limit` only applies to log-producing queries, and we
+		// currently only support metric queries, so this can be set to any value.
 		limit := 1
 
-		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, 0, false)
+		// we do not use `interval`, so we set it to zero
+		interval := time.Duration(0)
+
+		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
 		if err != nil {
 			return result, err
 		}
