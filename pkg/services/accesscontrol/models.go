@@ -211,8 +211,7 @@ func (p *ResourcePermission) Managed() bool {
 }
 
 func (p *ResourcePermission) Match(targetActions []string) bool {
-	actions := p.Actions
-	if len(actions) >= len(targetActions) {
+	if len(p.Actions) < len(targetActions) {
 		return false
 	}
 
@@ -226,7 +225,7 @@ func (p *ResourcePermission) Match(targetActions []string) bool {
 	}
 
 	for _, a := range targetActions {
-		if !contains(actions, a) {
+		if !contains(p.Actions, a) {
 			return false
 		}
 	}
