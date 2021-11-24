@@ -28,6 +28,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
         };
 
     return {
+      cacheTimeout: panel.cacheTimeout,
       dataSource,
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,

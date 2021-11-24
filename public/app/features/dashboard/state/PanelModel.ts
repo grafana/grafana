@@ -449,6 +449,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
           uid: dataSource.uid,
           type: dataSource.type,
         };
+    this.cacheTimeout = options.cacheTimeout;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
     this.hideTimeOverride = options.timeRange?.hide;
