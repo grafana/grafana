@@ -34,15 +34,13 @@ func GetPendingOrgInvites(c *models.ReqContext) response.Response {
 func AddOrgInvite(c *models.ReqContext) response.Response {
 	inviteDto := dtos.AddInviteForm{}
 	if err := web.Bind(c.Req, &inviteDto); err != nil {
-		return response.Error(http.
-
-			// first try get existing user
-			StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if !inviteDto.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
 
+	// first try get existing user
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
 	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
 		if !errors.Is(err, models.ErrUserNotFound) {
