@@ -37,6 +37,8 @@ var rmMigTitle = "remove unified alerting data"
 
 const clearMigrationEntryTitle = "clear migration entry %q"
 
+var ClearRmMigTitle = fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle)
+
 type MigrationError struct {
 	AlertId int64
 	Err     error
@@ -61,7 +63,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	case mg.Cfg.UnifiedAlerting.IsEnabled() && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
-		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle), &clearMigrationEntry{
+		mg.AddMigration(ClearRmMigTitle, &clearMigrationEntry{
 			migrationID: rmMigTitle,
 		})
 		if err != nil {
