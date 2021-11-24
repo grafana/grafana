@@ -199,17 +199,15 @@ func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Resp
 func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext) response.Response {
 	cmd := models.RevokeAuthTokenCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.
-
-			// updateUserPermissions updates the user's permissions.
-			//
-			// Stubbable by tests.
-			StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	userID := c.ParamsInt64(":id")
 	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
 }
 
+// updateUserPermissions updates the user's permissions.
+//
+// Stubbable by tests.
 var updateUserPermissions = func(sqlStore *sqlstore.SQLStore, userID int64, isAdmin bool) error {
 	return sqlStore.UpdateUserPermissions(userID, isAdmin)
 }
