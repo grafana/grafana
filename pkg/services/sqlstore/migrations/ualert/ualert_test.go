@@ -79,33 +79,7 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 	}
 }
 
-func Test_AddAlertingEnabledMigration(t *testing.T) {
-	testDB := sqlutil.SQLite3TestDB()
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
-	require.NoError(t, err)
-
-	t.Run("should do nothing when unified alerting is defined", func(t *testing.T) {
-		enabled := rand.Int63()%2 == 0
-		mg := migrator.NewMigrator(x, &setting.Cfg{
-			UnifiedAlerting: setting.UnifiedAlertingSettings{
-				Enabled: &enabled,
-			},
-		})
-		AddAlertingEnabledMigration(mg)
-		require.Equal(t, 0, mg.MigrationsCount())
-	})
-	t.Run("should add a migration if unified alerting is not defined", func(t *testing.T) {
-		mg := migrator.NewMigrator(x, &setting.Cfg{
-			UnifiedAlerting: setting.UnifiedAlertingSettings{
-				Enabled: nil,
-			},
-		})
-		AddAlertingEnabledMigration(mg)
-		require.Equal(t, 1, mg.MigrationsCount())
-	})
-}
-
-func TestEnableUnifiedAlertingByDefault_Exec(t *testing.T) {
+func TestCheckUnifiedAlertingEnabledByDefault(t *testing.T) {
 	testDB := sqlutil.SQLite3TestDB()
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
@@ -115,8 +89,6 @@ func TestEnableUnifiedAlertingByDefault_Exec(t *testing.T) {
 		_, err = x.Exec("DROP TABLE alert")
 		require.NoError(t, err)
 	})
-
-	m := &enableUnifiedAlertingByDefault{}
 
 	t.Run("when 'alert' table has no data", func(t *testing.T) {
 		t.Run("it should fail if legacy alerting is explicitly enabled", func(t *testing.T) {
@@ -130,7 +102,7 @@ func TestEnableUnifiedAlertingByDefault_Exec(t *testing.T) {
 			}
 			mg := migrator.NewMigrator(x, &cfg)
 
-			err := m.Exec(x.NewSession(), mg)
+			err := CheckUnifiedAlertingEnabledByDefault(mg)
 			require.Error(t, err)
 			require.Nil(t, cfg.UnifiedAlerting.Enabled)
 		})
@@ -143,7 +115,7 @@ func TestEnableUnifiedAlertingByDefault_Exec(t *testing.T) {
 			}
 			mg := migrator.NewMigrator(x, &cfg)
 
-			err := m.Exec(x.NewSession(), mg)
+			err := CheckUnifiedAlertingEnabledByDefault(mg)
 			require.NoError(t, err)
 
 			require.NotNil(t, setting.AlertingEnabled)
@@ -169,7 +141,7 @@ func TestEnableUnifiedAlertingByDefault_Exec(t *testing.T) {
 			}
 			mg := migrator.NewMigrator(x, &cfg)
 
-			err := m.Exec(x.NewSession(), mg)
+			err := CheckUnifiedAlertingEnabledByDefault(mg)
 			require.NoError(t, err)
 
 			require.NotNil(t, setting.AlertingEnabled)
@@ -188,7 +160,7 @@ func TestEnableUnifiedAlertingByDefault_Exec(t *testing.T) {
 			}
 			mg := migrator.NewMigrator(x, &cfg)
 
-			err := m.Exec(x.NewSession(), mg)
+			err := CheckUnifiedAlertingEnabledByDefault(mg)
 			require.NoError(t, err)
 
 			require.NotNil(t, setting.AlertingEnabled)

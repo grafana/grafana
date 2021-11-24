@@ -106,7 +106,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaCfg.Enabled != nil && *uaCfg.Enabled && AlertingEnabled != nil && *AlertingEnabled {
 		return errors.New("both legacy and Grafana 8 Alerts are enabled. Disable one of them and restart")
 	}
-	// NOTE: in the case when at this point the enabled flag is still not defined, the final decision is made during migration. (see sqlstore.migrations.ualert.AddAlertingEnabledMigration)
+	// NOTE: in the case when at this point the enabled flag is still not defined, the final decision is made during migration. (see sqlstore.migrations.ualert.CheckUnifiedAlertingEnabledByDefault)
 	if uaCfg.Enabled == nil {
 		cfg.Logger.Info("The state of unified alerting is still not defined. The decision will be made during the migration phase")
 	}
