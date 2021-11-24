@@ -28,51 +28,52 @@ You can use an encryption key from AWS Key Management Service to encrypt secrets
  <br><br>b. Fill in the section with the following values:
  `key_id`: a reference to a key stored in the KMS. This can be a key ID, a key Amazon Resource Name (ARN), an alias name, or an alias ARN. If you are using an alias, use the prefix “alias/.” To specify a KMS key in a different AWS account, use its ARN or alias. For more information about how to retrieve a key ID from AWS, refer to [Finding the key ID and key ARN](https://docs.aws.amazon.com/kms/latest/developerguide/find-cmk-id-arn.html).
 
-Here are some examples of values you can use in the `key_id` field:
+ Here are some examples of values you can use in the `key_id` field:
 
-Key ID: `1234abcd-12ab-34cd-56ef-1234567890ab`
-Key ARN: `arn:aws:kms:us-east-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab`
-Alias name: `alias/ExampleAlias`
-Alias ARN:  `arn:aws:kms:us-east-2:111122223333:alias/ExampleAlias`
-`access_key_id`: The AWS Access Key ID that you previously generated.
-`secret_access_key`: The AWS Secret Access Key you previously generated.
-`token`: (Optional) An AWS Session Token, which you must provide if you created temporary credentials.
-`AWS Region`: The AWS region where you created the KMS key. The region is contained in the key’s ARN. For example: `arn:aws:kms:*us-east-2*:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab`
+ Key ID: `1234abcd-12ab-34cd-56ef-1234567890ab`
+ Key ARN: `arn:aws:kms:us-east-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab`
+ Alias name: `alias/ExampleAlias`
+ Alias ARN:  `arn:aws:kms:us-east-2:111122223333:alias/ExampleAlias`
+ `access_key_id`: The AWS Access Key ID that you previously generated.
+ `secret_access_key`: The AWS Secret Access Key you previously generated.
+ `token`: (Optional) An AWS Session Token, which you must provide if you created temporary credentials.
+ `AWS Region`: The AWS region where you created the KMS key. The region is contained in the key’s ARN. For example: `arn:aws:kms:*us-east-2*:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab`
 
-Here is an example of an AWS KMS provider section in the `grafana.ini` file:
-```
-# AWS key management service provider setup
-;[security.encryption.awskms.example-encryption-key]
-# Reference to a KMS key - either key ID, key ARN, alias name, or ARN
-;key_id = 1234abcd-12ab-34cd-56ef-1234567890ab
-# AWS access key ID
-;access_key_id = AKIAIOSFODNN7EXAMPLE
-# AWS secret access key
-;secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-# AWS session token, optional
-;token = AQoDYXdzEJr...<REMAINDER OF SECURITY TOKEN>
-# AWS region, for example eu-north-1
-;region = eu-north-1
-```
+ Here is an example of an AWS KMS provider section in the `grafana.ini` file:
 
-Update the `[security]` section of the `grafana.ini` configuration file with the new Encryption Provider key that you created:
+ ```
+ # AWS key management service provider setup
+ ;[security.encryption.awskms.example-encryption-key]
+ # Reference to a KMS key - either key ID, key ARN, alias name, or ARN
+ ;key_id = 1234abcd-12ab-34cd-56ef-1234567890ab
+ # AWS access key ID
+ ;access_key_id = AKIAIOSFODNN7EXAMPLE
+ # AWS secret access key
+ ;secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+ # AWS session token, optional
+ ;token = AQoDYXdzEJr...<REMAINDER OF SECURITY TOKEN>
+ # AWS region, for example eu-north-1
+ ;region = eu-north-1
+ ```
 
-```
-[security] 
-# previous encryption key, used for legacy alerts, decrypting existing secrets or used as default provider when external providers are not configured
-secret_key = AaaaAaaa
-# encryption provider key in the format <PROVIDER>.<KEY_NAME>
-encryption_provider = awskms.example-encryption-key
-# list of configured key providers, space separated
-available_encryption_providers = awskms.example-encryption-key
-```
+6. Update the `[security]` section of the `grafana.ini` configuration file with the new Encryption Provider key that you created:
 
-**> Note:** The encryption key that is stored in the `secret_key` field is still used by Grafana’s legacy alerting system to encrypt secrets, for decrypting existing secrets, or it is used as the default provider when external providers are not configured. Do not change or remove that value when adding a new KMS provider.
+ ```
+ [security] 
+ # previous encryption key, used for legacy alerts, decrypting existing secrets or used as default provider when external providers are not configured
+ secret_key = AaaaAaaa
+ # encryption provider key in the format <PROVIDER>.<KEY_NAME>
+ encryption_provider = awskms.example-encryption-key
+ # list of configured key providers, space separated
+ available_encryption_providers = awskms.example-encryption-key
+ ```
 
-6. [Restart Grafana](https://grafana.com/docs/grafana/latest/installation/restart-grafana/).
+ **> Note:** The encryption key that is stored in the `secret_key` field is still used by Grafana’s legacy alerting system to encrypt secrets, for decrypting existing secrets, or it is used as the default provider when external providers are not configured. Do not change or remove that value when adding a new KMS provider.
 
-7. From the command line, (optionally) re-encrypt all of the secrets within the Grafana database using the new key.
-8. (Optional) From the command line, navigate to the root directory of Grafana, and run the command `grafana-cli admin secrets-migration re-encrypt`.
+7. [Restart Grafana](https://grafana.com/docs/grafana/latest/installation/restart-grafana/).
+
+8. From the command line, (optionally) re-encrypt all of the secrets within the Grafana database using the new key.
+9. (Optional) From the command line, navigate to the root directory of Grafana, and run the command `grafana-cli admin secrets-migration re-encrypt`.
    <br><br>If you do not re-encrypt existing secrets, then they will remain encrypted by the previous encryption key. Users will still be able to access them.
 
    <br><br>**> Note:** This process could take a few minutes to complete, depending on the number of secrets (data sources, alert notification channels, etc.) in your database. Users might experience errors while this process is running, and alert notifications might not fire.
