@@ -50,9 +50,12 @@ func (mg *Migrator) AddMigration(id string, m Migration) {
 	mg.migrations = append(mg.migrations, m)
 }
 
-func (mg *Migrator) GetMigrationIDs() []string {
+func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
 	result := make([]string, 0, len(mg.migrations))
 	for _, migration := range mg.migrations {
+		if migration.SkipMigrationLog() && excludeNotLogged {
+			continue
+		}
 		result = append(result, migration.Id())
 	}
 	return result

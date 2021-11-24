@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,7 +30,7 @@ func TestMigrations(t *testing.T) {
 	mg := NewMigrator(x, &setting.Cfg{})
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg)
-	expectedMigrations := mg.GetMigrationIDs()
+	expectedMigrations := mg.GetMigrationIDs(true)
 
 	err = mg.Start()
 	require.NoError(t, err)
@@ -62,10 +61,7 @@ func checkStepsAndDatabaseMatch(t *testing.T, mg *Migrator, expected []string) {
 	for _, id := range expected {
 		_, ok := log[id]
 		if !ok {
-			// ignore migration that removes steps from the log
-			if !(mg.Cfg.UnifiedAlerting.IsEnabled() && id == ualert.ClearRmMigTitle) {
-				missing = append(missing, id)
-			}
+			missing = append(missing, id)
 		}
 	}
 	notIntended := make([]string, 0)
