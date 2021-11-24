@@ -21,7 +21,7 @@ module.exports = {
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
   snapshotSerializers: ['enzyme-to-json/serializer'],
   globals: {
-    'ts-jest': { isolatedModules: true },
+    'ts-jest': { isolatedModules: true, babelConfig: true },
     __webpack_public_path__: '', // empty string
   },
   moduleNameMapper: {

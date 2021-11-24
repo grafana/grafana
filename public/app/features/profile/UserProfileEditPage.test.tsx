@@ -10,6 +10,8 @@ import { initialUserState } from './state/reducers';
 import { getNavModel } from '../../core/selectors/navModel';
 import { backendSrv } from '../../core/services/backend_srv';
 import { TeamPermissionLevel } from '../../types';
+import { I18nProvider } from '@lingui/react';
+import { getI18n } from 'app/core/localisation';
 
 const defaultProps: Props = {
   ...initialUserState,
@@ -116,6 +118,9 @@ function getSelectors() {
   };
 }
 
+const i18n = getI18n();
+const TestingProvider = ({ children }: any) => <I18nProvider i18n={i18n}>{children}</I18nProvider>;
+
 async function getTestContext(overrides: Partial<Props> = {}) {
   jest.clearAllMocks();
   const putSpy = jest.spyOn(backendSrv, 'put');
@@ -125,7 +130,7 @@ async function getTestContext(overrides: Partial<Props> = {}) {
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
   const props = { ...defaultProps, ...overrides };
-  const { rerender } = render(<UserProfileEditPage {...props} />);
+  const { rerender } = render(<UserProfileEditPage {...props} />, { wrapper: TestingProvider });
 
   await waitFor(() => expect(props.initUserProfilePage).toHaveBeenCalledTimes(1));
 
@@ -142,7 +147,7 @@ describe('UserProfileEditPage', () => {
   });
 
   describe('when user has loaded', () => {
-    it('should show edit profile form', async () => {
+    it.only('should show edit profile form', async () => {
       await getTestContext();
 
       const { name, email, username, saveProfile } = getSelectors();
