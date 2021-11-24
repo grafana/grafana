@@ -525,7 +525,7 @@ Content-Type: application/json; charset=UTF-8
 
 `POST /api/access-control/users/:userId/roles`
 
-Assign a single role assignment to a user.
+Assign a single role to a user.
 
 For bulk updates consider
 [Set user role assignments]({{< ref "#set-user-role-assignments" >}}).
@@ -539,7 +539,7 @@ For bulk updates consider
 #### Example request
 
 ```http
-PUT /api/access-control/users/1/roles
+POST /api/access-control/users/1/roles
 Accept: application/json
 Content-Type: application/json
 
