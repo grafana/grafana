@@ -45,8 +45,22 @@ export class NumberInput extends PureComponent<Props, State> {
   };
 
   onChange = (e: React.FocusEvent<HTMLInputElement>) => {
+    let newValue: string | undefined = undefined;
+    const min = this.props.min;
+    const max = this.props.max;
+    const currValue = e.currentTarget.valueAsNumber;
+
+    if (!Number.isNaN(currValue)) {
+      if (min && currValue < min) {
+        newValue = min.toString();
+      } else if (max && currValue > max) {
+        newValue = max.toString();
+      } else {
+        newValue = e.currentTarget.value;
+      }
+    }
     this.setState({
-      text: e.currentTarget.value,
+      text: newValue ? newValue : '',
     });
   };
 
