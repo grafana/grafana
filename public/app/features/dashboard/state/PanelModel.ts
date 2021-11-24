@@ -171,7 +171,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   isInView = false;
   configRev = 0; // increments when configs change
   hasRefreshed?: boolean;
-  cacheTimeout?: any;
+  cacheTimeout?: string | null;
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
@@ -449,6 +449,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
           uid: dataSource.uid,
           type: dataSource.type,
         };
+    this.cacheTimeout = options.cacheTimeout;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
     this.hideTimeOverride = options.timeRange?.hide;
