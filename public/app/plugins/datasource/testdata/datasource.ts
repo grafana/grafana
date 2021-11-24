@@ -191,7 +191,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
 
   rawFrameQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
     try {
-      let data: any[] = JSON.parse(target.rawFrameContent || '');
+      let data: any[] = JSON.parse(target.rawFrameContent || '[]');
       return of({ data }).pipe(delay(100));
     } catch (ex) {
       return of({ data: [], error: ex }).pipe(delay(100));

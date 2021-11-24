@@ -13,8 +13,8 @@ export const RawFrameEditor = ({ onChange, query }: EditorProps) => {
         width="100%"
         rows={10}
         onBlur={(e) => onContent(e.currentTarget.value)}
-        placeholder="frames content (JSON array)"
-        defaultValue={query.rawFrameContent ?? ''}
+        placeholder="frames array (JSON)"
+        defaultValue={query.rawFrameContent ?? '[]'}
       />
     </InlineField>
   );
