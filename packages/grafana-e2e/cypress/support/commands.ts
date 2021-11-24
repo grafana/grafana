@@ -31,3 +31,11 @@ Cypress.Commands.add('getJSONFilesFromDir', (dirPath: string) => {
     relativePath: dirPath,
   });
 });
+
+Cypress.Commands.add('startProfiling', () => {
+  return cy.task('startProfiling');
+});
+
+Cypress.Commands.add('stopProfiling', () => {
+  return cy.task('stopProfiling');
+});
