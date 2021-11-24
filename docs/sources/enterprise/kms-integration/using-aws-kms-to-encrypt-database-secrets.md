@@ -63,6 +63,7 @@ Update the `[security]` section of the `grafana.ini` configuration file with the
 secret_key = AaaaAaaa
 # encryption provider key in the format <PROVIDER>.<KEY_NAME>
 encryption_provider = awskms.example-encryption-key
+available_encryption_providers = awskms.example-encryption-key
 ```
 
 **> Note:** The encryption key that is stored in the `secret_key` field is still used by Grafana’s legacy alerting system to encrypt secrets, for decrypting existing secrets, or it is used as the default provider when external providers are not configured. Do not change or remove that value when adding a new KMS provider.
