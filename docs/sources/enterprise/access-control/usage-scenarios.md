@@ -134,7 +134,7 @@ Example response:
 
 ## Manage roles granted directly to users
 
-[Manage user role assignments]({{< relref "manage-role-assignments/manage-user-role-assignments.md" >}}) page explains how user role assignments can be granted and revoked.
+To learn about granting roles to users, refer to [Manage user role assignments]({{< relref "manage-role-assignments/manage-user-role-assignments.md" >}}) page.
 
 ## Create your first custom role
 

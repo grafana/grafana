@@ -75,18 +75,11 @@ If a Grafana Server Admin wants to delegate that privilege to other users, they 
 
 Note that you won't be able to create, update or delete a custom role with permissions which you yourself do not have. For example, if the only permission you have is a `users:create`, you won't be able to create a role with other permissions.
 
-## User role assignments
+## Assign roles
 
-To control what your users can access or not, you can assign or unassign [Custom roles]({{< ref "#custom-roles" >}}) or [Fixed roles]({{< ref "#fixed-roles" >}}) directly to your users.
+[Custom roles]({{< ref "#custom-roles" >}}) and [Fixed roles]({{< ref "#fixed-roles" >}}) can be assigned to users, teams, the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) and to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role.
 
-Visit [Manage role assignments]({{< relref "manage-role-assignments/_index.md" >}}) page for details on how to revoke or assign roles to users.
-
-## Built-in role assignments
-
-Fine-grained access control roles can be assigned to the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) or to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role.
-These assignments are called built-in role assignments.
-
-Visit [Manage built-in assignments]({{< relref "manage-built-in-assignments/_index.md" >}}) page for details.
+Visit [Manage role assignments]({{< relref "manage-role-assignments/_index.md" >}}) page for more details.
 
 ### Scope of assignments
 
