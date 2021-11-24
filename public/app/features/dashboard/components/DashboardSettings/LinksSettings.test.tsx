@@ -69,7 +69,7 @@ describe('LinksSettings', () => {
 
     expect(screen.getByRole('heading', { name: 'Dashboard links' })).toBeInTheDocument();
     expect(
-      screen.getByLabelText(selectors.components.CallToActionCard.button('Add dashboard link'))
+      screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add dashboard link'))
     ).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
@@ -80,7 +80,7 @@ describe('LinksSettings', () => {
 
     expect(getTableBodyRows().length).toBe(links.length);
     expect(
-      screen.queryByLabelText(selectors.components.CallToActionCard.button('Add dashboard link'))
+      screen.queryByTestId(selectors.components.CallToActionCard.buttonV2('Add dashboard link'))
     ).not.toBeInTheDocument();
   });
 

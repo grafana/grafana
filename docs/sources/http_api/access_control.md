@@ -86,23 +86,27 @@ Content-Type: application/json; charset=UTF-8
 
 [
     {
-        "version": 1,
-        "uid": "Kz9m_YjGz",
-        "name": "fixed:reporting:admin:edit",
-        "description": "Gives access to edit any report or the organization's general reporting settings.",
-        "global": true,
-        "updated": "2021-05-13T16:24:26+02:00",
-        "created": "2021-05-13T16:24:26+02:00"
+        "version": 3,
+        "uid": "XvHQJq57z",
+        "name": "fixed:reports:reader",
+        "displayName": "Report reader",
+        "description": "Read all reports and shared report settings.",
+        "group": "Reports",
+        "updated": "2021-11-19T10:48:00+01:00",
+        "created": "2021-11-19T10:48:00+01:00",
+        "global": true
     },
     {
-        "version": 5,
-        "uid": "vi9mlLjGz",
-        "name": "fixed:permissions:admin:read",
-        "description": "Gives access to read and list roles and permissions, as well as built-in role assignments.",
-        "global": true,
-        "updated": "2021-05-13T22:41:49+02:00",
-        "created": "2021-05-13T16:24:26+02:00"
-    }
+        "version": 4,
+        "uid": "6dNwJq57z",
+        "name": "fixed:reports:writer",
+        "displayName": "Report writer",
+        "description": "Create, read, update, or delete all reports and shared report settings.",
+        "group": "Reports",
+        "updated": "2021-11-19T10:48:00+01:00",
+        "created": "2021-11-19T10:48:00+01:00",
+        "global": true
+    },
 ]
 ```
 
@@ -141,27 +145,59 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    "version": 2,
-    "uid": "jZrmlLCGk",
-    "name": "fixed:permissions:admin:edit",
-    "description": "Gives access to create, update and delete roles, as well as manage built-in role assignments.",
-    "global": true,
+    "version": 4,
+    "uid": "6dNwJq57z",
+    "name": "fixed:reports:writer",
+    "displayName": "Report writer",
+    "description": "Create, read, update, or delete all reports and shared report settings.",
+    "group": "Reports",
     "permissions": [
         {
-            "action": "roles:delete",
-            "scope": "permissions:delegate",
-            "updated": "2021-05-13T16:24:26+02:00",
-            "created": "2021-05-13T16:24:26+02:00"
+            "action": "reports:delete",
+            "scope": "reports:*",
+            "updated": "2021-11-19T10:48:00+01:00",
+            "created": "2021-11-19T10:48:00+01:00"
         },
         {
-            "action": "roles:list",
-            "scope": "roles:*",
-            "updated": "2021-05-13T16:24:26+02:00",
-            "created": "2021-05-13T16:24:26+02:00"
+            "action": "reports:read",
+            "scope": "reports:*",
+            "updated": "2021-11-19T10:48:00+01:00",
+            "created": "2021-11-19T10:48:00+01:00"
+        },
+        {
+            "action": "reports:send",
+            "scope": "reports:*",
+            "updated": "2021-11-19T10:48:00+01:00",
+            "created": "2021-11-19T10:48:00+01:00"
+        },
+        {
+            "action": "reports.admin:create",
+            "scope": "",
+            "updated": "2021-11-19T10:48:00+01:00",
+            "created": "2021-11-19T10:48:00+01:00"
+        },
+        {
+            "action": "reports.admin:write",
+            "scope": "reports:*",
+            "updated": "2021-11-19T10:48:00+01:00",
+            "created": "2021-11-19T10:48:00+01:00"
+        },
+        {
+            "action": "reports.settings:read",
+            "scope": "",
+            "updated": "2021-11-19T10:48:00+01:00",
+            "created": "2021-11-19T10:48:00+01:00"
+        },
+        {
+            "action": "reports.settings:write",
+            "scope": "",
+            "updated": "2021-11-19T10:48:00+01:00",
+            "created": "2021-11-19T10:48:00+01:00"
         }
     ],
-    "updated": "2021-05-13T16:24:26+02:00",
-    "created": "2021-05-13T16:24:26+02:00"
+    "updated": "2021-11-19T10:48:00+01:00",
+    "created": "2021-11-19T10:48:00+01:00",
+    "global": true
 }
 ```
 
@@ -170,7 +206,7 @@ Content-Type: application/json; charset=UTF-8
 | Code | Description                                                          |
 | ---- | -------------------------------------------------------------------- |
 | 200  | Role is returned.                                                    |
-| 403  | Access denied                                                        |
+| 403  | Access denied.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
 ### Create a new custom role
@@ -200,6 +236,8 @@ Content-Type: application/json
     "uid": "jZrmlLCGka",
     "name": "custom:delete:roles",
     "description": "My custom role which gives users permissions to delete roles",
+    "group":"My Group",
+    "displayName": "My Custom Role",
     "global": true,
     "permissions": [
         {
@@ -219,6 +257,8 @@ Content-Type: application/json
 | version     | number     | No       | Version of the role. If not present, version 0 will be assigned to the role and returned in the response. Refer to the [Custom roles]({{< relref "../enterprise/access-control/roles.md#custom-roles" >}}) for more information.                                    |
 | name        | string     | Yes      | Name of the role. Refer to [Custom roles]({{< relref "../enterprise/access-control/roles.md#custom-roles" >}}) for more information.                                                                                                                                |
 | description | string     | No       | Description of the role.                                                                                                                                                                                                                                            |
+| displayName | string     | No       | Display name of the role, visible in the UI. |
+| group       | string     | No       | The group name the role belongs to. |
 | permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                                                   |
 
 **Permission**
@@ -239,6 +279,8 @@ Content-Type: application/json; charset=UTF-8
     "uid": "jZrmlLCGka",
     "name": "custom:delete:create:roles",
     "description": "My custom role which gives users permissions to delete and create roles",
+    "group":"My Group",
+    "displayName": "My Custom Role",
     "global": true,
     "permissions": [
         {
@@ -288,6 +330,8 @@ Content-Type: application/json
     "version": 3,
     "name": "custom:delete:write:roles",
     "description": "My custom role which gives users permissions to delete and write roles",
+    "group":"My Group",
+    "displayName": "My Custom Role",
     "global": true,
     "permissions": [
         {
@@ -309,6 +353,8 @@ Content-Type: application/json
 | version     | number              | Yes      | Version of the role. Must be incremented for update to work.        |
 | name        | string              | Yes      | Name of the role.                                                   |
 | description | string              | No       | Description of the role.                                            |
+| displayName | string              | No       | Display name of the role, visible in the UI. |
+| group       | string              | No       | The group name the role belongs to. |
 | permissions | List of Permissions | No       | The full list of permissions the role should have after the update. |
 
 **Permission**
@@ -329,6 +375,8 @@ Content-Type: application/json; charset=UTF-8
     "uid":"jZrmlLCGka",
     "name":"custom:delete:write:roles",
     "description":"My custom role which gives users permissions to delete and write roles",
+    "group":"My Group",
+    "displayName": "My Custom Role",
     "permissions":[
         {
             "action":"roles:delete",
@@ -407,136 +455,214 @@ Content-Type: application/json; charset=UTF-8
 | 403  | Access denied                                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details.               |
 
-## Manage roles granted to users
+## Create and remove user role assignments  
 
-Manage [fine-grained access control roles]({{< relref "../enterprise/access-control/fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}) granted to specific users.
+### List roles assigned to a user
 
-### View the roles that have been assigned to a user
+`GET /api/access-control/users/:userId/roles`
 
-`GET /api/access-control/[SOMETHING]`
-
-Lists the [fine-grained access control roles]({{< relref "../enterprise/access-control/fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}) that have been directly assigned to a given user. Note: this list does not include builtin roles (Viewer, Editor, or Admin), and it does not include roles that have been inherited from a team.
+Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor or Admin), and it does not include roles that have been inherited from a team.
 
 #### Required permissions
 
 | Action             | Scope    |
 | ------------------ | -------- |
-|  |  |
-
-#### Example request
-
-```http
-INSERT EXAMPLE REQUEST HERE
-```
+| users.roles:list   | users:*  |
 
 #### Example response
 
 ```http
-INSERT EXAMPLE RESPONSE HERE
+[
+    {
+        "version": 4,
+        "uid": "6dNwJq57z",
+        "name": "fixed:reports:writer",
+        "displayName": "Report writer",
+        "description": "Create, read, update, or delete all reports and shared report settings.",
+        "group": "Reports",
+        "updated": "2021-11-19T10:48:00+01:00",
+        "created": "2021-11-19T10:48:00+01:00",
+        "global": false
+    }
+]
 ```
 
 #### Status codes
 
 | Code | Description                                                          |
 | ---- | -------------------------------------------------------------------- |
-| 200  | [INSERT RESPONSE HERE]                                               |
-| 403  | Access denied                                                        |
+| 200  | Set of assigned roles is returned.                                   |
+| 403  | Access denied.                                                        |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
-### Grant a role to a user
+### List permissions assigned to a user
 
-`POST /api/access-control/[SOMETHING]`
+`GET /api/access-control/users/:userId/permissions`
 
-Grant a [fine-grained access control role]({{< relref "../enterprise/access-control/fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}) to a specific user
+Lists the permissions that a given user has.
 
 #### Required permissions
 
 | Action             | Scope    |
 | ------------------ | -------- |
-|  |  |
-
-#### Example request
-
-```http
-INSERT EXAMPLE REQUEST HERE
-```
+| users.permissions:list   | users:*  |
 
 #### Example response
 
 ```http
-INSERT EXAMPLE RESPONSE HERE
+[
+    {
+        "action": "ldap.status:read",
+        "scope": ""
+    },
+    {
+        "action": "ldap.user:read",
+        "scope": ""
+    }
+]
 ```
 
 #### Status codes
 
 | Code | Description                                                          |
 | ---- | -------------------------------------------------------------------- |
-| 200  | [ADD RESPONSE HERE]                                                  |
-| 403  | Access denied                                                        |
+| 200  | Set of assigned permissions is returned.                                   |
+| 403  | Access denied.                                                        |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
-## Remove a role from a user
+### Assign a role to a user
 
-`POST /api/access-control/[SOMETHING]`
+`POST /api/access-control/users/:userId/roles`
 
-Un-grant a [fine-grained access control roles]({{< relref "../enterprise/access-control/fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}) that was previously granted to a user.
+Assign a role to a specific user.
 
 #### Required permissions
 
-| Action             | Scope    |
-| ------------------ | -------- |
-|  |  |
+`permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.
+
+| Action            | Scope                |
+| ----------------- | -------------------- |
+| users.roles:add | permissions:delegate |
 
 #### Example request
 
 ```http
-INSERT EXAMPLE REQUEST HERE
+{
+    "global": true,
+    "roleUid": "XvHQJq57z"
+}
 ```
+#### JSON body schema
+
+| Field Name  | Data Type           | Required | Description                                                         |
+| ----------- | ------------------- | -------- | ------------------------------------------------------------------- |
+| roleUid     | string    | Yes      | UID of the role.                                                                                                                                                                                                                                                                                                                              |
+| global      | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to create organization local assignment.
 
 #### Example response
 
 ```http
-INSERT EXAMPLE RESPONSE HERE
+{
+    "message": "Role added to the user."
+}
 ```
 
 #### Status codes
 
 | Code | Description                                                          |
 | ---- | -------------------------------------------------------------------- |
-| 200  | [ADD RESPONSE HERE]                                                  |
-| 403  | Access denied                                                        |
+| 200  | Role is assigned to a user.                                          |
+| 403  | Access denied.                                                       |
+| 404  | Role not found.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
-### Bulk update a user's roles
+## Unassign a role from a user
 
-`POST /api/access-control/[SOMETHING]`
+`DELETE /api/access-control/users/:userId/roles/:roleUID`
 
-Replace a user's [fine-grained access control roles]({{< relref "../enterprise/access-control/roles.md" >}}) entirely with a new set of roles.
+Unassign a role from a user.
 
 #### Required permissions
 
-| Action             | Scope    |
-| ------------------ | -------- |
-|  |  |
+`permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.
 
-#### Example request
+| Action            | Scope                |
+| ----------------- | -------------------- |
+| users.roles:remove | permissions:delegate |
 
-```http
-INSERT EXAMPLE REQUEST HERE
-```
+#### Query parameters
+
+| Param  | Type    | Required | Description                                                                                                                                                                                                                                                                                                                |
+| ------ | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| global | boolean | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to remove assignment. |
 
 #### Example response
 
 ```http
-INSERT EXAMPLE RESPONSE HERE
+{
+    "message": "Role removed from user."
+}
 ```
 
 #### Status codes
 
 | Code | Description                                                          |
 | ---- | -------------------------------------------------------------------- |
-| 200  | [ADD RESPONSE HERE]                                                  |
-| 403  | Access denied                                                        |
+| 200  | Role is unassigned.                                                  |
+| 403  | Access denied.                                                       |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+### Assign roles to a user in bulk
+
+`PUT /api/access-control/users/:userId/roles`
+
+Assigns roles to a user in bulk. The assignment is idempotent and replaces current assignments of a user.
+
+#### Required permissions
+
+`permission:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.
+
+| Action            | Scope                |
+| ----------------- | -------------------- |
+| users.roles:add | permissions:delegate |
+| users.roles:remove | permissions:delegate |
+
+#### Example request
+
+```http
+{
+    "global": true,
+    "roleUids": [
+        "ZiHQJq5nk",
+        "GzNQ1357k"
+    ]
+}
+```
+#### JSON body schema
+
+| Field Name  | Date Type  | Required | Description                                                                                                                                                                                                                                                         |
+| ----------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| global      | boolean    | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request.  |
+| roleUids    | list       | Yes      | List of role UIDs.                                                                                                                                                                                                   |
+
+#### Example response
+
+```http
+{
+    "message": "User roles have been updated."
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Roles have been assigned.                                                  |
+| 403  | Access denied.                                                        |
+| 404  | Role not found.                                                        |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
 ## Create and remove built-in role assignments

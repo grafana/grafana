@@ -200,7 +200,8 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 func newTestAlert(c apimodels.TestReceiversConfigParams, startsAt, updatedAt time.Time) types.Alert {
 	var (
 		defaultAnnotations = model.LabelSet{
-			"summary": "Notification test",
+			"summary":          "Notification test",
+			"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]",
 		}
 		defaultLabels = model.LabelSet{
 			"alertname": "TestAlert",

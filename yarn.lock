@@ -1871,9 +1871,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cypress/request@npm:^2.88.6":
-  version: 2.88.6
-  resolution: "@cypress/request@npm:2.88.6"
+"@cypress/request@npm:^2.88.7":
+  version: 2.88.7
+  resolution: "@cypress/request@npm:2.88.7"
   dependencies:
     aws-sign2: ~0.7.0
     aws4: ^1.8.0
@@ -1894,7 +1894,7 @@ __metadata:
     tough-cookie: ~2.5.0
     tunnel-agent: ^0.6.0
     uuid: ^8.3.2
-  checksum: 31d4586e212e20955091cdf67a0de746c2587f97f7ff0e2b8e84e772d98a73a1c6051c9090dd938ecdf595c37aec9193b6211faf754b5fcf43c7a151b4d274b7
+  checksum: 21544e555afd0841a8a189d4a4af7695c918bc782db3c636f56cadfed9ea1620c2ef43d94a709de984660c4fe9407dd8446f9f65fbe56f4eafa26a0c05792a64
   languageName: node
   linkType: hard
 
@@ -1995,7 +1995,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/cache@npm:^11.0.0, @emotion/cache@npm:^11.1.3, @emotion/cache@npm:^11.5.0":
+"@emotion/cache@npm:^11.1.3, @emotion/cache@npm:^11.4.0, @emotion/cache@npm:^11.5.0":
   version: 11.5.0
   resolution: "@emotion/cache@npm:11.5.0"
   dependencies:
@@ -2329,9 +2329,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
   dependencies:
-    "@grafana/data": 8.3.0-pre
-    "@grafana/toolkit": 8.3.0-pre
-    "@grafana/ui": 8.3.0-pre
+    "@grafana/data": 8.4.0-pre
+    "@grafana/toolkit": 8.4.0-pre
+    "@grafana/ui": 8.4.0-pre
     "@types/jest": 26.0.15
     "@types/react": 17.0.30
     jquery: 3.5.1
@@ -2369,12 +2369,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@8.3.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
+"@grafana/data@8.4.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
     "@braintree/sanitize-url": 5.0.2
-    "@grafana/schema": 8.3.0-pre
+    "@grafana/schema": 8.4.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-json": 4.1.0
@@ -2382,8 +2382,8 @@ __metadata:
     "@swc/helpers": 0.2.13
     "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.9
-    "@testing-library/react": 11.1.2
-    "@testing-library/react-hooks": ^3.2.1
+    "@testing-library/react": 12.1.2
+    "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.3.0
     "@types/braintree__sanitize-url": 4.1.0
     "@types/d3-interpolate": ^1.4.0
@@ -2429,7 +2429,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@8.3.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@8.4.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -2461,7 +2461,7 @@ __metadata:
     "@babel/core": 7.14.6
     "@babel/preset-env": 7.14.7
     "@cypress/webpack-preprocessor": 5.9.1
-    "@grafana/e2e-selectors": 8.3.0-pre
+    "@grafana/e2e-selectors": 8.4.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 21.0.1
@@ -2472,7 +2472,7 @@ __metadata:
     babel-loader: 8.2.2
     blink-diff: 1.0.13
     commander: 8.3.0
-    cypress: 8.4.1
+    cypress: 9.0.0
     cypress-file-upload: 5.0.8
     date-fns: 2.21.3
     execa: 5.1.1
@@ -2519,20 +2519,20 @@ __metadata:
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
     "@emotion/css": 11.1.3
-    "@grafana/data": 8.3.0-pre
-    "@grafana/e2e-selectors": 8.3.0-pre
+    "@grafana/data": 8.4.0-pre
+    "@grafana/e2e-selectors": 8.4.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
-    "@grafana/ui": 8.3.0-pre
+    "@grafana/ui": 8.4.0-pre
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.0.6
-    "@sentry/browser": 5.25.0
+    "@sentry/browser": 6.15.0
     "@testing-library/react": ^12.1.2
     "@testing-library/user-event": ^13.5.0
     "@types/angular": 1.6.56
     "@types/history": ^4.7.8
     "@types/jest": 27.0.2
     "@types/lodash": 4.14.149
-    "@types/react": 16.9.9
+    "@types/react": 17.0.36
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/systemjs": ^0.20.6
     history: 4.10.1
@@ -2554,7 +2554,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/schema@8.3.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@8.4.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
@@ -2604,16 +2604,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/toolkit@8.3.0-pre, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@8.4.0-pre, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
     "@babel/core": 7.13.14
     "@babel/preset-env": 7.13.12
-    "@grafana/data": 8.3.0-pre
+    "@grafana/data": 8.4.0-pre
     "@grafana/eslint-config": 2.5.1
     "@grafana/tsconfig": ^1.0.0-rc1
-    "@grafana/ui": 8.3.0-pre
+    "@grafana/ui": 8.4.0-pre
     "@jest/core": 26.6.3
     "@rushstack/eslint-patch": 1.0.6
     "@types/command-exists": ^1.2.0
@@ -2697,7 +2697,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@8.3.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@8.4.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
@@ -2705,9 +2705,9 @@ __metadata:
     "@emotion/css": 11.1.3
     "@emotion/react": 11.1.5
     "@grafana/aws-sdk": 0.0.3
-    "@grafana/data": 8.3.0-pre
-    "@grafana/e2e-selectors": 8.3.0-pre
-    "@grafana/schema": 8.3.0-pre
+    "@grafana/data": 8.4.0-pre
+    "@grafana/e2e-selectors": 8.4.0-pre
+    "@grafana/schema": 8.4.0-pre
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.0.0-rc1
     "@mdx-js/react": 1.6.22
@@ -2718,7 +2718,7 @@ __metadata:
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-image": 2.1.1
     "@rollup/plugin-node-resolve": 13.0.6
-    "@sentry/browser": 5.25.0
+    "@sentry/browser": 6.15.0
     "@storybook/addon-a11y": 6.3.7
     "@storybook/addon-actions": 6.3.7
     "@storybook/addon-docs": 6.3.7
@@ -2736,8 +2736,8 @@ __metadata:
     "@swc/helpers": 0.2.13
     "@testing-library/dom": 8.10.1
     "@testing-library/jest-dom": 5.11.9
-    "@testing-library/react": 11.1.2
-    "@testing-library/react-hooks": ^3.2.1
+    "@testing-library/react": 12.1.2
+    "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.3.0
     "@types/classnames": 2.2.7
     "@types/clipboard": 2.0.1
@@ -2759,9 +2759,8 @@ __metadata:
     "@types/react-beautiful-dnd": 13.1.1
     "@types/react-calendar": ^3.4.3
     "@types/react-color": 3.0.1
-    "@types/react-dom": 16.9.9
+    "@types/react-dom": 17.0.11
     "@types/react-router-dom": ^5.1.7
-    "@types/react-select": 4.0.13
     "@types/react-table": 7.7.2
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.0
@@ -2791,7 +2790,7 @@ __metadata:
     enzyme: 3.11.0
     expose-loader: 3.0.0
     hoist-non-react-statics: 3.3.2
-    immutable: 3.8.2
+    immutable: 4.0.0
     is-hotkey: 0.1.6
     jquery: 3.5.1
     lodash: 4.17.21
@@ -2821,7 +2820,7 @@ __metadata:
     react-inlinesvg: 2.3.0
     react-popper: 2.2.4
     react-router-dom: ^5.2.0
-    react-select: 4.3.0
+    react-select: 5.2.1
     react-select-event: ^5.1.0
     react-table: 7.7.0
     react-test-renderer: 17.0.1
@@ -2920,9 +2919,9 @@ __metadata:
   dependencies:
     "@emotion/css": 11.1.3
     "@emotion/react": 11.1.5
-    "@grafana/data": 8.3.0-pre
+    "@grafana/data": 8.4.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
-    "@grafana/ui": 8.3.0-pre
+    "@grafana/ui": 8.4.0-pre
     "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
@@ -5227,64 +5226,50 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/browser@npm:5.25.0":
-  version: 5.25.0
-  resolution: "@sentry/browser@npm:5.25.0"
+"@sentry/browser@npm:6.15.0":
+  version: 6.15.0
+  resolution: "@sentry/browser@npm:6.15.0"
   dependencies:
-    "@sentry/core": 5.25.0
-    "@sentry/types": 5.25.0
-    "@sentry/utils": 5.25.0
+    "@sentry/core": 6.15.0
+    "@sentry/types": 6.15.0
+    "@sentry/utils": 6.15.0
     tslib: ^1.9.3
-  checksum: b7124629ff1637b0909ef8f0afeeb7c77bc3eda12f5cac4bb1bf3fc8a545cb08607bbbdb873819a73386d3fab7dce88ad2a104e6552834aaac8b0bf050db10be
+  checksum: 8c429ea1aa86a9b32c2734e99495a7b92e6957b897ea160aeffeb34fb8931c5f2c409c948fc09f8b5be3729fd0f66d3ac0ccfeb6396e936d4a4fe8df93a27683
   languageName: node
   linkType: hard
 
-"@sentry/core@npm:5.25.0":
-  version: 5.25.0
-  resolution: "@sentry/core@npm:5.25.0"
+"@sentry/core@npm:6.15.0":
+  version: 6.15.0
+  resolution: "@sentry/core@npm:6.15.0"
   dependencies:
-    "@sentry/hub": 5.25.0
-    "@sentry/minimal": 5.25.0
-    "@sentry/types": 5.25.0
-    "@sentry/utils": 5.25.0
+    "@sentry/hub": 6.15.0
+    "@sentry/minimal": 6.15.0
+    "@sentry/types": 6.15.0
+    "@sentry/utils": 6.15.0
     tslib: ^1.9.3
-  checksum: 75a66834a68331388e0a73512352e81c9769f1462d541cb273b7ed6b25ef739edeaa884306ccdb8d6d97c64c60f8445b44955808b870bfb0ee11132853d5725c
+  checksum: 6299324cfafc62968a3c063bb4d9c62745230d8e235c3148426ceb6df70bfeee2c250fe38b351e1ab5ca3fa4c9079c3bdce357e756c734c33680c84052f0a129
   languageName: node
   linkType: hard
 
-"@sentry/hub@npm:5.25.0":
-  version: 5.25.0
-  resolution: "@sentry/hub@npm:5.25.0"
+"@sentry/hub@npm:6.15.0":
+  version: 6.15.0
+  resolution: "@sentry/hub@npm:6.15.0"
   dependencies:
-    "@sentry/types": 5.25.0
-    "@sentry/utils": 5.25.0
+    "@sentry/types": 6.15.0
+    "@sentry/utils": 6.15.0
     tslib: ^1.9.3
-  checksum: 71a2314946344d378027e533aa5d1b2bfaabf1057e07cd1dba4501e2c6505064fa9e82ee916d8158b1bcd21cf806fefbf90997e2a8e17a0b6638a9be4f21f617
+  checksum: 6645534f0de5056ea6a15d790f65356bf4085936c220584f78bdd59e81cd1482bff7e9a81a448a17da550e330a1c1b7b56bd11aa6a8533b73760076b6424003e
   languageName: node
   linkType: hard
 
-"@sentry/minimal@npm:5.25.0":
-  version: 5.25.0
-  resolution: "@sentry/minimal@npm:5.25.0"
+"@sentry/minimal@npm:6.15.0":
+  version: 6.15.0
+  resolution: "@sentry/minimal@npm:6.15.0"
   dependencies:
-    "@sentry/hub": 5.25.0
-    "@sentry/types": 5.25.0
+    "@sentry/hub": 6.15.0
+    "@sentry/types": 6.15.0
     tslib: ^1.9.3
-  checksum: 4db970b8e650a9c55a7d2a4d40f4274a27abf56fcbd19d92b41928532576ce34474894a231b619435f0f42ff60685cd347eca39d8a69031893f83d2f077177fa
-  languageName: node
-  linkType: hard
-
-"@sentry/types@npm:5.24.2":
-  version: 5.24.2
-  resolution: "@sentry/types@npm:5.24.2"
-  checksum: 265552c1608994cbd2709d391f581094f898a45d22b1d8fe49a0a5d5222d484a9dd40ffa1f14903e5cebe74bcd8d22bbf2ef545036295067e3802e2aaa3dcbdc
-  languageName: node
-  linkType: hard
-
-"@sentry/types@npm:5.25.0":
-  version: 5.25.0
-  resolution: "@sentry/types@npm:5.25.0"
-  checksum: 136156a76f034eeeef4d2bed18f5b9459ff3264b12f061313fb076a3ce8f366c77881b87a9efbd1c502a7b4f1a4b413cbdb80b2d525851b6dae5e91690d4c176
+  checksum: 98a39f2f2c4b5d0ec63aa034fbd37990c7e456c3db0e0b08d7deefc2d6d6d2353d94ccb1a2e5f4ed6c3e759b0948dcecf57efeaab8b27e0602581deeeca37674
   languageName: node
   linkType: hard
 
@@ -5295,13 +5280,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/utils@npm:5.25.0":
-  version: 5.25.0
-  resolution: "@sentry/utils@npm:5.25.0"
-  dependencies:
-    "@sentry/types": 5.25.0
-    tslib: ^1.9.3
-  checksum: 1f5471228cbd0d517b2c05f1f0ca17baaa71290570e9c8df41a2071a471825b6387718bff15be5e9a3a42ba33e3aa86c760d185abb4353ccb43f862aafe7e5e7
+"@sentry/types@npm:6.15.0":
+  version: 6.15.0
+  resolution: "@sentry/types@npm:6.15.0"
+  checksum: e84a53cd8cf4603ac794049729d44f2d67cde3a29875b7404d61d36d904cdb4cd9d35ff53463ba1828ab4a4cbd734cd276ce10d3bb7c32a0ffdea1ac4344fb5f
   languageName: node
   linkType: hard
 
@@ -5312,6 +5294,16 @@ __metadata:
     "@sentry/types": 6.13.2
     tslib: ^1.9.3
   checksum: e4ee48750147247a96937858aef4e038bd97d2626fba337a10230666d3498914ba9f7a2f9484880dd0aa85dc36f94bb5fd4df98dedb7fc8e087c5e9f428fc133
+  languageName: node
+  linkType: hard
+
+"@sentry/utils@npm:6.15.0":
+  version: 6.15.0
+  resolution: "@sentry/utils@npm:6.15.0"
+  dependencies:
+    "@sentry/types": 6.15.0
+    tslib: ^1.9.3
+  checksum: 150a7d8b4ed15f2cd04687062e08a62dad18a754ef8c00fcbaebc7816fb80336785aedd3ea3f6e47e7397d5c253177d029961fe98ff8869ceb566fd78cc91f84
   languageName: node
   linkType: hard
 
@@ -6899,22 +6891,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:^7.26.6":
-  version: 7.31.2
-  resolution: "@testing-library/dom@npm:7.31.2"
-  dependencies:
-    "@babel/code-frame": ^7.10.4
-    "@babel/runtime": ^7.12.5
-    "@types/aria-query": ^4.2.0
-    aria-query: ^4.2.2
-    chalk: ^4.1.0
-    dom-accessibility-api: ^0.5.6
-    lz-string: ^1.4.4
-    pretty-format: ^26.6.2
-  checksum: 54fbedd1ecdfe1d47be2e592b98d18b2ab9d7e731f57231caf9b152593fe7329fe5ebe219e0e5d1e0df5b1ab803121cb8acd8b73bd1fb292bfdc2c55663eb01d
-  languageName: node
-  linkType: hard
-
 "@testing-library/jest-dom@npm:5.11.5":
   version: 5.11.5
   resolution: "@testing-library/jest-dom@npm:5.11.5"
@@ -6966,32 +6942,6 @@ __metadata:
     react-test-renderer:
       optional: true
   checksum: 27c6169b5c9832bd02dcea232e6a0a3cd8d4504e13ecb49d57eb5ab6bea5e2f1bff65f3102068b7e57eec3cbd671326dc0b277335014b0edfbdedf11a1fe6db5
-  languageName: node
-  linkType: hard
-
-"@testing-library/react-hooks@npm:^3.2.1":
-  version: 3.7.0
-  resolution: "@testing-library/react-hooks@npm:3.7.0"
-  dependencies:
-    "@babel/runtime": ^7.12.5
-    "@types/testing-library__react-hooks": ^3.4.0
-  peerDependencies:
-    react: ">=16.9.0"
-    react-test-renderer: ">=16.9.0"
-  checksum: 7ada35cb4114056908990250033527ffd554d055eced797083aca752fb9789b3bc70291077f1d57b8cf64ab5eb7b3827f9de3bcaa38655f2b975c65a33a418d6
-  languageName: node
-  linkType: hard
-
-"@testing-library/react@npm:11.1.2":
-  version: 11.1.2
-  resolution: "@testing-library/react@npm:11.1.2"
-  dependencies:
-    "@babel/runtime": ^7.12.1
-    "@testing-library/dom": ^7.26.6
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 61df2bfc12e81b2d69696b8e2585c028c7213bb019e6bfa285ddbb2a99ee3c565feb714c06a344de11ee20ab1846a7654d4ec2bd710b009346ecaff71d51b36e
   languageName: node
   linkType: hard
 
@@ -7984,7 +7934,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/json-schema@npm:*, @types/json-schema@npm:^7.0.4, @types/json-schema@npm:^7.0.5, @types/json-schema@npm:^7.0.7, @types/json-schema@npm:^7.0.8":
+"@types/json-schema@npm:*, @types/json-schema@npm:^7.0.4, @types/json-schema@npm:^7.0.5, @types/json-schema@npm:^7.0.7, @types/json-schema@npm:^7.0.8, @types/json-schema@npm:^7.0.9":
   version: 7.0.9
   resolution: "@types/json-schema@npm:7.0.9"
   checksum: 259d0e25f11a21ba5c708f7ea47196bd396e379fddb79c76f9f4f62c945879dc21657904914313ec2754e443c5018ea8372362f323f30e0792897fdb2098a705
@@ -8331,12 +8281,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:16.9.9":
-  version: 16.9.9
-  resolution: "@types/react-dom@npm:16.9.9"
+"@types/react-dom@npm:17.0.11":
+  version: 17.0.11
+  resolution: "@types/react-dom@npm:17.0.11"
   dependencies:
     "@types/react": "*"
-  checksum: b42a788b6a40a79a738346044c21e6c536f136e9b919fce90847aaaba7298e0b7d4d6845a1449d92a5678c5c221f060d66207a7f4968f7f5991e2511aa8e6860
+  checksum: 4d5730dffbef86c887cecad7e3cecda424ce6a64d0b5441c63b5b015d48219868660a2bb1aa15e897e565ad8867fa6b885d4358b04e1c4e589ba4c07c3fda55c
   languageName: node
   linkType: hard
 
@@ -8420,18 +8370,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-select@npm:4.0.13":
-  version: 4.0.13
-  resolution: "@types/react-select@npm:4.0.13"
-  dependencies:
-    "@emotion/serialize": ^1.0.0
-    "@types/react": "*"
-    "@types/react-dom": "*"
-    "@types/react-transition-group": "*"
-  checksum: 1a3fdd93a33e8b3fd59ba32c4e952cf057e0f745a3506ac556172ceba4c849e33494dfba1553783f6f55d864a530869f33feefc55306b212146758d612117dba
-  languageName: node
-  linkType: hard
-
 "@types/react-syntax-highlighter@npm:11.0.5":
   version: 11.0.5
   resolution: "@types/react-syntax-highlighter@npm:11.0.5"
@@ -8459,21 +8397,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-transition-group@npm:*":
-  version: 4.4.4
-  resolution: "@types/react-transition-group@npm:4.4.4"
-  dependencies:
-    "@types/react": "*"
-  checksum: 86e9ff9731798e12bc2afe0304678918769633b531dcf6397f86af81718fb7930ef8648e894eeb3718fc6eab6eb885cfb9b82a44d1d74e10951ee11ebc4643ae
-  languageName: node
-  linkType: hard
-
 "@types/react-transition-group@npm:4.4.0":
   version: 4.4.0
   resolution: "@types/react-transition-group@npm:4.4.0"
   dependencies:
     "@types/react": "*"
   checksum: ba44361d7b055922b60a557389a68d5320a190785cd80173839ef8c096aeb0808bd9c35fc9a70badbfe959dc668fdb1b82211e4914140a5edc9ed87d760c9812
+  languageName: node
+  linkType: hard
+
+"@types/react-transition-group@npm:^4.4.0":
+  version: 4.4.4
+  resolution: "@types/react-transition-group@npm:4.4.4"
+  dependencies:
+    "@types/react": "*"
+  checksum: 86e9ff9731798e12bc2afe0304678918769633b531dcf6397f86af81718fb7930ef8648e894eeb3718fc6eab6eb885cfb9b82a44d1d74e10951ee11ebc4643ae
   languageName: node
   linkType: hard
 
@@ -8506,16 +8444,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:16.9.9":
-  version: 16.9.9
-  resolution: "@types/react@npm:16.9.9"
-  dependencies:
-    "@types/prop-types": "*"
-    csstype: ^2.2.0
-  checksum: a44ad6338989161b4da02b1d0da6efe31a50e78bd747525402c953110736e0567f54148743f1399bd58e2874866bcd9c56961893c791d0cdc11df5b955c78382
-  languageName: node
-  linkType: hard
-
 "@types/react@npm:17.0.30":
   version: 17.0.30
   resolution: "@types/react@npm:17.0.30"
@@ -8524,6 +8452,17 @@ __metadata:
     "@types/scheduler": "*"
     csstype: ^3.0.2
   checksum: e3aaac1b8fda6e3622b75db0bd7d8dc412c2f2b77a00afdd32cae8c71fb0b1ca6926ab1fbe1c536dd51d96c0ba372738993837a8df1637637aaab7b86e421b7f
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:17.0.36":
+  version: 17.0.36
+  resolution: "@types/react@npm:17.0.36"
+  dependencies:
+    "@types/prop-types": "*"
+    "@types/scheduler": "*"
+    csstype: ^3.0.2
+  checksum: feeaa484d5d7e354ba6830b06342dec6fd1a2ac87f73d21d3d4f2a3d311459de4090330a1e8af7275c8d1e7737b655a7550c8dd3dbc74ccf34ffd3fc824bbd12
   languageName: node
   linkType: hard
 
@@ -8748,7 +8687,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/testing-library__react-hooks@npm:^3.2.0, @types/testing-library__react-hooks@npm:^3.4.0":
+"@types/testing-library__react-hooks@npm:^3.2.0":
   version: 3.4.1
   resolution: "@types/testing-library__react-hooks@npm:3.4.1"
   dependencies:
@@ -8953,6 +8892,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript-eslint/eslint-plugin@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@typescript-eslint/eslint-plugin@npm:5.4.0"
+  dependencies:
+    "@typescript-eslint/experimental-utils": 5.4.0
+    "@typescript-eslint/scope-manager": 5.4.0
+    debug: ^4.3.2
+    functional-red-black-tree: ^1.0.1
+    ignore: ^5.1.8
+    regexpp: ^3.2.0
+    semver: ^7.3.5
+    tsutils: ^3.21.0
+  peerDependencies:
+    "@typescript-eslint/parser": ^5.0.0
+    eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 83e8d5ab66405b9ff9a63dfc66ff45870c2ede6f7ef3368f57fa6140f97c4aac28d9e44b71f6443b004f41b5b36003a4609dc3bd51bcc96c72bd1f4d42af1d7b
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/experimental-utils@npm:4.28.0":
   version: 4.28.0
   resolution: "@typescript-eslint/experimental-utils@npm:4.28.0"
@@ -8966,6 +8927,22 @@ __metadata:
   peerDependencies:
     eslint: "*"
   checksum: 29bcee0d581ad20043532b6b1fa0c2e844ab35a99aa67478fbb68b7be5889dc8aee1f52b72c3a51d8f4cf57e1f0ac664d92738b3eb5aea9aa8a8c72aa30a74b7
+  languageName: node
+  linkType: hard
+
+"@typescript-eslint/experimental-utils@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@typescript-eslint/experimental-utils@npm:5.4.0"
+  dependencies:
+    "@types/json-schema": ^7.0.9
+    "@typescript-eslint/scope-manager": 5.4.0
+    "@typescript-eslint/types": 5.4.0
+    "@typescript-eslint/typescript-estree": 5.4.0
+    eslint-scope: ^5.1.1
+    eslint-utils: ^3.0.0
+  peerDependencies:
+    eslint: "*"
+  checksum: 85c818a147e86bfde3db8b2ed3f3a79855f9baf539a0f4796715b1632afdd79638bc5bb525ce9e616ee3a0f549889b5e8049a51801ff75eabf13ab4ba474e0f1
   languageName: node
   linkType: hard
 
@@ -8986,6 +8963,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript-eslint/parser@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@typescript-eslint/parser@npm:5.4.0"
+  dependencies:
+    "@typescript-eslint/scope-manager": 5.4.0
+    "@typescript-eslint/types": 5.4.0
+    "@typescript-eslint/typescript-estree": 5.4.0
+    debug: ^4.3.2
+  peerDependencies:
+    eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: d76732469cb100426fb9574713c1065c14969a502214b8b400e4829e5c01b1fe4744ce59a86ef9fd4ac5baf620454c517975b136b8735881f617e53322325cd7
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/scope-manager@npm:4.28.0":
   version: 4.28.0
   resolution: "@typescript-eslint/scope-manager@npm:4.28.0"
@@ -8996,10 +8990,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript-eslint/scope-manager@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@typescript-eslint/scope-manager@npm:5.4.0"
+  dependencies:
+    "@typescript-eslint/types": 5.4.0
+    "@typescript-eslint/visitor-keys": 5.4.0
+  checksum: 681007e727f01b694a8dbec79eba993479eb2c8aa26a0e02832d9e99bca4ba97258d8a2845bd6fb8ab461081a268d5db9b0b67385d357a07d58f78a9386f4682
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/types@npm:4.28.0":
   version: 4.28.0
   resolution: "@typescript-eslint/types@npm:4.28.0"
   checksum: 5d167f32e93f5854e78315a3a59beaf45bf9fdc5dc6a01d02c22152c08c8871022b5c41281c5355f44be1f9d36f9d24a67087a5c0dcfeea25477eb5918b5c410
+  languageName: node
+  linkType: hard
+
+"@typescript-eslint/types@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@typescript-eslint/types@npm:5.4.0"
+  checksum: 8d1dc7149e597ae98917cc109136b8c081682158f688b2ca76256493e46b4acfda2135e30258200e83a40492678683393f0eb4d508d43b80b321ea006fc11a38
   languageName: node
   linkType: hard
 
@@ -9021,6 +9032,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript-eslint/typescript-estree@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@typescript-eslint/typescript-estree@npm:5.4.0"
+  dependencies:
+    "@typescript-eslint/types": 5.4.0
+    "@typescript-eslint/visitor-keys": 5.4.0
+    debug: ^4.3.2
+    globby: ^11.0.4
+    is-glob: ^4.0.3
+    semver: ^7.3.5
+    tsutils: ^3.21.0
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 2f818c629c2b43b5cb669e9d950b9afadbad94275ef867308f8544277631f723ffd769852a522012c1aef12a9bba11ae46e72469187e3630f7ae373bc8c8a1c0
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/visitor-keys@npm:4.28.0":
   version: 4.28.0
   resolution: "@typescript-eslint/visitor-keys@npm:4.28.0"
@@ -9028,6 +9057,16 @@ __metadata:
     "@typescript-eslint/types": 4.28.0
     eslint-visitor-keys: ^2.0.0
   checksum: a2f5cec756946d924e3a4f5e89d600da82d500690575620513eb700e9ab65226f62910a16ed3a2e1e9c46d7171ee6c5f23ff82e222dcd65e4b6e14f712534d71
+  languageName: node
+  linkType: hard
+
+"@typescript-eslint/visitor-keys@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@typescript-eslint/visitor-keys@npm:5.4.0"
+  dependencies:
+    "@typescript-eslint/types": 5.4.0
+    eslint-visitor-keys: ^3.0.0
+  checksum: a0c1c5e3fbe2fb6d49e240603f7f613e071a9b5a5a7dd41b7a10cf4d71fbda522c1d3af8389efafd7c03cacd5d2ab9286d6e805d530957aba3a6538b9d248a3a
   languageName: node
   linkType: hard
 
@@ -13758,7 +13797,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:^2.2.0, csstype@npm:^2.5.7":
+"csstype@npm:^2.5.7":
   version: 2.6.18
   resolution: "csstype@npm:2.6.18"
   checksum: 1d6d67bc7f55af976d7a9cb153d61867d6c84eb0d69733165d2d4f10c659e7647a1e7a19859acacbf0120552164b8ff1a4ffef45a435aa37a4ff2f09e5b0bcf7
@@ -13781,11 +13820,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:8.4.1":
-  version: 8.4.1
-  resolution: "cypress@npm:8.4.1"
+"cypress@npm:9.0.0":
+  version: 9.0.0
+  resolution: "cypress@npm:9.0.0"
   dependencies:
-    "@cypress/request": ^2.88.6
+    "@cypress/request": ^2.88.7
     "@cypress/xvfb": ^1.2.4
     "@types/node": ^14.14.31
     "@types/sinonjs__fake-timers": ^6.0.2
@@ -13819,7 +13858,7 @@ __metadata:
     minimist: ^1.2.5
     ospath: ^1.2.2
     pretty-bytes: ^5.6.0
-    ramda: ~0.27.1
+    proxy-from-env: 1.0.0
     request-progress: ^3.0.0
     supports-color: ^8.1.1
     tmp: ~0.2.1
@@ -13828,7 +13867,7 @@ __metadata:
     yauzl: ^2.10.0
   bin:
     cypress: bin/cypress
-  checksum: d06e91df458d8052971a6992c0d0e74451bf916ceba0599e9bf0287022b60e831a2ef0b9be64af03894101d06c3fc21b98fed9a3e9f6a0818ee75f0b7358d033
+  checksum: ae481f26f6a51370bad6571b7edd525559c0b4e36fb9c33ac26c822610bd2f0b419614f12c1d87aff59c46afb3c2f06f7e167f924023da65fe2a3987927255c8
   languageName: node
   linkType: hard
 
@@ -14831,7 +14870,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dom-accessibility-api@npm:^0.5.6, dom-accessibility-api@npm:^0.5.9":
+"dom-accessibility-api@npm:^0.5.9":
   version: 0.5.9
   resolution: "dom-accessibility-api@npm:0.5.9"
   checksum: 3988bd1c58e115e972179b9ef881e65ab5da9c2e9d08f4e9646870301971fb0c72d0e0866559e0c06b91b9da6f1fed2f31f0fcbf0b6cffd959b01c0601da2c56
@@ -15830,6 +15869,13 @@ __metadata:
   version: 2.1.0
   resolution: "eslint-visitor-keys@npm:2.1.0"
   checksum: e3081d7dd2611a35f0388bbdc2f5da60b3a3c5b8b6e928daffff7391146b434d691577aa95064c8b7faad0b8a680266bcda0a42439c18c717b80e6718d7e267d
+  languageName: node
+  linkType: hard
+
+"eslint-visitor-keys@npm:^3.0.0":
+  version: 3.1.0
+  resolution: "eslint-visitor-keys@npm:3.1.0"
+  checksum: fd2d613bb315bc549068ca97771d868437fb60c8f13ef8d6d54669773ff53f814b759fa9e57966f15e4c50a5f5e11c6ba47060b8f201f9776311f6c5d5c11b70
   languageName: node
   linkType: hard
 
@@ -17868,8 +17914,8 @@ __metadata:
     "@react-aria/overlays": 3.7.2
     "@reduxjs/toolkit": 1.6.1
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
-    "@sentry/browser": 5.25.0
-    "@sentry/types": 5.24.2
+    "@sentry/browser": 6.15.0
+    "@sentry/types": 6.15.0
     "@sentry/utils": 6.13.2
     "@swc/core": 1.2.103
     "@swc/helpers": 0.2.13
@@ -17914,7 +17960,6 @@ __metadata:
     "@types/react-loadable": 5.5.2
     "@types/react-redux": 7.1.20
     "@types/react-router-dom": ^5.1.7
-    "@types/react-select": 4.0.13
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.0
     "@types/react-virtualized-auto-sizer": 1.0.0
@@ -17929,8 +17974,8 @@ __metadata:
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.2
     "@types/uuid": 8.3.0
-    "@typescript-eslint/eslint-plugin": 4.28.0
-    "@typescript-eslint/parser": 4.28.0
+    "@typescript-eslint/eslint-plugin": 5.4.0
+    "@typescript-eslint/parser": 5.4.0
     "@visx/event": 2.1.0
     "@visx/gradient": 2.1.0
     "@visx/group": 2.1.0
@@ -17963,7 +18008,7 @@ __metadata:
     core-js: 3.10.0
     css-loader: 6.5.1
     css-minimizer-webpack-plugin: ^3.1.3
-    cypress: 8.4.1
+    cypress: 9.0.0
     d3: 5.15.0
     d3-force: ^2.1.1
     d3-scale-chromatic: 1.5.0
@@ -18006,7 +18051,7 @@ __metadata:
     husky: ^7.0.0
     iconscout-unicons-tarball: "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28"
     immer: 9.0.6
-    immutable: 3.8.2
+    immutable: 4.0.0
     jest: 26.6.3
     jest-canvas-mock: 2.3.0
     jest-date-mock: 1.0.8
@@ -18069,7 +18114,7 @@ __metadata:
     react-resizable: 3.0.4
     react-reverse-portal: ^2.0.1
     react-router-dom: ^5.2.0
-    react-select: 4.3.0
+    react-select: 5.2.1
     react-select-event: ^5.1.0
     react-split-pane: 0.1.89
     react-test-renderer: 17.0.1
@@ -18103,7 +18148,6 @@ __metadata:
     terser-webpack-plugin: 5.2.5
     test: "link:./public/test"
     testing-library-selector: ^0.1.3
-    tether: 1.4.7
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: 1.4.1
     ts-jest: 26.4.4
@@ -19058,7 +19102,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:3.8.2, immutable@npm:^3.8.2":
+"immutable@npm:4.0.0":
+  version: 4.0.0
+  resolution: "immutable@npm:4.0.0"
+  checksum: 4b5e9181e4d5fa06728a481835ec09c86367e5d03268666c95b522b7644ab891098022e4479a43c4c81a68f2ed82f10751ce5d33e208d7b873b6e7f9dfaf4d87
+  languageName: node
+  linkType: hard
+
+"immutable@npm:^3.8.2":
   version: 3.8.2
   resolution: "immutable@npm:3.8.2"
   checksum: 41909b386950ff84ca3cfca77c74cfc87d225a914e98e6c57996fa81a328da61a7c32216d6d5abad40f54747ffdc5c4b02b102e6ad1a504c1752efde8041f964
@@ -26465,6 +26516,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"proxy-from-env@npm:1.0.0":
+  version: 1.0.0
+  resolution: "proxy-from-env@npm:1.0.0"
+  checksum: 292e28d1de0c315958d71d8315eb546dd3cd8c8cbc2dab7c54eeb9f5c17f421771964ad0b5e1f77011bab2305bdae42e1757ce33bdb1ccc3e87732322a8efcf1
+  languageName: node
+  linkType: hard
+
 "prr@npm:~1.0.1":
   version: 1.0.1
   resolution: "prr@npm:1.0.1"
@@ -26680,13 +26738,6 @@ __metadata:
   version: 0.21.0
   resolution: "ramda@npm:0.21.0"
   checksum: e08d63c12ed4bab70bfd700a843901d9fa340d1a88c50085a6ef0ecf25f528e5ac7c71848481270923491e7315a34301bb35905d45861cb13cc75b8ca05add32
-  languageName: node
-  linkType: hard
-
-"ramda@npm:~0.27.1":
-  version: 0.27.1
-  resolution: "ramda@npm:0.27.1"
-  checksum: 31a0c0ef739b2525d7615f84cbb5d3cb89ee0c795469b711f729ea1d8df0dccc3cd75d3717a1e9742d42315ce86435680b7c87743eb7618111c60c144a5b8059
   languageName: node
   linkType: hard
 
@@ -27606,21 +27657,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:4.3.0":
-  version: 4.3.0
-  resolution: "react-select@npm:4.3.0"
+"react-select@npm:5.2.1":
+  version: 5.2.1
+  resolution: "react-select@npm:5.2.1"
   dependencies:
     "@babel/runtime": ^7.12.0
-    "@emotion/cache": ^11.0.0
+    "@emotion/cache": ^11.4.0
     "@emotion/react": ^11.1.1
+    "@types/react-transition-group": ^4.4.0
     memoize-one: ^5.0.0
     prop-types: ^15.6.0
-    react-input-autosize: ^3.0.0
     react-transition-group: ^4.3.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
-  checksum: 00946ed4dfa46523bc44cd26aab11431396632097207081b471d1965fa53cf7f5a006ac11d89b8a65df05cc5376b1c4438edb1d5259323bdc6d3adf01c79d53e
+  checksum: 014cde5d23ca466795bd7f02455769efda74522c41f11109ec2d6f0e3c77f401ea91ae23cdccce997efb653aa6ea88688a16f40e59bfdef2a2414d0cfd10f374
   languageName: node
   linkType: hard
 
@@ -28271,7 +28322,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"regexpp@npm:^3.1.0":
+"regexpp@npm:^3.1.0, regexpp@npm:^3.2.0":
   version: 3.2.0
   resolution: "regexpp@npm:3.2.0"
   checksum: a78dc5c7158ad9ddcfe01aa9144f46e192ddbfa7b263895a70a5c6c73edd9ce85faf7c0430e59ac38839e1734e275b9c3de5c57ee3ab6edc0e0b1bdebefccef8
@@ -31372,7 +31423,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tether@npm:1.4.7, tether@npm:^1.1.0":
+"tether@npm:^1.1.0":
   version: 1.4.7
   resolution: "tether@npm:1.4.7"
   checksum: 766ac802654064b05e5785584a109101fc184266a0df99581a3ac45d33706c39d9fed314bd28daddf3532bfa0c41f81ebc133ce2c51995101ac922d3fb0477b8

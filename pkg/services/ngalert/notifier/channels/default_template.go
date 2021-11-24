@@ -13,6 +13,7 @@ var DefaultTemplateString = `
 {{ define "__subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}{{ end }}
 
 {{ define "__text_alert_list" }}{{ range . }}
+Value: {{ or .ValueString "<no value>" }}
 Labels:
 {{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
 {{ end }}Annotations:
@@ -33,6 +34,7 @@ Labels:
 
 
 {{ define "__teams_text_alert_list" }}{{ range . }}
+Value: {{ or .ValueString "<no value>" }}
 Labels:
 {{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
 {{ end }}
@@ -65,6 +67,7 @@ const TemplateForTestsString = `
 {{ define "__subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}{{ end }}
 
 {{ define "__text_alert_list" }}{{ range . }}
+Value: {{ or .ValueString "<no value>" }}
 Labels:
 {{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
 {{ end }}Annotations:
