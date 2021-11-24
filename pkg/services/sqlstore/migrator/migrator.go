@@ -50,6 +50,14 @@ func (mg *Migrator) AddMigration(id string, m Migration) {
 	mg.migrations = append(mg.migrations, m)
 }
 
+func (mg *Migrator) GetMigrationIDs() []string {
+	result := make([]string, 0, len(mg.migrations))
+	for _, migration := range mg.migrations {
+		result = append(result, migration.Id())
+	}
+	return result
+}
+
 func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	logMap := make(map[string]MigrationLog)
 	logItems := make([]MigrationLog, 0)
