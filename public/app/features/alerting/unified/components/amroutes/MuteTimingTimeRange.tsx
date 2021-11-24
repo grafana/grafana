@@ -17,27 +17,39 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
     name: `time_intervals.${intervalIndex}.times`,
   });
 
-  const timeRangeRegExp = /[0-2]{1}[0-9]{1}\:[0-5]{1}[0-9]{1}/;
+  const validateTime = (timeString: string) => {
+    if (!timeString) {
+      return true;
+    }
+    const [hour, minutes] = timeString.split(':').map((x) => parseInt(x, 10));
+    const isHourValid = hour > 0 && hour < 25;
+    const isMinuteValid = minutes > -1 && minutes < 60;
+    const isTimeValid = hour === 24 ? minutes === 0 : isHourValid && isMinuteValid;
+
+    return isTimeValid || 'Time is invalid';
+  };
+
+  const formErrors = formState.errors.time_intervals?.[intervalIndex];
+  const timeRangeInvalid = formErrors?.times?.some((value) => value?.start_time || value?.end_time) ?? false;
 
   return (
     <div>
       <Field
+        className={styles.field}
         label="Time range"
         description="The time inclusive of the starting time and exclusive of the end time in UTC"
+        invalid={timeRangeInvalid}
+        error={timeRangeInvalid ? 'Times must be between 00:00 and 24:00 UTC' : ''}
       >
         <>
           {timeRanges.map((timeRange, index) => {
-            const formErrors = formState.errors.time_intervals?.[intervalIndex];
             return (
               <div className={styles.timeRange} key={timeRange.id}>
                 <InlineFieldRow>
                   <InlineField label="Start time" invalid={!!formErrors?.times?.[index]?.start_time}>
                     <Input
                       {...register(`time_intervals.${intervalIndex}.times.${index}.start_time`, {
-                        pattern: {
-                          value: timeRangeRegExp,
-                          message: 'Invalid start time',
-                        },
+                        validate: validateTime,
                       })}
                       className={styles.timeRangeInput}
                       // @ts-ignore react-hook-form doesn't handle nested field arrays well
@@ -49,10 +61,7 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
                   <InlineField label="End time" invalid={!!formErrors?.times?.[index]?.end_time}>
                     <Input
                       {...register(`time_intervals.${intervalIndex}.times.${index}.end_time`, {
-                        pattern: {
-                          value: timeRangeRegExp,
-                          message: 'Invalid end time',
-                        },
+                        validate: validateTime,
                       })}
                       className={styles.timeRangeInput}
                       // @ts-ignore react-hook-form doesn't handle nested field arrays well
@@ -75,22 +84,25 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
               </div>
             );
           })}
-
-          <Button
-            variant="secondary"
-            type="button"
-            icon={'plus'}
-            onClick={() => addTimeRange({ start_time: '', end_time: '' })}
-          >
-            Add another time range
-          </Button>
         </>
       </Field>
+      <Button
+        className={styles.addTimeRange}
+        variant="secondary"
+        type="button"
+        icon={'plus'}
+        onClick={() => addTimeRange({ start_time: '', end_time: '' })}
+      >
+        Add another time range
+      </Button>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  field: css`
+    margin-bottom: 0;
+  `,
   timeRange: css`
     margin-bottom: ${theme.spacing(1)};
   `,
@@ -99,5 +111,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   deleteTimeRange: css`
     margin: ${theme.spacing(1)} 0 0 ${theme.spacing(0.5)};
+  `,
+  addTimeRange: css`
+    margin-bottom: ${theme.spacing(2)};
   `,
 });

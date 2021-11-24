@@ -277,7 +277,7 @@ export enum AlertManagerImplementation {
   prometheus = 'prometheus',
 }
 
-interface TimeRange {
+export interface TimeRange {
   /** Times are in format `HH:MM` in UTC */
   start_time: string;
   end_time: string;

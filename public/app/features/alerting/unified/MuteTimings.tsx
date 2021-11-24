@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
-import { AlertmanagerConfig } from 'app/plugins/datasource/alertmanager/types';
+import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -30,11 +30,11 @@ const MuteTimings = () => {
   const { result, error, loading } =
     (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
-  const config: AlertmanagerConfig = result?.alertmanager_config;
+  const config = result?.alertmanager_config;
 
   const getMuteTimingByName = useCallback(
     (id: string) => {
-      return config?.mute_time_intervals?.find(({ name }) => name === id);
+      return config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
     },
     [config]
   );
