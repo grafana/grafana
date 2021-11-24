@@ -28,12 +28,10 @@ export class PanelEditorQueries extends PureComponent<Props> {
           default: true,
         };
 
-    // dataSource.meta.queryOptions?.cacheTimeout
-
     const datasourceSettings = getDatasourceSrv().getInstanceSettings(dataSource.uid);
 
     return {
-      cacheTimeout: datasourceSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : null,
+      cacheTimeout: datasourceSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
       dataSource,
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,
