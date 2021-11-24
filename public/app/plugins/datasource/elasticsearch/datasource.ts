@@ -31,7 +31,7 @@ import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
@@ -796,7 +796,7 @@ export class ElasticDatasource
     );
   }
 
-  getTerms(queryDef: any, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
+  getTerms(queryDef: TermsQuery, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
     const searchType = gte(this.esVersion, '5.0.0') ? 'query_then_fetch' : 'count';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));

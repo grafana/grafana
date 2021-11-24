@@ -16,7 +16,7 @@ import {
   MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './query_def';
-import { ElasticsearchQuery } from './types';
+import { ElasticsearchQuery, TermsQuery } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
 export class ElasticQueryBuilder {
@@ -437,7 +437,7 @@ export class ElasticQueryBuilder {
     return parsedValue;
   }
 
-  getTermsQuery(queryDef: any) {
+  getTermsQuery(queryDef: TermsQuery) {
     const query: any = {
       size: 0,
       query: {

@@ -695,6 +695,44 @@ describe('ElasticQueryBuilder', () => {
           expect(query.aggs['1'].terms.order._key).toBeUndefined();
           expect(query.aggs['1'].terms.order._count).toBe('asc');
         });
+
+        describe('lucene query', () => {
+          it('should add query_string filter when query is not empty', () => {
+            const luceneQuery = 'foo';
+            const query = builder.getTermsQuery({ orderBy: 'doc_count', order: 'asc', query: luceneQuery });
+
+            expect(query.query.bool.filter).toContainEqual({
+              query_string: { analyze_wildcard: true, query: luceneQuery },
+            });
+          });
+
+          it('should not add query_string filter when query is empty', () => {
+            const query = builder.getTermsQuery({ orderBy: 'doc_count', order: 'asc' });
+
+            expect(
+              query.query.bool.filter.find((filter: any) => Object.keys(filter).includes('query_string'))
+            ).toBeFalsy();
+          });
+        });
+      });
+
+      describe('lucene query', () => {
+        it('should add query_string filter when query is not empty', () => {
+          const luceneQuery = 'foo';
+          const query = builder.build({ refId: 'A', query: luceneQuery });
+
+          expect(query.query.bool.filter).toContainEqual({
+            query_string: { analyze_wildcard: true, query: luceneQuery },
+          });
+        });
+
+        it('should not add query_string filter when query is empty', () => {
+          const query = builder.build({ refId: 'A' });
+
+          expect(
+            query.query.bool.filter.find((filter: any) => Object.keys(filter).includes('query_string'))
+          ).toBeFalsy();
+        });
       });
 
       describe('getLogsQuery', () => {
@@ -739,11 +777,12 @@ describe('ElasticQueryBuilder', () => {
 
         describe('lucene query', () => {
           it('should add query_string filter when query is not empty', () => {
-            const query = builder.getLogsQuery({ refId: 'A', query: 'foo' }, 500, null);
+            const luceneQuery = 'foo';
+            const query = builder.getLogsQuery({ refId: 'A', query: luceneQuery }, 500, null);
 
-            expect(
-              query.query.bool.filter.find((filter: any) => Object.keys(filter).includes('query_string'))
-            ).toBeTruthy();
+            expect(query.query.bool.filter).toContainEqual({
+              query_string: { analyze_wildcard: true, query: luceneQuery },
+            });
           });
 
           it('should not add query_string filter when query is empty', () => {
