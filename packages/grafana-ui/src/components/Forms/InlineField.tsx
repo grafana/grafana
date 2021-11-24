@@ -5,7 +5,7 @@ import { useTheme } from '../../themes';
 import { InlineLabel } from './InlineLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { FieldProps } from './Field';
-import { getChildId } from '../../utils/children';
+import { getChildId } from '../../utils/reactUtils';
 
 export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'description' | 'error'> {
   /** Content for the label's tooltip */

@@ -31,6 +31,9 @@ export const getFeatures = (
       if (dims.size) {
         values.size = dims.size.get(i);
       }
+      if (dims.rotation) {
+        values.rotation = dims.rotation.get(i);
+      }
       if (dims.text) {
         values.text = dims.text.get(i);
       }
