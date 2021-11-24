@@ -188,7 +188,7 @@ describe('LokiDatasource', () => {
         expect(backendSrv.fetch).toBeCalledWith(
           expect.objectContaining({
             headers: {
-              'X-Query-Tag': 'Source=logvolhist',
+              'X-Query-Tags': 'Source=logvolhist',
             },
           })
         );
@@ -200,7 +200,7 @@ describe('LokiDatasource', () => {
         expect(backendSrv.fetch).not.toBeCalledWith(
           expect.objectContaining({
             headers: {
-              'X-Query-Tag': 'Source=logvolhist',
+              'X-Query-Tags': 'Source=logvolhist',
             },
           })
         );
