@@ -228,6 +228,11 @@ def get_steps(edition, ver_mode):
     # Insert remaining steps
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
+        e2e_tests_server_step(edition=edition),
+        e2e_tests_step('dashboards-suite', edition=edition, tries=3),
+        e2e_tests_step('smoke-tests-suite', edition=edition, tries=3),
+        e2e_tests_step('panels-suite', edition=edition, tries=3),
+        e2e_tests_step('various-suite', edition=edition, tries=3),
         copy_packages_for_docker_step(),
         package_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
         package_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
@@ -266,6 +271,11 @@ def get_steps(edition, ver_mode):
     if include_enterprise2:
         publish_steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
+            e2e_tests_server_step(edition=edition2, port=3002),
+            e2e_tests_step('dashboards-suite', edition=edition2, port=3002, tries=3),
+            e2e_tests_step('smoke-tests-suite', edition=edition2, port=3002, tries=3),
+            e2e_tests_step('panels-suite', edition=edition2, port=3002, tries=3),
+            e2e_tests_step('various-suite', edition=edition2, port=3002, tries=3),
             upload_cdn_step(edition=edition2, ver_mode=ver_mode),
         ])
         if should_upload:

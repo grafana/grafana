@@ -1,5 +1,4 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
-
 load('scripts/drone/opts.star', 'cypress_image')
 
 grabpl_version = 'v2.8.2'
@@ -280,7 +279,13 @@ def store_storybook_step(edition, ver_mode):
     return {
         'name': 'store-storybook',
         'image': publish_image,
-        'depends_on': ['build-storybook',] + end_to_end_tests_deps(edition),
+        'depends_on': [
+            'build-storybook',
+            'end-to-end-tests-dashboards-suite',
+            'end-to-end-tests-panels-suite',
+            'end-to-end-tests-smoke-tests-suite',
+            'end-to-end-tests-various-suite',
+        ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
@@ -682,6 +687,10 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         'environment': {
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
         },
+        'volumes': [{
+            'name': 'cypress_cache',
+            'path': '/root/.cache/Cypress'
+        }],
         'commands': [
             'apt-get install -y netcat',
             cmd,
@@ -878,7 +887,12 @@ def release_canary_npm_packages_step(edition):
     return {
         'name': 'release-canary-npm-packages',
         'image': build_image,
-        'depends_on': end_to_end_tests_deps(edition),
+        'depends_on': [
+            'end-to-end-tests-dashboards-suite',
+            'end-to-end-tests-panels-suite',
+            'end-to-end-tests-smoke-tests-suite',
+            'end-to-end-tests-various-suite',
+        ],
         'environment': {
             'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
         },
@@ -911,18 +925,21 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     else:
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
 
-    deps = []
-    if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
-        deps.extend([
-            'package' + enterprise2_suffix(edition),
-            ])
-    else:
-        deps.extend(end_to_end_tests_deps(edition))
+    dependencies = [
+        'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
+    ]
+
+    if edition in ('enterprise', 'enterprise2'):
+        dependencies.append('redis-integration-tests')
+        dependencies.append('memcached-integration-tests')
 
     return {
         'name': 'upload-packages' + enterprise2_suffix(edition),
         'image': publish_image,
-        'depends_on': deps,
+        'depends_on': dependencies,
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
