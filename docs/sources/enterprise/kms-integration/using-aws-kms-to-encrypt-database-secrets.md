@@ -63,6 +63,7 @@ Update the `[security]` section of the `grafana.ini` configuration file with the
 secret_key = AaaaAaaa
 # encryption provider key in the format <PROVIDER>.<KEY_NAME>
 encryption_provider = awskms.example-encryption-key
+# list of configured key providers, space separated
 available_encryption_providers = awskms.example-encryption-key
 ```
 
