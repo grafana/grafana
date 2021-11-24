@@ -38,5 +38,5 @@ case "$1" in
 esac
 
 yarn $CMD --env BASE_URL=$URL,SLOWMO=$SLOWMO \
-  --config defaultCommandTimeout=30000,testFiles=$testFiles,integrationFolder=$integrationFolder,screenshotsFolder=../../e2e"${args[0]}"/screenshots,videosFolder=../../e2e/"${args[0]}"/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false,videoUploadOnPasses=false \
+  --config defaultCommandTimeout=30000,testFiles=$testFiles,integrationFolder=$integrationFolder,screenshotsFolder=../../e2e/"${args[0]}"/screenshots,videosFolder=../../e2e/"${args[0]}"/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false,videoUploadOnPasses=false \
   $PARAMS
