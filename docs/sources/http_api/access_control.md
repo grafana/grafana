@@ -206,7 +206,7 @@ Content-Type: application/json; charset=UTF-8
 | Code | Description                                                          |
 | ---- | -------------------------------------------------------------------- |
 | 200  | Role is returned.                                                    |
-| 403  | Access denied.                                                      |
+| 403  | Access denied.                                                       |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
 ### Create a new custom role
@@ -257,8 +257,8 @@ Content-Type: application/json
 | version     | number     | No       | Version of the role. If not present, version 0 will be assigned to the role and returned in the response. Refer to the [Custom roles]({{< relref "../enterprise/access-control/roles.md#custom-roles" >}}) for more information.                                    |
 | name        | string     | Yes      | Name of the role. Refer to [Custom roles]({{< relref "../enterprise/access-control/roles.md#custom-roles" >}}) for more information.                                                                                                                                |
 | description | string     | No       | Description of the role.                                                                                                                                                                                                                                            |
-| displayName | string     | No       | Display name of the role, visible in the UI. |
-| group       | string     | No       | The group name the role belongs to. |
+| displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                                                        |
+| group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                                                 |
 | permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                                                   |
 
 **Permission**
@@ -353,8 +353,8 @@ Content-Type: application/json
 | version     | number              | Yes      | Version of the role. Must be incremented for update to work.        |
 | name        | string              | Yes      | Name of the role.                                                   |
 | description | string              | No       | Description of the role.                                            |
-| displayName | string              | No       | Display name of the role, visible in the UI. |
-| group       | string              | No       | The group name the role belongs to. |
+| displayName | string              | No       | Display name of the role, visible in the UI.                        |
+| group       | string              | No       | The group name the role belongs to.                                 |
 | permissions | List of Permissions | No       | The full list of permissions the role should have after the update. |
 
 **Permission**
@@ -455,7 +455,7 @@ Content-Type: application/json; charset=UTF-8
 | 403  | Access denied                                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details.               |
 
-## Create and remove user role assignments  
+## Create and remove user role assignments
 
 ### List roles assigned to a user
 
@@ -465,9 +465,9 @@ Lists the roles that have been directly assigned to a given user. The list does 
 
 #### Required permissions
 
-| Action             | Scope    |
-| ------------------ | -------- |
-| users.roles:list   | users:*  |
+| Action           | Scope    |
+| ---------------- | -------- |
+| users.roles:list | users:\* |
 
 #### Example response
 
@@ -492,7 +492,7 @@ Lists the roles that have been directly assigned to a given user. The list does 
 | Code | Description                                                          |
 | ---- | -------------------------------------------------------------------- |
 | 200  | Set of assigned roles is returned.                                   |
-| 403  | Access denied.                                                        |
+| 403  | Access denied.                                                       |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
 ### List permissions assigned to a user
@@ -503,9 +503,9 @@ Lists the permissions that a given user has.
 
 #### Required permissions
 
-| Action             | Scope    |
-| ------------------ | -------- |
-| users.permissions:list   | users:*  |
+| Action                 | Scope    |
+| ---------------------- | -------- |
+| users.permissions:list | users:\* |
 
 #### Example response
 
@@ -526,8 +526,8 @@ Lists the permissions that a given user has.
 
 | Code | Description                                                          |
 | ---- | -------------------------------------------------------------------- |
-| 200  | Set of assigned permissions is returned.                                   |
-| 403  | Access denied.                                                        |
+| 200  | Set of assigned permissions is returned.                             |
+| 403  | Access denied.                                                       |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
 ### Assign a role to a user
@@ -541,8 +541,8 @@ Assign a role to a specific user.
 `permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action            | Scope                |
-| ----------------- | -------------------- |
+| Action          | Scope                |
+| --------------- | -------------------- |
 | users.roles:add | permissions:delegate |
 
 #### Example request
@@ -553,12 +553,13 @@ For example, if a user does not have required permissions for creating users, th
     "roleUid": "XvHQJq57z"
 }
 ```
+
 #### JSON body schema
 
-| Field Name  | Data Type           | Required | Description                                                         |
-| ----------- | ------------------- | -------- | ------------------------------------------------------------------- |
-| roleUid     | string    | Yes      | UID of the role.                                                                                                                                                                                                                                                                                                                              |
-| global      | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to create organization local assignment.
+| Field Name | Data Type | Required | Description                                                                                                                                                                                  |
+| ---------- | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| roleUid    | string    | Yes      | UID of the role.                                                                                                                                                                             |
+| global     | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to create organization local assignment. |
 
 #### Example response
 
@@ -588,14 +589,14 @@ Unassign a role from a user.
 `permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action            | Scope                |
-| ----------------- | -------------------- |
+| Action             | Scope                |
+| ------------------ | -------------------- |
 | users.roles:remove | permissions:delegate |
 
 #### Query parameters
 
-| Param  | Type    | Required | Description                                                                                                                                                                                                                                                                                                                |
-| ------ | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Param  | Type    | Required | Description                                                                                                                                                               |
+| ------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | global | boolean | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to remove assignment. |
 
 #### Example response
@@ -625,9 +626,9 @@ Assigns roles to a user in bulk. The assignment is idempotent and replaces curre
 `permission:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action            | Scope                |
-| ----------------- | -------------------- |
-| users.roles:add | permissions:delegate |
+| Action             | Scope                |
+| ------------------ | -------------------- |
+| users.roles:add    | permissions:delegate |
 | users.roles:remove | permissions:delegate |
 
 #### Example request
@@ -641,12 +642,13 @@ For example, if a user does not have required permissions for creating users, th
     ]
 }
 ```
+
 #### JSON body schema
 
-| Field Name  | Date Type  | Required | Description                                                                                                                                                                                                                                                         |
-| ----------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| global      | boolean    | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request.  |
-| roleUids    | list       | Yes      | List of role UIDs.                                                                                                                                                                                                   |
+| Field Name | Date Type | Required | Description                                                                                                                                          |
+| ---------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| global     | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request. |
+| roleUids   | list      | Yes      | List of role UIDs.                                                                                                                                   |
 
 #### Example response
 
@@ -660,9 +662,9 @@ For example, if a user does not have required permissions for creating users, th
 
 | Code | Description                                                          |
 | ---- | -------------------------------------------------------------------- |
-| 200  | Roles have been assigned.                                                  |
-| 403  | Access denied.                                                        |
-| 404  | Role not found.                                                        |
+| 200  | Roles have been assigned.                                            |
+| 403  | Access denied.                                                       |
+| 404  | Role not found.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
 ## Create and remove built-in role assignments
