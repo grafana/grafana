@@ -178,7 +178,7 @@ export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
 export { Form } from './Forms/Form';
 export { sharedInputStyle } from './Forms/commonStyles';
 export { InputControl } from './InputControl';
-export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow } from './Button';
+export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow, ButtonProps } from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
