@@ -27,7 +27,7 @@ Steps:
 1. Select one or more roles that you would like to assign to that user.
 1. Click the **Apply** button to apply the selected roles to that user.
 
-< TODO link images >
+![User role picker in Organization](/static/img/docs/enterprise/user_role_picker_global.png)
 
 The user's permissions will update immediately, and the UI will reflect their new permissions the next time they reload their browser or visit a new page.
 
@@ -51,7 +51,7 @@ Steps:
 1. Select one or more roles that you would like to assign to that user.
 1. Click the **Apply** button to apply the selected roles to that user.
 
-< TODO link images >
+![User role picker in Organization](/static/img/docs/enterprise/user_role_picker_in_org.png)
 
 The user's permissions will update immediately, and the UI will reflect their new permissions the next time they reload their browser or visit a new page.
 
