@@ -25,6 +25,7 @@ describe('AzureMonitor resourcePickerData', () => {
 
       expect(argQuery).toContain(`where type == 'microsoft.resources/subscriptions'`);
       expect(argQuery).toContain(`where type == 'microsoft.resources/subscriptions/resourcegroups'`);
+      expect(argQuery).toContain(`project resourceGroupURI=id, resourceGroupName=name, resourceGroup, subscriptionId`);
     });
 
     it('returns only subscriptions at the top level', async () => {
