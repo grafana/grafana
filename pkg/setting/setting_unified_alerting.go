@@ -81,34 +81,33 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	enabled, err := ua.Key("enabled").Bool()
 	if err == nil {
 		uaCfg.Enabled = &enabled
-		// if unified alerting is disabled but legacy is undefined, fallback to the legacy enabled
+		// If unified alerting is disabled but legacy alerting is undefined, fallback to legacy enabled.
 		if AlertingEnabled == nil {
 			alertingEnabled := !enabled
 			AlertingEnabled = &alertingEnabled
 		}
 	} else if cfg.FeatureToggles["ngalert"] {
-		// if the old feature toggle ngalert is set, enable Grafana 8 Unified Alerting anyway.
-		//TODO: Remove this in v9
+		// If old feature toggle ngalert is set, enable unified alerting.
+		// TODO: Remove this in v9
 		cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
-		enabled = true
-		uaCfg.Enabled = &enabled
-		alertingEnabled := false
-		AlertingEnabled = &alertingEnabled
+		uaCfg.Enabled = new(bool)
+		*uaCfg.Enabled = true
+		AlertingEnabled = new(bool)
 	} else if AlertingEnabled != nil && !*AlertingEnabled {
-		// if unified alerting is not defined but the legacy alerting is disabled, enable unified alerting
+		// If unified alerting is not defined but legacy alerting is disabled, enable unified alerting.
 		enabled = true
 		uaCfg.Enabled = &enabled
 	} else {
 		uaCfg.Enabled = nil
 	}
 
-	// if the unified alerting is defined explicitly as well as the legacy alerting and both are enabled, return error
+	// If unified alerting is defined explicitly as well as legacy alerting and both are enabled, return error.
 	if uaCfg.Enabled != nil && *uaCfg.Enabled && AlertingEnabled != nil && *AlertingEnabled {
 		return errors.New("both legacy and Grafana 8 Alerts are enabled. Disable one of them and restart")
 	}
-	// NOTE: in the case when at this point the enabled flag is still not defined, the final decision is made during migration. (see sqlstore.migrations.ualert.CheckUnifiedAlertingEnabledByDefault)
+	// NOTE: If the enabled flag is still not defined, the final decision is made during migration (see sqlstore.migrations.ualert.CheckUnifiedAlertingEnabledByDefault).
 	if uaCfg.Enabled == nil {
-		cfg.Logger.Info("The state of unified alerting is still not defined. The decision will be made during the migration phase")
+		cfg.Logger.Info("The state of unified alerting is still not defined. The decision will be made during migration")
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
