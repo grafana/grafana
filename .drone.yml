@@ -228,7 +228,7 @@ steps:
 - commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
-  - cd /hugo && make prod
+  - cd /hugo && make docs-test
   depends_on:
   - build-frontend-docs
   image: grafana/docs-base:latest
