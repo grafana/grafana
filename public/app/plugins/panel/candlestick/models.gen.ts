@@ -53,6 +53,9 @@ export interface CandlestickOptions extends OptionsWithLegend {
   colorStrategy: ColorStrategy;
   fields: CandlestickFieldMap;
   colors: CandlestickColors;
+
+  // When enabled, all fields will be sent to the graph
+  includeAllFields?: boolean;
 }
 
 export const defaultPanelOptions: CandlestickOptions = {
@@ -66,4 +69,5 @@ export const defaultPanelOptions: CandlestickOptions = {
     placement: 'bottom',
     calcs: [],
   },
+  includeAllFields: false,
 };

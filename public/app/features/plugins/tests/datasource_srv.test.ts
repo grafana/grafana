@@ -30,7 +30,7 @@ class TestDataSource {
   constructor(public instanceSettings: DataSourceInstanceSettings) {}
 }
 
-jest.mock('./plugin_loader', () => ({
+jest.mock('../plugin_loader', () => ({
   importDataSourcePlugin: (meta: DataSourcePluginMeta) => {
     return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
   },

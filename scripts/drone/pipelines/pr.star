@@ -66,8 +66,8 @@ def pr_pipelines(edition):
         ensure_cuetsified_step(),
     ]
     integration_test_steps = [
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
     ]
 
     if include_enterprise2:
@@ -98,8 +98,8 @@ def pr_pipelines(edition):
 
     if include_enterprise2:
         integration_test_steps.extend([
-            redis_integration_tests_step(),
-            memcached_integration_tests_step(),
+            redis_integration_tests_step(edition=edition2, ver_mode=ver_mode),
+            memcached_integration_tests_step(edition=edition, ver_mode=ver_mode),
         ])
         build_steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
@@ -119,6 +119,6 @@ def pr_pipelines(edition):
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
                 + build_steps,
         ), pipeline(
-            name='pr-integration-tests', edition=edition, trigger=trigger, services=services, steps=[download_grabpl_step()] + integration_test_steps,
+            name='pr-integration-tests', edition=edition, trigger=trigger, services=services, steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
         ),
     ]

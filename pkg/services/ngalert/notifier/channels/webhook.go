@@ -31,7 +31,10 @@ type WebhookNotifier struct {
 // the WebHook notifier.
 func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*WebhookNotifier, error) {
 	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find settings property"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
+	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
 	url := model.Settings.Get("url").MustString()
 	if url == "" {

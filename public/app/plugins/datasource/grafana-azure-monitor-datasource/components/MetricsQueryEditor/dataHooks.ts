@@ -193,8 +193,6 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
       // Do some cleanup of the query state if need be
       if (!metricNamespace && options.length) {
         onChange(setMetricNamespace(query, options[0].value));
-      } else if (options[0] && isInvalidOption(metricNamespace, options, datasource.getVariables())) {
-        onChange(setMetricNamespace(query, options[0].value));
       }
 
       return options;

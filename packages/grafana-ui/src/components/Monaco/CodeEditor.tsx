@@ -131,6 +131,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
         top: 0.5 * theme.spacing.gridSize,
         bottom: 0.5 * theme.spacing.gridSize,
       },
+      fixedOverflowWidgets: true, // Ensures suggestions menu is drawn on top
     };
 
     if (!showLineNumbers) {
