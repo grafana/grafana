@@ -43,13 +43,12 @@ e2e.scenario({
 
         //  Can change to Alerts tab (graph panel is the default vis so the alerts tab should be rendered)
         e2e.components.Tab.title('Alert').should('be.visible').click();
-        e2e.components.Tab.active().within((li: JQuery<HTMLLIElement>) => {
-          expect(li.text()).equals('Alert0'); // there's no alert so therefore Alert + 0
-        });
-        e2e.components.AlertTab.content().should('be.visible');
+        e2e.components.Tab.active().should('have.text', 'Alert0'); // there's no alert so therefore Alert + 0
+        e2e.components.AlertTab.content().should('not.exist');
         e2e.components.QueryTab.content().should('not.exist');
         e2e.components.TransformTab.content().should('not.exist');
-        e2e.components.PanelAlertTabContent.content().should('not.exist');
+        e2e.components.PanelAlertTabContent.content().should('exist');
+        e2e.components.PanelAlertTabContent.content().should('be.visible');
 
         e2e.components.Tab.title('Query').should('be.visible').click();
       });
