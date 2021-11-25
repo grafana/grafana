@@ -34,7 +34,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example Response**:
+**Example response**:
 
 ```http
 HTTP/1.1 200
