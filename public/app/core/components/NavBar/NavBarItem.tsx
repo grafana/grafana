@@ -43,7 +43,6 @@ const NavBarItem = ({
   // Disable all keys that are subtitle they should not be focusable
   disabledKeys.push('subtitle');
   const items: NavModelItem[] = [section].concat(filteredItems);
-  console.log({ isActive, text: link.text });
 
   return showMenu ? (
     <div className={cx(styles.container, className)}>
@@ -53,11 +52,12 @@ const NavBarItem = ({
           reverseMenuDirection={reverseMenuDirection}
           adjustHeightForBorder={adjustHeightForBorder}
           disabledKeys={disabledKeys}
+          aria-label={section.text}
         >
           {(item: NavModelItem) => {
             if (item.menuItemType === NavMenuItemType.Section) {
               return (
-                <Item key={getNavModelItemKey(item)}>
+                <Item key={getNavModelItemKey(item)} textValue={item.text}>
                   <NavBarMenuItem
                     target={item.target}
                     text={item.text}
@@ -70,7 +70,7 @@ const NavBarItem = ({
             }
 
             return (
-              <Item key={getNavModelItemKey(item)}>
+              <Item key={getNavModelItemKey(item)} textValue={item.text}>
                 <NavBarMenuItem
                   isDivider={item.divider}
                   icon={item.icon as IconName}

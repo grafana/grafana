@@ -134,7 +134,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     <li className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
       {element}
       {state.isOpen && (
-        <NavBarItemMenuContext.Provider value={{ menuProps, menuHasFocus: menuHasFocus, onClose: () => state.close() }}>
+        <NavBarItemMenuContext.Provider value={{ menuProps, menuHasFocus, onClose: () => state.close() }}>
           <FocusScope restoreFocus>
             <div {...overlayProps} ref={overlayRef}>
               <DismissButton onDismiss={() => state.close()} />

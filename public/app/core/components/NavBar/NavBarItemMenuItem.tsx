@@ -33,7 +33,10 @@ export function NavBarItemMenuItem({ item, state, onAction }: NavBarItemMenuItem
       isDisabled,
       'aria-label': item['aria-label'],
       key,
-      onClose,
+      onClose: () => {
+        // we want to give react router a chance to handle the click before we call onClose
+        setTimeout(() => onClose(), 100);
+      },
       closeOnSelect: true,
       onAction,
     },
@@ -51,6 +54,10 @@ export function NavBarItemMenuItem({ item, state, onAction }: NavBarItemMenuItem
         }
         e.preventDefault();
         // Alert: Hacky way to go to link
+        // The supported way is to use the `onAction` prop
+        // https://github.com/adobe/react-spectrum/issues/1244
+        // https://react-spectrum.adobe.com/react-aria/useMenu.html#complex-menu-items
+        // NOTE: menu items cannot contain interactive content (e.g. buttons, checkboxes, etc.).
         e.currentTarget?.querySelector('a')?.click();
         e.currentTarget?.querySelector('button')?.click();
         break;
