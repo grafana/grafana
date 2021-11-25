@@ -12,7 +12,7 @@ import {
   locationUtil,
   PanelProps,
 } from '@grafana/data';
-import { config, getBackendSrv, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, getTemplateSrv, locationService } from '@grafana/runtime';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import appEvents from 'app/core/app_events';
@@ -90,7 +90,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     const { queryUser, queryTags } = this.state;
 
     const params: any = {
-      tags: options.tags,
+      tags: options.tags.map(e => getTemplateSrv().replace(e)),
       limit: options.limit,
       type: 'annotation', // Skip the Annotations that are really alerts.  (Use the alerts panel!)
     };
