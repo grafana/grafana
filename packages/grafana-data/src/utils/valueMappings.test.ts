@@ -172,7 +172,7 @@ describe('Format value with regex mappings', () => {
     expect(getValueMappingResult(testSet2, value)).toBeNull();
   });
 
-  it('should return not replace match when replace text is null', () => {
+  it('should not replace match when replace text is null', () => {
     expect(getValueMappingResult(testSet2, 'hello my name is')).toEqual({ color: 'red' });
   });
 });
