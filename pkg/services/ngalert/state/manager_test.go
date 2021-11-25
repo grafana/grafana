@@ -1186,7 +1186,7 @@ func TestProcessEvalResults(t *testing.T) {
 				NamespaceUID: "test_namespace_uid",
 				Data: []models.AlertQuery{{
 					RefID:         "A",
-					DatasourceUID: "datasource1",
+					DatasourceUID: "datasource_uid_1",
 				}},
 				Annotations:     map[string]string{"annotation": "test"},
 				Labels:          map[string]string{"label": "test"},
@@ -1227,7 +1227,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 						"instance_label":               "test",
-						"datasource_uid":               "datasource1",
+						"datasource_uid":               "datasource_uid_1",
 					},
 					State: eval.Error,
 					Error: expr.QueryError{
