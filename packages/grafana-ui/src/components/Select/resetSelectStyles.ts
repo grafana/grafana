@@ -14,6 +14,9 @@ export default function resetSelectStyles() {
       return {
         ...originalStyles,
         color: 'inherit',
+        margin: 0,
+        padding: 0,
+        zIndex: 1,
       };
     },
     loadingIndicator: () => ({}),
