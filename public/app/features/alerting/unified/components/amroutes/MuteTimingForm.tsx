@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { Alert, Field, FieldSet, Input, Button, LinkButton, useStyles2 } from '@grafana/ui';
-import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
@@ -11,24 +11,16 @@ import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { MuteTimingTimeRange } from './MuteTimingTimeRange';
-import { MuteTimingFields, MuteTimingIntervalFields } from '../../types/mute-timing-form';
-import { DAYS_OF_THE_WEEK, MONTHS, validateArrayField, createMuteTiming } from '../../utils/mute-timings';
+import { MuteTimingFields } from '../../types/mute-timing-form';
+import { createMuteTiming, defaultTimeInterval } from '../../utils/mute-timings';
 import { makeAMLink } from '../../utils/misc';
 import { renameMuteTimings } from '../../utils/alertmanager';
+import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
 
 interface Props {
   muteTiming?: MuteTimeInterval;
   showError?: boolean;
 }
-
-const defaultTimeInterval: MuteTimingIntervalFields = {
-  times: [{ start_time: '', end_time: '' }],
-  weekdays: '',
-  days_of_month: '',
-  months: '',
-  years: '',
-};
 
 const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
   return useMemo(() => {
@@ -67,14 +59,6 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
   const config: AlertmanagerConfig = result?.alertmanager_config;
   const defaultValues = useDefaultValues(muteTiming);
   const formApi = useForm({ defaultValues });
-  const {
-    fields: timeIntervals,
-    append: addTimeInterval,
-    remove: removeTimeInterval,
-  } = useFieldArray<MuteTimingFields>({
-    name: 'time_intervals',
-    control: formApi.control,
-  });
 
   const onSubmit = (values: MuteTimingFields) => {
     const newMuteTiming = createMuteTiming(values);
@@ -136,122 +120,7 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
                   data-testid={'mute-timing-name'}
                 />
               </Field>
-              <FieldSet className={styles.timeIntervalLegend} label="Time intervals">
-                {timeIntervals.map((timeInterval, timeIntervalIndex) => {
-                  const errors = formApi.formState.errors;
-                  return (
-                    <div key={timeInterval.id} className={styles.timeIntervalSection}>
-                      <MuteTimingTimeRange intervalIndex={timeIntervalIndex} />
-                      <Field
-                        label="Days of the week"
-                        error={errors.time_intervals?.[timeIntervalIndex]?.weekdays?.message ?? ''}
-                        invalid={!!errors.time_intervals?.[timeIntervalIndex]?.weekdays}
-                      >
-                        <Input
-                          {...formApi.register(`time_intervals.${timeIntervalIndex}.weekdays`, {
-                            validate: (value) =>
-                              validateArrayField(
-                                value,
-                                (day) => DAYS_OF_THE_WEEK.includes(day.toLowerCase()),
-                                'Invalid day of the week'
-                              ),
-                          })}
-                          className={styles.input}
-                          data-testid="mute-timing-weekdays"
-                          // @ts-ignore react-hook-form doesn't handle nested field arrays well
-                          defaultValue={timeInterval.weekdays}
-                          placeholder="Example: monday, tuesday:thursday"
-                        />
-                      </Field>
-                      <Field
-                        label="Days of the month"
-                        description="The days of the month, 1-31, of a month. Negative values can be used to represent days which begin at the end of the month"
-                        invalid={!!errors.time_intervals?.[timeIntervalIndex]?.days_of_month}
-                        error={errors.time_intervals?.[timeIntervalIndex]?.days_of_month?.message}
-                      >
-                        <Input
-                          {...formApi.register(`time_intervals.${timeIntervalIndex}.days_of_month`, {
-                            validate: (value) =>
-                              validateArrayField(
-                                value,
-                                (day) => {
-                                  const parsedDay = parseInt(day, 10);
-                                  return (parsedDay > -31 && parsedDay < 0) || (parsedDay > 0 && parsedDay < 32);
-                                },
-                                'Invalid day'
-                              ),
-                          })}
-                          className={styles.input}
-                          // @ts-ignore react-hook-form doesn't handle nested field arrays well
-                          defaultValue={timeInterval.days_of_month}
-                          placeholder="Example: 1, 14:16, -1"
-                          data-testid="mute-timing-days"
-                        />
-                      </Field>
-                      <Field
-                        label="Months"
-                        description="The months of the year in either numerical or the full calendar month"
-                        invalid={!!errors.time_intervals?.[timeIntervalIndex]?.months}
-                        error={errors.time_intervals?.[timeIntervalIndex]?.months?.message}
-                      >
-                        <Input
-                          {...formApi.register(`time_intervals.${timeIntervalIndex}.months`, {
-                            validate: (value) =>
-                              validateArrayField(
-                                value,
-                                (month) =>
-                                  MONTHS.includes(month) || (parseInt(month, 10) < 13 && parseInt(month, 10) > 0),
-                                'Invalid month'
-                              ),
-                          })}
-                          className={styles.input}
-                          placeholder="Example: 1:3, may:august, december"
-                          // @ts-ignore react-hook-form doesn't handle nested field arrays well
-                          defaultValue={timeInterval.months}
-                          data-testid="mute-timing-months"
-                        />
-                      </Field>
-                      <Field
-                        label="Years"
-                        invalid={!!errors.time_intervals?.[timeIntervalIndex]?.years}
-                        error={errors.time_intervals?.[timeIntervalIndex]?.years?.message ?? ''}
-                      >
-                        <Input
-                          {...formApi.register(`time_intervals.${timeIntervalIndex}.years`, {
-                            validate: (value) =>
-                              validateArrayField(value, (year) => /^\d{4}$/.test(year), 'Invalid year'),
-                          })}
-                          className={styles.input}
-                          placeholder="Example: 2021:2022, 2030"
-                          // @ts-ignore react-hook-form doesn't handle nested field arrays well
-                          defaultValue={timeInterval.years}
-                          data-testid="mute-timing-years"
-                        />
-                      </Field>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        icon="trash-alt"
-                        onClick={() => removeTimeInterval(timeIntervalIndex)}
-                      >
-                        Remove time interval
-                      </Button>
-                    </div>
-                  );
-                })}
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className={styles.removeTimeIntervalButton}
-                  onClick={() => {
-                    addTimeInterval(defaultTimeInterval);
-                  }}
-                  icon="plus"
-                >
-                  Add another time interval
-                </Button>
-              </FieldSet>
-
+              <MuteTimingTimeInterval />
               <LinkButton
                 type="button"
                 variant="secondary"

@@ -1,6 +1,6 @@
 import { MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { omitBy, isUndefined } from 'lodash';
-import { MuteTimingFields } from '../types/mute-timing-form';
+import { MuteTimingFields, MuteTimingIntervalFields } from '../types/mute-timing-form';
 
 export const DAYS_OF_THE_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -18,6 +18,14 @@ export const MONTHS = [
   'november',
   'december',
 ];
+
+export const defaultTimeInterval: MuteTimingIntervalFields = {
+  times: [{ start_time: '', end_time: '' }],
+  weekdays: '',
+  days_of_month: '',
+  months: '',
+  years: '',
+};
 
 export const validateArrayField = (value: string, validateValue: (input: string) => boolean, invalidText: string) => {
   if (value) {

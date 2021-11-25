@@ -33,7 +33,7 @@ const MuteTimings = () => {
   const config = result?.alertmanager_config;
 
   const getMuteTimingByName = useCallback(
-    (id: string) => {
+    (id: string): MuteTimeInterval | undefined => {
       return config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
     },
     [config]
