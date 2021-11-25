@@ -23,7 +23,7 @@ describe('Candlestick data', () => {
       options,
       theme
     );
-    expect(info.warn).toMatchInlineSnapshot(`"Data does not have a time field"`);
+    expect(info).toBeNull();
   });
 
   it('will match common names by default', () => {
@@ -42,8 +42,7 @@ describe('Candlestick data', () => {
       options,
       theme
     );
-    expect(info.warn).toBeUndefined();
-    expect(info.names).toMatchInlineSnapshot(`
+    expect(info?.names).toMatchInlineSnapshot(`
       Object {
         "close": "Next open",
         "high": "MAX",
@@ -72,7 +71,8 @@ describe('Candlestick data', () => {
       ],
       options,
       theme
-    );
+    )!;
+
     expect(info.open).toBeDefined();
     expect(info.open).toEqual(info.high);
     expect(info.open).toEqual(info.low);
@@ -114,7 +114,8 @@ describe('Candlestick data', () => {
       ],
       options,
       theme
-    );
+    )!;
+
     expect(info.open!.values.toArray()).toEqual([1, 1, 2, 3, 4]);
     expect(info.close!.values.toArray()).toEqual([1, 2, 3, 4, 5]);
   });
