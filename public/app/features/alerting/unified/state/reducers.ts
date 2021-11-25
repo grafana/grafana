@@ -19,6 +19,7 @@ import {
   updateLotexNamespaceAndGroupAction,
   fetchExternalAlertmanagersAction,
   fetchExternalAlertmanagersConfigAction,
+  fetchGrafanaAnnotationsAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -60,6 +61,7 @@ export const reducer = combineReducers({
     alertmanagerConfig: createAsyncSlice('alertmanagerConfig', fetchExternalAlertmanagersConfigAction).reducer,
     discoveredAlertmanagers: createAsyncSlice('discoveredAlertmanagers', fetchExternalAlertmanagersAction).reducer,
   }),
+  managedAlertStateHistory: createAsyncSlice('managedAlertStateHistory', fetchGrafanaAnnotationsAction).reducer,
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;

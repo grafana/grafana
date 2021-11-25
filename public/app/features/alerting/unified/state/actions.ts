@@ -11,7 +11,7 @@ import {
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
-import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
+import { RuleIdentifier, RuleNamespace, RuleWithLocation, StateHistoryItem } from 'app/types/unified-alerting';
 import {
   PostableRulerRuleGroupDTO,
   RulerGrafanaRuleDTO,
@@ -19,6 +19,7 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 import { fetchNotifiers } from '../api/grafana';
+import { fetchAnnotations } from '../api/annotations';
 import {
   expireSilence,
   fetchAlertManagerConfig,
@@ -444,6 +445,11 @@ export const saveRuleFormAction = createAsyncThunk(
 export const fetchGrafanaNotifiersAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaNotifiers',
   (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
+);
+
+export const fetchGrafanaAnnotationsAction = createAsyncThunk(
+  'unifiedalerting/fetchGrafanaAnnotations',
+  (alertId: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(alertId))
 );
 
 interface UpdateAlertManagerConfigActionOptions {
