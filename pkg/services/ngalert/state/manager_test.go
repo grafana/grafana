@@ -1180,10 +1180,14 @@ func TestProcessEvalResults(t *testing.T) {
 		{
 			desc: "normal -> error when result is Error and ExecErrState is Error",
 			alertRule: &models.AlertRule{
-				OrgID:           1,
-				Title:           "test_title",
-				UID:             "test_alert_rule_uid_2",
-				NamespaceUID:    "test_namespace_uid",
+				OrgID:        1,
+				Title:        "test_title",
+				UID:          "test_alert_rule_uid_2",
+				NamespaceUID: "test_namespace_uid",
+				Data: []models.AlertQuery{{
+					RefID:         "A",
+					DatasourceUID: "datasource1",
+				}},
 				Annotations:     map[string]string{"annotation": "test"},
 				Labels:          map[string]string{"label": "test"},
 				IntervalSeconds: 10,
@@ -1223,7 +1227,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 						"instance_label":               "test",
-						"ref_id":                       "A",
+						"datasource_uid":               "datasource1",
 					},
 					State: eval.Error,
 					Error: expr.QueryError{

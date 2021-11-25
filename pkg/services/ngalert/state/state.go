@@ -101,12 +101,16 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 		a.State = eval.Error
 
 		// If the evaluation failed because a query returned an error then
-		// update the state with the Ref ID as a label and the error message
-		// as an annotation so other code can use this metadata to add context
-		// to alerts
+		// update the state with the Datasource UID as a label and the error
+		// message as an annotation so other code can use this metadata to
+		// add context to alerts
 		var queryError expr.QueryError
 		if errors.As(a.Error, &queryError) {
-			a.Labels["ref_id"] = queryError.RefID
+			for _, next := range alertRule.Data {
+				if next.RefID == queryError.RefID {
+					a.Labels["datasource_uid"] = next.DatasourceUID
+				}
+			}
 			a.Annotations["Error"] = queryError.Error()
 		}
 	}
