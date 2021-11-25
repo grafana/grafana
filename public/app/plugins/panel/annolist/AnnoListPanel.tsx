@@ -90,7 +90,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     const { queryUser, queryTags } = this.state;
 
     const params: any = {
-      tags: options.tags.map(e => getTemplateSrv().replace(e)),
+      tags: options.tags.map((e) => getTemplateSrv().replace(e)),
       limit: options.limit,
       type: 'annotation', // Skip the Annotations that are really alerts.  (Use the alerts panel!)
     };
