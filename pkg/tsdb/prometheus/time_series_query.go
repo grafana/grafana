@@ -257,7 +257,6 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration, intervalCalculator intervalv2.Calculator, timeInterval string) string {
 	rangeMs := timeRange.Milliseconds()
 	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
-	fmt.Println(rangeMs, rangeSRounded)
 
 	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(interval/time.Millisecond), 10))
 	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
