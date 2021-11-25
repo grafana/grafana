@@ -201,6 +201,7 @@ export { selectOptionInTest } from './Select/test-utils';
 export * from './Select/Select';
 export { DropdownIndicator } from './Select/DropdownIndicator';
 export { getSelectStyles } from './Select/getSelectStyles';
+export * from './Select/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
