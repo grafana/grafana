@@ -13,10 +13,10 @@ import (
 type AlertNotificationService struct {
 	Bus               bus.Bus
 	SQLStore          *sqlstore.SQLStore
-	EncryptionService encryption.Service
+	EncryptionService encryption.Internal
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Service,
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Internal,
 ) *AlertNotificationService {
 	s := &AlertNotificationService{
 		Bus:               bus,
@@ -24,25 +24,25 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 		EncryptionService: encryptionService,
 	}
 
-	s.Bus.AddHandler(s.GetAlertNotifications)
+	s.Bus.AddHandlerCtx(s.GetAlertNotifications)
 	s.Bus.AddHandlerCtx(s.CreateAlertNotificationCommand)
 	s.Bus.AddHandlerCtx(s.UpdateAlertNotification)
-	s.Bus.AddHandler(s.DeleteAlertNotification)
-	s.Bus.AddHandler(s.GetAllAlertNotifications)
+	s.Bus.AddHandlerCtx(s.DeleteAlertNotification)
+	s.Bus.AddHandlerCtx(s.GetAllAlertNotifications)
 	s.Bus.AddHandlerCtx(s.GetOrCreateAlertNotificationState)
 	s.Bus.AddHandlerCtx(s.SetAlertNotificationStateToCompleteCommand)
 	s.Bus.AddHandlerCtx(s.SetAlertNotificationStateToPendingCommand)
-	s.Bus.AddHandler(s.GetAlertNotificationsWithUid)
-	s.Bus.AddHandler(s.UpdateAlertNotificationWithUid)
-	s.Bus.AddHandler(s.DeleteAlertNotificationWithUid)
-	s.Bus.AddHandler(s.GetAlertNotificationsWithUidToSend)
+	s.Bus.AddHandlerCtx(s.GetAlertNotificationsWithUid)
+	s.Bus.AddHandlerCtx(s.UpdateAlertNotificationWithUid)
+	s.Bus.AddHandlerCtx(s.DeleteAlertNotificationWithUid)
+	s.Bus.AddHandlerCtx(s.GetAlertNotificationsWithUidToSend)
 	s.Bus.AddHandlerCtx(s.HandleNotificationTestCommand)
 
 	return s
 }
 
-func (s *AlertNotificationService) GetAlertNotifications(query *models.GetAlertNotificationsQuery) error {
-	return s.SQLStore.GetAlertNotifications(query)
+func (s *AlertNotificationService) GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error {
+	return s.SQLStore.GetAlertNotifications(ctx, query)
 }
 
 func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error {
@@ -62,7 +62,7 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 		return err
 	}
 
-	return s.SQLStore.CreateAlertNotificationCommand(cmd)
+	return s.SQLStore.CreateAlertNotificationCommand(ctx, cmd)
 }
 
 func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
@@ -83,15 +83,15 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 		return err
 	}
 
-	return s.SQLStore.UpdateAlertNotification(cmd)
+	return s.SQLStore.UpdateAlertNotification(ctx, cmd)
 }
 
-func (s *AlertNotificationService) DeleteAlertNotification(cmd *models.DeleteAlertNotificationCommand) error {
-	return s.SQLStore.DeleteAlertNotification(cmd)
+func (s *AlertNotificationService) DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
+	return s.SQLStore.DeleteAlertNotification(ctx, cmd)
 }
 
-func (s *AlertNotificationService) GetAllAlertNotifications(query *models.GetAllAlertNotificationsQuery) error {
-	return s.SQLStore.GetAllAlertNotifications(query)
+func (s *AlertNotificationService) GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error {
+	return s.SQLStore.GetAllAlertNotifications(ctx, query)
 }
 
 func (s *AlertNotificationService) GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
@@ -106,20 +106,20 @@ func (s *AlertNotificationService) SetAlertNotificationStateToPendingCommand(ctx
 	return s.SQLStore.SetAlertNotificationStateToPendingCommand(ctx, cmd)
 }
 
-func (s *AlertNotificationService) GetAlertNotificationsWithUid(query *models.GetAlertNotificationsWithUidQuery) error {
-	return s.SQLStore.GetAlertNotificationsWithUid(query)
+func (s *AlertNotificationService) GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error {
+	return s.SQLStore.GetAlertNotificationsWithUid(ctx, query)
 }
 
-func (s *AlertNotificationService) UpdateAlertNotificationWithUid(cmd *models.UpdateAlertNotificationWithUidCommand) error {
-	return s.SQLStore.UpdateAlertNotificationWithUid(cmd)
+func (s *AlertNotificationService) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
+	return s.SQLStore.UpdateAlertNotificationWithUid(ctx, cmd)
 }
 
-func (s *AlertNotificationService) DeleteAlertNotificationWithUid(cmd *models.DeleteAlertNotificationWithUidCommand) error {
-	return s.SQLStore.DeleteAlertNotificationWithUid(cmd)
+func (s *AlertNotificationService) DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error {
+	return s.SQLStore.DeleteAlertNotificationWithUid(ctx, cmd)
 }
 
-func (s *AlertNotificationService) GetAlertNotificationsWithUidToSend(query *models.GetAlertNotificationsWithUidToSendQuery) error {
-	return s.SQLStore.GetAlertNotificationsWithUidToSend(query)
+func (s *AlertNotificationService) GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
+	return s.SQLStore.GetAlertNotificationsWithUidToSend(ctx, query)
 }
 
 func (s *AlertNotificationService) createNotifier(ctx context.Context, model *models.AlertNotification, secureSettings map[string]string) (Notifier, error) {
@@ -130,7 +130,7 @@ func (s *AlertNotificationService) createNotifier(ctx context.Context, model *mo
 			OrgId: model.OrgId,
 			Id:    model.Id,
 		}
-		if err := s.SQLStore.GetAlertNotifications(query); err != nil {
+		if err := s.SQLStore.GetAlertNotifications(ctx, query); err != nil {
 			return nil, err
 		}
 

@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -587,10 +587,11 @@ func (c *GettableApiAlertingConfig) validate() error {
 
 // Config is the top-level configuration for Alertmanager's config files.
 type Config struct {
-	Global       *config.GlobalConfig  `yaml:"global,omitempty" json:"global,omitempty"`
-	Route        *Route                `yaml:"route,omitempty" json:"route,omitempty"`
-	InhibitRules []*config.InhibitRule `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
-	Templates    []string              `yaml:"templates" json:"templates"`
+	Global            *config.GlobalConfig      `yaml:"global,omitempty" json:"global,omitempty"`
+	Route             *Route                    `yaml:"route,omitempty" json:"route,omitempty"`
+	InhibitRules      []*config.InhibitRule     `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
+	MuteTimeIntervals []config.MuteTimeInterval `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
+	Templates         []string                  `yaml:"templates" json:"templates"`
 }
 
 // A Route is a node that contains definitions of how to handle alerts. This is modified
@@ -745,6 +746,9 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	if len(c.Route.Match) > 0 || len(c.Route.MatchRE) > 0 {
 		return fmt.Errorf("root route must not have any matchers")
 	}
+	if len(c.Route.MuteTimeIntervals) > 0 {
+		return fmt.Errorf("root route must not have any mute time intervals")
+	}
 
 	for _, r := range c.InhibitRules {
 		if err := r.UnmarshalYAML(noopUnmarshal); err != nil {
@@ -752,6 +756,33 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 		}
 	}
 
+	tiNames := make(map[string]struct{})
+	for _, mt := range c.MuteTimeIntervals {
+		if mt.Name == "" {
+			return fmt.Errorf("missing name in mute time interval")
+		}
+		if _, ok := tiNames[mt.Name]; ok {
+			return fmt.Errorf("mute time interval %q is not unique", mt.Name)
+		}
+		tiNames[mt.Name] = struct{}{}
+	}
+	return checkTimeInterval(c.Route, tiNames)
+}
+
+func checkTimeInterval(r *Route, timeIntervals map[string]struct{}) error {
+	for _, sr := range r.Routes {
+		if err := checkTimeInterval(sr, timeIntervals); err != nil {
+			return err
+		}
+	}
+	if len(r.MuteTimeIntervals) == 0 {
+		return nil
+	}
+	for _, mt := range r.MuteTimeIntervals {
+		if _, ok := timeIntervals[mt]; !ok {
+			return fmt.Errorf("undefined time interval %q used in route", mt)
+		}
+	}
 	return nil
 }
 
@@ -1053,7 +1084,7 @@ type PostableGrafanaReceivers struct {
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
 
-type EncryptFn func(ctx context.Context, payload []byte, secret string) ([]byte, error)
+type EncryptFn func(ctx context.Context, payload []byte, scope secrets.EncryptionOptions) ([]byte, error)
 
 func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 	seenUIDs := make(map[string]struct{})
@@ -1063,7 +1094,7 @@ func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 		case GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				for k, v := range gr.SecureSettings {
-					encryptedData, err := encrypt(context.Background(), []byte(v), setting.SecretKey)
+					encryptedData, err := encrypt(context.Background(), []byte(v), secrets.WithoutScope())
 					if err != nil {
 						return fmt.Errorf("failed to encrypt secure settings: %w", err)
 					}

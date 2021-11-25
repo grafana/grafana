@@ -68,7 +68,7 @@ export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clear
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           onChange(event.currentTarget.value);
         }}
-        tabIndex={1}
+        tabIndex={0}
         spellCheck={false}
         className={styles.input}
         {...inputProps}

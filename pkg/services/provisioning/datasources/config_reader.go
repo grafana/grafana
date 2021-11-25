@@ -1,6 +1,8 @@
 package datasources
 
 import (
+	"context"
+	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -17,7 +19,7 @@ type configReader struct {
 	log log.Logger
 }
 
-func (cr *configReader) readConfig(path string) ([]*configs, error) {
+func (cr *configReader) readConfig(ctx context.Context, path string) ([]*configs, error) {
 	var datasources []*configs
 
 	files, err := ioutil.ReadDir(path)
@@ -34,12 +36,18 @@ func (cr *configReader) readConfig(path string) ([]*configs, error) {
 			}
 
 			if datasource != nil {
+				for _, ds := range datasource.Datasources {
+					if ds.UID == "" && ds.Name != "" {
+						ds.UID = safeUIDFromName(ds.Name)
+					}
+				}
+
 				datasources = append(datasources, datasource)
 			}
 		}
 	}
 
-	err = cr.validateDefaultUniqueness(datasources)
+	err = cr.validateDefaultUniqueness(ctx, datasources)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +96,7 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*c
 	return v0.mapToDatasourceFromConfig(apiVersion.APIVersion), nil
 }
 
-func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error {
+func (cr *configReader) validateDefaultUniqueness(ctx context.Context, datasources []*configs) error {
 	defaultCount := map[int64]int{}
 	for i := range datasources {
 		if datasources[i].Datasources == nil {
@@ -100,7 +108,7 @@ func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error 
 				ds.OrgID = 1
 			}
 
-			if err := cr.validateAccessAndOrgID(ds); err != nil {
+			if err := cr.validateAccessAndOrgID(ctx, ds); err != nil {
 				return fmt.Errorf("failed to provision %q data source: %w", ds.Name, err)
 			}
 
@@ -122,8 +130,8 @@ func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error 
 	return nil
 }
 
-func (cr *configReader) validateAccessAndOrgID(ds *upsertDataSourceFromConfig) error {
-	if err := utils.CheckOrgExists(ds.OrgID); err != nil {
+func (cr *configReader) validateAccessAndOrgID(ctx context.Context, ds *upsertDataSourceFromConfig) error {
+	if err := utils.CheckOrgExists(ctx, ds.OrgID); err != nil {
 		return err
 	}
 
@@ -136,4 +144,11 @@ func (cr *configReader) validateAccessAndOrgID(ds *upsertDataSourceFromConfig) e
 		ds.Access = models.DS_ACCESS_PROXY
 	}
 	return nil
+}
+
+func safeUIDFromName(name string) string {
+	h := sha256.New()
+	_, _ = h.Write([]byte(name))
+	bs := h.Sum(nil)
+	return strings.ToUpper(fmt.Sprintf("P%x", bs[:8]))
 }

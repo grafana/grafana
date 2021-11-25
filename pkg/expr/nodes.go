@@ -19,6 +19,19 @@ var (
 	logger = log.New("expr")
 )
 
+type QueryError struct {
+	RefID string
+	Err   error
+}
+
+func (e QueryError) Error() string {
+	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
+}
+
+func (e QueryError) Unwrap() error {
+	return e.Err
+}
+
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
@@ -30,62 +43,19 @@ type rawNode struct {
 	Query         map[string]interface{}
 	QueryType     string
 	TimeRange     TimeRange
-	DatasourceUID string
+	DatasourceUID string // Gets populated from Either DatasourceUID or Datasource.UID
 }
 
-func (rn *rawNode) GetDatasourceUID() (string, error) {
-	if rn.DatasourceUID != "" {
-		return rn.DatasourceUID, nil
+func (rn *rawNode) IsExpressionQuery() bool {
+	if IsDataSource(rn.DatasourceUID) {
+		return true
 	}
-
-	rawDs, ok := rn.Query["datasource"]
-	if !ok {
-		return "", fmt.Errorf("no datasource property found in query model")
+	if v, ok := rn.Query["datasourceId"]; ok {
+		if v == OldDatasourceUID {
+			return true
+		}
 	}
-
-	// For old queries with string datasource prop representing data source name
-	if dsName, ok := rawDs.(string); ok {
-		return dsName, nil
-	}
-
-	dsRef, ok := rawDs.(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("data source property is not an object nor string, got %T", rawDs)
-	}
-
-	if dsUid, ok := dsRef["uid"].(string); ok {
-		return dsUid, nil
-	}
-
-	return "", fmt.Errorf("no datasource uid found for query, got %T", rn.Query)
-}
-
-func (rn *rawNode) IsExpressionQuery() (bool, error) {
-	if rn.DatasourceUID != "" {
-		return rn.DatasourceUID == DatasourceUID, nil
-	}
-
-	rawDs, ok := rn.Query["datasource"]
-	if !ok {
-		return false, fmt.Errorf("no datasource property found in query model")
-	}
-
-	// For old queries with string datasource prop representing data source name
-	dsName, ok := rawDs.(string)
-	if ok && dsName == DatasourceName {
-		return true, nil
-	}
-
-	dsRef, ok := rawDs.(map[string]interface{})
-	if !ok {
-		return false, nil
-	}
-
-	if dsRef["uid"].(string) == DatasourceUID {
-		return true, nil
-	}
-
-	return false, nil
+	return false
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -213,6 +183,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 		request:    *req,
 	}
 
+	// support old datasourceId property
 	rawDsID, ok := rn.Query["datasourceId"]
 	if ok {
 		floatDsID, ok := rawDsID.(float64)
@@ -221,11 +192,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 		}
 		dsNode.datasourceID = int64(floatDsID)
 	} else {
-		dsUid, err := rn.GetDatasourceUID()
-		if err != nil {
-			return nil, fmt.Errorf("neither datasourceId or datasourceUid in expression data source request for refId %v", rn.RefID)
-		}
-		dsNode.datasourceUID = dsUid
+		dsNode.datasourceUID = rn.DatasourceUID
 	}
 
 	var floatIntervalMS float64
@@ -286,7 +253,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 	vals := make([]mathexp.Value, 0)
 	for refID, qr := range resp.Responses {
 		if qr.Error != nil {
-			return mathexp.Results{}, fmt.Errorf("failed to execute query %v: %w", refID, qr.Error)
+			return mathexp.Results{}, QueryError{RefID: refID, Err: qr.Error}
 		}
 
 		if len(qr.Frames) == 1 {

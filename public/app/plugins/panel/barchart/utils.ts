@@ -13,6 +13,8 @@ import {
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
+import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
+import { Padding } from 'uplot';
 import {
   AxisPlacement,
   ScaleDirection,
@@ -21,7 +23,6 @@ import {
   StackingMode,
   VizLegendOptions,
 } from '@grafana/schema';
-import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
 import { collectStackingGroups, orderIdsByCalcs } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { orderBy } from 'lodash';
 
@@ -55,11 +56,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   text,
   rawValue,
   allFrames,
+  xTickLabelRotation,
+  xTickLabelMaxLength,
   legend,
 }) => {
   const builder = new UPlotConfigBuilder();
-  const defaultValueFormatter = (seriesIdx: number, value: any) =>
-    formattedValueToString(frame.fields[seriesIdx].display!(value));
+  const defaultValueFormatter = (seriesIdx: number, value: any) => {
+    return shortenValue(formattedValueToString(frame.fields[seriesIdx].display!(value)), xTickLabelMaxLength);
+  };
 
   // bar orientation -> x scale orientation & direction
   const vizOrientation = getBarCharScaleOrientation(orientation);
@@ -95,6 +99,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
+  if (vizOrientation.xOri === ScaleOrientation.Horizontal && xTickLabelRotation !== 0) {
+    builder.setPadding(getRotationPadding(frame, xTickLabelRotation, xTickLabelMaxLength));
+  }
+
   builder.setPrepData(config.prepData);
 
   builder.addScale({
@@ -109,11 +117,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     scaleKey: 'x',
     isTime: false,
     placement: vizOrientation.xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
+    label: frame.fields[0].config.custom?.axisLabel,
     splits: config.xSplits,
     values: config.xValues,
     grid: { show: false },
-    ticks: false,
+    ticks: { show: false },
     gap: 15,
+    tickLabelRotation: xTickLabelRotation * -1,
     theme,
   });
 
@@ -216,6 +226,51 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   return builder;
 };
+
+function shortenValue(value: string, length: number) {
+  if (value.length > length) {
+    return value.substring(0, length).concat('...');
+  } else {
+    return value;
+  }
+}
+
+function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLength: number): Padding {
+  const values = frame.fields[0].values;
+  const fontSize = UPLOT_AXIS_FONT_SIZE;
+  const displayProcessor = frame.fields[0].display ?? ((v) => v);
+  let maxLength = 0;
+  for (let i = 0; i < values.length; i++) {
+    let size = measureText(
+      shortenValue(formattedValueToString(displayProcessor(values.get(i))), valueMaxLength),
+      fontSize
+    );
+    maxLength = size.width > maxLength ? size.width : maxLength;
+  }
+
+  // Add padding to the right if the labels are rotated in a way that makes the last label extend outside the graph.
+  const paddingRight =
+    rotateLabel > 0
+      ? Math.cos((rotateLabel * Math.PI) / 180) *
+        measureText(
+          shortenValue(formattedValueToString(displayProcessor(values.get(values.length - 1))), valueMaxLength),
+          fontSize
+        ).width
+      : 0;
+
+  // Add padding to the left if the labels are rotated in a way that makes the first label extend outside the graph.
+  const paddingLeft =
+    rotateLabel < 0
+      ? Math.cos((rotateLabel * -1 * Math.PI) / 180) *
+        measureText(shortenValue(formattedValueToString(displayProcessor(values.get(0))), valueMaxLength), fontSize)
+          .width
+      : 0;
+
+  // Add padding to the bottom to avoid clipping the rotated labels.
+  const paddingBottom = Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength;
+
+  return [0, paddingRight, paddingBottom, paddingLeft];
+}
 
 /** @internal */
 export function preparePlotFrame(data: DataFrame[]) {

@@ -15,21 +15,20 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginStore plugins.Store,
-	dataSourceCache datasources.CacheService, encryptionService encryption.Service,
+	dataSourceCache datasources.CacheService, secretsService secrets.Service,
 	pluginSettingsService *pluginsettings.Service) *Provider {
 	return &Provider{
 		Bus:                   bus,
 		CacheService:          cacheService,
 		pluginStore:           pluginStore,
 		DataSourceCache:       dataSourceCache,
-		EncryptionService:     encryptionService,
+		SecretsService:        secretsService,
 		PluginSettingsService: pluginSettingsService,
 		logger:                log.New("plugincontext"),
 	}
@@ -40,7 +39,7 @@ type Provider struct {
 	CacheService          *localcache.CacheService
 	pluginStore           plugins.Store
 	DataSourceCache       datasources.CacheService
-	EncryptionService     encryption.Service
+	SecretsService        secrets.Service
 	PluginSettingsService *pluginsettings.Service
 	logger                log.Logger
 }
@@ -50,8 +49,8 @@ type Provider struct {
 // returned context.
 func (p *Provider) Get(ctx context.Context, pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
 	pc := backend.PluginContext{}
-	plugin := p.pluginStore.Plugin(pluginID)
-	if plugin == nil {
+	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
+	if !exists {
 		return pc, false, nil
 	}
 
@@ -125,7 +124,7 @@ func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string,
 
 func (p *Provider) decryptSecureJsonDataFn() func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, err := p.EncryptionService.DecryptJsonData(context.Background(), m, setting.SecretKey)
+		decryptedJsonData, err := p.SecretsService.DecryptJsonData(context.Background(), m)
 		if err != nil {
 			p.logger.Error("Failed to decrypt secure json data", "error", err)
 		}

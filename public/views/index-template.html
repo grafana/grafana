@@ -70,7 +70,7 @@
         height: 60px;
         background-repeat: no-repeat;
         background-size: contain;
-        background-image: url("[[.LoadingLogo]]");
+        background-image: url('[[.LoadingLogo]]');
       }
 
       .preloader__text {
@@ -246,29 +246,37 @@
     <div id="reactRoot"></div>
 
     <script nonce="[[.Nonce]]">
-        window.grafanaBootData = {
-          user: [[.User]],
-          settings: [[.Settings]],
-          navTree: [[.NavTree]],
-          themePaths: {
-            light: '[[.ContentDeliveryURL]]public/build/grafana.light.<%= compilation.hash %>.css',
-            dark: '[[.ContentDeliveryURL]]public/build/grafana.dark.<%= compilation.hash %>.css'
-          }
-        };
+      window.grafanaBootData = {
+        user: [[.User]],
+        settings: [[.Settings]],
+        navTree: [[.NavTree]],
+        themePaths: {
+          light: '[[.ContentDeliveryURL]]public/build/grafana.light.<%= compilation.hash %>.css',
+          dark: '[[.ContentDeliveryURL]]public/build/grafana.dark.<%= compilation.hash %>.css'
+        }
+      };
+
+      window.__grafana_load_failed = function() {
+        var preloader = document.getElementsByClassName("preloader");
+        if (preloader.length) {
+          preloader[0].className = "preloader preloader--done";
+        }
+      }
 
       // In case the js files fails to load the code below will show an info message.
-        window.onload = function() {
-          var preloader = document.getElementsByClassName("preloader");
-          if (preloader.length) {
-            preloader[0].className = "preloader preloader--done";
-          }
-        };
-        [[if .ContentDeliveryURL]]
-          window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
-        [[end]]
-        [[if .Nonce]]
-          window.nonce = '[[.Nonce]]';
-        [[end]]
+      window.onload = function() {
+        if (window.__grafana_app_bundle_loaded) {
+          return;
+        }
+        window.__grafana_load_failed();
+      };
+
+      [[if .ContentDeliveryURL]]
+        window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
+      [[end]]
+      [[if .Nonce]]
+        window.nonce = '[[.Nonce]]';
+      [[end]]
     </script>
 
     [[if .GoogleTagManagerId]]

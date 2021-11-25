@@ -18,41 +18,48 @@ export interface RadioButtonProps {
   onChange: () => void;
   fullWidth?: boolean;
   'aria-label'?: StringSelector;
+  children?: React.ReactNode;
 }
 
-export const RadioButton: React.FC<RadioButtonProps> = ({
-  children,
-  active = false,
-  disabled = false,
-  size = 'md',
-  onChange,
-  id,
-  name = undefined,
-  description,
-  fullWidth,
-  'aria-label': ariaLabel,
-}) => {
-  const theme = useTheme2();
-  const styles = getRadioButtonStyles(theme, size, fullWidth);
+export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
+  (
+    {
+      children,
+      active = false,
+      disabled = false,
+      size = 'md',
+      onChange,
+      id,
+      name = undefined,
+      description,
+      fullWidth,
+      'aria-label': ariaLabel,
+    },
+    ref
+  ) => {
+    const theme = useTheme2();
+    const styles = getRadioButtonStyles(theme, size, fullWidth);
 
-  return (
-    <>
-      <input
-        type="radio"
-        className={styles.radio}
-        onChange={onChange}
-        disabled={disabled}
-        id={id}
-        checked={active}
-        name={name}
-        aria-label={ariaLabel}
-      />
-      <label className={styles.radioLabel} htmlFor={id} title={description}>
-        {children}
-      </label>
-    </>
-  );
-};
+    return (
+      <>
+        <input
+          type="radio"
+          className={styles.radio}
+          onChange={onChange}
+          disabled={disabled}
+          id={id}
+          checked={active}
+          name={name}
+          aria-label={ariaLabel}
+          ref={ref}
+        />
+        <label className={styles.radioLabel} htmlFor={id} title={description}>
+          {children}
+        </label>
+      </>
+    );
+  }
+);
 
 RadioButton.displayName = 'RadioButton';
 

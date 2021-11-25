@@ -1,4 +1,3 @@
-import coreModule from 'app/core/core_module';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 const hitTypes = {
@@ -63,8 +62,4 @@ export class ValidationSrv {
   }
 }
 
-const validationSrv = new ValidationSrv();
-
-export default validationSrv;
-
-coreModule.service('validationSrv', ValidationSrv);
+export const validationSrv = new ValidationSrv();

@@ -17,8 +17,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -34,7 +36,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
-	fakeInstanceStore := &fakeInstanceStore{}
+	fakeInstanceStore := &FakeInstanceStore{}
 	fakeAdminConfigStore := newFakeAdminConfigStore(t)
 
 	// create alert rule with one second interval
@@ -99,7 +101,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
-	fakeInstanceStore := &fakeInstanceStore{}
+	fakeInstanceStore := &FakeInstanceStore{}
 	fakeAdminConfigStore := newFakeAdminConfigStore(t)
 
 	// First, let's create an admin configuration that holds an alertmanager.
@@ -239,9 +241,9 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-	) (*schedule, *fakeRuleStore, *fakeInstanceStore, *fakeAdminConfigStore, prometheus.Gatherer) {
+	) (*schedule, *fakeRuleStore, *FakeInstanceStore, *fakeAdminConfigStore, prometheus.Gatherer) {
 		ruleStore := newFakeRuleStore(t)
-		instanceStore := &fakeInstanceStore{}
+		instanceStore := &FakeInstanceStore{}
 		adminConfigStore := newFakeAdminConfigStore(t)
 
 		registry := prometheus.NewPedanticRegistry()
@@ -580,7 +582,8 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		registry = prometheus.NewPedanticRegistry()
 	}
 	m := metrics.NewNGAlert(registry)
-	decryptFn := ossencryption.ProvideService().GetDecryptedValue
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	decryptFn := secretsService.GetDecryptedValue
 	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, decryptFn, nil, log.New("testlogger"))
 	require.NoError(t, err)
 
@@ -602,7 +605,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	return NewScheduler(schedCfg, nil, appUrl, st), mockedClock
+	return NewScheduler(schedCfg, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), appUrl, st), mockedClock
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.

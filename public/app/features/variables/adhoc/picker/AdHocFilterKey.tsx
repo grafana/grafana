@@ -16,7 +16,7 @@ export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey }) =
 
   if (filterKey === null) {
     return (
-      <div className="gf-form">
+      <div className="gf-form" data-testid="AdHocFilterKey-add-key-wrapper">
         <SegmentAsync
           className="query-segment-key"
           Component={plusSegment}
@@ -30,7 +30,7 @@ export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey }) =
   }
 
   return (
-    <div className="gf-form">
+    <div className="gf-form" data-testid="AdHocFilterKey-key-wrapper">
       <SegmentAsync
         className="query-segment-key"
         value={filterKey}
@@ -46,7 +46,7 @@ export const REMOVE_FILTER_KEY = '-- remove filter --';
 const REMOVE_VALUE = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
 
 const plusSegment: ReactElement = (
-  <a className="gf-form-label query-part">
+  <a className="gf-form-label query-part" aria-label="Add Filter">
     <Icon name="plus" />
   </a>
 );

@@ -1,40 +1,21 @@
-import { DataFrame } from '@grafana/data';
-import { DimensionSupplier } from 'app/features/dimensions';
+import { DataFrame, SelectableValue } from '@grafana/data';
 import { Feature } from 'ol';
+import { FeatureLike } from 'ol/Feature';
 import { Point } from 'ol/geom';
-import tinycolor from 'tinycolor2';
-import { StyleMaker } from '../types';
+import { GeometryTypeId, StyleConfigState } from '../style/types';
 import { LocationInfo } from './location';
-
-export interface FeaturesStylesBuilderConfig {
-  colorDim: DimensionSupplier<string>;
-  sizeDim: DimensionSupplier<number>;
-  opacity: number;
-  styleMaker: StyleMaker;
-  textDim?: DimensionSupplier<string>;
-}
 
 export const getFeatures = (
   frame: DataFrame,
   info: LocationInfo,
-  config: FeaturesStylesBuilderConfig
+  style: StyleConfigState
 ): Array<Feature<Point>> | undefined => {
   const features: Array<Feature<Point>> = [];
+  const { dims } = style;
+  const values = { ...style.base };
 
   // Map each data value into new points
   for (let i = 0; i < frame.length; i++) {
-    // Get the color for the feature based on color scheme
-    const color = config.colorDim.get(i);
-
-    // Get the size for the feature based on size dimension
-    const size = config.sizeDim.get(i);
-
-    // Get the text for the feature based on text dimension
-    const label = config?.textDim ? config?.textDim.get(i) : undefined;
-
-    // Set the opacity determined from user configuration
-    const fillColor = tinycolor(color).setAlpha(config?.opacity).toRgbString();
-
     // Create a new Feature for each point returned from dataFrameToPoints
     const dot = new Feature(info.points[i]);
     dot.setProperties({
@@ -42,13 +23,82 @@ export const getFeatures = (
       rowIndex: i,
     });
 
-    if (config?.textDim) {
-      dot.setStyle(config.styleMaker({ color, fillColor, size, text: label }));
-    } else {
-      dot.setStyle(config.styleMaker({ color, fillColor, size }));
+    // Update values used in dynamic styles
+    if (dims) {
+      if (dims.color) {
+        values.color = dims.color.get(i);
+      }
+      if (dims.size) {
+        values.size = dims.size.get(i);
+      }
+      if (dims.rotation) {
+        values.rotation = dims.rotation.get(i);
+      }
+      if (dims.text) {
+        values.text = dims.text.get(i);
+      }
+
+      dot.setStyle(style.maker(values));
     }
     features.push(dot);
   }
 
   return features;
 };
+
+export interface LayerContentInfo {
+  geometryType: GeometryTypeId;
+  propertes: Array<SelectableValue<string>>;
+}
+
+export function getLayerPropertyInfo(features: FeatureLike[]): LayerContentInfo {
+  const types = new Set<string>();
+  const props = new Set<string>();
+  features.some((feature, idx) => {
+    for (const key of Object.keys(feature.getProperties())) {
+      if (key === 'geometry') {
+        continue;
+      }
+      props.add(key);
+      const g = feature.getGeometry();
+      if (g) {
+        types.add(g.getType());
+      }
+    }
+    return idx > 10; // first 10 items
+  });
+
+  let geometryType = GeometryTypeId.Any;
+  if (types.size === 1) {
+    switch (types.values().next().value) {
+      case 'Point':
+      case 'MultiPoint':
+        geometryType = GeometryTypeId.Point;
+        break;
+      case 'Line':
+      case 'MultiLine':
+        geometryType = GeometryTypeId.Line;
+        break;
+      case 'Polygon':
+        geometryType = GeometryTypeId.Polygon;
+    }
+  }
+
+  return {
+    geometryType,
+    propertes: Array.from(props.keys()).map((v) => ({ label: v, value: v })),
+  };
+}
+
+export function getUniqueFeatureValues(features: FeatureLike[], key: string): string[] {
+  const unique = new Set<string>();
+  for (const feature of features) {
+    const v = feature.get(key);
+    if (v != null) {
+      unique.add(`${v}`); // always string
+    }
+  }
+  const buffer = Array.from(unique);
+  buffer.sort();
+  return buffer;
+}

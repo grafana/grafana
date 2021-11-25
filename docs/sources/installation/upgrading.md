@@ -62,7 +62,7 @@ links.
 
 ```bash
 wget <debian package url>
-sudo apt-get install -y adduser libfontconfig1
+sudo apt-get install -y adduser
 sudo dpkg -i grafana_<version>_amd64.deb
 ```
 

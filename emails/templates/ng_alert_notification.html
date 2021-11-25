@@ -1,6 +1,11 @@
 [[Subject .Subject "[[.Title]]"]]
 
 [[ define "alert" ]]
+<tr>
+  <td colspan="2" class="value">
+    <span class="value-heading">Value:</span> <span class="value-value">[[ .ValueString ]]</span>
+  </td>
+</tr>
   [[ if gt (len .Annotations.SortedPairs) 0 ]]
       <tr>
         <td colspan="2" class="annotations">
@@ -107,6 +112,16 @@
     font-weight: bold;
     margin: 0 10px 0 0;
     padding: 5px 9px;
+  }
+  .value {
+    font-size: 14px;
+    padding-top: 24px;
+  }
+  .value-heading {
+    font-weight: bold;
+  }
+  .value-value {
+    padding-left: 8px;
   }
   .annotations {
     font-size: 14px;

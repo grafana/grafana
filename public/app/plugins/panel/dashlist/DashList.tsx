@@ -1,9 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { take } from 'lodash';
+import { css, cx } from '@emotion/css';
 
-import { InterpolateFunction, PanelProps } from '@grafana/data';
-import { CustomScrollbar, Icon, useStyles2 } from '@grafana/ui';
-
+import { GrafanaTheme2, InterpolateFunction, PanelProps } from '@grafana/data';
+import { CustomScrollbar, stylesFactory, useStyles2 } from '@grafana/ui';
+import { Icon, IconProps } from '@grafana/ui/src/components/Icon/Icon';
+import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -141,9 +143,14 @@ export function DashList(props: PanelProps<DashListOptions>) {
                         </a>
                         {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
                       </div>
-                      <span className={css.dashlistStar} onClick={(e) => toggleDashboardStar(e, dash)}>
-                        <Icon name={dash.isStarred ? 'favorite' : 'star'} type={dash.isStarred ? 'mono' : 'default'} />
-                      </span>
+                      <IconToggle
+                        aria-label={`Star dashboard "${dash.title}".`}
+                        className={css.dashlistStar}
+                        enabled={{ name: 'favorite', type: 'mono' }}
+                        disabled={{ name: 'star', type: 'default' }}
+                        checked={dash.isStarred}
+                        onClick={(e) => toggleDashboardStar(e, dash)}
+                      />
                     </div>
                   </li>
                 ))}
@@ -154,3 +161,68 @@ export function DashList(props: PanelProps<DashListOptions>) {
     </CustomScrollbar>
   );
 }
+
+interface IconToggleProps extends Partial<IconProps> {
+  enabled: IconProps;
+  disabled: IconProps;
+  checked: boolean;
+}
+
+function IconToggle({
+  enabled,
+  disabled,
+  checked,
+  onClick,
+  className,
+  'aria-label': ariaLabel,
+  ...otherProps
+}: IconToggleProps) {
+  const toggleCheckbox = useCallback(
+    (e: React.MouseEvent<HTMLInputElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      onClick?.(e);
+    },
+    [onClick]
+  );
+
+  const iconPropsOverride = checked ? enabled : disabled;
+  const iconProps = { ...otherProps, ...iconPropsOverride };
+  const styles = useStyles2(getCheckboxStyles);
+  return (
+    <label className={styles.wrapper}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onClick={toggleCheckbox}
+        className={styles.checkBox}
+        aria-label={ariaLabel}
+      />
+      <Icon className={cx(styles.icon, className)} {...iconProps} />
+    </label>
+  );
+}
+
+export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({
+      display: 'flex',
+      alignSelf: 'center',
+      cursor: 'pointer',
+      zIndex: 100,
+    }),
+    checkBox: css({
+      appearance: 'none',
+      '&:focus-visible + *': {
+        ...getFocusStyles(theme),
+        borderRadius: theme.shape.borderRadius(1),
+      },
+    }),
+    icon: css({
+      marginBottom: 0,
+      verticalAlign: 'baseline',
+      display: 'flex',
+    }),
+  };
+});

@@ -27,7 +27,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
-import { addQuery, updateQueries } from 'app/core/utils/query';
+import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
@@ -37,6 +37,7 @@ import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/dataso
 import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
 import { GroupActionComponents } from './QueryActionComponent';
+import { updateQueries } from '../state/updateQueries';
 
 interface Props {
   queryRunner: PanelQueryRunner;
@@ -112,7 +113,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
     const { dsSettings } = this.state;
-    const queries = updateQueries(newSettings, this.state.queries, expressionDatasource.name, dsSettings);
+    const queries = updateQueries(newSettings, this.state.queries, dsSettings);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({
@@ -305,13 +306,15 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderExtraActions() {
-    return GroupActionComponents.getAllExtraRenderAction().map((c, index) => {
-      return React.createElement(c, {
-        onAddQuery: this.onAddQuery,
-        onChangeDataSource: this.onChangeDataSource,
-        key: index,
-      });
-    });
+    return GroupActionComponents.getAllExtraRenderAction()
+      .map((action, index) =>
+        action({
+          onAddQuery: this.onAddQuery,
+          onChangeDataSource: this.onChangeDataSource,
+          key: index,
+        })
+      )
+      .filter(Boolean);
   }
 
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {

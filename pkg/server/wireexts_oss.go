@@ -11,11 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/kmsproviders"
+	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
@@ -51,13 +54,18 @@ var wireExtsBasicSet = wire.NewSet(
 	authinfoservice.ProvideOSSUserProtectionService,
 	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
 	ossencryption.ProvideService,
-	wire.Bind(new(encryption.Service), new(*ossencryption.Service)),
+	wire.Bind(new(encryption.Internal), new(*ossencryption.Service)),
 	filters.ProvideOSSSearchUserFilter,
 	wire.Bind(new(models.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
 	searchusers.ProvideUsersService,
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	signature.ProvideService,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
+	acdb.ProvideService,
+	wire.Bind(new(accesscontrol.ResourceStore), new(*acdb.AccessControlStore)),
+	wire.Bind(new(accesscontrol.PermissionsProvider), new(*acdb.AccessControlStore)),
+	osskmsproviders.ProvideService,
+	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
 )
 
 var wireExtsSet = wire.NewSet(

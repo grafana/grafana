@@ -16,6 +16,7 @@ import {
   ScopedVars,
   TimeRange,
   DataFrame,
+  dateTime,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -300,7 +301,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   };
 
   shouldRunExemplarQuery(target: PromQuery): boolean {
-    /* We want to run exemplar query only for histogram metrics: 
+    /* We want to run exemplar query only for histogram metrics:
     1. If we haven't processd histogram metrics yet, we need to check if expr includes "_bucket" which means that it is probably histogram metric (can rarely lead to false positive).
     2. If we have processed histogram metrics, check if it is part of query expr.
     */
@@ -503,15 +504,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     let expr = target.expr;
 
     // Apply adhoc filters
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
-      const { key, operator } = filter;
-      let { value } = filter;
-      if (operator === '=~' || operator === '!~') {
-        value = prometheusRegularEscape(value);
-      }
-      return addLabelToQuery(acc, key, value, operator);
-    }, expr);
+    expr = this.enhanceExprWithAdHocFilters(expr);
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
@@ -672,7 +665,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       interval: step,
       queryType: PromQueryType.timeSeriesQuery,
       refId: 'X',
-      datasourceId: this.id,
+      datasource: this.getRef(),
     };
 
     return await lastValueFrom(
@@ -790,18 +783,40 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
 
-  async getTagValues(options: any = {}) {
+  async getTagValues(options: { key?: string } = {}) {
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
 
   async testDatasource() {
     const now = new Date().getTime();
-    const query = { expr: '1+1' } as PromQueryRequest;
-    const response = await lastValueFrom(this.performInstantQuery(query, now / 1000));
-    return response.data.status === 'success'
-      ? { status: 'success', message: 'Data source is working' }
-      : { status: 'error', message: response.data.error };
+    const request: DataQueryRequest<PromQuery> = {
+      targets: [{ refId: 'test', expr: '1+1', instant: true }],
+      requestId: `${this.id}-health`,
+      scopedVars: {},
+      dashboardId: 0,
+      panelId: 0,
+      interval: '1m',
+      intervalMs: 60000,
+      maxDataPoints: 1,
+      range: {
+        from: dateTime(now - 1000),
+        to: dateTime(now),
+      },
+    } as DataQueryRequest<PromQuery>;
+
+    return lastValueFrom(this.query(request))
+      .then((res: DataQueryResponse) => {
+        if (!res || !res.data || res.state !== LoadingState.Done) {
+          return { status: 'error', message: `Error reading Prometheus: ${res?.error?.message}` };
+        } else {
+          return { status: 'success', message: 'Data source is working' };
+        }
+      })
+      .catch((err: any) => {
+        console.error('Prometheus Error', err);
+        return { status: 'error', message: err.message };
+      });
   }
 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
@@ -909,6 +924,20 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return getOriginalMetricName(labelData);
   }
 
+  enhanceExprWithAdHocFilters(expr: string) {
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    let finalQuery = expr;
+    finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
+      const { key, operator } = filter;
+      let { value } = filter;
+      if (operator === '=~' || operator === '!~') {
+        value = prometheusRegularEscape(value);
+      }
+      return addLabelToQuery(acc, key, value, operator);
+    }, finalQuery);
+    return finalQuery;
+  }
+
   // Used when running queries trough backend
   filterQuery(query: PromQuery): boolean {
     if (query.hide || !query.expr) {
@@ -920,14 +949,18 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   // Used when running queries trough backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
     const variables = cloneDeep(scopedVars);
+
     // We want to interpolate these variables on backend
     delete variables.__interval;
     delete variables.__interval_ms;
 
+    //Add ad hoc filters
+    const expr = this.enhanceExprWithAdHocFilters(target.expr);
+
     return {
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
-      expr: this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
+      expr: this.templateSrv.replace(expr, variables, this.interpolateQueryExpr),
     };
   }
 }

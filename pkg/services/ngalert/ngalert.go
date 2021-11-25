@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -20,10 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -38,18 +39,18 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
-	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, encryptionService encryption.Service, m *metrics.NGAlert) (*AlertNG, error) {
+	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
+	quotaService *quota.QuotaService, secretsService secrets.Service, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:               cfg,
 		DataSourceCache:   dataSourceCache,
 		RouteRegister:     routeRegister,
 		SQLStore:          sqlStore,
 		KVStore:           kvStore,
-		DataService:       dataService,
+		ExpressionService: expressionService,
 		DataProxy:         dataProxy,
 		QuotaService:      quotaService,
-		EncryptionService: encryptionService,
+		SecretsService:    secretsService,
 		Metrics:           m,
 		Log:               log.New("ngalert"),
 	}
@@ -72,10 +73,10 @@ type AlertNG struct {
 	RouteRegister     routing.RouteRegister
 	SQLStore          *sqlstore.SQLStore
 	KVStore           kvstore.KVStore
-	DataService       *tsdb.Service
+	ExpressionService *expr.Service
 	DataProxy         *datasourceproxy.DataSourceProxyService
 	QuotaService      *quota.QuotaService
-	EncryptionService encryption.Service
+	SecretsService    secrets.Service
 	Metrics           *metrics.NGAlert
 	Log               log.Logger
 	schedule          schedule.ScheduleService
@@ -101,7 +102,7 @@ func (ng *AlertNG) init() error {
 		Logger:          ng.Log,
 	}
 
-	decryptFn := ng.EncryptionService.GetDecryptedValue
+	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
 	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, log.New("ngalert.multiorg.alertmanager"))
 	if err != nil {
@@ -136,7 +137,7 @@ func (ng *AlertNG) init() error {
 		appUrl = nil
 	}
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store)
-	scheduler := schedule.NewScheduler(schedCfg, ng.DataService, appUrl, stateManager)
+	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
@@ -145,11 +146,11 @@ func (ng *AlertNG) init() error {
 		Cfg:                  ng.Cfg,
 		DatasourceCache:      ng.DataSourceCache,
 		RouteRegister:        ng.RouteRegister,
-		DataService:          ng.DataService,
+		ExpressionService:    ng.ExpressionService,
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
-		EncryptionService:    ng.EncryptionService,
+		SecretsService:       ng.SecretsService,
 		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,
@@ -185,7 +186,7 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	return !ng.Cfg.UnifiedAlerting.Enabled
+	return !ng.Cfg.UnifiedAlerting.IsEnabled()
 }
 
 // getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.

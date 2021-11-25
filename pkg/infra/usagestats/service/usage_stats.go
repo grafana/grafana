@@ -60,6 +60,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.active_editors.count"] = statsQuery.Result.ActiveEditors
 	metrics["stats.active_viewers.count"] = statsQuery.Result.ActiveViewers
 	metrics["stats.active_sessions.count"] = statsQuery.Result.ActiveSessions
+	metrics["stats.monthly_active_users.count"] = statsQuery.Result.MonthlyActiveUsers
 	metrics["stats.daily_active_users.count"] = statsQuery.Result.DailyActiveUsers
 	metrics["stats.daily_active_admins.count"] = statsQuery.Result.DailyActiveAdmins
 	metrics["stats.daily_active_editors.count"] = statsQuery.Result.DailyActiveEditors
@@ -93,7 +94,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.edition.oss.count"] = ossEditionCount
 	metrics["stats.edition.enterprise.count"] = enterpriseEditionCount
 
-	uss.registerExternalMetrics(metrics)
+	uss.registerExternalMetrics(ctx, metrics)
 
 	// must run after registration of external metrics
 	if v, ok := metrics["stats.valid_license.count"]; ok {
@@ -231,9 +232,9 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	return report, nil
 }
 
-func (uss *UsageStats) registerExternalMetrics(metrics map[string]interface{}) {
+func (uss *UsageStats) registerExternalMetrics(ctx context.Context, metrics map[string]interface{}) {
 	for _, fn := range uss.externalMetrics {
-		fnMetrics, err := fn()
+		fnMetrics, err := fn(ctx)
 		if err != nil {
 			uss.log.Error("Failed to fetch external metrics", "error", err)
 			continue
@@ -329,8 +330,8 @@ func (uss *UsageStats) updateTotalStats(ctx context.Context) {
 }
 
 func (uss *UsageStats) ShouldBeReported(dsType string) bool {
-	ds := uss.pluginStore.Plugin(dsType)
-	if ds == nil {
+	ds, exists := uss.pluginStore.Plugin(context.TODO(), dsType)
+	if !exists {
 		return false
 	}
 
@@ -366,13 +367,13 @@ func (uss *UsageStats) GetUsageStatsId(ctx context.Context) string {
 }
 
 func (uss *UsageStats) appCount() int {
-	return len(uss.pluginStore.Plugins(plugins.App))
+	return len(uss.pluginStore.Plugins(context.TODO(), plugins.App))
 }
 
 func (uss *UsageStats) panelCount() int {
-	return len(uss.pluginStore.Plugins(plugins.Panel))
+	return len(uss.pluginStore.Plugins(context.TODO(), plugins.Panel))
 }
 
 func (uss *UsageStats) dataSourceCount() int {
-	return len(uss.pluginStore.Plugins(plugins.DataSource))
+	return len(uss.pluginStore.Plugins(context.TODO(), plugins.DataSource))
 }
