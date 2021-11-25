@@ -17,7 +17,7 @@ func ProvideService() *Service {
 	return &Service{}
 }
 
-func (_ *Service) BackendFactory(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+func (*Service) BackendFactory(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 	for _, provider := range []PluginBackendProvider{RendererProvider, DefaultProvider} {
 		if factory := provider(ctx, p); factory != nil {
 			return factory
