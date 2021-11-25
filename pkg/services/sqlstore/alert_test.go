@@ -83,7 +83,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				State:   models.AlertStateOK,
 			}
 
-			err := SetAlertState(context.Background(), cmd)
+			err := sqlStore.SetAlertState(context.Background(), cmd)
 			require.Nil(t, err)
 		})
 
@@ -100,7 +100,7 @@ func TestAlertingDataAccess(t *testing.T) {
 					State:   models.AlertStateOK,
 				}
 
-				err = SetAlertState(context.Background(), cmd)
+				err = sqlStore.SetAlertState(context.Background(), cmd)
 				require.Error(t, err)
 			})
 

@@ -427,6 +427,30 @@ describe('VariableSupport', () => {
       });
     });
 
+    it('can handle legacy string queries', (done) => {
+      const expectedResults = ['test'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          azureMonitorDatasource: {
+            defaultSubscriptionId: 'defaultSubscriptionId',
+          },
+          getMetricDefinitions: jest.fn((sub: string, rg: string) => {
+            if (sub === 'subscriptionId' && rg === 'resourceGroup') {
+              return Promise.resolve(expectedResults);
+            }
+            return Promise.resolve([`getMetricDefinitions unexpected input: ${sub}, ${rg}`]);
+          }),
+        })
+      );
+      const mockRequest = {
+        targets: [('Namespaces(subscriptionId, resourceGroup)' as unknown) as AzureMonitorQuery],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(expectedResults);
+        done();
+      });
+    });
     it('returns an empty array for unknown queries', (done) => {
       const variableSupport = new VariableSupport(createMockDatasource());
       const mockRequest = {

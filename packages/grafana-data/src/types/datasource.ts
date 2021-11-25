@@ -9,7 +9,6 @@ import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
-import { LiveChannelSupport } from './live';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 import { DataQuery } from './query';
@@ -129,6 +128,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   sort?: number;
   streaming?: boolean;
   unlicensed?: boolean;
+  backend?: boolean;
   isBackend?: boolean;
 }
 
@@ -205,11 +205,8 @@ abstract class DataSourceApi<
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.type = instanceSettings.type;
-    this.meta = {} as DataSourcePluginMeta;
+    this.meta = instanceSettings.meta;
     this.uid = instanceSettings.uid;
-    if (!this.uid) {
-      this.uid = this.name; // Internal datasources do not have a UID (-- Grafana --)
-    }
   }
 
   /**
@@ -240,6 +237,15 @@ abstract class DataSourceApi<
    * public/app/features/datasources/state/actions.ts
    */
   abstract testDatasource(): Promise<any>;
+
+  /**
+   * Override to skip executing a query
+   *
+   * @returns false if the query should be skipped
+   *
+   * @virtual
+   */
+  filterQuery?(query: TQuery): boolean;
 
   /**
    *  Get hints for query improvements
@@ -345,15 +351,6 @@ abstract class DataSourceApi<
    * @deprecated -- prefer using {@link AnnotationSupport}
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
-
-  /**
-   * Define live streaming behavior within this datasource settings
-   *
-   * Note: `plugin.json` must also define `live: true`
-   *
-   * @alpha -- experimental
-   */
-  channelSupport?: LiveChannelSupport;
 
   /**
    * Defines new variable support
@@ -490,7 +487,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timezone: string;
   app: CoreApp | string;
 
-  cacheTimeout?: string;
+  cacheTimeout?: string | null;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
@@ -595,6 +592,9 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
    */
   basicAuth?: string;
   withCredentials?: boolean;
+
+  /** When the name+uid are based on template variables, maintain access to the real values */
+  rawRef?: DataSourceRef;
 }
 
 /**

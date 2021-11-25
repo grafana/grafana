@@ -19,7 +19,7 @@ func (ss *SQLStore) addAlertQueryAndCommandHandlers() {
 	bus.AddHandlerCtx("sql", ss.HandleAlertsQuery)
 	bus.AddHandlerCtx("sql", ss.GetAlertById)
 	bus.AddHandlerCtx("sql", ss.GetAllAlertQueryHandler)
-	bus.AddHandlerCtx("sql", SetAlertState)
+	bus.AddHandlerCtx("sql", ss.SetAlertState)
 	bus.AddHandlerCtx("sql", ss.GetAlertStatesForDashboard)
 	bus.AddHandlerCtx("sql", PauseAlert)
 	bus.AddHandlerCtx("sql", PauseAllAlerts)
@@ -305,8 +305,8 @@ func GetAlertsByDashboardId2(dashboardId int64, sess *DBSession) ([]*models.Aler
 	return alerts, nil
 }
 
-func SetAlertState(ctx context.Context, cmd *models.SetAlertStateCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) SetAlertState(ctx context.Context, cmd *models.SetAlertStateCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		alert := models.Alert{}
 
 		if has, err := sess.ID(cmd.AlertId).Get(&alert); err != nil {

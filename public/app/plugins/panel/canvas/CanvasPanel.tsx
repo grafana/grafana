@@ -7,7 +7,6 @@ import { CanvasGroupOptions } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
-import { GroupState } from 'app/features/canvas/runtime/group';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -18,7 +17,6 @@ interface State {
 export interface InstanceState {
   scene: Scene;
   selected: ElementState[];
-  layer: GroupState;
 }
 
 export class CanvasPanel extends Component<Props, State> {

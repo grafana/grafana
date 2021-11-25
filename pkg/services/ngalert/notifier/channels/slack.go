@@ -48,6 +48,9 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 
 	slackURL := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
 	if slackURL == "" {

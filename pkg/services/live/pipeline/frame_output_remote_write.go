@@ -21,10 +21,10 @@ type RemoteWriteFrameOutput struct {
 
 	// Endpoint to send streaming frames to.
 	Endpoint string
-	// User is a user for remote write request.
-	User string
-	// Password for remote write endpoint.
-	Password string
+
+	// BasicAuth is an optional basic auth params.
+	BasicAuth *BasicAuth
+
 	// SampleMilliseconds allow defining an interval to sample points inside a channel
 	// when outputting to remote write endpoint (on __name__ label basis). For example
 	// when having a 20Hz stream and SampleMilliseconds 1000 then only one point in a
@@ -38,11 +38,10 @@ type RemoteWriteFrameOutput struct {
 	buffer     []prompb.TimeSeries
 }
 
-func NewRemoteWriteFrameOutput(endpoint, user, password string, sampleMilliseconds int64) *RemoteWriteFrameOutput {
+func NewRemoteWriteFrameOutput(endpoint string, basicAuth *BasicAuth, sampleMilliseconds int64) *RemoteWriteFrameOutput {
 	out := &RemoteWriteFrameOutput{
 		Endpoint:           endpoint,
-		User:               user,
-		Password:           password,
+		BasicAuth:          basicAuth,
 		SampleMilliseconds: sampleMilliseconds,
 		httpClient:         &http.Client{Timeout: 2 * time.Second},
 	}
@@ -153,8 +152,8 @@ func (out *RemoteWriteFrameOutput) flush(timeSeries []prompb.TimeSeries) error {
 	req.Header.Set("Content-Type", "application/x-protobuf")
 	req.Header.Set("Content-Encoding", "snappy")
 	req.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
-	if out.User != "" {
-		req.SetBasicAuth(out.User, out.Password)
+	if out.BasicAuth != nil {
+		req.SetBasicAuth(out.BasicAuth.User, out.BasicAuth.Password)
 	}
 
 	started := time.Now()

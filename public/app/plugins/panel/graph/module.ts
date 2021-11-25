@@ -2,6 +2,8 @@ import './graph';
 import './series_overrides_ctrl';
 import './thresholds_form';
 import './time_regions_form';
+import './annotation_tooltip';
+import './event_editor';
 
 import template from './template';
 import { defaults, find, without } from 'lodash';
@@ -354,6 +356,10 @@ export class GraphCtrl extends MetricsPanelCtrl {
   getDataFrameByRefId = (refId: string) => {
     return this.dataList.filter((dataFrame) => dataFrame.refId === refId)[0];
   };
+
+  migrateToReact() {
+    this.onPluginTypeChange(config.panels['timeseries']);
+  }
 }
 
 // Use new react style configuration

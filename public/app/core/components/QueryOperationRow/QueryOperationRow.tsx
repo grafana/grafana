@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, ReactUtils, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useUpdateEffect } from 'react-use';
@@ -69,9 +69,9 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
     },
   };
 
-  const titleElement = title && renderOrCallToRender(title, renderPropArgs);
-  const actionsElement = actions && renderOrCallToRender(actions, renderPropArgs);
-  const headerElementRendered = headerElement && renderOrCallToRender(headerElement, renderPropArgs);
+  const titleElement = title && ReactUtils.renderOrCallToRender(title, renderPropArgs);
+  const actionsElement = actions && ReactUtils.renderOrCallToRender(actions, renderPropArgs);
+  const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
 
   const rowHeader = (
     <div className={styles.header}>

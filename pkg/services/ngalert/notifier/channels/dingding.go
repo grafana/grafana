@@ -19,7 +19,7 @@ const defaultDingdingMsgType = "link"
 // NewDingDingNotifier is the constructor for the Dingding notifier
 func NewDingDingNotifier(model *NotificationChannelConfig, t *template.Template) (*DingDingNotifier, error) {
 	if model.Settings == nil {
-		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	url := model.Settings.Get("url").MustString()
