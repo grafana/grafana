@@ -44,6 +44,7 @@ const NavBarDropdown = ({
           isDivider={child.divider}
           icon={child.icon as IconName}
           onClick={child.onClick}
+          styleOverrides={styles.item}
           target={child.target}
           text={child.text}
           url={child.url}
@@ -67,12 +68,16 @@ const getStyles = (
   return {
     header: css`
       background-color: ${theme.colors.background.secondary};
+      color: ${theme.colors.text.primary};
       height: ${theme.components.sidemenu.width - (adjustHeightForBorder ? 2 : 1)}px;
       font-size: ${theme.typography.h4.fontSize};
       font-weight: ${theme.typography.h4.fontWeight};
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
       white-space: nowrap;
       width: 100%;
+    `,
+    item: css`
+      color: ${theme.colors.text.primary};
     `,
     menu: css`
       background-color: ${theme.colors.background.primary};

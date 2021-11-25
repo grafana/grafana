@@ -44,7 +44,7 @@ var skipPaths = []string{
 	"public/app/plugins/panel/gauge/models.cue",
 	"public/app/plugins/panel/histogram/models.cue",
 	"public/app/plugins/panel/stat/models.cue",
-	"public/app/plugins/panel/market-trend/models.cue",
+	"public/app/plugins/panel/candlestick/models.cue",
 	"public/app/plugins/panel/state-timeline/models.cue",
 	"public/app/plugins/panel/status-history/models.cue",
 	"public/app/plugins/panel/table/models.cue",

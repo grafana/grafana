@@ -7,6 +7,7 @@ awsconfig
 /.awcache
 /dist
 /public/build
+public/dist/tsconfig.tsbuildinfo
 /public/views/index.html
 /public/views/error.html
 /emails/dist
@@ -87,6 +88,7 @@ profile.cov
 /pkg/cmd/grafana-server/debug
 /pkg/extensions/*
 /pkg/server/wireexts_enterprise.go
+/pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 !/pkg/extensions/main.go
 /public/app/extensions
 debug.test
@@ -147,3 +149,5 @@ compilation-stats.json
 
 # auto generated Go files
 *_gen.go
+
+deployment_tools_config.json

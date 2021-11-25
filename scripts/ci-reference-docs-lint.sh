@@ -13,10 +13,10 @@ pretty_print_result_of_report() {
 }
 
 BUILD_MODE="${1-local}"
-REPORT_PATH="$(realpath "$(dirname "$0")/../reports/docs/")"
 BUILD_SCRIPT_PATH="$(realpath "$(dirname "$0")/ci-reference-docs-build.sh")"
 
-if [ ! -d "$REPORT_PATH" ]; then
+if [ ! -d "$(realpath "$(dirname "$0")/../reports/docs/")" ]; then
+  echo "reports/docs directory doesn't exist. creating..."
   # this script needs to be run after the packages have been built and the api-extractor has completed.
   # shellcheck source=/scripts/ci-reference-docs-build.sh
   if ! . "$BUILD_SCRIPT_PATH" "$BUILD_MODE";
@@ -28,6 +28,7 @@ if [ ! -d "$REPORT_PATH" ]; then
   fi
 fi
 
+REPORT_PATH="$(realpath "$(dirname "$0")/../reports/docs/")"
 WARNINGS_COUNT="$(find "$REPORT_PATH" -type f -name \*.log -print0 | xargs -0 grep -o "Warning:.*(ae-\|Warning:.*(tsdoc-" | wc -l | xargs)"
 WARNINGS_COUNT_LIMIT=1212
 

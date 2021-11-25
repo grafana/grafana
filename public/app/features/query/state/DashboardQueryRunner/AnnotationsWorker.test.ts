@@ -2,7 +2,7 @@ import { Subject, throwError } from 'rxjs';
 import { setDataSourceSrv } from '@grafana/runtime';
 
 import { AnnotationsWorker } from './AnnotationsWorker';
-import * as annotationsSrv from '../../../annotations/annotations_srv';
+import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import { createDashboardQueryRunner, setDashboardQueryRunnerFactory } from './DashboardQueryRunner';

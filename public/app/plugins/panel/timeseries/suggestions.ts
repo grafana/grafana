@@ -1,4 +1,4 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { FieldColorModeId, VisualizationSuggestionsBuilder } from '@grafana/data';
 import {
   GraphDrawStyle,
   GraphFieldConfig,
@@ -30,12 +30,14 @@ export class TimeSeriesSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {
-        s.options!.legend.displayMode = LegendDisplayMode.Hidden;
+      cardOptions: {
+        previewModifier: (s) => {
+          s.options!.legend.displayMode = LegendDisplayMode.Hidden;
 
-        if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-          s.fieldConfig!.defaults.custom!.lineWidth = 3;
-        }
+          if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
+            s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
+          }
+        },
       },
     });
 
@@ -73,6 +75,24 @@ export class TimeSeriesSuggestionsSupplier {
         },
       });
 
+      list.append({
+        name: SuggestionName.LineChartGradientColorScheme,
+        fieldConfig: {
+          defaults: {
+            color: {
+              mode: FieldColorModeId.ContinuousGrYlRd,
+            },
+            custom: {
+              gradientMode: GraphGradientMode.Scheme,
+              lineInterpolation: LineInterpolation.Smooth,
+              lineWidth: 3,
+              fillOpacity: 20,
+            },
+          },
+          overrides: [],
+        },
+      });
+
       if (dataSummary.rowCountMax < maxBarsCount) {
         list.append({
           name: SuggestionName.BarChart,
@@ -88,7 +108,26 @@ export class TimeSeriesSuggestionsSupplier {
             overrides: [],
           },
         });
+
+        list.append({
+          name: SuggestionName.BarChartGradientColorScheme,
+          fieldConfig: {
+            defaults: {
+              color: {
+                mode: FieldColorModeId.ContinuousGrYlRd,
+              },
+              custom: {
+                drawStyle: GraphDrawStyle.Bars,
+                fillOpacity: 90,
+                lineWidth: 1,
+                gradientMode: GraphGradientMode.Scheme,
+              },
+            },
+            overrides: [],
+          },
+        });
       }
+
       return;
     }
 

@@ -179,28 +179,17 @@ export interface VariableUsageTree {
 
 export interface VariableUsages {
   unUsed: VariableModel[];
-  unknown: VariableUsageTree[];
   usages: VariableUsageTree[];
 }
 
 export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel | null): VariableUsages => {
   if (!dashboard) {
-    return { unUsed: [], unknown: [], usages: [] };
+    return { unUsed: [], usages: [] };
   }
 
   const unUsed: VariableModel[] = [];
   let usages: VariableUsageTree[] = [];
-  let unknown: VariableUsageTree[] = [];
   const model = dashboard.getSaveModelClone();
-
-  const unknownVariables = getUnknownVariableStrings(variables, model);
-  for (const unknownVariable of unknownVariables) {
-    const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
-    if (Object.keys(props).length) {
-      const variable = ({ id: unknownVariable, name: unknownVariable } as unknown) as VariableModel;
-      unknown.push({ variable, tree: props });
-    }
-  }
 
   for (const variable of variables) {
     const variableId = variable.id;
@@ -214,8 +203,45 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
     }
   }
 
-  return { unUsed, unknown, usages };
+  return { unUsed, usages };
 };
+
+export async function getUnknownsNetwork(
+  variables: VariableModel[],
+  dashboard: DashboardModel | null
+): Promise<UsagesToNetwork[]> {
+  return new Promise((resolve, reject) => {
+    // can be an expensive call so we avoid blocking the main thread
+    setTimeout(() => {
+      try {
+        const unknowns = createUnknownsNetwork(variables, dashboard);
+        resolve(transformUsagesToNetwork(unknowns));
+      } catch (e) {
+        reject(e);
+      }
+    }, 200);
+  });
+}
+
+function createUnknownsNetwork(variables: VariableModel[], dashboard: DashboardModel | null): VariableUsageTree[] {
+  if (!dashboard) {
+    return [];
+  }
+
+  let unknown: VariableUsageTree[] = [];
+  const model = dashboard.getSaveModelClone();
+
+  const unknownVariables = getUnknownVariableStrings(variables, model);
+  for (const unknownVariable of unknownVariables) {
+    const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
+    if (Object.keys(props).length) {
+      const variable = ({ id: unknownVariable, name: unknownVariable } as unknown) as VariableModel;
+      unknown.push({ variable, tree: props });
+    }
+  }
+
+  return unknown;
+}
 
 /*
   getAllAffectedPanelIdsForVariableChange is a function that extracts all the panel ids that are affected by a single variable
@@ -231,13 +257,17 @@ export function getAllAffectedPanelIdsForVariableChange(
   variables: VariableModel[],
   panels: PanelModel[]
 ): number[] {
-  let affectedPanelIds: number[] = getAffectedPanelIdsForVariable(variableId, panels);
-  const affectedPanelIdsForAllVariables = getAffectedPanelIdsForVariable(DataLinkBuiltInVars.includeVars, panels);
+  const flattenedPanels = flattenPanels(panels);
+  let affectedPanelIds: number[] = getAffectedPanelIdsForVariable(variableId, flattenedPanels);
+  const affectedPanelIdsForAllVariables = getAffectedPanelIdsForVariable(
+    DataLinkBuiltInVars.includeVars,
+    flattenedPanels
+  );
   affectedPanelIds = [...new Set([...affectedPanelIdsForAllVariables, ...affectedPanelIds])];
 
   const dependencies = getDependenciesForVariable(variableId, variables, new Set());
   for (const dependency of dependencies) {
-    const affectedPanelIdsForDependency = getAffectedPanelIdsForVariable(dependency, panels);
+    const affectedPanelIdsForDependency = getAffectedPanelIdsForVariable(dependency, flattenedPanels);
     affectedPanelIds = [...new Set([...affectedPanelIdsForDependency, ...affectedPanelIds])];
   }
 
@@ -375,3 +405,16 @@ export const getVariableUsages = (variableId: string, usages: VariableUsageTree[
 
   return countLeaves(usage.tree);
 };
+
+export function flattenPanels(panels: PanelModel[]): PanelModel[] {
+  const result: PanelModel[] = [];
+
+  for (const panel of panels) {
+    result.push(panel);
+    if (panel.panels?.length) {
+      result.push(...flattenPanels(panel.panels.map((p: PanelModel) => new PanelModel(p))));
+    }
+  }
+
+  return result;
+}

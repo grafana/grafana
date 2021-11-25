@@ -1,6 +1,7 @@
 import React, { CSSProperties } from 'react';
 import { css } from '@emotion/css';
 import { ReplaySubject, Subject } from 'rxjs';
+import { first } from 'rxjs/operators';
 import Moveable from 'moveable';
 import Selecto from 'selecto';
 
@@ -24,6 +25,7 @@ import {
 import { ElementState } from './element';
 import { RootElement } from './root';
 import { GroupState } from './group';
+import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 export interface SelectionParams {
   targets: Array<HTMLElement | SVGElement>;
@@ -92,6 +94,30 @@ export class Scene {
     if (this.selecto?.getSelectedTargets().length) {
       this.clearCurrentSelection();
     }
+  }
+
+  groupSelection() {
+    this.selection.pipe(first()).subscribe((currentSelectedElements) => {
+      const currentLayer = currentSelectedElements[0].parent!;
+
+      const newLayer = new GroupState(
+        {
+          type: 'group',
+          elements: [],
+        },
+        this,
+        currentSelectedElements[0].parent
+      );
+
+      currentSelectedElements.forEach((element: ElementState) => {
+        newLayer.doAction(LayerActionID.Duplicate, element);
+        currentLayer.doAction(LayerActionID.Delete, element);
+      });
+
+      currentLayer.elements.push(newLayer);
+
+      this.save();
+    });
   }
 
   clearCurrentSelection() {

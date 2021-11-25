@@ -1,10 +1,12 @@
 package state
 
 import (
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -87,6 +89,7 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 
 func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error
+
 	if a.StartsAt.IsZero() {
 		a.StartsAt = result.EvaluatedAt
 	}
@@ -94,6 +97,23 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 
 	if alertRule.ExecErrState == ngModels.AlertingErrState {
 		a.State = eval.Alerting
+	} else if alertRule.ExecErrState == ngModels.ErrorErrState {
+		a.State = eval.Error
+
+		// If the evaluation failed because a query returned an error then
+		// update the state with the Datasource UID as a label and the error
+		// message as an annotation so other code can use this metadata to
+		// add context to alerts
+		var queryError expr.QueryError
+		if errors.As(a.Error, &queryError) {
+			for _, next := range alertRule.Data {
+				if next.RefID == queryError.RefID {
+					a.Labels["datasource_uid"] = next.DatasourceUID
+					break
+				}
+			}
+			a.Annotations["Error"] = queryError.Error()
+		}
 	}
 }
 
@@ -114,7 +134,7 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 }
 
 func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	if a.State == eval.Pending || a.State == eval.Error || a.State == eval.Normal && !a.Resolved {
+	if a.State == eval.Pending || a.State == eval.Normal && !a.Resolved {
 		return false
 	}
 	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
