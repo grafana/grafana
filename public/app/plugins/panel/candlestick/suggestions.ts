@@ -38,7 +38,6 @@ export class CandlestickSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {},
     });
 
     list.append({

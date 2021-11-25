@@ -14,7 +14,6 @@ export class LogsPanelSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: () => {},
     });
 
     const { dataSummary: ds } = builder;
