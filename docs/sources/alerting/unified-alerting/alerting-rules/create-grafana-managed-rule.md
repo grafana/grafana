@@ -69,7 +69,8 @@ Configure alerting behavior in the absence of data using information in the foll
 | Alerting       | Set alert rule state to `Alerting`.                                                                                                       |
 | Ok             | Set alert rule state to `Normal`.                                                                                                         |
 
-| Error or timeout option | Description                        |
-| ----------------------- | ---------------------------------- |
-| Alerting                | Set alert rule state to `Alerting` |
-| OK                      | Set alert rule state to `Normal`   |
+| Error or timeout option | Description                                                                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Alerting                | Set alert rule state to `Alerting`                                                                                                       |
+| OK                      | Set alert rule state to `Normal`                                                                                                         |
+| Error                   | Create a new alert `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
