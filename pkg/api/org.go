@@ -139,13 +139,12 @@ func updateOrgHelper(ctx context.Context, form dtos.UpdateOrgForm, orgID int64) 
 func UpdateCurrentOrgAddress(c *models.ReqContext) response.Response {
 	form := dtos.UpdateOrgAddressForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
-
-		// PUT /api/orgs/:orgId/address
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return updateOrgAddressHelper(c.Req.Context(), form, c.OrgId)
 }
 
+// PUT /api/orgs/:orgId/address
 func UpdateOrgAddress(c *models.ReqContext) response.Response {
 	form := dtos.UpdateOrgAddressForm{}
 	if err := web.Bind(c.Req, &form); err != nil {

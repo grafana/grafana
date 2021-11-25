@@ -27,19 +27,6 @@ type FrontendSentryEvent struct {
 	Exception *FrontendSentryException `json:"exception,omitempty"`
 }
 
-func (value *FrontendSentryEvent) MarshalJSON() ([]byte, error) {
-	event, err := json.Marshal(value.Event)
-	if err != nil {
-		return nil, err
-	}
-	exception, err := json.Marshal(map[string]interface{}{"exception": value.Exception})
-	if err != nil {
-		return nil, err
-	}
-	exception[0] = ','
-	return append(event[:len(event)-1], exception...), nil
-}
-
 func (value *FrontendSentryExceptionValue) FmtMessage() string {
 	return fmt.Sprintf("%s: %s", value.Type, value.Value)
 }
@@ -106,4 +93,17 @@ func (event *FrontendSentryEvent) ToLogContext(store *SourceMapStore) log15.Ctx 
 	}
 
 	return ctx
+}
+
+func (event *FrontendSentryEvent) MarshalJSON() ([]byte, error) {
+	eventJSON, err := json.Marshal(event.Event)
+	if err != nil {
+		return nil, err
+	}
+	exceptionJSON, err := json.Marshal(map[string]interface{}{"exception": event.Exception})
+	if err != nil {
+		return nil, err
+	}
+	exceptionJSON[0] = ','
+	return append(eventJSON[:len(eventJSON)-1], exceptionJSON...), nil
 }
