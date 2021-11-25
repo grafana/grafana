@@ -1,6 +1,7 @@
 package frontendlogging
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -24,6 +25,19 @@ type FrontendSentryException struct {
 type FrontendSentryEvent struct {
 	*sentry.Event
 	Exception *FrontendSentryException `json:"exception,omitempty"`
+}
+
+func (value *FrontendSentryEvent) MarshalJSON() ([]byte, error) {
+	event, err := json.Marshal(value.Event)
+	if err != nil {
+		return nil, err
+	}
+	exception, err := json.Marshal(map[string]interface{}{"exception": value.Exception})
+	if err != nil {
+		return nil, err
+	}
+	exception[0] = ','
+	return append(event[:len(event)-1], exception...), nil
 }
 
 func (value *FrontendSentryExceptionValue) FmtMessage() string {
