@@ -9,8 +9,7 @@ aliases = ["/docs/grafana/latest/http_api/serviceaccount/"]
 
 This API allows you to interact programmatically with the [Service accounts]({{< relref "../manage-users/serviceaccount/_index.md" >}}).
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required
+**> Note:** If you are using Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
 ## Delete a service account
 
