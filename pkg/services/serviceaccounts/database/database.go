@@ -13,9 +13,15 @@ type ServiceAccountsStoreImpl struct {
 }
 
 func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl {
-	return &ServiceAccountsStoreImpl{
+	s := &ServiceAccountsStoreImpl{
 		sqlStore: store,
 	}
+	s.initMetrics()
+	return s
+}
+
+func (s *ServiceAccountsStoreImpl) initMetrics() {
+	return
 }
 
 func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceaccountID int64) error {
