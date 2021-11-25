@@ -29,6 +29,7 @@ module.exports = {
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
     '@lingui/macro': '<rootDir>/public/test/mocks/linguiMacro.tsx',
+    'locales/\\w+/messages$': '<rootDir>/public/test/mocks/i18nMessages.ts',
   },
   watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
 };
