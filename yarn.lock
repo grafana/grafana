@@ -12322,6 +12322,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"babel-plugin-macros@npm:3.1.0, babel-plugin-macros@npm:^3.0.1":
+  version: 3.1.0
+  resolution: "babel-plugin-macros@npm:3.1.0"
+  dependencies:
+    "@babel/runtime": ^7.12.5
+    cosmiconfig: ^7.0.0
+    resolve: ^1.19.0
+  checksum: 765de4abebd3e4688ebdfbff8571ddc8cd8061f839bb6c3e550b0344a4027b04c60491f843296ce3f3379fb356cc873d57a9ee6694262547eb822c14a25be9a6
+  languageName: node
+  linkType: hard
+
 "babel-plugin-macros@npm:^2.0.0, babel-plugin-macros@npm:^2.6.1, babel-plugin-macros@npm:^2.8.0":
   version: 2.8.0
   resolution: "babel-plugin-macros@npm:2.8.0"
@@ -12330,17 +12341,6 @@ __metadata:
     cosmiconfig: ^6.0.0
     resolve: ^1.12.0
   checksum: 59b09a21cf3ae1e14186c1b021917d004b49b953824b24953a54c6502da79e8051d4ac31cfd4a0ae7f6ea5ddf1f7edd93df4895dd3c3982a5b2431859c2889ac
-  languageName: node
-  linkType: hard
-
-"babel-plugin-macros@npm:^3.0.1, babel-plugin-macros@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "babel-plugin-macros@npm:3.1.0"
-  dependencies:
-    "@babel/runtime": ^7.12.5
-    cosmiconfig: ^7.0.0
-    resolve: ^1.19.0
-  checksum: 765de4abebd3e4688ebdfbff8571ddc8cd8061f839bb6c3e550b0344a4027b04c60491f843296ce3f3379fb356cc873d57a9ee6694262547eb822c14a25be9a6
   languageName: node
   linkType: hard
 
@@ -19366,7 +19366,7 @@ __metadata:
     babel-jest: 27.4.2
     babel-loader: 8.2.2
     babel-plugin-angularjs-annotate: 0.10.0
-    babel-plugin-macros: ^3.1.0
+    babel-plugin-macros: 3.1.0
     baron: 3.0.3
     brace: 0.11.1
     calculate-size: 1.1.1
@@ -19528,7 +19528,6 @@ __metadata:
     webpack-dev-server: 4.4.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.1.0
-    yarn: ^1.22.17
   languageName: unknown
   linkType: soft
 
@@ -35973,16 +35972,6 @@ __metadata:
     y18n: ^4.0.0
     yargs-parser: ^18.1.2
   checksum: 40b974f508d8aed28598087720e086ecd32a5fd3e945e95ea4457da04ee9bdb8bdd17fd91acff36dc5b7f0595a735929c514c40c402416bbb87c03f6fb782373
-  languageName: node
-  linkType: hard
-
-"yarn@npm:^1.22.17":
-  version: 1.22.17
-  resolution: "yarn@npm:1.22.17"
-  bin:
-    yarn: ./bin/yarn.js
-    yarnpkg: ./bin/yarn.js
-  checksum: 9d5211477d439a4d7b5632d7c290a3be36d2edc13599b64964bff520d3a3a480db85010f3262293981abb4e618ac92aaafa4c4c54bae50a7713c7b8ec431adac
   languageName: node
   linkType: hard
 
