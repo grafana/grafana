@@ -163,11 +163,13 @@ func TestOpsgenieNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
+			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
-				Name:     "opsgenie_testing",
-				Type:     "opsgenie",
-				Settings: settingsJSON,
+				Name:           "opsgenie_testing",
+				Type:           "opsgenie",
+				Settings:       settingsJSON,
+				SecureSettings: secureSettings,
 			}
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())

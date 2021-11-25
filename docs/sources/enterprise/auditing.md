@@ -181,6 +181,14 @@ external group.
 | Restore old dashboard version | `{"action": "restore", "resources": [{"type": "dashboard"}]}`            |
 | Delete dashboard              | `{"action": "delete", "resources": [{"type": "dashboard"}]}`             |
 
+#### Library elements management
+
+| Action                 | Distinguishing fields                                              |
+| ---------------------- | ------------------------------------------------------------------ |
+| Create library element | `{"action": "create", "resources": [{"type": "library-element"}]}` |
+| Update library element | `{"action": "update", "resources": [{"type": "library-element"}]}` |
+| Delete library element | `{"action": "delete", "resources": [{"type": "library-element"}]}` |
+
 #### Data sources management
 
 | Action                                             | Distinguishing fields                                                                     |
@@ -192,10 +200,36 @@ external group.
 | Disable permissions for datasource                 | `{"action": "disable-permissions", "resources": [{"type": "datasource"}]}`                |
 | Grant datasource permission to role, team, or user | `{"action": "create", "resources": [{"type": "datasource"}, {"type": "dspermission"}]}`\* |
 | Remove datasource permission                       | `{"action": "delete", "resources": [{"type": "datasource"}, {"type": "dspermission"}]}`   |
+| Enable caching for datasource                      | `{"action": "enable-cache", "resources": [{"type": "datasource"}]}`                       |
+| Disable caching for datasource                     | `{"action": "disable-cache", "resources": [{"type": "datasource"}]}`                      |
+| Update datasource caching configuration            | `{"action": "update", "resources": [{"type": "datasource"}]}`                             |
 
 \* `resources` may also contain a third item with `"type":` set to `"user"` or `"team"`.
 
 #### Alerts and notification channels management
+
+| Action                                                                | Distinguishing fields                                                                          |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Save alert manager configuration                                      | `{"action": "update", "requestUri": "/api/alertmanager/RECIPIENT/config/api/v1/alerts"}`       |
+| Reset alert manager configuration                                     | `{"action": "delete", "requestUri": "/api/alertmanager/RECIPIENT/config/api/v1/alerts"}`       |
+| Create silence                                                        | `{"action": "create", "requestUri": "/api/alertmanager/RECIPIENT/api/v2/silences"}`            |
+| Delete silence                                                        | `{"action": "delete", "requestUri": "/api/alertmanager/RECIPIENT/api/v2/silences/SILENCE-ID"}` |
+| Create alert                                                          | `{"action": "create", "requestUri": "/api/ruler/RECIPIENT/api/v2/alerts"}`                     |
+| Create or update rule group                                           | `{"action": "create-update", "requestUri": "/api/ruler/RECIPIENT/api/v1/rules/NAMESPACE"}`     |
+| Delete rule group                                                     | `{"action": "delete", "requestUri": "/api/ruler/RECIPIENT/api/v1/rules/NAMESPACE/GROUP-NAME"}` |
+| Delete namespace                                                      | `{"action": "delete", "requestUri": "/api/ruler/RECIPIENT/api/v1/rules/NAMESPACE"}`            |
+| Test Grafana managed receivers                                        | `{"action": "test", "requestUri": "/api/alertmanager/RECIPIENT/config/api/v1/receivers/test"}` |
+| Create or update the NGalert configuration of the user's organization | `{"action": "create-update", "requestUri": "/api/v1/ngalert/admin_config"}`                    |
+| Delete the NGalert configuration of the user's organization           | `{"action": "delete", "requestUri": "/api/v1/ngalert/admin_config"}`                           |
+
+Where the following:
+
+- `RECIPIENT` is `grafana` for requests handled by Grafana or the numeric data source ID for requests forwarded to a data source.
+- `NAMESPACE` is the string identifier for the rules namespace.
+- `GROUP-NAME` is the string identifier for the rules group.
+- `SILENCE-ID` is the ID of the affected silence.
+
+The following legacy alerting actions are still supported:
 
 | Action                            | Distinguishing fields                                                 |
 | --------------------------------- | --------------------------------------------------------------------- |
@@ -235,19 +269,19 @@ external group.
 
 #### Provisioning
 
-"resources": [
-{
-"id": 1,
-"type": "api-key"
-}
-],
-
 | Action                           | Distinguishing fields                      |
 | -------------------------------- | ------------------------------------------ |
 | Reload provisioned dashboards    | `{"action": "provisioning-dashboards"}`    |
 | Reload provisioned datasources   | `{"action": "provisioning-datasources"}`   |
 | Reload provisioned plugins       | `{"action": "provisioning-plugins"}`       |
 | Reload provisioned notifications | `{"action": "provisioning-notifications"}` |
+
+#### Plugins management
+
+| Action           | Distinguishing fields     |
+| ---------------- | ------------------------- |
+| Install plugin   | `{"action": "install"}`   |
+| Uninstall plugin | `{"action": "uninstall"}` |
 
 #### Miscellaneous
 

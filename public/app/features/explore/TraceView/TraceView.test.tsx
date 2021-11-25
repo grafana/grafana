@@ -143,6 +143,26 @@ describe('TraceView', () => {
     table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-3');
   });
+
+  it('resets detail view for new trace with the identical spanID', () => {
+    const store = configureStore();
+    const { rerender } = render(
+      <Provider store={store}>
+        <TraceView exploreId={ExploreId.left} dataFrames={[frameOld]} splitOpenFn={() => {}} />
+      </Provider>
+    );
+    const span = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
+    userEvent.click(span);
+    //Process is in detail view
+    expect(screen.getByText(/Process/)).toBeInTheDocument();
+
+    rerender(
+      <Provider store={store}>
+        <TraceView exploreId={ExploreId.left} dataFrames={[frameNew]} splitOpenFn={() => {}} />
+      </Provider>
+    );
+    expect(screen.queryByText(/Process/)).not.toBeInTheDocument();
+  });
 });
 
 const response: TraceData & { spans: TraceSpanData[] } = {

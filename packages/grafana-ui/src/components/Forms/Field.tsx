@@ -4,7 +4,7 @@ import { stylesFactory, useTheme2 } from '../../themes';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { FieldValidationMessage } from './FieldValidationMessage';
-import { getChildId } from '../../utils/children';
+import { getChildId } from '../../utils/reactUtils';
 
 export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Form input element, i.e Input or Switch */
