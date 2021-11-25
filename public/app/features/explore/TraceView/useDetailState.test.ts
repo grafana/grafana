@@ -3,6 +3,18 @@ import { useDetailState } from './useDetailState';
 import { TraceLog } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 
 describe('useDetailState', () => {
+  it('clears detail state', async () => {
+    const { result } = renderHook(() => useDetailState());
+    expect(result.current.detailStates.size).toBe(0);
+
+    act(() => result.current.toggleDetail('span1'));
+    expect(result.current.detailStates.size).toBe(1);
+    expect(result.current.detailStates.has('span1')).toBe(true);
+
+    act(() => result.current.clearDetailStates());
+    expect(result.current.detailStates.size).toBe(0);
+  });
+
   it('toggles detail', async () => {
     const { result } = renderHook(() => useDetailState());
     expect(result.current.detailStates.size).toBe(0);

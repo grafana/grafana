@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
@@ -887,6 +888,7 @@ func newLoader(cfg *setting.Cfg) *Loader {
 		pluginInitializer:  initializer.New(cfg, &fakeLicensingService{}),
 		signatureValidator: signature.NewValidator(&signature.UnsignedPluginAuthorizer{Cfg: cfg}),
 		errs:               make(map[string]*plugins.SignatureError),
+		log:                &fakeLogger{},
 	}
 }
 
@@ -916,7 +918,7 @@ func (t *fakeLicensingService) ContentDeliveryPrefix() string {
 	return ""
 }
 
-func (t *fakeLicensingService) LicenseURL(showAdminLicensingPage bool) string {
+func (t *fakeLicensingService) LicenseURL(_ bool) string {
 	return ""
 }
 
@@ -926,4 +928,20 @@ func (t *fakeLicensingService) HasValidLicense() bool {
 
 func (t *fakeLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
+}
+
+type fakeLogger struct {
+	log.Logger
+}
+
+func (fl fakeLogger) Info(_ string, _ ...interface{}) {
+
+}
+
+func (fl fakeLogger) Debug(_ string, _ ...interface{}) {
+
+}
+
+func (fl fakeLogger) Warn(_ string, _ ...interface{}) {
+
 }
