@@ -63,11 +63,11 @@ For more information, see [expressions documentation]({{< relref "../../../panel
 
 Configure alerting behavior in the absence of data using information in the following tables.
 
-| No Data Option | Description                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------------- |
-| No Data        | Set alert state to `NoData` and rule state to `Normal` (notifications are not sent on NoData states). |
-| Alerting       | Set alert rule state to `Alerting`.                                                                   |
-| Ok             | Set alert rule state to `Normal`.                                                                     |
+| No Data Option | Description                                                                                                                               |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| No Data        | Create a new alert `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting       | Set alert rule state to `Alerting`.                                                                                                       |
+| Ok             | Set alert rule state to `Normal`.                                                                                                         |
 
 | Error or timeout option | Description                        |
 | ----------------------- | ---------------------------------- |
