@@ -93,6 +93,7 @@ func (ots *OpentelemetryTracingService) initOpentelemetryTracer() error {
 		otel.SetTracerProvider(tp)
 	}
 
+	ots.tracerProvider = tp
 	GlobalTracer = otel.GetTracerProvider().Tracer("component-main")
 
 	return nil
@@ -102,8 +103,9 @@ func (ots *OpentelemetryTracingService) Run(ctx context.Context) error {
 	<-ctx.Done()
 
 	ots.log.Info("Closing tracing")
-	ctxShutdown, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctxShutdown, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
+
 	if err := ots.tracerProvider.Shutdown(ctxShutdown); err != nil {
 		return err
 	}

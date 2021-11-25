@@ -40,7 +40,7 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 	}
 
 	if err := ots.parseSettingsOpentelemetry(); err != nil {
-		return nil, ots.initOpentelemetryTracer()
+		return nil, err
 	}
 
 	return ots, ots.initOpentelemetryTracer()
