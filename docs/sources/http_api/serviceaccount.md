@@ -17,7 +17,7 @@ This API allows you to interact programmatically with the [Service accounts]({{<
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+For details, see the [introduction]({{< ref "#user-api" >}}).
 
 | Action                 | Scope              |
 | ---------------------- | ------------------ |
