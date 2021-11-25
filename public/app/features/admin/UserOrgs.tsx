@@ -185,7 +185,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                   orgId={org.orgId}
                   builtInRole={org.role}
                   onBuiltinRoleChange={this.onBuiltinRoleChange}
-                  disabled={rolePickerDisabled}
+                  builtinRolesDisabled={rolePickerDisabled}
                 />
               </div>
               {isExternalUser && <ExternalUserTooltip />}
@@ -391,7 +391,8 @@ const ExternalUserTooltip: React.FC = () => {
         placement="right-end"
         content={
           <div>
-            This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to the&nbsp;
+            This user&apos;s built-in role is not editable because it is synchronized from your auth provider. Refer to
+            the&nbsp;
             <a
               className={styles.tooltipItemLink}
               href={'https://grafana.com/docs/grafana/latest/auth'}
