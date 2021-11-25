@@ -118,6 +118,7 @@ function getSelectors() {
   };
 }
 
+// TODO: make this available globally through a render helper
 const i18n = getI18n();
 const TestingProvider = ({ children }: any) => <I18nProvider i18n={i18n}>{children}</I18nProvider>;
 
