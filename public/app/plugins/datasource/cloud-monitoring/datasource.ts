@@ -1,4 +1,4 @@
-import { chunk, flatten, isString, isArray } from 'lodash';
+import { chunk, flatten, isString } from 'lodash';
 import { from, lastValueFrom, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import {
