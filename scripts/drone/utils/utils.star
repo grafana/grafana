@@ -37,6 +37,10 @@ def pipeline(
         'trigger': trigger,
         'services': services,
         'steps': steps,
+        'volumes': [{
+            'name': 'cypress_cache',
+            'temp': {},
+        }],
         'depends_on': depends_on,
     }
     pipeline.update(platform_conf)
