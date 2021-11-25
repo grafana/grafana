@@ -2514,6 +2514,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/experimental@npm:0.0.1":
+  version: 0.0.1
+  resolution: "@grafana/experimental@npm:0.0.1"
+  peerDependencies:
+    "@emotion/css": 11.1.3
+    react: 17.0.1
+    react-select: 5.2.1
+  checksum: 5e5708395c100bddadec187becf70fb64bef3d7633cf30566a58872af09dd41ea4290c64aa02515c87bf36246e55a6cdae26bf7e7b4a8c0e2d95ed7cb5ba84ac
+  languageName: node
+  linkType: hard
+
 "@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
@@ -17815,6 +17826,7 @@ __metadata:
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 2.5.1
+    "@grafana/experimental": 0.0.1
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
