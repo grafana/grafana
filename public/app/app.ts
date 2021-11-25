@@ -33,7 +33,6 @@ import {
   setDataSourceSrv,
   setEchoSrv,
   setLocationSrv,
-  setPanelRenderer,
   setQueryRunnerFactory,
 } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
@@ -60,6 +59,9 @@ import { ApplicationInsightsBackend } from './core/services/echo/backends/analyt
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { getAllOptionEditors } from './core/components/editors/registry';
 import { backendSrv } from './core/services/backend_srv';
+import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
+import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { AngularApp } from './angular';
 import { ModalManager } from './core/services/ModalManager';
@@ -93,6 +95,7 @@ export class GrafanaApp {
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
+      setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       // Important that extension reducers are initialized before store

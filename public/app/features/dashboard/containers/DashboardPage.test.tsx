@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import { Props, UnthemedDashboardPage } from './DashboardPage';
 import { Router } from 'react-router-dom';
-import { locationService } from '@grafana/runtime';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel } from '../state';
 import { configureStore } from '../../../store/configureStore';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
@@ -208,6 +208,12 @@ describe('DashboardPage', () => {
   });
 
   dashboardPageScenario('When going into edit mode', (ctx) => {
+    setDataSourceSrv({
+      get: jest.fn().mockResolvedValue({}),
+      getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
+      getList: jest.fn(),
+    });
+
     ctx.setup(() => {
       ctx.mount({
         dashboard: getTestDashboard(),
