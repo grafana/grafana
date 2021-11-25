@@ -1330,7 +1330,7 @@ func TestGenerateConnectionString(t *testing.T) {
 				JsonData: sqleng.JsonData{},
 			},
 			expConnStr: "server=localhost;database=database;user id=user;password=;",
-		},		
+		},
 		{
 			desc: "With instance name",
 			dataSource: sqleng.DataSourceInfo{
