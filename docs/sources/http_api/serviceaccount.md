@@ -9,8 +9,7 @@ aliases = ["/docs/grafana/latest/http_api/serviceaccount/"]
 
 This API allows you to interact programmatically with the [Service accounts]({{< relref "../manage-users/serviceaccount/_index.md" >}}).
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required
+**> Note:** If you are using Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
 ## Delete a service account
 
@@ -18,7 +17,7 @@ This API allows you to interact programmatically with the [Service accounts]({{<
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+For details, see the [introduction]({{< ref "#user-api" >}}).
 
 | Action                 | Scope              |
 | ---------------------- | ------------------ |
@@ -26,7 +25,7 @@ See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 Deletes the given service account if it exists.
 
-**Example Request**:
+**Example request**:
 
 ```http
 DELETE /api/serviceaccounts/1 HTTP/1.1
@@ -35,7 +34,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example Response**:
+**Example response**:
 
 ```http
 HTTP/1.1 200
