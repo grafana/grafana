@@ -88,7 +88,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 
 	newTestReceiversResult := func(alert types.Alert, results []result, notifiedAt time.Time) *TestReceiversResult {
 		m := make(map[string]TestReceiverResult)
-		for _, receiver := range c.Receivers {
+		for _, receiver := range c.Body.Receivers {
 			// set up the result for this receiver
 			m[receiver.Name] = TestReceiverResult{
 				Name: receiver.Name,
@@ -112,7 +112,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		}
 		v := new(TestReceiversResult)
 		v.Alert = alert
-		v.Receivers = make([]TestReceiverResult, 0, len(c.Receivers))
+		v.Receivers = make([]TestReceiverResult, 0, len(c.Body.Receivers))
 		v.NotifedAt = notifiedAt
 		for _, next := range m {
 			v.Receivers = append(v.Receivers, next)
@@ -127,11 +127,11 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}
 
 	// invalid keeps track of all invalid receiver configurations
-	invalid := make([]result, 0, len(c.Receivers))
+	invalid := make([]result, 0, len(c.Body.Receivers))
 	// jobs keeps track of all receivers that need to be sent test notifications
-	jobs := make([]job, 0, len(c.Receivers))
+	jobs := make([]job, 0, len(c.Body.Receivers))
 
-	for _, receiver := range c.Receivers {
+	for _, receiver := range c.Body.Receivers {
 		for _, next := range receiver.GrafanaManagedReceivers {
 			n, err := am.buildReceiverIntegration(next, tmpl)
 			if err != nil {
@@ -218,14 +218,14 @@ func newTestAlert(c apimodels.TestReceiversConfigParams, startsAt, updatedAt tim
 		UpdatedAt: updatedAt,
 	}
 
-	if c.Alert != nil {
-		if c.Alert.Annotations != nil {
-			for k, v := range c.Alert.Annotations {
+	if c.Body.Alert != nil {
+		if c.Body.Alert.Annotations != nil {
+			for k, v := range c.Body.Alert.Annotations {
 				alert.Annotations[k] = v
 			}
 		}
-		if c.Alert.Labels != nil {
-			for k, v := range c.Alert.Labels {
+		if c.Body.Alert.Labels != nil {
+			for k, v := range c.Body.Alert.Labels {
 				alert.Labels[k] = v
 			}
 		}

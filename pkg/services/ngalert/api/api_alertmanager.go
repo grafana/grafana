@@ -381,7 +381,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 		return accessForbiddenResp()
 	}
 
-	if err := srv.loadSecureSettings(c.OrgId, body.Receivers); err != nil {
+	if err := srv.loadSecureSettings(c.OrgId, body.Body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")
