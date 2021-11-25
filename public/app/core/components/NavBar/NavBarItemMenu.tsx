@@ -12,12 +12,13 @@ import { useNavBarItemMenuContext } from './context';
 import { NavBarItemMenuItem } from './NavBarItemMenuItem';
 
 export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
+  onNavigate: (item: NavModelItem) => void;
   adjustHeightForBorder: boolean;
   reverseMenuDirection?: boolean;
 }
 
 export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null {
-  const { reverseMenuDirection, adjustHeightForBorder, disabledKeys, onAction, ...rest } = props;
+  const { reverseMenuDirection, adjustHeightForBorder, disabledKeys, onNavigate, ...rest } = props;
   const contextProps = useNavBarItemMenuContext();
   const completeProps = {
     ...mergeProps(contextProps, rest),
@@ -48,7 +49,9 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
 
   const menuSubTitle = section.value.subTitle;
 
-  const sectionComponent = <NavBarItemMenuItem key={section.key} item={section} state={state} onAction={onAction} />;
+  const sectionComponent = (
+    <NavBarItemMenuItem key={section.key} item={section} state={state} onNavigate={onNavigate} />
+  );
 
   const subTitleComponent = (
     <li key={menuSubTitle} className={styles.menuItem}>
@@ -67,7 +70,7 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
       {menuSubTitle && reverseMenuDirection ? subTitleComponent : null}
       {items.map((item, index) => {
         return (
-          <NavBarItemMenuItem key={getNavModelItemKey(item.value)} item={item} state={state} onAction={onAction} />
+          <NavBarItemMenuItem key={getNavModelItemKey(item.value)} item={item} state={state} onNavigate={onNavigate} />
         );
       })}
       {reverseMenuDirection ? sectionComponent : null}

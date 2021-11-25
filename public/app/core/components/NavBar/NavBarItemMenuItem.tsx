@@ -1,4 +1,4 @@
-import React, { Key, ReactElement, useRef, useState } from 'react';
+import React, { ReactElement, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -13,10 +13,10 @@ import { useNavBarItemMenuContext } from './context';
 export interface NavBarItemMenuItemProps {
   item: Node<NavModelItem>;
   state: TreeState<NavModelItem>;
-  onAction?: (key: Key) => void;
+  onNavigate: (item: NavModelItem) => void;
 }
 
-export function NavBarItemMenuItem({ item, state, onAction }: NavBarItemMenuItemProps): ReactElement {
+export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuItemProps): ReactElement {
   const { onClose } = useNavBarItemMenuContext();
   const { key, rendered } = item;
   const ref = useRef<HTMLLIElement>(null);
@@ -27,45 +27,26 @@ export function NavBarItemMenuItem({ item, state, onAction }: NavBarItemMenuItem
   const { focusProps } = useFocus({ onFocusChange: setFocused, isDisabled });
   const theme = useTheme2();
   const styles = getStyles(theme, isFocused);
+  const onAction = () => {
+    onNavigate(item.value);
+    onClose();
+  };
 
   let { menuItemProps } = useMenuItem(
     {
       isDisabled,
       'aria-label': item['aria-label'],
       key,
-      onClose: () => {
-        // we want to give react router a chance to handle the click before we call onClose
-        setTimeout(() => onClose(), 100);
-      },
       closeOnSelect: true,
+      onClose,
       onAction,
     },
     state,
     ref
   );
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    switch (e.key) {
-      case 'Enter':
-      case ' ':
-        // Stop propagation, unless it would already be handled by useKeyboard.
-        if (!('continuePropagation' in e)) {
-          e.stopPropagation();
-        }
-        e.preventDefault();
-        // Alert: Hacky way to go to link
-        // The supported way is to use the `onAction` prop
-        // https://github.com/adobe/react-spectrum/issues/1244
-        // https://react-spectrum.adobe.com/react-aria/useMenu.html#complex-menu-items
-        // NOTE: menu items cannot contain interactive content (e.g. buttons, checkboxes, etc.).
-        e.currentTarget?.querySelector('a')?.click();
-        e.currentTarget?.querySelector('button')?.click();
-        break;
-    }
-  };
-
   return (
-    <li {...mergeProps(menuItemProps, focusProps)} onKeyDown={onKeyDown} ref={ref} className={styles.menuItem}>
+    <li {...mergeProps(menuItemProps, focusProps)} ref={ref} className={styles.menuItem}>
       {rendered}
     </li>
   );

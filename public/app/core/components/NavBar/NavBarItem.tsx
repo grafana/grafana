@@ -1,8 +1,10 @@
 import React, { ReactNode } from 'react';
+import { Item } from '@react-stately/collections';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
 import { IconName, useTheme2 } from '@grafana/ui';
-import { Item } from '@react-stately/collections';
+import { locationService } from '@grafana/runtime';
+
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
@@ -39,10 +41,20 @@ const NavBarItem = ({
     children: filteredItems,
     menuItemType: NavMenuItemType.Section,
   };
-  const disabledKeys = filteredItems.filter((item) => item.divider).map(getNavModelItemKey);
-  // Disable all keys that are subtitle they should not be focusable
-  disabledKeys.push('subtitle');
   const items: NavModelItem[] = [section].concat(filteredItems);
+  const onNavigate = (item: NavModelItem) => {
+    const { url, target, onClick } = item;
+    if (!url) {
+      onClick?.();
+      return;
+    }
+
+    if (!target && url.startsWith('/')) {
+      locationService.push(url);
+    } else {
+      window.open(url, target);
+    }
+  };
 
   return showMenu ? (
     <div className={cx(styles.container, className)}>
@@ -51,8 +63,9 @@ const NavBarItem = ({
           items={items}
           reverseMenuDirection={reverseMenuDirection}
           adjustHeightForBorder={adjustHeightForBorder}
-          disabledKeys={disabledKeys}
+          disabledKeys={['divider', 'subtitle']}
           aria-label={section.text}
+          onNavigate={onNavigate}
         >
           {(item: NavModelItem) => {
             if (item.menuItemType === NavMenuItemType.Section) {
