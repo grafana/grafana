@@ -746,6 +746,9 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	if len(c.Route.Match) > 0 || len(c.Route.MatchRE) > 0 {
 		return fmt.Errorf("root route must not have any matchers")
 	}
+	if len(c.Route.MuteTimeIntervals) > 0 {
+		return fmt.Errorf("root route must not have any mute time intervals")
+	}
 
 	for _, r := range c.InhibitRules {
 		if err := r.UnmarshalYAML(noopUnmarshal); err != nil {
@@ -753,6 +756,33 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 		}
 	}
 
+	tiNames := make(map[string]struct{})
+	for _, mt := range c.MuteTimeIntervals {
+		if mt.Name == "" {
+			return fmt.Errorf("missing name in mute time interval")
+		}
+		if _, ok := tiNames[mt.Name]; ok {
+			return fmt.Errorf("mute time interval %q is not unique", mt.Name)
+		}
+		tiNames[mt.Name] = struct{}{}
+	}
+	return checkTimeInterval(c.Route, tiNames)
+}
+
+func checkTimeInterval(r *Route, timeIntervals map[string]struct{}) error {
+	for _, sr := range r.Routes {
+		if err := checkTimeInterval(sr, timeIntervals); err != nil {
+			return err
+		}
+	}
+	if len(r.MuteTimeIntervals) == 0 {
+		return nil
+	}
+	for _, mt := range r.MuteTimeIntervals {
+		if _, ok := timeIntervals[mt]; !ok {
+			return fmt.Errorf("undefined time interval %q used in route", mt)
+		}
+	}
 	return nil
 }
 
