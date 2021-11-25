@@ -62,7 +62,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				}
 				continue
 			}
-			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.Enabled}
+			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled()}
 			if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 				return true, err
 			}
@@ -77,7 +77,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				OrgId:                  c.OrgId,
 				Target:                 scope.Target,
 				Default:                scope.DefaultLimit,
-				UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.Enabled,
+				UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled(),
 			}
 			if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 				return true, err
@@ -96,7 +96,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 			if !c.IsSignedIn || c.UserId == 0 {
 				continue
 			}
-			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.Enabled}
+			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled()}
 			if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 				return true, err
 			}

@@ -2,7 +2,6 @@ const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const FilterWarningsPlugin = require('webpack-filter-warnings-plugin');
-const getBabelConfig = require('../../../scripts/webpack/babel.config');
 
 const stories = ['../src/**/*.story.{js,jsx,ts,tsx,mdx}'];
 

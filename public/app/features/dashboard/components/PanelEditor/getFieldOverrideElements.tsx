@@ -18,7 +18,10 @@ import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/l
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
 import { css } from '@emotion/css';
 
-export function getFieldOverrideCategories(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
+export function getFieldOverrideCategories(
+  props: OptionPaneRenderProps,
+  searchQuery: string
+): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = props.panel.fieldConfig;
   const registry = props.plugin.fieldConfigRegistry;
@@ -170,6 +173,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
                 property={property}
                 registry={registry}
                 context={context}
+                searchQuery={searchQuery}
               />
             );
           },

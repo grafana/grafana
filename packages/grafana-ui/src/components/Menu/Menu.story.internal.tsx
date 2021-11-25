@@ -50,6 +50,30 @@ export const Simple: Story<MenuProps> = (args) => {
           </MenuGroup>
         </Menu>
       </StoryExample>
+      <StoryExample name="With submenu">
+        <Menu>
+          <MenuItem label="item1" icon="history" />
+          <MenuItem
+            label="item2"
+            icon="apps"
+            childItems={[
+              <MenuItem key="subitem1" label="subitem1" icon="history" />,
+              <MenuItem key="subitem2" label="subitem2" icon="apps" />,
+              <MenuItem
+                key="subitem3"
+                label="subitem3"
+                icon="search-plus"
+                childItems={[
+                  <MenuItem key="subitem1" label="subitem1" icon="history" />,
+                  <MenuItem key="subitem2" label="subitem2" icon="apps" />,
+                  <MenuItem key="subitem3" label="subitem3" icon="search-plus" />,
+                ]}
+              />,
+            ]}
+          />
+          <MenuItem label="item3" icon="filter" />
+        </Menu>
+      </StoryExample>
     </VerticalGroup>
   );
 };

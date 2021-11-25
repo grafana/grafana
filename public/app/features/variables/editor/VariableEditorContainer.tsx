@@ -17,10 +17,7 @@ const mapStateToProps = (state: StoreState) => ({
   variables: getEditorVariables(state),
   idInEditor: state.templating.editor.id,
   dashboard: state.dashboard.getModel(),
-  unknownsNetwork: state.templating.inspect.unknownsNetwork,
-  unknownExists: state.templating.inspect.unknownExits,
   usagesNetwork: state.templating.inspect.usagesNetwork,
-  unknown: state.templating.inspect.unknown,
   usages: state.templating.inspect.usages,
 });
 
@@ -119,7 +116,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
               usages={this.props.usages}
               usagesNetwork={this.props.usagesNetwork}
             />
-            {this.props.unknownExists ? <VariablesUnknownTable usages={this.props.unknownsNetwork} /> : null}
+            <VariablesUnknownTable variables={this.props.variables} dashboard={this.props.dashboard} />
           </>
         )}
         {variableToEdit && <VariableEditorEditor identifier={toVariableIdentifier(variableToEdit)} />}

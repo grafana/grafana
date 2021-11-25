@@ -3,6 +3,7 @@ import { StatusHistoryPanel } from './StatusHistoryPanel';
 import { StatusPanelOptions, StatusFieldConfig, defaultStatusFieldConfig } from './types';
 import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
+import { StatusHistorySuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(StatusHistoryPanel)
   .useFieldConfig({
@@ -77,4 +78,5 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
 
     commonOptionsBuilder.addLegendOptions(builder, false);
     commonOptionsBuilder.addTooltipOptions(builder, true);
-  });
+  })
+  .setSuggestionsSupplier(new StatusHistorySuggestionsSupplier());

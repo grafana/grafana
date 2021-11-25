@@ -77,6 +77,10 @@ export class ContextSrv {
     return this.user.orgRole === role;
   }
 
+  accessControlEnabled(): boolean {
+    return config.licenseInfo.hasLicense && config.featureToggles['accesscontrol'];
+  }
+
   // Checks whether user has required permission
   hasPermission(action: AccessControlAction | string): boolean {
     // Fallback if access control disabled

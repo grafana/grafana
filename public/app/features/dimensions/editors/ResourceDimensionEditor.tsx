@@ -63,6 +63,11 @@ export const ResourceDimensionEditor: FC<
     [onChange, value]
   );
 
+  const onClear = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    onChange({ mode: ResourceDimensionMode.Fixed, fixed: '', field: '' });
+  };
+
   const openModal = useCallback(() => {
     setOpen(true);
   }, []);
@@ -71,7 +76,14 @@ export const ResourceDimensionEditor: FC<
   const showSourceRadio = item.settings?.showSourceRadio ?? true;
   const mediaType = item.settings?.resourceType ?? 'icon';
   const folderName = item.settings?.folderName ?? ResourceFolderName.Icon;
-  const srcPath = mediaType === 'icon' && value ? getPublicOrAbsoluteUrl(value?.fixed) : '';
+  let srcPath = '';
+  if (mediaType === 'icon') {
+    if (value?.fixed) {
+      srcPath = getPublicOrAbsoluteUrl(value.fixed);
+    } else if (item.settings?.placeholderValue) {
+      srcPath = getPublicOrAbsoluteUrl(item.settings.placeholderValue);
+    }
+  }
 
   return (
     <>
@@ -106,15 +118,14 @@ export const ResourceDimensionEditor: FC<
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Fixed && (
-        <InlineFieldRow>
+        <InlineFieldRow onClick={openModal} className={styles.pointer}>
           <InlineField label={null} grow>
             <Input
-              value={niceName(value?.fixed)}
-              placeholder="Resource URL"
+              value={niceName(value?.fixed) ?? ''}
+              placeholder={item.settings?.placeholderText ?? 'Select a value'}
               readOnly={true}
-              onClick={openModal}
               prefix={srcPath && <SVG src={srcPath} className={styles.icon} />}
-              suffix={<Button icon="ellipsis-h" variant="secondary" fill="text" size="sm" onClick={openModal} />}
+              suffix={<Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClear} />}
             />
           </InlineField>
         </InlineFieldRow>
@@ -147,5 +158,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: inline-block;
     fill: currentColor;
     max-width: 25px;
+  `,
+  pointer: css`
+    cursor: pointer;
+    input[readonly] {
+      cursor: pointer;
+    }
   `,
 });

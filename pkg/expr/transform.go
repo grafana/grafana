@@ -219,7 +219,7 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, err := s.encryptionService.DecryptJsonData(ctx, m, s.cfg.SecretKey)
+		decryptedJsonData, err := s.secretsService.DecryptJsonData(ctx, m)
 		if err != nil {
 			logger.Error("Failed to decrypt secure json data", "error", err)
 		}

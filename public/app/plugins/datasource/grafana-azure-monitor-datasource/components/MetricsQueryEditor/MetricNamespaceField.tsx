@@ -29,6 +29,11 @@ const MetricNamespaceField: React.FC<MetricNamespaceFieldProps> = ({
   );
 
   const options = useMemo(() => [...metricNamespaces, variableOptionGroup], [metricNamespaces, variableOptionGroup]);
+  const optionValues = metricNamespaces.map((m) => m.value).concat(variableOptionGroup.options.map((p) => p.value));
+  const value = query.azureMonitor?.metricNamespace;
+  if (value && !optionValues.includes(value)) {
+    options.push({ label: value, value });
+  }
 
   return (
     <Field label="Metric namespace">

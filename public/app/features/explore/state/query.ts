@@ -37,7 +37,7 @@ import { localStorageFullAction, richHistoryLimitExceededAction, richHistoryUpda
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
+import { createCacheKey, getResultsFromCache } from './utils';
 import deepEqual from 'fast-deep-equal';
 
 //
@@ -65,17 +65,12 @@ export interface ChangeQueriesPayload {
 export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
 
 /**
- * Clear all queries and results.
- */
-export interface ClearQueriesPayload {
-  exploreId: ExploreId;
-}
-export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/clearQueries');
-
-/**
  * Cancel running queries.
  */
-export const cancelQueriesAction = createAction<ClearQueriesPayload>('explore/cancelQueries');
+export interface CancelQueriesPayload {
+  exploreId: ExploreId;
+}
+export const cancelQueriesAction = createAction<CancelQueriesPayload>('explore/cancelQueries');
 
 export interface QueriesImportedPayload {
   exploreId: ExploreId;
@@ -115,11 +110,11 @@ export interface StoreLogsVolumeDataProvider {
 /**
  * Stores available logs volume provider after running the query. Used internally by runQueries().
  */
-const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
+export const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
   'explore/storeLogsVolumeDataProviderAction'
 );
 
-const cleanLogsVolumeAction = createAction<{ exploreId: ExploreId }>('explore/cleanLogsVolumeAction');
+export const cleanLogsVolumeAction = createAction<{ exploreId: ExploreId }>('explore/cleanLogsVolumeAction');
 
 export interface StoreLogsVolumeDataSubscriptionPayload {
   exploreId: ExploreId;
@@ -223,23 +218,22 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
 }
 
 /**
- * Clear all queries and results.
- */
-export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
-  return (dispatch) => {
-    dispatch(scanStopAction({ exploreId }));
-    dispatch(clearQueriesAction({ exploreId }));
-    dispatch(stateSave());
-  };
-}
-
-/**
  * Cancel running queries
  */
 export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch(scanStopAction({ exploreId }));
     dispatch(cancelQueriesAction({ exploreId }));
+    dispatch(
+      storeLogsVolumeDataProviderAction({
+        exploreId,
+        logsVolumeDataProvider: undefined,
+      })
+    );
+    // clear any incomplete data
+    if (getState().explore[exploreId]!.logsVolumeData?.state !== LoadingState.Done) {
+      dispatch(cleanLogsVolumeAction({ exploreId }));
+    }
     dispatch(stateSave());
   };
 }
@@ -624,21 +618,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries,
-    };
-  }
-
-  if (clearQueriesAction.match(action)) {
-    const queries = ensureQueries();
-    stopQueryState(state.querySubscription);
-    return {
-      ...state,
-      queries: queries.slice(),
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
-      queryResponse: createEmptyQueryResponse(),
-      loading: false,
     };
   }
 
