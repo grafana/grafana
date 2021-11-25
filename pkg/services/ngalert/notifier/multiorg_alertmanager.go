@@ -85,7 +85,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 			return nil, fmt.Errorf("unable to initialize gossip mesh: %w", err)
 		}
 
-		err = peer.Join(cluster.DefaultReconnectInterval, cluster.DefaultReconnectTimeout)
+		err = peer.Join(cfg.UnifiedAlerting.HAPeerReconnectInterval, cfg.UnifiedAlerting.HAPeerReconnectTimeout)
 		if err != nil {
 			l.Error("msg", "unable to join gossip mesh while initializing cluster for high availability mode", "err", err)
 		}

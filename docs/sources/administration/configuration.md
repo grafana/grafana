@@ -1157,6 +1157,23 @@ each instance wait before sending the notification to take into account replicat
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
+### ha_peer_reconnect_timeout
+
+Length of time to attempt to reconnect to a lost peer. After this timeout
+peers that are lost and not part of the configuration will be removed from
+the cluster. In ephemeral setups like kubernetes this should be set to a
+lower value to avoid error log spam on ungraceful shutdown. The default value
+is `6h`.
+
+The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_peer_reconnect_interval
+
+Interval between attempting to reconnect to lost peers. The default value is
+`10s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
 ### ha_gossip_interval
 
 The interval between sending gossip messages. By lowering this value (more frequent) gossip messages are propagated

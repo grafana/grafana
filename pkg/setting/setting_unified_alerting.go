@@ -15,11 +15,13 @@ import (
 )
 
 const (
-	alertmanagerDefaultClusterAddr        = "0.0.0.0:9094"
-	alertmanagerDefaultPeerTimeout        = 15 * time.Second
-	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
-	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
-	alertmanagerDefaultConfigPollInterval = 60 * time.Second
+	alertmanagerDefaultClusterAddr           = "0.0.0.0:9094"
+	alertmanagerDefaultPeerTimeout           = 15 * time.Second
+	alertmanagerDefaultPeerReconnectTimeout  = cluster.DefaultReconnectTimeout
+	alertmanagerDefaultPeerReconnectInterval = cluster.DefaultReconnectInterval
+	alertmanagerDefaultGossipInterval        = cluster.DefaultGossipInterval
+	alertmanagerDefaultPushPullInterval      = cluster.DefaultPushPullInterval
+	alertmanagerDefaultConfigPollInterval    = 60 * time.Second
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
@@ -57,6 +59,8 @@ type UnifiedAlertingSettings struct {
 	HAAdvertiseAddr                string
 	HAPeers                        []string
 	HAPeerTimeout                  time.Duration
+	HAPeerReconnectTimeout         time.Duration
+	HAPeerReconnectInterval        time.Duration
 	HAGossipInterval               time.Duration
 	HAPushPullInterval             time.Duration
 	MaxAttempts                    int64
@@ -139,6 +143,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return err
 	}
 	uaCfg.HAPeerTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_timeout", (alertmanagerDefaultPeerTimeout).String()))
+	if err != nil {
+		return err
+	}
+	uaCfg.HAPeerReconnectTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_reconnect_timeout", (alertmanagerDefaultPeerReconnectTimeout).String()))
+	if err != nil {
+		return err
+	}
+	uaCfg.HAPeerReconnectInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_reconnect_interval", (alertmanagerDefaultPeerReconnectInterval).String()))
 	if err != nil {
 		return err
 	}
