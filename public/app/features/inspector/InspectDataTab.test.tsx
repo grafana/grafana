@@ -57,7 +57,7 @@ describe('InspectDataTab', () => {
       render(<InspectDataTab {...createProps()} />);
       const dataOptions = screen.getByText(/Data options/i);
       userEvent.click(dataOptions);
-      const dataFrameInput = screen.getByRole('textbox', { name: /Select dataframe/i });
+      const dataFrameInput = screen.getByRole('combobox', { name: /Select dataframe/i });
       userEvent.click(dataFrameInput);
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });

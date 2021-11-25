@@ -8,7 +8,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { MarketTrendPanel } from './CandlestickPanel';
+import { CandlestickPanel } from './CandlestickPanel';
 import {
   defaultColors,
   CandlestickOptions,
@@ -68,7 +68,7 @@ function addFieldPicker(
   });
 }
 
-export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(MarketTrendPanel)
+export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(CandlestickPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
@@ -124,6 +124,19 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Mark
     if (opts.mode !== VizDisplayMode.Candles) {
       addFieldPicker(builder, candlestickFieldsInfo.volume, info);
     }
+
+    builder.addRadio({
+      path: 'includeAllFields',
+      name: 'Additional fields',
+      description: 'Use standard timeseries options to configure any fields not mapped above',
+      defaultValue: defaultPanelOptions.includeAllFields,
+      settings: {
+        options: [
+          { label: 'Ignore', value: false },
+          { label: 'Include', value: true },
+        ],
+      },
+    });
 
     // commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);

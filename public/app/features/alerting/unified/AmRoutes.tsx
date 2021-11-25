@@ -58,6 +58,10 @@ const AmRoutes: FC = () => {
 
   useCleanup((state) => state.unifiedAlerting.saveAMConfig);
   const handleSave = (data: Partial<FormAmRoute>) => {
+    if (!result) {
+      return;
+    }
+
     const newData = formAmRouteToAmRoute(
       alertManagerSourceName,
       {

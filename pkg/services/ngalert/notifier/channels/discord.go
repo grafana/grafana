@@ -28,7 +28,7 @@ type DiscordNotifier struct {
 
 func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) (*DiscordNotifier, error) {
 	if model.Settings == nil {
-		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	avatarURL := model.Settings.Get("avatar_url").MustString()
