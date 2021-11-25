@@ -1,7 +1,7 @@
 +++
 title = "Service account HTTP API"
 description = "Grafana Service account HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "serviceaccount"]
+keywords = ["grafana", "http", "documentation", "api", "service account"]
 aliases = ["/docs/grafana/latest/http_api/serviceaccount/"]
 +++
 
