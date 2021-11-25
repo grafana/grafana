@@ -10,8 +10,6 @@ import { initialUserState } from './state/reducers';
 import { getNavModel } from '../../core/selectors/navModel';
 import { backendSrv } from '../../core/services/backend_srv';
 import { TeamPermissionLevel } from '../../types';
-import { I18nProvider } from '@lingui/react';
-import { getI18n } from 'app/core/localisation';
 
 const defaultProps: Props = {
   ...initialUserState,
