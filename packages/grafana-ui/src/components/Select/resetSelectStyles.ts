@@ -16,8 +16,6 @@ export default function resetSelectStyles() {
         color: 'inherit',
         margin: 0,
         padding: 0,
-        // Set an explicit z-index here to ensure this element overlays singleValue
-        zIndex: 1,
       };
     },
     loadingIndicator: () => ({}),
@@ -32,7 +30,10 @@ export default function resetSelectStyles() {
     noOptionsMessage: () => ({}),
     option: () => ({}),
     placeholder: () => ({}),
-    singleValue: () => ({}),
+    singleValue: () => ({
+      // Set an explicit z-index here to ensure this element always sits under the input
+      zIndex: -1,
+    }),
     valueContainer: () => ({}),
   };
 }
