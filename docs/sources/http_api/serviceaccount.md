@@ -25,7 +25,7 @@ For details, see the [introduction]({{< ref "#user-api" >}}).
 
 Deletes the given service account if it exists.
 
-**Example Request**:
+**Example request**:
 
 ```http
 DELETE /api/serviceaccounts/1 HTTP/1.1
