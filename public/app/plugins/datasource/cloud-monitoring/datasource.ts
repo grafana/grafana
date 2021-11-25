@@ -296,9 +296,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       completeFilter.map(({ key, operator, value, condition }: Filter) => [
         this.templateSrv.replace(key, scopedVars || {}),
         operator,
-        this.templateSrv.replace(value, scopedVars || {}, (value: string | string[]) => {
-          return isArray(value) && value.length ? `(${value.join('|')})` : value;
-        }),
+        adjustForGoogleRE2(this.templateSrv.replace(value, scopedVars || {}, 'regex')),
         ...(condition ? [condition] : []),
       ])
     );
@@ -318,4 +316,26 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     });
     return interpolatedGroupBys;
   }
+}
+
+function adjustForGoogleRE2(input: string): string {
+  let output = '';
+
+  for (let i = 0, len: number = input.length; i < len; i++) {
+    const currentChar = input.charAt(i);
+
+    if (currentChar === '\\' && i < len - 1) {
+      const nextChar = input.charAt(++i);
+
+      if (nextChar !== '/') {
+        output += currentChar;
+      }
+
+      output += nextChar;
+    } else {
+      output += currentChar;
+    }
+  }
+
+  return output;
 }

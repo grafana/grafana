@@ -114,20 +114,12 @@ describe('CloudMonitoringDataSource', () => {
         expect(interpolated[2]).toBe('(filtervalue1|filtervalue2)');
       });
 
-      it('should not escape a regex', () => {
-        const templateSrv = initTemplateSrv('/[a-Z]*.html', true);
+      it('should escape regexes compatible with Google RE2 format', () => {
+        const templateSrv = initTemplateSrv(['/[a-Z]*.html', '/foo.html', '**/', '\\/'], true);
         const { ds } = getTestcontext({ templateSrv });
         const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
 
-        expect(interpolated[2]).toBe('/[a-Z]*.html');
-      });
-
-      it('should not escape an array of regexes but join them as a regex', () => {
-        const templateSrv = initTemplateSrv(['/[a-Z]*.html', '/foo.html'], true);
-        const { ds } = getTestcontext({ templateSrv });
-        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
-
-        expect(interpolated[2]).toBe('(/[a-Z]*.html|/foo.html)');
+        expect(interpolated[2]).toBe('(/\\[a-Z\\]\\*\\.html|/foo\\.html|\\*\\*/|\\\\/)');
       });
     });
   });
