@@ -17,7 +17,7 @@ import { SystemJS } from '@grafana/runtime';
 import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/data';
 
 // Loaded after the `unmock` abve
-import { importAppPlugin } from './plugin_loader';
+import { importAppPlugin } from '../plugin_loader';
 
 class MyCustomApp extends AppPlugin {
   initWasCalled = false;
