@@ -137,15 +137,12 @@ export function RichHistoryQueriesTab(props: Props) {
   } = props;
 
   const [timeFilter, setTimeFilter] = useState<[number, number]>([0, retentionPeriod]);
-  const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
+  const [data, setData] = useState<[RichHistoryQuery[], ReturnType<typeof createDatasourcesList>]>([[], []]);
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearchInput, setDebouncedSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme, height);
-
-  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
-  const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   useDebounce(
     () => {
@@ -156,16 +153,22 @@ export function RichHistoryQueriesTab(props: Props) {
   );
 
   useEffect(() => {
-    setFilteredQueries(
+    const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
+    const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
+
+    setData([
       filterAndSortQueries(
         queries,
         sortOrder,
         datasourceFilters.map((d) => d.value),
         debouncedSearchInput,
         timeFilter
-      )
-    );
+      ),
+      listOfDatasources,
+    ]);
   }, [timeFilter, queries, sortOrder, datasourceFilters, debouncedSearchInput]);
+
+  const [filteredQueries, listOfDatasources] = data;
 
   /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
    * are keys and arrays with queries that belong to that headings are values.
