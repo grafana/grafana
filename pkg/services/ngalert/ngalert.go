@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -23,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -185,7 +186,7 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	return !ng.Cfg.UnifiedAlerting.Enabled
+	return !ng.Cfg.UnifiedAlerting.IsEnabled()
 }
 
 // getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.

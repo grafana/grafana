@@ -182,38 +182,6 @@ func formatLegend(metric model.Metric, query *lokiQuery) string {
 	return string(result)
 }
 
-func parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
-	qs := []*lokiQuery{}
-	for _, query := range queryContext.Queries {
-		model := &ResponseModel{}
-		err := json.Unmarshal(query.JSON, model)
-		if err != nil {
-			return nil, err
-		}
-
-		start := query.TimeRange.From
-		end := query.TimeRange.To
-
-		var resolution int64 = 1
-		if model.Resolution >= 1 && model.Resolution <= 5 || model.Resolution == 10 {
-			resolution = model.Resolution
-		}
-
-		step := calculateStep(query.Interval, query.TimeRange.To.Sub(query.TimeRange.From), resolution)
-
-		qs = append(qs, &lokiQuery{
-			Expr:         model.Expr,
-			Step:         step,
-			LegendFormat: model.LegendFormat,
-			Start:        start,
-			End:          end,
-			RefID:        query.RefID,
-		})
-	}
-
-	return qs, nil
-}
-
 func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames, error) {
 	frames := data.Frames{}
 
