@@ -118,10 +118,6 @@ function getSelectors() {
   };
 }
 
-// TODO: make this available globally through a render helper
-const i18n = getI18n();
-const TestingProvider = ({ children }: any) => <I18nProvider i18n={i18n}>{children}</I18nProvider>;
-
 async function getTestContext(overrides: Partial<Props> = {}) {
   jest.clearAllMocks();
   const putSpy = jest.spyOn(backendSrv, 'put');
@@ -131,7 +127,7 @@ async function getTestContext(overrides: Partial<Props> = {}) {
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
   const props = { ...defaultProps, ...overrides };
-  const { rerender } = render(<UserProfileEditPage {...props} />, { wrapper: TestingProvider });
+  const { rerender } = render(<UserProfileEditPage {...props} />);
 
   await waitFor(() => expect(props.initUserProfilePage).toHaveBeenCalledTimes(1));
 
