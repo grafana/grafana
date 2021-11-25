@@ -59,8 +59,6 @@ export const candlestickFieldsInfo: Record<keyof CandlestickFieldMap, FieldPicke
 };
 
 export interface CandlestickData {
-  warn?: string;
-  noTimeField?: boolean;
   autoOpenClose?: boolean;
 
   // Special fields
@@ -97,30 +95,31 @@ export function prepareCandlestickFields(
   series: DataFrame[] | undefined,
   options: CandlestickOptions,
   theme: GrafanaTheme2
-): CandlestickData {
+): CandlestickData | null {
   if (!series?.length) {
-    return { warn: 'No data' } as CandlestickData;
+    return null;
   }
 
   // All fields
   const fieldMap = options.fields ?? {};
   const aligned = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series, enforceSort: true });
   if (!aligned?.length) {
-    return { warn: 'No data found' } as CandlestickData;
+    return null;
   }
+
   const data: CandlestickData = { aligned, frame: aligned, names: {} };
 
   // Apply same filter as everythign else in timeseries
-  const norm = prepareGraphableFields([aligned], theme);
-  if (norm.warn || norm.noTimeField || !norm.frames?.length) {
-    return norm as CandlestickData;
+  const timeSeriesFrames = prepareGraphableFields([aligned], theme);
+  if (!timeSeriesFrames) {
+    return null;
   }
-  const frame = (data.frame = norm.frames[0]);
+
+  const frame = (data.frame = timeSeriesFrames[0]);
   const timeIndex = frame.fields.findIndex((f) => f.type === FieldType.time);
+
   if (timeIndex < 0) {
-    data.warn = 'Missing time field';
-    data.noTimeField = true;
-    return data;
+    return null;
   }
 
   // Find the known fields
@@ -184,11 +183,15 @@ export function prepareCandlestickFields(
   // so they fall through to unmapped fields and get appropriate includeAllFields treatment
   if (options.mode === VizDisplayMode.Volume) {
     if (data.high) {
-      used.delete(data.high);
+      if (data.high !== data.open) {
+        used.delete(data.high);
+      }
       data.high = undefined;
     }
     if (data.low) {
-      used.delete(data.low);
+      if (data.low !== data.open) {
+        used.delete(data.low);
+      }
       data.low = undefined;
     }
   } else if (options.mode === VizDisplayMode.Candles) {
@@ -213,7 +216,7 @@ export function prepareCandlestickFields(
 
   if (!options.includeAllFields) {
     fields.push(...used);
-  } else if (timeIndex > 0) {
+  } else {
     fields.push(...frame.fields.filter((f) => f !== timeField));
   }
 
@@ -226,12 +229,16 @@ export function prepareCandlestickFields(
   for (let i = 0; i < data.frame.fields.length; i++) {
     const field = data.frame.fields[i];
 
-    // time is unused (-1), y series enumerate from 0
-    field.state!.seriesIndex = i - 1;
+    field.state = {
+      ...field.state,
 
-    field.state!.origin = {
-      fieldIndex: i,
-      frameIndex: 0,
+      // time is unused (-1), y series enumerate from 0
+      seriesIndex: i - 1,
+
+      origin: {
+        fieldIndex: i,
+        frameIndex: 0,
+      },
     };
   }
 
