@@ -6,9 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
-
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/licensing"
