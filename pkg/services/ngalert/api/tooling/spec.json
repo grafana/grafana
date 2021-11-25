@@ -495,23 +495,10 @@
         "operationId": "RoutePostTestReceivers",
         "parameters": [
           {
-            "x-go-name": "Body",
-            "name": "body",
+            "name": "Body",
             "in": "body",
             "schema": {
-              "type": "object",
-              "properties": {
-                "alert": {
-                  "$ref": "#/definitions/TestReceiversConfigAlertParams"
-                },
-                "receivers": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/PostableApiReceiver"
-                  },
-                  "x-go-name": "Receivers"
-                }
-              }
+              "$ref": "#/definitions/TestReceiversConfigBodyParams"
             }
           },
           {
@@ -3567,6 +3554,22 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "TestReceiversConfigBodyParams": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "$ref": "#/definitions/TestReceiversConfigAlertParams"
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableApiReceiver"
+          },
+          "x-go-name": "Receivers"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
     "TestReceiversResult": {
       "type": "object",
       "properties": {
@@ -4119,16 +4122,14 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       },
-      "x-go-name": "GettableAlerts",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -4181,6 +4182,8 @@
           "x-go-name": "UpdatedAt"
         }
       },
+      "x-go-name": "GettableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
@@ -4362,7 +4365,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "name"
@@ -4374,6 +4376,8 @@
           "x-go-name": "Name"
         }
       },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/receiver"
     },
     "silence": {

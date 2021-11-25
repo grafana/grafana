@@ -2531,6 +2531,22 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "TestReceiversConfigBodyParams": {
+   "properties": {
+    "alert": {
+     "$ref": "#/definitions/TestReceiversConfigAlertParams"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/PostableApiReceiver"
+     },
+     "type": "array",
+     "x-go-name": "Receivers"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "TestReceiversResult": {
    "properties": {
     "alert": {
@@ -3080,15 +3096,13 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array",
-   "x-go-name": "GettableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3140,7 +3154,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
    "description": "GettableSilences gettable silences",
@@ -3319,7 +3335,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3330,7 +3345,9 @@
    "required": [
     "name"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "Receiver",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "silence": {
    "description": "Silence silence",
@@ -3919,23 +3936,10 @@
     "parameters": [
      {
       "in": "body",
-      "name": "body",
+      "name": "Body",
       "schema": {
-       "properties": {
-        "alert": {
-         "$ref": "#/definitions/TestReceiversConfigAlertParams"
-        },
-        "receivers": {
-         "items": {
-          "$ref": "#/definitions/PostableApiReceiver"
-         },
-         "type": "array",
-         "x-go-name": "Receivers"
-        }
-       },
-       "type": "object"
-      },
-      "x-go-name": "Body"
+       "$ref": "#/definitions/TestReceiversConfigBodyParams"
+      }
      },
      {
       "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",

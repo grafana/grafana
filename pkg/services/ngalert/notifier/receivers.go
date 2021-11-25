@@ -59,7 +59,7 @@ func (e ReceiverTimeoutError) Error() string {
 	return fmt.Sprintf("the receiver timed out: %s", e.Err)
 }
 
-func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigParams) (*TestReceiversResult, error) {
+func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
 	// now represents the start time of the test
 	now := time.Now()
 	testAlert := newTestAlert(c, now, now)
@@ -88,7 +88,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 
 	newTestReceiversResult := func(alert types.Alert, results []result, notifiedAt time.Time) *TestReceiversResult {
 		m := make(map[string]TestReceiverResult)
-		for _, receiver := range c.Body.Receivers {
+		for _, receiver := range c.Receivers {
 			// set up the result for this receiver
 			m[receiver.Name] = TestReceiverResult{
 				Name: receiver.Name,
@@ -112,7 +112,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		}
 		v := new(TestReceiversResult)
 		v.Alert = alert
-		v.Receivers = make([]TestReceiverResult, 0, len(c.Body.Receivers))
+		v.Receivers = make([]TestReceiverResult, 0, len(c.Receivers))
 		v.NotifedAt = notifiedAt
 		for _, next := range m {
 			v.Receivers = append(v.Receivers, next)
@@ -127,11 +127,11 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}
 
 	// invalid keeps track of all invalid receiver configurations
-	invalid := make([]result, 0, len(c.Body.Receivers))
+	invalid := make([]result, 0, len(c.Receivers))
 	// jobs keeps track of all receivers that need to be sent test notifications
-	jobs := make([]job, 0, len(c.Body.Receivers))
+	jobs := make([]job, 0, len(c.Receivers))
 
-	for _, receiver := range c.Body.Receivers {
+	for _, receiver := range c.Receivers {
 		for _, next := range receiver.GrafanaManagedReceivers {
 			n, err := am.buildReceiverIntegration(next, tmpl)
 			if err != nil {
@@ -197,7 +197,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	return newTestReceiversResult(testAlert, append(invalid, results...), now), nil
 }
 
-func newTestAlert(c apimodels.TestReceiversConfigParams, startsAt, updatedAt time.Time) types.Alert {
+func newTestAlert(c apimodels.TestReceiversConfigBodyParams, startsAt, updatedAt time.Time) types.Alert {
 	var (
 		defaultAnnotations = model.LabelSet{
 			"summary":          "Notification test",
@@ -218,14 +218,14 @@ func newTestAlert(c apimodels.TestReceiversConfigParams, startsAt, updatedAt tim
 		UpdatedAt: updatedAt,
 	}
 
-	if c.Body.Alert != nil {
-		if c.Body.Alert.Annotations != nil {
-			for k, v := range c.Body.Alert.Annotations {
+	if c.Alert != nil {
+		if c.Alert.Annotations != nil {
+			for k, v := range c.Alert.Annotations {
 				alert.Annotations[k] = v
 			}
 		}
-		if c.Body.Alert.Labels != nil {
-			for k, v := range c.Body.Alert.Labels {
+		if c.Alert.Labels != nil {
+			for k, v := range c.Alert.Labels {
 				alert.Labels[k] = v
 			}
 		}

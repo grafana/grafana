@@ -376,12 +376,12 @@ func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.P
 	return NotImplementedResp
 }
 
-func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigParams) response.Response {
+func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return accessForbiddenResp()
 	}
 
-	if err := srv.loadSecureSettings(c.OrgId, body.Body.Receivers); err != nil {
+	if err := srv.loadSecureSettings(c.OrgId, body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")
