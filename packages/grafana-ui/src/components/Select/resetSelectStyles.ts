@@ -14,6 +14,8 @@ export default function resetSelectStyles() {
       return {
         ...originalStyles,
         color: 'inherit',
+        margin: 0,
+        padding: 0,
         // Set an explicit z-index here to ensure this element overlays singleValue
         zIndex: 1,
       };

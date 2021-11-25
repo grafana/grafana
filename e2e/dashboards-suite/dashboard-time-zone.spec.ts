@@ -54,8 +54,9 @@ e2e.scenario({
       .should('be.visible')
       .within(() => {
         e2e.components.Select.singleValue().should('have.text', 'Coordinated Universal Time');
-        e2e.components.Select.input().should('be.visible').click();
       });
+
+    e2e.components.Select.input().should('be.visible').click();
 
     e2e.components.Select.option().should('be.visible').contains(toTimeZone).click();
 
