@@ -111,19 +111,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       text-align: center;
     `,
     name: css`
-      padding: ${theme.spacing(1)};
+      padding-bottom: ${theme.spacing(0.5)};
+      margin-top: ${theme.spacing(-1)};
       font-size: ${theme.typography.bodySmall.fontSize};
       white-space: nowrap;
       overflow: hidden;
       color: ${theme.colors.text.secondary};
       font-weight: ${theme.typography.fontWeightMedium};
       text-overflow: ellipsis;
-      padding-bottom: ${theme.spacing(0.5)};
-      margin-top: ${theme.spacing(-2)};
     `,
     img: css`
-      max-width: 65px;
-      max-height: 65px;
+      max-width: ${theme.spacing(8)};
+      max-height: ${theme.spacing(8)};
     `,
     renderContainer: css`
       position: absolute;
