@@ -7,6 +7,11 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	tlog "github.com/opentracing/opentracing-go/log"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -15,10 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	tlog "github.com/opentracing/opentracing-go/log"
-	"golang.org/x/sync/errgroup"
 )
 
 // AlertEngine is the background process that
@@ -41,9 +42,9 @@ type AlertEngine struct {
 	usageStatsService usagestats.Service
 }
 
-// IsDisabled returns true if the alerting service is disable for this instance.
+// IsDisabled returns true if the alerting service is disabled for this instance.
 func (e *AlertEngine) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.UnifiedAlerting.Enabled
+	return setting.AlertingEnabled == nil || !*setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.UnifiedAlerting.IsEnabled()
 }
 
 // ProvideAlertEngine returns a new AlertEngine.

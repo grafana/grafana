@@ -11,6 +11,7 @@ export interface Props {
   getRoleOptions?: () => Promise<Role[]>;
   getBuiltinRoles?: () => Promise<{ [key: string]: Role[] }>;
   disabled?: boolean;
+  builtinRolesDisabled?: boolean;
 }
 
 export const UserRolePicker: FC<Props> = ({
@@ -21,6 +22,7 @@ export const UserRolePicker: FC<Props> = ({
   getRoleOptions,
   getBuiltinRoles,
   disabled,
+  builtinRolesDisabled,
 }) => {
   return (
     <RolePicker
@@ -31,6 +33,7 @@ export const UserRolePicker: FC<Props> = ({
       getRoles={() => fetchUserRoles(userId, orgId)}
       getBuiltinRoles={() => (getBuiltinRoles ? getBuiltinRoles() : fetchBuiltinRoles(orgId))}
       disabled={disabled}
+      builtinRolesDisabled={builtinRolesDisabled}
     />
   );
 };
