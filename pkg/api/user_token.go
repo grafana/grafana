@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/ua-parser/uap-go/uaparser"
@@ -46,6 +47,14 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User logged out",
 	})
+}
+
+func (hs *HTTPServer) GetUserOAuthToken(c *models.ReqContext) response.Response {
+	if token := oauthtoken.GetCurrentOAuthToken(hs.context, c.SignedInUser); token != nil {
+		return response.JSON(200, token)
+	}
+
+	return response.Error(500, "Failed to get token", nil)
 }
 
 func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int64) response.Response {

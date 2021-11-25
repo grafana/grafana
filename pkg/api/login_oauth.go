@@ -101,7 +101,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	code := ctx.Query("code")
 	if code == "" {
-		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOnline}
+		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOffline}
 
 		if provider.UsePKCE {
 			ascii, pkce, err := genPKCECode()
