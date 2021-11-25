@@ -162,7 +162,7 @@ describe('Candlestick data', () => {
       ],
       options,
       theme
-    );
+    )!;
 
     expect(info.open).toBeDefined();
     expect(info.close).toBeDefined();
@@ -224,7 +224,7 @@ describe('Candlestick data', () => {
       ],
       options,
       theme
-    );
+    )!;
 
     expect(info.open).toBeDefined();
     expect(info.close).toBeDefined();
@@ -278,7 +278,7 @@ describe('Candlestick data', () => {
       ],
       options,
       theme
-    );
+    )!;
 
     expect(info.open).toBeDefined();
     expect(info.close).toBeDefined();
