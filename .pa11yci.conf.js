@@ -6,7 +6,7 @@ var config = {
     chromeLaunchConfig: {
       args: ['--no-sandbox'],
     },
-    hideElements: '#updateVersion',
+    hideElements: '#updateVersion, [class*="-singleValue"], [id^="react-select-"][id$="-placeholder"]',
   },
 
   urls: [
