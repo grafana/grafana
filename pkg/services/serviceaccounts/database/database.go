@@ -16,16 +16,12 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	s := &ServiceAccountsStoreImpl{
 		sqlStore: store,
 	}
-	s.initMetrics()
+	s.InitMetrics()
 	return s
 }
 
-func (s *ServiceAccountsStoreImpl) initMetrics() {
-	return
-}
-
-func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceaccountID int64) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+func (sa *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceaccountID int64) error {
+	return sa.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return deleteServiceAccountInTransaction(sess, orgID, serviceaccountID)
 	})
 }
