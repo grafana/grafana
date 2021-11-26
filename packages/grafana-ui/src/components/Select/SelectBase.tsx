@@ -1,4 +1,4 @@
-import React, { ComponentProps, useCallback } from 'react';
+import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
 import { default as ReactSelect } from 'react-select';
 import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
@@ -145,6 +145,20 @@ export function SelectBase<T>({
   }
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+
+  const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
+  const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
+
+  // Infer menu position for asynchronously loaded options. AsyncSelect displays "Loading options..." menu that usually
+  // fits below the input. After all options are loaded AsyncSelect does not reset the position of the menu.
+  // See: https://github.com/JedWatson/react-select/issues/3505
+  useEffect(() => {
+    if (loadOptions && reactSelectRef.current && reactSelectRef.current.controlRef && menuPlacement === 'auto') {
+      const distance = window.innerHeight - reactSelectRef.current.controlRef.getBoundingClientRect().bottom;
+      setCloseToBottom(distance < maxMenuHeight);
+    }
+  }, [maxMenuHeight, menuPlacement, loadOptions]);
+
   const onChangeWithEmpty = useCallback(
     (value: SelectValue<T>, action: ActionMeta) => {
       if (isMulti && (value === undefined || value === null)) {
@@ -205,7 +219,7 @@ export function SelectBase<T>({
     minMenuHeight,
     maxVisibleValues,
     menuIsOpen: isOpen,
-    menuPlacement,
+    menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
     menuPosition,
     menuShouldBlockScroll: true,
     menuPortalTarget: menuShouldPortal ? document.body : undefined,
@@ -247,6 +261,7 @@ export function SelectBase<T>({
   return (
     <>
       <ReactSelectComponent
+        ref={reactSelectRef}
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
