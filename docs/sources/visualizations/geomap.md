@@ -18,17 +18,11 @@ The map view controls the initial view of the map when the dashboard loads.
 
 ### Initial View
 
-Set the center of the map. 
+The initial view Sets the center of the map. 
 
 * **View** sets the center for the map when the panel first loads.
-  * (0°,0°)
-  * North America
-  * Europe
-  * West Asia
-  * South-east Asia
-  * Coordinates
-* Latitude (available when the **View** mode is *Coordinates*)
-* Longitude (available when the **View** mode is *Coordinates*)
+* **Latitude** (available when the **View** mode is *Coordinates*)
+* **Longitude** (available when the **View** mode is *Coordinates*)
 * **Zoom** sets the initial zoom level for the GeoMap panel.
 
 ## Data layer
