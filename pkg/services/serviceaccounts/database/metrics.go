@@ -32,11 +32,11 @@ func (sa *ServiceAccountsStoreImpl) makeMetric(name, help string) prometheus.Gau
 	)
 }
 
-func (saStore *ServiceAccountsStoreImpl) InitMetrics() {
+func (sa *ServiceAccountsStoreImpl) InitMetrics() {
 	once.Do(func() {
 		prometheus.MustRegister(
 			//If you add a line here, you must also add it to CacheMetrics
-			saStore.makeMetric("serviceaccount_count", "Gauge for total number of serviceaccounts."),
+			sa.makeMetric("serviceaccount_count", "Gauge for total number of serviceaccounts."),
 		)
 	})
 }
