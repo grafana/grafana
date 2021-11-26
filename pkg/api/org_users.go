@@ -16,15 +16,13 @@ import (
 func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Response {
 	cmd := models.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.
-
-			// POST /api/orgs/:orgId/users
-			Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
 	return hs.addOrgUserHelper(c.Req.Context(), cmd)
 }
 
+// POST /api/orgs/:orgId/users
 func (hs *HTTPServer) AddOrgUser(c *models.ReqContext) response.Response {
 	cmd := models.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -184,16 +182,14 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
 	cmd := models.UpdateOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data",
-
-			// PATCH /api/orgs/:orgId/users/:userId
-			err)
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.ParamsInt64(":userId")
 	return hs.updateOrgUserHelper(c.Req.Context(), cmd)
 }
 
+// PATCH /api/orgs/:orgId/users/:userId
 func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext) response.Response {
 	cmd := models.UpdateOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {

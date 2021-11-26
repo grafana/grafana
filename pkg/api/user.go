@@ -93,15 +93,13 @@ func UpdateSignedInUser(c *models.ReqContext) response.Response {
 func UpdateUser(c *models.ReqContext) response.Response {
 	cmd := models.UpdateUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(
-
-			// POST /api/users/:id/using/:orgId
-			http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.UserId = c.ParamsInt64(":id")
 	return handleUpdateUser(c.Req.Context(), cmd)
 }
 
+// POST /api/users/:id/using/:orgId
 func UpdateUserActiveOrg(c *models.ReqContext) response.Response {
 	userID := c.ParamsInt64(":id")
 	orgID := c.ParamsInt64(":orgId")
