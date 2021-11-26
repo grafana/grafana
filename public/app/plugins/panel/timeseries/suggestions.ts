@@ -30,12 +30,14 @@ export class TimeSeriesSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {
-        s.options!.legend.displayMode = LegendDisplayMode.Hidden;
+      cardOptions: {
+        previewModifier: (s) => {
+          s.options!.legend.displayMode = LegendDisplayMode.Hidden;
 
-        if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-          s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
-        }
+          if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
+            s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
+          }
+        },
       },
     });
 

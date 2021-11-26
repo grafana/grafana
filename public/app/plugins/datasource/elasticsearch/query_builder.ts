@@ -16,7 +16,7 @@ import {
   MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './query_def';
-import { ElasticsearchQuery } from './types';
+import { ElasticsearchQuery, TermsQuery } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
 export class ElasticQueryBuilder {
@@ -213,7 +213,7 @@ export class ElasticQueryBuilder {
     }
   }
 
-  build(target: ElasticsearchQuery, adhocFilters?: any, queryString?: string) {
+  build(target: ElasticsearchQuery, adhocFilters?: any) {
     // make sure query has defaults;
     target.metrics = target.metrics || [defaultMetricAgg()];
     target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
@@ -221,22 +221,26 @@ export class ElasticQueryBuilder {
     let metric: MetricAggregation;
 
     let i, j, pv, nestedAggs;
-    const query = {
+    const query: any = {
       size: 0,
       query: {
         bool: {
-          filter: [
-            { range: this.getRangeFilter() },
-            {
-              query_string: {
-                analyze_wildcard: true,
-                query: queryString,
-              },
-            },
-          ],
+          filter: [{ range: this.getRangeFilter() }],
         },
       },
     };
+
+    if (target.query && target.query !== '') {
+      query.query.bool.filter = [
+        ...query.query.bool.filter,
+        {
+          query_string: {
+            analyze_wildcard: true,
+            query: target.query,
+          },
+        },
+      ];
+    }
 
     this.addAdhocFilters(query, adhocFilters);
 
@@ -433,7 +437,7 @@ export class ElasticQueryBuilder {
     return parsedValue;
   }
 
-  getTermsQuery(queryDef: any) {
+  getTermsQuery(queryDef: TermsQuery) {
     const query: any = {
       size: 0,
       query: {
@@ -493,7 +497,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: ElasticsearchQuery, limit: number, adhocFilters?: any, querystring?: string) {
+  getLogsQuery(target: ElasticsearchQuery, limit: number, adhocFilters?: any) {
     let query: any = {
       size: 0,
       query: {
@@ -509,7 +513,7 @@ export class ElasticQueryBuilder {
       query.query.bool.filter.push({
         query_string: {
           analyze_wildcard: true,
-          query: querystring,
+          query: target.query,
         },
       });
     }
@@ -518,7 +522,7 @@ export class ElasticQueryBuilder {
 
     return {
       ...query,
-      aggs: this.build(target, null, querystring).aggs,
+      aggs: this.build(target, null).aggs,
       highlight: {
         fields: {
           '*': {},
