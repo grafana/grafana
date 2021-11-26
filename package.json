@@ -239,7 +239,7 @@
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
     "@opentelemetry/api": "1.0.2",
-    "@opentelemetry/exporter-collector": "0.23.0",
+    "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.0.0",
     "@popperjs/core": "2.5.4",
     "@react-aria/focus": "3.5.0",
