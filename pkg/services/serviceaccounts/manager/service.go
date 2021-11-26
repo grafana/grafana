@@ -60,7 +60,7 @@ func (sa *ServiceAccountsService) IsDisabled() error {
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	err := sa.IsDisabled()
 	if err != nil {
-		return err
+		return nil
 	}
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
