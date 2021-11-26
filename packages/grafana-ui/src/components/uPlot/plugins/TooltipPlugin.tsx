@@ -183,7 +183,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         return null;
       }
 
-      const dataIdx = plotInstance.current?.legend?.idxs?.[focusedSeriesIdx] ?? focusedPointIdx;
+      const dataIdx = focusedPointIdxs?.[focusedSeriesIdx] ?? focusedPointIdx;
       xVal = xFieldFmt(xField!.values.get(dataIdx)).text;
       const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
       const display = fieldFmt(field.values.get(dataIdx));
@@ -233,7 +233,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       tooltip = <SeriesTable series={series} timestamp={xVal} />;
     }
   } else {
-    tooltip = renderTooltip(otherProps.data, focusedSeriesIdx, plotInstance.current?.cursor.idx ?? focusedPointIdx);
+    tooltip = renderTooltip(otherProps.data, focusedSeriesIdx, focusedPointIdx);
   }
 
   return (
