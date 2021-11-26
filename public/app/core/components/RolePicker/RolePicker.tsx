@@ -12,6 +12,7 @@ export interface Props {
   onRolesChange: (newRoles: string[]) => void;
   onBuiltinRoleChange: (newRole: OrgRole) => void;
   disabled?: boolean;
+  builtinRolesDisabled?: boolean;
 }
 
 export const RolePicker = ({
@@ -22,6 +23,7 @@ export const RolePicker = ({
   onRolesChange,
   onBuiltinRoleChange,
   disabled,
+  builtinRolesDisabled,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
@@ -133,6 +135,7 @@ export const RolePicker = ({
             onSelect={onSelect}
             onUpdate={onUpdate}
             showGroups={query.length === 0 || query.trim() === ''}
+            builtinRolesDisabled={builtinRolesDisabled}
           />
         )}
       </ClickOutsideWrapper>
