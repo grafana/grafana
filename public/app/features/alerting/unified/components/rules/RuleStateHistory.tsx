@@ -78,23 +78,23 @@ function renderTimestampCell(item: DynamicTableItemProps<PartialHistoryItem>) {
   );
 }
 
+const LabelsWrapper: FC<{}> = ({ children }) => {
+  const { wrapper } = useStyles(getStyles);
+  return <div className={wrapper}>{children}</div>;
+};
+
 const TimestampStyle = css`
   display: flex;
   align-items: flex-end;
   flex-direction: column;
 `;
 
-const LabelsWrapper: FC<{}> = ({ children }) => {
-  const styles = useStyles(getStyles);
-  return <div className={styles}>{children}</div>;
-};
-
-const getStyles = function (theme: GrafanaTheme) {
-  return css`
+const getStyles = (theme: GrafanaTheme) => ({
+  wrapper: css`
     & > * {
       margin-right: ${theme.spacing.xs};
     }
-  `;
-};
+  `,
+});
 
 export { RuleStateHistory };
