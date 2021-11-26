@@ -16,7 +16,30 @@ Further documentation can be found at http://docs.grafana.org/installation/docke
 
 ## Changelog
 
-### v6.4.0-pre1
+### v8.3.0-beta2
+
+- Our Alpine based images have been upgraded to Alpine [3.14.3](https://alpinelinux.org/posts/Alpine-3.14.3-released.html) [#41922](https://github.com/grafana/grafana/pull/41922) [@hairyhenderson](https://github.com/hairyhenderson)
+- Our Go build image has been upgraded to Go [1.17.0](https://golang.org/doc/devel/release#go1.17.minor) [#41922](https://github.com/grafana/grafana/pull/41922) [@hairyhenderson](https://github.com/hairyhenderson)
+
+### v7.3.0-beta1
+
+- OpenShift compatability. [#27813](https://github.com/grafana/grafana/pull/27813), [@xlson](https://github.com/grafana/grafana/pull/27813)
+
+### v7.0.0-beta3
+
+- Our Alpine based images have been upgraded to Alpine [3.11](https://www.alpinelinux.org/posts/Alpine-3.11.0-released.html)
+
+### v7.0.0-beta1
+
+- Our Ubuntu based images have been upgraded to Ubuntu [20.04 LTS](https://releases.ubuntu.com/20.04/)
+
+### v6.5.0-beta1
+
+- Build and publish an additional Ubuntu based docker image. [#20196](https://github.com/grafana/grafana/pull/20196), [@aknuds1](https://github.com/aknuds1)
+- Build and use musl-based binaries in alpine images to resolve glibc incompatibility issues. [#19798](https://github.com/grafana/grafana/pull/19798), [@aknuds1](https://github.com/aknuds1)
+- Add additional glibc dependencies to support certain backend plugins in alpine. [#20214](https://github.com/grafana/grafana/pull/20214), [@briangann](https://github.com/briangann)
+
+### v6.4.0-beta1
 
 - Switched base image from Ubuntu:18.04 to Alpine:3.10.
 
