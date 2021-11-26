@@ -116,7 +116,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, onShowS
           <LinkButton
             className={style.button}
             size="xs"
-            key="dashboard"
+            key="panel"
             variant="primary"
             icon="apps"
             target="__blank"
@@ -181,6 +181,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, onShowS
     if (isViewMode) {
       rightButtons.push(
         <ClipboardButton
+          key="copy"
           onClipboardCopy={() => {
             appEvents.emit(AppEvents.alertSuccess, ['URL copied!']);
           }}
