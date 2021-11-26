@@ -72,7 +72,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 		}
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
-		dsDTO.Meta = &plugins.PluginMetaDTO{
+		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
 			JSONData:  plugin.JSONData,
 			Signature: plugin.Signature,
 			Module:    plugin.Module,
@@ -129,7 +129,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			dto := plugins.DataSourceDTO{
 				Type: string(ds.Type),
 				Name: ds.Name,
-				Meta: &plugins.PluginMetaDTO{
+				PluginMeta: &plugins.PluginMetaDTO{
 					JSONData:  ds.JSONData,
 					Signature: ds.Signature,
 					Module:    ds.Module,
@@ -178,7 +178,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		if ds.Preload && ds.Module != "" {
 			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
 				Path:    ds.Module,
-				Version: ds.Meta.Version,
+				Version: ds.PluginMeta.Version,
 			})
 		}
 	}
