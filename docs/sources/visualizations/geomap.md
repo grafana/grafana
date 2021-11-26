@@ -18,7 +18,7 @@ The map view controls the initial view of the map when the dashboard loads.
 
 ### Initial View
 
-The initial view Sets the center of the map. 
+The initial view configures how the GeoMap panel renders when the panel is first loaded.
 
 * **View** sets the center for the map when the panel first loads.
 * **Latitude** (available when the **View** mode is *Coordinates*)
