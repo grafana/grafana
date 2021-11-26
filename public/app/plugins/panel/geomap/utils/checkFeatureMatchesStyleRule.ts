@@ -12,6 +12,8 @@ export const checkFeatureMatchesStyleRule = (rule: FeatureRuleConfig, feature: F
   switch (rule.operation) {
     case ComparisonOperation.EQ:
       return val === rule.value;
+    case ComparisonOperation.NEQ:
+      return val !== rule.value;
     case ComparisonOperation.GT:
       return val > rule.value;
     case ComparisonOperation.GTE:
