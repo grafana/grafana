@@ -51,8 +51,12 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
           graphFrames.push(frame);
           tableFrames.push(frame);
         } else {
-          // We fallback to table if we do not have any better meta info about the dataframe.
-          tableFrames.push(frame);
+          if (isLogs(frame)) {
+            logsFrames.push(frame);
+          } else {
+            // We fallback to table if we do not have any better meta info about the dataframe.
+            tableFrames.push(frame);
+          }
         }
     }
   }
@@ -178,5 +182,17 @@ function isTimeSeries(frame: DataFrame): boolean {
   const grouped = groupBy(frame.fields, (field) => field.type);
   return Boolean(
     Object.keys(grouped).length === 2 && grouped[FieldType.time]?.length === 1 && grouped[FieldType.number]
+  );
+}
+
+/**
+ * Check if frame contains logs, which for our purpose means 1 time column and 1 text columns
+ */
+function isLogs(frame: DataFrame): boolean {
+  const grouped = groupBy(frame.fields, (field) => field.type);
+  return Boolean(
+    Object.keys(grouped).length === 2 &&
+      grouped[FieldType.time]?.length === 1 &&
+      grouped[FieldType.string]?.length === 1
   );
 }
