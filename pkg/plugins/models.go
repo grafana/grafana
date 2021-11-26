@@ -211,7 +211,7 @@ type DataSourceDTO struct {
 	Access     string                 `json:"access,omitempty"`
 	Preload    bool                   `json:"preload"`
 	Module     string                 `json:"module,omitempty"`
-	JSONData   map[string]interface{} `json:"jsonData,omitempty"`
+	JSONData   map[string]interface{} `json:"jsonData"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
