@@ -48,7 +48,7 @@ func (saStore *ServiceAccountsStoreImpl) CacheMetrics() {
 	if LastUpdateTime.UTC().Add(MetricCacheInterval).Before(time.Now()) {
 		LastUpdateTime = time.Now()
 		//If you add a line here, you also have to add a line to InitMetrics
-		cache.Store("serviceaccount_count", saStore.CountTable("role"))
+		cache.Store("serviceaccount_count", saStore.CountTable("user"))
 	}
 }
 
@@ -56,7 +56,7 @@ func (saStore *ServiceAccountsStoreImpl) CacheMetrics() {
 func (saStore *ServiceAccountsStoreImpl) CountTable(table string) int {
 	var result int = -1
 	_ = saStore.sqlStore.WithDbSession(context.TODO(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.SQL("SELECT count(1) FROM user where is_service_account = true").Get(&result)
+		_, err := sess.SQL("SELECT count(1) FROM " + table + " where is_service_account = true").Get(&result)
 		return err
 	})
 	return result
