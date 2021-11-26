@@ -26,9 +26,12 @@
   ],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies"],
-  "minor": {
-    "enabled": false
-  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch"],
+      "extends": ["schedule:monthly"]
+    }
+  ]
   "patch": {
     "enabled": false
   },
