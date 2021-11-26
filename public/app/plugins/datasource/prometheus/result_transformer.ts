@@ -296,7 +296,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
 
   if (options.url) {
     dataLinks.push({
-      title: `Go to ${options.url}`,
+      title: `Go to trace detail`,
       url: options.url,
       targetBlank: true,
     });
