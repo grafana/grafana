@@ -121,6 +121,8 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 }
 
 func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) {
+	a.Error = result.Error
+
 	if a.StartsAt.IsZero() {
 		a.StartsAt = result.EvaluatedAt
 	}
