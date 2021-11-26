@@ -1,6 +1,6 @@
 import { CombinedRule } from 'app/types/unified-alerting';
-import React, { FC, useState } from 'react';
-import { Modal, useStyles2 } from '@grafana/ui';
+import React, { FC } from 'react';
+import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { AlertLabels } from '../AlertLabels';
@@ -10,15 +10,16 @@ import { RuleDetailsDataSources } from './RuleDetailsDataSources';
 import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
 import { RuleDetailsExpression } from './RuleDetailsExpression';
 import { RuleDetailsAnnotations } from './RuleDetailsAnnotations';
-import { RuleStateHistory } from './RuleStateHistory';
 import { Annotation } from '../../utils/constants';
+import { useAlertHistoryModal } from '../../hooks/useAlertHistoryModal';
 
 interface Props {
   rule: CombinedRule;
 }
 
 export const RuleDetails: FC<Props> = ({ rule }) => {
-  const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
+  const alertId = rule.annotations[Annotation.alertId];
+  const { AlertHistoryModal, showAlertHistoryModal } = useAlertHistoryModal(alertId);
 
   const styles = useStyles2(getStyles);
   const {
@@ -33,7 +34,7 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
       <RuleDetailsActionButtons
         rule={rule}
         rulesSource={rulesSource}
-        onShowStateHistory={() => setShowHistoryModal(true)}
+        onShowStateHistory={() => showAlertHistoryModal()}
       />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
@@ -50,15 +51,7 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
         </div>
       </div>
       <RuleDetailsMatchingInstances promRule={promRule} />
-      <Modal
-        isOpen={showHistoryModal}
-        onDismiss={() => setShowHistoryModal(false)}
-        closeOnBackdropClick={true}
-        closeOnEscape={true}
-        title="State history"
-      >
-        <RuleStateHistory alertId={rule.annotations[Annotation.alertId]} />
-      </Modal>
+      {AlertHistoryModal}
     </div>
   );
 };

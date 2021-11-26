@@ -28,6 +28,8 @@ import { RuleDetailsExpression } from './components/rules/RuleDetailsExpression'
 import { RuleDetailsAnnotations } from './components/rules/RuleDetailsAnnotations';
 import * as ruleId from './utils/rule-id';
 import { AlertQuery } from '../../../types/unified-alerting-dto';
+import { useAlertHistoryModal } from './hooks/useAlertHistoryModal';
+import { Annotation } from './utils/constants';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
@@ -44,6 +46,8 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const data = useObservable(runner.get());
   const queries2 = useMemo(() => alertRuleToQueries(rule), [rule]);
   const [queries, setQueries] = useState<AlertQuery[]>([]);
+  const alertId = (rule?.annotations ?? {})[Annotation.alertId];
+  const { AlertHistoryModal, showAlertHistoryModal } = useAlertHistoryModal(alertId);
 
   const onRunQueries = useCallback(() => {
     if (queries.length > 0) {
@@ -124,7 +128,11 @@ export function RuleViewer({ match }: RuleViewerProps) {
             <Icon name="bell" size="lg" /> {rule.name}
           </h4>
           <RuleState rule={rule} isCreating={false} isDeleting={false} />
-          <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
+          <RuleDetailsActionButtons
+            rule={rule}
+            rulesSource={rulesSource}
+            onShowStateHistory={() => showAlertHistoryModal()}
+          />
         </div>
         <div className={styles.details}>
           <div className={styles.leftSide}>
@@ -172,6 +180,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </RuleViewerLayoutContent>
         </>
       )}
+      {AlertHistoryModal}
     </RuleViewerLayout>
   );
 }
