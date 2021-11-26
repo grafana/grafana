@@ -113,7 +113,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     }
 
     if (options.tags && options.tags.length) {
-      params.tags = options.tags.map((e) => this.props.replaceVariables(e));
+      params.tags = options.tags.map((tag) => this.props.replaceVariables(tag) ? this.props.replaceVariables(tag) : tag);
     }
 
     if (queryTags.length) {
