@@ -1,12 +1,12 @@
 import React, { FC } from 'react';
 
-import { dateTimeFormat } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { StateHistoryItem } from 'app/types/unified-alerting';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { AlertStateTag } from './AlertStateTag';
 import { useManagedAlertStateHistory } from '../../hooks/useManagedAlertStateHistory';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder, useStyles } from '@grafana/ui';
 import { LegacyAlertStateToGrafanaAlertState } from '../../utils/rules';
 import { AlertLabel } from '../AlertLabel';
 
@@ -55,7 +55,14 @@ const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
 
 function renderValueCell(item: DynamicTableItemProps<PartialHistoryItem>) {
   const matches = item.data.data?.evalMatches ?? [];
-  return matches.map((match) => <AlertLabel key={match.metric} labelKey={match.metric} value={String(match.value)} />);
+
+  return (
+    <LabelsWrapper>
+      {matches.map((match) => (
+        <AlertLabel key={match.metric} labelKey={match.metric} value={String(match.value)} />
+      ))}
+    </LabelsWrapper>
+  );
 }
 
 function renderStateCell(item: DynamicTableItemProps<PartialHistoryItem>) {
@@ -76,5 +83,18 @@ const TimestampStyle = css`
   align-items: flex-end;
   flex-direction: column;
 `;
+
+const LabelsWrapper: FC<{}> = ({ children }) => {
+  const styles = useStyles(getStyles);
+  return <div className={styles}>{children}</div>;
+};
+
+const getStyles = function (theme: GrafanaTheme) {
+  return css`
+    & > * {
+      margin-right: ${theme.spacing.xs};
+    }
+  `;
+};
 
 export { RuleStateHistory };
