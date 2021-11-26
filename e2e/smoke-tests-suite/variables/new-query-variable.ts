@@ -18,7 +18,7 @@ describe('Variables - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect()
       .should('be.visible')
       .within((select) => {
-        e2e.components.Select.singleValue().should('be.visible').should('have.text', 'Query');
+        e2e.components.Select.singleValue().should('have.text', 'Query');
       });
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput()
       .should('be.visible')
@@ -82,7 +82,7 @@ describe('Variables - Add variable', () => {
 
     e2e().get('#Description').should('be.visible').clear().type('a description');
 
-    e2e.components.DataSourcePicker.inputV2().should('be.visible').type('gdev-testdata{enter}');
+    e2e.components.DataSourcePicker.container().should('be.visible').type('gdev-testdata{enter}');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
       .should('be.visible')
@@ -132,7 +132,7 @@ describe('Variables - Add variable', () => {
 
     e2e().get('#Description').should('be.visible').clear().type('a description');
 
-    e2e.components.DataSourcePicker.inputV2().should('be.visible').type('gdev-testdata{enter}');
+    e2e.components.DataSourcePicker.container().type('gdev-testdata{enter}');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
       .should('be.visible')
