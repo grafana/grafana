@@ -178,20 +178,13 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     // when interacting with a point in single mode
     if (mode === TooltipDisplayMode.Single && focusedSeriesIdx !== null) {
       const field = otherProps.data.fields[focusedSeriesIdx];
-      const xValueAtCursor = plotInstance.current?.posToVal(plotInstance.current?.cursor.left!, 'x');
-      const dataIdx =
-        plotInstance.current?.cursor.dataIdx?.(
-          plotInstance.current,
-          focusedSeriesIdx,
-          focusedPointIdx,
-          xValueAtCursor ?? 0
-        ) ?? focusedPointIdx;
-      xVal = xFieldFmt(xField!.values.get(dataIdx)).text;
 
       if (!field) {
         return null;
       }
 
+      const dataIdx = plotInstance.current?.legend?.idxs?.[focusedSeriesIdx] ?? focusedPointIdx;
+      xVal = xFieldFmt(xField!.values.get(dataIdx)).text;
       const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
       const display = fieldFmt(field.values.get(dataIdx));
 
