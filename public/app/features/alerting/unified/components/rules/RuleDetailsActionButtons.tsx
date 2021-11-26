@@ -15,19 +15,21 @@ import * as ruleId from '../../utils/rule-id';
 import { deleteRuleAction } from '../../state/actions';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { getAlertmanagerByUid } from '../../utils/alertmanager';
+import { useAlertHistoryModal } from '../../hooks/useAlertHistoryModal';
 
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
-  onShowStateHistory: () => void;
 }
 
-export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, onShowStateHistory }) => {
+export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const dispatch = useDispatch();
   const location = useLocation();
   const style = useStyles2(getStyles);
-  const { namespace, group, rulerRule } = rule;
+  const { namespace, group, rulerRule, annotations } = rule;
+  const alertId = annotations[Annotation.alertId];
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
+  const { AlertHistoryModal, showAlertHistoryModal } = useAlertHistoryModal(alertId);
 
   const alertmanagerSourceName = isGrafanaRulesSource(rulesSource)
     ? rulesSource
@@ -144,11 +146,14 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, onShowS
     );
   }
 
-  if (rule.annotations[Annotation.alertId]) {
+  if (ruleId) {
     leftButtons.push(
-      <Button className={style.button} size="xs" key="history" icon="history" onClick={() => onShowStateHistory()}>
-        Show state history
-      </Button>
+      <>
+        <Button className={style.button} size="xs" key="history" icon="history" onClick={() => showAlertHistoryModal()}>
+          Show state history
+        </Button>
+        {AlertHistoryModal}
+      </>
     );
   }
 

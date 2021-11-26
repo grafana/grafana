@@ -10,17 +10,12 @@ import { RuleDetailsDataSources } from './RuleDetailsDataSources';
 import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
 import { RuleDetailsExpression } from './RuleDetailsExpression';
 import { RuleDetailsAnnotations } from './RuleDetailsAnnotations';
-import { Annotation } from '../../utils/constants';
-import { useAlertHistoryModal } from '../../hooks/useAlertHistoryModal';
 
 interface Props {
   rule: CombinedRule;
 }
 
 export const RuleDetails: FC<Props> = ({ rule }) => {
-  const alertId = rule.annotations[Annotation.alertId];
-  const { AlertHistoryModal, showAlertHistoryModal } = useAlertHistoryModal(alertId);
-
   const styles = useStyles2(getStyles);
   const {
     promRule,
@@ -31,11 +26,7 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
 
   return (
     <div>
-      <RuleDetailsActionButtons
-        rule={rule}
-        rulesSource={rulesSource}
-        onShowStateHistory={() => showAlertHistoryModal()}
-      />
+      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {!!rule.labels && !!Object.keys(rule.labels).length && (
@@ -51,7 +42,6 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
         </div>
       </div>
       <RuleDetailsMatchingInstances promRule={promRule} />
-      {AlertHistoryModal}
     </div>
   );
 };
