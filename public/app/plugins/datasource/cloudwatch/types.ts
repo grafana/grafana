@@ -122,6 +122,12 @@ export interface QueryStatistics {
 
 export type QueryStatus = 'Scheduled' | 'Running' | 'Complete' | 'Failed' | 'Cancelled' | string;
 
+export type CloudWatchLogsRequest =
+  | GetLogEventsRequest
+  | StartQueryRequest
+  | DescribeLogGroupsRequest
+  | GetLogGroupFieldsRequest;
+
 export interface GetLogEventsRequest {
   /**
    * The name of the log group.
@@ -182,7 +188,7 @@ export interface DescribeLogGroupsRequest {
    */
   limit?: number;
   refId?: string;
-  region?: string;
+  region: string;
 }
 
 export interface TSDBResponse<T = any> {
@@ -256,6 +262,7 @@ export interface GetLogGroupFieldsRequest {
    * The time to set as the center of the query. If you specify time, the 8 minutes before and 8 minutes after this time are searched. If you omit time, the past 15 minutes are queried. The time value is specified as epoch time, the number of seconds since January 1, 1970, 00:00:00 UTC.
    */
   time?: number;
+  region: string;
 }
 
 export interface LogGroupField {
