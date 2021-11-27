@@ -43,12 +43,12 @@ func ProvideServiceAccountsService(
 	return s, nil
 }
 
-func (s *ServiceAccountsService) CreateServiceAccount(ctx context.Context, siUser *models.SignedInUser) error {
+func (s *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
 	if !s.cfg.FeatureToggles["service-accounts"] {
 		s.log.Debug(ServiceAccountFeatureToggleNotFound)
-		return nil
+		return nil, nil
 	}
-	return s.store.CreateServiceAccount(ctx, siUser)
+	return s.store.CreateServiceAccount(ctx, saForm)
 }
 
 func (s *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {

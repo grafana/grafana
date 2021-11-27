@@ -49,7 +49,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 // POST /api/access-control/roles
 func (api *ServiceAccountsAPI) createServiceAccount(c *models.ReqContext, cmd serviceaccounts.CreateServiceaccountForm) response.Response {
 
-	err := api.service.CreateServiceAccount(c.Req.Context(), cmd)
+	err := api.service.CreateServiceAccount(c.Req.Context(), c.SignedInUser)
 	switch {
 	case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 		return response.Error(http.StatusBadRequest, "Failed to create role with the provided name", err)
