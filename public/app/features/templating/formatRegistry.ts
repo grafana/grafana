@@ -20,6 +20,7 @@ export enum FormatRegistryID {
   lucene = 'lucene',
   raw = 'raw',
   regex = 'regex',
+  rawRegex = 'rawregex',
   pipe = 'pipe',
   distributed = 'distributed',
   csv = 'csv',
@@ -77,6 +78,21 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
           return escapedValues[0];
         }
         return '(' + escapedValues.join('|') + ')';
+      },
+    },
+    {
+      id: FormatRegistryID.rawRegex,
+      name: 'Raw Regex',
+      description: 'Values are unescaped regex and multi-valued variables generate a (<value>|<value>) expression',
+      formatter: ({ value }) => {
+        if (typeof value === 'string') {
+          return value;
+        }
+
+        if (value.length === 1) {
+          return value[0];
+        }
+        return '(' + value.join('|') + ')';
       },
     },
     {

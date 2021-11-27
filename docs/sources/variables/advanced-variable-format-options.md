@@ -120,6 +120,16 @@ String to interpolate: '${servers:regex}'
 Interpolation result: '(test1\.|test2)'
 ```
 
+## Raw Regex
+
+Formats variables with multiple values into an **unescaped** regex string.
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${servers:rawregex}'
+Interpolation result: '(test1.|test2)'
+```
+
 ## Singlequote
 
 Formats single- and multi-valued variables into a comma-separated string, escapes `'` in each value by `\'` and quotes each value with `'`.
