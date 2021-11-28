@@ -136,6 +136,8 @@ compilation-stats.json
 /e2e/**/screenshots
 !/e2e/**/screenshots/expected/*
 /e2e/**/videos/*
+/e2e/benchmarks/**/results/*
+/e2e/benchmarks/**/results
 
 # a11y tests
 /pa11y-ci-results.json

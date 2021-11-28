@@ -5,18 +5,12 @@ const compareScreenshots = require('./compareScreenshots');
 const extendConfig = require('./extendConfig');
 const readProvisions = require('./readProvisions');
 const typescriptPreprocessor = require('./typescriptPreprocessor');
-const profilerPlugin = require('./profiler');
+const benchmarkPlugin = require('./benchmark');
 
 module.exports = (on, config) => {
-  on('before:browser:launch', profilerPlugin.initialize);
-
-  on('task', {
-    startProfiling: profilerPlugin.startProfiling,
-    stopProfiling: profilerPlugin.stopProfiling,
-  });
-
-  on('after:run', profilerPlugin.afterRun);
-  on('after:spec', profilerPlugin.afterSpec);
+  if (config.env['BENCHMARK_PLUGIN_ENABLED'] === true) {
+    benchmarkPlugin.initialize(on, config);
+  }
 
   on('file:preprocessor', typescriptPreprocessor);
   on('task', { compareScreenshots, readProvisions });

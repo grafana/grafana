@@ -32,10 +32,10 @@ Cypress.Commands.add('getJSONFilesFromDir', (dirPath: string) => {
   });
 });
 
-Cypress.Commands.add('startProfiling', () => {
-  return cy.task('startProfiling');
+Cypress.Commands.add('startBenchmarking', (testName: string) => {
+  return cy.task('startBenchmarking', { testName });
 });
 
-Cypress.Commands.add('stopProfiling', () => {
-  return cy.task('stopProfiling');
+Cypress.Commands.add('stopBenchmarking', (testName: string) => {
+  return cy.task('stopBenchmarking', { testName });
 });
