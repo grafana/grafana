@@ -28,7 +28,7 @@ export const benchmark = ({
     });
 
     beforeEach(() => {
-      e2e.flows.importDashboards(dashboardFolder, 1000, true);
+      e2e.flows.importDashboards(dashboardFolder, 1000);
       Cypress.Cookies.preserveOnce('grafana_session');
     });
 
