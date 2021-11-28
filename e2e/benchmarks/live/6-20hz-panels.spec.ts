@@ -6,6 +6,6 @@ e2e.benchmark({
     dashboardFolder: '/dashboards/live',
     repeat: 5,
     delayAfterOpeningDashboard: 1000,
-    duration: 3000,
+    duration: 30000,
   },
 });
