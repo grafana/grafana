@@ -315,12 +315,13 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return hs.AdminUpdateUserPermissions(c, cmd)
+			return hs.AdminUpdateUserPermissions(c)
 		})
 
 		sc.m.Put(routePattern, sc.defaultHandler)
@@ -370,12 +371,13 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = models.ROLE_ADMIN
 
-			return hs.AdminRevokeUserAuthToken(c, cmd)
+			return hs.AdminRevokeUserAuthToken(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
@@ -470,10 +472,11 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 
-			return hs.AdminCreateUser(c, cmd)
+			return hs.AdminCreateUser(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)

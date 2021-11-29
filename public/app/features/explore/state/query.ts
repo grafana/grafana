@@ -391,7 +391,7 @@ export const runQueries = (
       const timeZone = getTimeZone(getState().user);
       const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, scanning, timeZone);
 
-      let firstResponse = true;
+      let querySaved = false;
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
       newQuerySub = runRequest(datasourceInstance, transaction.request)
@@ -413,7 +413,7 @@ export const runQueries = (
         )
         .subscribe(
           (data) => {
-            if (!data.error && firstResponse) {
+            if (data.state !== LoadingState.Loading && !data.error && !querySaved) {
               // Side-effect: Saving history in localstorage
               const nextHistory = updateHistory(history, datasourceId, queries);
               const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(
@@ -438,9 +438,8 @@ export const runQueries = (
 
               // We save queries to the URL here so that only successfully run queries change the URL.
               dispatch(stateSave({ replace: options?.replaceUrl }));
+              querySaved = true;
             }
-
-            firstResponse = false;
 
             dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 

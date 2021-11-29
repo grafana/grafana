@@ -16,11 +16,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
-func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
+func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
+	reqDTO := dtos.MetricRequest{}
+	if err := web.Bind(c.Req, &reqDTO); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if len(reqDTO.Queries) == 0 {
 		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
 	}
@@ -162,7 +167,11 @@ func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceRef interfac
 
 // QueryMetrics returns query metrics
 // POST /api/tsdb/query
-func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricRequest) response.Response {
+func (hs *HTTPServer) QueryMetrics(c *models.ReqContext) response.Response {
+	reqDto := dtos.MetricRequest{}
+	if err := web.Bind(c.Req, &reqDto); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if len(reqDto.Queries) == 0 {
 		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
 	}
