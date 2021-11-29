@@ -64,7 +64,7 @@ The Geomap panel needs a source of geographical data. This data comes from a dat
 
 ### Markers layer
 
-The markers layer allows you to display data points as different marker shapes such as circle, squares, triangles, stars, and more.
+The markers layer allows you to display data points as different marker shapes such as circles, squares, triangles, stars, and more.
 
 ![Markers Layer](/static/img/docs/geomap-panel/geomap-markers-8-1-0.png)
 
