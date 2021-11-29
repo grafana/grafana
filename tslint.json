@@ -71,6 +71,6 @@
       "allow-pascal-case"
     ],
     "use-isnan": true,
-    "whitespace": [true, "check-branch", "check-decl", "check-type", "check-preblock"]
+    "whitespace": [false, "check-branch", "check-decl", "check-type", "check-preblock"]
   }
 }
