@@ -232,13 +232,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderTablePanel(width: number) {
-    const { exploreId, datasourceInstance } = this.props;
+    const { exploreId, datasourceInstance, timeZone } = this.props;
     return (
       <TableContainer
         ariaLabel={selectors.pages.Explore.General.table}
         width={width}
         exploreId={exploreId}
         onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
+        timeZone={timeZone}
       />
     );
   }
@@ -303,6 +304,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
+      timeZone,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -364,6 +366,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           exploreId={exploreId}
                           width={width}
                           onClose={this.toggleShowQueryInspector}
+                          timeZone={timeZone}
                         />
                       )}
                     </ErrorBoundaryAlert>
