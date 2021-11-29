@@ -101,7 +101,7 @@
     "@storybook/addon-actions": "6.3.7",
     "@storybook/addon-docs": "6.3.7",
     "@storybook/addon-essentials": "6.3.7",
-    "@storybook/addon-knobs": "6.3.0",
+    "@storybook/addon-knobs": "6.4.0",
     "@storybook/addon-storysource": "6.3.7",
     "@storybook/addons": "6.3.7",
     "@storybook/api": "6.3.7",
