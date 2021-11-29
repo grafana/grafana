@@ -19,12 +19,9 @@ import (
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -44,8 +41,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/ngalert"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -104,19 +99,14 @@ type HTTPServer struct {
 	AlertNG                   *ngalert.AlertNG
 	LibraryPanelService       librarypanels.Service
 	LibraryElementService     libraryelements.Service
-	notificationService       *notifications.NotificationService
 	SocialService             social.Service
-	OAuthTokenService         oauthtoken.OAuthTokenService
 	Listener                  net.Listener
 	EncryptionService         encryption.Internal
 	SecretsService            secrets.Service
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
-	tracingService            *tracing.TracingService
-	internalMetricsSvc        *metrics.InternalMetricsService
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
-	expressionService         *expr.Service
 	queryDataService          *query.Service
 }
 
@@ -139,11 +129,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
-	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
-	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
+	quotaService *quota.QuotaService, socialService social.Service,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service, secretsService secrets.Service, expressionService *expr.Service,
+	dataSourcesService *datasources.Service, secretsService secrets.Service,
 	queryDataService *query.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -185,19 +173,14 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		LibraryPanelService:       libraryPanelService,
 		LibraryElementService:     libraryElementService,
 		QuotaService:              quotaService,
-		notificationService:       notificationService, // TODO: remove.
-		tracingService:            tracingService,      // TODO: remove.
-		internalMetricsSvc:        internalMetricsSvc,  // TODO: remove.
 		log:                       log.New("http.server"),
 		web:                       m,
 		Listener:                  opts.Listener,
 		SocialService:             socialService,
-		OAuthTokenService:         oauthTokenService, // TODO: remove.
 		EncryptionService:         encryptionService,
 		SecretsService:            secretsService,
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
-		expressionService:         expressionService, // TODO: remove.
 		queryDataService:          queryDataService,
 	}
 	if hs.Listener != nil {
