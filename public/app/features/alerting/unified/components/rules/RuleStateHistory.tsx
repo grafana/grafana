@@ -13,7 +13,7 @@ interface RuleStateHistoryProps {
   alertId: string;
 }
 
-type PartialHistoryItem = Pick<StateHistoryItem, 'newState' | 'updated' | 'data'>;
+type StateHistoryRow = DynamicTableItemProps<StateHistoryItem>;
 
 const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
   const { loading, error, result = [] } = useManagedAlertStateHistory(alertId);
@@ -26,7 +26,7 @@ const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
     return <Alert title={'Failed to fetch alert state history'}>{error.message}</Alert>;
   }
 
-  const columns: Array<DynamicTableColumnProps<PartialHistoryItem>> = [
+  const columns: Array<DynamicTableColumnProps<StateHistoryItem>> = [
     {
       id: 'state',
       label: 'State',
@@ -40,35 +40,39 @@ const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
     { id: 'timestamp', label: 'Time', renderCell: renderTimestampCell },
   ];
 
-  const items: Array<DynamicTableItemProps<PartialHistoryItem>> = result.map((historyItem) => ({
+  const items: StateHistoryRow[] = result.map((historyItem) => ({
     id: historyItem.id,
-    data: {
-      newState: historyItem.newState,
-      updated: historyItem.updated,
-      data: historyItem.data,
-    },
+    data: historyItem,
   }));
 
   return <DynamicTable cols={columns} items={items} />;
 };
 
-function renderValueCell(item: DynamicTableItemProps<PartialHistoryItem>) {
+function renderValueCell(item: StateHistoryRow) {
   const matches = item.data.data?.evalMatches ?? [];
 
   return (
-    <LabelsWrapper>
-      {matches.map((match) => (
-        <AlertLabel key={match.metric} labelKey={match.metric} value={String(match.value)} />
-      ))}
-    </LabelsWrapper>
+    <>
+      {item.data.text}
+      <LabelsWrapper>
+        {matches.map((match) => (
+          <AlertLabel key={match.metric} labelKey={match.metric} value={String(match.value)} />
+        ))}
+      </LabelsWrapper>
+    </>
   );
 }
 
-function renderStateCell(item: DynamicTableItemProps<PartialHistoryItem>) {
-  return <AlertStateTag state={item.data.newState} />;
+function renderStateCell(item: StateHistoryRow) {
+  return (
+    <>
+      <AlertStateTag state={item.data.prevState} />
+      <AlertStateTag state={item.data.newState} />
+    </>
+  );
 }
 
-function renderTimestampCell(item: DynamicTableItemProps<PartialHistoryItem>) {
+function renderTimestampCell(item: StateHistoryRow) {
   return (
     <div className={TimestampStyle}>
       <span>{dateTimeFormat(item.data.updated)}</span>
