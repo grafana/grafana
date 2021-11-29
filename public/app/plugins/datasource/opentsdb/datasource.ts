@@ -391,10 +391,16 @@ export default class OpenTsDatasource {
     if (!target.metric || target.hide) {
       return null;
     }
+    var fieldsName = ['value'];
+    if ( metricTuple.length == 2 ){
+      target.metric = metricTuple[0];
+      fieldsName =  [metricTuple[1]];
+    }
 
     const query: any = {
       metric: this.templateSrv.replace(target.metric, options.scopedVars, 'pipe'),
       aggregator: 'avg',
+      fields: fieldsName,
     };
 
     if (target.aggregator) {
