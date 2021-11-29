@@ -112,7 +112,7 @@
     "@storybook/react": "6.3.7",
     "@storybook/theming": "6.3.7",
     "@swc/helpers": "0.2.13",
-    "@testing-library/dom": "8.10.1",
+    "@testing-library/dom": "8.11.1",
     "@testing-library/jest-dom": "5.11.9",
     "@testing-library/react": "12.1.2",
     "@testing-library/react-hooks": "7.0.2",
