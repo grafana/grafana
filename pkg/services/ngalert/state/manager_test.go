@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/annotations"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -33,10 +36,11 @@ func TestProcessEvalResults(t *testing.T) {
 	evaluationDuration := 10 * time.Millisecond
 
 	testCases := []struct {
-		desc           string
-		alertRule      *models.AlertRule
-		evalResults    []eval.Results
-		expectedStates map[string]*state.State
+		desc                string
+		alertRule           *models.AlertRule
+		evalResults         []eval.Results
+		expectedStates      map[string]*state.State
+		expectedAnnotations int
 	}{
 		{
 			desc: "a cache entry is correctly created",
@@ -112,6 +116,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_1","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid",
@@ -252,6 +257,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -323,6 +329,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 2,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -416,6 +423,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 3,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -506,6 +514,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 2,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -579,6 +588,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -642,6 +652,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -705,6 +716,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -768,6 +780,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -831,6 +844,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -894,6 +908,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -959,6 +974,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -1081,6 +1097,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -1145,6 +1162,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -1217,6 +1235,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -1302,6 +1321,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 2,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -1393,6 +1413,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 2,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -1491,6 +1512,9 @@ func TestProcessEvalResults(t *testing.T) {
 	for _, tc := range testCases {
 		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &schedule.FakeInstanceStore{})
 		t.Run(tc.desc, func(t *testing.T) {
+			fakeAnnoRepo := NewFakeAnnotationsRepo()
+			annotations.SetRepository(fakeAnnoRepo)
+
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(context.Background(), tc.alertRule, res)
 			}
@@ -1503,6 +1527,10 @@ func TestProcessEvalResults(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, s, cachedState)
 			}
+
+			require.Eventuallyf(t, func() bool {
+				return tc.expectedAnnotations == fakeAnnoRepo.Len()
+			}, time.Second, 100*time.Millisecond, "only %d annotations are present", fakeAnnoRepo.Len())
 		})
 	}
 }
@@ -1608,4 +1636,48 @@ func TestStaleResultsHandler(t *testing.T) {
 		// The expected number of state entries remains after results are processed
 		assert.Equal(t, tc.finalStateCount, len(existingStatesForRule))
 	}
+}
+
+type fakeAnnotationsRepo struct {
+	mtx   sync.Mutex
+	items []*annotations.Item
+}
+
+func NewFakeAnnotationsRepo() *fakeAnnotationsRepo {
+	return &fakeAnnotationsRepo{
+		items: make([]*annotations.Item, 0, 0),
+	}
+}
+
+func (repo *fakeAnnotationsRepo) Len() int {
+	repo.mtx.Lock()
+	defer repo.mtx.Unlock()
+	return len(repo.items)
+}
+
+func (repo *fakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
+	return nil
+}
+
+func (repo *fakeAnnotationsRepo) Save(item *annotations.Item) error {
+	repo.mtx.Lock()
+	defer repo.mtx.Unlock()
+	repo.items = append(repo.items, item)
+
+	return nil
+}
+func (repo *fakeAnnotationsRepo) Update(item *annotations.Item) error {
+	return nil
+}
+
+func (repo *fakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	annotations := []*annotations.ItemDTO{{Id: 1}}
+	return annotations, nil
+}
+
+func (repo *fakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	result := annotations.FindTagsResult{
+		Tags: []*annotations.TagsDTO{},
+	}
+	return result, nil
 }
