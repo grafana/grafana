@@ -42,7 +42,7 @@ func ProvideServiceAccountsService(
 	serviceaccountsAPI.RegisterAPIEndpoints(cfg)
 
 	basicKeys := store.GetBasicAPIKeys(context.Background())
-	fmt.Println("Upgrading ", len(basicKeys), " API keys to service accounts")
+	s.log.Warn("Upgrading API keys to service accounts", "numberKeys", len(basicKeys))
 	for _, key := range basicKeys {
 
 		sa, err := store.CreateServiceAccountForApikey(context.Background(), key.OrgId, key.Name, key.Role)
