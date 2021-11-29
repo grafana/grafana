@@ -55,6 +55,7 @@ func (s *PipelinePushHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 	if err != nil {
 		return
 	}
+	defer func() { _ = conn.Close() }()
 	setupWSConn(r.Context(), conn, s.config)
 
 	for {

@@ -57,6 +57,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	defer func() { _ = conn.Close() }()
 	setupWSConn(r.Context(), conn, s.config)
 
 	for {
