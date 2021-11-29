@@ -1,14 +1,15 @@
 import {
+  flattenPanels,
   getAffectedPanelIdsForVariable,
   getAllAffectedPanelIdsForVariableChange,
   getDependenciesForVariable,
   getPropsWithVariable,
 } from './utils';
-import { PanelModel } from '@grafana/data';
 import { variableAdapters } from '../adapters';
 import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
 import { createQueryVariableAdapter } from '../query/adapter';
+import { PanelModel } from 'app/features/dashboard/state';
 
 describe('getPropsWithVariable', () => {
   it('when called it should return the correct graph', () => {
@@ -306,6 +307,49 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
       );
       const result = getAllAffectedPanelIdsForVariableChange('unknown', variables, panels);
       expect(result).toEqual([2, 3]);
+    });
+  });
+});
+
+describe('flattenPanels', () => {
+  describe('when called with a row with collapsed panels', () => {
+    it('then the result should be correct', () => {
+      const panel1 = new PanelModel({
+        id: 1,
+        type: 'row',
+        collapsed: true,
+        panels: [
+          { id: 2, type: 'graph', title: 'Graph' },
+          { id: 3, type: 'graph2', title: 'Graph2' },
+        ],
+      });
+      const panel2 = new PanelModel({ id: 2, type: 'graph', title: 'Graph' });
+      const panel3 = new PanelModel({ id: 3, type: 'graph2', title: 'Graph2' });
+
+      const result = flattenPanels([panel1]);
+
+      expect(result[0].getSaveModel()).toEqual(panel1.getSaveModel());
+      expect(result[1].getSaveModel()).toEqual(panel2.getSaveModel());
+      expect(result[2].getSaveModel()).toEqual(panel3.getSaveModel());
+    });
+  });
+
+  describe('when called with a row with expanded panels', () => {
+    it('then the result should be correct', () => {
+      const panel1 = new PanelModel({
+        id: 1,
+        type: 'row',
+        collapsed: false,
+        panels: [],
+      });
+      const panel2 = new PanelModel({ id: 2, type: 'graph', title: 'Graph' });
+      const panel3 = new PanelModel({ id: 3, type: 'graph2', title: 'Graph2' });
+
+      const result = flattenPanels([panel1, panel2, panel3]);
+
+      expect(result[0].getSaveModel()).toEqual(panel1.getSaveModel());
+      expect(result[1].getSaveModel()).toEqual(panel2.getSaveModel());
+      expect(result[2].getSaveModel()).toEqual(panel3.getSaveModel());
     });
   });
 });

@@ -51,7 +51,7 @@ export interface QueryRunnerOptions<
   maxDataPoints: number;
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
-  cacheTimeout?: string;
+  cacheTimeout?: string | null;
   transformations?: DataTransformerConfig[];
 }
 
@@ -235,7 +235,7 @@ export class PanelQueryRunner {
       // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
         if (!query.datasource) {
-          query.datasource = { uid: ds.uid };
+          query.datasource = ds.getRef();
         }
         return query;
       });

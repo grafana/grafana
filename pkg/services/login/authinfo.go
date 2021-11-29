@@ -1,7 +1,11 @@
 package login
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/models"
+)
 
 type AuthInfoService interface {
-	LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (*models.User, error)
+	LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error)
 }

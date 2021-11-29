@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // ErrBadQuery returned whenever request is malformed and must contain a message
@@ -46,7 +47,12 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 
 // QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
-func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
+func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
+	reqDTO := dtos.MetricRequest{}
+	if err := web.Bind(c.Req, &reqDTO); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
 	resp, err := hs.queryMetrics(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
@@ -58,7 +64,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 // POST /api/tsdb/query
 //nolint: staticcheck // legacydata.DataResponse deprecated
 //nolint: staticcheck // legacydata.DataQueryResult deprecated
-func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricRequest) response.Response {
+func (hs *HTTPServer) QueryMetrics(c *models.ReqContext) response.Response {
+	reqDto := dtos.MetricRequest{}
+	if err := web.Bind(c.Req, &reqDto); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
 	sdkResp, err := hs.queryMetrics(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDto, false)
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
@@ -271,6 +282,16 @@ func (hs *HTTPServer) getDataSourceFromQuery(user *models.SignedInUser, skipCach
 		return grafanads.DataSourceModel(user.OrgId), nil
 	}
 
+	// use datasourceId if it exists
+	id := query.Get("datasourceId").MustInt64(0)
+	if id > 0 {
+		ds, err = hs.DataSourceCache.GetDatasource(id, user, skipCache)
+		if err != nil {
+			return nil, err
+		}
+		return ds, nil
+	}
+
 	if uid != "" {
 		ds, err = hs.DataSourceCache.GetDatasourceByUID(uid, user, skipCache)
 		if err != nil {
@@ -279,16 +300,7 @@ func (hs *HTTPServer) getDataSourceFromQuery(user *models.SignedInUser, skipCach
 		return ds, nil
 	}
 
-	// Fallback to the datasourceId
-	id, err := query.Get("datasourceId").Int64()
-	if err != nil {
-		return nil, NewErrBadQuery("missing data source ID/UID")
-	}
-	ds, err = hs.DataSourceCache.GetDatasource(id, user, skipCache)
-	if err != nil {
-		return nil, err
-	}
-	return ds, nil
+	return nil, NewErrBadQuery("missing data source ID/UID")
 }
 
 func toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {

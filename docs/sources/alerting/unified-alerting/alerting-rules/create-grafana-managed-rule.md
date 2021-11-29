@@ -48,7 +48,7 @@ Use the classic condition expression to create a rule that triggers a single ale
 
 To generate a separate alert for each series, create a multi-dimensional rule. Use `Math`, `Reduce`, or `Resample` expressions to create a multi-dimensional rule. For example:
 
-- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data]({{< relref "../fundamentals/grafana-managed-numeric-rule.md" >}})).
+- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data]({{< relref "../fundamentals/evaluate-grafana-alerts.md#alerting-on-numeric-data-1" >}})).
 - Add a `Math` expression with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not fire, or a positive number if it should fire. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
 ![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
@@ -63,13 +63,14 @@ For more information, see [expressions documentation]({{< relref "../../../panel
 
 Configure alerting behavior in the absence of data using information in the following tables.
 
-| No Data Option | Description                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------------- |
-| No Data        | Set alert state to `NoData` and rule state to `Normal` (notifications are not sent on NoData states). |
-| Alerting       | Set alert rule state to `Alerting`.                                                                   |
-| Ok             | Set alert rule state to `Normal`.                                                                     |
+| No Data Option | Description                                                                                                                               |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| No Data        | Create a new alert `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting       | Set alert rule state to `Alerting`.                                                                                                       |
+| Ok             | Set alert rule state to `Normal`.                                                                                                         |
 
-| Error or timeout option | Description                        |
-| ----------------------- | ---------------------------------- |
-| Alerting                | Set alert rule state to `Alerting` |
-| OK                      | Set alert rule state to `Normal`   |
+| Error or timeout option | Description                                                                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Alerting                | Set alert rule state to `Alerting`                                                                                                       |
+| OK                      | Set alert rule state to `Normal`                                                                                                         |
+| Error                   | Create a new alert `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |

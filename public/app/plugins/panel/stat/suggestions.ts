@@ -22,10 +22,12 @@ export class StatSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {
-        if (s.options!.reduceOptions.values) {
-          s.options!.reduceOptions.limit = 1;
-        }
+      cardOptions: {
+        previewModifier: (s) => {
+          if (s.options!.reduceOptions.values) {
+            s.options!.reduceOptions.limit = 1;
+          }
+        },
       },
     });
 

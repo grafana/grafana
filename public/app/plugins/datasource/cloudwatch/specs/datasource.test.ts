@@ -164,7 +164,7 @@ describe('CloudWatchDatasource', () => {
         'container-insights-prometheus-demo',
       ];
 
-      const logGroups = await ds.describeLogGroups({});
+      const logGroups = await ds.describeLogGroups({ region: 'default' });
 
       expect(logGroups).toEqual(expectedLogGroups);
     });

@@ -3,10 +3,11 @@ import angular from 'angular';
 import { find, findLast, isEmpty, isString, set } from 'lodash';
 import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
 import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
-import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
+  DataQueryError,
   DataQueryErrorType,
   DataQueryRequest,
   DataQueryResponse,
@@ -48,12 +49,14 @@ import {
   TSDBResponse,
   Dimensions,
   MetricFindSuggestData,
+  CloudWatchLogsRequest,
 } from './types';
 import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
+import { runWithRetry } from './utils/logsRetry';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -85,6 +88,7 @@ export class CloudWatchDatasource
   datasourceName: string;
   languageProvider: CloudWatchLanguageProvider;
   tracingDataSourceUid?: string;
+  logsTimeout: string;
 
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
@@ -109,6 +113,7 @@ export class CloudWatchDatasource
     this.datasourceName = instanceSettings.name;
     this.languageProvider = new CloudWatchLanguageProvider(this);
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
+    this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
@@ -158,28 +163,42 @@ export class CloudWatchDatasource
     }
 
     const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
-      queryString: target.expression,
+      queryString: target.expression || '',
       refId: target.refId,
       logGroupNames: target.logGroupNames,
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
-    // This first starts the query which returns queryId which can be used to retrieve results.
-    return this.makeLogActionRequest('StartQuery', queryParams, {
-      makeReplacements: true,
-      scopedVars: options.scopedVars,
-      skipCache: true,
-    }).pipe(
-      mergeMap((dataFrames) =>
+    return runWithRetry(
+      (targets: StartQueryRequest[]) => {
+        return this.makeLogActionRequest('StartQuery', targets, {
+          makeReplacements: true,
+          scopedVars: options.scopedVars,
+          skipCache: true,
+        });
+      },
+      queryParams,
+      {
+        timeout: rangeUtil.intervalToMs(this.logsTimeout),
+      }
+    ).pipe(
+      mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
         // This queries for the results
         this.logsQuery(
-          dataFrames.map((dataFrame) => ({
+          frames.map((dataFrame) => ({
             queryId: dataFrame.fields[0].values.get(0),
             region: dataFrame.meta?.custom?.['Region'] ?? 'default',
             refId: dataFrame.refId!,
             statsGroups: (logQueries.find((target) => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
               .statsGroups,
           }))
+        ).pipe(
+          map((response: DataQueryResponse) => {
+            if (!response.error && error) {
+              response.error = error;
+            }
+            return response;
+          })
         )
       ),
       mergeMap((dataQueryResponse) => {
@@ -529,7 +548,7 @@ export class CloudWatchDatasource
 
   makeLogActionRequest(
     subtype: LogAction,
-    queryParams: Array<GetLogEventsRequest | StartQueryRequest | DescribeLogGroupsRequest | GetLogGroupFieldsRequest>,
+    queryParams: CloudWatchLogsRequest[],
     options: {
       scopedVars?: ScopedVars;
       makeReplacements?: boolean;
@@ -544,8 +563,8 @@ export class CloudWatchDatasource
     const requestParams = {
       from: range.from.valueOf().toString(),
       to: range.to.valueOf().toString(),
-      queries: queryParams.map((param: any) => ({
-        refId: 'A',
+      queries: queryParams.map((param: CloudWatchLogsRequest) => ({
+        refId: (param as StartQueryRequest).refId || 'A',
         intervalMs: 1, // dummy
         maxDataPoints: 1, // dummy
         datasource: this.getRef(),
@@ -556,24 +575,30 @@ export class CloudWatchDatasource
     };
 
     if (options.makeReplacements) {
-      requestParams.queries.forEach((query) => {
+      requestParams.queries.forEach((query: CloudWatchLogsRequest) => {
         const fieldsToReplace: Array<
           keyof (GetLogEventsRequest & StartQueryRequest & DescribeLogGroupsRequest & GetLogGroupFieldsRequest)
         > = ['queryString', 'logGroupNames', 'logGroupName', 'logGroupNamePrefix'];
 
+        const anyQuery: any = query;
         for (const fieldName of fieldsToReplace) {
           if (query.hasOwnProperty(fieldName)) {
-            if (Array.isArray(query[fieldName])) {
-              query[fieldName] = query[fieldName].map((val: string) =>
+            if (Array.isArray(anyQuery[fieldName])) {
+              anyQuery[fieldName] = anyQuery[fieldName].map((val: string) =>
                 this.replace(val, options.scopedVars, true, fieldName)
               );
             } else {
-              query[fieldName] = this.replace(query[fieldName], options.scopedVars, true, fieldName);
+              anyQuery[fieldName] = this.replace(anyQuery[fieldName], options.scopedVars, true, fieldName);
             }
           }
         }
-        query.region = this.replace(query.region, options.scopedVars, true, 'region');
-        query.region = this.getActualRegion(query.region);
+        // TODO: seems to be some sort of bug that we don't really send region with all queries. This means
+        //  if you select different than default region in editor you will get results for autocomplete from wrong
+        //  region.
+        if (anyQuery.region) {
+          anyQuery.region = this.replace(anyQuery.region, options.scopedVars, true, 'region');
+          anyQuery.region = this.getActualRegion(anyQuery.region);
+        }
       });
     }
 
@@ -587,7 +612,11 @@ export class CloudWatchDatasource
 
     return this.awsRequest(DS_QUERY_ENDPOINT, requestParams, headers).pipe(
       map((response) => resultsToDataFrames({ data: response })),
-      catchError((err) => {
+      catchError((err: FetchError) => {
+        if (err.status === 400) {
+          throw err;
+        }
+
         if (err.data?.error) {
           throw err.data.error;
         } else if (err.data?.message) {

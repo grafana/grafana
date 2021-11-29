@@ -2,12 +2,14 @@ package api
 
 import (
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
@@ -50,7 +52,11 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 	return response.JSON(200, filteredAcls)
 }
 
-func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) response.Response {
+func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {
+	apiCmd := dtos.UpdateDashboardAclCommand{}
+	if err := web.Bind(c.Req, &apiCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
 		return response.Error(400, err.Error(), err)
 	}

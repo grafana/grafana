@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -84,9 +83,10 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 
 		loggingHandler := NewFrontendLogMessageHandler(sourceMapStore)
 
-		handler := routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
+		handler := routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			return loggingHandler(c, event)
+			c.Req.Body = mockRequestBody(event)
+			return loggingHandler(c)
 		})
 
 		sc.m.Post(sc.url, handler)

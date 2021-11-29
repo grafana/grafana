@@ -150,6 +150,12 @@ describe('geomap migrations', () => {
                     "fixed": "dark-green",
                   },
                   "opacity": 0.4,
+                  "rotation": Object {
+                    "fixed": 0,
+                    "max": 360,
+                    "min": -360,
+                    "mode": "mod",
+                  },
                   "size": Object {
                     "field": "Count",
                     "fixed": 5,
@@ -159,6 +165,13 @@ describe('geomap migrations', () => {
                   "symbol": Object {
                     "fixed": "img/icons/marker/triangle.svg",
                     "mode": "fixed",
+                  },
+                  "textConfig": Object {
+                    "fontSize": 12,
+                    "offsetX": 0,
+                    "offsetY": 0,
+                    "textAlign": "center",
+                    "textBaseline": "middle",
                   },
                 },
               },

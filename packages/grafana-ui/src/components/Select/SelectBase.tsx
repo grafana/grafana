@@ -260,7 +260,7 @@ export function SelectBase<T>({
                   css`
                     display: inline-block;
                     color: ${theme.colors.text.disabled};
-
+                    grid-area: 1 / 1 / 2 / 3;
                     box-sizing: border-box;
                     line-height: 1;
                     white-space: nowrap;

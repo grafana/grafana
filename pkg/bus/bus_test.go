@@ -122,25 +122,80 @@ func TestQuery_HandlerReturnsError(t *testing.T) {
 	require.Error(t, err, "expected error but got none")
 }
 
-func TestEvent(t *testing.T) {
+func TestEventPublish(t *testing.T) {
 	bus := New()
 
 	var invoked bool
 
-	bus.AddEventListener(func(query *testQuery) error {
+	bus.AddEventListenerCtx(func(ctx context.Context, query *testQuery) error {
 		invoked = true
 		return nil
 	})
 
-	err := bus.Publish(&testQuery{})
+	err := bus.PublishCtx(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
 
 	require.True(t, invoked)
 }
 
-func TestEvent_NoRegisteredListener(t *testing.T) {
+func TestEventPublish_NoRegisteredListener(t *testing.T) {
 	bus := New()
 
-	err := bus.Publish(&testQuery{})
+	err := bus.PublishCtx(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
+}
+
+func TestEventCtxPublishCtx(t *testing.T) {
+	bus := New()
+
+	var invoked bool
+
+	bus.AddEventListenerCtx(func(ctx context.Context, query *testQuery) error {
+		invoked = true
+		return nil
+	})
+
+	err := bus.PublishCtx(context.Background(), &testQuery{})
+	require.NoError(t, err, "unable to publish event")
+
+	require.True(t, invoked)
+}
+
+func TestEventPublishCtx_NoRegisteredListener(t *testing.T) {
+	bus := New()
+
+	err := bus.PublishCtx(context.Background(), &testQuery{})
+	require.NoError(t, err, "unable to publish event")
+}
+
+func TestEventPublishCtx(t *testing.T) {
+	bus := New()
+
+	var invoked bool
+
+	bus.AddEventListenerCtx(func(ctx context.Context, query *testQuery) error {
+		invoked = true
+		return nil
+	})
+
+	err := bus.PublishCtx(context.Background(), &testQuery{})
+	require.NoError(t, err, "unable to publish event")
+
+	require.True(t, invoked)
+}
+
+func TestEventCtxPublish(t *testing.T) {
+	bus := New()
+
+	var invoked bool
+
+	bus.AddEventListenerCtx(func(ctx context.Context, query *testQuery) error {
+		invoked = true
+		return nil
+	})
+
+	err := bus.PublishCtx(context.Background(), &testQuery{})
+	require.NoError(t, err, "unable to publish event")
+
+	require.True(t, invoked)
 }

@@ -76,7 +76,8 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   database?: string;
   customMetricsNamespaces?: string;
   endpoint?: string;
-
+  // Time string like 15s, 10m etc, see rangeUtils.intervalToMs.
+  logsTimeout?: string;
   // Used to create links if logs contain traceId.
   tracingDatasourceUid?: string;
 }
@@ -120,6 +121,12 @@ export interface QueryStatistics {
 }
 
 export type QueryStatus = 'Scheduled' | 'Running' | 'Complete' | 'Failed' | 'Cancelled' | string;
+
+export type CloudWatchLogsRequest =
+  | GetLogEventsRequest
+  | StartQueryRequest
+  | DescribeLogGroupsRequest
+  | GetLogGroupFieldsRequest;
 
 export interface GetLogEventsRequest {
   /**
@@ -181,7 +188,7 @@ export interface DescribeLogGroupsRequest {
    */
   limit?: number;
   refId?: string;
-  region?: string;
+  region: string;
 }
 
 export interface TSDBResponse<T = any> {
@@ -255,6 +262,7 @@ export interface GetLogGroupFieldsRequest {
    * The time to set as the center of the query. If you specify time, the 8 minutes before and 8 minutes after this time are searched. If you omit time, the past 15 minutes are queried. The time value is specified as epoch time, the number of seconds since January 1, 1970, 00:00:00 UTC.
    */
   time?: number;
+  region: string;
 }
 
 export interface LogGroupField {
@@ -285,14 +293,6 @@ export interface StartQueryRequest {
    */
   logGroupNames?: string[];
   /**
-   * The beginning of the time range to query. The range is inclusive, so the specified start time is included in the query. Specified as epoch time, the number of seconds since January 1, 1970, 00:00:00 UTC.
-   */
-  startTime: number;
-  /**
-   * The end of the time range to query. The range is inclusive, so the specified end time is included in the query. Specified as epoch time, the number of seconds since January 1, 1970, 00:00:00 UTC.
-   */
-  endTime: number;
-  /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */
   queryString: string;
@@ -300,6 +300,8 @@ export interface StartQueryRequest {
    * The maximum number of log events to return in the query. If the query string uses the fields command, only the specified fields and their values are returned. The default is 1000.
    */
   limit?: number;
+  refId: string;
+  region: string;
 }
 export interface StartQueryResponse {
   /**

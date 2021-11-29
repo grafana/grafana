@@ -1122,10 +1122,11 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
-			return hs.PostDashboard(c, cmd)
+			return hs.PostDashboard(c)
 		})
 
 		origNewDashboardService := dashboards.NewService
@@ -1154,6 +1155,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
 				OrgId:  testOrgID,
@@ -1161,7 +1163,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			}
 			sc.context.OrgRole = role
 
-			return CalculateDashboardDiff(c, cmd)
+			return CalculateDashboardDiff(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
@@ -1188,6 +1190,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
 				OrgId:  testOrgID,
@@ -1195,7 +1198,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			}
 			sc.context.OrgRole = models.ROLE_ADMIN
 
-			return hs.RestoreDashboardVersion(c, cmd)
+			return hs.RestoreDashboardVersion(c)
 		})
 
 		origProvisioningService := dashboards.NewProvisioningService

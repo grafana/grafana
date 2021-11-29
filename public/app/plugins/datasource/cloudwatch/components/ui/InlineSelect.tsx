@@ -2,12 +2,12 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Select, stylesFactory, useTheme2 } from '@grafana/ui';
 import {
-  ContainerProps,
+  SelectContainerProps,
   SelectContainer as BaseSelectContainer,
 } from '@grafana/ui/src/components/Select/SelectContainer';
 import { SelectCommonProps } from '@grafana/ui/src/components/Select/types';
 import React, { useState } from 'react';
-import { GroupTypeBase } from 'react-select';
+import { GroupBase } from 'react-select';
 
 interface InlineSelectProps<T> extends SelectCommonProps<T> {
   label?: string;
@@ -38,8 +38,8 @@ function InlineSelect<T>({ label: labelProp, ...props }: InlineSelectProps<T>) {
 
 export default InlineSelect;
 
-const SelectContainer = <Option, isMulti extends boolean, Group extends GroupTypeBase<Option>>(
-  props: ContainerProps<Option, isMulti, Group>
+const SelectContainer = <Option, isMulti extends boolean, Group extends GroupBase<Option>>(
+  props: SelectContainerProps<Option, isMulti, Group>
 ) => {
   const { children } = props;
 
@@ -53,8 +53,8 @@ const SelectContainer = <Option, isMulti extends boolean, Group extends GroupTyp
   );
 };
 
-const ValueContainer = <Option, isMulti extends boolean, Group extends GroupTypeBase<Option>>(
-  props: ContainerProps<Option, isMulti, Group>
+const ValueContainer = <Option, isMulti extends boolean, Group extends GroupBase<Option>>(
+  props: SelectContainerProps<Option, isMulti, Group>
 ) => {
   const { className, children } = props;
   const theme = useTheme2();

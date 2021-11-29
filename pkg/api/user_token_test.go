@@ -184,12 +184,13 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = userId
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = models.ROLE_ADMIN
 
-			return hs.RevokeUserAuthToken(c, cmd)
+			return hs.RevokeUserAuthToken(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)

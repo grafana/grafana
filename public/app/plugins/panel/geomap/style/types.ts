@@ -1,8 +1,11 @@
 import {
   ColorDimensionConfig,
+  DimensionSupplier,
   ResourceDimensionConfig,
   ResourceDimensionMode,
   ScaleDimensionConfig,
+  ScalarDimensionConfig,
+  ScalarDimensionMode,
   TextDimensionConfig,
 } from 'app/features/dimensions';
 import { Style } from 'ol/style';
@@ -29,9 +32,23 @@ export interface StyleConfig {
   // Can show markers and text together!
   text?: TextDimensionConfig;
   textConfig?: TextStyleConfig;
+
+  // Allow for rotation of markers
+  rotation?: ScalarDimensionConfig;
 }
 
 export const DEFAULT_SIZE = 5;
+
+export enum TextAlignment {
+  Left = 'left',
+  Center = 'center',
+  Right = 'right',
+}
+export enum TextBaseline {
+  Top = 'top',
+  Middle = 'middle',
+  Bottom = 'bottom',
+}
 
 export const defaultStyleConfig = Object.freeze({
   size: {
@@ -47,6 +64,19 @@ export const defaultStyleConfig = Object.freeze({
     mode: ResourceDimensionMode.Fixed,
     fixed: 'img/icons/marker/circle.svg',
   },
+  textConfig: {
+    fontSize: 12,
+    textAlign: TextAlignment.Center,
+    textBaseline: TextBaseline.Middle,
+    offsetX: 0,
+    offsetY: 0,
+  },
+  rotation: {
+    fixed: 0,
+    mode: ScalarDimensionMode.Mod,
+    min: -360,
+    max: 360,
+  },
 });
 
 /**
@@ -57,8 +87,8 @@ export interface TextStyleConfig {
   fontSize?: number;
   offsetX?: number;
   offsetY?: number;
-  align?: 'left' | 'right' | 'center';
-  baseline?: 'bottom' | 'top' | 'middle';
+  textAlign?: TextAlignment;
+  textBaseline?: TextBaseline;
 }
 
 // Applying the config to real data gives the values
@@ -73,6 +103,30 @@ export interface StyleConfigValues {
 
   // Pass though (not value dependant)
   textConfig?: TextStyleConfig;
+}
+
+/** When the style depends on a field */
+export interface StyleConfigFields {
+  color?: string;
+  size?: string;
+  text?: string;
+  rotation?: string;
+}
+
+export interface StyleDimensions {
+  color?: DimensionSupplier<string>;
+  size?: DimensionSupplier<number>;
+  text?: DimensionSupplier<string>;
+  rotation?: DimensionSupplier<number>;
+}
+
+export interface StyleConfigState {
+  config: StyleConfig;
+  hasText?: boolean;
+  base: StyleConfigValues;
+  fields?: StyleConfigFields;
+  dims?: StyleDimensions;
+  maker: StyleMaker;
 }
 
 /**
