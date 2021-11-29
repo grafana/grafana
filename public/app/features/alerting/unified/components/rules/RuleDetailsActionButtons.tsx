@@ -146,7 +146,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     );
   }
 
-  if (ruleId) {
+  if (rule.annotations[Annotation.alertId]) {
     leftButtons.push(
       <>
         <Button className={style.button} size="xs" key="history" icon="history" onClick={() => showAlertHistoryModal()}>
