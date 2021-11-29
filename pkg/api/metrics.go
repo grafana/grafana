@@ -231,9 +231,9 @@ func (hs *HTTPServer) createRequest(ctx context.Context, ds *models.DataSource, 
 			delete(query.Headers, "Authorization")
 			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
 
-			idToken := token.Extra("id_token")
-			if idToken != nil {
-				query.Headers["X-ID-Token"] = idToken.(string)
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				query.Headers["X-ID-Token"] = idToken
 			}
 		}
 	}

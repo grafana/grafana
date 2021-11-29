@@ -270,9 +270,9 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
-			idToken := token.Extra("id_token")
-			if idToken != nil {
-				req.Header.Set("X-ID-Token", idToken.(string))
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				req.Header.Set("X-ID-Token", idToken)
 			}
 		}
 	}
