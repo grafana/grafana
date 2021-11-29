@@ -84,16 +84,17 @@ const sharedReducerSlice = createSlice({
       state: VariablesState,
       action: PayloadAction<VariablePayload<{ fromIndex: number; toIndex: number }>>
     ) => {
-      const variables = Object.values(state).map((s) => s);
-      const fromVariable = variables.find((v) => v.index === action.payload.data.fromIndex);
-      const toVariable = variables.find((v) => v.index === action.payload.data.toIndex);
-
-      if (fromVariable) {
-        state[fromVariable.id].index = action.payload.data.toIndex;
-      }
-
-      if (toVariable) {
-        state[toVariable.id].index = action.payload.data.fromIndex;
+      const { toIndex, fromIndex } = action.payload.data;
+      const variableStates = Object.values(state);
+      for (let index = 0; index < variableStates.length; index++) {
+        const variable = variableStates[index];
+        if (variable.index === fromIndex) {
+          variable.index = toIndex;
+        } else if (variable.index > fromIndex && variable.index <= toIndex) {
+          variable.index--;
+        } else if (variable.index < fromIndex && variable.index >= toIndex) {
+          variable.index++;
+        }
       }
     },
     changeVariableType: (state: VariablesState, action: PayloadAction<VariablePayload<{ newType: VariableType }>>) => {
