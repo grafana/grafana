@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -35,6 +36,7 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
+
 	t.Run("encrypting another secret with no entity_id should use the same DEK", func(t *testing.T) {
 		plaintext := []byte("another very secret string")
 
@@ -49,6 +51,7 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
+
 	t.Run("encrypting with entity_id provided should create a new DEK", func(t *testing.T) {
 		plaintext := []byte("some test data")
 
@@ -77,6 +80,13 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 		decrypted, err := svc.Decrypt(context.Background(), encrypted)
 		require.NoError(t, err)
 		assert.Equal(t, expected, string(decrypted))
+	})
+
+	t.Run("usage stats should be registered", func(t *testing.T) {
+		reports, err := svc.usageStats.GetUsageReport(context.Background())
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, reports.Metrics["stats.encryption.envelope_encryption_enabled.count"])
 	})
 }
 
@@ -181,6 +191,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			&kms,
 			encr,
 			settings,
+			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
 
@@ -197,6 +208,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			&kms,
 			encr,
 			settings,
+			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
 

@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
@@ -18,9 +20,10 @@ import (
 )
 
 type SecretsService struct {
-	store    secrets.Store
-	enc      encryption.Internal
-	settings setting.Provider
+	store      secrets.Store
+	enc        encryption.Internal
+	settings   setting.Provider
+	usageStats usagestats.Service
 
 	currentProvider string
 	providers       map[string]secrets.Provider
@@ -33,6 +36,7 @@ func ProvideSecretsService(
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
 	settings setting.Provider,
+	usageStats usagestats.Service,
 ) (*SecretsService, error) {
 	providers, err := kmsProvidersService.Provide()
 	if err != nil {
@@ -57,13 +61,28 @@ func ProvideSecretsService(
 		store:           store,
 		enc:             enc,
 		settings:        settings,
+		usageStats:      usageStats,
 		providers:       providers,
 		currentProvider: currentProvider,
 		dataKeyCache:    make(map[string]dataKeyCacheItem),
 		log:             logger,
 	}
 
+	s.registerUsageMetrics()
+
 	return s, nil
+}
+
+func (s *SecretsService) registerUsageMetrics() {
+	s.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
+		enabled := 0
+		if s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+			enabled = 1
+		}
+		return map[string]interface{}{
+			"stats.encryption.envelope_encryption_enabled.count": enabled,
+		}, nil
+	})
 }
 
 type dataKeyCacheItem struct {
