@@ -91,7 +91,7 @@
     "uuid": "8.3.0"
   },
   "devDependencies": {
-    "@babel/core": "7.14.6",
+    "@babel/core": "7.16.0",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@mdx-js/react": "1.6.22",
     "@rollup/plugin-commonjs": "21.0.1",
