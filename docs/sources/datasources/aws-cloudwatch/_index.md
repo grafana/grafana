@@ -29,6 +29,12 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 | `Assume Role Arn`          | Specify the ARN of the role to assume                                                                                   |
 | `External ID`              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
 
+### CloudWatch Logs
+
+| Name      | Description                                                                                                                                                                                                                                                                                              |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Timeout` | Timeout specifically for CloudWatch Logs queries. Log queries don't respect standard Grafana query timeout as they don't keep a single request open and instead periodically poll for results. Because of limits on concurrently running queries in CloudWatch they can also take longer time to finish. |
+
 ### X-Ray trace links
 
 Link an X-Ray data source in the "X-Ray trace link" section of the configuration page to automatically add links in your logs when the log contains `@xrayTraceId` field.
