@@ -392,18 +392,9 @@ export default class OpenTsDatasource {
       return null;
     }
 
-    const metricTuple = target.metric.split( ':' );
-    let fieldsName = [ 'value' ];
-
-    if ( metricTuple.length === 2 ) {
-      target.metric = metricTuple[0];
-      fieldsName = [ metricTuple[1] ];
-    }
-
     const query: any = {
       metric: this.templateSrv.replace(target.metric, options.scopedVars, 'pipe'),
       aggregator: 'avg',
-      fields: fieldsName,
     };
 
     if (target.aggregator) {
