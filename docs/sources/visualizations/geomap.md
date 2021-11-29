@@ -45,7 +45,7 @@ The layer controls allow you to create layers, change their name, reorder and de
 * The layer controls allow you to rename, delete, and reorder the layers of the panel.
   * **Edit layer name (pencil icon)** renames the layer.
   * **Trash Bin** deletes the layer.
-  * **Reorder (six dots/grab handle)** eallows you to change the layer order. Data on higher layers will appear above data on lower layers. The panel will update the layer order as you drag and drop to help simplify choosing a layer order.
+  * **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The panel will update the layer order as you drag and drop to help simplify choosing a layer order.
 
 You can add multiple layers of data to a single Geomap panel in order to create rich, detailed visualizations.
 
