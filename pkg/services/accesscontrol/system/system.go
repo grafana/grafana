@@ -27,7 +27,7 @@ func disabled(ac accesscontrol.AccessControl) web.Handler {
 	}
 }
 
-func NewSystem(options SystemOptions, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourceStore) (*System, error) {
+func NewSystem(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourceStore) (*System, error) {
 	s := &System{
 		ac:      ac,
 		options: options,
@@ -45,7 +45,7 @@ func NewSystem(options SystemOptions, router routing.RouteRegister, ac accesscon
 
 // System is used to create access control sub system including api / and service for managed resource permission
 type System struct {
-	options SystemOptions
+	options Options
 	router  routing.RouteRegister
 	ac      accesscontrol.AccessControl
 	manager *accesscontrol.ResourceManager

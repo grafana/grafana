@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-type SystemOptions struct {
+type Options struct {
 	Resource          string
 	ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
 
@@ -19,14 +19,14 @@ type SystemOptions struct {
 	PermissionMapper func(permission string) []string
 }
 
-func (s SystemOptions) mapActions(permission accesscontrol.ResourcePermission) (string, bool) {
+func (s Options) mapActions(permission accesscontrol.ResourcePermission) (string, bool) {
 	if s.ActionsMapper != nil {
 		return s.ActionsMapper(permission)
 	}
 	return "", false
 }
 
-func (s SystemOptions) mapPermission(permission string) []string {
+func (s Options) mapPermission(permission string) []string {
 	if s.PermissionMapper != nil {
 		return s.PermissionMapper(permission)
 	}
