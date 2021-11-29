@@ -179,6 +179,11 @@ func (hs *HTTPServer) handleQueryData(ctx context.Context, user *models.SignedIn
 	if hs.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
 		if token := hs.OAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
 			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				req.Headers["X-ID-Token"] = idToken
+			}
 		}
 	}
 
