@@ -1,11 +1,11 @@
 import React, { CSSProperties } from 'react';
 import { GrafanaTheme2, PanelData, VisualizationSuggestion } from '@grafana/data';
 import { PanelRenderer } from '../PanelRenderer';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 import { VizTypeChangeDetails } from './types';
-import { cloneDeep } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
+import { cloneDeep } from 'lodash';
 
 export interface Props {
   data: PanelData;
@@ -15,50 +15,59 @@ export interface Props {
   onChange: (details: VizTypeChangeDetails) => void;
 }
 
-export function VisualizationPreview({ data, suggestion, onChange, width, showTitle }: Props) {
+export function VisualizationSuggestionCard({ data, suggestion, onChange, width, showTitle }: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
+  const cardOptions = suggestion.cardOptions ?? {};
 
-  const onClick = () => {
-    onChange({
-      pluginId: suggestion.pluginId,
-      options: suggestion.options,
-      fieldConfig: suggestion.fieldConfig,
-    });
+  const commonButtonProps = {
+    'aria-label': suggestion.name,
+    className: styles.vizBox,
+    'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
+    style: outerStyles,
+    onClick: () => {
+      onChange({
+        pluginId: suggestion.pluginId,
+        options: suggestion.options,
+        fieldConfig: suggestion.fieldConfig,
+      });
+    },
   };
 
+  if (cardOptions.imgSrc) {
+    return (
+      <Tooltip content={suggestion.description ?? suggestion.name}>
+        <button {...commonButtonProps} className={cx(styles.vizBox, styles.imgBox)}>
+          <div className={styles.name}>{suggestion.name}</div>
+          <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
+        </button>
+      </Tooltip>
+    );
+  }
+
   let preview = suggestion;
-  if (suggestion.previewModifier) {
+  if (suggestion.cardOptions?.previewModifier) {
     preview = cloneDeep(suggestion);
-    suggestion.previewModifier(preview);
+    suggestion.cardOptions.previewModifier(preview);
   }
 
   return (
-    <div>
-      {showTitle && <div className={styles.name}>{suggestion.name}</div>}
-      <button
-        aria-label={suggestion.name}
-        className={styles.vizBox}
-        data-testid={selectors.components.VisualizationPreview.card(suggestion.name)}
-        style={outerStyles}
-        onClick={onClick}
-      >
-        <Tooltip content={suggestion.name}>
-          <div style={innerStyles} className={styles.renderContainer}>
-            <PanelRenderer
-              title=""
-              data={data}
-              pluginId={suggestion.pluginId}
-              width={renderWidth}
-              height={renderHeight}
-              options={preview.options}
-              fieldConfig={preview.fieldConfig}
-            />
-            <div className={styles.hoverPane} />
-          </div>
-        </Tooltip>
-      </button>
-    </div>
+    <button {...commonButtonProps}>
+      <Tooltip content={suggestion.name}>
+        <div style={innerStyles} className={styles.renderContainer}>
+          <PanelRenderer
+            title=""
+            data={data}
+            pluginId={suggestion.pluginId}
+            width={renderWidth}
+            height={renderHeight}
+            options={preview.options}
+            fieldConfig={preview.fieldConfig}
+          />
+          <div className={styles.hoverPane} />
+        </div>
+      </Tooltip>
+    </button>
   );
 }
 
@@ -77,8 +86,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: none;
       border-radius: ${theme.shape.borderRadius(1)};
       cursor: pointer;
-      text-align: left;
-      border: 1px solid ${theme.colors.border.strong};
+      border: 1px solid ${theme.colors.border.medium};
 
       transition: ${theme.transitions.create(['background'], {
         duration: theme.transitions.duration.short,
@@ -88,13 +96,33 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: ${theme.colors.background.secondary};
       }
     `,
+    imgBox: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+
+      justify-self: center;
+      color: ${theme.colors.text.primary};
+      width: 100%;
+      display: flex;
+
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    `,
     name: css`
+      padding-bottom: ${theme.spacing(0.5)};
+      margin-top: ${theme.spacing(-1)};
       font-size: ${theme.typography.bodySmall.fontSize};
       white-space: nowrap;
       overflow: hidden;
       color: ${theme.colors.text.secondary};
       font-weight: ${theme.typography.fontWeightMedium};
       text-overflow: ellipsis;
+    `,
+    img: css`
+      max-width: ${theme.spacing(8)};
+      max-height: ${theme.spacing(8)};
     `,
     renderContainer: css`
       position: absolute;

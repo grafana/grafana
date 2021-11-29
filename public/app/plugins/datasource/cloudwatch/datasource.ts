@@ -49,6 +49,7 @@ import {
   TSDBResponse,
   Dimensions,
   MetricFindSuggestData,
+  CloudWatchLogsRequest,
 } from './types';
 import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
@@ -547,7 +548,7 @@ export class CloudWatchDatasource
 
   makeLogActionRequest(
     subtype: LogAction,
-    queryParams: Array<GetLogEventsRequest | StartQueryRequest | DescribeLogGroupsRequest | GetLogGroupFieldsRequest>,
+    queryParams: CloudWatchLogsRequest[],
     options: {
       scopedVars?: ScopedVars;
       makeReplacements?: boolean;
@@ -562,47 +563,43 @@ export class CloudWatchDatasource
     const requestParams = {
       from: range.from.valueOf().toString(),
       to: range.to.valueOf().toString(),
-      queries: queryParams.map(
-        (param: GetLogEventsRequest | StartQueryRequest | DescribeLogGroupsRequest | GetLogGroupFieldsRequest) => ({
-          refId: (param as StartQueryRequest).refId || 'A',
-          intervalMs: 1, // dummy
-          maxDataPoints: 1, // dummy
-          datasource: this.getRef(),
-          type: 'logAction',
-          subtype: subtype,
-          ...param,
-        })
-      ),
+      queries: queryParams.map((param: CloudWatchLogsRequest) => ({
+        refId: (param as StartQueryRequest).refId || 'A',
+        intervalMs: 1, // dummy
+        maxDataPoints: 1, // dummy
+        datasource: this.getRef(),
+        type: 'logAction',
+        subtype: subtype,
+        ...param,
+      })),
     };
 
     if (options.makeReplacements) {
-      requestParams.queries.forEach(
-        (query: GetLogEventsRequest | StartQueryRequest | DescribeLogGroupsRequest | GetLogGroupFieldsRequest) => {
-          const fieldsToReplace: Array<
-            keyof (GetLogEventsRequest & StartQueryRequest & DescribeLogGroupsRequest & GetLogGroupFieldsRequest)
-          > = ['queryString', 'logGroupNames', 'logGroupName', 'logGroupNamePrefix'];
+      requestParams.queries.forEach((query: CloudWatchLogsRequest) => {
+        const fieldsToReplace: Array<
+          keyof (GetLogEventsRequest & StartQueryRequest & DescribeLogGroupsRequest & GetLogGroupFieldsRequest)
+        > = ['queryString', 'logGroupNames', 'logGroupName', 'logGroupNamePrefix'];
 
-          const anyQuery: any = query;
-          for (const fieldName of fieldsToReplace) {
-            if (query.hasOwnProperty(fieldName)) {
-              if (Array.isArray(anyQuery[fieldName])) {
-                anyQuery[fieldName] = anyQuery[fieldName].map((val: string) =>
-                  this.replace(val, options.scopedVars, true, fieldName)
-                );
-              } else {
-                anyQuery[fieldName] = this.replace(anyQuery[fieldName], options.scopedVars, true, fieldName);
-              }
+        const anyQuery: any = query;
+        for (const fieldName of fieldsToReplace) {
+          if (query.hasOwnProperty(fieldName)) {
+            if (Array.isArray(anyQuery[fieldName])) {
+              anyQuery[fieldName] = anyQuery[fieldName].map((val: string) =>
+                this.replace(val, options.scopedVars, true, fieldName)
+              );
+            } else {
+              anyQuery[fieldName] = this.replace(anyQuery[fieldName], options.scopedVars, true, fieldName);
             }
           }
-          // TODO: seems to be some sort of bug that we don't really send region with all queries. This means
-          //  if you select different than default region in editor you will get results for autocomplete from wrong
-          //  region.
-          if (anyQuery.region) {
-            anyQuery.region = this.replace(anyQuery.region, options.scopedVars, true, 'region');
-            anyQuery.region = this.getActualRegion(anyQuery.region);
-          }
         }
-      );
+        // TODO: seems to be some sort of bug that we don't really send region with all queries. This means
+        //  if you select different than default region in editor you will get results for autocomplete from wrong
+        //  region.
+        if (anyQuery.region) {
+          anyQuery.region = this.replace(anyQuery.region, options.scopedVars, true, 'region');
+          anyQuery.region = this.getActualRegion(anyQuery.region);
+        }
+      });
     }
 
     const resultsToDataFrames = (val: any): DataFrame[] => toDataQueryResponse(val).data || [];

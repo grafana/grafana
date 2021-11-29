@@ -263,7 +263,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const { datasource } = this.props;
+    const { datasource, query } = this.props;
     const { selectedLogGroups } = this.state;
 
     if (!datasource.languageProvider) {
@@ -276,7 +276,12 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
     return await cloudwatchLanguageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey, editor },
-      { history, absoluteRange, logGroupNames: selectedLogGroups.map((logGroup) => logGroup.value!) }
+      {
+        history,
+        absoluteRange,
+        logGroupNames: selectedLogGroups.map((logGroup) => logGroup.value!),
+        region: query.region,
+      }
     );
   };
 

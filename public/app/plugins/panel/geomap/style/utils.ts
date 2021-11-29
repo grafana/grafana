@@ -5,7 +5,7 @@ import { defaultStyleConfig, StyleConfig, StyleConfigFields, StyleConfigState } 
 
 /** Indicate if the style wants to show text values */
 export function styleUsesText(config: StyleConfig): boolean {
-  const { text } = config;
+  const text = config?.text;
   if (!text) {
     return false;
   }

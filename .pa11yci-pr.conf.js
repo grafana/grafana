@@ -6,6 +6,9 @@ var config = {
     chromeLaunchConfig: {
       args: ['--no-sandbox'],
     },
+    // see https://github.com/grafana/grafana/pull/41693#issuecomment-979921463 for context
+    // on why we're ignoring singleValue/react-select-*-placeholder elements
+    hideElements: '#updateVersion, [class*="-singleValue"], [id^="react-select-"][id$="-placeholder"]',
   },
 
   urls: [
@@ -13,7 +16,7 @@ var config = {
       url: '${HOST}/login',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 13,
+      threshold: 12,
     },
     {
       url: '${HOST}/login',
@@ -25,7 +28,7 @@ var config = {
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
-      threshold: 14,
+      threshold: 13,
       rootElement: '.main-view',
     },
     {

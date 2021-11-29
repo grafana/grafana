@@ -125,6 +125,34 @@ describe('datasource', () => {
       expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
     });
   });
+
+  describe('getLogGroupFields', () => {
+    it('passes region correctly', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource();
+      fetchMock.mockReturnValueOnce(
+        of({
+          data: {
+            results: {
+              A: {
+                frames: [
+                  dataFrameToJSON(
+                    new MutableDataFrame({
+                      fields: [
+                        { name: 'key', values: [] },
+                        { name: 'val', values: [] },
+                      ],
+                    })
+                  ),
+                ],
+              },
+            },
+          },
+        })
+      );
+      await datasource.getLogGroupFields({ region: 'us-west-1', logGroupName: 'test' });
+      expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe('us-west-1');
+    });
+  });
 });
 
 function setupForLogs() {

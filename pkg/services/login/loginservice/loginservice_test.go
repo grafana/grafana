@@ -1,6 +1,7 @@
 package loginservice
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -36,7 +37,7 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 		return nil
 	})
 
-	err := syncOrgRoles(&user, &externalUser)
+	err := syncOrgRoles(context.Background(), &user, &externalUser)
 	require.Empty(t, remResp)
 	require.NoError(t, err)
 }
@@ -71,7 +72,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 		return nil
 	})
 
-	err := syncOrgRoles(&user, &externalUser)
+	err := syncOrgRoles(context.Background(), &user, &externalUser)
 	require.NoError(t, err)
 	assert.Contains(t, logs, models.ErrLastOrgAdmin.Error())
 }
@@ -81,7 +82,7 @@ type authInfoServiceMock struct {
 	err  error
 }
 
-func (a *authInfoServiceMock) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (*models.User, error) {
+func (a *authInfoServiceMock) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
 	return a.user, a.err
 }
 
@@ -109,7 +110,7 @@ func Test_teamSync(t *testing.T) {
 	var actualExternalUser *models.ExternalUserInfo
 
 	t.Run("login.TeamSync should not be called when  nil", func(t *testing.T) {
-		err := login.UpsertUser(upserCmd)
+		err := login.UpsertUser(context.Background(), upserCmd)
 		require.Nil(t, err)
 		assert.Nil(t, actualUser)
 		assert.Nil(t, actualExternalUser)
@@ -121,7 +122,7 @@ func Test_teamSync(t *testing.T) {
 				return nil
 			}
 			login.TeamSync = teamSyncFunc
-			err := login.UpsertUser(upserCmd)
+			err := login.UpsertUser(context.Background(), upserCmd)
 			require.Nil(t, err)
 			assert.Equal(t, actualUser, expectedUser)
 			assert.Equal(t, actualExternalUser, upserCmd.ExternalUser)
@@ -132,7 +133,7 @@ func Test_teamSync(t *testing.T) {
 				return errors.New("teamsync test error")
 			}
 			login.TeamSync = teamSyncFunc
-			err := login.UpsertUser(upserCmd)
+			err := login.UpsertUser(context.Background(), upserCmd)
 			require.Error(t, err)
 		})
 	})
