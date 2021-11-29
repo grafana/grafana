@@ -50,7 +50,7 @@ A role’s display name is human friendly text that is displayed in the UI. When
 
 ### Display name
 
-A role's display name is intended as a human friendly identifier for the role, helping users understand the purpose of a role. The display name of the role is displayed in the role picker in the UI.
+A role’s display name is a human-friendly identifier for the role, so that users more easily understand the purpose of a role. You can see the display name in the role picker in the UI.
 
 ### Group
 
