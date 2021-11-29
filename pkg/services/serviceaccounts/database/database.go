@@ -16,7 +16,6 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	s := &ServiceAccountsStoreImpl{
 		sqlStore: store,
 	}
-	s.InitMetrics()
 	return s
 }
 
