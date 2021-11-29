@@ -37,18 +37,6 @@ func NewDecodedDataFrames(decodedFrames data.Frames) DataFrames {
 	}
 }
 
-// NewEncodedDataFrames instantiates DataFrames from encoded frames.
-//
-// This one is primarily used for creating DataFrames when receiving encoded data frames from an external
-// plugin or similar. This may allow the encoded data frames to be returned to Grafana UI without any additional
-// decoding/encoding required. In Grafana alerting scenario it needs to operate on decoded data frames why encoded
-// frames needs to be decoded before usage.
-func NewEncodedDataFrames(encodedFrames [][]byte) DataFrames {
-	return &dataFrames{
-		encoded: encodedFrames,
-	}
-}
-
 func (df *dataFrames) Encoded() ([][]byte, error) {
 	if df.encoded == nil {
 		encoded, err := df.decoded.MarshalArrow()

@@ -17,11 +17,16 @@ export function isSharedDashboardQuery(datasource: string | DataSourceRef | Data
     // default datasource
     return false;
   }
-  if (datasource === SHARED_DASHBOARD_QUERY || (datasource as any)?.uid === SHARED_DASHBOARD_QUERY) {
-    return true;
+
+  if (typeof datasource === 'string') {
+    return datasource === SHARED_DASHBOARD_QUERY;
   }
-  const ds = datasource as DataSourceApi;
-  return ds.meta && ds.meta.name === SHARED_DASHBOARD_QUERY;
+
+  if ('meta' in datasource) {
+    return datasource.meta.name === SHARED_DASHBOARD_QUERY || datasource.uid === SHARED_DASHBOARD_QUERY;
+  }
+
+  return datasource.uid === SHARED_DASHBOARD_QUERY;
 }
 
 export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelData> {

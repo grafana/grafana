@@ -37,7 +37,7 @@
     "@grafana/e2e-selectors": "8.4.0-pre",
     "@grafana/schema": "8.4.0-pre",
     "@grafana/slate-react": "0.22.10-grafana",
-    "@monaco-editor/react": "4.2.2",
+    "@monaco-editor/react": "4.3.1",
     "@popperjs/core": "2.5.4",
     "@react-aria/focus": "3.4.1",
     "@react-aria/overlays": "3.7.2",
@@ -91,7 +91,7 @@
     "uuid": "8.3.0"
   },
   "devDependencies": {
-    "@babel/core": "7.14.6",
+    "@babel/core": "7.16.0",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@mdx-js/react": "1.6.22",
     "@rollup/plugin-commonjs": "21.0.1",

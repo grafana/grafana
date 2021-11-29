@@ -33,8 +33,9 @@ Example response:
         {
             "version": 2,
             "uid": "qQui_LCMk",
-            "name": "fixed:users:org:edit",
-            "description": "Allows every read action for user organizations and in addition allows to administer user organizations.",
+            "name": "fixed:users:org:writer",
+            "displayName": "Users Organization writer",
+            "description": "Within a single organization, add a user, invite a user, read information about a user and their role, remove a user from that organization, or change the role of a user.",
             "global": true,
             "updated": "2021-05-17T20:49:18+02:00",
             "created": "2021-05-13T16:24:26+02:00"
@@ -42,8 +43,9 @@ Example response:
         {
             "version": 1,
             "uid": "Kz9m_YjGz",
-            "name": "fixed:reporting:admin:edit",
-            "description": "Gives access to edit any report or the organization's general reporting settings.",
+            "name": "fixed:reports:writer",
+            "displayName": "Report writer",
+            "description": "Create, read, update, or delete all reports and shared report settings.",
             "global": true,
             "updated": "2021-05-13T16:24:26+02:00",
             "created": "2021-05-13T16:24:26+02:00"
@@ -55,8 +57,9 @@ Example response:
         {
             "version": 2,
             "uid": "qQui_LCMk",
-            "name": "fixed:users:org:edit",
-            "description": "Allows every read action for user organizations and in addition allows to administer user organizations.",
+            "name": "fixed:users:writer",
+            "displayName": "User writer",
+            "description": "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
             "global": true,
             "updated": "2021-05-17T20:49:18+02:00",
             "created": "2021-05-13T16:24:26+02:00"
@@ -64,17 +67,9 @@ Example response:
         {
             "version": 2,
             "uid": "ajum_YjGk",
-            "name": "fixed:users:admin:read",
-            "description": "Allows to list and get users and related information.",
-            "global": true,
-            "updated": "2021-05-17T20:49:17+02:00",
-            "created": "2021-05-13T16:24:26+02:00"
-        },
-        {
-            "version": 2,
-            "uid": "K3um_LCMk",
-            "name": "fixed:users:admin:edit",
-            "description": "Allows every read action for users and in addition allows to administer users.",
+            "name": "fixed:users:reader",
+            "displayName": "User reader",
+            "description": "Allows every read action for user organizations and in addition allows to administer user organizations.",
             "global": true,
             "updated": "2021-05-17T20:49:17+02:00",
             "created": "2021-05-13T16:24:26+02:00"
@@ -98,8 +93,9 @@ Example response:
 {
     "version": 2,
     "uid": "qQui_LCMk",
-    "name": "fixed:users:org:edit",
-    "description": "Allows every read action for user organizations and in addition allows to administer user organizations.",
+    "name": "fixed:users:writer",
+    "displayName": "User writer",
+    "description": "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
     "global": true,
     "permissions": [
         {
@@ -151,6 +147,7 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
     "version": 1,
     "uid": "jZrmlLCkGksdka",
     "name": "custom:users:admin",
+    "displayName": "custom users admin",
     "description": "My custom role which gives users permissions to create users",
     "global": true,
     "permissions": [
@@ -168,6 +165,7 @@ Example response:
     "version": 1,
     "uid": "jZrmlLCkGksdka",
     "name": "custom:users:admin",
+    "displayName": "custom users admin",
     "description": "My custom role which gives users permissions to create users",
     "global": true,
     "permissions": [
