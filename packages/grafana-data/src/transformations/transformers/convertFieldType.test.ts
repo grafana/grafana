@@ -1,8 +1,14 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType } from '../../types/dataFrame';
+import { Field, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
-import { ensureTimeField, convertFieldType, convertFieldTypes, convertFieldTypeTransformer } from './convertFieldType';
+import {
+  ensureTimeField,
+  convertFieldType,
+  convertFieldTypes,
+  convertFieldTypeTransformer,
+  fieldToTimeField,
+} from './convertFieldType';
 
 describe('field convert type', () => {
   it('will parse properly formatted strings to time', () => {
@@ -230,6 +236,27 @@ describe('ensureTimeField', () => {
       name: 'proper dates',
       type: FieldType.time,
       values: new ArrayVector([1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000]),
+    });
+  });
+});
+
+describe('fieldToTimeField', () => {
+  // this needs to run in a non-UTC timezone env to ensure the parsing is not dependent on env tz settings
+  //process.env.TZ = 'Pacific/Easter';
+
+  it('should always parse ISO 8601 date strings in UTC timezone (e.g. 2011-10-05T14:48:00.000Z)', () => {
+    const stringTimeField: Field = {
+      config: {},
+      name: 'ISO 8601 date strings',
+      type: FieldType.time,
+      values: new ArrayVector(['2021-11-11T19:45:00.000Z']),
+    };
+
+    expect(fieldToTimeField(stringTimeField)).toEqual({
+      config: {},
+      name: 'ISO 8601 date strings',
+      type: FieldType.time,
+      values: new ArrayVector([1636659900000]),
     });
   });
 });

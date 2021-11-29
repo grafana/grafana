@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -17,18 +18,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
 )
 
-// ScheduleService handles scheduling
+// ScheduleService is an interface for a service that schedules the evaluation
+// of alert rules.
 type ScheduleService interface {
+	// Run the scheduler until the context is canceled or the scheduler returns
+	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
 	Pause() error
 	Unpause() error
+
+	// AlertmanagersFor returns all the discovered Alertmanager URLs for the
+	// organization.
 	AlertmanagersFor(orgID int64) []*url.URL
+
+	// DroppedAlertmanagersFor returns all the dropped Alertmanager URLs for the
+	// organization.
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 
 	// the following are used by tests only used for tests
@@ -64,11 +73,11 @@ type schedule struct {
 
 	evaluator eval.Evaluator
 
-	ruleStore        store.RuleStore
-	instanceStore    store.InstanceStore
-	adminConfigStore store.AdminConfigurationStore
-	orgStore         store.OrgStore
-	dataService      *tsdb.Service
+	ruleStore         store.RuleStore
+	instanceStore     store.InstanceStore
+	adminConfigStore  store.AdminConfigurationStore
+	orgStore          store.OrgStore
+	expressionService *expr.Service
 
 	stateManager *state.Manager
 
@@ -107,7 +116,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 
 	sch := schedule{
@@ -123,7 +132,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, 
 		ruleStore:               cfg.RuleStore,
 		instanceStore:           cfg.InstanceStore,
 		orgStore:                cfg.OrgStore,
-		dataService:             dataService,
+		expressionService:       expressionService,
 		adminConfigStore:        cfg.AdminConfigStore,
 		multiOrgNotifier:        cfg.MultiOrgNotifier,
 		metrics:                 cfg.Metrics,
@@ -449,7 +458,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 			OrgID:     alertRule.OrgID,
 			Data:      alertRule.Data,
 		}
-		results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
+		results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.expressionService)
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
@@ -543,7 +552,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					return evaluate(currentRule, attempt, ctx)
 				})
 				if err != nil {
-					log.Error("evaluation failed after all retries", "err", err)
+					logger.Error("evaluation failed after all retries", "err", err)
 				}
 			}()
 		case <-stopCh:

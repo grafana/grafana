@@ -9,7 +9,7 @@ import (
 )
 
 // Provision alert notifiers
-func Provision(ctx context.Context, configDirectory string, encryptionService encryption.Service) error {
+func Provision(ctx context.Context, configDirectory string, encryptionService encryption.Internal) error {
 	dc := newNotificationProvisioner(encryptionService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(ctx, configDirectory)
 }
@@ -20,7 +20,7 @@ type NotificationProvisioner struct {
 	cfgProvider *configReader
 }
 
-func newNotificationProvisioner(encryptionService encryption.Service, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(encryptionService encryption.Internal, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
 		log: log,
 		cfgProvider: &configReader{

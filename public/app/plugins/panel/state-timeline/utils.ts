@@ -34,6 +34,7 @@ import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } fro
 import { TimelineFieldConfig, TimelineOptions } from './types';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import uPlot from 'uplot';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -196,7 +197,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     splits: coreConfig.ySplits,
     values: coreConfig.yValues,
     grid: { show: false },
-    ticks: false,
+    ticks: { show: false },
     gap: 16,
     theme,
   });

@@ -148,10 +148,11 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
 
-			return hs.CreateFolder(c, cmd)
+			return hs.CreateFolder(c)
 		})
 
 		origNewFolderService := dashboards.NewFolderService
@@ -182,10 +183,11 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
 
-			return hs.UpdateFolder(c, cmd)
+			return hs.UpdateFolder(c)
 		})
 
 		origNewFolderService := dashboards.NewFolderService

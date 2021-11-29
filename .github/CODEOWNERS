@@ -14,7 +14,7 @@
 # Documentation owner: Jita Chatterjee
 /docs/ @grafana/docs-squad @pkolyvas
 /contribute/ @marcusolsson @grafana/docs-squad @pkolyvas
-/docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad @grafana/plugins-platform
+/docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend @marcusolsson @grafana/docs-squad @grafana/plugins-platform-backend
 /docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
 
@@ -48,7 +48,7 @@ go.sum @grafana/backend-platform
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
 # Grafana live
-/pkg/service/live/ @grafana/grafana-edge-squad
+/pkg/services/live/ @grafana/grafana-edge-squad
 
 # Unified Alerting
 /pkg/services/ngalert @grafana/alerting-squad
@@ -63,7 +63,6 @@ go.sum @grafana/backend-platform
 /pkg/plugins @grafana/plugins-platform-backend
 /pkg/services/datasourceproxy @grafana/plugins-platform-backend
 /pkg/services/datasources @grafana/plugins-platform-backend
-/public/app/features/plugins @grafana/plugins-platform-frontend
 
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
@@ -90,6 +89,7 @@ go.sum @grafana/backend-platform
 /public/app/features/dimensions/ @grafana/grafana-edge-squad
 /public/app/features/live/ @grafana/grafana-edge-squad
 /public/app/features/explore/ @grafana/observability-squad
+/public/app/features/plugins @grafana/plugins-platform-frontend
 /public/app/plugins/panel/alertlist @grafana/alerting-squad
 /public/app/plugins/panel/barchart @grafana/grafana-bi-squad
 /public/app/plugins/panel/heatmap @grafana/grafana-bi-squad
@@ -102,6 +102,7 @@ go.sum @grafana/backend-platform
 /public/app/plugins/panel/timeseries @grafana/grafana-bi-squad
 /public/app/plugins/panel/geomap @grafana/grafana-edge-squad
 /public/app/plugins/panel/canvas @grafana/grafana-edge-squad
+/public/app/plugins/panel/candlestick @grafana/grafana-edge-squad
 /public/app/plugins/panel/icon @grafana/grafana-edge-squad
 /scripts/build/release-packages.sh @grafana/plugins-platform-frontend
 /scripts/circle-release-next-packages.sh @grafana/plugins-platform-frontend
@@ -142,4 +143,4 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/alertmanager @grafana/alerting-squad
 
 # Cloud middleware
-/grafana-mixin/ @grafana/cloud-middleware
+/grafana-mixin/ @grafana/hosted-grafana-team

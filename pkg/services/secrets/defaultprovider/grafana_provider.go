@@ -10,10 +10,10 @@ import (
 
 type grafanaProvider struct {
 	settings   setting.Provider
-	encryption encryption.Service
+	encryption encryption.Internal
 }
 
-func New(settings setting.Provider, encryption encryption.Service) secrets.Provider {
+func New(settings setting.Provider, encryption encryption.Internal) secrets.Provider {
 	return grafanaProvider{
 		settings:   settings,
 		encryption: encryption,

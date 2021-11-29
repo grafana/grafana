@@ -1,19 +1,22 @@
 # You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
 
   elasticsearch-latest:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.13.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.0.0-beta1
     command: elasticsearch
     environment:
       - "discovery.type=single-node"
+      - "xpack.license.self_generated.type=basic"
+      - "xpack.security.enabled=false"
     ports:
       - "14200:9200"
       - "14300:9300"
 
-  fake-elastic-latest-data:
-    image: grafana/fake-data-gen
-    links:
-      - elasticsearch-latest
-    environment:
-      FD_SERVER: elasticsearch-latest
-      FD_DATASOURCE: elasticsearch7
-      FD_PORT: 9200
+  # TODO: uncomment when https://github.com/grafana/fake-data-gen/pull/20 is merged
+  # fake-elastic-latest-data:
+  #   image: grafana/fake-data-gen
+  #   links:
+  #     - elasticsearch-latest
+  #   environment:
+  #     FD_SERVER: elasticsearch-latest
+  #     FD_DATASOURCE: elasticsearch8
+  #     FD_PORT: 9200

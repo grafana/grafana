@@ -10,18 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// DataRequestHandler is a data request handler interface.
-type DataRequestHandler interface {
-	// HandleRequest handles a data request.
-	HandleRequest(context.Context, *models.DataSource, DataQuery) (DataResponse, error)
-}
-
 // Store is the storage for plugins.
 type Store interface {
 	// Plugin finds a plugin by its ID.
-	Plugin(pluginID string) *Plugin
+	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
-	Plugins(pluginTypes ...Type) []*Plugin
+	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 
 	// Add adds a plugin to the store.
 	Add(ctx context.Context, pluginID, version string, opts AddOpts) error
@@ -60,6 +54,7 @@ type UpdateInfo struct {
 type Client interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
+	backend.StreamHandler
 
 	// CallResource calls a plugin resource.
 	CallResource(pCtx backend.PluginContext, ctx *models.ReqContext, path string)
@@ -96,7 +91,7 @@ type PluginDashboardManager interface {
 	// LoadPluginDashboard loads a plugin dashboard.
 	LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error)
 	// ImportDashboard imports a dashboard.
-	ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
+	ImportDashboard(ctx context.Context, pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 		overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser) (PluginDashboardInfoDTO,
 		*models.Dashboard, error)
 }

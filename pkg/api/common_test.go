@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,9 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/searchusers/filters"
-
-	"github.com/grafana/grafana/pkg/services/searchusers"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -19,17 +19,20 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/searchusers"
+	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
@@ -49,10 +52,6 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 			sc.context.OrgRole = role
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
-			}
-
-			if sc.handlerFuncCtx != nil {
-				return sc.handlerFuncCtx(context.Background(), sc.context)
 			}
 
 			return nil
@@ -78,10 +77,6 @@ func anonymousUserScenario(t *testing.T, desc string, method string, url string,
 			sc.context = c
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
-			}
-
-			if sc.handlerFuncCtx != nil {
-				return sc.handlerFuncCtx(context.Background(), sc.context)
 			}
 
 			return nil
@@ -153,7 +148,6 @@ type scenarioContext struct {
 	context              *models.ReqContext
 	resp                 *httptest.ResponseRecorder
 	handlerFunc          handlerFunc
-	handlerFuncCtx       handlerFuncCtx
 	defaultHandler       web.Handler
 	req                  *http.Request
 	url                  string
@@ -166,7 +160,6 @@ func (sc *scenarioContext) exec() {
 
 type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *models.ReqContext) response.Response
-type handlerFuncCtx func(ctx context.Context, c *models.ReqContext) response.Response
 
 func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHandler {
 	t.Helper()
@@ -270,10 +263,19 @@ type accessControlScenarioContext struct {
 	cfg *setting.Cfg
 }
 
-func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission) {
-	acmock.GetUserPermissionsFunc = func(_ context.Context, _ *models.SignedInUser) ([]*accesscontrol.Permission, error) {
-		return perms, nil
+func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
+	acmock.GetUserPermissionsFunc = func(_ context.Context, u *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+		if u.OrgId == org {
+			return perms, nil
+		}
+		return nil, nil
 	}
+}
+
+// setInitCtxSignedInUser sets a copy of the user in initCtx
+func setInitCtxSignedInUser(initCtx *models.ReqContext, user models.SignedInUser) {
+	initCtx.IsSignedIn = true
+	initCtx.SignedInUser = &user
 }
 
 func setInitCtxSignedInViewer(initCtx *models.ReqContext) {
@@ -286,22 +288,17 @@ func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
 	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_ADMIN, Login: testUserLogin}
 }
 
-func setupHTTPServer(t *testing.T, enableAccessControl bool) accessControlScenarioContext {
+func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
 	t.Helper()
+
+	var acmock *accesscontrolmock.Mock
+	var ac *ossaccesscontrol.OSSAccessControlService
 
 	// Use a new conf
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = make(map[string]bool)
-
-	// Use an accesscontrol mock
-	acmock := accesscontrolmock.New()
-
-	// Handle accesscontrol enablement
 	if enableAccessControl {
 		cfg.FeatureToggles["accesscontrol"] = enableAccessControl
-	} else {
-		// Disabling accesscontrol has to be done before registering routes
-		acmock = acmock.WithDisabled()
 	}
 
 	// Use a test DB
@@ -317,9 +314,25 @@ func setupHTTPServer(t *testing.T, enableAccessControl bool) accessControlScenar
 		Live:               newTestLive(t),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
-		AccessControl:      acmock,
 		SQLStore:           db,
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
+	}
+
+	// Defining the accesscontrol service has to be done before registering routes
+	if useFakeAccessControl {
+		acmock = accesscontrolmock.New()
+		if !enableAccessControl {
+			acmock = acmock.WithDisabled()
+		}
+		hs.AccessControl = acmock
+	} else {
+		ac = ossaccesscontrol.ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
+		hs.AccessControl = ac
+		// Perform role registration
+		err := hs.declareFixedRoles()
+		require.NoError(t, err)
+		err = ac.RegisterFixedRoles()
+		require.NoError(t, err)
 	}
 
 	// Instantiate a new Server
@@ -354,4 +367,9 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 	recorder := httptest.NewRecorder()
 	server.ServeHTTP(recorder, req)
 	return recorder
+}
+
+func mockRequestBody(v interface{}) io.ReadCloser {
+	b, _ := json.Marshal(v)
+	return io.NopCloser(bytes.NewReader(b))
 }

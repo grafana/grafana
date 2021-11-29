@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/jmespath/go-jmespath"
 )
@@ -67,8 +66,7 @@ func (s *SocialBase) httpGet(client *http.Client, url string) (response httpGetR
 		err = fmt.Errorf(string(response.Body))
 		return
 	}
-
-	log.Debug("HTTP GET", "url", url, "status", r.Status, "response_body", string(response.Body))
+	s.log.Debug("HTTP GET", "url", url, "status", r.Status, "response_body", string(response.Body))
 
 	err = nil
 	return

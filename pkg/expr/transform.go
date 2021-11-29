@@ -3,14 +3,13 @@ package expr
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 )
@@ -30,37 +29,6 @@ func init() {
 	)
 
 	prometheus.MustRegister(expressionsQuerySummary)
-}
-
-// WrapTransformData creates and executes transform requests
-func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery) (*backend.QueryDataResponse, error) {
-	req := Request{
-		OrgId:   query.User.OrgId,
-		Queries: []Query{},
-	}
-
-	for _, q := range query.Queries {
-		if q.DataSource == nil {
-			return nil, fmt.Errorf("mising datasource info: " + q.RefID)
-		}
-		modelJSON, err := q.Model.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		req.Queries = append(req.Queries, Query{
-			JSON:          modelJSON,
-			Interval:      time.Duration(q.IntervalMS) * time.Millisecond,
-			RefID:         q.RefID,
-			MaxDataPoints: q.MaxDataPoints,
-			QueryType:     q.QueryType,
-			DataSource:    q.DataSource,
-			TimeRange: TimeRange{
-				From: query.TimeRange.GetFromAsTimeUTC(),
-				To:   query.TimeRange.GetToAsTimeUTC(),
-			},
-		})
-	}
-	return s.TransformData(ctx, &req)
 }
 
 // Request is similar to plugins.DataQuery but with the Time Ranges is per Query.
@@ -190,38 +158,23 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 
-	// Convert plugin-model (datasource) queries to tsdb queries
-	queries := make([]plugins.DataSubQuery, len(req.Queries))
-	for i, query := range req.Queries {
-		sj, err := simplejson.NewJson(query.JSON)
-		if err != nil {
-			return nil, err
-		}
-		queries[i] = plugins.DataSubQuery{
-			RefID:         query.RefID,
-			IntervalMS:    query.Interval.Milliseconds(),
-			MaxDataPoints: query.MaxDataPoints,
-			QueryType:     query.QueryType,
-			DataSource:    getDsInfo.Result,
-			Model:         sj,
-		}
-	}
-
-	// For now take Time Range from first query.
-	timeRange := plugins.NewDataTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10),
-		strconv.FormatInt(req.Queries[0].TimeRange.To.Unix()*1000, 10))
-
-	tQ := plugins.DataQuery{
-		TimeRange: &timeRange,
-		Queries:   queries,
-		Headers:   req.Headers,
-	}
-
-	// Execute the converted queries
-	tsdbRes, err := s.DataService.HandleRequest(ctx, getDsInfo.Result, tQ)
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(getDsInfo.Result, s.decryptSecureJsonDataFn(ctx))
 	if err != nil {
-		return nil, err
+		return nil, errutil.Wrap("failed to convert datasource instance settings", err)
 	}
 
-	return tsdbRes.ToBackendDataResponse()
+	req.PluginContext.DataSourceInstanceSettings = dsInstanceSettings
+	req.PluginContext.PluginID = getDsInfo.Result.Type
+
+	return s.dataService.QueryData(ctx, req)
+}
+
+func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(map[string][]byte) map[string]string {
+	return func(m map[string][]byte) map[string]string {
+		decryptedJsonData, err := s.secretsService.DecryptJsonData(ctx, m)
+		if err != nil {
+			logger.Error("Failed to decrypt secure json data", "error", err)
+		}
+		return decryptedJsonData
+	}
 }

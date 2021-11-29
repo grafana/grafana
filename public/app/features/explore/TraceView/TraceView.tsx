@@ -39,6 +39,9 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
+  // At this point we only show single trace
+  const frame = props.dataFrames[0];
+
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const {
     detailStates,
@@ -50,7 +53,8 @@ export function TraceView(props: Props) {
     detailTagsToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
-  } = useDetailState();
+  } = useDetailState(frame);
+
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
 
@@ -63,8 +67,6 @@ export function TraceView(props: Props) {
    */
   const [slim, setSlim] = useState(false);
 
-  // At this point we only show single trace.
-  const frame = props.dataFrames[0];
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
@@ -192,8 +194,8 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
   const processes: Record<string, TraceProcess> = {};
   for (let i = 0; i < view.length; i++) {
     const span = view.get(i);
-    if (!processes[span.serviceName]) {
-      processes[span.serviceName] = {
+    if (!processes[span.spanID]) {
+      processes[span.spanID] = {
         serviceName: span.serviceName,
         tags: span.serviceTags,
       };
@@ -208,7 +210,7 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
         ...s,
         duration: s.duration * 1000,
         startTime: s.startTime * 1000,
-        processID: s.serviceName,
+        processID: s.spanID,
         flags: 0,
         references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
         logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],

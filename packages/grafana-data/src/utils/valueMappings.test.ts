@@ -52,6 +52,30 @@ const testSet1: ValueMapping[] = [
   },
 ];
 
+const testSet2: ValueMapping[] = [
+  {
+    type: MappingType.RegexToText,
+    options: {
+      pattern: '^([^.]*).foo.com$',
+      result: { text: 'Hostname $1' },
+    },
+  },
+  {
+    type: MappingType.RegexToText,
+    options: {
+      pattern: '^([^.]*).bar.com$',
+      result: { text: 'Hostname $1' },
+    },
+  },
+  {
+    type: MappingType.RegexToText,
+    options: {
+      pattern: '/hello/',
+      result: { color: 'red' },
+    },
+  },
+];
+
 describe('Format value with value mappings', () => {
   it('should return null with no valuemappings', () => {
     const valueMappings: ValueMapping[] = [];
@@ -129,6 +153,27 @@ describe('Format value with value mappings', () => {
       },
     ];
     expect(getValueMappingResult(valueMappings, value)).toEqual(expected);
+  });
+});
+
+describe('Format value with regex mappings', () => {
+  it('should return correct regular expression result', () => {
+    const value = 'www.foo.com';
+    expect(getValueMappingResult(testSet2, value)).toEqual({ text: 'Hostname www' });
+  });
+
+  it('should return correct regular expression result on second regex', () => {
+    const value = 'ftp.bar.com';
+    expect(getValueMappingResult(testSet2, value)).toEqual({ text: 'Hostname ftp' });
+  });
+
+  it('should return null with unmatched value', () => {
+    const value = 'www.baz.com';
+    expect(getValueMappingResult(testSet2, value)).toBeNull();
+  });
+
+  it('should not replace match when replace text is null', () => {
+    expect(getValueMappingResult(testSet2, 'hello my name is')).toEqual({ color: 'red' });
   });
 });
 

@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -9,9 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func SendResetPasswordEmail(c *models.ReqContext, form dtos.SendResetPasswordEmailForm) response.Response {
+func SendResetPasswordEmail(c *models.ReqContext) response.Response {
+	form := dtos.SendResetPasswordEmailForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if setting.LDAPEnabled || setting.AuthProxyEnabled {
 		return response.Error(401, "Not allowed to reset password when LDAP or Auth Proxy is enabled", nil)
 	}
@@ -21,7 +27,7 @@ func SendResetPasswordEmail(c *models.ReqContext, form dtos.SendResetPasswordEma
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
 		return response.Error(200, "Email sent", err)
 	}
@@ -34,7 +40,11 @@ func SendResetPasswordEmail(c *models.ReqContext, form dtos.SendResetPasswordEma
 	return response.Success("Email sent")
 }
 
-func ResetPassword(c *models.ReqContext, form dtos.ResetUserPasswordForm) response.Response {
+func ResetPassword(c *models.ReqContext) response.Response {
+	form := dtos.ResetUserPasswordForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	query := models.ValidateResetPasswordCodeQuery{Code: form.Code}
 
 	if err := bus.Dispatch(&query); err != nil {

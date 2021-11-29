@@ -1,13 +1,16 @@
 package migrations
 
 import (
+	"fmt"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"xorm.io/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 )
 
 func TestMigrations(t *testing.T) {
@@ -27,7 +30,7 @@ func TestMigrations(t *testing.T) {
 	mg := NewMigrator(x, &setting.Cfg{})
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg)
-	expectedMigrations := mg.MigrationsCount()
+	expectedMigrations := mg.GetMigrationIDs(true)
 
 	err = mg.Start()
 	require.NoError(t, err)
@@ -36,7 +39,7 @@ func TestMigrations(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, has)
 
-	require.Equal(t, expectedMigrations, result.Count)
+	checkStepsAndDatabaseMatch(t, mg, expectedMigrations)
 
 	mg = NewMigrator(x, &setting.Cfg{})
 	migrations.AddMigration(mg)
@@ -47,5 +50,44 @@ func TestMigrations(t *testing.T) {
 	has, err = x.SQL(query).Get(&result)
 	require.NoError(t, err)
 	require.True(t, has)
-	require.Equal(t, expectedMigrations, result.Count)
+	checkStepsAndDatabaseMatch(t, mg, expectedMigrations)
+}
+
+func checkStepsAndDatabaseMatch(t *testing.T, mg *Migrator, expected []string) {
+	t.Helper()
+	log, err := mg.GetMigrationLog()
+	require.NoError(t, err)
+	missing := make([]string, 0)
+	for _, id := range expected {
+		_, ok := log[id]
+		if !ok {
+			missing = append(missing, id)
+		}
+	}
+	notIntended := make([]string, 0)
+	for logId := range log {
+		found := false
+		for _, s := range expected {
+			found = s == logId
+			if found {
+				break
+			}
+		}
+		if !found {
+			notIntended = append(notIntended, logId)
+		}
+	}
+
+	if len(missing) == 0 && len(notIntended) == 0 {
+		return
+	}
+
+	var msg string
+	if len(missing) > 0 {
+		msg = fmt.Sprintf("was not executed [%v], ", strings.Join(missing, ", "))
+	}
+	if len(notIntended) > 0 {
+		msg += fmt.Sprintf("executed but should not [%v]", strings.Join(notIntended, ", "))
+	}
+	require.Failf(t, "the number of migrations does not match log in database", msg)
 }
