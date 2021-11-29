@@ -230,6 +230,11 @@ func (hs *HTTPServer) createRequest(ctx context.Context, ds *models.DataSource, 
 		if token := hs.OAuthTokenService.GetCurrentOAuthToken(ctx, query.User); token != nil {
 			delete(query.Headers, "Authorization")
 			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				query.Headers["X-ID-Token"] = idToken
+			}
 		}
 	}
 
