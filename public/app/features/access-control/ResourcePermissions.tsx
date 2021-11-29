@@ -14,7 +14,7 @@ const initialDescription: SystemDescription = {
   assignments: {
     teams: false,
     users: false,
-    builtinRoles: false,
+    builtInRoles: false,
   },
 };
 

@@ -66,7 +66,7 @@ func (s *System) registerEndpoints() {
 type Assignments struct {
 	Users        bool `json:"users"`
 	Teams        bool `json:"teams"`
-	BuiltinRoles bool `json:"builtinRoles"`
+	BuiltInRoles bool `json:"builtInRoles"`
 }
 
 type Description struct {
@@ -185,7 +185,7 @@ func (s *System) setBuiltinRolePermission(c *models.ReqContext, cmd setPermissio
 	builtInRole := web.Params(c.Req)[":builtInRole"]
 	resourceID := web.Params(c.Req)[":resourceID"]
 
-	if !s.options.Assignments.BuiltinRoles {
+	if !s.options.Assignments.BuiltInRoles {
 		return response.Error(http.StatusNotImplemented, "", nil)
 	}
 

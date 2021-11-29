@@ -6,7 +6,7 @@ export type SystemDescription = {
 export type Assignments = {
   users: boolean;
   teams: boolean;
-  builtinRoles: boolean;
+  builtInRoles: boolean;
 };
 
 export type ResourcePermission = {

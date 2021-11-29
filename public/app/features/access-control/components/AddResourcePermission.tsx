@@ -33,7 +33,7 @@ export const AddResourcePermission = ({ permissions, assignments, canListUsers, 
     if (assignments.teams) {
       options.push({ value: AclTarget.Team, label: 'Team' });
     }
-    if (assignments.builtinRoles) {
+    if (assignments.builtInRoles) {
       options.push({ value: AclTarget.BuiltInRole, label: 'Role' });
     }
     return options;
