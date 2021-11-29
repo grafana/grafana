@@ -97,7 +97,7 @@ Similar to `Markers`, you are prompted with various options to determine which d
 The GeoJSON layer allows you to select and load a static GeoJSON file from the filesystem.
 
 * **GeoJSON URL** provides a choice of GeoJSON files which ship with Grafana.
-* **Default Syle** controls which styles to apply when no rules above match. 
+* **Default Style** controls which styles to apply when no rules above match. 
   * **Color** configures the color of the default style
   * **Opacity** configures the default opacity
 * **Style Rules** apply styles based on feature properties
