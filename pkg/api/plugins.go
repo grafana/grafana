@@ -149,7 +149,11 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	return response.JSON(200, dto)
 }
 
-func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) response.Response {
+func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Response {
+	cmd := models.UpdatePluginSettingCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	if _, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID); !exists {
@@ -208,7 +212,11 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 	return resp
 }
 
-func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
+func (hs *HTTPServer) ImportDashboard(c *models.ReqContext) response.Response {
+	apiCmd := dtos.ImportDashboardCommand{}
+	if err := web.Bind(c.Req, &apiCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	var err error
 	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
 		return response.Error(422, "Dashboard must be set", nil)
@@ -387,7 +395,11 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 	return response.JSON(200, hs.pluginErrorResolver.PluginErrors())
 }
 
-func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
+func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
+	dto := dtos.InstallPluginCommand{}
+	if err := web.Bind(c.Req, &dto); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version, plugins.AddOpts{})
