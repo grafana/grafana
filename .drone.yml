@@ -844,8 +844,8 @@ steps:
   settings:
     channel: slack-webhooks-test
     template: "`.drone.yml` and `starlark` files have been changed on the OSS repo,
-      by: {{build.author}}. \nBranch: branch: <https://github.com/{{ repo.owner }}/{{
-      repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{
+      by: {{build.author}}. \nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name
+      }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{
       truncate build.commit 8 }}>"
     webhook:
       from_secret: drone-changes-webhook
@@ -4186,6 +4186,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: a169b5501acfda0e9dd8d5e87ff0393c8458f719f68d5f8fc0f03489d0c5c76f
+hmac: 003d0d4a8b4e2fc81f575c838b064e5778c2562b445b26c5a76339ca95c95330
 
 ...
