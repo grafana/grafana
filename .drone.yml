@@ -3428,4 +3428,8 @@ get:
   path: infra/data/ci/drone
   name: machine-user-token
 
+---
+kind: signature
+hmac: bb0811643ca33f99e1bd3b80a7ef0a1cf074ac1c09fcb07b71ec3d26d88faf18
+
 ...
