@@ -41,7 +41,7 @@ There are four layer types to choose from in the Geomap visualization.
 
 The layer controls allow you to create layers, change their name, reorder and delete layers.
 
-* **Add layer** creates an additional, configurable data layer for the Geomap visualization. When you add a layer you will be prompted to select a layer type. The layer type can be changed at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
+* **Add layer** creates an additional, configurable data layer for the Geomap visualization. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
 * The layer controls allow you to rename, delete, and reorder the layers of the panel.
   * **Edit layer name (pencil icon)** renames the layer
   * **Trash Bin** deletes the layer
