@@ -12,14 +12,14 @@ wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
 
 
-def slack_step(channel):
+def slack_step(channel, template, secret):
     return {
         'name': 'slack',
         'image': 'plugins/slack',
         'settings': {
-            'webhook': from_secret('slack_webhook'),
+            'webhook': from_secret(secret),
             'channel': channel,
-            'template': 'Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}',
+            'template': template,
         },
     }
 
