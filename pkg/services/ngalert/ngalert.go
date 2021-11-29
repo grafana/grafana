@@ -40,7 +40,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, secretsService secrets.Service, m *metrics.NGAlert, dsCacheService datasources.CacheService) (*AlertNG, error) {
+	quotaService *quota.QuotaService, secretsService secrets.Service, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:               cfg,
 		DataSourceCache:   dataSourceCache,
