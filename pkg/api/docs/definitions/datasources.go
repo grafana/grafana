@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // swagger:route GET /datasources datasources getDatasources
@@ -344,7 +344,7 @@ type QueryDatasourceResponse struct {
 	// The response message
 	// in: body
 	//nolint: staticcheck // plugins.DataResponse deprecated
-	Body plugins.DataResponse `json:"body"`
+	Body legacydata.DataResponse `json:"body"`
 }
 
 // MetricRequest same as dtos.MetricRequest but with swagger annotations

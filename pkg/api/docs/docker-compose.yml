@@ -20,4 +20,4 @@ swagger-editor:
   volumes:
     - .:/tmp
   environment:
-    - SWAGGER_FILE=/tmp/spec.json
+    - SWAGGER_FILE=/tmp/merged.json

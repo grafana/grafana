@@ -6402,6 +6402,11 @@
           "format": "int64",
           "x-go-name": "Editors"
         },
+        "monthlyActiveUsers": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "MonthlyActiveUsers"
+        },
         "orgs": {
           "type": "integer",
           "format": "int64",
@@ -7485,7 +7490,7 @@
       "description": "See NewDecodedDataFrames and NewEncodedDataFrames for more information.",
       "type": "object",
       "title": "DataFrames is an interface for retrieving encoded and decoded data frames.",
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DataQueryResult": {
       "description": "Deprecated: DataQueryResult should use backend.QueryDataResponse",
@@ -7516,7 +7521,7 @@
           "x-go-name": "Tables"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DataResponse": {
       "description": "Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse",
@@ -7534,14 +7539,14 @@
           "x-go-name": "Results"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DataRowValues": {
       "type": "array",
       "items": {
         "type": "object"
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DataSource": {
       "type": "object",
@@ -7728,7 +7733,7 @@
           "x-go-name": "Rows"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DataTableColumn": {
       "type": "object",
@@ -7738,14 +7743,14 @@
           "x-go-name": "Text"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DataTimePoint": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Float"
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DataTimeSeries": {
       "description": "DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK",
@@ -7766,21 +7771,21 @@
           "x-go-name": "Tags"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DataTimeSeriesPoints": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/DataTimePoint"
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DataTimeSeriesSlice": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/DataTimeSeries"
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
+      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DeleteAnnotationsCmd": {
       "type": "object",
