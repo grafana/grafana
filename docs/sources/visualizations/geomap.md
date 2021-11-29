@@ -31,7 +31,7 @@ The Geomap visualization supports multiple Data Layers. Each data layer determin
 
 ### Layer Types
 
-There are four layer types to choose from in the Geomap visualization.
+There are four-layer types to choose from in the Geomap visualization.
 
 * **Marker** renders a marker at each data point.
 * **Heatmap** visualizes a heatmap of the data.
