@@ -34,6 +34,9 @@ func GetAPIKeys(c *models.ReqContext) response.Response {
 			Role:       t.Role,
 			Expiration: expiration,
 		}
+		if c.QueryBool("includeExpired") {
+			result[i].IsExpired = time.Now().After(*expiration)
+		}
 	}
 
 	return response.JSON(200, result)

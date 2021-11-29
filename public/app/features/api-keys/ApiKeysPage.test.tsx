@@ -44,10 +44,10 @@ const setup = (propOverrides: Partial<Props>) => {
 describe('ApiKeysPage', () => {
   silenceConsoleOutput();
   describe('when mounted', () => {
-    it('then it should call loadApiKeys without expired', () => {
+    it('then it should call loadApiKeys with expired', () => {
       const { loadApiKeysMock } = setup({});
       expect(loadApiKeysMock).toHaveBeenCalledTimes(1);
-      expect(loadApiKeysMock).toHaveBeenCalledWith(false);
+      expect(loadApiKeysMock).toHaveBeenCalledWith(true);
     });
   });
 
@@ -81,23 +81,6 @@ describe('ApiKeysPage', () => {
     });
   });
 
-  describe('when a user toggles the Show expired toggle', () => {
-    it('then it should call loadApiKeys with correct parameters', async () => {
-      const apiKeys = getMultipleMockKeys(3);
-      const { loadApiKeysMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
-
-      loadApiKeysMock.mockClear();
-      toggleShowExpired();
-      expect(loadApiKeysMock).toHaveBeenCalledTimes(1);
-      expect(loadApiKeysMock).toHaveBeenCalledWith(true);
-
-      loadApiKeysMock.mockClear();
-      toggleShowExpired();
-      expect(loadApiKeysMock).toHaveBeenCalledTimes(1);
-      expect(loadApiKeysMock).toHaveBeenCalledWith(false);
-    });
-  });
-
   describe('when a user searches for an API key', () => {
     it('then it should dispatch setSearchQuery with correct parameters', async () => {
       const apiKeys = getMultipleMockKeys(3);
@@ -119,7 +102,6 @@ describe('ApiKeysPage', () => {
       ];
       const { deleteApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
       const firstRow = screen.getByRole('row', { name: /first admin 2021-01-01 00:00:00/i });
-      const secondRow = screen.getByRole('row', { name: /second editor 2021-01-02 00:00:00/i });
 
       deleteApiKeyMock.mockClear();
       expect(within(firstRow).getByLabelText('Delete API key')).toBeInTheDocument();
@@ -128,19 +110,7 @@ describe('ApiKeysPage', () => {
       expect(within(firstRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
       userEvent.click(within(firstRow).getByRole('button', { name: /delete$/i }));
       expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
-      expect(deleteApiKeyMock).toHaveBeenCalledWith(1, false);
-
-      toggleShowExpired();
-
-      deleteApiKeyMock.mockClear();
-      expect(within(secondRow).getByLabelText('Delete API key')).toBeInTheDocument();
-      userEvent.click(within(secondRow).getByLabelText('Delete API key'));
-      expect(within(secondRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
-      userEvent.click(within(secondRow).getByRole('button', { name: /delete$/i }), undefined, {
-        skipPointerEventsCheck: true,
-      });
-      expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
-      expect(deleteApiKeyMock).toHaveBeenCalledWith(2, true);
+      expect(deleteApiKeyMock).toHaveBeenCalledWith(1, true);
     });
   });
 
@@ -159,12 +129,6 @@ describe('ApiKeysPage', () => {
     it('then it should call addApiKey with correct parameters', async () => {
       const apiKeys = getMultipleMockKeys(1);
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
-
-      addApiKeyMock.mockClear();
-      userEvent.click(screen.getByRole('button', { name: /add api key/i }));
-      await addAndVerifyApiKey(addApiKeyMock, false);
-
-      toggleShowExpired();
 
       addApiKeyMock.mockClear();
       userEvent.click(screen.getByRole('button', { name: /add api key/i }));
@@ -189,11 +153,6 @@ describe('ApiKeysPage', () => {
   });
 });
 
-function toggleShowExpired() {
-  expect(screen.queryByLabelText(/show expired/i)).toBeInTheDocument();
-  userEvent.click(screen.getByLabelText(/show expired/i));
-}
-
 async function addAndVerifyApiKey(addApiKeyMock: jest.Mock, includeExpired: boolean) {
   expect(screen.getByRole('heading', { name: /add api key/i })).toBeInTheDocument();
   expect(screen.getByPlaceholderText(/name/i)).toBeInTheDocument();
@@ -207,6 +166,6 @@ async function addAndVerifyApiKey(addApiKeyMock: jest.Mock, includeExpired: bool
   expect(addApiKeyMock).toHaveBeenCalledWith(
     { name: 'Test', role: 'Viewer', secondsToLive: 60 },
     expect.anything(),
-    includeExpired
+    true
   );
 }

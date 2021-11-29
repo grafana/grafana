@@ -71,4 +71,5 @@ type ApiKeyDTO struct {
 	Name       string     `json:"name"`
 	Role       RoleType   `json:"role"`
 	Expiration *time.Time `json:"expiration,omitempty"`
+	IsExpired  bool       `json:"isExpired,omitempty"`
 }
