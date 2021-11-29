@@ -61,6 +61,7 @@ func (s *PipelinePushHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 	for {
 		_, body, err := conn.ReadMessage()
 		if err != nil {
+			logger.Debug("Error reading websocket connection", "error", err)
 			break
 		}
 
