@@ -39,7 +39,6 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     };
 
     stopPropagation = (event: React.KeyboardEvent<HTMLDivElement>, hidePopper: () => void) => {
-      event.preventDefault();
       event.stopPropagation();
 
       if (event.key === 'Escape') {
