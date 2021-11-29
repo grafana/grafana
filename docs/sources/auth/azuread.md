@@ -89,6 +89,13 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
+1. Under Azure AD / App Registrations / Grafana / **Token Configuration**, click **Add Optional Claim** and select Type ***ID** and Claim **email**.
+
+1. Under Azure AD / App Registrations / Grafana / **API Permissions**, Add following permissions:
+    * **Directory.AccessAsUser.All** from **Azure AD Directory Graph**
+    * **User.Read** from **Azure AD Directory Graph**
+    * **email** from **Microsoft Graph** 
+
 ## Enable Azure AD OAuth in Grafana
 
 1. Add the following to the [Grafana configuration file]({{< relref "../administration/configuration.md#config-file-locations" >}}):
@@ -105,6 +112,13 @@ auth_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize
 token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
 allowed_domains =
 allowed_groups =
+
+[auth]
+oauth_auto_login = true
+disable_login_form = true
+
+[auth.basic]
+enabled = false
 ```
 
 You can also use these environment variables to configure **client_id** and **client_secret**:
@@ -114,7 +128,7 @@ GF_AUTH_AZUREAD_CLIENT_ID
 GF_AUTH_AZUREAD_CLIENT_SECRET
 ```
 
-**Note:** Verify that the Grafana [root_url]({{< relref "../administration/configuration/#root-url" >}}) is set in your Azure Application Redirect URLs.
+**Note:** Verify that the Grafana [server.root_url]({{< relref "../administration/configuration/#root_url" >}}) matches your Azure Application Redirect URLs.
 
 ### Configure allowed groups
 
