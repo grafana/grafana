@@ -483,7 +483,7 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, ex
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
 
-	execResult := executeCondition(alertExecCtx, condition, now, expressionService)
+	execResult := executeCondition(alertExecCtx, condition, now, expressionService, e.DataSourceCache)
 
 	evalResults := evaluateExecutionResult(execResult, now)
 	return evalResults, nil
@@ -496,7 +496,7 @@ func (e *Evaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQu
 
 	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
 
-	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, expressionService)
+	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, expressionService, e.DataSourceCache)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
