@@ -3359,7 +3359,7 @@ __metadata:
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 13.0.6
     "@swc/helpers": 0.2.13
-    "@testing-library/dom": 8.10.1
+    "@testing-library/dom": 8.11.1
     "@testing-library/jest-dom": 5.11.9
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
@@ -3713,7 +3713,7 @@ __metadata:
     "@storybook/react": 6.3.7
     "@storybook/theming": 6.3.7
     "@swc/helpers": 0.2.13
-    "@testing-library/dom": 8.10.1
+    "@testing-library/dom": 8.11.1
     "@testing-library/jest-dom": 5.11.9
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
@@ -7823,7 +7823,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:8.10.1, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
+"@testing-library/dom@npm:8.11.1":
+  version: 8.11.1
+  resolution: "@testing-library/dom@npm:8.11.1"
+  dependencies:
+    "@babel/code-frame": ^7.10.4
+    "@babel/runtime": ^7.12.5
+    "@types/aria-query": ^4.2.0
+    aria-query: ^5.0.0
+    chalk: ^4.1.0
+    dom-accessibility-api: ^0.5.9
+    lz-string: ^1.4.4
+    pretty-format: ^27.0.2
+  checksum: 082104b104def94db071fe35f967124c52d387d995a61327cd60ed39c310126f4cde2fa51054c37977cd3a2082311795417413506ad1a14df1010bd1cbb02bc5
+  languageName: node
+  linkType: hard
+
+"@testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
   version: 8.10.1
   resolution: "@testing-library/dom@npm:8.10.1"
   dependencies:
@@ -18861,7 +18877,7 @@ __metadata:
     "@sentry/utils": 6.15.0
     "@swc/core": 1.2.103
     "@swc/helpers": 0.2.13
-    "@testing-library/dom": 8.10.1
+    "@testing-library/dom": 8.11.1
     "@testing-library/jest-dom": 5.11.5
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
