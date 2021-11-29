@@ -282,6 +282,16 @@ func (hs *HTTPServer) getDataSourceFromQuery(user *models.SignedInUser, skipCach
 		return grafanads.DataSourceModel(user.OrgId), nil
 	}
 
+	// use datasourceId if it exists
+	id := query.Get("datasourceId").MustInt64(0)
+	if id > 0 {
+		ds, err = hs.DataSourceCache.GetDatasource(id, user, skipCache)
+		if err != nil {
+			return nil, err
+		}
+		return ds, nil
+	}
+
 	if uid != "" {
 		ds, err = hs.DataSourceCache.GetDatasourceByUID(uid, user, skipCache)
 		if err != nil {
@@ -290,16 +300,7 @@ func (hs *HTTPServer) getDataSourceFromQuery(user *models.SignedInUser, skipCach
 		return ds, nil
 	}
 
-	// Fallback to the datasourceId
-	id, err := query.Get("datasourceId").Int64()
-	if err != nil {
-		return nil, NewErrBadQuery("missing data source ID/UID")
-	}
-	ds, err = hs.DataSourceCache.GetDatasource(id, user, skipCache)
-	if err != nil {
-		return nil, err
-	}
-	return ds, nil
+	return nil, NewErrBadQuery("missing data source ID/UID")
 }
 
 func toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
