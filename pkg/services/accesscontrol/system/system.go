@@ -1,4 +1,4 @@
-package ossaccesscontrol
+package system
 
 import (
 	"context"
@@ -21,6 +21,7 @@ import (
 func disabled(ac accesscontrol.AccessControl) web.Handler {
 	return func(c *models.ReqContext) {
 		if ac.IsDisabled() {
+			c.Resp.WriteHeader(http.StatusNotFound)
 			return
 		}
 	}
@@ -64,19 +65,19 @@ func (s *System) registerEndpoints() {
 	})
 }
 
-type SystemAssignments struct {
+type Assignments struct {
 	Users        bool `json:"users"`
 	Teams        bool `json:"teams"`
 	BuiltinRoles bool `json:"builtinRoles"`
 }
 
-type SystemDescription struct {
-	Assignments SystemAssignments `json:"assignments"`
-	Permissions []string          `json:"permissions"`
+type Description struct {
+	Assignments Assignments `json:"assignments"`
+	Permissions []string    `json:"permissions"`
 }
 
 func (s *System) getDescription(c *models.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, &SystemDescription{
+	return response.JSON(http.StatusOK, &Description{
 		Assignments: s.options.Assignments,
 		Permissions: s.options.Permissions,
 	})

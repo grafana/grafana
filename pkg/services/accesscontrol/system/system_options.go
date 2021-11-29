@@ -1,4 +1,4 @@
-package ossaccesscontrol
+package system
 
 import (
 	"context"
@@ -13,7 +13,7 @@ type SystemOptions struct {
 	Actions       []string
 	ActionsMapper func(permission accesscontrol.ResourcePermission) (string, bool)
 
-	Assignments SystemAssignments
+	Assignments Assignments
 
 	Permissions      []string
 	PermissionMapper func(permission string) []string
