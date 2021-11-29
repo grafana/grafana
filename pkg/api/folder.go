@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -59,7 +60,11 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
-func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) response.Response {
+func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
+	cmd := models.CreateFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.CreateFolder(c.Req.Context(), cmd.Title, cmd.Uid)
 	if err != nil {
@@ -77,7 +82,11 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolder
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
-func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {
+func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
+	cmd := models.UpdateFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	err := s.UpdateFolder(c.Req.Context(), web.Params(c.Req)[":uid"], &cmd)
 	if err != nil {
