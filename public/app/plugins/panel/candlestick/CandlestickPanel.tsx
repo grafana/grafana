@@ -18,11 +18,13 @@ import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBu
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { prepareCandlestickFields } from './fields';
 import uPlot from 'uplot';
+import { PanelDataErrorView } from '@grafana/runtime';
 
 interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
-export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
+export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   data,
+  id,
   timeRange,
   timeZone,
   width,
@@ -43,14 +45,18 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
   const info = useMemo(() => prepareCandlestickFields(data?.series, options, theme), [data, options, theme]);
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
-    let tweakScale = (opts: ScaleProps) => opts;
-    let tweakAxis = (opts: AxisProps) => opts;
+    let tweakScale = (opts: ScaleProps, forField: Field) => opts;
+    let tweakAxis = (opts: AxisProps, forField: Field) => opts;
 
     let doNothing = {
       renderers: [],
       tweakScale,
       tweakAxis,
     };
+
+    if (!info) {
+      return doNothing;
+    }
 
     // Un-encoding the already parsed special fields
     // This takes currently matched fields and saves the name so they can be looked up by name later
@@ -97,8 +103,9 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
             theme: config.theme2,
           });
 
-          tweakAxis = (opts: AxisProps) => {
-            if (opts.scaleKey === 'short') {
+          tweakAxis = (opts: AxisProps, forField: Field) => {
+            // we can't do forField === info.volume because of copies :(
+            if (forField.name === info.volume?.name) {
               let filter = (u: uPlot, splits: number[]) => {
                 let _splits = [];
                 let max = u.series[volumeIdx].max as number;
@@ -122,8 +129,9 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
             return opts;
           };
 
-          tweakScale = (opts: ScaleProps) => {
-            if (opts.scaleKey === 'short') {
+          tweakScale = (opts: ScaleProps, forField: Field) => {
+            // we can't do forField === info.volume because of copies :(
+            if (forField.name === info.volume?.name) {
               opts.range = (u: uPlot, min: number, max: number) => [0, max * 7];
             }
 
@@ -200,12 +208,8 @@ export const MarketTrendPanel: React.FC<CandlestickPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
-  if (!info.frame || info.warn) {
-    return (
-      <div className="panel-empty">
-        <p>{info.warn ?? 'No data found in response'}</p>
-      </div>
-    );
+  if (!info) {
+    return <PanelDataErrorView panelId={id} data={data} needsTimeField={true} needsNumberField={true} />;
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());

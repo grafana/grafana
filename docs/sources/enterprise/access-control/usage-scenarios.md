@@ -132,6 +132,10 @@ Example response:
 }
 ```
 
+## Manage roles granted directly to users
+
+To learn about granting roles to users, refer to [Manage user role assignments]({{< relref "manage-role-assignments/manage-user-role-assignments.md" >}}) page.
+
 ## Create your first custom role
 
 You can create your custom role by either using an [HTTP API]({{< relref "../../http_api/access_control.md#create-a-new-custom-role" >}}) or by using [Grafana provisioning]({{< relref "./provisioning.md" >}}).

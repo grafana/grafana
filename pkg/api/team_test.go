@@ -130,8 +130,8 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				Logger:       stub,
 			}
 			c.OrgRole = models.ROLE_EDITOR
-			cmd := models.CreateTeamCommand{Name: teamName}
-			hs.CreateTeam(c, cmd)
+			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
+			hs.CreateTeam(c)
 			assert.Equal(t, createTeamCalled, 1)
 			assert.Equal(t, addTeamMemberCalled, 0)
 			assert.True(t, stub.warnCalled)
@@ -146,9 +146,9 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				Logger:       stub,
 			}
 			c.OrgRole = models.ROLE_EDITOR
-			cmd := models.CreateTeamCommand{Name: teamName}
+			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
 			createTeamCalled, addTeamMemberCalled = 0, 0
-			hs.CreateTeam(c, cmd)
+			hs.CreateTeam(c)
 			assert.Equal(t, createTeamCalled, 1)
 			assert.Equal(t, addTeamMemberCalled, 1)
 			assert.False(t, stub.warnCalled)

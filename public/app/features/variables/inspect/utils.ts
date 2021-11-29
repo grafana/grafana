@@ -179,28 +179,17 @@ export interface VariableUsageTree {
 
 export interface VariableUsages {
   unUsed: VariableModel[];
-  unknown: VariableUsageTree[];
   usages: VariableUsageTree[];
 }
 
 export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel | null): VariableUsages => {
   if (!dashboard) {
-    return { unUsed: [], unknown: [], usages: [] };
+    return { unUsed: [], usages: [] };
   }
 
   const unUsed: VariableModel[] = [];
   let usages: VariableUsageTree[] = [];
-  let unknown: VariableUsageTree[] = [];
   const model = dashboard.getSaveModelClone();
-
-  const unknownVariables = getUnknownVariableStrings(variables, model);
-  for (const unknownVariable of unknownVariables) {
-    const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
-    if (Object.keys(props).length) {
-      const variable = ({ id: unknownVariable, name: unknownVariable } as unknown) as VariableModel;
-      unknown.push({ variable, tree: props });
-    }
-  }
 
   for (const variable of variables) {
     const variableId = variable.id;
@@ -214,8 +203,45 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
     }
   }
 
-  return { unUsed, unknown, usages };
+  return { unUsed, usages };
 };
+
+export async function getUnknownsNetwork(
+  variables: VariableModel[],
+  dashboard: DashboardModel | null
+): Promise<UsagesToNetwork[]> {
+  return new Promise((resolve, reject) => {
+    // can be an expensive call so we avoid blocking the main thread
+    setTimeout(() => {
+      try {
+        const unknowns = createUnknownsNetwork(variables, dashboard);
+        resolve(transformUsagesToNetwork(unknowns));
+      } catch (e) {
+        reject(e);
+      }
+    }, 200);
+  });
+}
+
+function createUnknownsNetwork(variables: VariableModel[], dashboard: DashboardModel | null): VariableUsageTree[] {
+  if (!dashboard) {
+    return [];
+  }
+
+  let unknown: VariableUsageTree[] = [];
+  const model = dashboard.getSaveModelClone();
+
+  const unknownVariables = getUnknownVariableStrings(variables, model);
+  for (const unknownVariable of unknownVariables) {
+    const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
+    if (Object.keys(props).length) {
+      const variable = ({ id: unknownVariable, name: unknownVariable } as unknown) as VariableModel;
+      unknown.push({ variable, tree: props });
+    }
+  }
+
+  return unknown;
+}
 
 /*
   getAllAffectedPanelIdsForVariableChange is a function that extracts all the panel ids that are affected by a single variable

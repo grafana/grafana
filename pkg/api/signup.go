@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // GET /api/user/signup/options
@@ -23,7 +25,11 @@ func GetSignUpOptions(c *models.ReqContext) response.Response {
 }
 
 // POST /api/user/signup
-func SignUp(c *models.ReqContext, form dtos.SignUpForm) response.Response {
+func SignUp(c *models.ReqContext) response.Response {
+	form := dtos.SignUpForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if !setting.AllowUserSignUp {
 		return response.Error(401, "User signup is disabled", nil)
 	}
@@ -61,7 +67,11 @@ func SignUp(c *models.ReqContext, form dtos.SignUpForm) response.Response {
 	return response.JSON(200, util.DynMap{"status": "SignUpCreated"})
 }
 
-func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2Form) response.Response {
+func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
+	form := dtos.SignUpStep2Form{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if !setting.AllowUserSignUp {
 		return response.Error(401, "User signup is disabled", nil)
 	}

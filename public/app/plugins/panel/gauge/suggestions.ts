@@ -33,10 +33,12 @@ export class GaugeSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {
-        if (s.options!.reduceOptions.values) {
-          s.options!.reduceOptions.limit = 2;
-        }
+      cardOptions: {
+        previewModifier: (s) => {
+          if (s.options!.reduceOptions.values) {
+            s.options!.reduceOptions.limit = 2;
+          }
+        },
       },
     });
 
