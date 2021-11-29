@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 
 import { dateTimeFormat, GrafanaTheme } from '@grafana/data';
-import { LoadingPlaceholder, useStyles } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { StateHistoryItem } from 'app/types/unified-alerting';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
@@ -23,7 +23,7 @@ const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
   }
 
   if (error && !loading) {
-    return <div>{error.message}</div>;
+    return <Alert title={'Failed to fetch alert state history'}>{error.message}</Alert>;
   }
 
   const columns: Array<DynamicTableColumnProps<PartialHistoryItem>> = [
