@@ -155,7 +155,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
-	pluginsToPreload := []*PreloadPlugin{}
+	pluginsToPreload := make([]*PreloadPlugin, 0)
 	for _, app := range enabledPlugins[plugins.App] {
 		if app.Preload {
 			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
@@ -176,27 +176,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		if isDefault, _ := dsM["isDefault"].(bool); isDefault {
 			defaultDS = n
 		}
-
-		module, _ := dsM["module"].(string)
-		if preload, _ := dsM["preload"].(bool); preload && module != "" {
-			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
-				Path:    module,
-				Version: dsM["info"].(map[string]interface{})["version"].(string),
-			})
-		}
 	}
 
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins[plugins.Panel] {
 		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
-		}
-
-		if panel.Preload {
-			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
-				Path:    panel.Module,
-				Version: panel.Info.Version,
-			})
 		}
 
 		panels[panel.ID] = map[string]interface{}{
