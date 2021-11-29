@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -28,8 +29,13 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	result := make(dtos.DataSourceList, 0)
-	for _, ds := range query.Result {
+	filtered, err := filterDatasourcesByPermissions(c.Req.Context(), c.SignedInUser, query.Result)
+	if err != nil {
+		return response.Error(500, "Failed to query datasources", err)
+	}
+
+	result := make(dtos.DataSourceList, 0, len(filtered))
+	for _, ds := range filtered {
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgId,
 			Id:        ds.Id,
@@ -79,10 +85,13 @@ func GetDataSourceById(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	ds := query.Result
-	dtos := convertModelToDtos(ds)
+	filtered, err := filterDatasourcesByPermissions(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
+	if err != nil || len(filtered) != 1 {
+		return response.Error(http.StatusForbidden, "Missing permissions to view data source", err)
+	}
 
-	return response.JSON(200, &dtos)
+	dto := convertModelToDtos(filtered[0])
+	return response.JSON(200, &dto)
 }
 
 func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Response {
@@ -127,8 +136,13 @@ func GetDataSourceByUID(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	dtos := convertModelToDtos(ds)
-	return response.JSON(200, &dtos)
+	filtered, err := filterDatasourcesByPermissions(c.Req.Context(), c.SignedInUser, []*models.DataSource{ds})
+	if err != nil || len(filtered) != 1 {
+		return response.Error(http.StatusForbidden, "Missing permissions to view data source", err)
+	}
+
+	dto := convertModelToDtos(filtered[0])
+	return response.JSON(200, &dto)
 }
 
 // DELETE /api/datasources/uid/:uid
@@ -344,8 +358,13 @@ func GetDataSourceByName(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	dtos := convertModelToDtos(query.Result)
-	return response.JSON(200, &dtos)
+	filtered, err := filterDatasourcesByPermissions(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
+	if err != nil || len(filtered) != 1 {
+		return response.Error(http.StatusForbidden, "Missing permissions to view data source", err)
+	}
+
+	dto := convertModelToDtos(filtered[0])
+	return response.JSON(200, &dto)
 }
 
 // Get /api/datasources/id/:name
@@ -359,12 +378,13 @@ func GetDataSourceIdByName(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	ds := query.Result
-	dtos := dtos.AnyId{
-		Id: ds.Id,
+	filtered, err := filterDatasourcesByPermissions(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
+	if err != nil || len(filtered) != 1 {
+		return response.Error(http.StatusForbidden, "Missing permissions to view data source", err)
 	}
 
-	return response.JSON(200, &dtos)
+	ds := filtered[0]
+	return response.JSON(200, &dtos.AnyId{Id: ds.Id})
 }
 
 // /api/datasources/:id/resources/*
@@ -499,4 +519,20 @@ func (hs *HTTPServer) decryptSecureJsonDataFn() func(map[string][]byte) map[stri
 		}
 		return decryptedJsonData
 	}
+}
+
+func filterDatasourcesByPermissions(ctx context.Context, user *models.SignedInUser, datasources []*models.DataSource) ([]*models.DataSource, error) {
+	filter := models.DatasourcesPermissionFilterQuery{
+		User:        user,
+		Datasources: datasources,
+	}
+
+	if err := bus.Dispatch(&filter); err != nil {
+		if !errors.Is(err, bus.ErrHandlerNotFound) {
+			return nil, err
+		}
+		return datasources, nil
+	}
+
+	return filter.Result, nil
 }
