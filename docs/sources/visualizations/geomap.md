@@ -43,6 +43,9 @@ The layer controls allow you to create layers, change their name, reorder and de
 
 * **Add layer** creates an additional, configurable data layer for the Geomap visualization. When you add a layer you will be prompted to select a layer type. The layer type can be changed at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
 * The layer controls allow you to rename, delete, and reorder the layers of the panel.
+  * **Edit layer name (pencil icon)** renames the layer
+  * **Trash Bin** deletes the layer
+  * **Reorder (six dots/grab handle)** enables changing the layer order. Data on higher layers will appear above data on lower layers. The panel will update the layer order as you drag and drop to help simplify chosing a layer order.
 
 You can add multiple layers of data to a single Geomap panel in order to create rich, detailed visualizations.
 
@@ -177,4 +180,5 @@ default_baselayer_config = `{
 ```
 
 `enable_custom_baselayers` allows you to enable or disable custom open source base maps that are already implemented. The default is `true`.
+
 
