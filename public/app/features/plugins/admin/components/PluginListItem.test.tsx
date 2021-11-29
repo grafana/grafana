@@ -59,7 +59,7 @@ describe('PluginListItem', () => {
   it('renders a card with link, image, name, orgName and badges', () => {
     render(<PluginListItem plugin={plugin} pathName="/plugins" />);
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin?page=overview');
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin');
 
     const logo = screen.getByRole('img');
     expect(logo).toHaveAttribute('src', plugin.info.logos.small);
@@ -102,7 +102,7 @@ describe('PluginListItem', () => {
   it('renders a row with link, image, name, orgName and badges', () => {
     render(<PluginListItem plugin={plugin} pathName="/plugins" displayMode={PluginListDisplayMode.List} />);
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin?page=overview');
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin');
 
     const logo = screen.getByRole('img');
     expect(logo).toHaveAttribute('src', plugin.info.logos.small);

@@ -4,5 +4,5 @@ import { ZipkinQueryField } from './QueryField';
 import { ConfigEditor } from './ConfigEditor';
 
 export const plugin = new DataSourcePlugin(ZipkinDatasource)
-  .setConfigEditor(ConfigEditor)
-  .setExploreQueryField(ZipkinQueryField);
+  .setQueryEditor(ZipkinQueryField)
+  .setConfigEditor(ConfigEditor);

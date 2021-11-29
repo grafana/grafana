@@ -9,6 +9,8 @@ import { TraceLog } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 export function useDetailState() {
   const [detailStates, setDetailStates] = useState(new Map<string, DetailState>());
 
+  const clearDetailStates = useCallback(() => setDetailStates(new Map<string, DetailState>()), [setDetailStates]);
+
   const toggleDetail = useCallback(
     function toggleDetail(spanID: string) {
       const newDetailStates = new Map(detailStates);
@@ -38,6 +40,7 @@ export function useDetailState() {
 
   return {
     detailStates,
+    clearDetailStates,
     toggleDetail,
     detailLogItemToggle,
     detailLogsToggle: useCallback(
