@@ -3360,7 +3360,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 13.0.6
     "@swc/helpers": 0.2.13
     "@testing-library/dom": 8.11.1
-    "@testing-library/jest-dom": 5.11.9
+    "@testing-library/jest-dom": 5.15.1
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.3.0
@@ -3714,7 +3714,7 @@ __metadata:
     "@storybook/theming": 6.3.7
     "@swc/helpers": 0.2.13
     "@testing-library/dom": 8.11.1
-    "@testing-library/jest-dom": 5.11.9
+    "@testing-library/jest-dom": 5.15.1
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.3.0
@@ -7855,9 +7855,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/jest-dom@npm:5.11.5":
-  version: 5.11.5
-  resolution: "@testing-library/jest-dom@npm:5.11.5"
+"@testing-library/jest-dom@npm:5.15.1":
+  version: 5.15.1
+  resolution: "@testing-library/jest-dom@npm:5.15.1"
   dependencies:
     "@babel/runtime": ^7.9.2
     "@types/testing-library__jest-dom": ^5.9.1
@@ -7865,25 +7865,10 @@ __metadata:
     chalk: ^3.0.0
     css: ^3.0.0
     css.escape: ^1.5.1
+    dom-accessibility-api: ^0.5.6
     lodash: ^4.17.15
     redent: ^3.0.0
-  checksum: 699fdba9a5ea47facf9ce38a53aa8acc6a819de04f406a7b8167a48a6aa9fcfd029b3b991822f7896cfb0c4be8361b7ef2d7ad7e4e7ae15b04db8c91dd11ee35
-  languageName: node
-  linkType: hard
-
-"@testing-library/jest-dom@npm:5.11.9":
-  version: 5.11.9
-  resolution: "@testing-library/jest-dom@npm:5.11.9"
-  dependencies:
-    "@babel/runtime": ^7.9.2
-    "@types/testing-library__jest-dom": ^5.9.1
-    aria-query: ^4.2.2
-    chalk: ^3.0.0
-    css: ^3.0.0
-    css.escape: ^1.5.1
-    lodash: ^4.17.15
-    redent: ^3.0.0
-  checksum: 80234da7011631bb2674c1009a464bc2ce081dbf9ac72347d6886b941fb83893b0834ee2236005a66adf40cb8ab7037873cdb5afeed5c48d6d2109c0a0b15358
+  checksum: c9fba26f9a31c17143933537e16b55fdabbf065710f96f4c4be42de682651208d89361ac55bc68247610d9973ee37736f2a9911b50431d230f480b86379c2350
   languageName: node
   linkType: hard
 
@@ -15863,6 +15848,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dom-accessibility-api@npm:^0.5.6":
+  version: 0.5.10
+  resolution: "dom-accessibility-api@npm:0.5.10"
+  checksum: c05949889b02f5313d100778e9f736f9bddfb1da47387d351833f0b5d60d6230d4fcb849e124a8a1591706b6200337fa40f0f4f3817dce1459309e075f48371c
+  languageName: node
+  linkType: hard
+
 "dom-accessibility-api@npm:^0.5.9":
   version: 0.5.9
   resolution: "dom-accessibility-api@npm:0.5.9"
@@ -18878,7 +18870,7 @@ __metadata:
     "@swc/core": 1.2.103
     "@swc/helpers": 0.2.13
     "@testing-library/dom": 8.11.1
-    "@testing-library/jest-dom": 5.11.5
+    "@testing-library/jest-dom": 5.15.1
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.3.0
