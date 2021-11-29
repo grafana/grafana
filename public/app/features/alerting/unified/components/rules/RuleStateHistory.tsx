@@ -23,7 +23,7 @@ const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
   }
 
   if (error && !loading) {
-    return <div>{error.toString()}</div>;
+    return <div>{error.message}</div>;
   }
 
   const columns: Array<DynamicTableColumnProps<PartialHistoryItem>> = [

@@ -16,6 +16,7 @@ import { deleteRuleAction } from '../../state/actions';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { getAlertmanagerByUid } from '../../utils/alertmanager';
 import { useAlertHistoryModal } from '../../hooks/useAlertHistoryModal';
+import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 interface Props {
   rule: CombinedRule;
@@ -26,9 +27,9 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const dispatch = useDispatch();
   const location = useLocation();
   const style = useStyles2(getStyles);
-  const { namespace, group, rulerRule, annotations } = rule;
-  const alertId = annotations[Annotation.alertId];
+  const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
+  const alertId = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.id ?? '' : '';
   const { AlertHistoryModal, showAlertHistoryModal } = useAlertHistoryModal(alertId);
 
   const alertmanagerSourceName = isGrafanaRulesSource(rulesSource)
@@ -146,7 +147,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     );
   }
 
-  if (rule.annotations[Annotation.alertId]) {
+  if (alertId) {
     leftButtons.push(
       <>
         <Button className={style.button} size="xs" key="history" icon="history" onClick={() => showAlertHistoryModal()}>
@@ -263,3 +264,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
   `,
 });
+
+function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
+  if (!rule) {
+    return false;
+  }
+  return (rule as RulerGrafanaRuleDTO).grafana_alert != null;
+}
