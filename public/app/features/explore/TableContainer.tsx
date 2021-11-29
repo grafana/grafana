@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { ValueLinkConfig, applyFieldOverrides, TimeZone, DataFrame } from '@grafana/data';
+import { ValueLinkConfig, applyFieldOverrides, TimeZone } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
