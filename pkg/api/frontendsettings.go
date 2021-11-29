@@ -14,11 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type PreloadPlugin struct {
-	Path    string `json:"path"`
-	Version string `json:"version"`
-}
-
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*models.DataSource, 0)
 
@@ -77,7 +72,6 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			Signature: plugin.Signature,
 			Module:    plugin.Module,
 			BaseURL:   plugin.BaseURL,
-			Version:   plugin.Info.Version,
 		}
 
 		if ds.JsonData == nil {
@@ -127,8 +121,9 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 	for _, ds := range hs.pluginStore.Plugins(c.Req.Context(), plugins.DataSource) {
 		if ds.BuiltIn {
 			dto := plugins.DataSourceDTO{
-				Type: string(ds.Type),
-				Name: ds.Name,
+				Type:     string(ds.Type),
+				Name:     ds.Name,
+				JSONData: make(map[string]interface{}),
 				PluginMeta: &plugins.PluginMetaDTO{
 					JSONData:  ds.JSONData,
 					Signature: ds.Signature,
@@ -154,10 +149,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
-	pluginsToPreload := make([]*PreloadPlugin, 0)
+	pluginsToPreload := make([]*plugins.PreloadPlugin, 0)
 	for _, app := range enabledPlugins[plugins.App] {
 		if app.Preload {
-			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
+			pluginsToPreload = append(pluginsToPreload, &plugins.PreloadPlugin{
 				Path:    app.Module,
 				Version: app.Info.Version,
 			})
@@ -174,26 +169,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		if ds.IsDefault {
 			defaultDS = n
 		}
-
-		if ds.Preload && ds.Module != "" {
-			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
-				Path:    ds.Module,
-				Version: ds.PluginMeta.Version,
-			})
-		}
 	}
 
 	panels := make(map[string]plugins.PanelDTO)
 	for _, panel := range enabledPlugins[plugins.Panel] {
 		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
-		}
-
-		if panel.Preload {
-			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
-				Path:    panel.Module,
-				Version: panel.Info.Version,
-			})
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{

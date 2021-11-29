@@ -193,7 +193,6 @@ type Signature struct {
 type PluginMetaDTO struct {
 	JSONData
 
-	Version   string          `json:"version,omitempty"`
 	Signature SignatureStatus `json:"signature"`
 
 	Module  string `json:"module"`
@@ -251,4 +250,9 @@ type ErrorCode string
 type Error struct {
 	ErrorCode `json:"errorCode"`
 	PluginID  string `json:"pluginId,omitempty"`
+}
+
+type PreloadPlugin struct {
+	Path    string `json:"path"`
+	Version string `json:"version"`
 }
