@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -31,20 +30,12 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			return nil, err
 		}
 
-		dsFilterQuery := models.DatasourcesPermissionFilterQuery{
-			User:        c.SignedInUser,
-			Datasources: query.Result,
+		filtered, err := filterDatasourcesByPermissions(c.Req.Context(), c.SignedInUser, query.Result)
+		if err != nil {
+			return nil, err
 		}
 
-		if err := bus.Dispatch(&dsFilterQuery); err != nil {
-			if !errors.Is(err, bus.ErrHandlerNotFound) {
-				return nil, err
-			}
-
-			orgDataSources = query.Result
-		} else {
-			orgDataSources = dsFilterQuery.Result
-		}
+		orgDataSources = filtered
 	}
 
 	dataSources := make(map[string]interface{})
