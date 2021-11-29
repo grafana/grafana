@@ -58,9 +58,13 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
 
         const regex = stringToJsRegex(vm.options.pattern);
         if (value.match(regex)) {
-          const thisResult = Object.create(vm.options.result);
-          thisResult.text = value.replace(regex, vm.options.result.text || '');
-          return thisResult;
+          const res = { ...vm.options.result };
+
+          if (res.text != null) {
+            res.text = value.replace(regex, vm.options.result.text || '');
+          }
+
+          return res;
         }
 
       case MappingType.SpecialValue:
