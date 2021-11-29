@@ -6,10 +6,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+type ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
+
 // TODO: Add hooks for set Team / User / Builtin
 type Options struct {
 	Resource          string
-	ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
+	ResourceValidator ResourceValidator
 
 	Actions       []string
 	ActionsMapper func(permission accesscontrol.ResourcePermission) (string, bool)

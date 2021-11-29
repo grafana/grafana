@@ -11,14 +11,12 @@ import (
 )
 
 type Manager struct {
-	resource     string
-	actions      []string
-	validActions map[string]struct{}
-	validator    ResourceValidator
-	store        accesscontrol.ResourceStore
+	resource          string
+	actions           []string
+	validActions      map[string]struct{}
+	resourceValidator ResourceValidator
+	store             accesscontrol.ResourceStore
 }
-
-type ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
 
 func newManager(resource string, actions []string, validator ResourceValidator, store accesscontrol.ResourceStore) *Manager {
 	validActions := make(map[string]struct{}, len(actions))
@@ -27,11 +25,11 @@ func newManager(resource string, actions []string, validator ResourceValidator, 
 	}
 
 	return &Manager{
-		store:        store,
-		actions:      actions,
-		resource:     resource,
-		validator:    validator,
-		validActions: validActions,
+		store:             store,
+		actions:           actions,
+		resource:          resource,
+		resourceValidator: validator,
+		validActions:      validActions,
 	}
 }
 
@@ -104,8 +102,8 @@ func (m *Manager) SetBuiltinRolePermission(ctx context.Context, orgID int64, bui
 }
 
 func (m *Manager) validateResource(ctx context.Context, orgID int64, resourceID string) error {
-	if m.validator != nil {
-		return m.validator(ctx, orgID, resourceID)
+	if m.resourceValidator != nil {
+		return m.resourceValidator(ctx, orgID, resourceID)
 	}
 	return nil
 }
