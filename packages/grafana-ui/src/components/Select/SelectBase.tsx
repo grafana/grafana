@@ -149,15 +149,22 @@ export function SelectBase<T>({
   const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
 
-  // Infer menu position for asynchronously loaded options. AsyncSelect displays "Loading options..." menu that usually
-  // fits below the input. After all options are loaded AsyncSelect does not reset the position of the menu.
-  // See: https://github.com/JedWatson/react-select/issues/3505
+  // Infer menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
+  // automatically opened when the component is created (it happens in SegmentSelect). In other cases the position
+  // of the menu is correctly determined.
+  // We use useEffect becasue we cannot hook into onMenuOpen due to a bug: https://github.com/JedWatson/react-select/issues/3375
   useEffect(() => {
-    if (loadOptions && reactSelectRef.current && reactSelectRef.current.controlRef && menuPlacement === 'auto') {
+    if (
+      loadOptions &&
+      isOpen &&
+      reactSelectRef.current &&
+      reactSelectRef.current.controlRef &&
+      menuPlacement === 'auto'
+    ) {
       const distance = window.innerHeight - reactSelectRef.current.controlRef.getBoundingClientRect().bottom;
       setCloseToBottom(distance < maxMenuHeight);
     }
-  }, [maxMenuHeight, menuPlacement, loadOptions]);
+  }, [maxMenuHeight, menuPlacement, loadOptions, isOpen]);
 
   const onChangeWithEmpty = useCallback(
     (value: SelectValue<T>, action: ActionMeta) => {
