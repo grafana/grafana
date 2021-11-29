@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -176,12 +177,12 @@ func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
 	return map[string]string{"message": string(resp.Body())}, nil
 }
 
-func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
+func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
 	if len(c.Data) == 0 {
 		return nil
 	}
 
-	refIDs, err := validateQueriesAndExpressions(c.Data, user, skipCache, datasourceCache)
+	refIDs, err := validateQueriesAndExpressions(ctx, c.Data, user, skipCache, datasourceCache)
 	if err != nil {
 		return err
 	}
@@ -196,7 +197,7 @@ func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCach
 	return nil
 }
 
-func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
+func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
 	refIDs := make(map[string]struct{})
 	if len(data) == 0 {
 		return nil, nil
@@ -217,7 +218,7 @@ func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.Sign
 			continue
 		}
 
-		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		_, err = datasourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
 		if err != nil {
 			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
 		}
@@ -232,7 +233,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 		OrgID:     c.SignedInUser.OrgId,
 		Data:      cmd.Data,
 	}
-	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
+	if err := validateCondition(c.Req.Context(), evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
