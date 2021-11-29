@@ -2711,7 +2711,7 @@ __metadata:
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.0.0-rc1
     "@mdx-js/react": 1.6.22
-    "@monaco-editor/react": 4.2.2
+    "@monaco-editor/react": 4.3.1
     "@popperjs/core": 2.5.4
     "@react-aria/focus": 3.4.1
     "@react-aria/overlays": 3.7.2
@@ -4269,7 +4269,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monaco-editor/loader@npm:^1.1.1":
+"@monaco-editor/loader@npm:^1.2.0":
   version: 1.2.0
   resolution: "@monaco-editor/loader@npm:1.2.0"
   dependencies:
@@ -4280,17 +4280,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monaco-editor/react@npm:4.2.2":
-  version: 4.2.2
-  resolution: "@monaco-editor/react@npm:4.2.2"
+"@monaco-editor/react@npm:4.3.1":
+  version: 4.3.1
+  resolution: "@monaco-editor/react@npm:4.3.1"
   dependencies:
-    "@monaco-editor/loader": ^1.1.1
+    "@monaco-editor/loader": ^1.2.0
     prop-types: ^15.7.2
   peerDependencies:
     monaco-editor: ">= 0.25.0 < 1"
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
-  checksum: d6c6764954cf1a09dc69a289f2fab8f26fc2117fa3c092c30648898bfee508005bf576975aa3a81ef0ef480528688c091fdec0b731e5f7239be64d6690d647a1
+  checksum: 477349e64078ab3fc30e75577fbe51519c5af621cd1e3fa557e21f2a5e7291c4eabe34caa3013d578be0379c5bc43b199ee1c74853d571b05598ce866ad5a3a1
   languageName: node
   linkType: hard
 
