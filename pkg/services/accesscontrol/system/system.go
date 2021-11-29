@@ -1,7 +1,6 @@
 package system
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -32,7 +30,7 @@ func NewSystem(options Options, router routing.RouteRegister, ac accesscontrol.A
 		ac:      ac,
 		options: options,
 		router:  router,
-		manager: accesscontrol.NewResourceManager(options.Resource, options.Actions, nil, store),
+		manager: newManager(options.Resource, options.Actions, options.ResourceValidator, store),
 	}
 
 	if err := s.declareFixedRoles(); err != nil {
@@ -46,9 +44,9 @@ func NewSystem(options Options, router routing.RouteRegister, ac accesscontrol.A
 // System is used to create access control sub system including api / and service for managed resource permission
 type System struct {
 	options Options
+	manager *Manager
 	router  routing.RouteRegister
 	ac      accesscontrol.AccessControl
-	manager *accesscontrol.ResourceManager
 }
 
 func (s *System) registerEndpoints() {
@@ -139,21 +137,7 @@ func (s *System) setUserPermission(c *models.ReqContext, cmd setPermissionComman
 		return response.Error(http.StatusNotImplemented, "", nil)
 	}
 
-	if err := validateUser(c.Req.Context(), c.OrgId, userID); err != nil {
-		return response.Error(http.StatusNotFound, "user not found", err)
-	}
-
-	if err := s.options.ResourceValidator(c.Req.Context(), c.OrgId, resourceID); err != nil {
-		return response.Error(http.StatusNotFound, "data source not found", err)
-	}
-
-	permission, err := s.manager.SetUserPermission(
-		c.Req.Context(),
-		c.OrgId,
-		resourceID,
-		s.options.mapPermission(cmd.Permission),
-		userID,
-	)
+	permission, err := s.manager.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, s.options.mapPermission(cmd.Permission))
 
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
@@ -179,21 +163,7 @@ func (s *System) setTeamPermission(c *models.ReqContext, cmd setPermissionComman
 		return response.Error(http.StatusNotImplemented, "", nil)
 	}
 
-	if err := validateTeam(c.Req.Context(), c.OrgId, teamID); err != nil {
-		return response.Error(http.StatusNotFound, "team not found", err)
-	}
-
-	if err := s.options.ResourceValidator(c.Req.Context(), c.OrgId, resourceID); err != nil {
-		return response.Error(http.StatusNotFound, "data source not found", err)
-	}
-
-	permission, err := s.manager.SetTeamPermission(
-		c.Req.Context(),
-		c.OrgId,
-		resourceID,
-		s.options.mapPermission(cmd.Permission),
-		teamID,
-	)
+	permission, err := s.manager.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, s.options.mapPermission(cmd.Permission))
 
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
@@ -212,28 +182,14 @@ func (s *System) setTeamPermission(c *models.ReqContext, cmd setPermissionComman
 }
 
 func (s *System) setBuiltinRolePermission(c *models.ReqContext, cmd setPermissionCommand) response.Response {
-	builtinRole := web.Params(c.Req)[":builtInRole"]
+	builtInRole := web.Params(c.Req)[":builtInRole"]
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	if !s.options.Assignments.BuiltinRoles {
 		return response.Error(http.StatusNotImplemented, "", nil)
 	}
 
-	if err := validateBuiltinRole(c.Req.Context(), builtinRole); err != nil {
-		return response.Error(http.StatusNotFound, "role not found", err)
-	}
-
-	if err := s.options.ResourceValidator(c.Req.Context(), c.OrgId, resourceID); err != nil {
-		return response.Error(http.StatusNotFound, "data source not found", err)
-	}
-
-	permission, err := s.manager.SetBuiltinRolePermission(
-		c.Req.Context(),
-		c.OrgId,
-		resourceID,
-		s.options.mapPermission(cmd.Permission),
-		builtinRole,
-	)
+	permission, err := s.manager.SetBuiltinRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, s.options.mapPermission(cmd.Permission))
 
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
@@ -275,25 +231,4 @@ func (s *System) declareFixedRoles() error {
 	}
 
 	return s.ac.DeclareFixedRoles(readerRole, writerRole)
-}
-
-func validateUser(ctx context.Context, orgID, userID int64) error {
-	if err := sqlstore.GetSignedInUser(ctx, &models.GetSignedInUserQuery{OrgId: orgID, UserId: userID}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func validateTeam(ctx context.Context, orgID, teamID int64) error {
-	if err := sqlstore.GetTeamById(ctx, &models.GetTeamByIdQuery{OrgId: orgID, Id: teamID}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func validateBuiltinRole(ctx context.Context, builtinRole string) error {
-	if err := accesscontrol.ValidateBuiltInRoles([]string{builtinRole}); err != nil {
-		return err
-	}
-	return nil
 }
