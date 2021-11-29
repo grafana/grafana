@@ -63,21 +63,21 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     let plotInstance: uPlot | undefined = undefined;
     let bbox: DOMRect | undefined = undefined;
 
-    const plotMouseLeave = () => {
+    const plotEnter = () => {
+      if (!isMounted()) {
+        return;
+      }
+      setIsActive(true);
+      plotInstance?.root.classList.add('plot-active');
+    };
+
+    const plotLeave = () => {
       if (!isMounted()) {
         return;
       }
       setCoords(null);
       setIsActive(false);
       plotInstance?.root.classList.remove('plot-active');
-    };
-
-    const plotMouseEnter = () => {
-      if (!isMounted()) {
-        return;
-      }
-      setIsActive(true);
-      plotInstance?.root.classList.add('plot-active');
     };
 
     // cache uPlot plotting area bounding box
@@ -88,8 +88,11 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     config.addHook('init', (u) => {
       plotInstance = u;
 
-      u.over.addEventListener('mouseleave', plotMouseLeave);
-      u.over.addEventListener('mouseenter', plotMouseEnter);
+      u.root.parentElement?.addEventListener('focus', plotEnter);
+      u.over.addEventListener('mouseenter', plotEnter);
+
+      u.root.parentElement?.addEventListener('blur', plotLeave);
+      u.over.addEventListener('mouseleave', plotLeave);
 
       if (sync === DashboardCursorSync.Crosshair) {
         u.root.classList.add('shared-crosshair');
@@ -156,8 +159,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     return () => {
       setCoords(null);
       if (plotInstance) {
-        plotInstance.over.removeEventListener('mouseleave', plotMouseLeave);
-        plotInstance.over.removeEventListener('mouseenter', plotMouseEnter);
+        plotInstance.over.removeEventListener('mouseleave', plotLeave);
+        plotInstance.over.removeEventListener('mouseenter', plotEnter);
+        plotInstance.root.parentElement?.removeEventListener('focus', plotEnter);
+        plotInstance.root.parentElement?.removeEventListener('blur', plotLeave);
       }
     };
   }, [config, setCoords, setIsActive, setFocusedPointIdx, setFocusedPointIdxs]);

@@ -8,11 +8,16 @@ import { PlotProps } from './types';
 
 import { stylesFactory } from '../../themes/stylesFactory';
 import { ThemeContext } from '../../themes/ThemeContext';
+import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 const PIXELS_PER_MS = 0.1 as const;
 const SHIFT_MULTIPLIER = 2 as const;
 const SUPPORTED_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Shift', ' '] as const;
 type SupportedKey = typeof SUPPORTED_KEYS[number];
+
+function minMax(n: number, min: number, max: number) {
+  return Math.min(Math.max(min, n), max);
+}
 
 function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.width === prevProps.width && nextProps.height === prevProps.height;
@@ -80,13 +85,6 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       return;
     }
 
-    this.props.config.addHook('setSize', (u) => {
-      const canvas = u.over;
-      if (!canvas) {
-        return;
-      }
-    });
-
     const config: Options = {
       ...DEFAULT_PLOT_CONFIG,
       width: this.props.width,
@@ -97,10 +95,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
 
     pluginLog('UPlot', false, 'Reinitializing plot', config);
     const plot = new uPlot(config, this.props.data as AlignedData, this.plotContainer!.current!);
-
-    if (plotRef) {
-      plotRef(plot);
-    }
+    plotRef?.(plot);
 
     this.setState({ plot });
   }
@@ -141,7 +136,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     }
   }
 
-  handleKeyRelease = (e: React.KeyboardEvent) => {
+  onKeyRelease = (e: React.KeyboardEvent) => {
     if (!SUPPORTED_KEYS.includes(e.key as SupportedKey)) {
       return;
     }
@@ -158,7 +153,13 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     }
   };
 
-  handleKeys = (e: React.KeyboardEvent) => {
+  onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      // Hide the cursor if the user tabs away
+      this.state.plot?.setCursor({ left: -5, top: -5 });
+      return;
+    }
+
     if (!SUPPORTED_KEYS.includes(e.key as SupportedKey)) {
       return;
     }
@@ -237,21 +238,28 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     }
 
     const { cursor } = this.state.plot;
+    const { width, height } = this.state.plot.over.style;
+    const [maxX, maxY] = [Math.floor(parseFloat(width)), Math.floor(parseFloat(height))];
+
     this.state.plot.setCursor({
-      left: cursor.left! + dx,
-      top: cursor.top! + dy,
+      left: minMax(cursor.left! + dx, 0, maxX),
+      top: minMax(cursor.top! + dy, 0, maxY),
     });
   };
 
-  handleFocus = () => {
-    // Is there a more idiomatic way to do this?
-    const drawWidth = Number(this.state.plot?.over.style.width.slice(0, -2));
-    const drawHeight = Number(this.state.plot?.over.style.height.slice(0, -2));
+  onFocus = () => {
+    // We only want to initialize the cursor if the user is using keyboard controls
+    if (!this.state.plot || !this.plotContainer.current?.matches(':focus-visible')) {
+      return;
+    }
 
-    this.state.plot?.setCursor({ left: drawWidth / 2, top: drawHeight / 2 });
+    // Is there a more idiomatic way to do this?
+    const drawWidth = parseFloat(this.state.plot.over.style.width);
+    const drawHeight = parseFloat(this.state.plot.over.style.height);
+    this.state.plot.setCursor({ left: drawWidth / 2, top: drawHeight / 2 });
   };
 
-  handleBlur = () => {
+  onBlur = () => {
     this.keyboardState = initialKeyboardState;
     this.state.plot?.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
   };
@@ -259,23 +267,28 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
   render() {
     return (
       <div style={{ position: 'relative' }}>
-        <ThemeContext.Consumer>
-          {(theme) => {
-            const styles = getStyles(theme);
-            return (
-              <div
-                className={styles.focusStyle}
-                ref={this.plotContainer}
-                data-testid="uplot-main-div"
-                tabIndex={0}
-                onFocusCapture={this.handleFocus}
-                onBlur={this.handleBlur}
-                onKeyDown={this.handleKeys}
-                onKeyUp={this.handleKeyRelease}
-              />
-            );
-          }}
-        </ThemeContext.Consumer>
+        <ClickOutsideWrapper
+          onClick={() => this.state.plot?.setCursor({ left: -5, top: -5 })}
+          includeButtonPress={false}
+        >
+          <ThemeContext.Consumer>
+            {(theme) => {
+              const styles = getStyles(theme);
+              return (
+                <div
+                  className={styles.focusStyle}
+                  ref={this.plotContainer}
+                  data-testid="uplot-main-div"
+                  tabIndex={0}
+                  onFocusCapture={this.onFocus}
+                  onBlur={this.onBlur}
+                  onKeyDown={this.onKeyDown}
+                  onKeyUp={this.onKeyRelease}
+                />
+              );
+            }}
+          </ThemeContext.Consumer>
+        </ClickOutsideWrapper>
         {this.props.children}
       </div>
     );
