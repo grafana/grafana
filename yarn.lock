@@ -3692,7 +3692,7 @@ __metadata:
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.3.1
     "@popperjs/core": 2.5.4
-    "@react-aria/focus": 3.4.1
+    "@react-aria/focus": 3.5.0
     "@react-aria/overlays": 3.7.2
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-image": 2.1.1
@@ -5839,21 +5839,6 @@ __metadata:
     react: 15.x || 16.x || 16.4.0-alpha.0911da3
     react-dom: 15.x || 16.x || 16.4.0-alpha.0911da3
   checksum: f64372497e0464a9fdfd79283fec3f4fd01ee093f1599d8a8035e0a41fbce22113bfa46dcea63aa8b7b4e0796e916f134aa8e3fccd3974be397e7c19468de3c4
-  languageName: node
-  linkType: hard
-
-"@react-aria/focus@npm:3.4.1":
-  version: 3.4.1
-  resolution: "@react-aria/focus@npm:3.4.1"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-aria/interactions": ^3.5.1
-    "@react-aria/utils": ^3.8.2
-    "@react-types/shared": ^3.8.0
-    clsx: ^1.1.1
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 14b500a506068a6a9223a4f27f71e380a098586af26adc01bf7aff9261684cbf53b3319450297d1788ec5cac124ee29a6975eae56cc7d4a5114a37595a61c581
   languageName: node
   linkType: hard
 
