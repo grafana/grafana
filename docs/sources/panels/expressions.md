@@ -111,7 +111,7 @@ The inf, nan, and null functions all return a single value of the name. They pri
 
 ##### round
 
-The round function returns a rounded integer value. Example: `round(3.123)` or `round($A)`. (This function should probably take an argument so it can add presision to the rounded value).
+Round returns a rounded integer value. For example, `round(3.123)` or `round($A)`. (This function should probably take an argument so it can add precision to the rounded value).
 
 ##### ceil
 
