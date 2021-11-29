@@ -383,33 +383,6 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
-name: pr-notify-drone-changes
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: slack-webhooks-test
-    template: "`.drone.yml` and `starlark` files have been changed on the OSS repo,
-      by: {{build.author}}. \nBranch: branch: <https://github.com/{{ repo.owner }}/{{
-      repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{
-      truncate build.commit 8 }}>"
-    webhook:
-      from_secret: test-webhook
-trigger:
-  event:
-  - pull_request
-  paths:
-    exclude:
-    - dummy
-    include:
-    - .drone.yml
-type: docker
----
-depends_on: []
-kind: pipeline
 name: build-main
 node:
   type: no-parallel
@@ -4213,6 +4186,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 9ceda384023447a1f1ac5df3d556e71bc3e9d16d32dba950ec7982f567f75760
+hmac: a169b5501acfda0e9dd8d5e87ff0393c8458f719f68d5f8fc0f03489d0c5c76f
 
 ...
