@@ -6,10 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 )
@@ -131,42 +128,6 @@ func hiddenRefIDs(queries []Query) (map[string]struct{}, error) {
 		}
 	}
 	return hidden, nil
-}
-
-// queryData is called used to query datasources that are not expression commands, but are used
-// alongside expressions and/or are the input of an expression command.
-func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if len(req.Queries) == 0 {
-		return nil, fmt.Errorf("zero queries found in datasource request")
-	}
-
-	datasourceID := int64(0)
-	var datasourceUID string
-
-	if req.PluginContext.DataSourceInstanceSettings != nil {
-		datasourceID = req.PluginContext.DataSourceInstanceSettings.ID
-		datasourceUID = req.PluginContext.DataSourceInstanceSettings.UID
-	}
-
-	getDsInfo := &models.GetDataSourceQuery{
-		OrgId: req.PluginContext.OrgID,
-		Id:    datasourceID,
-		Uid:   datasourceUID,
-	}
-
-	if err := bus.DispatchCtx(ctx, getDsInfo); err != nil {
-		return nil, fmt.Errorf("could not find datasource: %w", err)
-	}
-
-	dsInstanceSettings, err := adapters.ModelToInstanceSettings(getDsInfo.Result, s.decryptSecureJsonDataFn(ctx))
-	if err != nil {
-		return nil, errutil.Wrap("failed to convert datasource instance settings", err)
-	}
-
-	req.PluginContext.DataSourceInstanceSettings = dsInstanceSettings
-	req.PluginContext.PluginID = getDsInfo.Result.Type
-
-	return s.dataService.QueryData(ctx, req)
 }
 
 func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(map[string][]byte) map[string]string {

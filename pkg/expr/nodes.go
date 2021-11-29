@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
@@ -199,12 +201,14 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
+	if err != nil {
+		return mathexp.Results{}, errutil.Wrap("failed to convert datasource instance settings", err)
+	}
 	pc := backend.PluginContext{
-		OrgID: dn.orgID,
-		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			ID:  dn.datasource.Id,
-			UID: dn.datasource.Uid,
-		},
+		OrgID:                      dn.orgID,
+		DataSourceInstanceSettings: dsInstanceSettings,
+		PluginID:                   dn.datasource.Type,
 	}
 
 	q := []backend.DataQuery{
@@ -221,12 +225,11 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		},
 	}
 
-	resp, err := s.queryData(ctx, &backend.QueryDataRequest{
+	resp, err := s.dataService.QueryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
 		Headers:       dn.request.Headers,
 	})
-
 	if err != nil {
 		return mathexp.Results{}, err
 	}

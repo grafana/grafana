@@ -136,7 +136,7 @@ func (hs *HTTPServer) handleExpressions(ctx context.Context, user *models.Signed
 			RefID:         pq.query.RefID,
 			MaxDataPoints: pq.query.MaxDataPoints,
 			QueryType:     pq.query.QueryType,
-			DataSource:    expr.DataSourceModel(),
+			DataSource:    pq.datasource,
 			TimeRange: expr.TimeRange{
 				From: pq.query.TimeRange.From,
 				To:   pq.query.TimeRange.To,
@@ -257,7 +257,6 @@ func (hs *HTTPServer) parseMetricRequest(user *models.SignedInUser, skipCache bo
 			return nil, NewErrBadQuery("all queries must use the same datasource")
 		}
 	}
-
 	return req, nil
 }
 
