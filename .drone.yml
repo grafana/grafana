@@ -832,6 +832,34 @@ volumes:
 - name: cypress_cache
   temp: {}
 ---
+depends_on: []
+kind: pipeline
+name: notify-drone-changes
+platform:
+  arch: amd64
+  os: linux
+steps:
+- image: plugins/slack
+  name: slack
+  settings:
+    channel: slack-webhooks-test
+    template: "`.drone.yml` and `starlark` files have been changed on the OSS repo,
+      by: {{build.author}}. \nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name
+      }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{
+      truncate build.commit 8 }}>"
+    webhook:
+      from_secret: drone-changes-webhook
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - exclude
+    include:
+    - .drone.yml
+type: docker
+---
 depends_on:
 - build-main
 - windows-main
@@ -4158,6 +4186,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: e905a82f06335fcdb8d1ea1d5c0b1d966cd66e37a49ae771d4d2ffcd1f3d8997
+hmac: 003d0d4a8b4e2fc81f575c838b064e5778c2562b445b26c5a76339ca95c95330
 
 ...
