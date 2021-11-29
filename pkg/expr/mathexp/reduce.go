@@ -72,7 +72,8 @@ func Count(fv *Float64Field) *float64 {
 func Last(fv *Float64Field) *float64 {
 	var f float64
 	if fv.Len() == 0 {
-		nan := math.NaN()
+		f = math.NaN()
+		return &f
 		return &nan
 	}
 	v := fv.GetValue(fv.Len() - 1)
