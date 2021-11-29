@@ -392,11 +392,12 @@ export default class OpenTsDatasource {
       return null;
     }
     
-    let fieldsName = ['value'];
+    let metricTuple = target.metric.split( ':' );
+    let fieldsName = [ 'value' ];
     
     if ( metricTuple.length == 2 ){
       target.metric = metricTuple[0];
-      fieldsName = [metricTuple[1]];
+      fieldsName = [ metricTuple[1] ];
     }
 
     const query: any = {
