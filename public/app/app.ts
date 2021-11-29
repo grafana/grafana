@@ -166,7 +166,7 @@ function initEchoSrv() {
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';
-    // should match names in public/views/index-template.html
+    // Metrics below are marked in public/views/index-template.html
     const jsLoadMetricName = 'frontend_boot_js_done_time_seconds';
     const cssLoadMetricName = 'frontend_boot_css_time_seconds';
 
