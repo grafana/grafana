@@ -36,7 +36,6 @@ There are four layer types to choose from in the Geomap visualization.
 * **Marker** renders a marker at each data point.
 * **Heatmap** visualizes a heatmap of the data.
 * **GeoJSON** renders static data from a geojson file.
-* **Icon at last point (alpha)** renders an icon at the last point in a series of points.
 
 ### Layer Controls
 
