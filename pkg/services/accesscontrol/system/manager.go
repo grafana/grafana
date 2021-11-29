@@ -35,105 +35,105 @@ func newManager(resource string, actions []string, validator ResourceValidator, 
 	}
 }
 
-func (r *Manager) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
-	return r.store.GetResourcesPermissions(ctx, orgID, accesscontrol.GetResourcesPermissionsQuery{
-		Actions:     r.actions,
-		Resource:    r.resource,
+func (m *Manager) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	return m.store.GetResourcesPermissions(ctx, orgID, accesscontrol.GetResourcesPermissionsQuery{
+		Actions:     m.actions,
+		Resource:    m.resource,
 		ResourceIDs: []string{resourceID},
 	})
 }
 
-func (r *Manager) SetUserPermission(ctx context.Context, orgID, userID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
-	if !r.validateActions(actions) {
+func (m *Manager) SetUserPermission(ctx context.Context, orgID, userID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
+	if !m.validateActions(actions) {
 		return nil, fmt.Errorf("invalid actions: %s", actions)
 	}
 
-	if err := r.validateResource(ctx, orgID, resourceID); err != nil {
+	if err := m.validateResource(ctx, orgID, resourceID); err != nil {
 		return nil, err
 	}
 
-	if err := validateUser(ctx, orgID, userID); err != nil {
+	if err := m.validateUser(ctx, orgID, userID); err != nil {
 		return nil, err
 	}
 
-	return r.store.SetUserResourcePermission(ctx, orgID, userID, accesscontrol.SetResourcePermissionCommand{
+	return m.store.SetUserResourcePermission(ctx, orgID, userID, accesscontrol.SetResourcePermissionCommand{
 		Actions:    actions,
-		Resource:   r.resource,
+		Resource:   m.resource,
 		ResourceID: resourceID,
 	})
 }
 
-func (r *Manager) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
-	if !r.validateActions(actions) {
+func (m *Manager) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
+	if !m.validateActions(actions) {
 		return nil, fmt.Errorf("invalid action: %s", actions)
 	}
 
-	if err := validateTeam(ctx, orgID, teamID); err != nil {
+	if err := m.validateTeam(ctx, orgID, teamID); err != nil {
 		return nil, err
 	}
 
-	if err := r.validateResource(ctx, orgID, resourceID); err != nil {
+	if err := m.validateResource(ctx, orgID, resourceID); err != nil {
 		return nil, err
 	}
 
-	return r.store.SetTeamResourcePermission(ctx, orgID, teamID, accesscontrol.SetResourcePermissionCommand{
+	return m.store.SetTeamResourcePermission(ctx, orgID, teamID, accesscontrol.SetResourcePermissionCommand{
 		Actions:    actions,
-		Resource:   r.resource,
+		Resource:   m.resource,
 		ResourceID: resourceID,
 	})
 }
 
-func (r *Manager) SetBuiltinRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
-	if !r.validateActions(actions) {
+func (m *Manager) SetBuiltinRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
+	if !m.validateActions(actions) {
 		return nil, fmt.Errorf("invalid action: %s", actions)
 	}
 
-	if err := validateBuiltinRole(ctx, builtInRole); err != nil {
+	if err := m.validateBuiltinRole(ctx, builtInRole); err != nil {
 		return nil, err
 	}
 
-	if err := r.validateResource(ctx, orgID, resourceID); err != nil {
+	if err := m.validateResource(ctx, orgID, resourceID); err != nil {
 		return nil, err
 	}
 
-	return r.store.SetBuiltinResourcePermission(ctx, orgID, builtInRole, accesscontrol.SetResourcePermissionCommand{
+	return m.store.SetBuiltinResourcePermission(ctx, orgID, builtInRole, accesscontrol.SetResourcePermissionCommand{
 		Actions:    actions,
-		Resource:   r.resource,
+		Resource:   m.resource,
 		ResourceID: resourceID,
 	})
 }
 
-func (r *Manager) validateResource(ctx context.Context, orgID int64, resourceID string) error {
-	if r.validator != nil {
-		return r.validator(ctx, orgID, resourceID)
+func (m *Manager) validateResource(ctx context.Context, orgID int64, resourceID string) error {
+	if m.validator != nil {
+		return m.validator(ctx, orgID, resourceID)
 	}
 	return nil
 }
 
-func (r *Manager) validateActions(actions []string) bool {
+func (m *Manager) validateActions(actions []string) bool {
 	for _, a := range actions {
-		if _, ok := r.validActions[a]; !ok {
+		if _, ok := m.validActions[a]; !ok {
 			return false
 		}
 	}
 	return true
 }
 
-func validateUser(ctx context.Context, orgID, userID int64) error {
+func (m *Manager) validateUser(ctx context.Context, orgID, userID int64) error {
 	if err := sqlstore.GetSignedInUser(ctx, &models.GetSignedInUserQuery{OrgId: orgID, UserId: userID}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func validateTeam(ctx context.Context, orgID, teamID int64) error {
+func (m *Manager) validateTeam(ctx context.Context, orgID, teamID int64) error {
 	if err := sqlstore.GetTeamById(ctx, &models.GetTeamByIdQuery{OrgId: orgID, Id: teamID}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func validateBuiltinRole(ctx context.Context, builtinRole string) error {
+func (m *Manager) validateBuiltinRole(ctx context.Context, builtinRole string) error {
 	if err := accesscontrol.ValidateBuiltInRoles([]string{builtinRole}); err != nil {
 		return err
 	}
