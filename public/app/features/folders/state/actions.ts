@@ -30,8 +30,8 @@ export function saveFolder(folder: FolderState): ThunkResult<void> {
 }
 
 export function deleteFolder(uid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    await backendSrv.delete(`/api/folders/${uid}?forceDeleteRules=true`);
+  return async () => {
+    await backendSrv.delete(`/api/folders/${uid}?forceDeleteRules=false`);
     locationService.push('/dashboards');
   };
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
@@ -30,40 +29,6 @@ func init() {
 	)
 
 	prometheus.MustRegister(expressionsQuerySummary)
-}
-
-// WrapTransformData creates and executes transform requests
-func (s *Service) WrapTransformData(ctx context.Context, query legacydata.DataQuery) (*backend.QueryDataResponse, error) {
-	req := Request{
-		OrgId:   query.User.OrgId,
-		Queries: []Query{},
-	}
-
-	for _, q := range query.Queries {
-		if q.DataSource == nil {
-			return nil, fmt.Errorf("mising datasource info: " + q.RefID)
-		}
-		modelJSON, err := q.Model.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		req.Queries = append(req.Queries, Query{
-			JSON:          modelJSON,
-			Interval:      time.Duration(q.IntervalMS) * time.Millisecond,
-			RefID:         q.RefID,
-			MaxDataPoints: q.MaxDataPoints,
-			QueryType:     q.QueryType,
-			Datasource: DataSourceRef{
-				Type: q.DataSource.Type,
-				UID:  q.DataSource.Uid,
-			},
-			TimeRange: TimeRange{
-				From: query.TimeRange.GetFromAsTimeUTC(),
-				To:   query.TimeRange.GetToAsTimeUTC(),
-			},
-		})
-	}
-	return s.TransformData(ctx, &req)
 }
 
 // Request is similar to plugins.DataQuery but with the Time Ranges is per Query.

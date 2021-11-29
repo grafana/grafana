@@ -127,12 +127,12 @@ func TestEventPublish(t *testing.T) {
 
 	var invoked bool
 
-	bus.AddEventListener(func(query *testQuery) error {
+	bus.AddEventListenerCtx(func(ctx context.Context, query *testQuery) error {
 		invoked = true
 		return nil
 	})
 
-	err := bus.Publish(&testQuery{})
+	err := bus.PublishCtx(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
 
 	require.True(t, invoked)
@@ -141,7 +141,7 @@ func TestEventPublish(t *testing.T) {
 func TestEventPublish_NoRegisteredListener(t *testing.T) {
 	bus := New()
 
-	err := bus.Publish(&testQuery{})
+	err := bus.PublishCtx(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
 }
 
@@ -173,7 +173,7 @@ func TestEventPublishCtx(t *testing.T) {
 
 	var invoked bool
 
-	bus.AddEventListener(func(query *testQuery) error {
+	bus.AddEventListenerCtx(func(ctx context.Context, query *testQuery) error {
 		invoked = true
 		return nil
 	})
@@ -194,7 +194,7 @@ func TestEventCtxPublish(t *testing.T) {
 		return nil
 	})
 
-	err := bus.Publish(&testQuery{})
+	err := bus.PublishCtx(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
 
 	require.True(t, invoked)

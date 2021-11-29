@@ -166,11 +166,13 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     self.show(pos, item);
 
     // broadcast to other graph panels that we are hovering!
-    pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
-    hoverEvent.payload.pos = pos;
-    hoverEvent.payload.panel = panel;
-    hoverEvent.payload.point['time'] = (pos as any).x;
-    dashboard.events.publish(hoverEvent);
+    if (!dashboard.panelInEdit) {
+      pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
+      hoverEvent.payload.pos = pos;
+      hoverEvent.payload.panel = panel;
+      hoverEvent.payload.point['time'] = (pos as any).x;
+      dashboard.events.publish(hoverEvent);
+    }
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {
