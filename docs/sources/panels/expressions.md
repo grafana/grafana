@@ -115,7 +115,7 @@ Round returns a rounded integer value. For example, `round(3.123)` or `round($A)
 
 ##### ceil
 
-The ceil function rounds the number up to the nearest integer value. Example: `ceil(3.123)` returns 4.
+Ceil rounds the number up to the nearest integer value. For example, `ceil(3.123)` returns 4.
 
 ##### floor
 
