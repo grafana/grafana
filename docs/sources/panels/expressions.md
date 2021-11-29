@@ -152,7 +152,7 @@ Sum returns the total of all values in the series. If series is of zero length, 
 
 #### Last
 
-Last returns the last number in the series. If the series has no values then NaN is returned.
+Last returns the last number in the series. If the series has no values then returns NaN.
 
 ### Resample
 
