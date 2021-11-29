@@ -38,8 +38,8 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error)
 	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandlerSync)
 	ns.Bus.AddHandlerCtx(ns.SendWebhookSync)
 
-	ns.Bus.AddEventListener(ns.signUpStartedHandler)
-	ns.Bus.AddEventListener(ns.signUpCompletedHandler)
+	ns.Bus.AddEventListenerCtx(ns.signUpStartedHandler)
+	ns.Bus.AddEventListenerCtx(ns.signUpCompletedHandler)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
@@ -186,7 +186,7 @@ func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, qu
 	return nil
 }
 
-func (ns *NotificationService) signUpStartedHandler(evt *events.SignUpStarted) error {
+func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *events.SignUpStarted) error {
 	if !setting.VerifyEmailEnabled {
 		return nil
 	}
@@ -215,7 +215,7 @@ func (ns *NotificationService) signUpStartedHandler(evt *events.SignUpStarted) e
 	return bus.Dispatch(&emailSentCmd)
 }
 
-func (ns *NotificationService) signUpCompletedHandler(evt *events.SignUpCompleted) error {
+func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *events.SignUpCompleted) error {
 	if evt.Email == "" || !ns.Cfg.Smtp.SendWelcomeEmailOnSignUp {
 		return nil
 	}
