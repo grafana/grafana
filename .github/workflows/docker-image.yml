@@ -27,4 +27,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: user/grafana:latest
+          tags: ${{ secrets.DOCKER_USER }}/grafana:latest
