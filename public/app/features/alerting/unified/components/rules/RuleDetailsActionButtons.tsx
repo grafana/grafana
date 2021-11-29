@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, Fragment, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
@@ -149,12 +149,12 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   if (alertId) {
     leftButtons.push(
-      <>
-        <Button className={style.button} size="xs" key="history" icon="history" onClick={() => showAlertHistoryModal()}>
+      <Fragment key="history">
+        <Button className={style.button} size="xs" icon="history" onClick={() => showAlertHistoryModal()}>
           Show state history
         </Button>
         {AlertHistoryModal}
-      </>
+      </Fragment>
     );
   }
 
