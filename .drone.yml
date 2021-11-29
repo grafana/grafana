@@ -845,8 +845,8 @@ steps:
   - cp C:\App\nssm-2.24.zip .
   - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://$${PRERELEASE_BUCKET}/artifacts/downloads/oss/main/
-  - gsutil cp "$$fname.sha256" gs://$${PRERELEASE_BUCKET}/artifacts/downloads/oss/main/
+  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
+  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
   depends_on:
   - initialize
   environment:
@@ -1394,8 +1394,8 @@ steps:
   - cp C:\App\nssm-2.24.zip .
   - .\grabpl.exe windows-installer --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://$${PRERELEASE_BUCKET}/artifacts/downloads/oss/release/
-  - gsutil cp "$$fname.sha256" gs://$${PRERELEASE_BUCKET}/artifacts/downloads/oss/release/
+  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/release/
+  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/release/
   depends_on:
   - initialize
   environment:
@@ -1990,8 +1990,8 @@ steps:
   - cp C:\App\nssm-2.24.zip .
   - .\grabpl.exe windows-installer --edition enterprise ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://$${PRERELEASE_BUCKET}/artifacts/downloads/enterprise/release/
-  - gsutil cp "$$fname.sha256" gs://$${PRERELEASE_BUCKET}/artifacts/downloads/enterprise/release/
+  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/enterprise/release/
+  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/enterprise/release/
   depends_on:
   - initialize
   environment:
@@ -4314,6 +4314,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 3d97225339aec7f35ab586df89dba129a745a0670300e9ab73887f3b8a31a570
+hmac: 7bc52c7b68033a5f06441b5cb39e1f555bfa40441094772770b000bf4a663fcc
 
 ...
