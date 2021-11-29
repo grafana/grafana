@@ -119,7 +119,7 @@ The ceil function rounds the number up to the nearest integer value. Example: `c
 
 ##### floor
 
-The floor function round the number down the the nearest integer value. Example: `floor(3.123)` returns 3.
+Floor rounds the number down to the nearest integer value. For example, `floor(3.123)` returns 3.
 
 ### Reduce
 
