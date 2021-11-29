@@ -269,14 +269,14 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
-			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll)), routing.Wrap(hs.GetDataSources))
+			datasourceRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSources))
 			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesCreate)), quota("data_source"), bind(models.AddDataSourceCommand{}), routing.Wrap(AddDataSource))
 			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesWrite, ScopeDatasourceID)), bind(models.UpdateDataSourceCommand{}), routing.Wrap(hs.UpdateDataSource))
 			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceID)), routing.Wrap(hs.DeleteDataSourceById))
 			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceUID)), routing.Wrap(hs.DeleteDataSourceByUID))
 			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceName)), routing.Wrap(hs.DeleteDataSourceByName))
-			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceID)), routing.Wrap(GetDataSourceById))
-			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceUID)), routing.Wrap(GetDataSourceByUID))
+			datasourceRoute.Get("/:id", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceID)), routing.Wrap(GetDataSourceById))
+			datasourceRoute.Get("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceUID)), routing.Wrap(GetDataSourceByUID))
 			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceName)), routing.Wrap(GetDataSourceByName))
 		})
 
