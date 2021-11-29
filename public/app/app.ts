@@ -166,6 +166,9 @@ function initEchoSrv() {
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';
+    // should match names in public/views/index-template.html
+    const jsLoadMetricName = 'frontend_boot_js_done_time_seconds';
+    const cssLoadMetricName = 'frontend_boot_css_time_seconds';
 
     if (performance && performance.getEntriesByType) {
       performance.mark(loadMetricName);
@@ -179,8 +182,9 @@ function initEchoSrv() {
         );
       }
 
-      const loadMetric = performance.getEntriesByName(loadMetricName)[0];
-      reportPerformance(loadMetric.name, Math.round(loadMetric.startTime + loadMetric.duration) / 1000);
+      reportMetricPerformance(loadMetricName);
+      reportMetricPerformance(jsLoadMetricName);
+      reportMetricPerformance(cssLoadMetricName);
     }
   });
 
@@ -229,6 +233,13 @@ function initEchoSrv() {
 function addClassIfNoOverlayScrollbar() {
   if (getScrollbarWidth() > 0) {
     document.body.classList.add('no-overlay-scrollbar');
+  }
+}
+
+function reportMetricPerformance(metricName: string): void {
+  const metric = _.first(performance.getEntriesByName(metricName));
+  if (metric) {
+    reportPerformance(metric.name, Math.round(metric.startTime + metric.duration) / 1000);
   }
 }
 
