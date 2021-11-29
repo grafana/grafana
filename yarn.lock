@@ -6237,27 +6237,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/types@npm:6.13.2":
-  version: 6.13.2
-  resolution: "@sentry/types@npm:6.13.2"
-  checksum: 96c7fde4bedc609511d802d43deb7e3e8703ca31dc513cd8429e271a2abe1cd03865c2052aa320e29bd777ed6c445966a5bdc83cb3917db006234cfca07ae6bb
-  languageName: node
-  linkType: hard
-
 "@sentry/types@npm:6.15.0":
   version: 6.15.0
   resolution: "@sentry/types@npm:6.15.0"
   checksum: e84a53cd8cf4603ac794049729d44f2d67cde3a29875b7404d61d36d904cdb4cd9d35ff53463ba1828ab4a4cbd734cd276ce10d3bb7c32a0ffdea1ac4344fb5f
-  languageName: node
-  linkType: hard
-
-"@sentry/utils@npm:6.13.2":
-  version: 6.13.2
-  resolution: "@sentry/utils@npm:6.13.2"
-  dependencies:
-    "@sentry/types": 6.13.2
-    tslib: ^1.9.3
-  checksum: e4ee48750147247a96937858aef4e038bd97d2626fba337a10230666d3498914ba9f7a2f9484880dd0aa85dc36f94bb5fd4df98dedb7fc8e087c5e9f428fc133
   languageName: node
   linkType: hard
 
@@ -18874,7 +18857,7 @@ __metadata:
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 6.15.0
     "@sentry/types": 6.15.0
-    "@sentry/utils": 6.13.2
+    "@sentry/utils": 6.15.0
     "@swc/core": 1.2.103
     "@swc/helpers": 0.2.13
     "@testing-library/dom": 8.10.1
