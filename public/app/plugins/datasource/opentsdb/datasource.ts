@@ -391,10 +391,12 @@ export default class OpenTsDatasource {
     if (!target.metric || target.hide) {
       return null;
     }
+    
     let fieldsName = ['value'];
+    
     if ( metricTuple.length == 2 ){
       target.metric = metricTuple[0];
-      fieldsName =  [metricTuple[1]];
+      fieldsName = [metricTuple[1]];
     }
 
     const query: any = {
