@@ -23,7 +23,7 @@ type ServiceAccountsService struct {
 	store      serviceaccounts.Store
 	cfg        *setting.Cfg
 	log        log.Logger
-	UsageStats usagestats.Service
+	usageStats usagestats.Service
 }
 
 func ProvideServiceAccountsService(
@@ -37,7 +37,7 @@ func ProvideServiceAccountsService(
 		cfg:        cfg,
 		store:      database.NewServiceAccountsStore(store),
 		log:        log.New("serviceaccounts"),
-		UsageStats: usageStats,
+		usageStats: usageStats,
 	}
 	if err := ac.DeclareFixedRoles(role); err != nil {
 		return nil, err
@@ -66,14 +66,16 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 }
 
 func (sa *ServiceAccountsService) registerUsageMetrics() {
-	sa.UsageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
+	sa.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 		return map[string]interface{}{
-			"stats.serviceaccounts.enabled.count": sa.getUsageMetrics(),
+			"stats.serviceaccounts.enabled.count": sa.getEnabledMetric(),
+			"stats.serviceaccounts.count":         sa.store.GetMetric("stats.serviceaccounts.count"),
+			// "stats.serviceaccounts.apikey.count":  sa.getServiceaccountsApikeyMetric(),
 		}, nil
 	})
 }
 
-func (sa *ServiceAccountsService) getUsageMetrics() interface{} {
+func (sa *ServiceAccountsService) getEnabledMetric() interface{} {
 	err := sa.IsDisabled()
 	if err != nil {
 		return 0

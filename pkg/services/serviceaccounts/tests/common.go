@@ -49,6 +49,7 @@ var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
 	DeleteServiceAccount []interface{}
+	GetMetric            []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -59,4 +60,8 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 	// now we can test that the mock has these calls when we call the function
 	s.Calls.DeleteServiceAccount = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
 	return nil
+}
+
+func (s *ServiceAccountsStoreMock) GetMetric(string) float64 {
+	return 1
 }
