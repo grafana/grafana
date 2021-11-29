@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { TableCellDisplayMode, useStyles2 } from '@grafana/ui';
@@ -15,17 +15,15 @@ type Props = {
 export function PreviewRuleResult(props: Props): React.ReactElement | null {
   const { preview } = props;
   const styles = useStyles2(getStyles);
-  const fieldConfig: FieldConfigSource = useMemo(() => {
-    return {
-      defaults: {},
-      overrides: [
-        {
-          matcher: { id: FieldMatcherID.byName, options: 'Info' },
-          properties: [{ id: 'custom.displayMode', value: TableCellDisplayMode.JSONView }],
-        },
-      ],
-    };
-  }, []);
+  const fieldConfig: FieldConfigSource = {
+    defaults: {},
+    overrides: [
+      {
+        matcher: { id: FieldMatcherID.byName, options: 'Info' },
+        properties: [{ id: 'custom.displayMode', value: TableCellDisplayMode.JSONView }],
+      },
+    ],
+  };
 
   if (!preview) {
     return null;
@@ -48,7 +46,6 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
       </div>
     );
   }
-  console.log(data);
   return (
     <div className={styles.container}>
       <span>
