@@ -14,16 +14,16 @@ The Geomap panel visualization allows you to view and customize the world map us
 
 ## Map View
 
-The map view controls the initial view of the map when the dashboard loads. 
+The map view controls the initial view of the map when the dashboard loads.
 
 ### Initial View
 
 The initial view configures how the GeoMap panel renders when the panel is first loaded.
 
-* **View** sets the center for the map when the panel first loads.
-* **Latitude** (available when the **View** mode is *Coordinates*)
-* **Longitude** (available when the **View** mode is *Coordinates*)
-* **Zoom** sets the initial zoom level for the GeoMap panel.
+- **View** sets the center for the map when the panel first loads.
+- **Latitude** (available when the **View** mode is _Coordinates_)
+- **Longitude** (available when the **View** mode is _Coordinates_)
+- **Zoom** sets the initial zoom level for the GeoMap panel.
 
 ## Data layer
 
@@ -33,19 +33,19 @@ The Geomap visualization supports multiple Data Layers. Each data layer determin
 
 There are four-layer types to choose from in the Geomap visualization.
 
-* **Marker** renders a marker at each data point.
-* **Heatmap** visualizes a heatmap of the data.
-* **GeoJSON** renders static data from a geojson file.
+- **Marker** renders a marker at each data point.
+- **Heatmap** visualizes a heatmap of the data.
+- **GeoJSON** renders static data from a geojson file.
 
 ### Layer Controls
 
 The layer controls allow you to create layers, change their name, reorder and delete layers.
 
-* **Add layer** creates an additional, configurable data layer for the Geomap visualization. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
-* The layer controls allow you to rename, delete, and reorder the layers of the panel.
-  * **Edit layer name (pencil icon)** renames the layer.
-  * **Trash Bin** deletes the layer.
-  * **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The panel will update the layer order as you drag and drop to help simplify choosing a layer order.
+- **Add layer** creates an additional, configurable data layer for the Geomap visualization. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
+- The layer controls allow you to rename, delete, and reorder the layers of the panel.
+  - **Edit layer name (pencil icon)** renames the layer.
+  - **Trash Bin** deletes the layer.
+  - **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The panel will update the layer order as you drag and drop to help simplify choosing a layer order.
 
 You can add multiple layers of data to a single Geomap panel in order to create rich, detailed visualizations.
 
@@ -72,7 +72,7 @@ The markers layer allows you to display data points as different marker shapes s
 
 - **Marker Color** configures the color of the marker. The default `Fixed size` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
 - **Marker Size** configures the size of the marker. Default is `Fixed size`, making all marker size the same regardless of the data points. However, there is also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within this range.
-- **Marker Shape** allows you to choose the shape, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple shapes or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). 
+- **Marker Shape** allows you to choose the shape, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple shapes or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
 - **Fill opacity** configures the transparency of each marker.
 
 ### Heatmap layer
@@ -96,15 +96,15 @@ Similar to `Markers`, you are prompted with various options to determine which d
 
 The GeoJSON layer allows you to select and load a static GeoJSON file from the filesystem.
 
-* **GeoJSON URL** provides a choice of GeoJSON files that ship with Grafana.
-* **Default Style** controls which styles to apply when no rules above match. 
-  * **Color** configures the color of the default style
-  * **Opacity** configures the default opacity
-* **Style Rules** apply styles based on feature properties
-  * **Rule** allows you to select a *feature*, *condition*, and *value* from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.
-  * **Color** configures the color of the style for the current rule
-  * **Opacity** configures the transparency level for the current rule
-* **Add style rule** creates additional style rules. 
+- **GeoJSON URL** provides a choice of GeoJSON files that ship with Grafana.
+- **Default Style** controls which styles to apply when no rules above match.
+  - **Color** configures the color of the default style
+  - **Opacity** configures the default opacity
+- **Style Rules** apply styles based on feature properties
+  - **Rule** allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.
+  - **Color** configures the color of the style for the current rule
+  - **Opacity** configures the transparency level for the current rule
+- **Add style rule** creates additional style rules.
 
 ## Base layer
 
@@ -174,5 +174,3 @@ default_baselayer_config = `{
 ```
 
 `enable_custom_baselayers` allows you to enable or disable custom open source base maps that are already implemented. The default is `true`.
-
-
