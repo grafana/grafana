@@ -8,6 +8,8 @@ aliases = ["/docs/grafana/latest/panels/visualizations/"]
 
 Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in panels, their options and typical usage.
 
+> **Note:** If you are unsure which visualization to pick, Grafana can provide visualization suggestions based on the panel query. Additionally, Grafana will display a preview of the selected visualization type or visualization suggestion. Please see the [add a panel]({{< relref "../pnaels/add-a-panel.md" >}}) documentation for more info.
+
 - Graphs & charts
   - [Time series]({{< relref "./time-series/_index.md" >}}) is the default and main Graph visualization.
   - [State timeline]({{< relref "./state-timeline.md" >}}) for state changes over time.
