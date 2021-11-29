@@ -1,3 +1,4 @@
+import { AlertState } from '@grafana/data';
 import {
   GrafanaAlertState,
   PromAlertingRuleState,
@@ -23,7 +24,6 @@ import { AsyncRequestState } from './redux';
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { capitalize } from 'lodash';
 import { State } from '../components/StateTag';
-import { AlertState } from '@grafana/data';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
@@ -65,39 +65,11 @@ export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifi
   return 'ruleHash' in identifier;
 }
 
-export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertState): string {
+export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertState | AlertState): string {
   if (state === PromAlertingRuleState.Inactive) {
     return 'Normal';
   }
   return capitalize(state);
-}
-
-export function LegacyAlertStateToGrafanaAlertState(legacyState: AlertState): GrafanaAlertState {
-  if (legacyState === AlertState.NoData) {
-    return GrafanaAlertState.NoData;
-  }
-
-  if (legacyState === AlertState.Paused) {
-    return GrafanaAlertState.Pending;
-  }
-
-  if (legacyState === AlertState.Alerting) {
-    return GrafanaAlertState.Alerting;
-  }
-
-  if (legacyState === AlertState.OK) {
-    return GrafanaAlertState.Normal;
-  }
-
-  if (legacyState === AlertState.Pending) {
-    return GrafanaAlertState.Pending;
-  }
-
-  if (legacyState === AlertState.Unknown) {
-    return GrafanaAlertState.Pending;
-  }
-
-  return GrafanaAlertState.Pending;
 }
 
 export const flattenRules = (rules: RuleNamespace[]) => {
@@ -113,7 +85,7 @@ export const flattenRules = (rules: RuleNamespace[]) => {
   }, []);
 };
 
-export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState, State> = {
+export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState | AlertState, State> = {
   [PromAlertingRuleState.Inactive]: 'good',
   [PromAlertingRuleState.Firing]: 'bad',
   [PromAlertingRuleState.Pending]: 'warning',
@@ -122,6 +94,12 @@ export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState
   [GrafanaAlertState.NoData]: 'info',
   [GrafanaAlertState.Normal]: 'good',
   [GrafanaAlertState.Pending]: 'warning',
+  [AlertState.NoData]: 'info',
+  [AlertState.Paused]: 'warning',
+  [AlertState.Alerting]: 'bad',
+  [AlertState.OK]: 'good',
+  [AlertState.Pending]: 'warning',
+  [AlertState.Unknown]: 'info',
 };
 
 export function getFirstActiveAt(promRule: AlertingRule) {

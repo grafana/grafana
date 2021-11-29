@@ -1,13 +1,12 @@
 import React, { FC } from 'react';
 
 import { dateTimeFormat, GrafanaTheme } from '@grafana/data';
+import { LoadingPlaceholder, useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { StateHistoryItem } from 'app/types/unified-alerting';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { AlertStateTag } from './AlertStateTag';
 import { useManagedAlertStateHistory } from '../../hooks/useManagedAlertStateHistory';
-import { LoadingPlaceholder, useStyles } from '@grafana/ui';
-import { LegacyAlertStateToGrafanaAlertState } from '../../utils/rules';
 import { AlertLabel } from '../AlertLabel';
 
 interface RuleStateHistoryProps {
@@ -66,8 +65,7 @@ function renderValueCell(item: DynamicTableItemProps<PartialHistoryItem>) {
 }
 
 function renderStateCell(item: DynamicTableItemProps<PartialHistoryItem>) {
-  const newState = LegacyAlertStateToGrafanaAlertState(item.data.newState);
-  return <AlertStateTag state={newState} />;
+  return <AlertStateTag state={item.data.newState} />;
 }
 
 function renderTimestampCell(item: DynamicTableItemProps<PartialHistoryItem>) {
