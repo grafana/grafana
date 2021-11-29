@@ -875,7 +875,7 @@ steps:
       repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{
       truncate build.commit 8 }}>"
     webhook:
-      from_secret: test-webhook
+      from_secret: drone-changes-webhook
 trigger:
   branch: main
   event:
@@ -960,7 +960,7 @@ steps:
       Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
       Author: {{build.author}}
     webhook:
-      from_secret: test-webhook
+      from_secret: slack_webhook
 trigger:
   branch: main
   event:
@@ -2044,7 +2044,7 @@ steps:
       Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
       Author: {{build.author}}
     webhook:
-      from_secret: test-webhook
+      from_secret: slack_webhook
 trigger:
   ref:
   - refs/tags/v*
@@ -3114,7 +3114,7 @@ steps:
       Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
       Author: {{build.author}}
     webhook:
-      from_secret: test-webhook
+      from_secret: slack_webhook
 trigger:
   event:
   - custom
@@ -4072,7 +4072,7 @@ steps:
       Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
       Author: {{build.author}}
     webhook:
-      from_secret: test-webhook
+      from_secret: slack_webhook
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -4213,6 +4213,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: abde56f8de0bdd8c645dc89555c41f7b581b489658c72b92b53a83f2385914bf
+hmac: 9ceda384023447a1f1ac5df3d556e71bc3e9d16d32dba950ec7982f567f75760
 
 ...

@@ -172,7 +172,7 @@ def main_pipelines(edition):
             steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
             depends_on=['build-main'], platform='windows',
         ), notify_pipeline(
-            name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger, template=drone_change_template,
+            name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger, template=drone_change_template, secret='drone-changes-webhook',
         ),
     ]
     if edition != 'enterprise':
@@ -184,7 +184,7 @@ def main_pipelines(edition):
 
         pipelines.append(notify_pipeline(
             name='notify-main', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
-            depends_on=['build-main', 'windows-main', 'publish-main'], template=failure_template,
+            depends_on=['build-main', 'windows-main', 'publish-main'], template=failure_template, secret='slack_webhook'
         ))
     else:
         # Add downstream enterprise pipelines triggerable from OSS builds
@@ -209,7 +209,7 @@ def main_pipelines(edition):
 
         pipelines.append(notify_pipeline(
             name='notify-main-downstream', slack_channel='grafana-enterprise-ci-notifications', trigger=dict(trigger, status = ['failure']),
-            depends_on=['build-main-downstream', 'windows-main-downstream', 'publish-main-downstream'], template=failure_template,
+            depends_on=['build-main-downstream', 'windows-main-downstream', 'publish-main-downstream'], template=failure_template, secret='slack_webhook',
         ))
 
     return pipelines

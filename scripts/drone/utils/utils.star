@@ -57,7 +57,7 @@ def pipeline(
 
     return pipeline
 
-def notify_pipeline(name, slack_channel, trigger, depends_on=[], template=None):
+def notify_pipeline(name, slack_channel, trigger, depends_on=[], template=None, secret=None):
     trigger = dict(trigger)
     return {
         'kind': 'pipeline',
@@ -69,7 +69,7 @@ def notify_pipeline(name, slack_channel, trigger, depends_on=[], template=None):
         'name': name,
         'trigger': trigger,
         'steps': [
-            slack_step(slack_channel, template),
+            slack_step(slack_channel, template, secret),
         ],
         'depends_on': depends_on,
     }

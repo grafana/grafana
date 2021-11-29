@@ -144,6 +144,6 @@ def pr_pipelines(edition):
         ), pipeline(
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services, steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
         ), notify_pipeline(
-            name='pr-notify-drone-changes', slack_channel='slack-webhooks-test', trigger=notify_trigger, template=drone_change_template,
+            name='pr-notify-drone-changes', slack_channel='slack-webhooks-test', trigger=notify_trigger, template=drone_change_template, secret='test-webhook',
         ),
     ]
