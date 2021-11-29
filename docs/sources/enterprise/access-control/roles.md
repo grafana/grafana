@@ -54,7 +54,7 @@ A role’s display name is a human-friendly identifier for the role, so that use
 
 ### Group
 
-A role's group is used to organize roles in the role picker in the UI.
+A role’s group organizes roles in the role picker in the UI.
 
 ### Role version
 
