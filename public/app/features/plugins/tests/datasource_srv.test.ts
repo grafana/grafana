@@ -1,5 +1,11 @@
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DataSourceApi, DataSourceInstanceSettings, DataSourcePlugin, DataSourcePluginMeta } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataSourcePlugin,
+  DataSourcePluginMeta,
+  ScopedVar,
+} from '@grafana/data';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv: any = {
@@ -19,7 +25,11 @@ const templateSrv: any = {
       },
     },
   ],
-  replace: (v: string) => {
+  replace: (v: string, scopedVars: ScopedVar) => {
+    if (scopedVars && scopedVars.datasource) {
+      return v.replace('${datasource}', scopedVars.datasource.value);
+    }
+
     let result = v.replace('${datasource}', 'BBB');
     result = result.replace('${datasourceDefault}', 'default');
     return result;
@@ -124,6 +134,14 @@ describe('datasource_srv', () => {
         expect(instance.uid).toBe('uid-code-mmm');
         expect(instance.getRef()).toEqual({ type: 'test-db', uid: 'uid-code-mmm' });
       });
+
+      it('Can get by variable', async () => {
+        const ds = (await dataSourceSrv.get('${datasource}')) as any;
+        expect(ds.meta).toBe(dataSourceInit.BBB.meta);
+
+        const ds2 = await dataSourceSrv.get('${datasource}', { datasource: { text: 'Prom', value: 'uid-code-aaa' } });
+        expect(ds2.uid).toBe(dataSourceInit.aaa.uid);
+      });
     });
 
     describe('when getting instance settings', () => {
@@ -143,6 +161,13 @@ describe('datasource_srv', () => {
             "uid": "uid-code-BBB",
           }
         `);
+      });
+
+      it('should work with variable via scopedVars', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasource}', {
+          datasource: { text: 'Prom', value: 'uid-code-aaa' },
+        });
+        expect(ds?.rawRef?.uid).toBe('uid-code-aaa');
       });
 
       it('should not set isDefault when being fetched via variable', () => {
