@@ -76,8 +76,10 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   return (
     <div style={containerStyle}>
-      <div style={vizStyle}>{size && children(size.width, size.height)}</div>
-      <div style={legendStyle} ref={legendRef}>
+      <div tabIndex={0} style={vizStyle}>
+        {size && children(size.width, size.height)}
+      </div>
+      <div tabIndex={0} style={legendStyle} ref={legendRef}>
         <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
       </div>
     </div>
