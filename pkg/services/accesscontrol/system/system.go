@@ -16,15 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func disabled(ac accesscontrol.AccessControl) web.Handler {
-	return func(c *models.ReqContext) {
-		if ac.IsDisabled() {
-			c.Resp.WriteHeader(http.StatusNotFound)
-			return
-		}
-	}
-}
-
 func NewSystem(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourceStore) (*System, error) {
 	s := &System{
 		ac:      ac,
@@ -51,15 +42,15 @@ type System struct {
 
 func (s *System) registerEndpoints() {
 	auth := middleware.Middleware(s.ac)
-
+	disable := middleware.Disable(s.ac.IsDisabled())
 	s.router.Group(fmt.Sprintf("/api/access-control/system/%s", s.options.Resource), func(r routing.RouteRegister) {
 		idScope := accesscontrol.Scope(s.options.Resource, "id", accesscontrol.Parameter(":resourceID"))
 		actionSet, actionRead := fmt.Sprintf("%s.permissions:set", s.options.Resource), fmt.Sprintf("%s.permissions:read", s.options.Resource)
-		r.Get("/description", auth(disabled(s.ac), accesscontrol.EvalPermission(actionRead)), routing.Wrap(s.getDescription))
-		r.Get("/:resourceID", auth(disabled(s.ac), accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(s.getPermissions))
-		r.Post("/:resourceID/users/:userID", auth(disabled(s.ac), accesscontrol.EvalPermission(actionSet, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setUserPermission))
-		r.Post("/:resourceID/teams/:teamID", auth(disabled(s.ac), accesscontrol.EvalPermission(actionSet, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setTeamPermission))
-		r.Post("/:resourceID/builtInRoles/:builtInRole", auth(disabled(s.ac), accesscontrol.EvalPermission(actionSet, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setBuiltinRolePermission))
+		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(s.getDescription))
+		r.Get("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(s.getPermissions))
+		r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionSet, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setUserPermission))
+		r.Post("/:resourceID/teams/:teamID", auth(disable, accesscontrol.EvalPermission(actionSet, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setTeamPermission))
+		r.Post("/:resourceID/builtInRoles/:builtInRole", auth(disable, accesscontrol.EvalPermission(actionSet, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setBuiltinRolePermission))
 	})
 }
 
