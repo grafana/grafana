@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -163,10 +164,10 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 		}
 		// targetFull of Graphite data source contains the expanded version of field 'target'. The alert rule does not contain enough information to continue using the 'target'.
 		// Instead, it should use the expanded version. So, copy targetFull to target.
-		fullQuery, ok := fixedData["targetFull"]
+		fullQuery, ok := fixedData[graphite.TargetFullModelField]
 		if ok {
-			delete(fixedData, "targetFull")
-			fixedData["target"] = fullQuery
+			delete(fixedData, graphite.TargetFullModelField)
+			fixedData[graphite.TargetModelField] = fullQuery
 			updatedModel, err := json.Marshal(fixedData)
 			if err != nil {
 				return nil, err
