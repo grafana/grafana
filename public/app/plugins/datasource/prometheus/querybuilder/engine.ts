@@ -1,29 +1,59 @@
-import { QueryPartDef, QueryPart } from 'app/angular/components/query_part';
-import { PromVisualQuery } from './types';
+import { PromVisualQuery, PromVisualQueryOperation, PromVisualQueryOperationDef } from './types';
 
 export class VisualQueryEngine {
-  operations: Record<string, QueryPartDef> = {};
+  operations: Record<string, PromVisualQueryOperationDef> = {};
 
   constructor() {
-    this.addOperationDef(
-      new QueryPartDef({
-        type: 'sum',
-        params: [],
-        defaultParams: [],
-        renderer: functionRenderer,
-      })
-    );
+    this.addOperationDef({
+      type: 'sum',
+      params: [],
+      defaultParams: [],
+      renderer: functionRendererLeft,
+    });
+
+    this.addOperationDef({
+      type: 'histogram_quantile',
+      params: [{ name: 'quantile', type: 'number', options: [0.99, 0.95, 0.9, 0.75, 0.5, 0.25] }],
+      defaultParams: [0.9],
+      renderer: functionRendererLeft,
+    });
+
+    this.addOperationDef({
+      type: 'label_replace',
+      params: [
+        { name: 'dst_label', type: 'string' },
+        { name: 'replacement', type: 'string' },
+        { name: 'src_label', type: 'string' },
+        { name: 'regex', type: 'string' },
+      ],
+      defaultParams: [],
+      renderer: functionRendererRight,
+    });
+
+    this.addOperationDef({
+      type: 'group by',
+      params: [
+        { name: 'aggregation', type: 'string' },
+        { name: 'label', type: 'string', multiple: true },
+      ],
+      defaultParams: ['sum'],
+      renderer: groupByRenderer,
+    });
   }
 
-  private addOperationDef(op: QueryPartDef) {
+  private addOperationDef(op: PromVisualQueryOperationDef) {
     this.operations[op.type] = op;
   }
 
   renderQuery(query: PromVisualQuery) {
-    const queryString = `${query.metric}${renderLabels(query)}`;
+    let queryString = `${query.metric}${this.renderLabels(query)}`;
 
     for (const operation of query.operations) {
       const def = this.operations[operation.type];
+      if (!def) {
+        throw new Error(`Operation ${operation.type} not found`);
+      }
+      queryString = def.renderer(operation, def, queryString);
     }
 
     return queryString;
@@ -47,23 +77,54 @@ export class VisualQueryEngine {
   }
 }
 
-export function functionRenderer(part: QueryPart, innerExpr: string) {
-  const str = part.def.type + '(';
-  const parameters = part.params.map((value, index) => {
-    const paramType = part.def.params[index];
+function functionRendererLeft(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+  const params = renderParams(model, def, innerExpr);
+  const str = model.type + '(';
 
-    if (paramType.quote === 'single') {
-      return "'" + value + "'";
-    } else if (paramType.quote === 'double') {
+  if (innerExpr) {
+    params.push(innerExpr);
+  }
+
+  return str + params.join(', ') + ')';
+}
+
+function functionRendererRight(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+  const params = renderParams(model, def, innerExpr);
+  const str = model.type + '(';
+
+  if (innerExpr) {
+    params.unshift(innerExpr);
+  }
+
+  return str + params.join(', ') + ')';
+}
+
+function renderParams(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+  return (model.params ?? []).map((value, index) => {
+    const paramDef = def.params[index];
+    if (paramDef.type === 'string') {
       return '"' + value + '"';
     }
 
     return value;
   });
+}
 
-  if (innerExpr) {
-    parameters.unshift(innerExpr);
+function groupByRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+  if (!model.params || model.params.length < 2) {
+    throw Error('Params missing on group by');
   }
 
-  return str + parameters.join(', ') + ')';
+  // First param is the aggregation, the rest are labels
+  let expr = `${model.params[0]} by(`;
+
+  for (let i = 1; i < model.params.length; i++) {
+    if (i > 1) {
+      expr += ', ';
+    }
+
+    expr += model.params[i];
+  }
+
+  return `${expr}) (${innerExpr})`;
 }
