@@ -279,7 +279,6 @@ def release_pipelines(ver_mode='release', trigger=None):
             steps=[download_grabpl_step()] + initialize_step(edition='oss', platform='linux', ver_mode=ver_mode, install_deps=False) + steps,
             depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines],
         )
-        #pipelines.append(publish_pipeline)
 
     pipelines.append(notify_pipeline(
         name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
