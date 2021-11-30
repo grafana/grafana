@@ -88,6 +88,13 @@ describe('Alertmanager utils', () => {
         { name: 'bar', value: 'bazz', isEqual: true, isRegex: false },
       ]);
     });
+
+    it('should parse matchers for key with special characters', () => {
+      expect(parseMatchers('foo.bar-baz="bar",baz-bar.foo=bazz')).toEqual<Matcher[]>([
+        { name: 'foo.bar-baz', value: 'bar', isRegex: false, isEqual: true },
+        { name: 'baz-bar.foo', value: 'bazz', isEqual: true, isRegex: false },
+      ]);
+    });
   });
 
   describe('labelsMatchMatchers', () => {

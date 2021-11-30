@@ -16,15 +16,12 @@ type AlertTableColumnProps = DynamicTableColumnProps<Alert>;
 type AlertTableItemProps = DynamicTableItemProps<Alert>;
 
 export const AlertInstancesTable: FC<Props> = ({ instances }) => {
-  // add key & sort instance. API returns instances in random order, different every time.
   const items = useMemo(
     (): AlertTableItemProps[] =>
-      instances
-        .map((instance) => ({
-          data: instance,
-          id: alertInstanceKey(instance),
-        }))
-        .sort((a, b) => a.id.localeCompare(b.id)),
+      instances.map((instance) => ({
+        data: instance,
+        id: alertInstanceKey(instance),
+      })),
     [instances]
   );
 

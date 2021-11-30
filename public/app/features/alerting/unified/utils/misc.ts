@@ -1,9 +1,13 @@
 import { urlUtil, UrlQueryMap } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
+import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
 import * as ruleId from './rule-id';
+import { SortOrder } from 'app/plugins/panel/alertlist/types';
+import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
+import { sortBy } from 'lodash';
+import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
   const sourceName = getRulesSourceName(ruleSource);
@@ -82,4 +86,39 @@ export function retryWhile<T, E = Error>(
       throw e;
     });
   return makeAttempt();
+}
+
+const grafanaAlertStateSortScore = {
+  [GrafanaAlertState.Alerting]: 1,
+  [GrafanaAlertState.Error]: 1,
+  [GrafanaAlertState.Pending]: 2,
+  [GrafanaAlertState.NoData]: 3,
+  [GrafanaAlertState.Normal]: 4,
+};
+
+export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
+  // Make sure to handle tie-breaks because API returns alert instances in random order every time
+  if (sortOrder === SortOrder.Importance) {
+    return sortBy(alerts, (alert) => [
+      // @ts-ignore
+      grafanaAlertStateSortScore[alert.state],
+      alertInstanceKey(alert).toLocaleLowerCase(),
+    ]);
+  } else if (sortOrder === SortOrder.TimeAsc) {
+    return sortBy(alerts, (alert) => [
+      new Date(alert.activeAt) || new Date(),
+      alertInstanceKey(alert).toLocaleLowerCase(),
+    ]);
+  } else if (sortOrder === SortOrder.TimeDesc) {
+    return sortBy(alerts, (alert) => [
+      new Date(alert.activeAt) || new Date(),
+      alertInstanceKey(alert).toLocaleLowerCase(),
+    ]).reverse();
+  }
+  const result = sortBy(alerts, (alert) => alertInstanceKey(alert).toLocaleLowerCase());
+  if (sortOrder === SortOrder.AlphaDesc) {
+    result.reverse();
+  }
+
+  return result;
 }
