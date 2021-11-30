@@ -490,23 +490,62 @@ func RedactedValue(key, value string) string {
 		"SECRET_KEY",
 		"CERTIFICATE",
 		"ACCOUNT_KEY",
+		"TOKEN",
+		"ENCRYPTION_KEY",
 	} {
 		if strings.Contains(uppercased, pattern) {
 			return RedactedPassword
 		}
 	}
-	// Sensitive URLs that might contain username and password
-	for _, pattern := range []string{
-		"DATABASE_URL",
+
+	for _, exception := range []string{
+		"RUDDERSTACK",
+		"APPLICATION_INSIGHTS",
+		"SENTRY",
 	} {
-		if strings.Contains(uppercased, pattern) {
-			if u, err := url.Parse(value); err == nil {
-				return u.Redacted()
-			}
+		if strings.Contains(uppercased, exception) {
+			return value
 		}
 	}
-	// Otherwise return unmodified value
+
+	if u, err := RedactedURL(value); err == nil {
+		return u
+	}
+
 	return value
+}
+
+func RedactedURL(value string) (string, error) {
+	// Value could be a list of URLs
+	chunks := util.SplitString(value)
+
+	for i, chunk := range chunks {
+		var hasTmpPrefix bool
+		const tmpPrefix = "http://"
+
+		if !strings.Contains(chunk, "://") {
+			chunk = tmpPrefix + chunk
+			hasTmpPrefix = true
+		}
+
+		u, err := url.Parse(chunk)
+		if err != nil {
+			return "", err
+		}
+
+		redacted := u.Redacted()
+		if hasTmpPrefix {
+			redacted = strings.Replace(redacted, tmpPrefix, "", 1)
+		}
+
+		chunks[i] = redacted
+	}
+
+	if strings.Contains(value, ",") {
+		return strings.Join(chunks, ","), nil
+	}
+
+	return strings.Join(chunks, " "), nil
 }
 
 func applyEnvVariableOverrides(file *ini.File) error {
