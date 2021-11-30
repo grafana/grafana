@@ -100,3 +100,4 @@ export class UnThemedLogMessageAnsi extends PureComponent<Props, State> {
 }
 
 export const LogMessageAnsi = withTheme2(UnThemedLogMessageAnsi);
+LogMessageAnsi.displayName = 'LogMessageAnsi';
