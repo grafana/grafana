@@ -7,6 +7,7 @@ import { GeomapPanelOptions } from '../../types';
 import { GeomapInstanceState } from '../../GeomapPanel';
 import { AddLayerButton } from './AddLayerButton';
 import { LayerList } from './LayerList';
+import { LayerDragDropList } from '../LayerDragDropList/LayerDragDropList';
 
 type LayersEditorProps = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
 
@@ -34,6 +35,8 @@ export const LayersEditor = (props: LayersEditorProps) => {
     actions.reorder(src, dst);
   };
 
+  const selection = selected ? [selected] : [];
+
   return (
     <>
       <Container>
@@ -42,6 +45,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
       <br />
 
       <LayerList layers={layers} onDragEnd={onDragEnd} selected={selected} actions={actions} />
+      <LayerDragDropList layers={layers} onDragEnd={onDragEnd} selection={selection} />
     </>
   );
 };

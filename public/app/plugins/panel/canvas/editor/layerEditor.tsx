@@ -8,6 +8,7 @@ import { GroupState } from 'app/features/canvas/runtime/group';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { PlacementEditor } from './PlacementEditor';
+import { LayersEditor } from '../../geomap/editor/LayersEditor/LayersEditor';
 
 export interface LayerEditorProps {
   scene: Scene;
@@ -69,6 +70,14 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
         path: 'root',
         name: 'Elements',
         editor: LayerElementListEditor,
+        settings: { scene, layer: scene.currentLayer, selected },
+      });
+
+      builder.addCustomEditor({
+        id: 'content',
+        path: 'root',
+        name: 'Elements',
+        editor: LayersEditor,
         settings: { scene, layer: scene.currentLayer, selected },
       });
 

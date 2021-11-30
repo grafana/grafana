@@ -15,6 +15,7 @@ import { GroupState } from 'app/features/canvas/runtime/group';
 import { LayerEditorProps } from './layerEditor';
 import { SelectionParams } from 'app/features/canvas/runtime/scene';
 import { ShowConfirmModalEvent } from 'app/types/events';
+import { LayerDragDropList } from '../../geomap/editor/LayerDragDropList/LayerDragDropList';
 
 type Props = StandardEditorProps<any, LayerEditorProps, PanelOptions>;
 
@@ -221,6 +222,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
             </Button>
           </>
         )}
+        <LayerDragDropList onDragEnd={this.onDragEnd} layers={layer.elements} selection={selection} />
         <DragDropContext onDragEnd={this.onDragEnd}>
           <Droppable droppableId="droppable">
             {(provided, snapshot) => (
