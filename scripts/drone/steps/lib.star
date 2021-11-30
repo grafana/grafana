@@ -686,6 +686,7 @@ def postgres_integration_tests_step():
             'POSTGRES_HOST': 'postgres',
         },
         'commands': [
+            'apt-get update',
             'apt-get install -yq postgresql-client',
             'dockerize -wait tcp://postgres:5432 -timeout 120s',
             'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
@@ -709,6 +710,7 @@ def mysql_integration_tests_step():
             'MYSQL_HOST': 'mysql',
         },
         'commands': [
+            'apt-get update',
             'apt-get install -yq default-mysql-client',
             'dockerize -wait tcp://mysql:3306 -timeout 120s',
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',

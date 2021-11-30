@@ -191,6 +191,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
@@ -207,6 +208,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
@@ -490,6 +492,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
@@ -506,6 +509,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
@@ -906,6 +910,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
@@ -922,6 +927,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
@@ -1293,6 +1299,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
@@ -1309,6 +1316,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
@@ -1830,6 +1838,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
@@ -1846,6 +1855,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
@@ -2206,6 +2216,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
@@ -2222,6 +2233,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
@@ -2739,6 +2751,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
@@ -2755,6 +2768,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
@@ -3093,6 +3107,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
@@ -3109,6 +3124,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.3
   commands:
+  - apt-get update
   - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
@@ -3430,6 +3446,6 @@ get:
 
 ---
 kind: signature
-hmac: a63230a1a54a9c53c72a38bc69c6495f5b1199b5b21324b6cb00d1fd416628a2
+hmac: c27ac8c63440e97000f65b80e9fa1a19bb65a09114203ad257b41371481ff626
 
 ...
