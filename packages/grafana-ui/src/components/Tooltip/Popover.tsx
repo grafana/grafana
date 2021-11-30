@@ -38,6 +38,7 @@ class Popover extends PureComponent<Props> {
       placement,
       onMouseEnter,
       onMouseLeave,
+      onKeyDown,
       className,
       wrapperClassName,
       renderArrow,
@@ -66,6 +67,7 @@ class Popover extends PureComponent<Props> {
                       <div
                         onMouseEnter={onMouseEnter}
                         onMouseLeave={onMouseLeave}
+                        onKeyDown={onKeyDown}
                         ref={ref}
                         style={{
                           ...style,

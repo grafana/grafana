@@ -66,6 +66,13 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
     return () => this.setState({ activePicker: tab });
   };
 
+  activateTab = (event: React.KeyboardEvent<HTMLDivElement>, tabHandler: () => void) => {
+    if (event.key === 'Enter') {
+      tabHandler();
+    }
+    return;
+  };
+
   renderPicker = () => {
     const { activePicker } = this.state;
     const { color } = this.props;
@@ -120,10 +127,20 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
       <FocusScope contain restoreFocus autoFocus>
         <div className={styles.colorPickerPopover}>
           <div className={styles.colorPickerPopoverTabs}>
-            <div tabIndex={0} className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')}>
+            <div
+              tabIndex={0}
+              className={this.getTabClassName('palette')}
+              onClick={this.onTabChange('palette')}
+              onKeyDown={(event) => this.activateTab(event, this.onTabChange('palette'))}
+            >
               Colors
             </div>
-            <div tabIndex={0} className={this.getTabClassName('spectrum')} onClick={this.onTabChange('spectrum')}>
+            <div
+              tabIndex={0}
+              className={this.getTabClassName('spectrum')}
+              onClick={this.onTabChange('spectrum')}
+              onKeyDown={(event) => this.activateTab(event, this.onTabChange('spectrum'))}
+            >
               Custom
             </div>
             {this.renderCustomPickerTabs()}

@@ -38,6 +38,27 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
       return changeHandler(color);
     };
 
+    stopPropagation = (event: React.KeyboardEvent<HTMLDivElement>, hidePopper: () => void) => {
+      if (event.key === 'Tab' || event.altKey || event.ctrlKey || event.metaKey) {
+        return;
+      }
+
+      event.stopPropagation();
+
+      if (event.key === 'Escape') {
+        hidePopper();
+      }
+
+      return;
+    };
+
+    activatePopper = (event: React.KeyboardEvent<HTMLDivElement>, showPopper: () => void) => {
+      if (event.key === 'Enter') {
+        showPopper();
+      }
+      return;
+    };
+
     render() {
       const { theme, children } = this.props;
       const styles = getStyles(theme);
@@ -58,6 +79,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     wrapperClassName={styles.colorPicker}
                     onMouseLeave={hidePopper}
                     onMouseEnter={showPopper}
+                    onKeyDown={(event) => this.stopPropagation(event, hidePopper)}
                   />
                 )}
 
@@ -75,6 +97,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}
+                    onKeyDown={(event) => this.activatePopper(event, showPopper)}
                     color={theme.visualization.getColorByName(this.props.color || '#000000')}
                   />
                 )}

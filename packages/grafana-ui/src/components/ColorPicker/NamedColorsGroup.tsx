@@ -29,6 +29,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
           color={primaryShade.color}
           label={upperFirst(hue.name)}
           onClick={() => onColorSelect(primaryShade.name)}
+          onKeyDown={() => onColorSelect(primaryShade.name)}
         />
       )}
       <div
@@ -46,6 +47,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
                   isSelected={shade.name === selectedColor}
                   color={shade.color}
                   onClick={() => onColorSelect(shade.name)}
+                  onKeyDown={() => onColorSelect(primaryShade.name)}
                 />
               </div>
             )
