@@ -82,7 +82,7 @@ describe('TableContainer', () => {
 
   it('should update time when timezone changes', () => {
     const { rerender } = render(<TableContainer {...defaultProps} />);
-    let rowsBeforeChange = within(getTable()).getAllByRole('row');
+    const rowsBeforeChange = within(getTable()).getAllByRole('row');
     expect(getRowsData(rowsBeforeChange)).toEqual([
       { time: '2021-01-01 00:00:00', text: 'test_string_1' },
       { time: '2021-01-01 03:00:00', text: 'test_string_2' },
