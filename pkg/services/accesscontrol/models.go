@@ -210,12 +210,12 @@ func (p *ResourcePermission) Managed() bool {
 	return strings.HasPrefix(p.RoleName, "managed:")
 }
 
-func (p *ResourcePermission) Match(targetActions []string) bool {
+func (p *ResourcePermission) Contains(targetActions []string) bool {
 	if len(p.Actions) < len(targetActions) {
 		return false
 	}
 
-	var contains = func(arr []string, s string) bool {
+	var contain = func(arr []string, s string) bool {
 		for _, item := range arr {
 			if item == s {
 				return true
@@ -225,7 +225,7 @@ func (p *ResourcePermission) Match(targetActions []string) bool {
 	}
 
 	for _, a := range targetActions {
-		if !contains(p.Actions, a) {
+		if !contain(p.Actions, a) {
 			return false
 		}
 	}
