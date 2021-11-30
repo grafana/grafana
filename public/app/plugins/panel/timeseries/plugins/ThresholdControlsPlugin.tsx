@@ -41,6 +41,7 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
     if (!thresholds) {
       return null;
     }
+
     const scale = fieldConfig.defaults.unit ?? FIXED_UNIT;
     const decimals = fieldConfig.defaults.decimals;
     const handles = [];
