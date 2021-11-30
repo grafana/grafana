@@ -64,7 +64,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         />
       </Card.Figure>
       <Card.Meta separator={''}>
-        <span className={styles.metaContainer} aria-label={`Folder "${folderTitle}"`}>
+        <span className={styles.metaContainer}>
           <Icon name={'folder'} aria-hidden />
           {folderTitle}
         </span>
