@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -211,7 +212,11 @@ func validateURL(tp string, u string) response.Response {
 	return nil
 }
 
-func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) response.Response {
+func AddDataSource(c *models.ReqContext) response.Response {
+	cmd := models.AddDataSourceCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
@@ -235,7 +240,11 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) respon
 	})
 }
 
-func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) response.Response {
+func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
+	cmd := models.UpdateDataSourceCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")

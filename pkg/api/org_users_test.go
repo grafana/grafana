@@ -57,7 +57,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
-		sc.handlerFuncCtx = hs.SearchOrgUsersWithPaging
+		sc.handlerFunc = hs.SearchOrgUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
@@ -75,7 +75,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
-		sc.handlerFuncCtx = hs.SearchOrgUsersWithPaging
+		sc.handlerFunc = hs.SearchOrgUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "2", "page": "2"}).exec()
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)

@@ -177,17 +177,9 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 			interval = time.Duration(int64(adjustedInterval) * intervalFactor)
 		}
 
-		intervalMs := int64(interval / time.Millisecond)
-		rangeS := query.TimeRange.To.Unix() - query.TimeRange.From.Unix()
-
 		// Interpolate variables in expr
-		expr := model.Expr
-		expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(intervalMs, 10))
-		expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
-		expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeS*1000, 10))
-		expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeS, 10))
-		expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeS, 10)+"s")
-		expr = strings.ReplaceAll(expr, varRateInterval, intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
+		timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
+		expr := interpolateVariables(model.Expr, interval, timeRange, s.intervalCalculator, dsInfo.TimeInterval)
 
 		rangeQuery := model.RangeQuery
 		if !model.InstantQuery && !model.RangeQuery {
@@ -260,6 +252,19 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 
 	rateInterval := time.Duration(int(math.Max(float64(interval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
 	return rateInterval
+}
+
+func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration, intervalCalculator intervalv2.Calculator, timeInterval string) string {
+	rangeMs := timeRange.Milliseconds()
+	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
+
+	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(interval/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
+	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
+	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
+	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
+	expr = strings.ReplaceAll(expr, varRateInterval, intervalv2.FormatDuration(calculateRateInterval(interval, timeInterval, intervalCalculator)))
+	return expr
 }
 
 func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
