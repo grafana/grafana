@@ -18,6 +18,9 @@ We’ve summarized what’s new in the release here, but you might also be inter
 
 # Grafana OSS
 
+## Community Contributions
+
+Grafana 8.3 includes many community contributions including the ability to interpolate variables in tags ([#42318](https://github.com/grafana/grafana/pull/42318)), fly-out sub-menu support ([#41647](https://github.com/grafana/grafana/pull/42318)), the addition of AWS RoboMaker & AWS  Global Accelerator metrics to the AWS CloudWatch data source ([#41450](https://github.com/grafana/grafana/pull/41450), [#41236](https://github.com/grafana/grafana/pull/41236)), as well as updates to the news panel ([#41193](https://github.com/grafana/grafana/pull/41193)), the plugin catalog ([#40917](https://github.com/grafana/grafana/pull/40917)), and many more. The Grafana Labs team is deeply grateful for all those who take time to contribute and participate in the development of Grafana. 
 ## Accessibility
 
 We’ve continued to make progress on improving Grafana’s accessibility. In Grafana 8.3 we’ve updated the main menu with improved keyboard navigation. We’ve also improved Grafana’s behavior when navigating through elements with the tab key (tab stops) and finished our work to make Grafana’s viewer roles compatible with assistive technologies such as screen readers. You can read our accessibility statement here and reach out to us with accessibility issues using our community Slack or our community forums.
@@ -28,10 +31,25 @@ We’ve continued to make progress on improving Grafana’s accessibility. In Gr
 
 Grafana will now make suggestions for visualization types based on the current data surfaced by a query or queries in a panel. This makes seeing available, possible interpretations of your data more straightforward and can be a useful jumping-off point when building panels and dashboards with specific goals in mind.
 
+{{< figure src="/static/img/docs/panels/panel_suggestions_8_3.png" max-width="1200px" caption="Panel suggestionss" >}}
+
 ### Candlestick Panel (Beta)
 
-Grafana 8.3 is shipping with a new Candlestick panel that is so much more. Beyond candlesticks and open, high, low, high, close, behaviors, it includes customizable up/down colors, bar color determined by intra-period or inter-period movement of the data, volume histogram with matching colors, and the ability to detach or create a separate volume histogram to allow for more flexible dashboard design. You can read more about it here [link to do].
+Grafana 8.3 includes a new Candlestick panel that is so much more. Beyond candlesticks and open, high, low, close, behaviors, it includes customizable up/down colors, bar color determined by intra-period or inter-period movement of the data, volume histogram with matching colors, and the ability to detach or create a separate volume histogram to allow for more flexible dashboard design. The candlestick panel is based upon our time series panel meaning it also has support for additional data with the same configuration options and styles.
 
+{{< figure src="/static/img/docs/candlestick-panel/candlestick_panel_8_3.png" max-width="1200px" caption="Candlestick panel" >}}
+
+### Geomap updates
+
+The Geomap panel has been updated to support multiple data layers. The panel can now be configured with multiple marker, heatmap & GeoJSON layers. The layers can be individually configured, named and re-ordered to create rich, multidimensional visualizations. Please see the documentation for details on how you can set up and configure these new configuration options. 
+
+{{< figure src="/static/img/docs/geomap-panel/geomap_8_3.png" max-width="1200px" caption="Geomap panel updates" >}}
+
+### Grafana Alerting
+
+Grafana Alerting is now the default alerting experience for all new Open Source installations of Grafana 8.3. Grafana Alerting in 8.3 includes the ability to test contact points and notification routing. Grafana 8.3 also adds the ability to configure and use external, prometheus-style alert managers from within the Grafana Alerting workflow. 
+
+{{< figure src="/static/img/docs/alerting/alerting_8_0.png" max-width="1200px" caption="Grafana Alerting" >}}
 # Grafana Enterprise
 
 ## Recorded Queries
