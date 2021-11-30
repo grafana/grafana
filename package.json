@@ -191,6 +191,7 @@
     "module-alias": "2.2.2",
     "mutationobserver-shim": "0.3.3",
     "ngtemplate-loader": "2.1.0",
+    "node-notifier": "^10.0.0",
     "nodemon": "2.0.2",
     "postcss": "8.3.6",
     "postcss-loader": "6.2.0",
