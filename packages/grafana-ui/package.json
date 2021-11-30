@@ -116,7 +116,7 @@
     "@testing-library/jest-dom": "5.15.1",
     "@testing-library/react": "12.1.2",
     "@testing-library/react-hooks": "7.0.2",
-    "@testing-library/user-event": "13.3.0",
+    "@testing-library/user-event": "13.5.0",
     "@types/classnames": "2.2.7",
     "@types/clipboard": "2.0.1",
     "@types/common-tags": "^1.8.0",
