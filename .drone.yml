@@ -137,7 +137,7 @@ steps:
   depends_on:
   - initialize
   environment:
-    NODE_OPTIONS: --max_old_space_size=4096
+    NODE_OPTIONS: --max_old_space_size=10000
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -541,7 +541,7 @@ steps:
   depends_on:
   - initialize
   environment:
-    NODE_OPTIONS: --max_old_space_size=4096
+    NODE_OPTIONS: --max_old_space_size=10000
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -1090,7 +1090,7 @@ steps:
   depends_on:
   - initialize
   environment:
-    NODE_OPTIONS: --max_old_space_size=4096
+    NODE_OPTIONS: --max_old_space_size=10000
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -1526,7 +1526,7 @@ steps:
   depends_on:
   - initialize
   environment:
-    NODE_OPTIONS: --max_old_space_size=4096
+    NODE_OPTIONS: --max_old_space_size=10000
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -2177,7 +2177,7 @@ steps:
   depends_on:
   - initialize
   environment:
-    NODE_OPTIONS: --max_old_space_size=4096
+    NODE_OPTIONS: --max_old_space_size=10000
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -2602,7 +2602,7 @@ steps:
   depends_on:
   - initialize
   environment:
-    NODE_OPTIONS: --max_old_space_size=4096
+    NODE_OPTIONS: --max_old_space_size=10000
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -3248,7 +3248,7 @@ steps:
   depends_on:
   - initialize
   environment:
-    NODE_OPTIONS: --max_old_space_size=4096
+    NODE_OPTIONS: --max_old_space_size=10000
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -3642,7 +3642,7 @@ steps:
   depends_on:
   - initialize
   environment:
-    NODE_OPTIONS: --max_old_space_size=4096
+    NODE_OPTIONS: --max_old_space_size=10000
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -4202,6 +4202,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: bf3953f4cb4330889b3e18c9a7991c2986361ccd197f73bab9add6077c737474
+hmac: 45f41c8ebc9452206e3b34f3d03d956f1b143eb3ab50c0f182c5ddd4fbd8aa20
 
 ...

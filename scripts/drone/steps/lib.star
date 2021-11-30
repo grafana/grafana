@@ -381,7 +381,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
             'initialize',
         ],
         'environment': {
-            'NODE_OPTIONS': '--max_old_space_size=4096',
+            'NODE_OPTIONS': '--max_old_space_size=10000',
         },
         'commands': cmds,
     }
