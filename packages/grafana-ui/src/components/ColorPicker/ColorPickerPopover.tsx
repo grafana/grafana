@@ -117,8 +117,8 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
     const { theme } = this.props;
     const styles = getStyles(theme);
     return (
-      <div className={styles.colorPickerPopover}>
-        <FocusScope contain restoreFocus autoFocus>
+      <FocusScope contain restoreFocus autoFocus>
+        <div className={styles.colorPickerPopover}>
           <div className={styles.colorPickerPopoverTabs}>
             <div tabIndex={0} className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')}>
               Colors
@@ -129,8 +129,8 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
             {this.renderCustomPickerTabs()}
           </div>
           <div className={styles.colorPickerPopoverContent}>{this.renderPicker()}</div>
-        </FocusScope>
-      </div>
+        </div>
+      </FocusScope>
     );
   }
 }
