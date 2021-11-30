@@ -1,21 +1,28 @@
-interface PromQueryModel {
+/**
+ * Visual query model
+ */
+export interface PromVisualQuery {
   metric: string;
   labels: PromLabelFilter[];
-  binary?: PromBinaryOperation;
+  operations: PromVisualQueryOperation[];
+  binary?: PromVisualQueryBinary;
 }
 
-interface PromLabelFilter {
+export interface PromLabelFilter {
   label: string;
-  operator: string;
+  op: string;
   value: string;
 }
 
-interface PromQueryModifier {
-  name: string;
+/**
+ * Functions, group by and other elements
+ */
+export interface PromVisualQueryOperation {
+  type: string;
   parameters: string[];
 }
 
-interface PromBinaryOperation {
+export interface PromVisualQueryBinary {
   operator: string;
-  expression: number | PromQueryModel;
+  expression: number | PromVisualQuery;
 }
