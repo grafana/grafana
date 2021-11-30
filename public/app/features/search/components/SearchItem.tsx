@@ -76,7 +76,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         )}
       </Card.Meta>
       <Card.Tags>
-        <TagList tags={item.tags} onClick={tagSelected} aria-label={(tag) => `Filter by tag "${tag}"`} />
+        <TagList tags={item.tags} onClick={tagSelected} />
       </Card.Tags>
     </Card>
   );
