@@ -136,6 +136,8 @@ steps:
     ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -538,6 +540,8 @@ steps:
     ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -1085,6 +1089,8 @@ steps:
     --edition oss --no-pull-enterprise ${DRONE_TAG}
   depends_on:
   - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -1519,6 +1525,8 @@ steps:
     --edition enterprise --no-pull-enterprise ${DRONE_TAG}
   depends_on:
   - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -2168,6 +2176,8 @@ steps:
     --edition oss --no-pull-enterprise v7.3.0-test
   depends_on:
   - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -2591,6 +2601,8 @@ steps:
     --edition enterprise --no-pull-enterprise v7.3.0-test
   depends_on:
   - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -3235,6 +3247,8 @@ steps:
     ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -3627,6 +3641,8 @@ steps:
     ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.4.8
   name: build-frontend
 - commands:
@@ -4186,6 +4202,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 003d0d4a8b4e2fc81f575c838b064e5778c2562b445b26c5a76339ca95c95330
+hmac: e7679bfda524f6300d4fd0dbff9bfece564f0dc0b2aa995301ebf7c8f2fc00ea
 
 ...
