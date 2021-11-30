@@ -1,10 +1,8 @@
 package manager
 
 import (
-	"bytes"
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"sync"
@@ -399,14 +397,6 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 						_, err = ctx.manager.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
 						require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 					})
-
-					t.Run("Call resource should return method not implemented error", func(t *testing.T) {
-						req, err := http.NewRequest(http.MethodGet, "/test", bytes.NewReader([]byte{}))
-						require.NoError(t, err)
-						w := httptest.NewRecorder()
-						err = ctx.manager.callResourceInternal(w, req, backend.PluginContext{PluginID: testPluginID})
-						require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
-					})
 				})
 
 				t.Run("Implemented handlers", func(t *testing.T) {
@@ -441,22 +431,6 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 						require.Equal(t, backend.HealthStatusOk, res.Status)
 						require.Equal(t, "All good", res.Message)
 						require.Equal(t, json, res.JSONDetails)
-					})
-
-					t.Run("Call resource should return expected response", func(t *testing.T) {
-						ctx.pluginClient.CallResourceHandlerFunc = func(ctx context.Context,
-							req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-							return sender.Send(&backend.CallResourceResponse{
-								Status: http.StatusOK,
-							})
-						}
-
-						req, err := http.NewRequest(http.MethodGet, "/test", bytes.NewReader([]byte{}))
-						require.NoError(t, err)
-						w := httptest.NewRecorder()
-						err = ctx.manager.callResourceInternal(w, req, backend.PluginContext{PluginID: testPluginID})
-						require.NoError(t, err)
-						require.Equal(t, http.StatusOK, w.Code)
 					})
 				})
 			})
