@@ -3507,7 +3507,7 @@ __metadata:
     "@sentry/browser": 6.15.0
     "@testing-library/react": ^12.1.2
     "@testing-library/user-event": ^13.5.0
-    "@types/angular": 1.6.56
+    "@types/angular": 1.8.3
     "@types/history": ^4.7.8
     "@types/jest": 27.0.2
     "@types/lodash": 4.14.149
@@ -7969,17 +7969,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/angular@npm:*":
+"@types/angular@npm:*, @types/angular@npm:1.8.3":
   version: 1.8.3
   resolution: "@types/angular@npm:1.8.3"
   checksum: 2d133bb7e5da750cfeef298cac70d1cbeb53037b133bde14ca2c80f93dd6145b7c9e5bf82425b3f35c6812bb6cf38d1dbbdba1554b622f83b409ccf8ff8f192f
-  languageName: node
-  linkType: hard
-
-"@types/angular@npm:1.6.56":
-  version: 1.6.56
-  resolution: "@types/angular@npm:1.6.56"
-  checksum: 009b9fc78c00a0348d0b9737563b67d750214e9c997b819ee39dd6682a93969db6caefd80aa1a70ba24294bfe94f64ea8c81f5b2010254f3fb02a8dd7add6c32
   languageName: node
   linkType: hard
 
@@ -18863,7 +18856,7 @@ __metadata:
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.5.0
-    "@types/angular": 1.6.56
+    "@types/angular": 1.8.3
     "@types/angular-route": 1.7.0
     "@types/classnames": 2.2.9
     "@types/clipboard": 2.0.1
