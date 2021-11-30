@@ -149,10 +149,10 @@ export function SelectBase<T>({
   const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
 
-  // Infer menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
-  // automatically opened when the component is created (it happens in SegmentSelect). In other cases the position
-  // of the menu is correctly determined.
-  // We use useEffect becasue we cannot hook into onMenuOpen due to a bug: https://github.com/JedWatson/react-select/issues/3375
+  // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
+  // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
+  // See also: https://github.com/JedWatson/react-select/issues/4936
+  // Note: we use useEffect instead of hooking into onMenuOpen due to a bug: https://github.com/JedWatson/react-select/issues/3375
   useEffect(() => {
     if (
       loadOptions &&
